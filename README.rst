@@ -66,7 +66,13 @@ Overview
 
 ANAC Supply Chain Management League Platform
 
-* Free software: BSD 2-Clause License
+Overview
+========
+
+This repository is the official platform for running ANAC Supply Chain Management Leagues. It will contain a package
+called `scmlXXXX` for the competition run in year XXXX. For example scml2019 will contain all files related to the
+2019's version of the competition.
+
 
 Installation
 ============

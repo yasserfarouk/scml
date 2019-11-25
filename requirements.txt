@@ -1,0 +1,10 @@
+pytest
+hypothesis
+coverage
+click
+prettytable
+pulp
+negmas
+dataclasses; python_version < '3.7'
+-e .
+

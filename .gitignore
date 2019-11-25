@@ -69,3 +69,12 @@ docs/_build
 
 # Mypy Cache
 .mypy_cache/
+venv/
+venv/*
+**/logs/*
+**/logs
+*/logs
+tests/logs
+src/tests/logs
+**/my_results
+AVERAGE_STEPS.txt
