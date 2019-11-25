@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='scml',
-    version='0.1.0',
+    version='0.1.1',
     description='ANAC Supply Chain Management League Platform',
     long_description='%s\n%s' % (
         re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
