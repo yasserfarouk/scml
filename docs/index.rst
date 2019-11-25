@@ -8,6 +8,8 @@ Contents
    readme
    installation
    usage
+
+   scripts
    reference/index
    contributing
    authors
