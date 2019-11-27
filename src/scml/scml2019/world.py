@@ -1510,7 +1510,6 @@ class SCMLWorld(TimeInAgreementMixin, World):
         self._n_production_failures = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
-        pass
 
     def post_step_stats(self):
         """Saves relevant stats"""
