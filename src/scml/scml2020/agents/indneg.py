@@ -29,47 +29,49 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         self.horizon = horizon
 
     def init(self):
-        self.costs = self.awi.profile.costs
+        self.costs = np.ceil(np.sum(self.awi.profile.costs, axis=0) / self.awi.profile.n_lines).astype(int)
 
     def step(self):
+        np.seterr(divide="ignore")
         if self.awi.current_step % self.horizon != 0:
             return
         input_products = self.awi.my_input_products
         output_products = self.awi.my_output_products
         nxt = self.awi.current_step + 3  # (1 for the negotiation to end and another for transfer of product and 1 extra)
-
+        final = min(nxt + self.horizon - 1, self.awi.n_steps)
         # if I have guaranteed inputs, negotiate to sell them
-        supplies = self.awi.profile.guaranteed_supplies[nxt: nxt + self.horizon, input_products]
+        supplies = self.awi.profile.guaranteed_supplies[nxt: final, input_products]
+        quantity = np.sum(supplies, axis=0)
+        prices = np.sum(self.awi.profile.guaranteed_supply_prices[nxt: final, input_products] * supplies) // quantity
         nonzero = np.transpose(np.nonzero(supplies))
         for step, input_product in nonzero:
-            quantity = supplies[step, input_product]
+            price = prices[input_product]
             output_product = input_product + 1
             n_inputs = self.awi.inputs[input_product]
-            cost = self.costs[step, output_product]
-            produce = self.awi.outputs[input_product]
+            cost = self.costs[input_product]
+            n_outputs = self.awi.outputs[input_product]
             self.start_negotiations(
                 product=output_product,
-                quantity=max(1, quantity * n_inputs // produce),
-                unit_price=(cost + self.awi.profile.guaranteed_supply_prices[step, input_product]
-                            * n_inputs) // produce,
-                time=step, to_buy=False
+                quantity=max(1, quantity[input_product] * n_outputs // n_inputs),
+                unit_price=(cost + price * n_inputs) // n_outputs,
+                time=step + nxt, to_buy=False
             )
 
         # if I have guaranteed outputs, negotiate to buy corresponding inputs
-        sales = self.awi.profile.guaranteed_sales[nxt: nxt + self.horizon, output_products]
+        sales = self.awi.profile.guaranteed_sales[nxt: final, output_products]
+        quantity = np.sum(sales, axis=0)
+        prices = np.sum(sales * self.awi.profile.guaranteed_sale_prices[nxt: final, output_products]) // quantity
         nonzero = np.transpose(np.nonzero(sales))
         for step, output_product in nonzero:
             input_product = output_product - 1
-            quantity = sales[step, output_product]
-            needs = self.awi.inputs[input_product]
-            cost = self.costs[step, input_product]
+            price = prices[output_product]
+            n_inputs = self.awi.inputs[input_product]
+            cost = self.costs[input_product]
             n_outputs = self.awi.outputs[input_product]
             self.start_negotiations(product=input_product,
-                                    quantity=max(1, quantity * needs // n_outputs),
-                                    unit_price=(n_outputs *
-                                                self.awi.profile.guaranteed_sale_prices[step, output_product]
-                                                - cost) // needs,
-                                    time=step, to_buy=True
+                                    quantity=max(1, quantity[output_product] * n_inputs // n_outputs),
+                                    unit_price=(n_outputs * price - cost) // n_inputs,
+                                    time=step + nxt, to_buy=True
                                     )
 
     @abstractmethod
@@ -79,7 +81,7 @@ class IndependentNegotiationsAgent(DoNothingAgent):
 
     def negotiator(self, is_seller: bool, issues=None, outcomes=None) -> SAONegotiator:
         """Creates a negotiator"""
-        params = copy.deepcopy(self.negotiator_params)
+        params = self.negotiator_params
         params["ufun"] = self.create_ufun(is_seller=is_seller, outcomes=outcomes, issues=issues)
         return instantiate(self.negotiator_type, **params)
 
@@ -109,23 +111,30 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             - This method assumes that products cannot be in my_input_products and my_output_products
 
         """
+        if quantity < 1 or unit_price < 1 or time < self.awi.current_step + 1:
+            self.awi.logdebug(f"Less than 2 valid issues (q:{quantity}, u:{unit_price}, t:{time})")
+            return
         # choose ranges for the negotiation agenda.
         cprice = self.awi.catalog_prices[product]
-        cprice = min(cprice, unit_price) if to_buy else max(cprice, unit_price)
         qvalues = (1, quantity)
-        uvalues = (1, int(1.2 * cprice)) if to_buy else (int(0.8 * cprice), 2 * cprice)
-        tvalues = (self.awi.current_step + 1, time - 1) if to_buy else (time + 1, self.awi.n_steps - 1)
+        if to_buy:
+            uvalues = (1, cprice)
+            tvalues = (self.awi.current_step + 1, time - 1)
+            partners = self.awi.all_suppliers[product]
+        else:
+            uvalues = (cprice, 2 * cprice)
+            tvalues = (time + 1, self.awi.n_steps - 1)
+            partners = self.awi.all_consumers[product]
         issues = [
-            Issue(qvalues, name="quantity"),
-            Issue(uvalues, name="unit_price"),
-            Issue(tvalues, name="time"),
+            Issue(qvalues, name="quantity", value_type=int),
+            Issue(tvalues, name="time", value_type=int),
+            Issue(uvalues, name="unit_price", value_type=int),
         ]
         if Issue.num_outcomes(issues) < 2:
             self.awi.logdebug(f"Less than 2 issues for product {product}: {[str(_) for _ in issues]}")
             return
 
         # negotiate with all suppliers of the input product I need to produce
-        partners = self.awi.all_suppliers[product] if to_buy else self.awi.all_consumers[product]
         for partner in partners:
             self.awi.request_negotiation(
                 is_buy=to_buy,
@@ -137,21 +146,29 @@ class IndependentNegotiationsAgent(DoNothingAgent):
                 negotiator=self.negotiator(not to_buy, issues=issues),
             )
 
+    def sign_contract(self, contract: Contract) -> Optional[str]:
+        step = contract.agreement["time"]
+        if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
+            return None
+        return self.id
+
     def on_contract_signed(self, contract: Contract) -> None:
         is_seller = contract.annotation["seller"] == self.id
         step = contract.agreement["time"]
+        if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
+            return
         if is_seller:
             # if I am a seller, I will schedule production then buy my needs to produce
             output_product = contract.annotation["product"]
             input_product = output_product - 1
             if input_product >= 0:
                 self.awi.schedule_production(process=input_product, step=-1, line=-1)
-                needs = self.awi.inputs[input_product]
-                cost = self.costs[step, input_product]
+                n_inputs = self.awi.inputs[input_product]
+                cost = self.costs[input_product]
                 n_outputs = self.awi.outputs[input_product]
                 self.start_negotiations(product=input_product,
-                                        quantity=max(1, contract.agreement["quantity"] * needs // n_outputs),
-                                        unit_price=(n_outputs * contract.agreement["unit_price"] - cost) // needs,
+                                        quantity=max(1, contract.agreement["quantity"] * n_inputs // n_outputs),
+                                        unit_price=(n_outputs * contract.agreement["unit_price"] - cost) // n_inputs,
                                         time=contract.agreement["time"], to_buy=True
                                         )
             return
@@ -161,9 +178,9 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         output_product = input_product + 1
         if output_product < self.awi.n_products:
             n_inputs = self.awi.inputs[input_product]
-            cost = self.costs[step, output_product]
-            produce = self.awi.outputs[input_product]
+            cost = self.costs[input_product]
+            n_outputs = self.awi.outputs[input_product]
             self.start_negotiations(product=output_product,
-                                    quantity=max(1, contract.agreement["quantity"] * n_inputs / produce),
-                                    unit_price=(cost + contract.agreement["unit_price"] * n_inputs) // produce,
+                                    quantity=max(1, contract.agreement["quantity"] * n_inputs / n_outputs),
+                                    unit_price=(cost + contract.agreement["unit_price"] * n_inputs) // n_outputs,
                                     time=contract.agreement["time"], to_buy=False)

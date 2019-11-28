@@ -10,7 +10,5 @@ class BuyCheapSellExpensiveAgent(IndependentNegotiationsAgent):
 
     def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
         if is_seller:
-            return LinearUtilityFunction(
-                {"unit_price": 1, "quantity": 0.1, "time": 0.1}
-            )
-        return LinearUtilityFunction({"unit_price": -1, "quantity": 0.1, "time": -0.1})
+            return LinearUtilityFunction((1, 1, 10))
+        return LinearUtilityFunction((1, -1, -10))

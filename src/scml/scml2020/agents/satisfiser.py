@@ -24,31 +24,31 @@ class SatisfiserController(SAOController, AspirationMixin):
     """
 
     def __init__(self, *args, target_quantity: int, is_seller: bool,
-                 neg_type: SAONegotiator, neg_params: Dict[str, Any] = None,
+                 negotiator_type: SAONegotiator, negotiator_params: Dict[str, Any] = None,
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.is_seller = is_seller
         self.target = target_quantity
-        neg_params = neg_params if neg_params is not None else dict()
+        negotiator_params = negotiator_params if negotiator_params is not None else dict()
         self.secured = 0
         if is_seller:
-            self.ufun = LinearUtilityFunction({"unit_price": 1, "quantity": 0.1, "time": 0.1})
+            self.ufun = LinearUtilityFunction((1, 1, 10))
         else:
-            self.ufun = LinearUtilityFunction({"unit_price": -1, "quantity": 0.1, "time": -0.1})
-        neg_params["ufun"] = self.ufun
-        self.__netotiator = instantiate(neg_type, **neg_params)
+            self.ufun = LinearUtilityFunction((1, -1, -10))
+        negotiator_params["ufun"] = self.ufun
+        self.__negotiator = instantiate(negotiator_type, **negotiator_params)
 
     def propose(self, negotiator_id: str, state: MechanismState) -> Optional["Outcome"]:
-        self.__negotiator._ami = self.negotiators[negotiator_id]._ami
-        return self.__netotiator.propose(state)
+        self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
+        return self.__negotiator.propose(state)
 
     def respond(
         self, negotiator_id: str, state: MechanismState, offer: "Outcome"
     ) -> ResponseType:
         if self.secured >= self.target:
             return ResponseType.END_NEGOTIATION
-        self.__negotiator._ami = self.negotiators[negotiator_id]._ami
-        return self.__netotiator.respond(state)
+        self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
+        return self.__negotiator.respond(state)
 
     def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
         if state.agreement is not None:
@@ -86,10 +86,10 @@ class SatisfiserAgent(DoNothingAgent):
         self.outputs_available: np.ndarray = None
 
     def init(self):
-        self.input_product = int(self.awi.my_input_products[0])
+        self.input_product = int(self.awi.my_input_product)
         self.output_product = self.input_product + 1
         self.process = self.input_product
-        self.production_cost = self.awi.profile.costs[self.process]
+        self.production_cost = int(np.ceil(np.mean(self.awi.profile.costs[:, self.process])))
         self.production_inputs = self.awi.inputs[self.process]
         self.production_outputs = self.awi.outputs[self.process]
         self.inputs_available = self.awi.profile.guaranteed_supplies[:, self.input_product]
@@ -108,6 +108,8 @@ class SatisfiserAgent(DoNothingAgent):
 
         # if I have guaranteed inputs, negotiate to sell them
         step = self.awi.current_step + self.input_product + 2
+        if step > self.awi.n_steps - 1:
+            return
         input_product = self.input_product
 
         quantity = self.outputs_needed[step] - self.outputs_available[step]
@@ -115,11 +117,11 @@ class SatisfiserAgent(DoNothingAgent):
             output_product = self.output_product
             n_inputs = self.production_inputs
             cost = self.production_cost
-            produce = self.production_outputs
+            n_outputs = self.production_outputs
             self.start_negotiations(
                 product=output_product,
-                quantity=max(1, quantity * n_inputs / produce),
-                unit_price=(cost + quantity * n_inputs) // produce,
+                quantity=max(1, quantity * n_inputs / n_outputs),
+                unit_price=(cost + quantity * n_inputs) // n_outputs,
                 time=step
             )
 
@@ -127,18 +129,19 @@ class SatisfiserAgent(DoNothingAgent):
         step = self.awi.n_processes - self.output_product + 2
         quantity = self.inputs_needed[step] - self.outputs_needed[step]
         if quantity > 0:
-            needs = self.production_inputs
+            n_inputs = self.production_inputs
+            cost = self.production_cost
             n_outputs = self.production_outputs
             self.start_negotiations(product=input_product,
-                                    quantity=max(1, quantity * needs // n_outputs),
-                                    unit_price=(n_outputs * quantity - cost) // needs,
+                                    quantity=max(1, quantity * n_inputs // n_outputs),
+                                    unit_price=(n_outputs * quantity - cost) // n_inputs,
                                     time=step
                                     )
 
     def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
         if is_seller:
-            return LinearUtilityFunction({"unit_price": 1, "quantity": 0.1, "time": 0.1})
-        return LinearUtilityFunction({"unit_price": -1, "quantity": 0.1, "time": -0.1})
+            return LinearUtilityFunction((1, 1, 10))
+        return LinearUtilityFunction((1, -1, -10))
 
     def negotiator(self, is_seller: bool, issues=None, outcomes=None) -> SAONegotiator:
         """Creates a negotiator"""
@@ -176,31 +179,33 @@ class SatisfiserAgent(DoNothingAgent):
 
         """
         to_buy = product == self.input_product
+        if quantity < 1 or unit_price < 1 or time < self.awi.current_step + 1:
+            self.awi.logdebug(f"Less than 2 valid issues (q:{quantity}, u:{unit_price}, t:{time})")
+            return
         # choose ranges for the negotiation agenda.
         cprice = self.awi.catalog_prices[product]
-        cprice = min(cprice, unit_price) if to_buy else max(cprice, unit_price)
         qvalues = (1, quantity)
-        uvalues = (1, int(1.2 * cprice)) if to_buy else (int(0.8 * cprice), 2 * cprice)
-        tvalues = (self.awi.current_step + 1, time - 1) if to_buy else (time + 1, self.awi.n_steps - 1)
-        issues = [
-            Issue(qvalues, name="quantity"),
-            Issue(uvalues, name="unit_price"),
-            Issue(tvalues, name="time"),
-        ]
+        if to_buy:
+            uvalues = (1, cprice)
+            tvalues = (self.awi.current_step + 1, time - 1)
+            partners = self.awi.all_suppliers[product]
+        else:
+            uvalues = (cprice, 2 * cprice)
+            tvalues = (time + 1, self.awi.n_steps - 1)
+            partners = self.awi.all_consumers[product]
 
-        # negotiate with all suppliers of the input product I need to produce
-        partners = self.awi.all_suppliers[product] if to_buy else self.awi.all_consumers[product]
+        # negotiate with everyone
         self.awi.request_negotiations(
             is_buy=to_buy,
             product=product,
             quantity=qvalues,
             unit_price=uvalues,
             time=tvalues,
-            partnera=partners,
-            negotiator=SatisfiserController(is_seller=not to_buy
+            partners=partners,
+            controller=SatisfiserController(is_seller=not to_buy
                                             , target_quantity=qvalues[1]
-                                            , neg_type=self.negotiator_type
-                                            , neg_params=self.negotiator_params),
+                                            , negotiator_type=self.negotiator_type
+                                            , negotiator_params=self.negotiator_params),
         )
 
     def on_contract_signed(self, contract: Contract) -> None:
