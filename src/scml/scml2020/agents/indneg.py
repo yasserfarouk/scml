@@ -40,9 +40,9 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         nxt = self.awi.current_step + 3  # (1 for the negotiation to end and another for transfer of product and 1 extra)
         final = min(nxt + self.horizon - 1, self.awi.n_steps)
         # if I have guaranteed inputs, negotiate to sell them
-        supplies = self.awi.profile.guaranteed_supplies[nxt: final, input_products]
+        supplies = self.awi.profile.external_supplies[nxt: final, input_products]
         quantity = np.sum(supplies, axis=0)
-        prices = np.sum(self.awi.profile.guaranteed_supply_prices[nxt: final, input_products] * supplies) // quantity
+        prices = np.sum(self.awi.profile.external_supply_prices[nxt: final, input_products] * supplies) // quantity
         nonzero = np.transpose(np.nonzero(supplies))
         for step, input_product in nonzero:
             price = prices[input_product]
@@ -58,9 +58,9 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             )
 
         # if I have guaranteed outputs, negotiate to buy corresponding inputs
-        sales = self.awi.profile.guaranteed_sales[nxt: final, output_products]
+        sales = self.awi.profile.external_sales[nxt: final, output_products]
         quantity = np.sum(sales, axis=0)
-        prices = np.sum(sales * self.awi.profile.guaranteed_sale_prices[nxt: final, output_products]) // quantity
+        prices = np.sum(sales * self.awi.profile.external_sale_prices[nxt: final, output_products]) // quantity
         nonzero = np.transpose(np.nonzero(sales))
         for step, output_product in nonzero:
             input_product = output_product - 1
@@ -89,10 +89,10 @@ class IndependentNegotiationsAgent(DoNothingAgent):
                                        mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
         return self.negotiator(annotation["seller"] == self.id, issues=issues)
 
-    def confirm_guaranteed_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_external_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         return quantities
 
-    def confirm_guaranteed_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_external_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         return quantities
 
     def start_negotiations(self, product: int, quantity: int, unit_price: int, time: int, to_buy: bool) -> None:

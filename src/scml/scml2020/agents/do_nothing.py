@@ -13,10 +13,10 @@ __all__ = ["DoNothingAgent"]
 class DoNothingAgent(SCML2020Agent):
     """An agent that does nothing for the whole length of the simulation"""
 
-    def confirm_guaranteed_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_external_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         return np.zeros_like(quantities)
 
-    def confirm_guaranteed_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_external_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         return np.zeros_like(quantities)
 
     def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],

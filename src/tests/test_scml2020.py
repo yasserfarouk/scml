@@ -5,7 +5,7 @@ from pytest import mark
 from hypothesis import given, settings
 import hypothesis.strategies as st
 from scml.scml2020 import (
-    SCML2020World,
+    World,
     DoNothingAgent,
     FactoryProfile,
     RandomAgent,
@@ -26,11 +26,13 @@ def generate_world(
     n_steps=15,
     n_agents_per_level=3,
     n_lines=10,
-    initial_balance=10_000_000,
+    initial_balance=10_000,
+    random_supply_demand=False,
     **kwargs,
 ):
     profiles = []
     catalog = 20 * np.arange(1, n_processes + 2, dtype=int)
+    agent_params = []
     for process in range(n_processes):
         supply = np.zeros((n_steps, n_processes + 1), dtype=int)
         sales = np.zeros((n_steps, n_processes + 1), dtype=int)
@@ -41,19 +43,28 @@ def generate_world(
             catalog[-1], catalog[-1] * 2 + 1, size=(n_steps, n_processes + 1)
         )
         if process == 0:
-            supply[:, process] = np.random.randint(1, 10, size=n_steps)
+            supply[:, process] = (
+                np.random.randint(1, n_lines * 2, size=n_steps)
+                if random_supply_demand
+                else n_lines
+            )
         elif process == n_processes - 1:
-            sales[:, process] = np.random.randint(1, 10, size=n_steps)
+            sales[:, process + 1] = (
+                np.random.randint(1, n_lines * 2, size=n_steps)
+                if random_supply_demand
+                else n_lines
+            )
         for a in range(n_agents_per_level):
+            agent_params.append({"name": f"a{process}_{a}"})
             costs = INFINTE_COST * np.ones((n_lines, n_processes), dtype=int)
             costs[:, process] = random.randint(1, 6)
             profiles.append(
                 FactoryProfile(
                     costs=costs,
-                    guaranteed_sale_prices=sales_prices,
-                    guaranteed_sales=sales,
-                    guaranteed_supplies=supply,
-                    guaranteed_supply_prices=supply_prices,
+                    external_sale_prices=sales_prices,
+                    external_sales=sales,
+                    external_supplies=supply,
+                    external_supply_prices=supply_prices,
                 )
             )
 
@@ -62,11 +73,12 @@ def generate_world(
         for _ in range(n_agents_per_level * n_processes)
     ]
     assert len(agent_types_final) == len(profiles)
-    world = SCML2020World(
+    world = World(
         process_inputs=np.ones(n_processes, dtype=int),
         process_outputs=np.ones(n_processes, dtype=int),
         catalog_prices=catalog,
         agent_types=agent_types_final,
+        agent_params=agent_params,
         profiles=profiles,
         n_steps=n_steps,
         initial_balance=initial_balance,
@@ -107,6 +119,7 @@ def test_can_run_with_a_single_agent_type(agent_type):
         unique=True,
     )
 )
+@settings(deadline=100_000, max_examples=20)
 def test_can_run_with_a_multiple_agent_types(agent_types):
     world = generate_world(agent_types, compact=True)
     world.run()

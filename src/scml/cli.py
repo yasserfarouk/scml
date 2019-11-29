@@ -62,6 +62,7 @@ def print_progress(_, i, n) -> None:
         flush=True,
     )
 
+
 def print_world_progress(world) -> None:
     """Prints the progress of a world"""
     step = world.current_step + 1

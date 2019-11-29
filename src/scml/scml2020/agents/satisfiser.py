@@ -48,7 +48,7 @@ class SatisfiserController(SAOController, AspirationMixin):
         if self.secured >= self.target:
             return ResponseType.END_NEGOTIATION
         self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
-        return self.__negotiator.respond(state)
+        return self.__negotiator.respond(offer=offer, state=state)
 
     def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
         if state.agreement is not None:
@@ -92,17 +92,17 @@ class SatisfiserAgent(DoNothingAgent):
         self.production_cost = int(np.ceil(np.mean(self.awi.profile.costs[:, self.process])))
         self.production_inputs = self.awi.inputs[self.process]
         self.production_outputs = self.awi.outputs[self.process]
-        self.inputs_available = self.awi.profile.guaranteed_supplies[:, self.input_product]
+        self.inputs_available = self.awi.profile.external_supplies[:, self.input_product]
         self.inputs_needed = np.zeros(self.awi.n_steps, dtype=int)
-        self.inputs_needed[:-1] += np.ceil(self.awi.profile.guaranteed_sales[1:, self.input_product] *
+        self.inputs_needed[:-1] += np.ceil(self.awi.profile.external_sales[1:, self.input_product] *
                                            self.production_inputs / self.production_outputs).astype(int)
-        self.outputs_available = self.awi.profile.guaranteed_sales[:, self.input_product]
+        self.outputs_available = self.awi.profile.external_sales[:, self.input_product]
         self.outputs_needed = np.zeros(self.awi.n_steps, dtype=int)
-        self.outputs_needed[1:] = np.floor(self.awi.profile.guaranteed_supplies[:-1, self.output_product]
+        self.outputs_needed[1:] = np.floor(self.awi.profile.external_supplies[:-1, self.output_product]
                                            * self.production_outputs / self.production_inputs).astype(int)
 
-        self.input_cost = self.awi.profile.guaranteed_supply_prices[:, self.input_product]
-        self.output_cost = self.awi.profile.guaranteed_sale_prices[:, self.output_product]
+        self.input_cost = self.awi.profile.external_supply_prices[:, self.input_product]
+        self.output_cost = self.awi.profile.external_sale_prices[:, self.output_product]
 
     def step(self):
 
@@ -138,7 +138,7 @@ class SatisfiserAgent(DoNothingAgent):
                                     time=step
                                     )
 
-    def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
+    def create_ufun(self, is_seller: bool):
         if is_seller:
             return LinearUtilityFunction((1, 1, 10))
         return LinearUtilityFunction((1, -1, -10))
@@ -146,19 +146,19 @@ class SatisfiserAgent(DoNothingAgent):
     def negotiator(self, is_seller: bool, issues=None, outcomes=None) -> SAONegotiator:
         """Creates a negotiator"""
         params = copy.deepcopy(self.negotiator_params)
-        params["ufun"] = self.create_ufun(is_seller=is_seller, outcomes=outcomes, issues=issues)
+        params["ufun"] = self.create_ufun(is_seller=is_seller)
         return instantiate(self.negotiator_type, **params)
 
     def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],
                                        mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
         return self.negotiator(annotation["seller"] == self.id, issues=issues)
 
-    def confirm_guaranteed_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_external_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         p, s = self.output_product, self.awi.current_step
         quantities[p] = max(0, min(quantities[p], self.outputs_needed[s] - self.outputs_available[s]))
         return quantities
 
-    def confirm_guaranteed_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_external_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         p, s = self.input_product, self.awi.current_step
         quantities[p] = max(0, min(quantities[p], self.inputs_needed[s] - self.inputs_available[s]))
         return quantities
@@ -212,8 +212,8 @@ class SatisfiserAgent(DoNothingAgent):
         is_seller = contract.annotation["seller"] == self.id
         s = self.awi.current_step
         cost = self.production_cost
-        current_input = self.awi.state[self.input_product]
-        current_output = self.awi.state[self.output_product]
+        current_input = self.awi.inputs[self.input_product]
+        current_output = self.awi.outputs[self.input_product]
         q, u, t = contract.agreement["quantity"], contract.agreement["unit_price"], contract.agreement["time"]
         if is_seller:
             # if I am a seller, I will schedule production then buy my needs to produce

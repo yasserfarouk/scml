@@ -4,8 +4,8 @@ coverage
 click
 prettytable
 pulp
+python-constraint
 negmas
 dataclasses; python_version < '3.7'
 -e .
--r docs/requirements.txt
 

@@ -71,11 +71,13 @@ setup(
         'negmas',
         'prettytable',
         'pulp',
+        'python-constraint',
+        'negmas',
     ],
     extras_require={
         # eg:
         #   'rst': ['docutils>=0.11'],
-           ':python_version=="3.6"': ['attrs'],
+           ':python_version=="3.6"': ['dataclasses'],
     },
     setup_requires=[
         'pytest-runner',

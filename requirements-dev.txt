@@ -2,3 +2,4 @@ coverage
 jinja2
 matrix
 tox
+-r docs/requirements.txt
