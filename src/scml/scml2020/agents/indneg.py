@@ -37,41 +37,43 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             return
         input_products = self.awi.my_input_products
         output_products = self.awi.my_output_products
-        nxt = self.awi.current_step + 3  # (1 for the negotiation to end and another for transfer of product and 1 extra)
-        final = min(nxt + self.horizon - 1, self.awi.n_steps)
-        # if I have guaranteed inputs, negotiate to sell them
-        supplies = self.awi.profile.external_supplies[nxt: final, input_products]
+        earliest = self.awi.current_step + 2
+        final = min(earliest + self.horizon - 1, self.awi.n_steps)
+        # if I have external inputs, negotiate to sell them (after production)
+        supplies = self.awi.profile.external_supplies[earliest: final, input_products]
         quantity = np.sum(supplies, axis=0)
-        prices = np.sum(self.awi.profile.external_supply_prices[nxt: final, input_products] * supplies) // quantity
+        prices = np.sum(self.awi.profile.external_supply_prices[earliest: final, input_products] * supplies) // quantity
         nonzero = np.transpose(np.nonzero(supplies))
-        for step, input_product in nonzero:
-            price = prices[input_product]
+        for step, i in nonzero:
+            input_product = input_products[i]
+            price = prices[i]
             output_product = input_product + 1
             n_inputs = self.awi.inputs[input_product]
             cost = self.costs[input_product]
             n_outputs = self.awi.outputs[input_product]
             self.start_negotiations(
                 product=output_product,
-                quantity=max(1, quantity[input_product] * n_outputs // n_inputs),
+                quantity=max(1, quantity[i] * n_outputs // n_inputs),
                 unit_price=(cost + price * n_inputs) // n_outputs,
-                time=step + nxt, to_buy=False
+                time=step + earliest + 1, to_buy=False
             )
 
         # if I have guaranteed outputs, negotiate to buy corresponding inputs
-        sales = self.awi.profile.external_sales[nxt: final, output_products]
+        sales = self.awi.profile.external_sales[earliest: final, output_products]
         quantity = np.sum(sales, axis=0)
-        prices = np.sum(sales * self.awi.profile.external_sale_prices[nxt: final, output_products]) // quantity
+        prices = np.sum(sales * self.awi.profile.external_sale_prices[earliest: final, output_products]) // quantity
         nonzero = np.transpose(np.nonzero(sales))
-        for step, output_product in nonzero:
+        for step, o in nonzero:
+            output_product = output_products[o]
             input_product = output_product - 1
-            price = prices[output_product]
+            price = prices[o]
             n_inputs = self.awi.inputs[input_product]
             cost = self.costs[input_product]
             n_outputs = self.awi.outputs[input_product]
             self.start_negotiations(product=input_product,
-                                    quantity=max(1, quantity[output_product] * n_inputs // n_outputs),
+                                    quantity=max(1, quantity[o] * n_inputs // n_outputs),
                                     unit_price=(n_outputs * price - cost) // n_inputs,
-                                    time=step + nxt, to_buy=True
+                                    time=step + earliest - 1, to_buy=True
                                     )
 
     @abstractmethod
@@ -155,21 +157,29 @@ class IndependentNegotiationsAgent(DoNothingAgent):
     def on_contract_signed(self, contract: Contract) -> None:
         is_seller = contract.annotation["seller"] == self.id
         step = contract.agreement["time"]
-        if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
+        # find the earliest time I can do anything about this contract
+        earliest_production = self.awi.current_step + 1
+        if step > self.awi.n_steps - 1 or step < earliest_production:
             return
         if is_seller:
             # if I am a seller, I will schedule production then buy my needs to produce
             output_product = contract.annotation["product"]
             input_product = output_product - 1
             if input_product >= 0:
-                self.awi.schedule_production(process=input_product, step=-1, line=-1)
+                scheduled_at, _ = self.awi.schedule_production(
+                    process=input_product,
+                    step=(earliest_production, step - 1),
+                    line=-1
+                )
+                if scheduled_at < 0:
+                    return
                 n_inputs = self.awi.inputs[input_product]
                 cost = self.costs[input_product]
                 n_outputs = self.awi.outputs[input_product]
                 self.start_negotiations(product=input_product,
                                         quantity=max(1, contract.agreement["quantity"] * n_inputs // n_outputs),
                                         unit_price=(n_outputs * contract.agreement["unit_price"] - cost) // n_inputs,
-                                        time=contract.agreement["time"], to_buy=True
+                                        time=scheduled_at - 1, to_buy=True
                                         )
             return
 
@@ -183,4 +193,4 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             self.start_negotiations(product=output_product,
                                     quantity=max(1, contract.agreement["quantity"] * n_inputs / n_outputs),
                                     unit_price=(cost + contract.agreement["unit_price"] * n_inputs) // n_outputs,
-                                    time=contract.agreement["time"], to_buy=False)
+                                    time=step - 1, to_buy=False)

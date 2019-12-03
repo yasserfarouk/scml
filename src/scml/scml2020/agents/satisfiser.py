@@ -84,6 +84,7 @@ class SatisfiserAgent(DoNothingAgent):
         self.output_cost: np.ndarray = None
         self.inputs_available: np.ndarray = None
         self.outputs_available: np.ndarray = None
+        self.production_factor = 1
 
     def init(self):
         self.input_product = int(self.awi.my_input_product)
@@ -92,42 +93,46 @@ class SatisfiserAgent(DoNothingAgent):
         self.production_cost = int(np.ceil(np.mean(self.awi.profile.costs[:, self.process])))
         self.production_inputs = self.awi.inputs[self.process]
         self.production_outputs = self.awi.outputs[self.process]
+        self.production_factor = self.production_outputs / self.production_inputs
         self.inputs_available = self.awi.profile.external_supplies[:, self.input_product]
-        self.inputs_needed = np.zeros(self.awi.n_steps, dtype=int)
-        self.inputs_needed[:-1] += np.ceil(self.awi.profile.external_sales[1:, self.input_product] *
-                                           self.production_inputs / self.production_outputs).astype(int)
         self.outputs_available = self.awi.profile.external_sales[:, self.input_product]
+        self.inputs_needed = np.zeros(self.awi.n_steps, dtype=int)
         self.outputs_needed = np.zeros(self.awi.n_steps, dtype=int)
-        self.outputs_needed[1:] = np.floor(self.awi.profile.external_supplies[:-1, self.output_product]
-                                           * self.production_outputs / self.production_inputs).astype(int)
+        self.inputs_needed[:-1] += np.ceil(self.outputs_available[1:] / self.production_factor).astype(int)
+        self.outputs_needed[1:] = np.floor(self.inputs_available[:-1] * self.production_factor).astype(int)
 
         self.input_cost = self.awi.profile.external_supply_prices[:, self.input_product]
         self.output_cost = self.awi.profile.external_sale_prices[:, self.output_product]
 
     def step(self):
 
-        # if I have guaranteed inputs, negotiate to sell them
-        step = self.awi.current_step + self.input_product + 2
-        if step > self.awi.n_steps - 1:
+        # I wait two steps, one for running the negotiation and another for signing
+        nxt_step = self.awi.current_step + self.input_product + 2
+
+        if nxt_step > self.awi.n_steps - 1:
             return
+
+        # negotiate to sell extra quantities
         input_product = self.input_product
 
-        quantity = self.outputs_needed[step] - self.outputs_available[step]
+        # find out if I need to sell any output products
+        quantity = self.outputs_needed[nxt_step] - self.outputs_available[nxt_step]
         if quantity > 0:
+            # if so, negotiate to sell as much of them as possible
             output_product = self.output_product
             n_inputs = self.production_inputs
             cost = self.production_cost
             n_outputs = self.production_outputs
             self.start_negotiations(
                 product=output_product,
-                quantity=max(1, quantity * n_inputs / n_outputs),
+                quantity=max(1, int(math.ceil(quantity / self.production_factor))),
                 unit_price=(cost + quantity * n_inputs) // n_outputs,
-                time=step
+                time=nxt_step
             )
 
         # if I have guaranteed outputs, negotiate to buy corresponding inputs
-        step = self.awi.n_processes - self.output_product + 2
-        quantity = self.inputs_needed[step] - self.outputs_needed[step]
+        nxt_step = self.awi.n_processes - self.output_product + 2
+        quantity = self.inputs_needed[nxt_step] - self.outputs_needed[nxt_step]
         if quantity > 0:
             n_inputs = self.production_inputs
             cost = self.production_cost
@@ -135,7 +140,7 @@ class SatisfiserAgent(DoNothingAgent):
             self.start_negotiations(product=input_product,
                                     quantity=max(1, quantity * n_inputs // n_outputs),
                                     unit_price=(n_outputs * quantity - cost) // n_inputs,
-                                    time=step
+                                    time=nxt_step
                                     )
 
     def create_ufun(self, is_seller: bool):
@@ -223,7 +228,7 @@ class SatisfiserAgent(DoNothingAgent):
                 self.outputs_available[t] + q)
             self.outputs_available[t] += q
             if input_product >= 0 and t > 0:
-                self.awi.schedule_production(process=input_product, step=-1, line=-1)
+                self.awi.schedule_production(process=input_product, step=(self.awi.current_step+1, t - 1), line=-1)
                 n_needs = self.production_inputs
                 n_outputs = self.production_outputs
                 self.inputs_needed[t - 1] += max(1, math.ceil(q * n_needs // n_outputs))
@@ -245,7 +250,6 @@ class SatisfiserAgent(DoNothingAgent):
             n_inputs = self.production_inputs
             cost = self.production_cost
             n_produced = self.production_outputs
-            # todo change outputs_needed and inputs_needed to float and do not use floor here or ceiling above to handle potential n_inputs, n_outputs > 1
             self.outputs_needed[t + 1] = max(1, q * n_produced // n_inputs)
             if self.outputs_needed[s: t + 1].sum() > self.outputs_available[s: t + 1].sum() + current_output:
                 self.start_negotiations(product=output_product,

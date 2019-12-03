@@ -1,11 +1,13 @@
 import copy
+from unittest import mock
 
 import numpy as np
 import pytest
 import hypothesis.strategies as st
-from hypothesis import given
+from hypothesis import given, example
 
 from scml.scml2020 import FactoryProfile, Factory, NO_COMMAND, FactoryState
+from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 
 PROCESSES = 5
 LINES = 10
@@ -13,8 +15,31 @@ STEPS = 50
 INITIAL = 1000
 
 
-@pytest.fixture
-def profile():
+def create_factory():
+    return Factory(
+        create_profile(),
+        INITIAL,
+        np.ones(PROCESSES, dtype=int),
+        np.ones(PROCESSES, dtype=int),
+        agent_id="aid",
+        agent_name="aname",
+        world=create_world(),
+        # breach processing parameters
+        buy_missing_products=True,
+        # compensation parameters (for victims of bankrupt agents)
+        compensate_before_past_debt=False,
+        # external contracts parameters
+        external_no_borrow=False,
+        external_no_bankruptcy=True,
+        external_penalty=0.15,
+        production_no_borrow=False,
+        production_no_bankruptcy=True,
+        production_penalty=0.15,
+        catalog_prices=np.random.randint(1, 20, size=PROCESSES + 1, dtype=int),
+    )
+
+
+def create_profile():
     return FactoryProfile(
         np.random.randint(1, 10, (LINES, PROCESSES), dtype=int),
         np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
@@ -24,21 +49,27 @@ def profile():
     )
 
 
+def create_world():
+    return mock.Mock(current_step=0, n_steps=STEPS)
+
+
+@pytest.fixture
+def profile():
+    return create_profile()
+
+
 @pytest.fixture()
-def factory(profile):
-    return Factory(
-        profile, INITIAL, np.ones(PROCESSES, dtype=int), np.ones(PROCESSES, dtype=int)
-    )
+def world_mock():
+    return create_world()
+
+
+@pytest.fixture()
+def factory():
+    return create_factory()
 
 
 def test_factory_profile():
-    p = FactoryProfile(
-        np.random.randint(1, 10, (LINES, PROCESSES), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-    )
+    p = create_profile()
     assert p.n_lines == LINES
     assert p.n_products == PROCESSES + 1
     assert p.n_processes == PROCESSES
@@ -74,19 +105,9 @@ class TestFactory:
         step=st.integers(-1, STEPS - 1),
         line=st.integers(-1, LINES - 1),
     )
+    @example(process=0, step=0, line=0)
     def test_scheduling(self, process, step, line):
-        factory = Factory(
-            FactoryProfile(
-                np.random.randint(1, 10, (LINES, PROCESSES), dtype=int),
-                np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-                np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-                np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-                np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-            ),
-            INITIAL,
-            np.ones(PROCESSES, dtype=int),
-            np.ones(PROCESSES, dtype=int),
-        )
+        factory = create_factory()
         assert self.confirm_empty(factory.state)
         initial_state = copy.deepcopy(factory.state)
 
