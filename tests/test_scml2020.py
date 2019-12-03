@@ -23,9 +23,9 @@ active_types = [_ for _ in types if _ != DoNothingAgent]
 
 def generate_world(
     agent_types,
-    n_processes=2,
-    n_steps=30,
-    n_agents_per_level=3,
+    n_processes=3,
+    n_steps=20,
+    n_agents_per_level=2,
     n_lines=10,
     initial_balance=10_000,
     random_supply_demand=False,
@@ -35,10 +35,7 @@ def generate_world(
     profiles = []
     catalog = 20 * np.arange(1, n_processes + 2, dtype=int)
     agent_params = []
-    agent_types_final = [
-        random.sample(agent_types, 1)[0]
-        for _ in range(n_agents_per_level * n_processes)
-    ]
+    agent_types_final = random.choices(agent_types, k=n_agents_per_level * n_processes)
 
     for process in range(n_processes):
         supply = np.zeros((n_steps, n_processes + 1), dtype=int)
@@ -111,10 +108,20 @@ def generate_world(
 
 
 @mark.parametrize("agent_type", types)
-@given(buy_missing=st.booleans())
+@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)
-def test_can_run_with_a_single_agent_type(agent_type, buy_missing):
-    world = generate_world([agent_type], buy_missing_products=buy_missing, name=unique_name("scml2020/single"))
+def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
+    world = generate_world(
+        [agent_type],
+        buy_missing_products=buy_missing,
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020/single/{agent_type.__name__}"
+            f"{'Buy' if buy_missing else 'Fine'}{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+    )
     world.run()
     save_stats(world, world.log_folder)
 
@@ -127,11 +134,13 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing):
         unique=True,
     ),
     buy_missing=st.booleans(),
+    n_processes=st.integers(2, 4)
 )
 @settings(deadline=300_000, max_examples=20)
-def test_can_run_with_a_multiple_agent_types(agent_types, buy_missing):
+def test_can_run_with_a_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(
         agent_types, compact=True, buy_missing_products=buy_missing, name=unique_name("scml2020/multi")
+        , n_processes=n_processes
     )
     world.run()
     save_stats(world, world.log_folder)

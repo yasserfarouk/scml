@@ -283,23 +283,84 @@ class Factory:
         return self._balance
 
     def schedule_production(
-        self, process: int, step: Union[int, Tuple[int, int]] = ANY_STEP, line: int = ANY_LINE, override: bool = True, method: str = "latest"
-    ) -> Tuple[int, int]:
+        self,
+        process: int,
+        repeats: int,
+        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        line: int = ANY_LINE, override: bool = True,
+        method: str = "latest",
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Orders production of the given process on the given step and line.
 
         Args:
 
             process: The process index
+            repeats: How many times to repeat the process
             step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
                   schedule production at any step in the present or future.
             line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
             override: Whether to override any existing commands at that line at that time.
-            method: When to schedule the command if step was set to a range. Options are latest, earliest
+            method: When to schedule the command if step was set to a range. Options are latest, earliest, all
 
         Returns:
 
-            Tuple[int, int] giving the step, line at which scheduling ocucured. Both will be -1 on failure
+            Tuple[np.ndarray, np.ndarray] The steps and lines at which production is scheduled.
+
+        Remarks:
+
+            - You cannot order production in the past or in the current step
+            - Ordering production, will automatically update inventory and balance for all simulation steps assuming
+              that this production will be carried out. At the indicated `step` if production was not possible (due
+              to insufficient funds or insufficient inventory of the input product), the predictions for the future
+              will be corrected.
+
+        """
+        steps, lines = self.available_for_production(repeats, step, line, override, method)
+        self.order_production(process, steps, lines)
+        return steps, lines
+
+    def order_production(self, process: int, steps: np.ndarray, lines: np.ndarray) -> None:
+        """
+        Orders production of the given process
+
+        Args:
+            process: The process to run
+            steps: The time steps to run the process at as an np.ndarray
+            lines: The corresponding lines to run the process at
+
+        Remarks:
+
+            - len(steps) must equal len(lines)
+            - No checks are done in this function. It is expected to be used after calling `available_for_production`
+        """
+        if self.is_bankrupt:
+            return
+        if len(steps) > 0:
+            self.commands[steps, lines] = process
+
+    def available_for_production(
+        self,
+        repeats: int,
+        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        line: int = ANY_LINE, override: bool = True,
+        method: str = "latest",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Finds available times and lines for scheduling production.
+
+        Args:
+
+            repeats: How many times to repeat the process
+            step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
+                  schedule production at any step in the present or future.
+            line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
+            override: Whether to override any existing commands at that line at that time.
+            method: When to schedule the command if step was set to a range. Options are latest, earliest, all
+
+        Returns:
+
+            Tuple[np.ndarray, np.ndarray] The steps and lines at which production is scheduled.
 
         Remarks:
 
@@ -311,7 +372,7 @@ class Factory:
 
         """
         if self.is_bankrupt:
-            return -1, -1
+            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         current_step = self.world.current_step
         if not isinstance(step, tuple):
             if step < 0:
@@ -322,24 +383,31 @@ class Factory:
             step = (step[0], step[1] + 1)
         step = (max(current_step, step[0]), step[1])
         if step[1] <= step[0]:
-            return -1, -1
-        if line < 0:
-            steps, lines = np.nonzero(self.commands[step[0] : step[1], :] < 0)
+            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
+        if override:
+            if line < 0:
+                steps, lines = np.nonzero(self.commands[step[0] : step[1], :] >= NO_COMMAND)
+            else:
+                steps = np.nonzero(self.commands[step[0]: step[1], line] >= NO_COMMAND)[0]
+                lines = [line]
         else:
-            steps = np.nonzero(self.commands[step[0]: step[1], line] < 0)[0]
-            lines = [line]
+            if line < 0:
+                steps, lines = np.nonzero(self.commands[step[0] : step[1], :] == NO_COMMAND)
+            else:
+                steps = np.nonzero(self.commands[step[0]: step[1], line] == NO_COMMAND)[0]
+                lines = [line]
         steps += step[0]
-        if len(steps) < 0 and not override:
-            return -1, -1
+        possible = min(repeats, len(steps))
+        if possible < 1:
+            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         if method.startswith("l"):
-            step, line = steps[-1], lines[-1]
+            steps, lines = steps[-possible+1:], lines[-possible+1:]
+        elif method == "all":
+            pass
         else:
-            step, line = steps[0], lines[0]
+            steps, lines = steps[:possible], lines[: possible]
 
-        if self.commands[step, line] >= 0 and not override:
-            return -1, -1
-        self.commands[step, line] = process
-        return step, line
+        return steps, lines
 
     def cancel_production(self, step: int, line: int) -> bool:
         """
@@ -739,14 +807,20 @@ class AWI(AgentWorldInterface):
         )
 
     def schedule_production(
-        self, process: int, step: Union[int, Tuple[int, int]] = ANY_STEP, line: int = ANY_LINE, override: bool = True, method: str = "latest"
-    ) -> Tuple[int, int]:
+        self,
+        process: int,
+        repeats: int,
+        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        line: int = ANY_LINE, override: bool = True,
+        method: str = "latest"
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Orders the factory to run the given process at the given line at the given step
 
         Args:
 
             process: The process to run
+            repeats: How many times to repeat the process
             step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
                   schedule production at any step in the present or future.
             line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
@@ -754,7 +828,7 @@ class AWI(AgentWorldInterface):
             method: When to schedule the command if step was set to a range. Options are latest, earliest
 
         Returns:
-            Tuple[int, int] giving the step, line at which scheduling ocucured. Both will be -1 on failure
+            Tuple[int, int] giving the steps and lines at which production is scheduled.
 
         Remarks:
 
@@ -763,8 +837,58 @@ class AWI(AgentWorldInterface):
               given
         """
         return self._world.a2f[self.agent.id].schedule_production(
-            process, step, line, override, method
+            process, repeats, step, line, override, method
         )
+
+    def order_production(self, process: int, steps: np.ndarray, lines: np.ndarray) -> None:
+        """
+        Orders production of the given process
+
+        Args:
+            process: The process to run
+            steps: The time steps to run the process at as an np.ndarray
+            lines: The corresponding lines to run the process at
+
+        Remarks:
+
+            - len(steps) must equal len(lines)
+            - No checks are done in this function. It is expected to be used after calling `available_for_production`
+        """
+        return self._world.a2f[self.agent.id].order_production(process, steps, lines)
+
+    def available_for_production(
+        self,
+        repeats: int,
+        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        line: int = ANY_LINE, override: bool = True,
+        method: str = "latest",
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Finds available times and lines for scheduling production.
+
+        Args:
+
+            repeats: How many times to repeat the process
+            step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
+                  schedule production at any step in the present or future.
+            line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
+            override: Whether to override any existing commands at that line at that time.
+            method: When to schedule the command if step was set to a range. Options are latest, earliest, all
+
+        Returns:
+
+            Tuple[np.ndarray, np.ndarray] The steps and lines at which production is scheduled.
+
+        Remarks:
+
+            - You cannot order production in the past or in the current step
+            - Ordering production, will automatically update inventory and balance for all simulation steps assuming
+              that this production will be carried out. At the indicated `step` if production was not possible (due
+              to insufficient funds or insufficient inventory of the input product), the predictions for the future
+              will be corrected.
+
+        """
+        return self._world.a2f[self.agent.id].available_for_production(repeats, step, line, override, method)
 
     def cancel_production(self, step: int, line: int) -> bool:
         """
@@ -1108,7 +1232,7 @@ class World(TimeInAgreementMixin, World):
         neg_n_steps=20,
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
-        negotiation_speed=101,
+        negotiation_speed=21,
         # simulation parameters
         signing_delay=1,
         name: str = None,

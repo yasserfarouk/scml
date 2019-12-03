@@ -55,7 +55,7 @@ class IndependentNegotiationsAgent(DoNothingAgent):
                 product=output_product,
                 quantity=max(1, quantity[i] * n_outputs // n_inputs),
                 unit_price=(cost + price * n_inputs) // n_outputs,
-                time=step + earliest + 1, to_buy=False
+                time=step + final + 1, to_buy=False
             )
 
         # if I have guaranteed outputs, negotiate to buy corresponding inputs
@@ -152,6 +152,17 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         step = contract.agreement["time"]
         if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
             return None
+        if contract.annotation["seller"] == self.id:
+            q = contract.agreement["quantity"]
+            steps, lines = self.awi.available_for_production(
+                q,
+                (self.awi.current_step+1, step),
+                -1,
+                override=False,
+                method="all",
+            )
+            if len(steps) < q:
+                return None
         return self.id
 
     def on_contract_signed(self, contract: Contract) -> None:
@@ -166,13 +177,14 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             output_product = contract.annotation["product"]
             input_product = output_product - 1
             if input_product >= 0:
-                scheduled_at, _ = self.awi.schedule_production(
-                    process=input_product,
+                steps, _ = self.awi.schedule_production(
+                    process=input_product, repeats=contract.agreement["quantity"],
                     step=(earliest_production, step - 1),
                     line=-1
                 )
-                if scheduled_at < 0:
+                if len(steps) < 1:
                     return
+                scheduled_at = steps.min()
                 n_inputs = self.awi.inputs[input_product]
                 cost = self.costs[input_product]
                 n_outputs = self.awi.outputs[input_product]

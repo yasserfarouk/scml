@@ -228,7 +228,10 @@ class SatisfiserAgent(DoNothingAgent):
                 self.outputs_available[t] + q)
             self.outputs_available[t] += q
             if input_product >= 0 and t > 0:
-                self.awi.schedule_production(process=input_product, step=(self.awi.current_step+1, t - 1), line=-1)
+                steps, lines = self.awi.available_for_production(repeats=q, step=(self.awi.current_step+1, t - 1))
+                if len(steps) < q:
+                    return
+                self.awi.order_production(input_product, steps, lines)
                 n_needs = self.production_inputs
                 n_outputs = self.production_outputs
                 self.inputs_needed[t - 1] += max(1, math.ceil(q * n_needs // n_outputs))
@@ -261,12 +264,22 @@ class SatisfiserAgent(DoNothingAgent):
         """Only signs contracts that are needed"""
         s = self.awi.current_step
         q, u, t = contract.agreement["quantity"], contract.agreement["unit_price"], contract.agreement["time"]
+        # if contract.annotation["seller"] == self.id:
+        #
+        #     if self.outputs_available[s:t].sum() + q <= self.outputs_needed[s: t].sum():
+        #         return self.id
+        # else:
+        #     if self.inputs_available[s:t].sum() + q <= self.inputs_needed[s: t].sum():
+        #         return self.id
         if contract.annotation["seller"] == self.id:
-            assert contract.annotation["product"] == self.output_product
-            if self.outputs_available[s:t].sum() + q <= self.outputs_needed[s: t].sum():
-                return self.id
-        else:
-            assert contract.annotation["product"] == self.input_product
-            if self.inputs_available[s:t].sum() + q <= self.inputs_needed[s: t].sum():
-                return self.id
+            q = contract.agreement["quantity"]
+            steps, lines = self.awi.available_for_production(
+                q,
+                (self.awi.current_step+1, s),
+                -1,
+                override=False,
+                method="all",
+            )
+            if len(steps) < q:
+                return None
         return None
