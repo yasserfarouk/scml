@@ -50,7 +50,7 @@ def create_profile():
 
 
 def create_world():
-    return mock.Mock(current_step=0, n_steps=STEPS)
+    return mock.Mock(current_step=0, n_steps=STEPS, bankruptcy_limit=-100)
 
 
 @pytest.fixture
