@@ -773,10 +773,6 @@ class Factory:
             money = self._balance
         self._balance -= money
         self.balance_change -= money
-        assert self._balance >= self.min_balance, (
-            f"Factory {self.agent_id}'s balance is {self._balance} "
-            f"(min is {self.min_balance})"
-        )
         return money
 
     def bankrupt(self, required: int) -> int:
@@ -877,7 +873,7 @@ class AWI(AgentWorldInterface):
             self.request_negotiation(
                 is_buy, product, quantity, unit_price, time, partner, negotiator, extra
             )
-            if not self._world.is_bankrupt[partner]
+            if not self._world.a2f[partner].is_bankrupt
             else False
             for partner, negotiator in zip(partners, negotiators)
         ]
@@ -933,7 +929,7 @@ class AWI(AgentWorldInterface):
                 f"its ({'inputs' if is_buy else 'outputs'})"
             )
             return False
-        if self._world.is_bankrupt[partner]:
+        if self._world.a2f[partner].is_bankrupt:
             return False
 
         def values(x: Union[int, Tuple[int, int]]):
@@ -1584,9 +1580,9 @@ class World(TimeInAgreementMixin, World):
         self.__n_nullified = 0
         self.__n_bankrupt = 0
         self.penalties = 0
-        self.is_bankrupt: Dict[str, bool] = dict(
-            zip(self.agents.keys(), itertools.repeat(False))
-        )
+        # self.is_bankrupt: Dict[str, bool] = dict(
+        #     zip(self.agents.keys(), itertools.repeat(False))
+        # )
         self.compensation_balance = 0
         self.compensation_records: Dict[str, List[CompensationRecord]] = defaultdict(
             list
@@ -1732,14 +1728,14 @@ class World(TimeInAgreementMixin, World):
         Returns:
 
         """
-        bankrupt = self.is_bankrupt[agent.id]
+        bankrupt = factory.is_bankrupt
         inventory = (
-            int(np.sum(self.catalog_prices * factory._inventory)) if not bankrupt else 0
+            int(np.sum(self.catalog_prices * factory.current_inventory)) if not bankrupt else 0
         )
         report = FinancialReport(
             agent_id=agent.id,
             step=self.current_step,
-            cash=factory._balance,
+            cash=factory.current_balance,
             assets=inventory,
             breach_prob=self.breach_prob[agent.id],
             breach_level=self.breach_level[agent.id],
@@ -1762,8 +1758,8 @@ class World(TimeInAgreementMixin, World):
         # -----------------------------------
         if self.interest_rate > 0.0:
             for agent, factory, _ in self.afp:
-                if factory._balance < 0 and not self.is_bankrupt[agent.id]:
-                    to_pay = -int(math.ceil(self.interest_rate * factory._balance))
+                if factory.current_balance < 0 and not factory.is_bankrupt:
+                    to_pay = -int(math.ceil(self.interest_rate * factory.current_balance))
                     factory.pay(to_pay)
 
         # publish financial reports
@@ -1778,7 +1774,7 @@ class World(TimeInAgreementMixin, World):
         # -------------------------------------------
         if self.external_force_max:
             for a, f, p in self.afp:
-                if self.is_bankrupt[a.id]:
+                if f.is_bankrupt:
                     continue
                 f.step(p.external_sales[s, :], p.external_supplies[s, :])
         else:
@@ -1786,7 +1782,7 @@ class World(TimeInAgreementMixin, World):
                 self.afp[_] for _ in np.random.permutation(np.arange(len(self.afp)))
             ]
             for a, f, p in afp_randomized:
-                if self.is_bankrupt[a.id]:
+                if f.is_bankrupt:
                     continue
                 supply = a.confirm_external_supplies(
                     p.external_supplies[s].copy(), p.external_supply_prices[s].copy()
@@ -1875,7 +1871,7 @@ class World(TimeInAgreementMixin, World):
                 np.sum(f.current_inventory * self.catalog_prices)
             )
             self._stats[f"bankrupt_{a.name}"].append(f.is_bankrupt)
-            if not self.is_bankrupt[a.id]:
+            if not f.is_bankrupt:
                 market_size += f.current_balance
         self._stats["productivity"].append(float(np.mean(prod)))
         self._stats["market_size"].append(market_size)
@@ -2002,7 +1998,6 @@ class World(TimeInAgreementMixin, World):
         """Records agent bankruptcy"""
 
         agent_id = factory.agent_id
-        self.is_bankrupt[agent_id] = True
 
         # announce bankruptcy
         reports_agent = self.bulletin_board.data["reports_agent"]
@@ -2014,7 +2009,7 @@ class World(TimeInAgreementMixin, World):
 
     def on_contract_concluded(self, contract: Contract, to_be_signed_at: int) -> None:
         if (
-            any(self.is_bankrupt[_] for _ in contract.partners)
+            any(self.a2f[_].is_bankrupt for _ in contract.partners)
             or contract.agreement["time"] >= self.n_steps
         ):
             return
@@ -2022,7 +2017,7 @@ class World(TimeInAgreementMixin, World):
 
     def on_contract_signed(self, contract: Contract):
         if (
-            any(self.is_bankrupt[_] for _ in contract.partners)
+            any(self.a2f[_].is_bankrupt for _ in contract.partners)
             or contract.agreement["time"] >= self.n_steps
         ):
             return
@@ -2063,6 +2058,8 @@ class World(TimeInAgreementMixin, World):
         self.logdebug(
             f"{self.agents[agent_id].name} breached {level} of {contract_total}"
         )
+        if factory.is_bankrupt:
+            return 0
         if level <= 0:
             return 0
         penalty = int(math.ceil(level * contract_total))
@@ -2077,7 +2074,7 @@ class World(TimeInAgreementMixin, World):
         self.logdebug(f"Executing {str(contract)}")
         # get contract info
         breaches = set()
-        if any(self.is_bankrupt[_] for _ in contract.partners):
+        if self.compensate_immediately and any(self.a2f[a].is_bankrupt for a in contract.partners):
             return breaches
         product = contract.annotation["product"]
         buyer_id, seller_id = (

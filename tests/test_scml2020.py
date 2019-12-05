@@ -17,6 +17,9 @@ import random
 random.seed(0)
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 
+
+COMPACT = True
+NOLOGS = True
 # agent types to be tested
 types = [DoNothingAgent, RandomAgent, BuyCheapSellExpensiveAgent, DecentralizingAgent]
 active_types = [_ for _ in types if _ != DoNothingAgent]
@@ -26,8 +29,8 @@ def generate_world(
     agent_types,
     n_processes=2,
     n_steps=10,
-    n_agents_per_level=1,
-    n_lines=5,
+    n_agents_per_level=2,
+    n_lines=10,
     initial_balance=10_000,
     random_supply_demand=False,
     buy_missing_products=True,
@@ -121,11 +124,13 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
         buy_missing_products=buy_missing,
         n_processes=n_processes,
         name=unique_name(
-            f"scml2020/single/{agent_type.__name__}"
+            f"scml2020tests/single/{agent_type.__name__}"
             f"{'Buy' if buy_missing else 'Fine'}{n_processes}",
             add_time=True,
             rand_digits=4,
         ),
+        compact=COMPACT,
+        no_logs=NOLOGS,
     )
     world.run()
     save_stats(world, world.log_folder)
@@ -145,10 +150,17 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
 def test_can_run_with_a_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(
         agent_types,
-        compact=True, no_logs=True,
         buy_missing_products=buy_missing,
-        name=unique_name("scml2020/multi"),
+        name=unique_name(
+            f"scml2020tests/multi/{'-'.join(_.__name__[:3] for _ in agent_types)}/"
+            f"{'Buy' if buy_missing else 'Fine'}_p{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
         n_processes=n_processes,
+        initial_balance=10_000,
+        compact=COMPACT,
+        no_logs=NOLOGS,
     )
     world.run()
     save_stats(world, world.log_folder)
@@ -165,20 +177,24 @@ def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balan
         buy_missing_products=buy_missing,
         n_processes=n_processes,
         name=unique_name(
-            f"scml2020/single/doing_nothing/"
+            f"scml2020tests/single/doing_nothing/"
             f"{'Buy' if buy_missing else 'Fine'}_p{n_processes}_b{initial_balance}",
             add_time=True,
             rand_digits=4,
         ),
         initial_balance=initial_balance,
         bankruptcy_limit=initial_balance,
-        compact=True, no_logs=True,
+        compact=COMPACT,
+        no_logs=NOLOGS,
     )
     world.run()
     assert len(world.contracts) == 0
     for a, f, p in world.afp:
-        if a.awi.my_input_product == 0 or a.awi.my_input_product == a.awi.n_processes - 1:
-            assert f.current_balance < initial_balance, (
+        if (
+            a.awi.my_input_product == 0
+            or a.awi.my_input_product == a.awi.n_processes - 1
+        ):
+            assert f.current_balance <= initial_balance, (
                 f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes})'s balance "
                 f"should go down"
             )
@@ -189,17 +205,37 @@ def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balan
             )
 
 
-@given(
-    buy_missing=st.booleans(),
-    n_processes=st.integers(2, 4),
-)
+@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
+@settings(deadline=300_000, max_examples=20)
+def test_something_happens_with_random_agents(buy_missing, n_processes):
+    world = generate_world(
+        [RandomAgent],
+        buy_missing_products=buy_missing,
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/do_something/"
+            f"{'Buy' if buy_missing else 'Fine'}_p{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+        initial_balance=10_000,
+        bankruptcy_limit=10_000,
+        compact=COMPACT,
+        no_logs=NOLOGS,
+        n_steps=15,
+    )
+    world.run()
+    assert len(world.signed_contracts) + len(world.cancelled_contracts) != 0
+
+
+@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 def test_agents_go_bankrupt(buy_missing, n_processes):
     world = generate_world(
         [DoNothingAgent],
         buy_missing_products=buy_missing,
         n_processes=n_processes,
         name=unique_name(
-            f"scml2020/single/bankrupt/"
+            f"scml2020tests/single/bankrupt/"
             f"{'Buy' if buy_missing else 'Fine'}_p{n_processes}",
             add_time=True,
             rand_digits=4,
@@ -207,23 +243,31 @@ def test_agents_go_bankrupt(buy_missing, n_processes):
         initial_balance=0,
         bankruptcy_limit=0,
         n_steps=100,
-        compact=True, no_logs=True,
+        compact=COMPACT,
+        no_logs=NOLOGS,
     )
     world.run()
-    assert len(world.contracts) == 0
+    assert len(world.signed_contracts) + len(world.cancelled_contracts) == 0
     for a, f, p in world.afp:
-        if a.awi.my_input_product == 0 or a.awi.my_input_product == a.awi.n_processes - 1:
+        if (
+            a.awi.my_input_product == 0
+            or a.awi.my_input_product == a.awi.n_processes - 1
+        ):
             assert f.current_balance <= 0, (
                 f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes})'s balance "
                 f"should go down"
             )
-            assert f.is_bankrupt, f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes}) should " \
-                                  f"be bankrupt (balance = {f.current_balance}, inventory={f.current_inventory})"
+            assert f.is_bankrupt, (
+                f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes}) should "
+                f"be bankrupt (balance = {f.current_balance}, inventory={f.current_inventory})"
+            )
         else:
             assert f.current_balance == 0, (
                 f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes})'s balance "
                 f"should not change"
             )
-            assert not f.is_bankrupt, f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes}) should " \
-                                      f"NOT be bankrupt (balance = {f.current_balance}, " \
-                                      f"inventory={f.current_inventory})"
+            assert not f.is_bankrupt, (
+                f"{a.name} (process {a.awi.my_input_product} of {a.awi.n_processes}) should "
+                f"NOT be bankrupt (balance = {f.current_balance}, "
+                f"inventory={f.current_inventory})"
+            )
