@@ -1,14 +1,25 @@
-"""Implements a randomly behaving agent"""
-import copy
+"""
+Implements the base class for agents that negotiate independently with different partners.
+
+These agents do not take production capacity, availability of materials or any other aspects of the simulation into
+account. They are to serve only as baselines.
+
+Assumptions
+-----------
+
+The main assumptions of the agents based on `IndependentNegotiationsAgent` are:
+
+1. All production processes take one input time and generate one output type.
+
+"""
+
 from abc import abstractmethod
 from typing import List, Optional, Dict, Any, Union
 
 import numpy as np
 from negmas import (
     Contract,
-    Breach,
     AgentMechanismInterface,
-    MechanismState,
     Issue,
     Negotiator,
     SAONegotiator,
@@ -22,7 +33,29 @@ __all__ = ["IndependentNegotiationsAgent"]
 
 
 class IndependentNegotiationsAgent(DoNothingAgent):
-    """An agent that negotiates independently with everyone"""
+    """
+    Implements the base class for agents that negotiate independently with different partners.
+
+    These agents do not take production capacity, availability of materials or any other aspects of the simulation into
+    account. They are to serve only as baselines.
+
+    Args:
+
+        negotiator_type: The type of the negotiator to use. The default is `AspirationNegotiator`
+        negotiator_params: key-value pairs to pass to the constructor of negotiators
+        horizon: The number of production step to handle together using a single set of negotiations. See `step` for
+                 details
+
+
+    Remarks:
+
+        - `IndependentNegotiationsAgent` agents assume that each production process has one input type with the same
+           index as itself and one output type with one added to the index (i.e. process $i$ takes product $i$ as input
+           and creates product $i+1$ as output.
+        - It does not assume that all lines have the same production cost (it uses the average cost though).
+        - It does not assume that the agent has a single production process.
+
+    """
 
     def __init__(
         self,
@@ -41,21 +74,30 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         self.horizon = horizon
 
     def init(self):
+        """Initializes the agent by finding the average production cost."""
         self.costs = np.ceil(
             np.sum(self.awi.profile.costs, axis=0) / self.awi.profile.n_lines
         ).astype(int)
 
     def step(self):
+        """Every `horizon` steps, create new negotiations based on external supplies and sales."""
+
+        # avoid division by zero error in numpy
         np.seterr(divide="ignore")
+
+        # only run this process once every `horizon` steps
         if self.awi.current_step % self.horizon != 0:
             return
         input_products = self.awi.my_input_products
         output_products = self.awi.my_output_products
-        earliest = self.awi.current_step + 2
+        earliest = self.awi.current_step + 1
         final = min(earliest + self.horizon - 1, self.awi.n_steps)
+
         # if I have external inputs, negotiate to sell them (after production)
         supplies = self.awi.profile.external_supplies[earliest:final, input_products]
         quantity = np.sum(supplies, axis=0)
+
+        # find the supply prices
         prices = (
             np.sum(
                 self.awi.profile.external_supply_prices[earliest:final, input_products]
@@ -63,14 +105,16 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             )
             // quantity
         )
+
+        # for every step and product, start negotiations to sell the output of this external supply
         nonzero = np.transpose(np.nonzero(supplies))
         for step, i in nonzero:
-            input_product = input_products[i]
+            process = input_products[i]
             price = prices[i]
-            output_product = input_product + 1
-            n_inputs = self.awi.inputs[input_product]
-            cost = self.costs[input_product]
-            n_outputs = self.awi.outputs[input_product]
+            output_product = process + 1
+            n_inputs = self.awi.inputs[process]
+            cost = self.costs[process]
+            n_outputs = self.awi.outputs[process]
             self.start_negotiations(
                 product=output_product,
                 quantity=max(1, quantity[i] * n_outputs // n_inputs),
@@ -79,7 +123,7 @@ class IndependentNegotiationsAgent(DoNothingAgent):
                 to_buy=False,
             )
 
-        # if I have guaranteed outputs, negotiate to buy corresponding inputs
+        # if I have external outputs, negotiate to buy corresponding inputs
         sales = self.awi.profile.external_sales[earliest:final, output_products]
         quantity = np.sum(sales, axis=0)
         prices = (
@@ -92,13 +136,13 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         nonzero = np.transpose(np.nonzero(sales))
         for step, o in nonzero:
             output_product = output_products[o]
-            input_product = output_product - 1
+            process = output_product - 1
             price = prices[o]
-            n_inputs = self.awi.inputs[input_product]
-            cost = self.costs[input_product]
-            n_outputs = self.awi.outputs[input_product]
+            n_inputs = self.awi.inputs[process]
+            cost = self.costs[process]
+            n_outputs = self.awi.outputs[process]
             self.start_negotiations(
-                product=input_product,
+                product=process,
                 quantity=max(1, quantity[o] * n_inputs // n_outputs),
                 unit_price=(n_outputs * price - cost) // n_inputs,
                 time=step + earliest - 1,

@@ -84,7 +84,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'scml = scml.cli:main',
+            'scml = scml.cli:cli',
         ]
     },
 )

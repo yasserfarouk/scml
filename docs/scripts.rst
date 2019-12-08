@@ -9,12 +9,13 @@ The set of supported commands are:
 ===============       ===================================================================
  Command                                  Meaning
 ===============       ===================================================================
-tournament            Runs a tournament
+tournament            Manages a tournament (create, run, evaluate)
 run2019               Runs a 2019 tournament
-version               Prints NegMAS version
+run2020               Runs a 2020 tournament
+version               Prints SCML version (and NegMAS version)
 ===============       ===================================================================
 
-Tournament Command (negmas tournament)
+Tournament Command (scml tournament)
 --------------------------------------
 
 The Tournament command (`tournament`) allows you to run a tournament between different agents in some world and
@@ -67,7 +68,7 @@ These are the *optional* arguments of this tool:
   --max-runs INTEGER                        Maximum total number of runs. Zero or
                                             negative numbers mean no limit  [default: -1]
   --agents INTEGER                          Number of agents per competitor (not used
-                                            for anac2019std in which this is preset to
+                                            for *std in which this is preset to
                                             1).  [default: 3]
   --factories INTEGER                       Minimum numbers of factories to have per
                                             level.  [default: 5]
@@ -101,7 +102,9 @@ These are the *optional* arguments of this tool:
                                             separated list of paths on linux/mac and a ;
                                             separated list in windows
   --ttype TEXT                              The tournament type. Supported types are scml2019std
-                                            , scml2019collusion, scml2019sabotage
+                                            , scml2019collusion, scml2019sabotage, scml2020std
+                                            , scml2020collusion.  You can also use anac* instead
+                                            of scml*. [default: scml2020collusion]
   --cw INTEGER                              Number of competitors to run at every world
                                             simulation. It must either be left at
                                             default or be a number > 1 and < the number
@@ -174,7 +177,7 @@ ttest.csv                   CSV          Results of a factorial TTEST comparing 
 =========================   ========     =================================================================
 
 Other than these files, a folder with the same number as the corresponding config file in the configs folder, keeps full
-statistics/log of every world *but only if --debug is specified* (see the `World Runner` section for the contents of
+statistics/log of every world *but only if --debug is specified* (see the `SCML2020World Runner` section for the contents of
 this folder.
 
 Combining tournament results
@@ -215,4 +218,120 @@ To report the winners of a tournament, you can use tournament `winners` . The pa
   --config FILE                 Read configuration from FILE.
 ============================== =======================================================
 
+Running an SCML2020 world (scml run2020)
+----------------------------------------
 
+Runs a single world simulation of SCML2020.
+
+================================================ =======================================================
+  Parameter                                         Meaning
+================================================ =======================================================
+  --steps INTEGER                                 Number of steps.  [default: 10]
+  --processes INTEGER                             Number of processes. Should never be less
+                                                  than 2  [default: 3]
+  --neg-speedup INTEGER                           Negotiation Speedup.  [default: 21]
+  --agents INTEGER                                Number of agents (miners/negmas.consumers)
+                                                  per production level  [default: 5]
+  --horizon INTEGER                               Exogenous contracts horizon.  [default: 15]
+  --time INTEGER                                  Total time limit.  [default: 7200]
+  --neg-time INTEGER                              Time limit per single negotiation  [default: 120]
+  --neg-steps INTEGER                             Number of rounds per single negotiation [default: 20]
+  --lines INTEGER                                 The number of lines per factory  [default: 10]
+  --competitors TEXT                              A semicolon (;) separated list of agent
+                                                  types to use for the competition.  [default: RandomAgent]
+  --log DIRECTORY                                 Default location to save logs (A folder will
+                                                  be created under it)  [default: ~/negmas/logs]
+  --log-ufuns / --no-ufun-logs                    Log ufuns into their own CSV file. Only
+                                                  effective if --debug is given  [default: False]
+  --log-negs / --no-neg-logs                      Log all negotiations. Only effective if
+                                                  --debug is given  [default: False]
+  --compact / --debug                             If True, effort is exerted to reduce the
+                                                  memory footprint whichincludes reducing logs
+                                                  dramatically.  [default: False]
+  --raise-exceptions / --ignore-exceptions        Whether to ignore agent exceptions [default: True]
+  --balance INTEGER                               Initial balance of all factories. A negative
+                                                  number will make the balance automatically
+                                                  calculated by the system. It will go up with
+                                                  process level  [default: -1]
+  --path TEXT                                     A path to be added to PYTHONPATH in which
+                                                  all competitors are stored. You can path a :
+                                                  separated list of paths on linux/mac and a ;
+                                                  separated list in windows  [default: ]
+  --world-config FILE                             A file to load extra configuration
+                                                  parameters for world simulations from.
+  --config FILE                                   Read configuration from FILE.
+  --help                                          Show this message and exit.
+================================================ =======================================================
+
+
+Running an SCML2019 world (scml run2019)
+----------------------------------------
+
+Runs a single world simulation of SCML2019.
+
+================================================ =======================================================
+  Parameter                                         Meaning
+================================================ =======================================================
+  --steps INTEGER                                 Number of steps.  [default: 10]
+  --levels INTEGER                                Number of intermediate production levels
+                                                  (processes). -1 means a single product and
+                                                  no factories.  [default: 3]
+  --neg-speedup INTEGER                           Negotiation Speedup.  [default: 21]
+  --agents INTEGER                                Number of agents (miners/negmas.consumers)
+                                                  per production level  [default: 5]
+  --horizon INTEGER                               Exogenous contracts horizon.  [default: 15]
+  --time INTEGER                                  Total time limit.  [default: 7200]
+  --neg-time INTEGER                              Time limit per single negotiation  [default: 120]
+  --neg-steps INTEGER                             Number of rounds per single negotiation [default: 20]
+  --lines INTEGER                                 The number of lines per factory  [default: 10]
+  --competitors TEXT                              A semicolon (;) separated list of agent
+                                                  types to use for the competition.
+                                                  [default: GreedyFactoryManager]
+  --log DIRECTORY                                 Default location to save logs (A folder will
+                                                  be created under it)  [default: ~/negmas/logs]
+  --log-ufuns / --no-ufun-logs                    Log ufuns into their own CSV file. Only
+                                                  effective if --debug is given  [default: False]
+  --log-negs / --no-neg-logs                      Log all negotiations. Only effective if
+                                                  --debug is given  [default: False]
+  --compact / --debug                             If True, effort is exerted to reduce the
+                                                  memory footprint whichincludes reducing logs
+                                                  dramatically.  [default: False]
+  --raise-exceptions / --ignore-exceptions        Whether to ignore agent exceptions [default: True]
+  --balance INTEGER                               Initial balance of all factories. A negative
+                                                  number will make the balance automatically
+                                                  calculated by the system. It will go up with
+                                                  process level  [default: -1]
+  --min-consumption INTEGER                       The minimum number of units consumed by each
+                                                  consumer at every time-step.  [default: 3]
+  --max-consumption INTEGER                       The maximum number of units consumed by each
+                                                  consumer at every time-step.  [default: 5]
+  --horizon INTEGER                               Consumption horizon.  [default: 15]
+  --transport INTEGER                             Transportation Delay.  [default: 0]
+  --sign INTEGER                                  The default delay between contract
+                                                  conclusion and signing  [default: 1]
+  --guaranteed TEXT                               Whether to only sign contracts that are
+                                                  guaranteed not to cause breaches  [default:
+                                                  False]
+  --retrials INTEGER                              The number of times an agent re-tries on
+                                                  failed negotiations  [default: 2]
+  --use-consumer / --no-consumer                  Use internal consumer object in factory
+                                                  managers  [default: True]
+  --max-insurance FLOAT                           Use insurance against partner in factory
+                                                  managers up to this premium. Pass zero for
+                                                  never buying insurance and a 'inf' (without
+                                                  quotes) for infinity.  [default: inf]
+  --riskiness FLOAT                               How risky is the default factory manager
+                                                  [default: 0.0]
+  --shared-profile / --multi-profile              If True, all lines in the same factory will
+                                                  have the same cost.  [default: True]
+  --reserved-value FLOAT                          The reserved value used by
+                                                  GreedyFactoryManager  [default: -inf]
+  --path TEXT                                     A path to be added to PYTHONPATH in which
+                                                  all competitors are stored. You can path a :
+                                                  separated list of paths on linux/mac and a ;
+                                                  separated list in windows  [default: ]
+  --world-config FILE                             A file to load extra configuration
+                                                  parameters for world simulations from.
+  --config FILE                                   Read configuration from FILE.
+  --help                                          Show this message and exit.
+================================================ =======================================================

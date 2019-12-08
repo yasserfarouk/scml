@@ -1087,7 +1087,7 @@ class FactoryState:
 
 @dataclass
 class Factory:
-    """Represents a factory within an SCML world. It is only accessed by the World so it need not be made public."""
+    """Represents a factory within an SCML world. It is only accessed by the SCML2020World so it need not be made public."""
 
     initial_storage: InitVar[Dict[int, int]]
     """Initial storage"""

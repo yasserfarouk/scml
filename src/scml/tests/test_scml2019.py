@@ -117,7 +117,7 @@ def test_world_auto_checkpoint(tmp_path, single_checkpoint, checkpoint_every, ex
     if 0 < checkpoint_every <= n_steps:
         if single_checkpoint:
             assert len(list(new_folder.glob("*"))) == 2, print(
-                f"World ran for: {world.current_step}"
+                f"SCML2020World ran for: {world.current_step}"
             )
         else:
             assert len(list(new_folder.glob("*"))) >= 2 * (

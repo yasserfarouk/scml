@@ -75,7 +75,7 @@ class FactoryManager(SCMLAgent, ABC):
 
     The agent can access the world simulation in one of two ways:
 
-    1. Attributes and methods available in the Agent-World-Interface (See `SCMLAWI` documentation for those).
+    1. Attributes and methods available in the Agent-SCML2020World-Interface (See `SCMLAWI` documentation for those).
     2. Attributes and methods in the `FactoryManager` object itself. All factory managers will have the following
        attributes and methods that simplify the interaction with the world simulation. Some of these attributes/methods
        are convenient ways to access functionality already available in the agent's internal `SCMLAWI`.

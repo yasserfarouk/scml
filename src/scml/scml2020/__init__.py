@@ -2,5 +2,6 @@
 
 from .world import *
 from .agents import *
-
-__all__ = agents.__all__ + world.__all__
+from . import utils
+from .utils import *
+__all__ = agents.__all__ + world.__all__ + ["utils"]

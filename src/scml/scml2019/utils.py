@@ -886,7 +886,7 @@ def anac2019_world(
 
     Args:
         n_agents_per_competitor: Number of instantiations of each competing type.
-        name: World name to use
+        name: SCML2020World name to use
         agent_names_reveal_type: If true, a snake_case version of the agent_type will prefix agent names
         randomize: If true, managers are assigned to factories randomly otherwise in the order
         they are giving (cycling).

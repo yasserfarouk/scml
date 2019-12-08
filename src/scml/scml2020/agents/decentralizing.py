@@ -39,7 +39,7 @@ QUANTITY = 1
 TIME = 2
 UNIT_PRICE = 3
 
-
+__all__ = ["DecentralizingAgent"]
 class StepController(SAOController, AspirationMixin, Notifier):
     """A controller for managing a set of negotiations about selling/buying the a product starting/ending at some
     specific time-step. It works in conjunction with the `DecentralizingAgent` .
@@ -145,7 +145,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
                     self.notify(
                         self.negotiators[k][0], Notification("end_negotiation", None)
                     )
-
+        self.kill_negotiator(negotiator_id, force=True)
         if all(self.completed.values()):
             # If we secured everything, just return control to the agent
             if self.secured >= self.target:
@@ -163,6 +163,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
                         break
                 else:
                     return
+                self.retries[partner] += 1
                 neg = self.create_negotiator()
                 self.completed[neg.id] = False
                 awi.request_negotiation(

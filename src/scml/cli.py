@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""The NegMAS universal command line tool"""
+"""The SCML universal command line tool"""
 import json
 import os
 import pathlib
@@ -22,6 +22,8 @@ from tabulate import tabulate
 
 import negmas
 from negmas import save_stats
+
+import scml
 from scml.scml2019 import *
 from scml.scml2019.utils import (
     anac2019_sabotage,
@@ -40,6 +42,12 @@ from negmas.tournaments import (
     evaluate_tournament,
     combine_tournaments,
     combine_tournament_stats,
+)
+
+from scml.scml2020.utils import (
+    anac2020_assigner,
+    anac2020_config_generator,
+    anac2020_world_generator,
 )
 
 try:
@@ -67,7 +75,7 @@ def print_world_progress(world) -> None:
     """Prints the progress of a world"""
     step = world.current_step + 1
     s = (
-        f"World# {n_completed:04}: {step:04}  of {world.n_steps:04} "
+        f"SCML2020World# {n_completed:04}: {step:04}  of {world.n_steps:04} "
         f"steps completed ({step / world.n_steps:0.2f}) "
     )
     if n_total > 0:
@@ -128,10 +136,23 @@ def tournament(ctx, ignore_warnings):
     "--ttype",
     "--tournament-type",
     "--tournament",
-    default="anac2019collusion",
-    type=click.Choice(["anac2019collusion", "anac2019std", "anac2019sabotage"]),
+    default="anac2020std",
+    type=click.Choice(
+        [
+            "scml2019collusion",
+            "scml2019std",
+            "scml2019sabotage",
+            "scml2020std",
+            "scml2020collusion",
+            "anac2019collusion",
+            "anac2019std",
+            "anac2019sabotage",
+            "anac2020std",
+            "anac2020collusion",
+        ]
+    ),
     help="The config to use. Default is ANAC 2019. Options supported are anac2019std, anac2019collusion, "
-    "anac2019sabotage",
+    "anac2019sabotage, anac2020scml, anac2020collusion. You can replace anac with scml",
 )
 @click.option(
     "--timeout",
@@ -167,8 +188,10 @@ def tournament(ctx, ignore_warnings):
 )
 @click.option(
     "--competitors",
-    default="DoNothingFactoryManager;GreedyFactoryManager",
-    help="A semicolon (;) separated list of agent types to use for the competition.",
+    default="default",
+    help="A semicolon (;) separated list of agent types to use for the competition. You"
+    " can also pass the special value default for the default builtin"
+    " agents",
 )
 @click.option(
     "--jcompetitors",
@@ -271,6 +294,16 @@ def create(
     path,
     cw,
 ):
+    if competitors == "default":
+        if "2020" in ttype:
+            competitors = "RandomAgent;BuyCheapSellExpensiveAgent;DoNothingAgent;DecentralizingAgent"
+        else:
+            competitors = "DefaultFactoryManager;DoNothingFactoryManager"
+    if jcompetitors is not None and len(jcompetitors) > 0 and "2020" in ttype:
+        raise ValueError("Java competitors are not supported in SCML2020")
+    if "2020" in ttype and "sabotage" in ttype.lower():
+        raise ValueError("There is no sabotage track in SCML2020")
+
     if len(path) > 0:
         sys.path.append(path)
     kwargs = {}
@@ -303,7 +336,11 @@ def create(
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
-            all_competitors[i] = "scml.scml2019.factory_managers." + cp
+            all_competitors[i] = (
+                "scml.scml2019.factory_managers."
+                if "2019" in ttype
+                else "scml.scml2020.agents."
+            ) + cp
     all_competitors_params = [dict() for _ in range(len(all_competitors))]
     if jcompetitors is not None and len(jcompetitors) > 0:
         jcompetitor_params = [{"java_class_name": _} for _ in jcompetitors.split(";")]
@@ -397,7 +434,14 @@ def create(
         non_competitors = non_competitors.split(";")
         for i, cp in enumerate(non_competitors):
             if "." not in cp:
-                non_competitors[i] = "scml.scml2019.factory_managers." + cp
+                non_competitors[i] = (
+                    "scml.scml2019.factory_managers."
+                    if "2019" in ttype
+                    else "scml.scml2020.agents."
+                ) + cp
+
+    if ttype.lower().startswith("scml"):
+        ttype = ttype.lower().replace("scml", "anac")
 
     if ttype.lower() == "anac2019std":
         if non_competitors is None:
@@ -435,6 +479,41 @@ def create(
             ignore_contract_execution_exceptions=not raise_exceptions,
             **kwargs,
         )
+    elif ttype.lower() == "anac2020std":
+        if non_competitors is None:
+            non_competitors = (scml.scml2020.utils.DefaultAgent,)
+            non_competitor_params = ({},)
+        print(f"Tournament will be run between {len(all_competitors)} agents: ")
+        pprint(all_competitors)
+        print("Non-competitors are: ")
+        pprint(non_competitors)
+        results = create_tournament(
+            competitors=all_competitors,
+            competitor_params=all_competitors_params,
+            non_competitors=non_competitors,
+            non_competitor_params=non_competitor_params,
+            n_competitors_per_world=cw,
+            n_configs=configs,
+            n_runs_per_world=runs,
+            max_worlds_per_config=worlds_per_config,
+            base_tournament_path=log,
+            total_timeout=timeout,
+            name=name,
+            verbose=verbosity > 0,
+            n_agents_per_competitor=1,
+            world_generator=anac2020_world_generator,
+            config_generator=anac2020_config_generator,
+            config_assigner=anac2020_assigner,
+            score_calculator=scml.scml2020.utils.balance_calculator2020,
+            min_factories_per_level=factories,
+            compact=compact,
+            n_steps=steps,
+            log_ufuns=log_ufuns,
+            log_negotiations=log_negs,
+            ignore_agent_exceptions=not raise_exceptions,
+            ignore_contract_execution_exceptions=not raise_exceptions,
+            **kwargs,
+        )
     elif ttype.lower() in ("anac2019collusion", "anac2019"):
         print(f"Tournament will be run between {len(all_competitors)} agents: ")
         pprint(all_competitors)
@@ -459,6 +538,38 @@ def create(
             config_generator=anac2019_config_generator,
             config_assigner=anac2019_assigner,
             score_calculator=balance_calculator,
+            min_factories_per_level=factories,
+            compact=compact,
+            n_steps=steps,
+            log_ufuns=log_ufuns,
+            log_negotiations=log_negs,
+            ignore_agent_exceptions=not raise_exceptions,
+            ignore_contract_execution_exceptions=not raise_exceptions,
+            **kwargs,
+        )
+    elif ttype.lower() in ("anac2020collusion", "anac2020"):
+        print(f"Tournament will be run between {len(all_competitors)} agents: ")
+        pprint(all_competitors)
+        print("Non-competitors are: ")
+        pprint(non_competitors)
+        results = create_tournament(
+            competitors=all_competitors,
+            competitor_params=all_competitors_params,
+            non_competitors=non_competitors,
+            non_competitor_params=non_competitor_params,
+            n_competitors_per_world=cw,
+            n_configs=configs,
+            n_runs_per_world=runs,
+            max_worlds_per_config=worlds_per_config,
+            base_tournament_path=log,
+            total_timeout=timeout,
+            name=name,
+            verbose=verbosity > 0,
+            n_agents_per_competitor=agents,
+            world_generator=anac2019_world_generator,
+            config_generator=anac2019_config_generator,
+            config_assigner=anac2019_assigner,
+            score_calculator=scml.scml2020.utils.balance_calculator2020,
             min_factories_per_level=factories,
             compact=compact,
             n_steps=steps,
@@ -1075,6 +1186,302 @@ def run2019(
             pass
         winners = [
             f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
+            for _ in world.winners
+        ]
+        print_and_log(
+            f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
+            f"{world.agreement_rate:0.0%}]"
+            f" (rounds/successful negotiation: {world.n_negotiation_rounds_successful:5.2f}, "
+            f"rounds/broken negotiation: {world.n_negotiation_rounds_failed:5.2f})"
+        )
+        print_and_log(
+            f"Cancelled: {world.cancellation_rate:0.0%}, Executed: {world.contract_execution_fraction:0.0%}"
+            f", Breached: {world.breach_rate:0.0%}, N. Executed: {n_executed}, Business size: "
+            f"{world.business_size}\n"
+            f"Winners: {winners}\n"
+            f"Running Time {humanize_time(elapsed)}"
+        )
+    else:
+        print_and_log("No contracts! :-(")
+        print_and_log(f"Running Time {humanize_time(elapsed)}")
+
+    if failed:
+        print(exception)
+        world.logdebug(exception)
+        print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
+
+
+@cli.command(help="Run an SCML2020 world simulation")
+@click.option("--steps", default=10, type=int, help="Number of steps.")
+@click.option(
+    "--processes",
+    default=3,
+    type=int,
+    help="Number of processes. Should never be less than 2",
+)
+@click.option("--neg-speedup", default=21, help="Negotiation Speedup.")
+@click.option(
+    "--agents",
+    default=5,
+    type=int,
+    help="Number of agents (miners/negmas.consumers) per production level",
+)
+@click.option("--horizon", default=15, type=int, help="Excogenous contracts horizon.")
+@click.option("--time", default=7200, type=int, help="Total time limit.")
+@click.option(
+    "--neg-time", default=120, type=int, help="Time limit per single negotiation"
+)
+@click.option(
+    "--neg-steps", default=20, type=int, help="Number of rounds per single negotiation"
+)
+@click.option("--lines", default=10, help="The number of lines per factory")
+@click.option(
+    "--competitors",
+    default="RandomAgent",
+    help="A semicolon (;) separated list of agent types to use for the competition.",
+)
+@click.option(
+    "--log",
+    type=click.Path(file_okay=False, dir_okay=True),
+    default="~/negmas/logs",
+    help="Default location to save logs (A folder will be created under it)",
+)
+@click.option(
+    "--log-ufuns/--no-ufun-logs",
+    default=False,
+    help="Log ufuns into their own CSV file. Only effective if --debug is given",
+)
+@click.option(
+    "--log-negs/--no-neg-logs",
+    default=False,
+    help="Log all negotiations. Only effective if --debug is given",
+)
+@click.option(
+    "--compact/--debug",
+    default=False,
+    help="If True, effort is exerted to reduce the memory footprint which"
+    "includes reducing logs dramatically.",
+)
+@click.option(
+    "--raise-exceptions/--ignore-exceptions",
+    default=True,
+    help="Whether to ignore agent exceptions",
+)
+@click.option(
+    "--balance",
+    default=-1,
+    type=int,
+    help="Initial balance of all factories. A negative number will make the balance"
+    " automatically calculated by the system. It will go up with process level",
+)
+@click.option(
+    "--path",
+    default="",
+    help="A path to be added to PYTHONPATH in which all competitors are stored. You can path a : separated list of "
+    "paths on linux/mac and a ; separated list in windows",
+)
+@click.option(
+    "--world-config",
+    type=click.Path(dir_okay=False, file_okay=True),
+    default=tuple(),
+    multiple=True,
+    help="A file to load extra configuration parameters for world simulations from.",
+)
+@click_config_file.configuration_option()
+def run2020(
+    steps,
+    processes,
+    neg_speedup,
+    agents,
+    horizon,
+    time,
+    neg_time,
+    neg_steps,
+    lines,
+    competitors,
+    log,
+    compact,
+    log_ufuns,
+    log_negs,
+    balance,
+    raise_exceptions,
+    path,
+    world_config,
+):
+    if balance < 0:
+        balance = None
+    kwargs = dict(
+        neg_step_time_limit=10,
+        breach_penalty=0.2,
+        interest_rate=0.08,
+        bankruptcy_limit=1.0,
+        start_negotiations_immediately=False,
+    )
+    if world_config is not None and len(world_config) > 0:
+        for wc in world_config:
+            kwargs.update(load(wc))
+    if len(path) > 0:
+        sys.path.append(path)
+
+    params = {
+        "steps": steps,
+        "n_processes": processes,
+        "neg_speedup": neg_speedup,
+        "agents": agents,
+        "horizon": horizon,
+        "time": time,
+        "neg_time": neg_time,
+        "neg_steps": neg_steps,
+        "lines": lines,
+    }
+    if compact:
+        log_ufuns = False
+        log_negs = False
+    neg_speedup = neg_speedup if neg_speedup is not None and neg_speedup > 0 else None
+    if log.startswith("~/"):
+        log_dir = Path.home() / log[2:]
+    else:
+        log_dir = Path(log)
+    world_name = unique_name(base="scml2020", add_time=True, rand_digits=0)
+    log_dir = log_dir / world_name
+    log_dir = log_dir.absolute()
+    os.makedirs(log_dir, exist_ok=True)
+
+    exception = None
+
+    def _no_default(s):
+        return not (s.startswith("scml.2020.agents."))
+
+    all_competitors = competitors.split(";")
+    for i, cp in enumerate(all_competitors):
+        if "." not in cp:
+            all_competitors[i] = "scml.scml2020.agents." + cp
+    all_competitors_params = [dict() for _ in all_competitors]
+    world = scml.SCML2020World(
+        **scml.SCML2020World.generate(
+            n_steps=steps,
+            negotiation_speed=neg_speedup,
+            n_processes=processes,
+            n_agents_per_process=agents,
+            time_limit=time,
+            neg_time_limit=neg_time,
+            neg_n_steps=neg_steps,
+            n_lines=lines,
+            compact=compact,
+            log_ufuns=log_ufuns,
+            agent_types=all_competitors,
+            agent_params=all_competitors_params,
+            log_negotiations=log_negs,
+            log_folder=log_dir,
+            name=world_name,
+            initial_balance=balance,
+            ignore_agent_exceptions=not raise_exceptions,
+            ignore_contract_execution_exceptions=not raise_exceptions,
+            **kwargs,
+        )
+    )
+    failed = False
+    strt = perf_counter()
+    try:
+        for i in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
+            elapsed = perf_counter() - strt
+            if world.time_limit is not None and elapsed >= world.time_limit:
+                break
+            if not world.step():
+                break
+    except Exception:
+        exception = traceback.format_exc()
+        failed = True
+    elapsed = perf_counter() - strt
+
+    def print_and_log(s):
+        world.logdebug(s)
+        print(s)
+
+    world.logdebug(f"{pformat(world.stats, compact=True)}")
+    world.logdebug(
+        f"=================================================\n"
+        f"steps: {steps}, horizon: {horizon}, time: {time}, processes: {processes}, agents_per_process: "
+        f"{agents}, lines: {lines}, speedup: {neg_speedup}, neg_steps: {neg_steps}"
+        f", neg_time: {neg_time}\n"
+        f"=================================================="
+    )
+
+    save_stats(world=world, log_dir=log_dir, params=params)
+
+    if len(world.saved_contracts) > 0:
+        data = pd.DataFrame(world.saved_contracts)
+        data = data.sort_values(["delivery_time"])
+        data = data.loc[
+            data.signed_at >= 0,
+            [
+                "seller_type",
+                "buyer_type",
+                "seller_name",
+                "buyer_name",
+                "delivery_time",
+                "unit_price",
+                "quantity",
+                "product_name",
+                "n_neg_steps",
+                "signed_at",
+            ],
+        ]
+        data.columns = [
+            "seller_type",
+            "buyer_type",
+            "seller",
+            "buyer",
+            "t",
+            "price",
+            "q",
+            "product",
+            "steps",
+            "signed",
+        ]
+        print_and_log(tabulate(data, headers="keys", tablefmt="psql"))
+
+        d2 = (
+            data.loc[(~(data["signed"].isnull())) & (data["signed"] > -1), :]
+            .groupby(["product"])
+            .apply(
+                lambda x: pd.DataFrame(
+                    [
+                        {
+                            "uprice": np.sum(x["price"] * x["q"]) / np.sum(x["q"]),
+                            "quantity": np.sum(x["q"]),
+                        }
+                    ]
+                )
+            )
+        )
+        d2 = d2.reset_index().sort_values(["product"])
+        d2["Product"] = d2["product"]
+        d2 = d2.loc[:, ["Product", "uprice", "quantity"]]
+        d2.columns = ["Product", "Avg. Unit Price", "Total Quantity"]
+        print_and_log(tabulate(d2, headers="keys", tablefmt="psql"))
+
+        n_executed = sum(world.stats["n_contracts_executed"])
+        n_negs = sum(world.stats["n_negotiations"])
+        n_contracts = len(world.saved_contracts)
+        try:
+            agent_scores = sorted(
+                [
+                    [_.name, world.a2f[_.id].total_balance]
+                    for _ in world.agents.values()
+                    if isinstance(_, FactoryManager)
+                ],
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            agent_scores = pd.DataFrame(
+                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
+            )
+            print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
+        except:
+            pass
+        winners = [
+            f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
             for _ in world.winners
         ]
         print_and_log(

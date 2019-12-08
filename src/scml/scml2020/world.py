@@ -41,14 +41,14 @@ from negmas import (
     SAOController,
     PassThroughSAONegotiator,
 )
-from negmas.helpers import instantiate, unique_name
+from negmas.helpers import instantiate, unique_name, get_class
 from negmas.situated import World, TimeInAgreementMixin, BreachProcessing
 
 __all__ = [
     "FactoryState",
     "SCML2020Agent",
     "AWI",
-    "World",
+    "SCML2020World",
     "FinancialReport",
     "FactoryProfile",
     "INFINITE_COST",
@@ -230,7 +230,7 @@ class Factory:
         inputs: np.ndarray,
         outputs: np.ndarray,
         catalog_prices: np.ndarray,
-        world: "World",
+        world: "SCML2020World",
         compensate_before_past_debt: bool,
         buy_missing_products: bool,
         external_penalty: float,
@@ -251,6 +251,7 @@ class Factory:
         self.production_no_bankruptcy = production_no_bankruptcy
         self.production_no_borrow = production_no_borrow
         self.catalog_prices = catalog_prices
+        self.initial_balance = initial_balance
         self.__profile = profile
         self.world = world
         self.profile = copy.deepcopy(profile)
@@ -806,7 +807,7 @@ class Factory:
 
 
 class AWI(AgentWorldInterface):
-    """The Agent World Interface for SCML2020 world allowing a single process per agent"""
+    """The Agent SCML2020World Interface for SCML2020 world allowing a single process per agent"""
 
     # --------
     # Actions
@@ -1301,8 +1302,45 @@ class SCML2020Agent(Agent):
         """
 
 
-class World(TimeInAgreementMixin, World):
-    """A Supply Chain World Simulation as described for the SCML league of ANAC @ IJCAI 2020.
+def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
+    """
+    Generates l random integers that sum to n where each of them is at least l_m
+    Args:
+        n: total
+        l: number of levels
+        l_m: minimum per level
+
+    Returns:
+
+    """
+    if not isinstance(l_m, Iterable):
+        l_m = [l_m] * l
+    sizes = np.asarray(l_m)
+    if n < sizes.sum():
+        raise ValueError(
+            f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
+        )
+    while sizes.sum() < n:
+        sizes[random.randint(0, l - 1)] += 1
+    return sizes.tolist()
+
+
+def make_array(x: Union[np.ndarray, Tuple[int, int], int], n, dtype=int) -> np.ndarray:
+    """Creates an array with the given choices"""
+    if not isinstance(x, Iterable):
+        return np.ones(n, dtype=dtype) * x
+    if isinstance(x, tuple) and len(x) == 2:
+        if dtype == int:
+            return np.random.randint(x[0], x[1] + 1, n, dtype=dtype)
+        return x[0] + np.random.rand(n) * (x[1] - x[0])
+    x = list(x)
+    if len(x) == n:
+        return np.array(x)
+    return np.array(list(random.choices(x, k=n)))
+
+
+class SCML2020World(TimeInAgreementMixin, World):
+    """A Supply Chain SCML2020World Simulation as described for the SCML league of ANAC @ IJCAI 2020.
 
         Args:
 
@@ -1369,7 +1407,7 @@ class World(TimeInAgreementMixin, World):
                                will be guaranteed to finish within a single simulation step
             signing_delay: The number of simulation steps to pass between a contract is concluded and signed
             name: The name of the simulations
-            **kwargs: Other parameters that are passed directly to `World` constructor.
+            **kwargs: Other parameters that are passed directly to `SCML2020World` constructor.
 
     """
 
@@ -1382,7 +1420,7 @@ class World(TimeInAgreementMixin, World):
         profiles: List[FactoryProfile],
         agent_types: List[Type[SCML2020Agent]],
         agent_params: List[Dict[str, Any]] = None,
-        initial_balance: int = 1000,
+        initial_balance: Union[np.ndarray, Tuple[int, int], int] = 1000,
         # breach processing parameters
         buy_missing_products=True,
         borrow_on_breach=True,
@@ -1405,7 +1443,7 @@ class World(TimeInAgreementMixin, World):
         production_no_borrow=False,
         production_no_bankruptcy=False,
         production_penalty=0.15,
-        # General World Parameters
+        # General SCML2020World Parameters
         compact=False,
         no_logs=False,
         n_steps=1000,
@@ -1438,7 +1476,6 @@ class World(TimeInAgreementMixin, World):
             bulletin_board=None,
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.scml2020.AWI",
-            start_negotiations_immediately=False,
             mechanisms={"negmas.sao.SAOMechanism": {}},
             default_signing_delay=signing_delay,
             n_steps=n_steps,
@@ -1482,10 +1519,13 @@ class World(TimeInAgreementMixin, World):
         )
         self.compensation_fraction = compensation_fraction
         self.compensate_immediately = compensate_immediately
+
+        initial_balance = make_array(initial_balance, len(profiles), dtype=int)
+        agent_types = [get_class(_) for _ in agent_types]
         self.bankruptcy_limit = (
             -bankruptcy_limit
             if isinstance(bankruptcy_limit, int)
-            else -int(0.5 + bankruptcy_limit * initial_balance)
+            else -int(0.5 + bankruptcy_limit * initial_balance.mean())
         )
         assert self.n_products == self.n_processes + 1
 
@@ -1506,18 +1546,33 @@ class World(TimeInAgreementMixin, World):
             agent_params = [
                 dict(name=f"{_.__name__[:3]}{i:03}") for i, _ in enumerate(agent_types)
             ]
+        elif isinstance(agent_params, dict):
+            a = copy.copy(agent_params)
+            agent_params = []
+            for i, _ in enumerate(agent_types):
+                b = copy.deepcopy(a)
+                if "name" not in a.keys():
+                    b["name"] = f"{_.__name__[:3]}{i:03}"
+                agent_params.append(b)
+        elif len(agent_params) == 1:
+            a = copy.copy(agent_params[0])
+            agent_params = []
+            for i, _ in enumerate(agent_types):
+                b = copy.deepcopy(a)
+                if "name" not in a.keys():
+                    b["name"] = f"{_.__name__[:3]}{i:03}"
+                agent_params.append(b)
         agents = []
         for i, (atype, aparams) in enumerate(zip(agent_types, agent_params)):
             a = instantiate(atype, **aparams)
             self.join(a, i)
             agents.append(a)
         n_agents = len(agents)
-
         self.factories = [
             Factory(
                 world=self,
                 profile=profile,
-                initial_balance=initial_balance,
+                initial_balance=initial_balance[i],
                 inputs=process_inputs,
                 outputs=process_outputs,
                 agent_id=agents[i].id,
@@ -1617,98 +1672,288 @@ class World(TimeInAgreementMixin, World):
         cls,
         agent_types: List[Type[SCML2020Agent]],
         agent_params: List[Dict[str, Any]] = None,
-        depth=4,
-        process_inputs: Union[np.ndarray, Tuple[int, int]] = (1, 4),
-        process_outputs: Union[np.ndarray, Tuple[int, int]] = (1, 1),
-        profit_mean=0.15,
-        profit_stddev=0.05,
-        initial_balance: int = 1000,
-        breach_penalty=0.15,
-        n_steps: int = 100,
-        n_lines: int = 10,
-        n_agents_per_process: int = 1,
-        agent_name_reveals_location=False,
-        signing_delay: int = 1,
-    ):
-        n_products = depth + 1
-        n_processes = depth
-        if not isinstance(agent_types, Iterable):
-            agent_types = [agent_types] * (n_agents_per_process * n_processes)
-        n_agents = len(agent_types)
+        n_steps=100,
+        n_processes=4,
+        n_lines: Union[np.ndarray, Tuple[int, int], int] = 10,
+        n_agents_per_process: Union[np.ndarray, Tuple[int, int], int] = 3,
+        process_inputs: Union[np.ndarray, Tuple[int, int], int] = 1,
+        process_outputs: Union[np.ndarray, Tuple[int, int], int] = 1,
+        production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
+        profit_means: Union[np.ndarray, Tuple[float, float], float] = 0.15,
+        profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
+        max_productivity: Union[np.ndarray, Tuple[float, float], float] = (0.8, 1.0),
+        initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = 10_000,
+        cost_increases_with_level=False,
+        equal_external_supply=False,
+        equal_external_sales=False,
+        cash_availability=1.0,
+        profit_basis=np.mean,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Generates the configuration for a world
+
+        Args:
+
+            agent_types: All agent types
+            agent_params: Agent parameters used to initialize them
+            n_steps: Number of simulation steps
+            n_processes: Number of processes in the production chain
+            n_lines: Number of lines per factory
+            process_inputs: Number of input units per process
+            process_outputs: Number of output units per process
+            production_costs: Production cost per factory
+            profit_means: Mean profitability per production level (i.e. process).
+            profit_stddevs:  Std. Dev. of the profitability of every level (i.e. process).
+            max_productivity:  Maximum possible productivity per level (i.e. process).
+            initial_balance: The initial balance of all agents
+            n_agents_per_process: Number of agents per process
+            cost_increases_with_level: If true, production cost will be higher for processes nearer to the final
+                                       product.
+            profit_basis: The statistic used when controlling catalog prices by profit arguments. It can be np.mean,
+                          np.median, np.min, np.max or any Callable[[list[float]], float] and is used to summarize
+                          production costs at every level.
+            equal_external_supply: If true, external supply will be distributed equally among all agents in the first
+                                   layer
+            equal_external_sales: If true, external sales will be distributed equally among all agents in the last
+                                   layer
+            cash_availability: The fraction of the total money needs of the agent to work at maximum capacity that
+                               is available as `initial_balance` . This is only effective if `initial_balance` is set
+                               to `None` .
+            **kwargs:
+
+        Returns:
+
+            world configuration as a Dict[str, Any]. A world can be generated from this dict by calling SCML2020World(**d)
+
+        Remarks:
+
+            - Most parameters (i.e. `process_inputs` , `process_outputs` , `n_agents_per_process` , `costs` ) can
+              take a single value, a tuple of two values, or a list of values.
+              If it has a single value, it is repeated for all processes/factories as appropriate. If it is a
+              tuple of two numbers $(i, j)$, each process will take a number sampled from a uniform distribution
+              supported on $[i, j]$ inclusive. If it is a list of values, of the length `n_processes` , it is used as
+              it is otherwise, it is used to sample values for each process.
+
+        """
+        np.errstate(divide="ignore")
+        n_startup = n_processes
+        process_inputs = make_array(process_inputs, n_processes, dtype=int)
+        process_outputs = make_array(process_outputs, n_processes, dtype=int)
+        n_agents_per_process = make_array(n_agents_per_process, n_processes, dtype=int)
+        profit_means = make_array(profit_means, n_processes, dtype=float)
+        profit_stddevs = make_array(profit_stddevs, n_processes, dtype=float)
+        max_productivity = make_array(
+            max_productivity, n_processes * n_steps, dtype=float
+        ).reshape((n_processes, n_steps))
+        n_agents = n_agents_per_process.sum()
         assert n_agents >= n_processes
-        assert n_agents_per_process <= n_agents
-        if isinstance(process_inputs, np.ndarray):
-            process_inputs = process_inputs.flatten()
-            assert (
-                len(process_inputs) == depth
-            ), f"depth is {depth} but got {len(process_inputs)} inputs"
-            inputs = process_inputs
+        n_products = n_processes + 1
+        production_costs = make_array(production_costs, n_agents, dtype=int)
+        if initial_balance is not None:
+            initial_balance = make_array(initial_balance, n_agents, dtype=int)
+        if cost_increases_with_level:
+            production_costs *= np.arange(1, n_agents + 1)
+        if not isinstance(agent_types, Iterable):
+            agent_types = [agent_types] * n_agents
+        elif len(agent_types) != n_agents:
+            agent_types = random.choices(agent_types, k=n_agents)
         else:
-            inputs = np.random.randint(*process_inputs, size=depth)
+            agent_types = list(agent_types)
 
-        if isinstance(process_outputs, np.ndarray):
-            process_outputs = process_outputs.flatten()
-            assert (
-                len(process_outputs) == depth
-            ), f"depth is {depth} but got {len(process_outputs)} outputs"
-            outputs = process_outputs
-        else:
-            outputs = np.random.randint(*process_outputs, size=depth)
+        # generate production costs making sure that every agent can do exactly one process
+        first_agent = [0] + n_agents_per_process[1:].cumsum().tolist()
+        last_agent = n_agents_per_process[:-1].cumsum().tolist() + [n_agents]
+        costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
+        for p, (f, l) in enumerate(zip(first_agent, last_agent)):
+            costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
 
-        min_cost, max_cost = 1, 10
-        min_unit, max_unit = 1, 10
-        if n_agents_per_process < 1:
-            costs = np.random.randint(
-                min_cost, max_cost, (n_agents, n_lines, n_processes), dtype=float
+        # generate external contract amounts (controlled by productivity):
+
+        # - generate total amount of input to the market (it will end up being an n_products list of n_steps vectors)
+        quantities = [
+            np.round(n_lines * n_agents_per_process[0] * max_productivity[0, :]).astype(
+                int
             )
-            n_agents_per_process = n_agents
-        elif n_agents >= n_agents_per_process * n_processes:
-            costs = float("inf") * np.ones(
-                (n_agents, n_lines, n_processes), dtype=float
+        ]
+        # - make sure there is a cool-down period at the end in which no more input is added that cannot be converted
+        #   into final products in time
+        quantities[0][-n_startup:] = 0
+        # - for each level, find the amount of the output product that can be produced given the input amount and
+        #   productivity
+        for p in range(n_processes):
+            agents = n_agents_per_process[p]
+            lines = n_lines * agents
+            quantities.append(
+                np.minimum(
+                    (quantities[-1] // process_outputs[p]) * process_inputs[p],
+                    (
+                        np.round(lines * max_productivity[p, :]).astype(int)
+                        // process_inputs[p]
+                    )
+                    * process_outputs[p],
+                )
             )
-            for p in range(n_processes):
-                costs[
-                    p * n_agents_per_process : (p + 1) * n_agents_per_process, :, p
-                ] = np.random.randint(min_cost, max_cost, size=n_agents_per_process)
-            if not agent_name_reveals_location:
-                costs = np.random.permutation(costs)
+            # * shift quantities one step to account for the one step needed to move the produce to the next level. This
+            #   step results from having production happen after contract execution.
+            quantities[-1][1:] = quantities[-1][:-1]
+            quantities[-1][0] = 0
+            assert quantities[-1][-1] == 0 or p >= n_startup - 1
+            assert quantities[-1][0] == 0
+            assert np.sum(quantities[-1] == 0) >= n_startup
+        # - divide the quantity at every level between factories
+        if equal_external_supply:
+            external_supplies = np.maximum(
+                1, np.round(quantities[0] / n_agents_per_process[0]).astype(int)
+            ).tolist()
+            external_supplies = [
+                np.array([external_supplies[p]] * n_agents_per_process[p])
+                for p in range(n_processes)
+            ]
         else:
-            costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
-            for p in range(n_processes):
-                # guarantee that at least one agent is running each process (we know that n_agents>=n_processes)
-                costs[p, :, p] = random.randrange(min_cost, max_cost)
-                # generate random new agents for the process
-                agents = np.random.randint(
-                    0, n_agents - 2, size=n_agents_per_process - 1
+            external_supplies = []
+            for s in range(n_steps):
+                external_supplies.append(
+                    integer_cut(quantities[0][s], n_agents_per_process[0], 0)
                 )
-                # make sure that the agent with the same index as the process is not chosen twice
-                agents[agents >= p] += 1
-                # assign agents to processes
-                costs[agents, :, p] = np.random.randint(
-                    min_cost, max_cost, size=(n_agents_per_process, 1)
+                assert sum(external_supplies[-1]) == quantities[0][s]
+        if equal_external_sales:
+            external_sales = np.maximum(
+                1, np.round(quantities[-1] / n_agents_per_process[-1]).astype(int)
+            ).tolist()
+            external_sales = [
+                np.array([external_sales[p]] * n_agents_per_process[p])
+                for p in range(n_processes)
+            ]
+        else:
+            external_sales = []
+            for s in range(n_steps):
+                external_sales.append(
+                    integer_cut(quantities[-1][s], n_agents_per_process[-1], 0)
                 )
-            # permute costs so that agent i is not really guaranteed to run process i
-            if not agent_name_reveals_location:
-                costs = np.random.permutation(costs)
+                assert sum(external_sales[-1]) == quantities[-1][s]
+        # - now external_supplies and external_sales are both n_steps lists of n_agents_per_process[p] vectors (jagged)
 
-        # generate guaranteed contracts
-        # -----------------------------
-        # select the amount of random raw material available to every agent that can consume it
-        quantity = np.zeros((n_products, n_agents, n_steps), dtype=int)
-        a0 = np.nonzero(~np.isinf(costs[:, 0, 0].flatten()))[0].flatten()
-        quantity[0, a0, :-1] = np.random.randint(
-            0, process_inputs[0] * n_lines, size=(1, len(a0), n_steps - 1)
+        # assign prices to the quantities given the profits
+        catalog_prices = np.zeros(n_products, dtype=int)
+        catalog_prices[0] = 10
+        supply_prices = np.zeros((n_agents_per_process[0], n_steps), dtype=int)
+        supply_prices[:, :] = catalog_prices[0]
+        sale_prices = np.zeros((n_agents_per_process[-1], n_steps), dtype=int)
+
+        manufacturing_costs = np.zeros((n_processes, n_steps), dtype=int)
+        for p in range(n_processes):
+            manufacturing_costs[p, :] = profit_basis(
+                costs[first_agent[p] : last_agent[p], :, p]
+            )
+            manufacturing_costs[p, :p] = 0
+            manufacturing_costs[p, p - n_startup :] = 0
+
+        profits = np.zeros((n_processes, n_steps))
+        for p in range(n_processes):
+            profits[p, :] = np.random.randn() * profit_stddevs[p] + profit_means[p]
+
+        input_costs = np.zeros((n_processes, n_steps), dtype=int)
+        for step in range(n_steps):
+            input_costs[0, step] = np.sum(
+                external_supplies[step] * supply_prices[:, step][:]
+            )
+
+        input_quantity = np.zeros((n_processes, n_steps), dtype=int)
+        input_quantity[0, :] = quantities[0]
+
+        active_lines = np.hstack(
+            [(n_lines * n_agents_per_process).reshape((n_processes, 1))] * n_steps
         )
-        # initialize unit prices randomly within the allowed negotiation range
-        price = np.random.randint(min_unit, max_unit, size=quantity.shape)
-        for p in range(1, n_processes):
-            # find the agents / lines that can run this process
-            ins = quantity[p - 1, :, :-1]
+        assert active_lines.shape == (n_processes, n_steps)
+        active_lines[0, :] = input_quantity[0, :] // process_inputs[0]
 
-    def generate_initial_contracts(
-        self
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        pass
+        output_quantity = np.zeros((n_processes, n_steps), dtype=int)
+        output_quantity[0, :] = active_lines[0, :] * process_outputs[0]
+
+        manufacturing_costs[0, :-n_startup] *= active_lines[0, :-n_startup]
+
+        total_costs = input_costs + manufacturing_costs
+
+        output_total_prices = np.ceil(total_costs * (1 + profits)).astype(int)
+
+        for p in range(1, n_processes):
+            input_costs[p, p:] = output_total_prices[p - 1, p - 1 : -1]
+            input_quantity[p, p:] = output_quantity[p - 1, p - 1 : -1]
+            active_lines[p, :] = input_quantity[p, :] // process_inputs[p]
+            output_quantity[p, :] = active_lines[p, :] * process_outputs[p]
+            manufacturing_costs[p, p : p - n_startup] *= active_lines[
+                p, p : p - n_startup
+            ]
+            total_costs[p, :] = input_costs[p, :] + manufacturing_costs[p, :]
+            output_total_prices[p, :] = np.ceil(
+                total_costs[p, :] * (1 + profits[p, :])
+            ).astype(int)
+
+        sale_prices[:, n_startup:] = np.ceil(
+            output_total_prices[-1, n_startup - 1 : -1]
+            / output_quantity[-1, n_startup - 1 : -1]
+        ).astype(int)
+        product_prices = np.zeros((n_products, n_steps))
+        product_prices[0, :-n_startup] = catalog_prices[0]
+        product_prices[1:, 1:] = np.ceil(
+            np.divide(
+                output_total_prices.astype(float),
+                output_quantity.astype(float),
+                out=np.zeros_like(output_total_prices, dtype=float),
+                where=output_quantity != 0,
+            )
+        ).astype(int)[:, :-1]
+        catalog_prices = np.ceil(
+            [
+                profit_basis(product_prices[p, p : p + n_steps - n_startup])
+                for p in range(n_products)
+            ]
+        ).astype(int)
+        profiles = []
+        nxt = 0
+        for l in range(n_processes):
+            for a in range(n_agents_per_process[l]):
+                esales = np.zeros((n_steps, n_products), dtype=int)
+                esupplies = np.zeros((n_steps, n_products), dtype=int)
+                esale_prices = np.zeros((n_steps, n_products), dtype=int)
+                esupply_prices = np.zeros((n_steps, n_products), dtype=int)
+                if l == 0:
+                    esupplies[:, 0] = [external_supplies[s][a] for s in range(n_steps)]
+                    esupply_prices[:, 0] = supply_prices[a, :]
+                if l == n_processes - 1:
+                    esales[:, -1] = [external_sales[s][a] for s in range(n_steps)]
+                    esale_prices[:, -1] = sale_prices[a, :]
+
+                profiles.append(
+                    FactoryProfile(
+                        costs=costs[nxt],
+                        external_sales=esales,
+                        external_supplies=esupplies,
+                        external_sale_prices=esale_prices,
+                        external_supply_prices=esupply_prices,
+                    )
+                )
+                nxt += 1
+        assert nxt == n_agents
+        if initial_balance is None:
+            balance = np.ceil(
+                np.sum(total_costs, axis=1) / n_agents_per_process
+            ).astype(int)
+            initial_balance = []
+            for b, a in zip(balance, n_agents_per_process):
+                initial_balance += [int(math.ceil(b * cash_availability))] * a
+        return dict(
+            process_inputs=process_inputs,
+            process_outputs=process_outputs,
+            catalog_prices=catalog_prices,
+            profiles=profiles,
+            agent_types=agent_types,
+            agent_params=agent_params,
+            initial_balance=initial_balance,
+            n_steps=n_steps,
+            **kwargs,
+        )
 
     def get_private_state(self, agent: "SCML2020Agent") -> dict:
         return vars(self.a2f[agent.id].state)
@@ -1730,7 +1975,9 @@ class World(TimeInAgreementMixin, World):
         """
         bankrupt = factory.is_bankrupt
         inventory = (
-            int(np.sum(self.catalog_prices * factory.current_inventory)) if not bankrupt else 0
+            int(np.sum(self.catalog_prices * factory.current_inventory))
+            if not bankrupt
+            else 0
         )
         report = FinancialReport(
             agent_id=agent.id,
@@ -1759,7 +2006,9 @@ class World(TimeInAgreementMixin, World):
         if self.interest_rate > 0.0:
             for agent, factory, _ in self.afp:
                 if factory.current_balance < 0 and not factory.is_bankrupt:
-                    to_pay = -int(math.ceil(self.interest_rate * factory.current_balance))
+                    to_pay = -int(
+                        math.ceil(self.interest_rate * factory.current_balance)
+                    )
                     factory.pay(to_pay)
 
         # publish financial reports
@@ -1816,6 +2065,7 @@ class World(TimeInAgreementMixin, World):
             "issues": contract.issues if not self.compact else None,
             "seller": contract.annotation["seller"],
             "buyer": contract.annotation["buyer"],
+            "product_name": "p" + str(contract.annotation["product"])
         }
         if not self.compact:
             c.update(contract.annotation)
@@ -1967,8 +2217,10 @@ class World(TimeInAgreementMixin, World):
             f"Transferring {q} of {product} at price {u} ({'breached' if has_breaches else ''})"
         )
         if q == 0 or u == 0:
-            self.logwarning(f"{buyer_factory.agent_name} bought {q} from {seller_factory.agent_name} at {u} dollars"
-                            f" ({'with breaches' if has_breaches else 'no breaches'})!! Zero quantity or unit price")
+            self.logwarning(
+                f"{buyer_factory.agent_name} bought {q} from {seller_factory.agent_name} at {u} dollars"
+                f" ({'with breaches' if has_breaches else 'no breaches'})!! Zero quantity or unit price"
+            )
         if has_breaches:
             money = (
                 p
@@ -2074,7 +2326,9 @@ class World(TimeInAgreementMixin, World):
         self.logdebug(f"Executing {str(contract)}")
         # get contract info
         breaches = set()
-        if self.compensate_immediately and any(self.a2f[a].is_bankrupt for a in contract.partners):
+        if self.compensate_immediately and any(
+            self.a2f[a].is_bankrupt for a in contract.partners
+        ):
             return breaches
         product = contract.annotation["product"]
         buyer_id, seller_id = (
@@ -2275,3 +2529,27 @@ class World(TimeInAgreementMixin, World):
             )
             self.nullify_contract(contract.contract)
             self.record_bankrupt(factory)
+
+    @property
+    def winners(self):
+        """The winners of this world (factory managers with maximum wallet balance"""
+        if len(self.agents) < 1:
+            return []
+        if 0.0 in [self.a2f[aid].initial_balance for aid, agent in self.agents.items()]:
+            balances = sorted(
+                ((self.a2f[aid].current_balance, agent) for aid, agent in self.agents.items()),
+                key=lambda x: x[0],
+                reverse=True,
+            )
+        else:
+            balances = sorted(
+                (
+                    (self.a2f[aid].current_balance / self.a2f[aid].initial_balance, agent)
+                    for aid, agent in self.agents.items()
+                ),
+                key=lambda x: x[0],
+                reverse=True,
+            )
+
+        max_balance = balances[0][0]
+        return [_[1] for _ in balances if _[0] >= max_balance]

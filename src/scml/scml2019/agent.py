@@ -55,7 +55,7 @@ class SCMLAgent(Agent):
 
     @property
     def awi(self) -> "SCMLAWI":
-        """Returns the Agent-World-Interface through which the agent does all of its actions in the world.
+        """Returns the Agent-SCML2020World-Interface through which the agent does all of its actions in the world.
 
         A single excption is request_negotiation for which it is recommended to actually call the helper method
         on the agent itself instead of directly calling the AWI version."""
@@ -248,7 +248,7 @@ class SCMLAgent(Agent):
         return self.awi.request_negotiation(cfp=cfp, req_id=req_id)
 
     # ------------------------------------------------------------------
-    # EVENT CALLBACKS (Called by the `World` when certain events happen)
+    # EVENT CALLBACKS (Called by the `SCML2020World` when certain events happen)
     # ------------------------------------------------------------------
 
     @abstractmethod

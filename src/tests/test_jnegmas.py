@@ -63,7 +63,7 @@ def test_java_factory_manager(java_class):
             # log_file_name=log_file,
         )
         world.run()
-        # pprint('World completed')
+        # pprint('SCML2020World completed')
         # pprint(world.stats)
         # print(world.winners)
 

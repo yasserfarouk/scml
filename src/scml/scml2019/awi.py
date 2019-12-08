@@ -17,7 +17,7 @@ class SCMLAWI(AgentWorldInterface):
 
     The agent can access the world simulation in one of two ways:
 
-    1. Attributes and methods available in this Agent-World-Interface
+    1. Attributes and methods available in this Agent-SCML2020World-Interface
     2. Attributes and methods in the `FactoryManager` object itself which provide handy shortcuts
        to the agent-world interface
 

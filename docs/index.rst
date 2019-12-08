@@ -8,6 +8,10 @@ Contents
    readme
    installation
    usage
+   tutorials
+
+   modules/scml2019
+   modules/scml2020
 
    scripts
    reference/index

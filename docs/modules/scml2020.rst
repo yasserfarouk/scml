@@ -1,0 +1,9 @@
+SCML2020
+========
+    This module describes the Supply Chain Management League Platform as run in 2020
+
+
+.. automodapi:: scml.scml2020
+    :members:
+    :show-inheritance:
+    :inherited-members:

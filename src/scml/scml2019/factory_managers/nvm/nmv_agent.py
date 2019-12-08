@@ -142,7 +142,7 @@ class NVMFactoryManager(DoNothingFactoryManager):
                   f'Starting game with a total of {self.awi.n_steps} steps\n'
                   f'\t Expected catalog prices = {self.expected_catalog_prices}\n'
                   f'\t There are {self.num_intermediate_products} intermediate products. \n'
-                  f'\t World processes = {self.awi.processes}\n'
+                  f'\t SCML2020World processes = {self.awi.processes}\n'
                   f'\t My Cost = {self.line_profiles[0][0].cost}\n'
                   f'\t I, {self.id}, consume {self.input_index} and produce {self.output_index}\n'
                   f'\t Is the middle man active? {self.middle_man_active}\n'

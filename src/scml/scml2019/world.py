@@ -89,7 +89,7 @@ def _intin(rng: Union[Tuple[int, int], int]) -> int:
 
 
 class SCMLWorld(TimeInAgreementMixin, World):
-    """The `World` class running a simulation of supply chain management."""
+    """The `SCML2020World` class running a simulation of supply chain management."""
 
     def __init__(
         self,
@@ -2443,7 +2443,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
 
     def on_event(self, event: Event, sender: "EventSource") -> None:
         """
-        Called whenever an event is raised for which the `World` is registered asa listener
+        Called whenever an event is raised for which the `SCML2020World` is registered asa listener
 
         Args:
             event: The event
