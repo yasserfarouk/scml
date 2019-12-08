@@ -56,9 +56,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.org/project/scml
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/yasserfarouk/scml/v0.1.2.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/yasserfarouk/scml/v0.1.3.svg
     :alt: Commits since latest release
-    :target: https://github.com/yasserfarouk/scml/compare/v0.1.2...master
+    :target: https://github.com/yasserfarouk/scml/compare/v0.1.3...master
 
 
 
