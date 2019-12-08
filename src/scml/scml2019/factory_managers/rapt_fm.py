@@ -2,33 +2,22 @@ import warnings
 from collections import defaultdict
 
 from scml.scml2019.common import ProductionReport
-from scml.scml2019.common import (
-    SCMLAgreement,
-    INVALID_UTILITY,
-    ProductionFailure,
-)
+from scml.scml2019.common import SCMLAgreement, INVALID_UTILITY, ProductionFailure
 from scml.scml2019.consumers import ConsumptionProfile
 from scml.scml2019.schedulers import Scheduler, ScheduleInfo, GreedyScheduler
 from scml.scml2019.simulators import FactorySimulator, FastFactorySimulator
 from scml.scml2019.simulators import temporary_transaction
 from .builtins import NegotiatorUtility
-from .builtins import PessimisticNegotiatorUtility, OptimisticNegotiatorUtility, AveragingNegotiatorUtility
+from .builtins import (
+    PessimisticNegotiatorUtility,
+    OptimisticNegotiatorUtility,
+    AveragingNegotiatorUtility,
+)
 
 if True:
-    from typing import (
-        Dict,
-        Any,
-        Callable,
-        Collection,
-        Type,
-        List,
-        Optional,
-        Union,
-    )
+    from typing import Dict, Any, Callable, Collection, Type, List, Optional, Union
 
-__all__ = [
-    "RaptFactoryManager",
-]
+__all__ = ["RaptFactoryManager"]
 import functools
 import itertools
 from typing import TYPE_CHECKING
@@ -46,6 +35,10 @@ from negmas.utilities import ComplexWeightedUtilityFunction, MappingUtilityFunct
 from scml.scml2019.common import CFP
 from scml.scml2019.helpers import pos_gauss
 
+from .builtins import GreedyFactoryManager
+import math
+import numpy as np
+
 if True:  #
     from typing import Dict, Any, List, Optional, Union
     from scml.scml2019.common import Loan
@@ -55,8 +48,10 @@ if TYPE_CHECKING:
 
 from scml.scml2019.consumers import ScheduleDrivenConsumer
 
+
 class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
     "MyScheduleDrivenConsumer"
+
     def __init__(
         self,
         profiles: Dict[int, ConsumptionProfile] = None,
@@ -74,7 +69,7 @@ class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
             self.set_profiles(profiles=profiles)
         self.consumption_horizon = consumption_horizon
         self.immediate_cfp_update = immediate_cfp_update
-        self.sp=sp
+        self.sp = sp
 
     def on_new_cfp(self, cfp: "CFP") -> None:
         pass  # consumers never respond to CFPs
@@ -88,7 +83,9 @@ class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
         self.profiles = profiles if profiles is not None else dict()
         self.secured_quantities = dict(zip(profiles.keys(), itertools.repeat(0)))
 
-    def register_product_cfps(self, p: int, t: int, profile: ConsumptionProfile, sp: {}):
+    def register_product_cfps(
+        self, p: int, t: int, profile: ConsumptionProfile, sp: {}
+    ):
         current_schedule = profile.schedule_at(t)
         product = self.products[p]
         awi: SCMLAWI = self.awi
@@ -287,12 +284,10 @@ class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
                 negotiation.negotiator, Notification(type="ufun_modified", data=None)
             )
 
-from .builtins import GreedyFactoryManager
-import math
-import numpy as np
 
 class RaptFactoryManager(GreedyFactoryManager):
     """My factory manager"""
+
     def on_production_failure(self, failures: List[ProductionFailure]) -> None:
         pass
 
@@ -330,17 +325,17 @@ class RaptFactoryManager(GreedyFactoryManager):
         sign_only_guaranteed_contracts=True,
         riskiness=0.0,
         max_insurance_premium: float = 0.1,
-        my_reports = [],
-        not_fm = [],
+        my_reports=[],
+        not_fm=[],
         mean_score: float = 1000.0,
         bought={},
         sold={},
     ):
-        self.my_reports=[]
-        self.not_fm=[]
+        self.my_reports = []
+        self.not_fm = []
         self.mean_score: float = 1000.0
-        self.bought=bought
-        self.sold=sold
+        self.bought = bought
+        self.sold = sold
         super().__init__(name=name, simulator_type=simulator_type)
         self.negotiator_type = get_class(negotiator_type, scope=globals())
         self.negotiator_params = (
@@ -438,19 +433,19 @@ class RaptFactoryManager(GreedyFactoryManager):
             profiles=self.compiled_profiles,
         )
 
-    def respond_to_negotiation_request( ###
+    def respond_to_negotiation_request(  ###
         self, cfp: "CFP", partner: str
     ) -> Optional[Negotiator]:
         if self.awi.is_bankrupt(partner):
             return None
-        if self.use_consumer: ###
+        if self.use_consumer:  ###
 
             reports = self.awi.reports_for(cfp.publisher)
             if not reports:
                 "report not exist"
             else:
-#                 logger.debug('reports_for')
-#                     logger.debug(reports)
+                #                 logger.debug('reports_for')
+                #                     logger.debug(reports)
                 if reports[-1].cash >= self.mean_score:
                     return None
 
@@ -469,28 +464,31 @@ class RaptFactoryManager(GreedyFactoryManager):
             )
             return neg
 
-    def on_negotiation_success( ###
+    def on_negotiation_success(  ###
         self, contract: Contract, mechanism: AgentMechanismInterface
     ):
         con_cfp = contract.annotation["cfp"]
         con_agr = contract.agreement
-        if {con_cfp.is_buy == True and con_cfp.publisher == self.name} or {con_cfp.is_buy == False and con_cfp.publisher != self.agent}:
-            if self.bought.get(con_cfp.product)==None:
+        if {con_cfp.is_buy == True and con_cfp.publisher == self.name} or {
+            con_cfp.is_buy == False and con_cfp.publisher != self.agent
+        }:
+            if self.bought.get(con_cfp.product) == None:
                 self.bought.setdefault(con_cfp.product, con_agr["unit_price"])
             else:
-                self.bought[con_cfp.product]=con_agr["unit_price"]
-        if {con_cfp.is_buy == True and con_cfp.publisher != self.name} or {con_cfp.is_buy == False and con_cfp.publisher == self.agent}:
-            if self.sold.get(con_cfp.product)==None:
+                self.bought[con_cfp.product] = con_agr["unit_price"]
+        if {con_cfp.is_buy == True and con_cfp.publisher != self.name} or {
+            con_cfp.is_buy == False and con_cfp.publisher == self.agent
+        }:
+            if self.sold.get(con_cfp.product) == None:
                 self.sold.setdefault(con_cfp.product, con_agr["unit_price"])
             else:
-                self.sold[con_cfp.product]=con_agr["unit_price"]
+                self.sold[con_cfp.product] = con_agr["unit_price"]
 
         if self.use_consumer:
 
-
             self.consumer.on_negotiation_success(contract, mechanism)
 
-    def on_negotiation_failure( ###
+    def on_negotiation_failure(  ###
         self,
         partners: List[str],
         annotation: Dict[str, Any],
@@ -511,7 +509,9 @@ class RaptFactoryManager(GreedyFactoryManager):
             self.n_neg_trials[cfp.id] += 1
             self.on_new_cfp(cfp=annotation["cfp"])
 
-    def _execute_schedule(self, schedule: ScheduleInfo, contract: Contract) -> None: ###contact
+    def _execute_schedule(
+        self, schedule: ScheduleInfo, contract: Contract
+    ) -> None:  ###contact
         if self.simulator is None:
             raise ValueError("No factory simulator is defined")
         awi: SCMLAWI = self.awi
@@ -570,20 +570,20 @@ class RaptFactoryManager(GreedyFactoryManager):
                     p=product_id,
                     t=need.step,
                     profile=self.consumer.profiles[product_id],
-                    sp=self.sold ###
+                    sp=self.sold,  ###
                 )
                 continue
-#             logger.debug('seller')
+            #             logger.debug('seller')
             product = self.products[product_id]
             if product.catalog_price is None:
-                if self.sold.get(product_id)==None:
+                if self.sold.get(product_id) == None:
                     price_range = (0.0, 100.0)
                 else:
                     price_range = (0.5, 1.5 * self.sold(product_id))
             else:
-#                 logger.debug(product)
-#                 logger.debug(product.catalog_price)
-                if self.sold.get(product_id)!=None:
+                #                 logger.debug(product)
+                #                 logger.debug(product.catalog_price)
+                if self.sold.get(product_id) != None:
                     product_price = max(self.sold(product_id), product.catalog_price)
                 price_range = (0.5, 1.5 * product_price)
             # @todo check this. This error is raised sometimes
@@ -605,7 +605,7 @@ class RaptFactoryManager(GreedyFactoryManager):
             )
             awi.register_cfp(cfp)
 
-    def sign_contract(self, contract: Contract): ###contact
+    def sign_contract(self, contract: Contract):  ###contact
         if any(self.awi.is_bankrupt(partner) for partner in contract.partners):
             return None
         signature = self.id
@@ -643,7 +643,7 @@ class RaptFactoryManager(GreedyFactoryManager):
         self.contract_schedules[contract.id] = schedule
         return signature
 
-    def on_contract_signed(self, contract: Contract): ###contact
+    def on_contract_signed(self, contract: Contract):  ###contact
         if contract.annotation["buyer"] == self.id and self.use_consumer:
             self.consumer.on_contract_signed(contract)
         schedule = self.contract_schedules[contract.id]
@@ -659,7 +659,7 @@ class RaptFactoryManager(GreedyFactoryManager):
     def _process_buy_cfp(self, cfp: "CFP") -> None:
         if cfp.publisher == self.id:
             return
-        if self.awi.is_bankrupt(cfp.publisher): ###bankrupt
+        if self.awi.is_bankrupt(cfp.publisher):
             return
         if self.simulator is None or not self.can_expect_agreement(
             cfp=cfp, margin=self.negotiation_margin
@@ -675,16 +675,14 @@ class RaptFactoryManager(GreedyFactoryManager):
             cfp.money_resolution if cfp.money_resolution is not None else 0.1
         )
         self.request_negotiation(negotiator=neg, cfp=cfp, ufun=ufun)
-#         self.my_reports.append(cfp)
-        # normalize(, outcomes=cfp.outcomes, infeasible_cutoff=-1)
 
     def _process_sell_cfp(self, cfp: "CFP"):
-        if self.awi.is_bankrupt(cfp.publisher): ###bankrupt
+        if self.awi.is_bankrupt(cfp.publisher):
             return None
         if self.use_consumer:
             self.consumer.on_new_cfp(cfp=cfp)
 
-    def on_new_cfp(self, cfp: "CFP") -> None: ###new cfp
+    def on_new_cfp(self, cfp: "CFP") -> None:
         if not self.reactive:
             return
         if cfp.satisfies(
@@ -696,78 +694,50 @@ class RaptFactoryManager(GreedyFactoryManager):
         ):
             self._process_sell_cfp(cfp)
 
-    def step(self): ### step
+    def step(self):
         if self.use_consumer:
             self.consumer.step()
         if self.reactive:
             return
-
-#         logger.debug(self.bought.items())
-#         logger.debug(self.sold.items())
-#         if self.ready == False:
-        if  not self.not_fm:
+        if not self.not_fm:
             reports = self.awi.bb_query(section="reports_agent", query=None)
             if reports:
                 for report in reports.values():
                     for rep in report:
                         if rep.cash <= 0.0:
                             self.not_fm.append(rep.agent)
-#             logger.debug('start_not_fm')
-#             logger.debug(self.not_fm)
-#             logger.debug('end_not_fm')
-#             self.ready=True
         else:
-#             cnt=0
-#             allcash=0
             cashes = []
             reports = self.awi.bb_query(section="reports_agent", query=None)
             if reports:
-#                 logger.debug(self.not_fm)
                 for report in reports.values():
                     for rep in report:
                         if rep.agent not in self.not_fm:
-#                             cnt +=1
-#                             allcash += rep.cash
                             cashes.append(rep.cash)
-#                             logger.debug(rep.agent)
-#                             logger.debug(rep.cash)
-#                 logger.debug(self.current_step)
-#                 logger.debug('平均')
-#                 logger.debug(allcash/cnt)
-#                 logger.debug(cashes)
                 self.mean_score = np.mean(cashes)
-#                 logger.debug(self.mean_score)
-#                 logger.debug(np.min(cashes))
-#                 logger.debug(np.max(cashes))
 
-
-        # 0. remove all my CFPs
-        # self.awi.bb_remove(section='cfps', query={'publisher': self})
-
-        # respond to interesting CFPs
-        # todo: should check time and sort products by interest etc
-
-#         agents=[]
         keys = self.producing.keys()
         if not keys:
             return
 
         for key in keys:
             key_cfps = self.awi.bb_query(
-            section="cfps", query={"products": [key], "is_buy": True} ###unit_price
+                section="cfps", query={"products": [key], "is_buy": True}  ###unit_price
             )
             key_cfps = key_cfps.values()
-            sort_key_cfp = sorted(key_cfps, key=lambda cfp: cfp.unit_price, reverse=True)
-#             sort_key_cfp = sorted(key_cfps, key=lambda cfp: cfp.time)
-            half_sort_key_cfp = sort_key_cfp[0:int(len(sort_key_cfp)/4)]
-#             logger.debug(half_sort_key_cfp)
+            sort_key_cfp = sorted(
+                key_cfps, key=lambda cfp: cfp.unit_price, reverse=True
+            )
+            #             sort_key_cfp = sorted(key_cfps, key=lambda cfp: cfp.time)
+            half_sort_key_cfp = sort_key_cfp[0 : int(len(sort_key_cfp) / 4)]
+            #             logger.debug(half_sort_key_cfp)
             for cfp in sort_key_cfp:
                 reports = self.awi.reports_for(cfp.publisher)
                 if not reports:
                     self._process_buy_cfp(cfp)
                 else:
-#                     logger.debug('reports_for')
-#                     logger.debug(reports)
+                    #                     logger.debug('reports_for')
+                    #                     logger.debug(reports)
 
                     if reports[-1].cash <= self.mean_score:
                         self._process_buy_cfp(cfp)
@@ -778,20 +748,21 @@ class RaptFactoryManager(GreedyFactoryManager):
 
         for key in keys:
             key_cfps = self.awi.bb_query(
-            section="cfps", query={"products": [key], "is_buy": False} ###unit_price
+                section="cfps",
+                query={"products": [key], "is_buy": False},  ###unit_price
             )
             key_cfps = key_cfps.values()
             sort_key_cfp = sorted(key_cfps, key=lambda cfp: cfp.unit_price)
-#             sort_key_cfp = sorted(key_cfps, key=lambda cfp: cfp.time)
-            half_sort_key_cfp = sort_key_cfp[0:int(len(sort_key_cfp)/4)]
-#             logger.debug(half_sort_key_cfp)
+            #             sort_key_cfp = sorted(key_cfps, key=lambda cfp: cfp.time)
+            half_sort_key_cfp = sort_key_cfp[0 : int(len(sort_key_cfp) / 4)]
+            #             logger.debug(half_sort_key_cfp)
             for cfp in sort_key_cfp:
                 reports = self.awi.reports_for(cfp.publisher)
                 if not reports:
                     self._process_sell_cfp(cfp)
                 else:
-#                     logger.debug('reports_for')
-#                     logger.debug(reports)
+                    #                     logger.debug('reports_for')
+                    #                     logger.debug(reports)
 
                     if reports[-1].cash <= self.mean_score:
                         self._process_sell_cfp(cfp)
