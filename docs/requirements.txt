@@ -53,7 +53,6 @@ jupyter-highlight-selected-word
 jupyter-latex-envs
 jupyter-nbextensions-configurator
 kiwisolver
-llvmlite
 lxml
 MarkupSafe
 matplotlib
@@ -154,5 +153,5 @@ yapf
 yappi
 yarg
 zict
-poetry
-
+negmas
+scml
