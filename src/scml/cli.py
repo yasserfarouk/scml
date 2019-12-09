@@ -60,6 +60,21 @@ n_completed = 0
 n_total = 0
 
 
+def default_log_path():
+    """Default location for all logs"""
+    return Path.home() / "negmas" / "logs"
+
+
+def default_tournament_path():
+    """The default path to store tournament run info"""
+    return default_log_path() / "tournaments"
+
+
+def default_world_path():
+    """The default path to store world run info"""
+    return default_log_path() / "scml"
+
+
 def print_progress(_, i, n) -> None:
     """Prints the progress of a tournament"""
     global n_completed, n_total
@@ -209,7 +224,7 @@ def tournament(ctx, ignore_warnings):
     "--log",
     "-l",
     type=click.Path(dir_okay=True, file_okay=False),
-    default="~/negmas/logs/tournaments",
+    default=default_tournament_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
 @click.option(
@@ -294,6 +309,7 @@ def create(
     path,
     cw,
 ):
+    log = _path(log)
     if competitors == "default":
         if "2020" in ttype:
             competitors = "RandomAgent;BuyCheapSellExpensiveAgent;DoNothingAgent;DecentralizingAgent"
@@ -630,7 +646,7 @@ def create(
     "--log",
     "-l",
     type=click.Path(dir_okay=True, file_okay=False),
-    default="~/negmas/logs/tournaments",
+    default=default_tournament_path(),
     help="Default location to save logs",
 )
 @click.option(
@@ -694,6 +710,7 @@ def run(
         exit(1)
     if len(path) > 0:
         sys.path.append(path)
+
     saved_log_folder = ctx.obj.get("tournament_log_folder", None)
     if saved_log_folder is not None:
         log = saved_log_folder
@@ -749,10 +766,13 @@ def display_results(results, metric):
 
 def _path(path) -> Path:
     """Creates an absolute path from given path which can be a string"""
+    if isinstance(path, Path):
+        return Path.absolute()
+    path.replace("/", os.sep)
     if isinstance(path, str):
         if path.startswith("~"):
-            path = Path.home() / ("/".join(path.split("/")[1:]))
-    return pathlib.Path(path).absolute()
+            path = Path.home() / (os.sep.join(path.split(os.sep)[1:]))
+    return Path(path).absolute()
 
 
 @cli.command(help="Run an SCML2019 world simulation")
@@ -844,7 +864,7 @@ def _path(path) -> Path:
 @click.option(
     "--log",
     type=click.Path(file_okay=False, dir_okay=True),
-    default="~/negmas/logs",
+    default=default_log_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
 @click.option(
@@ -1005,10 +1025,7 @@ def run2019(
         "max_insurance_premium": max_insurance,
         "reserved_value": reserved_value,
     }
-    if log.startswith("~/"):
-        log_dir = Path.home() / log[2:]
-    else:
-        log_dir = Path(log)
+    log_dir = _path(log_dir)
     world_name = unique_name(base="scml", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
@@ -1243,7 +1260,7 @@ def run2019(
 @click.option(
     "--log",
     type=click.Path(file_okay=False, dir_okay=True),
-    default="~/negmas/logs",
+    default=default_world_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
 @click.option(
@@ -1338,10 +1355,9 @@ def run2020(
         log_ufuns = False
         log_negs = False
     neg_speedup = neg_speedup if neg_speedup is not None and neg_speedup > 0 else None
-    if log.startswith("~/"):
-        log_dir = Path.home() / log[2:]
-    else:
-        log_dir = Path(log)
+
+    log_dir = _path(log_dir)
+
     world_name = unique_name(base="scml2020", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
