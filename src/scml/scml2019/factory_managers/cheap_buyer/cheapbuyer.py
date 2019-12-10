@@ -93,7 +93,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         self.process = 0
         self.total_cost = 0
         self.amount_receivable = 0
-        self.negotiation_requests = 0
+        self._negotiation_requests = 0
         self.agents_bankrupt = 0
         self.successful_selling_negotiations = []
         self.failed_selling_negotiations = []
@@ -193,7 +193,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         failed_buying_negotiations = len(self.failed_buying_negotiations)
         failed_selling_negotiations = len(self.failed_selling_negotiations)
         average_buying_price = self.get_average_buying_price()
-        negotiation_requests = self.negotiation_requests
+        _negotiation_requests = self._negotiation_requests
         agents_bankrupt = self.agents_bankrupt
         amount_sold = self.amount_sold
         amount_receivable = self.amount_receivable
@@ -211,7 +211,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         #       +"\nFAILED SELLING NEGOTIATIONS : "+str(failed_selling_negotiations)
         #       +"\nAVERAGE BUYING PRICE : "+str(average_buying_price)
         #       +"\nAVERAGE SELLING PRICE : "+str(average_selling_price)
-        #       +"\nNEGOTIATION REQUESTS : "+str(negotiation_requests)
+        #       +"\nNEGOTIATION REQUESTS : "+str(_negotiation_requests)
         #       +"\nAGENTS BANKRUPT : "+str(agents_bankrupt)
         #       +"\nAMOUNT SOLD : "+str(amount_sold)
         #       +"\nAMOUNT RECEIVABLE : "+str(amount_receivable)
@@ -219,7 +219,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         #       +"\nBUY CONTRACT CANCELLATIONS : "+str(buy_contract_cancellations)
         #       +"\nAVAILABLE CFPS : "+str(len(available_cfps))
         #       +"\n")
-        self.negotiation_requests = 0
+        self._negotiation_requests = 0
         self.post_cfps()
         self.process_raw_materials()
 
@@ -564,7 +564,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
     def respond_to_negotiation_request(
             self, cfp: "CFP", partner: str
     ) -> Optional[Negotiator]:
-        self.negotiation_requests += 1
+        self._negotiation_requests += 1
         #print("NEGOTIATION REQUESTED : "+str(cfp))
 
         if partner == self.id or self.awi.is_bankrupt(partner):
