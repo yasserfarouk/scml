@@ -1254,7 +1254,7 @@ def run2019(
 @click.option("--lines", default=10, help="The number of lines per factory")
 @click.option(
     "--competitors",
-    default="RandomAgent",
+    default="RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent",
     help="A semicolon (;) separated list of agent types to use for the competition.",
 )
 @click.option(
@@ -1356,7 +1356,7 @@ def run2020(
         log_negs = False
     neg_speedup = neg_speedup if neg_speedup is not None and neg_speedup > 0 else None
 
-    log_dir = _path(log_dir)
+    log_dir = _path(log)
 
     world_name = unique_name(base="scml2020", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name

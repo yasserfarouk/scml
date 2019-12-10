@@ -105,13 +105,12 @@ class TestFactory:
         step=st.integers(-1, STEPS - 1),
         line=st.integers(-1, LINES - 1),
     )
-    @example(process=0, step=0, line=0)
     def test_scheduling(self, process, step, line):
         factory = create_factory()
         assert self.confirm_empty(factory.state)
         initial_state = copy.deepcopy(factory.state)
 
-        factory.schedule_production(process, step, line)
+        factory.schedule_production(process, 1, step, line)
         state = factory.state
         assert not self.confirm_same(initial_state, state)
         assert len(state.commands[np.nonzero(state.commands == process)]) == 1

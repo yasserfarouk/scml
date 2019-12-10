@@ -329,6 +329,7 @@ class Factory:
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
+        partial_ok: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Orders production of the given process on the given step and line.
@@ -342,6 +343,7 @@ class Factory:
             line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
             override: Whether to override any existing commands at that line at that time.
             method: When to schedule the command if step was set to a range. Options are latest, earliest, all
+            partial_ok: If true, it is OK to produce only a subset of repeats
 
         Returns:
 
@@ -356,10 +358,18 @@ class Factory:
               will be corrected.
 
         """
+        if self.is_bankrupt:
+            return np.empty(0, dtype=int), np.empty(0, dtype=int)
         steps, lines = self.available_for_production(
             repeats, step, line, override, method
         )
-        self.order_production(process, steps, lines)
+        if len(steps) < 1:
+            return np.empty(0, dtype=int), np.empty(0, dtype=int)
+        if len(steps) < repeats:
+            if not partial_ok:
+                return np.empty(0, dtype=int), np.empty(0, dtype=int)
+            repeats = len(steps)
+        self.order_production(process, steps[:repeats], lines[: repeats])
         return steps, lines
 
     def order_production(
@@ -1756,10 +1766,30 @@ class SCML2020World(TimeInAgreementMixin, World):
             production_costs *= np.arange(1, n_agents + 1)
         if not isinstance(agent_types, Iterable):
             agent_types = [agent_types] * n_agents
+            if agent_params is None:
+                agent_params = dict()
+            if isinstance(agent_params, dict):
+                agent_params = [copy.copy(agent_params)  for _ in range(n_agents)]
+            else:
+                assert len(agent_params) == 1
+                agent_params = [copy.copy(agent_params[0]) for _ in range(n_agents)]
         elif len(agent_types) != n_agents:
-            agent_types = random.choices(agent_types, k=n_agents)
+            if agent_params is None:
+                agent_params = [dict()] * len(agent_types)
+            if isinstance(agent_params, dict):
+                agent_params = [copy.copy(agent_params)  for _ in range(len(agent_types))]
+            assert len(agent_types) == len(agent_params)
+            tp = random.choices(list(range(len(agent_types))), k=n_agents)
+            agent_types = [agent_types[_] for _ in tp]
+            agent_params = [agent_params[_] for _ in tp]
         else:
+            if agent_params is None:
+                agent_params = [dict()] * len(agent_types)
+            if isinstance(agent_params, dict):
+                agent_params = [copy.copy(agent_params)  for _ in range(len(agent_types))]
             agent_types = list(agent_types)
+            agent_params = list(agent_params)
+            assert len(agent_types) == len(agent_params)
 
         # generate production costs making sure that every agent can do exactly one process
         first_agent = [0] + n_agents_per_process[1:].cumsum().tolist()
