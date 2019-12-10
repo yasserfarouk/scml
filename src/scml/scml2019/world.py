@@ -236,7 +236,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             default_signing_delay=default_signing_delay,
             start_negotiations_immediately=start_negotiations_immediately,
             neg_step_time_limit=neg_step_time_limit,
-            mechanisms={"negmas.sao.SAOMechanism": {}}
+            mechanisms={"negmas.sao.SAOMechanism": {"keep_issue_names": True}}
             if mechanisms is None
             else mechanisms,
             log_to_screen=log_to_screen,

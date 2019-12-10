@@ -78,7 +78,7 @@ class PrintingFactoryManager(DoNothingFactoryManager):
                 sign_only_guaranteed_contracts=False,
                 riskiness=0.0,
                 max_insurance_premium: float = 0.0,
-                reserved_value: float = None,
+                reserved_value: float = -float("inf"),
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -605,7 +605,7 @@ class NonDemandDrivenAgent(PrintingFactoryManager):
     def init(self):
         """Called once after the agent-world interface is initialized"""
         super().init()
-        self.__reserved_value = None
+        self.__reserved_value = -float("inf")
 
         self.add_i = 0
         pass

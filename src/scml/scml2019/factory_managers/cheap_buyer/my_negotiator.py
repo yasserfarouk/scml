@@ -12,8 +12,6 @@ class Mynegotiator(AspirationNegotiator):
     def __init__(self, name, ufun, cfp, partner_id):
         self.offers = {}  #  list of offers in that negotiator
         self.ufun = ufun
-        if self.ufun.reserved_value is None:
-            self.ufun.reserved_value = float("-inf")
         self.partner_id = partner_id
         self.partner_offers = []
         self.cfp: CFP = cfp
