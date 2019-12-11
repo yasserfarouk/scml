@@ -116,6 +116,11 @@ class StepController(SAOController, AspirationMixin, Notifier):
         self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
         return self.__negotiator.respond(offer=offer, state=state)
 
+    def __str__(self):
+        return f"{'selling' if self.is_seller else 'buying'} p{self.product} [{self.step}] " \
+               f"secured {self.secured} of {self.target} for {self.__parent.name} " \
+               f"({self.completed} completed of {len(self.negotiators)} negotiators)"
+
     def create_negotiator(
         self,
         negotiator_type: Union[str, Type[PassThroughNegotiator]] = None,
@@ -138,6 +143,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
         if agreement is not None:
             self.secured += agreement["quantity"]
             if self.secured >= self.target:
+                awi.loginfo(f"Ending all negotiations on controller {str(self)}")
                 # If we are done, end all other negotiations
                 for k in self.negotiators.keys():
                     if self.completed[k]:
@@ -149,6 +155,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
         if all(self.completed.values()):
             # If we secured everything, just return control to the agent
             if self.secured >= self.target:
+                awi.loginfo(f"Secured Everything: {str(self)}")
                 self.__parent.all_negotiations_concluded(self.step, self.is_seller)
                 return
             # If we did not secure everything we need yet and time allows it, create new negotiations
@@ -166,6 +173,8 @@ class StepController(SAOController, AspirationMixin, Notifier):
                 self.retries[partner] += 1
                 neg = self.create_negotiator()
                 self.completed[neg.id] = False
+                awi.loginfo(f"{str(self)} negotiating with {partner} on u={self.urange}"
+                            f", q=(1,{self.target-self.secured}), u=({tmin}, {tmax})")
                 awi.request_negotiation(
                     not self.is_seller,
                     product=self.product,
@@ -208,9 +217,11 @@ class DecentralizingAgent(DoNothingAgent):
         predicted_demand: Union[int, np.ndarray] = None,
         predicted_supply: Union[int, np.ndarray] = None,
         agreement_fraction: float = 0.5,
+        adapt_prices: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.adapt_prices = adapt_prices
         self.predicted_demand = predicted_demand
         self.predicted_supply = predicted_supply
         self.negotiator_type = get_class(negotiator_type)
@@ -363,6 +374,8 @@ class DecentralizingAgent(DoNothingAgent):
                 issues[TIME].min_value : issues[TIME].max_value + 1
             ] += int(math.ceil(self.agreement_fraction * issues[QUANTITY].max_value))
 
+        self.awi.loginfo(f"Accepting request from {initiator}: {[str(_) for _ in mechanism.issues]} "
+                         f"({Issue.num_outcomes(mechanism.issues)})")
         # create a controller for the time-step if one does not exist or use the one already running
         if controller_info.controller is None:
             controller = self.add_controller(
@@ -498,6 +511,7 @@ class DecentralizingAgent(DoNothingAgent):
             controllers, generator = self.buyers, self.generate_buy_negotiations
 
         negotiating[time_range[0] : time_range[1] + 1] -= expected
+        self.awi.loginfo(f"Killing Controller {str(controllers[controller_index].controller)}")
         controllers[controller_index].controller = None
         if quantity <= target:
             secured[time_range[0]] += quantity
@@ -619,6 +633,9 @@ class DecentralizingAgent(DoNothingAgent):
         controller = self.add_controller(
             is_seller, qvalues[1], uvalues, expected_quantity, step
         )
+        awi.loginfo(f"Requesting {'selling' if is_seller else 'buying'} negotiation "
+                    f"on u={uvalues}, q={qvalues}, t={tvalues}"
+                    f" with {str(partners)} using {str(controller)}")
         self.awi.request_negotiations(
             is_buy=not is_seller,
             product=product,
@@ -656,6 +673,10 @@ class DecentralizingAgent(DoNothingAgent):
         expected_quantity: int,
         step: int,
     ) -> StepController:
+        if is_seller and self.sellers[step].controller is not None:
+            return self.sellers[step].controller
+        if not is_seller and self.buyers[step].controller is not None:
+            return self.buyers[step].controller
         controller = StepController(
             is_seller=is_seller,
             target_quantity=target,
@@ -693,18 +714,22 @@ class DecentralizingAgent(DoNothingAgent):
 
     def _urange(self, step, is_seller, time_range):
         if is_seller:
-            cprice = self.output_price[time_range[0] : time_range[1]]
+            cprice = self.awi.catalog_prices[self.output_product]
+            if self.adapt_prices:
+                cprice = self.output_price[time_range[0] : time_range[1]]
+                if len(cprice):
+                    cprice = int(cprice.mean())
+                else:
+                    cprice = self.awi.catalog_prices[self.output_product]
+            return cprice, 2 * cprice
+
+        cprice = self.awi.catalog_prices[self.input_product]
+        if self.adapt_prices:
+            cprice = self.input_cost[time_range[0] : time_range[1]]
             if len(cprice):
                 cprice = int(cprice.mean())
             else:
                 cprice = self.awi.catalog_prices[self.input_product]
-            return cprice, 2 * cprice
-
-        cprice = self.input_cost[time_range[0] : time_range[1]]
-        if len(cprice):
-            cprice = int(cprice.mean())
-        else:
-            cprice = self.awi.catalog_prices[self.output_product]
         return 1, cprice
 
     def _trange(self, step, is_seller):
