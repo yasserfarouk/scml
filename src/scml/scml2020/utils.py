@@ -378,6 +378,7 @@ def anac2020_tournament(
     max_worlds_per_config: int = 1000,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
+    min_factories_per_level: int = 2,
     tournament_path: str = "./logs/tournaments",
     total_timeout: Optional[int] = None,
     parallelism="parallel",
@@ -406,6 +407,7 @@ def anac2020_tournament(
         n_runs_per_world: Number of runs per world. All of these world runs will have identical competitor assignment
                           and identical world configuration.
         n_agents_per_competitor: Number of agents per competitor
+        min_factories_per_level: Minimum number of factories for each production level
         total_timeout: Total timeout for the complete process
         tournament_path: Path at which to store all results. A scores.csv file will keep the scores and logs folder will
                          keep detailed logs
@@ -443,6 +445,7 @@ def anac2020_tournament(
         parallelism=parallelism,
         scheduler_ip=scheduler_ip,
         scheduler_port=scheduler_port,
+        min_factories_per_level=min_factories_per_level,
         tournament_progress_callback=tournament_progress_callback,
         world_progress_callback=world_progress_callback,
         name=name,
@@ -462,7 +465,7 @@ def anac2020_std(
     n_configs: int = 5,
     max_worlds_per_config: Optional[int] = 1000,
     n_runs_per_world: int = 5,
-    min_factories_per_level: int = 5,
+    min_factories_per_level: int = 2,
     tournament_path: str = "./logs/tournaments",
     total_timeout: Optional[int] = None,
     parallelism="parallel",
@@ -564,7 +567,7 @@ def anac2020_collusion(
     max_worlds_per_config: Optional[int] = 1000,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
-    min_factories_per_level: int = 5,
+    min_factories_per_level: int = 2,
     tournament_path: str = "./logs/tournaments",
     total_timeout: Optional[int] = None,
     parallelism="parallel",
