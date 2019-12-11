@@ -60,6 +60,13 @@ n_completed = 0
 n_total = 0
 
 
+def get_range(x, x_min, x_max):
+    """Gets a range with possibly overriding it with a single value"""
+    if x is not None:
+        return x, x
+    return x_min, x_max
+
+
 def default_log_path():
     """Default location for all logs"""
     return Path.home() / "negmas" / "logs"
@@ -196,10 +203,7 @@ def tournament(ctx, ignore_warnings):
     help="Number of agents per competitor (not used for anac2019std in which this is preset to 1).",
 )
 @click.option(
-    "--factories",
-    default=2,
-    type=int,
-    help="Minimum numbers of factories to have per level.",
+    "--factories", default=2, type=int, help="Numbers of factories to have per level."
 )
 @click.option(
     "--competitors",
@@ -280,6 +284,203 @@ def tournament(ctx, ignore_warnings):
     "either be left at default or be a number > 1 and < the number "
     "of competitors passed using --competitors",
 )
+@click.option(
+    "--factories-min",
+    default=2,
+    type=int,
+    help="SCML2020: Minimum number of agents per production level",
+)
+@click.option(
+    "--factories-max",
+    default=10,
+    type=int,
+    help="SCML2020: Maximum number of agents per production level",
+)
+@click.option(
+    "--inputs",
+    type=int,
+    default=1,
+    help="SCML2020: The number inputs to each production process",
+)
+@click.option(
+    "--inputs-min",
+    type=int,
+    default=1,
+    help="SCML2020: The minimum number inputs to each production process",
+)
+@click.option(
+    "--inputs-max",
+    type=int,
+    default=1,
+    help="SCML2020: The maximum number inputs to each production process",
+)
+@click.option(
+    "--outputs",
+    type=int,
+    default=1,
+    help="SCML2020: The number outputs to each production process",
+)
+@click.option(
+    "--outputs-min",
+    type=int,
+    default=1,
+    help="SCML2020: The minimum number outputs to each production process",
+)
+@click.option(
+    "--outputs-max",
+    type=int,
+    default=1,
+    help="The maximum number outputs to each production process",
+)
+@click.option(
+    "--costs",
+    type=int,
+    default=None,
+    help="SCML2020: The production cost (see --increasing-costs, --costs-min, --costs-max)",
+)
+@click.option(
+    "--costs-min", type=int, default=1, help="SCML2020: The minimum production cost"
+)
+@click.option(
+    "--costs-max", type=int, default=10, help="SCML2020: The maximum production cost"
+)
+@click.option(
+    "--productivity",
+    type=float,
+    default=None,
+    help="SCML2020: The fraction of production slots (lines/steps) that can be occupied with production given the "
+    "external contracts",
+)
+@click.option(
+    "--productivity-min",
+    type=float,
+    default=0.8,
+    help="SCML2020: The minimum fraction of production slots (lines/steps) that can be occupied with production given the "
+    "external contracts",
+)
+@click.option(
+    "--productivity-max",
+    type=float,
+    default=1.0,
+    help="SCML2020: The maximum fraction of production slots (lines/steps) that can be occupied with production given the "
+    "external contracts",
+)
+@click.option(
+    "--cash-availability",
+    type=float,
+    default=None,
+    help="SCML2020: The availability of cash which is a nubmer between zero and one specifying how much of the total"
+    " production requirements of agents is available as initial balance. It is only effective"
+    " when --balance < 0",
+)
+@click.option(
+    "--cash-availability-min",
+    type=float,
+    default=0.8,
+    help="SCML2020: The availability of cash which is a nubmer between zero and one specifying how much of the total"
+    " production requirements of agents is available as initial balance. It is only effective"
+    " when --balance < 0",
+)
+@click.option(
+    "--cash-availability-max",
+    type=float,
+    default=1.0,
+    help="SCML2020: The availability of cash which is a nubmer between zero and one specifying how much of the total"
+    " production requirements of agents is available as initial balance. It is only effective"
+    " when --balance < 0",
+)
+@click.option(
+    "--profit-mean",
+    type=float,
+    default=0.15,
+    help="SCML2020: The mean of the expected profit used to select catalog prices for the world",
+)
+@click.option(
+    "--profit-std",
+    type=float,
+    default=0.05,
+    help="SCML2020: The std. dev. of the expected profit used to select catalog prices for the world",
+)
+@click.option(
+    "--increasing-costs/--fixed-costs",
+    default=True,
+    help="SCML2020: Whether to increase the costs with production level (i.e. processes near the end"
+    " of the chain become more costly to run than those near the raw material)",
+)
+@click.option(
+    "--equal-external-supplies/--variable-external-supplies",
+    default=False,
+    help="SCML2020: Whether external supplies are equal for all agents executing process 0",
+)
+@click.option(
+    "--equal-external-sales/--variable-external-sales",
+    default=False,
+    help="SCML2020: Whether external sales are equal for all agents executing the last prodess",
+)
+@click.option(
+    "--buy-missing/--inventory-breach",
+    default=True,
+    help="SCML2020: If true, missing products will be assumed to be bought from an external source at a price"
+    " higher than both the catalog price and the unit price in the contract.",
+)
+@click.option(
+    "--borrow/--fine",
+    default=True,
+    help="SCML2020: If --borrow, agents will borrow when they commit a breach and will pay the breach penalty as part of "
+    "this borrowing process. If --fine, agents that commit a breach will be fined and the contract will not "
+    "execute fully.",
+)
+@click.option(
+    "--borrow-to-produce/--fail-to-produce",
+    default=True,
+    help="SCML2020: If a production command cannot be executed, should the agent borrow to do the production"
+    " (i.e. buying missing inputs at higher than catalog price and borrowing to cover production "
+    "costs) or not.",
+)
+@click.option(
+    "--bankruptcy-limit",
+    type=float,
+    default=1.0,
+    help="SCML2020: Fraction of the average initial balance that agents are allowed to borrow before going bankrupt",
+)
+@click.option(
+    "--penalty",
+    type=float,
+    default=0.2,
+    help="SCML2020: The penalty relative to the breach committed.",
+)
+@click.option(
+    "--reports",
+    type=int,
+    default=5,
+    help="SCML2020: The period for financial report publication",
+)
+@click.option(
+    "--interest",
+    type=float,
+    default=0.05,
+    help="SCML2020: Interest rate for negative balances (borrowed money)",
+)
+@click.option(
+    "--force-external/--choose-external-quantity",
+    default=True,
+    help="SCML2020: Whether the external contracts are forced to their full quantity"
+    " or agents can choose the quantity they want up to the value in the "
+    "external contract.",
+)
+@click.option(
+    "--balance",
+    default=-1,
+    type=int,
+    help="SCML2020: Initial balance of all factories. A negative number will make the balance"
+    " automatically calculated by the system. It will go up with process level",
+)
+@click.option(
+    "--processes",
+    default=3,
+    type=int,
+    help="SCML2020: Number of processes. Should never be less than 2",
+)
 @click_config_file.configuration_option()
 @click.pass_context
 def create(
@@ -308,7 +509,83 @@ def create(
     steps_max,
     path,
     cw,
+    inputs,
+    inputs_min,
+    inputs_max,
+    outputs,
+    outputs_min,
+    outputs_max,
+    costs,
+    costs_min,
+    costs_max,
+    increasing_costs,
+    equal_external_supplies,
+    equal_external_sales,
+    profit_mean,
+    profit_std,
+    productivity,
+    productivity_min,
+    productivity_max,
+    cash_availability,
+    cash_availability_min,
+    cash_availability_max,
+    buy_missing,
+    borrow,
+    bankruptcy_limit,
+    penalty,
+    reports,
+    interest,
+    force_external,
+    borrow_to_produce,
+    balance,
+    processes,
+    factories_min,
+    factories_max,
 ):
+    if balance < 0:
+        balance = None
+    productivity = get_range(productivity, productivity_min, productivity_max)
+    cash_availability = get_range(
+        cash_availability, cash_availability_min, cash_availability_max
+    )
+    inputs = get_range(inputs, inputs_min, inputs_max)
+    if "2020" in ttype:
+        factories = (min(factories, factories_min), max(factories, factories_max))
+    outputs = get_range(outputs, outputs_min, outputs_max)
+    costs = get_range(costs, costs_min, costs_max)
+    kwargs = {}
+    if world_config is not None and len(world_config) > 0:
+        for wc in world_config:
+            kwargs.update(load(wc))
+    if "2020" in ttype:
+        kwargs.update(
+            {
+                "n_processes": processes,
+                "process_inputs": inputs,
+                "process_outputs": outputs,
+                "production_costs": costs,
+                "cost_increases_with_level": increasing_costs,
+                "equal_external_supply": equal_external_supplies,
+                "equal_external_sales": equal_external_sales,
+                "max_productivity": productivity,
+                "cash_availability": cash_availability,
+                "profit_means": profit_mean,
+                "profit_stddevs": profit_std,
+                "buy_missing_products": buy_missing,
+                "borrow_on_breach": borrow,
+                "bankruptcy_limit": bankruptcy_limit,
+                "breach_penalty": penalty,
+                "production_penalty": penalty,
+                "external_penalty": penalty,
+                "financial_report_period": reports,
+                "interest_rate": interest,
+                "external_force_max": force_external,
+                "production_no_borrow": not borrow_to_produce,
+                "production_no_bankruptcy": not borrow_to_produce,
+                "initial_balance": balance,
+            }
+        )
+
     log = _path(log)
     if competitors == "default":
         if "2020" in ttype:
@@ -322,10 +599,6 @@ def create(
 
     if len(path) > 0:
         sys.path.append(path)
-    kwargs = {}
-    if world_config is not None and len(world_config) > 0:
-        for wc in world_config:
-            kwargs.update(load(wc))
     warning_n_runs = 2000
     if timeout <= 0:
         timeout = None
@@ -521,7 +794,8 @@ def create(
             config_generator=anac2020_config_generator,
             config_assigner=anac2020_assigner,
             score_calculator=scml.scml2020.utils.balance_calculator2020,
-            min_factories_per_level=factories,
+            min_factories_per_level=factories[0],
+            max_factories_per_level=factories[1],
             compact=compact,
             n_steps=steps,
             log_ufuns=log_ufuns,
@@ -586,7 +860,8 @@ def create(
             config_generator=anac2019_config_generator,
             config_assigner=anac2019_assigner,
             score_calculator=scml.scml2020.utils.balance_calculator2020,
-            min_factories_per_level=factories,
+            min_factories_per_level=factories[0],
+            max_factories_per_level=factories[1],
             compact=compact,
             n_steps=steps,
             log_ufuns=log_ufuns,
@@ -900,7 +1175,10 @@ def _path(path) -> Path:
     help="Whether to ignore agent exceptions",
 )
 @click.option(
-    "--balance", default="1000.0", type=float, help="Initial balance of all factories"
+    "--balance",
+    default=1000,
+    type=float,
+    help="Initial balance of all factories (see --increasing-balance)",
 )
 @click.option(
     "--path",
@@ -1238,10 +1516,19 @@ def run2019(
 )
 @click.option("--neg-speedup", default=21, help="Negotiation Speedup.")
 @click.option(
-    "--agents",
-    default=5,
+    "--factories", default=None, type=int, help="Number of agents per production level"
+)
+@click.option(
+    "--factories-min",
+    default=2,
     type=int,
-    help="Number of agents (miners/negmas.consumers) per production level",
+    help="Minimum number of agents per production level",
+)
+@click.option(
+    "--factories-max",
+    default=10,
+    type=int,
+    help="Maximum number of agents per production level",
 )
 @click.option("--horizon", default=15, type=int, help="Exogenous contracts horizon.")
 @click.option("--time", default=7200, type=int, help="Total time limit.")
@@ -1251,7 +1538,174 @@ def run2019(
 @click.option(
     "--neg-steps", default=20, type=int, help="Number of rounds per single negotiation"
 )
-@click.option("--lines", default=10, help="The number of lines per factory")
+@click.option(
+    "--lines",
+    type=int,
+    default=10,
+    help="The number of lines per factory. Overrides " "--lines-min, --lines-max",
+)
+@click.option(
+    "--inputs", type=int, default=1, help="The number inputs to each production process"
+)
+@click.option(
+    "--inputs-min",
+    type=int,
+    default=1,
+    help="The minimum number inputs to each production process",
+)
+@click.option(
+    "--inputs-max",
+    type=int,
+    default=1,
+    help="The maximum number inputs to each production process",
+)
+@click.option(
+    "--outputs",
+    type=int,
+    default=1,
+    help="The number outputs to each production process",
+)
+@click.option(
+    "--outputs-min",
+    type=int,
+    default=1,
+    help="The minimum number outputs to each production process",
+)
+@click.option(
+    "--outputs-max",
+    type=int,
+    default=1,
+    help="The maximum number outputs to each production process",
+)
+@click.option(
+    "--costs",
+    type=int,
+    default=None,
+    help="The production cost (see --increasing-costs, --costs-min, --costs-max)",
+)
+@click.option("--costs-min", type=int, default=1, help="The minimum production cost")
+@click.option("--costs-max", type=int, default=10, help="The maximum production cost")
+@click.option(
+    "--productivity",
+    type=float,
+    default=None,
+    help="The fraction of production slots (lines/steps) that can be occupied with production given the "
+    "external contracts",
+)
+@click.option(
+    "--productivity-min",
+    type=float,
+    default=0.8,
+    help="The minimum fraction of production slots (lines/steps) that can be occupied with production given the "
+    "external contracts",
+)
+@click.option(
+    "--productivity-max",
+    type=float,
+    default=1.0,
+    help="The maximum fraction of production slots (lines/steps) that can be occupied with production given the "
+    "external contracts",
+)
+@click.option(
+    "--cash-availability",
+    type=float,
+    default=None,
+    help="The availability of cash which is a nubmer between zero and one specifying how much of the total"
+    " production requirements of agents is available as initial balance. It is only effective"
+    " when --balance < 0",
+)
+@click.option(
+    "--cash-availability-min",
+    type=float,
+    default=0.8,
+    help="The availability of cash which is a nubmer between zero and one specifying how much of the total"
+    " production requirements of agents is available as initial balance. It is only effective"
+    " when --balance < 0",
+)
+@click.option(
+    "--cash-availability-max",
+    type=float,
+    default=1.0,
+    help="The availability of cash which is a nubmer between zero and one specifying how much of the total"
+    " production requirements of agents is available as initial balance. It is only effective"
+    " when --balance < 0",
+)
+@click.option(
+    "--profit-mean",
+    type=float,
+    default=0.15,
+    help="The mean of the expected profit used to select catalog prices for the world",
+)
+@click.option(
+    "--profit-std",
+    type=float,
+    default=0.05,
+    help="The std. dev. of the expected profit used to select catalog prices for the world",
+)
+@click.option(
+    "--increasing-costs/--fixed-costs",
+    default=True,
+    help="Whether to increase the costs with production level (i.e. processes near the end"
+    " of the chain become more costly to run than those near the raw material)",
+)
+@click.option(
+    "--equal-external-supplies/--variable-external-supplies",
+    default=False,
+    help="Whether external supplies are equal for all agents executing process 0",
+)
+@click.option(
+    "--equal-external-sales/--variable-external-sales",
+    default=False,
+    help="Whether external sales are equal for all agents executing the last prodess",
+)
+@click.option(
+    "--buy-missing/--inventory-breach",
+    default=True,
+    help="If true, missing products will be assumed to be bought from an external source at a price"
+    " higher than both the catalog price and the unit price in the contract.",
+)
+@click.option(
+    "--borrow/--fine",
+    default=True,
+    help="If --borrow, agents will borrow when they commit a breach and will pay the breach penalty as part of "
+    "this borrowing process. If --fine, agents that commit a breach will be fined and the contract will not "
+    "execute fully.",
+)
+@click.option(
+    "--borrow-to-produce/--fail-to-produce",
+    default=True,
+    help="If a production command cannot be executed, should the agent borrow to do the production"
+    " (i.e. buying missing inputs at higher than catalog price and borrowing to cover production "
+    "costs) or not.",
+)
+@click.option(
+    "--bankruptcy-limit",
+    type=float,
+    default=1.0,
+    help="Fraction of the average initial balance that agents are allowed to borrow before going bankrupt",
+)
+@click.option(
+    "--penalty",
+    type=float,
+    default=0.2,
+    help="The penalty relative to the breach committed.",
+)
+@click.option(
+    "--reports", type=int, default=5, help="The period for financial report publication"
+)
+@click.option(
+    "--interest",
+    type=float,
+    default=0.05,
+    help="Interest rate for negative balances (borrowed money)",
+)
+@click.option(
+    "--force-external/--choose-external-quantity",
+    default=True,
+    help="Whether the external contracts are forced to their full quantity"
+    " or agents can choose the quantity they want up to the value in the "
+    "external contract.",
+)
 @click.option(
     "--competitors",
     default="RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent",
@@ -1309,7 +1763,9 @@ def run2020(
     steps,
     processes,
     neg_speedup,
-    agents,
+    factories,
+    factories_min,
+    factories_max,
     horizon,
     time,
     neg_time,
@@ -1324,33 +1780,85 @@ def run2020(
     raise_exceptions,
     path,
     world_config,
+    inputs,
+    inputs_min,
+    inputs_max,
+    outputs,
+    outputs_min,
+    outputs_max,
+    costs,
+    costs_min,
+    costs_max,
+    increasing_costs,
+    equal_external_supplies,
+    equal_external_sales,
+    profit_mean,
+    profit_std,
+    productivity,
+    productivity_min,
+    productivity_max,
+    cash_availability,
+    cash_availability_min,
+    cash_availability_max,
+    buy_missing,
+    borrow,
+    bankruptcy_limit,
+    penalty,
+    reports,
+    interest,
+    force_external,
+    borrow_to_produce,
 ):
     if balance < 0:
         balance = None
-    kwargs = dict(
-        neg_step_time_limit=10,
-        breach_penalty=0.2,
-        interest_rate=0.08,
-        bankruptcy_limit=1.0,
-        start_negotiations_immediately=False,
+    productivity = get_range(productivity, productivity_min, productivity_max)
+    cash_availability = get_range(
+        cash_availability, cash_availability_min, cash_availability_max
     )
+    factories = get_range(factories, factories_min, factories_max)
+    inputs = get_range(inputs, inputs_min, inputs_max)
+    outputs = get_range(outputs, outputs_min, outputs_max)
+    costs = get_range(costs, costs_min, costs_max)
+    kwargs = {}
     if world_config is not None and len(world_config) > 0:
         for wc in world_config:
             kwargs.update(load(wc))
     if len(path) > 0:
         sys.path.append(path)
 
-    params = {
-        "steps": steps,
-        "n_processes": processes,
-        "neg_speedup": neg_speedup,
-        "agents": agents,
-        "horizon": horizon,
-        "time": time,
-        "neg_time": neg_time,
-        "neg_steps": neg_steps,
-        "lines": lines,
-    }
+    kwargs.update(
+        {
+            "n_steps": steps,
+            "n_processes": processes,
+            "negotiation_speed": neg_speedup,
+            "process_inputs": inputs,
+            "process_outputs": outputs,
+            "production_costs": costs,
+            "cost_increases_with_level": increasing_costs,
+            "equal_external_supply": equal_external_supplies,
+            "equal_external_sales": equal_external_sales,
+            "max_productivity": productivity,
+            "cash_availability": cash_availability,
+            "profit_means": profit_mean,
+            "profit_stddevs": profit_std,
+            "buy_missing_products": buy_missing,
+            "borrow_on_breach": borrow,
+            "bankruptcy_limit": bankruptcy_limit,
+            "breach_penalty": penalty,
+            "production_penalty": penalty,
+            "external_penalty": penalty,
+            "financial_report_period": reports,
+            "interest_rate": interest,
+            "external_force_max": force_external,
+            "production_no_borrow": not borrow_to_produce,
+            "production_no_bankruptcy": not borrow_to_produce,
+            "n_agents_per_process": factories,
+            "initial_balance": balance,
+        }
+    )
+
+    params = kwargs
+
     if compact:
         log_ufuns = False
         log_negs = False
@@ -1375,10 +1883,6 @@ def run2020(
     all_competitors_params = [dict() for _ in all_competitors]
     world = scml.SCML2020World(
         **scml.SCML2020World.generate(
-            n_steps=steps,
-            negotiation_speed=neg_speedup,
-            n_processes=processes,
-            n_agents_per_process=agents,
             time_limit=time,
             neg_time_limit=neg_time,
             neg_n_steps=neg_steps,
@@ -1390,7 +1894,6 @@ def run2020(
             log_negotiations=log_negs,
             log_folder=log_dir,
             name=world_name,
-            initial_balance=balance,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
             **kwargs,
@@ -1418,7 +1921,7 @@ def run2020(
     world.logdebug(
         f"=================================================\n"
         f"steps: {steps}, horizon: {horizon}, time: {time}, processes: {processes}, agents_per_process: "
-        f"{agents}, lines: {lines}, speedup: {neg_speedup}, neg_steps: {neg_steps}"
+        f"{factories}, lines: {lines}, speedup: {neg_speedup}, neg_steps: {neg_steps}"
         f", neg_time: {neg_time}\n"
         f"=================================================="
     )
