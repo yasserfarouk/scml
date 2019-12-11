@@ -44,6 +44,8 @@ from negmas import (
 from negmas.helpers import instantiate, unique_name, get_class, get_full_type_name
 from negmas.situated import World, TimeInAgreementMixin, BreachProcessing
 
+from scml.scml2019.utils import _realin
+
 __all__ = [
     "FactoryState",
     "SCML2020Agent",
@@ -1441,7 +1443,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         # compensation parameters (for victims of bankrupt agents)
         compensation_fraction=1.0,
         compensate_immediately=False,
-        compensate_before_past_debt=False,
+        compensate_before_past_debt=True,
         # external contracts parameters
         external_force_max=True,
         external_no_borrow=False,
@@ -2019,6 +2021,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 nxt += 1
         assert nxt == n_agents
         if initial_balance is None:
+            cash_availability = _realin(cash_availability)
             balance = np.ceil(
                 np.sum(total_costs, axis=1) / n_agents_per_process
             ).astype(int)
