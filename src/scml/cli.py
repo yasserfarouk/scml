@@ -197,7 +197,7 @@ def tournament(ctx, ignore_warnings):
 )
 @click.option(
     "--factories",
-    default=5,
+    default=2,
     type=int,
     help="Minimum numbers of factories to have per level.",
 )
@@ -1025,7 +1025,7 @@ def run2019(
         "max_insurance_premium": max_insurance,
         "reserved_value": reserved_value,
     }
-    log_dir = _path(log_dir)
+    log_dir = _path(log)
     world_name = unique_name(base="scml", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
@@ -1243,7 +1243,7 @@ def run2019(
     type=int,
     help="Number of agents (miners/negmas.consumers) per production level",
 )
-@click.option("--horizon", default=15, type=int, help="Excogenous contracts horizon.")
+@click.option("--horizon", default=15, type=int, help="Exogenous contracts horizon.")
 @click.option("--time", default=7200, type=int, help="Total time limit.")
 @click.option(
     "--neg-time", default=120, type=int, help="Time limit per single negotiation"
