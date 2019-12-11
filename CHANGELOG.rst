@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.1.5 (2019.12.11)
+------------------
+
+* correcting tournament implementation for SCML2020
+* updates to SCML2019 agents to be compatible with newer versions of negmas
+
 0.1.3 (2019-12-08)
 ------------------
 
