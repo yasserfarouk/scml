@@ -111,7 +111,6 @@ def anac2020_config_generator(
     n_processes: Tuple[int, int] = (2, 5),
     min_factories_per_level: int = 2,  # strictly guaranteed
     max_factories_per_level: int = 6,  # not strictly guaranteed
-    n_default_managers: Tuple[int, int] = (0, 0),
     n_lines: int = 10,
     **kwargs,
 ) -> List[Dict[str, Any]]:
@@ -126,11 +125,16 @@ def anac2020_config_generator(
     n_steps = _intin(n_steps)
 
     n_processes = randint(*n_processes)
-
-    n_defaults = []
-    for level in range(n_processes):
-        n_defaults.append(_intin(n_default_managers))
     n_agents = n_agents_per_competitor * n_competitors
+    n_default_managers = (
+        min(
+            n_processes * max_factories_per_level,
+            max(0, n_processes * min_factories_per_level),
+        )
+        - n_agents
+    )
+    n_defaults = integer_cut(n_default_managers, n_processes, 0)
+
     n_a_list = integer_cut(n_agents, n_processes, 0)
     for i, n_a in enumerate(n_a_list):
         if n_a + n_defaults[i] < min_factories_per_level:
@@ -190,7 +194,10 @@ def anac2020_config_generator(
         bankruptcy_limit=1.0,
         initial_balance=None,
         start_negotiations_immediately=False,
+        n_agents_per_process=n_f_list,
+        n_processes=n_processes,
         n_steps=n_steps,
+        n_lines=n_lines,
         compact=compact,
     )
     world_params.update(kwargs)
@@ -231,7 +238,7 @@ def anac2020_assigner(
         n_permutations = None
 
     agent_types = config["agent_types"]
-
+    is_default = [_ is not None for _ in agent_types]
     assignable_factories = [i for i, mtype in enumerate(agent_types) if mtype is None]
     shuffle(assignable_factories)
     assignable_factories = (
@@ -245,6 +252,7 @@ def anac2020_assigner(
     def _copy_config(perm_, c, indx):
         new_config = copy.deepcopy(c)
         new_config["world_params"]["name"] += f".{indx:05d}"
+        new_config["is_default"] = is_default
         for (a, p_), assignable in zip(perm_, assignable_factories):
             for factory in assignable:
                 new_config["agent_types"][factory] = a
@@ -256,9 +264,10 @@ def anac2020_assigner(
         permutation = list(zip(competitors, params))
         assert len(permutation) == len(assignable_factories)
         shuffle(permutation)
+        perm = permutation
         for __ in range(n_permutations):
             k += 1
-            perm = copy.deepcopy(permutation)
+            perm = copy.deepcopy(perm)
             perm = perm[-1:] + perm[:-1]
             configs.append(_copy_config(perm, config, k))
     elif max_n_worlds is None:
@@ -293,8 +302,14 @@ def anac2020_assigner(
 
 
 def anac2020_world_generator(**kwargs):
-    kwargs["world_params"]["agent_types"] = kwargs["agent_types"]
-    world = SCML2020World(**SCML2020World.generate(**kwargs["world_params"]))
+    assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
+        kwargs["world_params"]["agent_types"]
+    )
+    cnfg = SCML2020World.generate(**kwargs["world_params"])
+    if "info" not in cnfg.keys():
+        cnfg["info"] = dict()
+    cnfg["info"]["is_default"] = kwargs["is_default"]
+    world = SCML2020World(**cnfg)
     return world
 
 
@@ -325,18 +340,25 @@ def balance_calculator2020(
         world_names=[world.name], log_file_names=[world.log_file_name]
     )
     initial_balances = []
-    for manager in world.agents.values():
-        if "_df_" in manager.name and ignore_default:
+    is_default = world.info["is_default"]
+    factories = world.factories
+    agents = [world.agents[f.agent_id] for f in factories]
+    agent_types = world.agent_unique_types
+    if len(set(agent_types)) == len(set(world.agent_types)):
+        agent_types = world.agent_types
+    for i, factory in enumerate(factories):
+        if is_default[i] and ignore_default:
             continue
-        initial_balances.append(world.a2f[manager.id].initial_balance)
+        initial_balances.append(factory.initial_balance)
     normalize = all(_ != 0 for _ in initial_balances)
-    for manager in world.agents.values():
-        if "_df_" in manager.name and ignore_default:
+    for default, factory, manager, agent_type in zip(
+        is_default, factories, agents, agent_types
+    ):
+        if default and ignore_default:
             continue
-        factory = world.a2f[manager.id]
         result.names.append(manager.name)
         result.ids.append(manager.id)
-        result.types.append(manager.type_name)
+        result.types.append(agent_type)
         if dry_run:
             result.scores.append(None)
         if normalize:

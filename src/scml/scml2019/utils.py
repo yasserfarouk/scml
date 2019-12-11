@@ -699,9 +699,10 @@ def anac2019_assigner(
         permutation = list(zip(competitors, params))
         assert len(permutation) == len(assignable_factories)
         shuffle(permutation)
+        perm = permutation
         for __ in range(n_permutations):
             k += 1
-            perm = copy.deepcopy(permutation)
+            perm = copy.deepcopy(perm)
             perm = perm[-1:] + perm[:-1]
             configs.append(_copy_config(perm, config, k))
     elif max_n_worlds is None:

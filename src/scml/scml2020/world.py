@@ -41,7 +41,7 @@ from negmas import (
     SAOController,
     PassThroughSAONegotiator,
 )
-from negmas.helpers import instantiate, unique_name, get_class
+from negmas.helpers import instantiate, unique_name, get_class, get_full_type_name
 from negmas.situated import World, TimeInAgreementMixin, BreachProcessing
 
 __all__ = [
@@ -369,7 +369,7 @@ class Factory:
             if not partial_ok:
                 return np.empty(0, dtype=int), np.empty(0, dtype=int)
             repeats = len(steps)
-        self.order_production(process, steps[:repeats], lines[: repeats])
+        self.order_production(process, steps[:repeats], lines[:repeats])
         return steps, lines
 
     def order_production(
@@ -1466,6 +1466,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         # simulation parameters
         signing_delay=1,
         name: str = None,
+        # debugging parameters
+        agent_name_reveals_position: bool = True,
+        agent_name_reveals_type: bool = True,
         **kwargs,
     ):
         self.buy_missing_products = buy_missing_products
@@ -1551,33 +1554,51 @@ class SCML2020World(TimeInAgreementMixin, World):
             )
         else:
             self.sales_limit = external_sales_limit
-
+        n_agents = len(profiles)
+        if agent_name_reveals_position or agent_name_reveals_type:
+            default_names = [f"{_:02}" for _ in range(n_agents)]
+        else:
+            default_names = [unique_name("", add_time=False) for _ in range(n_agents)]
+        if agent_name_reveals_type:
+            for i, at in enumerate(agent_types):
+                default_names[i] += f"{at.__name__[:3]}"
+        agent_levels = [
+            int(np.nonzero(np.max(p.costs != INFINITE_COST, axis=0).flatten())[0])
+            for p in profiles
+        ]
+        if agent_name_reveals_position:
+            for i, l in enumerate(agent_levels):
+                default_names[i] += f"@{l:01}"
         if agent_params is None:
-            agent_params = [
-                dict(name=f"{_.__name__[:3]}{i:03}") for i, _ in enumerate(agent_types)
-            ]
+            agent_params = [dict(name=name) for i, name in enumerate(default_names)]
         elif isinstance(agent_params, dict):
             a = copy.copy(agent_params)
             agent_params = []
-            for i, _ in enumerate(agent_types):
+            for i, name in enumerate(default_names):
                 b = copy.deepcopy(a)
-                if "name" not in a.keys():
-                    b["name"] = f"{_.__name__[:3]}{i:03}"
+                b["name"] = name
                 agent_params.append(b)
         elif len(agent_params) == 1:
             a = copy.copy(agent_params[0])
             agent_params = []
-            for i, _ in enumerate(agent_types):
+            for i, _ in enumerate(default_names):
                 b = copy.deepcopy(a)
-                if "name" not in a.keys():
-                    b["name"] = f"{_.__name__[:3]}{i:03}"
+                b["name"] = name
                 agent_params.append(b)
+        else:
+            if agent_name_reveals_type or agent_name_reveals_position:
+                for i, (ns, ps) in enumerate(zip(default_names, agent_params)):
+                    agent_params[i] = dict(**ps)
+                    agent_params[i]["name"] = ns
         agents = []
         for i, (atype, aparams) in enumerate(zip(agent_types, agent_params)):
             a = instantiate(atype, **aparams)
             self.join(a, i)
             agents.append(a)
-        n_agents = len(agents)
+        self.agent_types = [get_class(_)._type_name().replace("_agent", "").replace("_factory", "").replace("_manager", "") for _ in agent_types]
+        self.agent_params = [{k: v for k, v in _.items() if k != "name"} for _ in agent_params]
+        self.agent_unique_types = [f"{t}{hash(p)}" if len(p) > 0 else t for t, p in zip(self.agent_types, self.agent_params)]
+
         self.factories = [
             Factory(
                 world=self,
@@ -1599,11 +1620,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             for i, profile in enumerate(profiles)
         ]
         self.a2f = dict(zip((_.id for _ in agents), self.factories))
-        self.f2a = dict(zip((_.agent_id for _ in self.factories), agents))
         self.afp = list(zip(agents, self.factories, profiles))
-        self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
+        self.f2i = self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
         self.i2a = agents
-        self.f2i = dict(zip((_.agent_id for _ in self.factories), range(n_agents)))
         self.i2f = self.factories
 
         self.breach_prob = dict(zip((_.id for _ in agents), itertools.repeat(0.0)))
@@ -1746,6 +1765,34 @@ class SCML2020World(TimeInAgreementMixin, World):
               it is otherwise, it is used to sample values for each process.
 
         """
+
+        info = dict(
+            n_steps=n_steps,
+            n_processes=n_processes,
+            n_lines=n_lines,
+            n_agents_per_process=n_agents_per_process,
+            process_inputs=process_inputs,
+            process_outputs=process_outputs,
+            production_costs=production_costs,
+            profit_means=profit_means,
+            profit_stddevs=profit_stddevs,
+            max_productivity=max_productivity,
+            initial_balance=initial_balance,
+            cost_increases_with_level=cost_increases_with_level,
+            equal_external_sales=equal_external_sales,
+            equal_external_supply=equal_external_supply,
+            cash_availability=cash_availability,
+            profit_basis="min"
+            if profit_basis == np.min
+            else "mean"
+            if profit_basis == np.mean
+            else "max"
+            if profit_basis == np.max
+            else "median"
+            if profit_basis == np.median
+            else "unknown",
+        )
+
         np.errstate(divide="ignore")
         n_startup = n_processes
         process_inputs = make_array(process_inputs, n_processes, dtype=int)
@@ -1769,7 +1816,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             if agent_params is None:
                 agent_params = dict()
             if isinstance(agent_params, dict):
-                agent_params = [copy.copy(agent_params)  for _ in range(n_agents)]
+                agent_params = [copy.copy(agent_params) for _ in range(n_agents)]
             else:
                 assert len(agent_params) == 1
                 agent_params = [copy.copy(agent_params[0]) for _ in range(n_agents)]
@@ -1777,23 +1824,28 @@ class SCML2020World(TimeInAgreementMixin, World):
             if agent_params is None:
                 agent_params = [dict()] * len(agent_types)
             if isinstance(agent_params, dict):
-                agent_params = [copy.copy(agent_params)  for _ in range(len(agent_types))]
+                agent_params = [
+                    copy.copy(agent_params) for _ in range(len(agent_types))
+                ]
             assert len(agent_types) == len(agent_params)
             tp = random.choices(list(range(len(agent_types))), k=n_agents)
-            agent_types = [agent_types[_] for _ in tp]
-            agent_params = [agent_params[_] for _ in tp]
+            agent_types = [copy.copy(agent_types[_]) for _ in tp]
+            agent_params = [copy.copy(agent_params[_]) for _ in tp]
         else:
             if agent_params is None:
                 agent_params = [dict()] * len(agent_types)
             if isinstance(agent_params, dict):
-                agent_params = [copy.copy(agent_params)  for _ in range(len(agent_types))]
+                agent_params = [
+                    copy.copy(agent_params) for _ in range(len(agent_types))
+                ]
             agent_types = list(agent_types)
             agent_params = list(agent_params)
             assert len(agent_types) == len(agent_params)
 
         # generate production costs making sure that every agent can do exactly one process
-        first_agent = [0] + n_agents_per_process[1:].cumsum().tolist()
-        last_agent = n_agents_per_process[:-1].cumsum().tolist() + [n_agents]
+        n_agents_cumsum = n_agents_per_process.cumsum().tolist()
+        first_agent = [0] + n_agents_cumsum[:-1]
+        last_agent = n_agents_cumsum[:-1] + [n_agents]
         costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
         for p, (f, l) in enumerate(zip(first_agent, last_agent)):
             costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
@@ -1973,6 +2025,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             initial_balance = []
             for b, a in zip(balance, n_agents_per_process):
                 initial_balance += [int(math.ceil(b * cash_availability))] * a
+        info.update(dict(initial_balance=initial_balance, product_prices=product_prices,
+                         active_lines=active_lines,
+                         input_quantity=input_quantity, output_quantity=output_quantity
+                         , catalog_prices=catalog_prices))
         return dict(
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -1982,6 +2038,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             agent_params=agent_params,
             initial_balance=initial_balance,
             n_steps=n_steps,
+            info=info,
             **kwargs,
         )
 
@@ -2095,7 +2152,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             "issues": contract.issues if not self.compact else None,
             "seller": contract.annotation["seller"],
             "buyer": contract.annotation["buyer"],
-            "product_name": "p" + str(contract.annotation["product"])
+            "product_name": "p" + str(contract.annotation["product"]),
         }
         if not self.compact:
             c.update(contract.annotation)
@@ -2429,7 +2486,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             )
             self.__register_contract(seller_id, product_breach_level)
             self.__register_breach(seller_id, product_breach_level, p, seller_factory)
-            if self.borrow_on_breach:
+            if self.borrow_on_breach and seller_factory != self.compensation_factory:
                 paid_for = seller_factory.store(
                     product,
                     -missing_product,
@@ -2455,7 +2512,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             )
             self.__register_contract(buyer_id, money_breach_level)
             self.__register_breach(buyer_id, money_breach_level, p, buyer_factory)
-            if self.borrow_on_breach:
+            if self.borrow_on_breach and buyer_factory != self.compensation_factory:
                 # find out the amount to be paid to borrow the needed money
                 to_pay = math.ceil(missing_money * self.breach_penalty)
                 paid = buyer_factory.pay(to_pay)
@@ -2567,14 +2624,20 @@ class SCML2020World(TimeInAgreementMixin, World):
             return []
         if 0.0 in [self.a2f[aid].initial_balance for aid, agent in self.agents.items()]:
             balances = sorted(
-                ((self.a2f[aid].current_balance, agent) for aid, agent in self.agents.items()),
+                (
+                    (self.a2f[aid].current_balance, agent)
+                    for aid, agent in self.agents.items()
+                ),
                 key=lambda x: x[0],
                 reverse=True,
             )
         else:
             balances = sorted(
                 (
-                    (self.a2f[aid].current_balance / self.a2f[aid].initial_balance, agent)
+                    (
+                        self.a2f[aid].current_balance / self.a2f[aid].initial_balance,
+                        agent,
+                    )
                     for aid, agent in self.agents.items()
                 ),
                 key=lambda x: x[0],
