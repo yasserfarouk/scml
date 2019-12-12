@@ -1436,7 +1436,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         # breach processing parameters
         buy_missing_products=True,
         borrow_on_breach=True,
-        bankruptcy_limit=0.2,
+        bankruptcy_limit=1.0,
         breach_penalty=0.15,
         financial_report_period=5,
         interest_rate=0.05,
@@ -1452,7 +1452,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         external_supply_limit: np.ndarray = None,
         external_sales_limit: np.ndarray = None,
         # production failure parameters
-        production_no_borrow=False,
+        production_no_borrow=True,
         production_no_bankruptcy=False,
         production_penalty=0.15,
         # General SCML2020World Parameters
@@ -1501,6 +1501,45 @@ class SCML2020World(TimeInAgreementMixin, World):
             neg_step_time_limit=neg_step_time_limit,
             name=name,
             **kwargs,
+        )
+        if self.info is None:
+            self.info = {}
+        self.info.update(
+            process_inputs=process_inputs,
+            process_outputs=process_outputs,
+            catalog_prices=catalog_prices,
+            agent_types_final=agent_types,
+            agent_params_final=agent_params,
+            initial_balance_final=initial_balance,
+            buy_missing_products=buy_missing_products,
+            borrow_on_breach=borrow_on_breach,
+            bankruptcy_limit=bankruptcy_limit,
+            breach_penalty=breach_penalty,
+            financial_report_period=financial_report_period,
+            interest_rate=interest_rate,
+            compensation_fraction=compensation_fraction,
+            compensate_immediately=compensate_immediately,
+            compensate_before_past_debt=compensate_before_past_debt,
+            external_force_max=external_force_max,
+            external_no_borrow=external_no_borrow,
+            external_no_bankruptcy=external_no_bankruptcy,
+            external_penalty=external_penalty,
+            external_supply_limit=external_supply_limit,
+            external_sales_limit=external_sales_limit,
+            production_no_borrow=production_no_borrow,
+            production_no_bankruptcy=production_no_bankruptcy,
+            production_penalty=production_penalty,
+            compact=compact,
+            no_logs=no_logs,
+            n_steps=n_steps,
+            time_limit=time_limit,
+            neg_n_steps=neg_n_steps,
+            neg_time_limit=neg_time_limit,
+            neg_step_time_limit=neg_step_time_limit,
+            negotiation_speed=negotiation_speed,
+            signing_delay=signing_delay,
+            agent_name_reveals_position=agent_name_reveals_position,
+            agent_name_reveals_type=agent_name_reveals_type,
         )
         TimeInAgreementMixin.init(self, time_field="time")
         self.breach_penalty = breach_penalty
@@ -1597,9 +1636,21 @@ class SCML2020World(TimeInAgreementMixin, World):
             a = instantiate(atype, **aparams)
             self.join(a, i)
             agents.append(a)
-        self.agent_types = [get_class(_)._type_name().replace("_agent", "").replace("_factory", "").replace("_manager", "") for _ in agent_types]
-        self.agent_params = [{k: v for k, v in _.items() if k != "name"} for _ in agent_params]
-        self.agent_unique_types = [f"{t}{hash(p)}" if len(p) > 0 else t for t, p in zip(self.agent_types, self.agent_params)]
+        self.agent_types = [
+            get_class(_)
+            ._type_name()
+            .replace("_agent", "")
+            .replace("_factory", "")
+            .replace("_manager", "")
+            for _ in agent_types
+        ]
+        self.agent_params = [
+            {k: v for k, v in _.items() if k != "name"} for _ in agent_params
+        ]
+        self.agent_unique_types = [
+            f"{t}{hash(p)}" if len(p) > 0 else t
+            for t, p in zip(self.agent_types, self.agent_params)
+        ]
 
         self.factories = [
             Factory(
@@ -1710,14 +1761,14 @@ class SCML2020World(TimeInAgreementMixin, World):
         process_inputs: Union[np.ndarray, Tuple[int, int], int] = 1,
         process_outputs: Union[np.ndarray, Tuple[int, int], int] = 1,
         production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
-        profit_means: Union[np.ndarray, Tuple[float, float], float] = 0.15,
+        profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
         max_productivity: Union[np.ndarray, Tuple[float, float], float] = (0.8, 1.0),
         initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = 10_000,
         cost_increases_with_level=False,
         equal_external_supply=False,
         equal_external_sales=False,
-        cash_availability=1.0,
+        cash_availability: Union[Tuple[float, float], float] = 1.0,
         profit_basis=np.mean,
         **kwargs,
     ) -> Dict[str, Any]:
@@ -2008,7 +2059,6 @@ class SCML2020World(TimeInAgreementMixin, World):
                 if l == n_processes - 1:
                     esales[:, -1] = [external_sales[s][a] for s in range(n_steps)]
                     esale_prices[:, -1] = sale_prices[a, :]
-
                 profiles.append(
                     FactoryProfile(
                         costs=costs[nxt],
@@ -2019,6 +2069,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                     )
                 )
                 nxt += 1
+        max_income = (
+            output_quantity * catalog_prices[1:].reshape((n_processes, 1)) - total_costs
+        )
+
         assert nxt == n_agents
         if initial_balance is None:
             cash_availability = _realin(cash_availability)
@@ -2028,10 +2082,28 @@ class SCML2020World(TimeInAgreementMixin, World):
             initial_balance = []
             for b, a in zip(balance, n_agents_per_process):
                 initial_balance += [int(math.ceil(b * cash_availability))] * a
-        info.update(dict(initial_balance=initial_balance, product_prices=product_prices,
-                         active_lines=active_lines,
-                         input_quantity=input_quantity, output_quantity=output_quantity
-                         , catalog_prices=catalog_prices))
+        b = np.sum(initial_balance)
+        info.update(
+            dict(
+                product_prices=product_prices,
+                active_lines=active_lines,
+                input_quantities=input_quantity,
+                output_quantities=output_quantity,
+                expected_productivity=float(np.sum(active_lines))
+                / np.sum(n_lines * n_steps * n_agents_per_process),
+                expected_n_products=np.sum(active_lines, axis=-1),
+                expected_income=max_income,
+                expected_welfare=float(np.sum(max_income)),
+                expected_income_per_step=max_income.sum(axis=0),
+                expected_income_per_process=max_income.sum(axis=-1),
+                expected_mean_profit=float(np.sum(max_income) / b)
+                if b != 0
+                else np.sum(max_income),
+                expected_profit_sum=float(n_agents * np.sum(max_income) / b)
+                if b != 0
+                else n_agents * np.sum(max_income),
+            )
+        )
         return dict(
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -2221,6 +2293,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             else np.nan
         )
         self._stats["_market_size_total"].append(market_size + internal_market_size)
+        self._stats["bankruptcy"] = np.sum(self.stats["n_bankrupt"]) / len(self.agents)
+        # self._stats["business"] = np.sum(self.stats["business_level"])
 
     def pre_step_stats(self):
         self._n_production_failures = 0
@@ -2231,6 +2305,39 @@ class SCML2020World(TimeInAgreementMixin, World):
     def business_size(self) -> float:
         """The total business size defined as the total money transferred within the system"""
         return sum(self.stats["activity_level"])
+
+    @property
+    def productivity(self) -> float:
+        """Fraction of production lines occupied during the simulation"""
+        return np.mean(self.stats["productivity"])
+
+    def welfare(self, include_bankrupt: bool = False) -> float:
+        """Total welfare of all agents"""
+        return sum(f.current_balance - f.initial_balance for f in self.factories if include_bankrupt or not f.is_bankrupt)
+
+    def relative_welfare(self, include_bankrupt: bool = False) -> Optional[float]:
+        """Total welfare relative to expected value. Returns None if no expectation is found in self.info"""
+        if "expected_income" not in self.info.keys():
+            return None
+        return self.welfare(include_bankrupt) / np.sum(self.info["expected_income"])
+
+    @property
+    def relative_productivity(self) -> Optional[float]:
+        """Productivity relative to the expected value. Will return None if self.info does not have
+        the expected productivity"""
+        if "expected_productivity" not in self.info.keys():
+            return None
+        return self.productivity / self.info["expected_productivity"]
+
+    @property
+    def bankruptcy_rate(self) -> float:
+        """The fraction of factories that went bankrupt"""
+        return sum([f.is_bankrupt for f in self.factories]) / len(self.factories)
+
+    @property
+    def num_bankrupt(self) -> float:
+        """The fraction of factories that went bankrupt"""
+        return sum([f.is_bankrupt for f in self.factories])
 
     @property
     def agreement_rate(self) -> float:
