@@ -292,6 +292,8 @@ def main(worlds, factorial, variables, name):
     ind_vars = {
         "borrow_on_breach": [True, False],
         "buy_missing_products": [True, False],
+        "production_buy_missing": [True, False],
+        "external_buy_missing": [True, False],
         "production_no_borrow": [True, False],
         "external_no_borrow": [True, False],
         "external_force_max": [True, False],
@@ -302,6 +304,7 @@ def main(worlds, factorial, variables, name):
         "interest_rate": [0.04, 0.08],
         "signing_delay": [0, 1],
     }
+
     if variables is not None and variables != "all":
         variables = ";".split(variables)
         ind_vars = {k: v for k, v in ind_vars.items() if k in variables}
@@ -333,6 +336,12 @@ def main(worlds, factorial, variables, name):
             condition_values=[[False]],
             conditioned_var="production_no_borrow",
             feasible_values=[False],
+        ),
+        Constraint(
+            condition_vars=["external_force_max"],
+            condition_values=[[True]],
+            conditioned_var="external_buy_missing",
+            feasible_values=[True],
         ),
     )
     print(

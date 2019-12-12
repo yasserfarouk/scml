@@ -235,6 +235,8 @@ class Factory:
         world: "SCML2020World",
         compensate_before_past_debt: bool,
         buy_missing_products: bool,
+        production_buy_missing: bool,
+        external_buy_missing: bool,
         external_penalty: float,
         external_no_bankruptcy: bool,
         external_no_borrow: bool,
@@ -244,6 +246,8 @@ class Factory:
         agent_id: str,
         agent_name: Optional[str] = None,
     ):
+        self.production_buy_missing = production_buy_missing
+        self.external_buy_missing = external_buy_missing
         self.compensate_before_past_debt = compensate_before_past_debt
         self.buy_missing_products = buy_missing_products
         self.external_penalty = external_penalty
@@ -539,7 +543,7 @@ class Factory:
                         p,
                         q,
                         u,
-                        self.buy_missing_products,
+                        self.external_buy_missing,
                         self.external_penalty,
                         self.external_no_bankruptcy,
                         self.external_no_borrow,
@@ -572,7 +576,7 @@ class Factory:
                         p,
                         -q,
                         u,
-                        self.buy_missing_products,
+                        self.external_buy_missing,
                         self.external_penalty,
                         self.external_no_bankruptcy,
                         self.external_no_borrow,
@@ -610,7 +614,7 @@ class Factory:
                 inp,
                 -ins,
                 0,
-                self.buy_missing_products,
+                self.production_buy_missing,
                 self.production_penalty,
                 self.production_no_bankruptcy,
                 self.production_no_borrow,
@@ -619,7 +623,7 @@ class Factory:
                 outp,
                 outs,
                 0,
-                self.buy_missing_products,
+                self.production_buy_missing,
                 self.production_penalty,
                 self.production_no_bankruptcy,
                 self.production_no_borrow,
@@ -690,7 +694,7 @@ class Factory:
         paid = int(self.pay(to_pay, no_bankruptcy, no_borrowing) / (1 + penalty))
         paid_for = paid // unit_price
         assert self._inventory[product] + paid_for >= 0, (
-            f"Had {self._inventory[product]} and paid for {paid_for} ("
+            f"{self.agent_name} had {self._inventory[product]} and paid for {paid_for} ("
             f"original quantity {quantity})"
         )
         self._inventory[product] += paid_for
@@ -1446,12 +1450,14 @@ class SCML2020World(TimeInAgreementMixin, World):
         compensate_before_past_debt=True,
         # external contracts parameters
         external_force_max=True,
+        external_buy_missing=True,
         external_no_borrow=False,
         external_no_bankruptcy=False,
         external_penalty=0.15,
         external_supply_limit: np.ndarray = None,
         external_sales_limit: np.ndarray = None,
         # production failure parameters
+        production_buy_missing=False,
         production_no_borrow=True,
         production_no_bankruptcy=False,
         production_penalty=0.15,
@@ -1474,6 +1480,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         **kwargs,
     ):
         self.buy_missing_products = buy_missing_products
+        self.production_buy_missing = production_buy_missing
+        self.external_buy_missing = external_buy_missing
         kwargs["log_to_file"] = not no_logs
         if compact:
             kwargs["log_screen_level"] = logging.CRITICAL
@@ -1512,6 +1520,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             agent_params_final=agent_params,
             initial_balance_final=initial_balance,
             buy_missing_products=buy_missing_products,
+            production_buy_missing=production_buy_missing,
+            external_buy_missing=external_buy_missing,
             borrow_on_breach=borrow_on_breach,
             bankruptcy_limit=bankruptcy_limit,
             breach_penalty=breach_penalty,
@@ -1663,6 +1673,8 @@ class SCML2020World(TimeInAgreementMixin, World):
                 catalog_prices=catalog_prices,
                 compensate_before_past_debt=self.compensate_before_past_debt,
                 buy_missing_products=self.buy_missing_products,
+                external_buy_missing=self.external_buy_missing,
+                production_buy_missing=self.production_buy_missing,
                 external_penalty=self.external_penalty,
                 external_no_bankruptcy=self.external_no_bankruptcy,
                 external_no_borrow=self.external_no_borrow,
@@ -1741,12 +1753,14 @@ class SCML2020World(TimeInAgreementMixin, World):
             catalog_prices=catalog_prices,
             compensate_before_past_debt=self.compensate_before_past_debt,
             buy_missing_products=self.buy_missing_products,
+            production_buy_missing=False,
+            external_buy_missing=False,
             external_penalty=self.external_penalty,
-            external_no_bankruptcy=self.external_no_bankruptcy,
-            external_no_borrow=self.external_no_borrow,
+            external_no_bankruptcy=True,
+            external_no_borrow=True,
             production_penalty=self.production_penalty,
-            production_no_borrow=self.production_no_borrow,
-            production_no_bankruptcy=self.production_no_bankruptcy,
+            production_no_borrow=True,
+            production_no_bankruptcy=True,
         )
 
     @classmethod
