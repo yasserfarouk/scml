@@ -2013,6 +2013,10 @@ def run2020(
             f"Cancelled: {world.cancellation_rate:0.0%}, Executed: {world.contract_execution_fraction:0.0%}"
             f", Breached: {world.breach_rate:0.0%}, N. Executed: {n_executed}, Business size: "
             f"{world.business_size}\n"
+            f"Welfare (Excluding Bankrupt): {world.welfare(False)} ({world.relative_welfare(False):5.03%}), "
+            f"Welfare (Including Bankrupt): {world.welfare(True)} ({world.relative_welfare(True):5.03%})\n"
+            f"Productivity: {world.productivity:5.03%} ({world.relative_productivity:4.03%}), "
+            f"Bankrupted Agents: {world.num_bankrupt} ({world.bankruptcy_rate:5.03%})\n"
             f"Winners: {winners}\n"
             f"Running Time {humanize_time(elapsed)}"
         )
