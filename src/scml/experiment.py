@@ -177,9 +177,10 @@ def generate_configs_factorial(
     configs = []
     for c in combinations:
         d = {}
-        for key, value in ind_vars.keys(), c:
+        for key, value in zip(ind_vars.keys(), c):
             d.update(get_var_vals(key, value))
-        config = dict(**d, **fixed_vars)
+        config = dict(**fixed_vars)
+        config.update(d)
         if not satisfied(config, constraints):
             continue
         configs += [config] * n_worlds_per_condition
@@ -311,7 +312,14 @@ def run(
     "--compact.",
 )
 @click.option("-n", "--name", type=str, default=None, help="Experiment Name")
-def main(worlds, factorial, variables, name, steps, compact, log):
+@click.option(
+    "-j",
+    "--jobs",
+    type=int,
+    default=0,
+    help="Number of parallel jobs to use. 0 means use all cores.",
+)
+def main(worlds, factorial, variables, name, steps, compact, log, jobs):
     fixed_vars["n_steps"] = steps
     fixed_vars["compact"] = compact
     fixed_vars["no_logs"] = not log
@@ -383,7 +391,7 @@ def main(worlds, factorial, variables, name, steps, compact, log):
         / unique_name("E" if name is None else name, add_time=True, sep="")
     )
     path.mkdir(parents=True, exist_ok=True)
-    run(ind_vars, fixed_vars, worlds, factorial, constraints).to_csv(
+    run(ind_vars, fixed_vars, worlds, factorial, constraints, n_jobs=jobs).to_csv(
         path / "results.csv"
     )
 
