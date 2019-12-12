@@ -13,7 +13,7 @@ from typing import Dict, Any, Callable, Tuple, List, Union, Iterable
 from negmas.helpers import unique_name
 from tqdm import tqdm
 
-from scml import SCML2020World, DecentralizingAgent, BuyCheapSellExpensiveAgent
+from scml import SCML2020World, DecentralizingAgent
 import random
 
 Constraint = namedtuple(
@@ -89,7 +89,7 @@ fixed_vars = {
     "max_productivity": (0.8, 1.0),
     "compact": True,
     "no_logs": True,
-    "agent_types": [DecentralizingAgent, BuyCheapSellExpensiveAgent],
+    "agent_types": [DecentralizingAgent],
 }
 
 
