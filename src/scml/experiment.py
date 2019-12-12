@@ -13,8 +13,13 @@ from typing import Dict, Any, Callable, Tuple, List, Union, Iterable
 from negmas.helpers import unique_name
 from tqdm import tqdm
 
-from scml import SCML2020World, DecentralizingAgent, BuyCheapSellExpensiveAgent
+from scml import SCML2020World, DecentralizingAgent
 import random
+
+N_STEPS = 10
+N_WORLDS = 2
+COMPACT = True
+NOLOGS = True
 
 Constraint = namedtuple(
     "Constraint",
@@ -82,14 +87,14 @@ fixed_vars = {
     "initial_balance": None,
     "cost_increases_with_level": True,
     "bankruptcy_limit": 1.0,
-    "n_steps": 10,
+    "n_steps": N_STEPS,
     "neg_n_steps": 20,
     "negotiation_speed": 21,
     "cash_availability": (0.8, 1.0),
     "max_productivity": (0.8, 1.0),
-    "compact": True,
-    "no_logs": True,
-    "agent_types": [DecentralizingAgent, BuyCheapSellExpensiveAgent],
+    "compact": COMPACT,
+    "no_logs": NOLOGS,
+    "agent_types": [DecentralizingAgent],
 }
 
 
@@ -267,8 +272,15 @@ def run(
     "-w",
     "--worlds",
     type=int,
-    default=2,
+    default=N_WORLDS,
     help="Number of world simulation per condition",
+)
+@click.option(
+    "-s",
+    "--steps",
+    type=int,
+    default=N_STEPS,
+    help="Number of simulation steps per world",
 )
 @click.option(
     "--factorial/--independent",
@@ -287,8 +299,22 @@ def run(
     help="A semicolon separated list of independent variable names to try. The"
     " special value 'all' will use all independent variables",
 )
+@click.option(
+    "--compact/--debug",
+    default=COMPACT,
+    help="Compact fast run or slower run with more extensive logs for debugging",
+)
+@click.option(
+    "--log/--nolog",
+    default=not NOLOGS,
+    help="Whether to keep or not keep logs. Should not use --nolog except with "
+    "--compact.",
+)
 @click.option("-n", "--name", type=str, default=None, help="Experiment Name")
-def main(worlds, factorial, variables, name):
+def main(worlds, factorial, variables, name, steps, compact, log):
+    fixed_vars["n_steps"] = steps
+    fixed_vars["compact"] = compact
+    fixed_vars["no_logs"] = not log
     ind_vars = {
         "borrow_on_breach": [True, False],
         "buy_missing_products": [True, False],
