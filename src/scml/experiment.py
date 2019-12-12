@@ -116,13 +116,24 @@ def get_var_vals(var: str, val: Any) -> Dict[str, Any]:
 def run_config(world_config: Dict[str, Any], funcs: List[str]):
     """Runs a single configuration and returns values of all functions for that configuration"""
     world = SCML2020World(**SCML2020World.generate(**world_config))
-    _start = time.perf_counter()
-    world.run()
-    _end = time.perf_counter()
-    results = {func: dep_vars[func](world) for func in funcs}
-    results["time"] = _end - _start
-    results["time_per_step"] = (_end - _start) / world.n_steps
+    results = {}
     results["log_folder"] = world.log_folder
+    try:
+        _start = time.perf_counter()
+        world.run()
+        _end = time.perf_counter()
+        results.update({func: dep_vars[func](world) for func in funcs})
+        results["time"] = _end - _start
+        results["time_per_step"] = (_end - _start) / world.n_steps
+        results["failed_run"] = False
+        results["exception"] = None
+    except Exception as e:
+        results.update({func: float("nan") for func in funcs})
+        results["time"] = float("nan")
+        results["time_per_step"] = float("nan")
+        results["failed_run"] = True
+        results["exception"] = str(e)
+
     results.update(world_config)
     results.update(world.info)
     return results
