@@ -73,6 +73,8 @@ setup(
         'pulp',
         'python-constraint',
         'negmas',
+        'tqdm',
+        'joblib',
     ],
     extras_require={
         # eg:
@@ -85,6 +87,7 @@ setup(
     entry_points={
         'console_scripts': [
             'scml = scml.cli:cli',
+            'experiment = scml.experiment:main',
         ]
     },
 )

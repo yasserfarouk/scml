@@ -6,6 +6,8 @@ prettytable
 pulp
 python-constraint
 negmas
+tqdm
+joblib
 dataclasses; python_version < '3.7'
 -e .
 
