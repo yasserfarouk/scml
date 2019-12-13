@@ -11,6 +11,7 @@ SCML2020World
    .. autosummary::
 
       ~SCML2020World.agreement_rate
+      ~SCML2020World.bankruptcy_rate
       ~SCML2020World.breach_rate
       ~SCML2020World.business_size
       ~SCML2020World.cancellation_rate
@@ -22,6 +23,9 @@ SCML2020World
       ~SCML2020World.n_negotiation_rounds_failed
       ~SCML2020World.n_negotiation_rounds_successful
       ~SCML2020World.name
+      ~SCML2020World.num_bankrupt
+      ~SCML2020World.productivity
+      ~SCML2020World.relative_productivity
       ~SCML2020World.relative_time
       ~SCML2020World.remaining_steps
       ~SCML2020World.remaining_time
@@ -81,6 +85,7 @@ SCML2020World
       ~SCML2020World.register_listener
       ~SCML2020World.register_stats_monitor
       ~SCML2020World.register_world_monitor
+      ~SCML2020World.relative_welfare
       ~SCML2020World.request_negotiation_about
       ~SCML2020World.run
       ~SCML2020World.run_negotiation
@@ -92,10 +97,12 @@ SCML2020World
       ~SCML2020World.step
       ~SCML2020World.unregister_stats_monitor
       ~SCML2020World.unregister_world_monitor
+      ~SCML2020World.welfare
 
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: agreement_rate
+   .. autoattribute:: bankruptcy_rate
    .. autoattribute:: breach_rate
    .. autoattribute:: business_size
    .. autoattribute:: cancellation_rate
@@ -107,6 +114,9 @@ SCML2020World
    .. autoattribute:: n_negotiation_rounds_failed
    .. autoattribute:: n_negotiation_rounds_successful
    .. autoattribute:: name
+   .. autoattribute:: num_bankrupt
+   .. autoattribute:: productivity
+   .. autoattribute:: relative_productivity
    .. autoattribute:: relative_time
    .. autoattribute:: remaining_steps
    .. autoattribute:: remaining_time
@@ -164,6 +174,7 @@ SCML2020World
    .. automethod:: register_listener
    .. automethod:: register_stats_monitor
    .. automethod:: register_world_monitor
+   .. automethod:: relative_welfare
    .. automethod:: request_negotiation_about
    .. automethod:: run
    .. automethod:: run_negotiation
@@ -175,3 +186,4 @@ SCML2020World
    .. automethod:: step
    .. automethod:: unregister_stats_monitor
    .. automethod:: unregister_world_monitor
+   .. automethod:: welfare

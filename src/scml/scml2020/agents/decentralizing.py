@@ -44,6 +44,22 @@ class StepController(SAOController, AspirationMixin, Notifier):
     """A controller for managing a set of negotiations about selling/buying the a product starting/ending at some
     specific time-step. It works in conjunction with the `DecentralizingAgent` .
 
+    Args:
+
+        target_quantity: The quantity to be secured
+        is_seller:  Is this a seller or a buyer
+        parent: The parent `DecedntralizingAgent`
+        step:  The simulation step that this controller is responsible about
+        urange: The range of unit prices used for negotiation
+        product: The product that this controller negotiates about
+        partners: A list of partners to negotiate with
+        negotiator_type: The type of the negotiator used for all negotiations.
+        negotiator_params: The parameters of the negotiator used for all negotiations
+        max_retries: How many times can the controller try negotiating with each partner.
+        *args: Position arguments passed to the base Controller constructor
+        **kwargs: Keyword arguments passed to the base Controller constructor
+
+
     Remarks:
 
         - It uses whatever negotiator type on all of its negotiations and it assumes that the ufun will never change
@@ -192,6 +208,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
 
 @dataclass
 class ControllerInfo:
+    """Keeps a record of information about one of the controllers used by the agent"""
     controller: StepController
     time_step: int
     is_seller: bool
@@ -204,7 +221,26 @@ class ControllerInfo:
 class DecentralizingAgent(DoNothingAgent):
     """An agent that keeps schedules of what it needs to buy and sell and tries to satisfy them.
 
-    It assumes that the agent can run a single process
+    It assumes that the agent can run a single process.
+
+    Args:
+
+        negotiator_type: The negotiator type to use for all negotiations
+        negotiator_params: The parameters used to initialize all negotiators
+        horizon: The number of steps in the future to consider for securing inputs and
+                 outputs.
+        predicted_demand: A prediction of the number of units needed by the market of the output
+                          product at each timestep
+        predicted_supply: A prediction of the nubmer of units available within the market of the input
+                          product at each timestep
+        agreement_fraction: A prediction about the fraction of the quantity negotiated about that will
+                            be secured
+        adapt_prices: If true, the agent tries to adapt the unit price range it negotites about to market
+                      conditions (i.e. previous trade). If false, catalog prices will be used to constrain
+                      the unit price ranges to (1, catalog price) for buying and (catalog price, 2* catalog price)
+                      for selling
+        *args: Position arguments to pass the the base `SCML2020Agent` constructor
+        **kwargs: Keyword arguments to pass to the base `SCML2020Agent` constructor
 
     """
 
