@@ -254,6 +254,8 @@ class SCMLWorld(TimeInAgreementMixin, World):
             log_file_name=log_file_name,
             ignore_agent_exceptions=ignore_agent_exceptions,
             ignore_contract_execution_exceptions=ignore_contract_execution_exceptions,
+            batch_signing=False,
+            force_signing=False,
             **kwargs,
         )
         TimeInAgreementMixin.init(self, time_field="time")
