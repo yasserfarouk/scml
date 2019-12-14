@@ -1349,7 +1349,7 @@ class Factory:
             return
         if not override:
             raise ValueError(
-                f"Job {str(existing_job)} is scheduled at {t} and overriding is not allowed"
+                f"Cannot schedule {str(job)}: Job {str(existing_job)} is scheduled at {t} and overriding is not allowed"
             )
         self._jobs[(t, line)] = job
 

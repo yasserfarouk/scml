@@ -35,6 +35,8 @@ def create_factory():
         production_no_borrow=False,
         production_no_bankruptcy=True,
         production_penalty=0.15,
+        production_buy_missing=False,
+        external_buy_missing=False,
         catalog_prices=np.random.randint(1, 20, size=PROCESSES + 1, dtype=int),
     )
 

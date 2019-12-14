@@ -255,7 +255,7 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         is_seller = contract.annotation["seller"] == self.id
         step = contract.agreement["time"]
         # find the earliest time I can do anything about this contract
-        earliest_production = self.awi.current_step + 1
+        earliest_production = self.awi.current_step
         if step > self.awi.n_steps - 1 or step < earliest_production:
             return
         if is_seller:
