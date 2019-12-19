@@ -1213,6 +1213,7 @@ class AWI(AgentWorldInterface):
         return self.state.n_processes
 
 
+
 class SCML2020Agent(Agent):
     """Base class for all SCML2020 agents (factory managers)"""
 
@@ -1512,7 +1513,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         # simulation parameters
         signing_delay=0,
         force_signing=False,
-        batch_signing=False,
+        batch_signing=True,
         name: str = None,
         # debugging parameters
         agent_name_reveals_position: bool = True,
@@ -1552,6 +1553,26 @@ class SCML2020World(TimeInAgreementMixin, World):
             name=name,
             **kwargs,
         )
+        self.bulletin_board.record("settings", buy_missing_products, "buy_missing_products")
+        self.bulletin_board.record("settings", borrow_on_breach, "borrow_on_breach")
+        self.bulletin_board.record("settings", bankruptcy_limit, "bankruptcy_limit")
+        self.bulletin_board.record("settings", breach_penalty, "breach_penalty")
+        self.bulletin_board.record("settings", financial_report_period, "financial_report_period")
+        self.bulletin_board.record("settings", interest_rate, "interest_rate")
+        self.bulletin_board.record("settings", compensation_fraction, "compensation_fraction")
+        self.bulletin_board.record("settings", compensate_immediately, "compensate_immediately")
+        self.bulletin_board.record("settings", compensate_before_past_debt, "compensate_before_past_debt")
+        self.bulletin_board.record("settings", external_force_max, "external_force_max")
+        self.bulletin_board.record("settings", external_buy_missing, "external_buy_missing")
+        self.bulletin_board.record("settings", external_no_borrow, "external_no_borrow")
+        self.bulletin_board.record("settings", external_no_bankruptcy, "external_no_bankruptcy")
+        self.bulletin_board.record("settings", external_penalty, "external_penalty")
+        self.bulletin_board.record("settings", production_confirm, "production_confirm")
+        self.bulletin_board.record("settings", production_buy_missing, "production_buy_missing")
+        self.bulletin_board.record("settings", production_no_borrow, "production_no_borrow")
+        self.bulletin_board.record("settings", production_no_bankruptcy, "production_no_bankruptcy")
+        self.bulletin_board.record("settings", production_penalty, "production_penalty")
+
         if self.info is None:
             self.info = {}
         self.info.update(
