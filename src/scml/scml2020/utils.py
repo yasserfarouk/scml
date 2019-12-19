@@ -30,6 +30,9 @@ if True:
     from .world import SCML2020Agent
 
 __all__ = [
+    "anac2020_config_generator",
+    "anac2020_assigner",
+    "anac2020_world_generator",
     "anac2020_tournament",
     "anac2020_collusion",
     "anac2020_std",
