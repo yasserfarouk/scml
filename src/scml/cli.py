@@ -1532,6 +1532,15 @@ def run2019(
 
 
 @cli.command(help="Run an SCML2020 world simulation")
+@click.option(
+    "--force-signing/--confirm-signing", default=False, help="Whether to force signing"
+)
+@click.option(
+    "--batch-signing/--individual-signing",
+    default=True,
+    help="Whether to sign contracts in batch by a call to sign_all_contracts or individually"
+    " by a call to sign_contract (only effectivec if --confirm-signing)",
+)
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--processes",
@@ -1785,6 +1794,8 @@ def run2019(
 )
 @click_config_file.configuration_option()
 def run2020(
+    force_signing,
+    batch_signing,
     steps,
     processes,
     neg_speedup,
@@ -1853,6 +1864,8 @@ def run2020(
 
     kwargs.update(
         {
+            "force_signing": force_signing,
+            "batch_signing": batch_signing,
             "n_steps": steps,
             "n_processes": processes,
             "negotiation_speed": neg_speedup,

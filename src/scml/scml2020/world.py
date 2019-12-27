@@ -2523,6 +2523,10 @@ class SCML2020World(TimeInAgreementMixin, World):
         super().on_contract_concluded(contract, to_be_signed_at)
 
     def on_contract_signed(self, contract: Contract):
+        # we need to cancel this contract if a partner was bankrupt (that is necessary only for
+        #  force_signing case as in this case the two partners will be assued to sign no matter what is
+        #  their bankruptcy status
+
         if (
             any(self.a2f[_].is_bankrupt for _ in contract.partners)
             or contract.agreement["time"] >= self.n_steps
