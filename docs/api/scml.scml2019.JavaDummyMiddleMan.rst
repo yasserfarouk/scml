@@ -86,6 +86,7 @@ JavaDummyMiddleMan
       ~JavaDummyMiddleMan.on_contract_nullified
       ~JavaDummyMiddleMan.on_contract_signed
       ~JavaDummyMiddleMan.on_contract_signed_
+      ~JavaDummyMiddleMan.on_contracts_finalized
       ~JavaDummyMiddleMan.on_event
       ~JavaDummyMiddleMan.on_inventory_change
       ~JavaDummyMiddleMan.on_neg_request_accepted
@@ -114,6 +115,7 @@ JavaDummyMiddleMan
       ~JavaDummyMiddleMan.setRenegotiationAgenda
       ~JavaDummyMiddleMan.set_renegotiation_agenda
       ~JavaDummyMiddleMan.signContract
+      ~JavaDummyMiddleMan.sign_all_contracts
       ~JavaDummyMiddleMan.sign_contract
       ~JavaDummyMiddleMan.step
       ~JavaDummyMiddleMan.stepPython
@@ -195,6 +197,7 @@ JavaDummyMiddleMan
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -223,6 +226,7 @@ JavaDummyMiddleMan
    .. automethod:: setRenegotiationAgenda
    .. automethod:: set_renegotiation_agenda
    .. automethod:: signContract
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: stepPython

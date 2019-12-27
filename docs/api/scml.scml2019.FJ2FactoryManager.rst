@@ -53,6 +53,7 @@ FJ2FactoryManager
       ~FJ2FactoryManager.on_contract_nullified
       ~FJ2FactoryManager.on_contract_signed
       ~FJ2FactoryManager.on_contract_signed_
+      ~FJ2FactoryManager.on_contracts_finalized
       ~FJ2FactoryManager.on_event
       ~FJ2FactoryManager.on_inventory_change
       ~FJ2FactoryManager.on_neg_request_accepted
@@ -74,6 +75,7 @@ FJ2FactoryManager
       ~FJ2FactoryManager.respond_to_negotiation_request_
       ~FJ2FactoryManager.respond_to_renegotiation_request
       ~FJ2FactoryManager.set_renegotiation_agenda
+      ~FJ2FactoryManager.sign_all_contracts
       ~FJ2FactoryManager.sign_contract
       ~FJ2FactoryManager.step
       ~FJ2FactoryManager.step_
@@ -122,6 +124,7 @@ FJ2FactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -143,6 +146,7 @@ FJ2FactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

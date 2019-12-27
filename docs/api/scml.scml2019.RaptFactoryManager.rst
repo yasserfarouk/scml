@@ -51,6 +51,7 @@ RaptFactoryManager
       ~RaptFactoryManager.on_contract_nullified
       ~RaptFactoryManager.on_contract_signed
       ~RaptFactoryManager.on_contract_signed_
+      ~RaptFactoryManager.on_contracts_finalized
       ~RaptFactoryManager.on_event
       ~RaptFactoryManager.on_inventory_change
       ~RaptFactoryManager.on_neg_request_accepted
@@ -72,6 +73,7 @@ RaptFactoryManager
       ~RaptFactoryManager.respond_to_negotiation_request_
       ~RaptFactoryManager.respond_to_renegotiation_request
       ~RaptFactoryManager.set_renegotiation_agenda
+      ~RaptFactoryManager.sign_all_contracts
       ~RaptFactoryManager.sign_contract
       ~RaptFactoryManager.step
       ~RaptFactoryManager.step_
@@ -118,6 +120,7 @@ RaptFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -139,6 +142,7 @@ RaptFactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

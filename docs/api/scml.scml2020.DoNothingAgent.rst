@@ -31,6 +31,7 @@ DoNothingAgent
       ~DoNothingAgent.checkpoint_info
       ~DoNothingAgent.confirm_external_sales
       ~DoNothingAgent.confirm_external_supplies
+      ~DoNothingAgent.confirm_production
       ~DoNothingAgent.create
       ~DoNothingAgent.create_negotiation_request
       ~DoNothingAgent.from_checkpoint
@@ -45,6 +46,7 @@ DoNothingAgent
       ~DoNothingAgent.on_contract_nullified
       ~DoNothingAgent.on_contract_signed
       ~DoNothingAgent.on_contract_signed_
+      ~DoNothingAgent.on_contracts_finalized
       ~DoNothingAgent.on_event
       ~DoNothingAgent.on_failures
       ~DoNothingAgent.on_neg_request_accepted
@@ -60,6 +62,7 @@ DoNothingAgent
       ~DoNothingAgent.respond_to_negotiation_request_
       ~DoNothingAgent.respond_to_renegotiation_request
       ~DoNothingAgent.set_renegotiation_agenda
+      ~DoNothingAgent.sign_all_contracts
       ~DoNothingAgent.sign_contract
       ~DoNothingAgent.step
       ~DoNothingAgent.step_
@@ -85,6 +88,7 @@ DoNothingAgent
    .. automethod:: checkpoint_info
    .. automethod:: confirm_external_sales
    .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
    .. automethod:: from_checkpoint
@@ -99,6 +103,7 @@ DoNothingAgent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_failures
    .. automethod:: on_neg_request_accepted
@@ -114,6 +119,7 @@ DoNothingAgent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

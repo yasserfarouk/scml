@@ -49,6 +49,7 @@ Miner
       ~Miner.on_contract_nullified
       ~Miner.on_contract_signed
       ~Miner.on_contract_signed_
+      ~Miner.on_contracts_finalized
       ~Miner.on_event
       ~Miner.on_inventory_change
       ~Miner.on_neg_request_accepted
@@ -68,6 +69,7 @@ Miner
       ~Miner.respond_to_negotiation_request_
       ~Miner.respond_to_renegotiation_request
       ~Miner.set_renegotiation_agenda
+      ~Miner.sign_all_contracts
       ~Miner.sign_contract
       ~Miner.step
       ~Miner.step_
@@ -111,6 +113,7 @@ Miner
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -130,6 +133,7 @@ Miner
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

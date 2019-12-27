@@ -10,19 +10,29 @@ SCML2020World
 
    .. autosummary::
 
+      ~SCML2020World.agreement_fraction
       ~SCML2020World.agreement_rate
       ~SCML2020World.bankruptcy_rate
+      ~SCML2020World.breach_fraction
+      ~SCML2020World.breach_level
       ~SCML2020World.breach_rate
       ~SCML2020World.business_size
+      ~SCML2020World.cancellation_fraction
       ~SCML2020World.cancellation_rate
       ~SCML2020World.cancelled_contracts
+      ~SCML2020World.contract_dropping_fraction
+      ~SCML2020World.contract_err_fraction
       ~SCML2020World.contract_execution_fraction
+      ~SCML2020World.contract_nullification_fraction
       ~SCML2020World.current_step
+      ~SCML2020World.erred_contracts
+      ~SCML2020World.executed_contracts
       ~SCML2020World.id
       ~SCML2020World.log_folder
       ~SCML2020World.n_negotiation_rounds_failed
       ~SCML2020World.n_negotiation_rounds_successful
       ~SCML2020World.name
+      ~SCML2020World.nullified_contracts
       ~SCML2020World.num_bankrupt
       ~SCML2020World.productivity
       ~SCML2020World.relative_productivity
@@ -64,6 +74,7 @@ SCML2020World
       ~SCML2020World.from_checkpoint
       ~SCML2020World.from_config
       ~SCML2020World.generate
+      ~SCML2020World.get_dropped_contracts
       ~SCML2020World.get_private_state
       ~SCML2020World.init
       ~SCML2020World.join
@@ -74,6 +85,7 @@ SCML2020World
       ~SCML2020World.nullify_contract
       ~SCML2020World.on_contract_cancelled
       ~SCML2020World.on_contract_concluded
+      ~SCML2020World.on_contract_processed
       ~SCML2020World.on_contract_signed
       ~SCML2020World.on_event
       ~SCML2020World.order_contracts_for_execution
@@ -101,19 +113,29 @@ SCML2020World
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
    .. autoattribute:: bankruptcy_rate
+   .. autoattribute:: breach_fraction
+   .. autoattribute:: breach_level
    .. autoattribute:: breach_rate
    .. autoattribute:: business_size
+   .. autoattribute:: cancellation_fraction
    .. autoattribute:: cancellation_rate
    .. autoattribute:: cancelled_contracts
+   .. autoattribute:: contract_dropping_fraction
+   .. autoattribute:: contract_err_fraction
    .. autoattribute:: contract_execution_fraction
+   .. autoattribute:: contract_nullification_fraction
    .. autoattribute:: current_step
+   .. autoattribute:: erred_contracts
+   .. autoattribute:: executed_contracts
    .. autoattribute:: id
    .. autoattribute:: log_folder
    .. autoattribute:: n_negotiation_rounds_failed
    .. autoattribute:: n_negotiation_rounds_successful
    .. autoattribute:: name
+   .. autoattribute:: nullified_contracts
    .. autoattribute:: num_bankrupt
    .. autoattribute:: productivity
    .. autoattribute:: relative_productivity
@@ -153,6 +175,7 @@ SCML2020World
    .. automethod:: from_checkpoint
    .. automethod:: from_config
    .. automethod:: generate
+   .. automethod:: get_dropped_contracts
    .. automethod:: get_private_state
    .. automethod:: init
    .. automethod:: join
@@ -163,6 +186,7 @@ SCML2020World
    .. automethod:: nullify_contract
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_concluded
+   .. automethod:: on_contract_processed
    .. automethod:: on_contract_signed
    .. automethod:: on_event
    .. automethod:: order_contracts_for_execution

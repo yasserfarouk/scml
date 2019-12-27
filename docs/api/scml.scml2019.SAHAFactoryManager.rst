@@ -52,6 +52,7 @@ SAHAFactoryManager
       ~SAHAFactoryManager.on_contract_nullified
       ~SAHAFactoryManager.on_contract_signed
       ~SAHAFactoryManager.on_contract_signed_
+      ~SAHAFactoryManager.on_contracts_finalized
       ~SAHAFactoryManager.on_event
       ~SAHAFactoryManager.on_inventory_change
       ~SAHAFactoryManager.on_neg_request_accepted
@@ -74,6 +75,7 @@ SAHAFactoryManager
       ~SAHAFactoryManager.respond_to_negotiation_request_
       ~SAHAFactoryManager.respond_to_renegotiation_request
       ~SAHAFactoryManager.set_renegotiation_agenda
+      ~SAHAFactoryManager.sign_all_contracts
       ~SAHAFactoryManager.sign_contract
       ~SAHAFactoryManager.step
       ~SAHAFactoryManager.step_
@@ -121,6 +123,7 @@ SAHAFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -143,6 +146,7 @@ SAHAFactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

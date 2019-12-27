@@ -10,18 +10,28 @@ SCMLWorld
 
    .. autosummary::
 
+      ~SCMLWorld.agreement_fraction
       ~SCMLWorld.agreement_rate
+      ~SCMLWorld.breach_fraction
+      ~SCMLWorld.breach_level
       ~SCMLWorld.breach_rate
       ~SCMLWorld.business_size
+      ~SCMLWorld.cancellation_fraction
       ~SCMLWorld.cancellation_rate
       ~SCMLWorld.cancelled_contracts
+      ~SCMLWorld.contract_dropping_fraction
+      ~SCMLWorld.contract_err_fraction
       ~SCMLWorld.contract_execution_fraction
+      ~SCMLWorld.contract_nullification_fraction
       ~SCMLWorld.current_step
+      ~SCMLWorld.erred_contracts
+      ~SCMLWorld.executed_contracts
       ~SCMLWorld.id
       ~SCMLWorld.log_folder
       ~SCMLWorld.n_negotiation_rounds_failed
       ~SCMLWorld.n_negotiation_rounds_successful
       ~SCMLWorld.name
+      ~SCMLWorld.nullified_contracts
       ~SCMLWorld.relative_time
       ~SCMLWorld.remaining_steps
       ~SCMLWorld.remaining_time
@@ -61,6 +71,7 @@ SCMLWorld
       ~SCMLWorld.execute_action
       ~SCMLWorld.from_checkpoint
       ~SCMLWorld.from_config
+      ~SCMLWorld.get_dropped_contracts
       ~SCMLWorld.get_private_state
       ~SCMLWorld.init
       ~SCMLWorld.join
@@ -72,6 +83,7 @@ SCMLWorld
       ~SCMLWorld.nullify_contract
       ~SCMLWorld.on_contract_cancelled
       ~SCMLWorld.on_contract_concluded
+      ~SCMLWorld.on_contract_processed
       ~SCMLWorld.on_contract_signed
       ~SCMLWorld.on_event
       ~SCMLWorld.order_contracts_for_execution
@@ -106,18 +118,28 @@ SCMLWorld
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
+   .. autoattribute:: breach_fraction
+   .. autoattribute:: breach_level
    .. autoattribute:: breach_rate
    .. autoattribute:: business_size
+   .. autoattribute:: cancellation_fraction
    .. autoattribute:: cancellation_rate
    .. autoattribute:: cancelled_contracts
+   .. autoattribute:: contract_dropping_fraction
+   .. autoattribute:: contract_err_fraction
    .. autoattribute:: contract_execution_fraction
+   .. autoattribute:: contract_nullification_fraction
    .. autoattribute:: current_step
+   .. autoattribute:: erred_contracts
+   .. autoattribute:: executed_contracts
    .. autoattribute:: id
    .. autoattribute:: log_folder
    .. autoattribute:: n_negotiation_rounds_failed
    .. autoattribute:: n_negotiation_rounds_successful
    .. autoattribute:: name
+   .. autoattribute:: nullified_contracts
    .. autoattribute:: relative_time
    .. autoattribute:: remaining_steps
    .. autoattribute:: remaining_time
@@ -155,6 +177,7 @@ SCMLWorld
    .. automethod:: execute_action
    .. automethod:: from_checkpoint
    .. automethod:: from_config
+   .. automethod:: get_dropped_contracts
    .. automethod:: get_private_state
    .. automethod:: init
    .. automethod:: join
@@ -166,6 +189,7 @@ SCMLWorld
    .. automethod:: nullify_contract
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_concluded
+   .. automethod:: on_contract_processed
    .. automethod:: on_contract_signed
    .. automethod:: on_event
    .. automethod:: order_contracts_for_execution

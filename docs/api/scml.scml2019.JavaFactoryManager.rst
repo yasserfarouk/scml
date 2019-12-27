@@ -86,6 +86,7 @@ JavaFactoryManager
       ~JavaFactoryManager.on_contract_nullified
       ~JavaFactoryManager.on_contract_signed
       ~JavaFactoryManager.on_contract_signed_
+      ~JavaFactoryManager.on_contracts_finalized
       ~JavaFactoryManager.on_event
       ~JavaFactoryManager.on_inventory_change
       ~JavaFactoryManager.on_neg_request_accepted
@@ -114,6 +115,7 @@ JavaFactoryManager
       ~JavaFactoryManager.setRenegotiationAgenda
       ~JavaFactoryManager.set_renegotiation_agenda
       ~JavaFactoryManager.signContract
+      ~JavaFactoryManager.sign_all_contracts
       ~JavaFactoryManager.sign_contract
       ~JavaFactoryManager.step
       ~JavaFactoryManager.stepPython
@@ -195,6 +197,7 @@ JavaFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -223,6 +226,7 @@ JavaFactoryManager
    .. automethod:: setRenegotiationAgenda
    .. automethod:: set_renegotiation_agenda
    .. automethod:: signContract
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: stepPython

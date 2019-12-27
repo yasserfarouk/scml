@@ -45,6 +45,7 @@ DefaultInsuranceCompany
       ~DefaultInsuranceCompany.on_contract_executed
       ~DefaultInsuranceCompany.on_contract_signed
       ~DefaultInsuranceCompany.on_contract_signed_
+      ~DefaultInsuranceCompany.on_contracts_finalized
       ~DefaultInsuranceCompany.on_event
       ~DefaultInsuranceCompany.on_neg_request_accepted
       ~DefaultInsuranceCompany.on_neg_request_accepted_
@@ -59,6 +60,7 @@ DefaultInsuranceCompany
       ~DefaultInsuranceCompany.respond_to_negotiation_request_
       ~DefaultInsuranceCompany.respond_to_renegotiation_request
       ~DefaultInsuranceCompany.set_renegotiation_agenda
+      ~DefaultInsuranceCompany.sign_all_contracts
       ~DefaultInsuranceCompany.sign_contract
       ~DefaultInsuranceCompany.step
       ~DefaultInsuranceCompany.step_
@@ -98,6 +100,7 @@ DefaultInsuranceCompany
    .. automethod:: on_contract_executed
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_neg_request_accepted
    .. automethod:: on_neg_request_accepted_
@@ -112,6 +115,7 @@ DefaultInsuranceCompany
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

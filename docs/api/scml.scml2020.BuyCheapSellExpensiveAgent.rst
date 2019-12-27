@@ -31,6 +31,7 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.checkpoint_info
       ~BuyCheapSellExpensiveAgent.confirm_external_sales
       ~BuyCheapSellExpensiveAgent.confirm_external_supplies
+      ~BuyCheapSellExpensiveAgent.confirm_production
       ~BuyCheapSellExpensiveAgent.create
       ~BuyCheapSellExpensiveAgent.create_negotiation_request
       ~BuyCheapSellExpensiveAgent.create_ufun
@@ -47,6 +48,7 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.on_contract_nullified
       ~BuyCheapSellExpensiveAgent.on_contract_signed
       ~BuyCheapSellExpensiveAgent.on_contract_signed_
+      ~BuyCheapSellExpensiveAgent.on_contracts_finalized
       ~BuyCheapSellExpensiveAgent.on_event
       ~BuyCheapSellExpensiveAgent.on_failures
       ~BuyCheapSellExpensiveAgent.on_neg_request_accepted
@@ -62,6 +64,7 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.respond_to_negotiation_request_
       ~BuyCheapSellExpensiveAgent.respond_to_renegotiation_request
       ~BuyCheapSellExpensiveAgent.set_renegotiation_agenda
+      ~BuyCheapSellExpensiveAgent.sign_all_contracts
       ~BuyCheapSellExpensiveAgent.sign_contract
       ~BuyCheapSellExpensiveAgent.start_negotiations
       ~BuyCheapSellExpensiveAgent.step
@@ -88,6 +91,7 @@ BuyCheapSellExpensiveAgent
    .. automethod:: checkpoint_info
    .. automethod:: confirm_external_sales
    .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
    .. automethod:: create_ufun
@@ -104,6 +108,7 @@ BuyCheapSellExpensiveAgent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_failures
    .. automethod:: on_neg_request_accepted
@@ -119,6 +124,7 @@ BuyCheapSellExpensiveAgent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: start_negotiations
    .. automethod:: step

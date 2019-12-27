@@ -49,6 +49,7 @@ DoNothingFactoryManager
       ~DoNothingFactoryManager.on_contract_nullified
       ~DoNothingFactoryManager.on_contract_signed
       ~DoNothingFactoryManager.on_contract_signed_
+      ~DoNothingFactoryManager.on_contracts_finalized
       ~DoNothingFactoryManager.on_event
       ~DoNothingFactoryManager.on_inventory_change
       ~DoNothingFactoryManager.on_neg_request_accepted
@@ -70,6 +71,7 @@ DoNothingFactoryManager
       ~DoNothingFactoryManager.respond_to_negotiation_request_
       ~DoNothingFactoryManager.respond_to_renegotiation_request
       ~DoNothingFactoryManager.set_renegotiation_agenda
+      ~DoNothingFactoryManager.sign_all_contracts
       ~DoNothingFactoryManager.sign_contract
       ~DoNothingFactoryManager.step
       ~DoNothingFactoryManager.step_
@@ -113,6 +115,7 @@ DoNothingFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -134,6 +137,7 @@ DoNothingFactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

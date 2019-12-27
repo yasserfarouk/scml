@@ -51,6 +51,7 @@ JustInTimeConsumer
       ~JustInTimeConsumer.on_contract_nullified
       ~JustInTimeConsumer.on_contract_signed
       ~JustInTimeConsumer.on_contract_signed_
+      ~JustInTimeConsumer.on_contracts_finalized
       ~JustInTimeConsumer.on_event
       ~JustInTimeConsumer.on_inventory_change
       ~JustInTimeConsumer.on_neg_request_accepted
@@ -72,6 +73,7 @@ JustInTimeConsumer
       ~JustInTimeConsumer.respond_to_renegotiation_request
       ~JustInTimeConsumer.set_profiles
       ~JustInTimeConsumer.set_renegotiation_agenda
+      ~JustInTimeConsumer.sign_all_contracts
       ~JustInTimeConsumer.sign_contract
       ~JustInTimeConsumer.step
       ~JustInTimeConsumer.step_
@@ -117,6 +119,7 @@ JustInTimeConsumer
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -138,6 +141,7 @@ JustInTimeConsumer
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_profiles
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

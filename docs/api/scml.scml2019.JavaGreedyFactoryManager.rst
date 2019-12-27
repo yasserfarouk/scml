@@ -86,6 +86,7 @@ JavaGreedyFactoryManager
       ~JavaGreedyFactoryManager.on_contract_nullified
       ~JavaGreedyFactoryManager.on_contract_signed
       ~JavaGreedyFactoryManager.on_contract_signed_
+      ~JavaGreedyFactoryManager.on_contracts_finalized
       ~JavaGreedyFactoryManager.on_event
       ~JavaGreedyFactoryManager.on_inventory_change
       ~JavaGreedyFactoryManager.on_neg_request_accepted
@@ -114,6 +115,7 @@ JavaGreedyFactoryManager
       ~JavaGreedyFactoryManager.setRenegotiationAgenda
       ~JavaGreedyFactoryManager.set_renegotiation_agenda
       ~JavaGreedyFactoryManager.signContract
+      ~JavaGreedyFactoryManager.sign_all_contracts
       ~JavaGreedyFactoryManager.sign_contract
       ~JavaGreedyFactoryManager.step
       ~JavaGreedyFactoryManager.stepPython
@@ -195,6 +197,7 @@ JavaGreedyFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -223,6 +226,7 @@ JavaGreedyFactoryManager
    .. automethod:: setRenegotiationAgenda
    .. automethod:: set_renegotiation_agenda
    .. automethod:: signContract
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: stepPython

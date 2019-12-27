@@ -49,6 +49,7 @@ Consumer
       ~Consumer.on_contract_nullified
       ~Consumer.on_contract_signed
       ~Consumer.on_contract_signed_
+      ~Consumer.on_contracts_finalized
       ~Consumer.on_event
       ~Consumer.on_inventory_change
       ~Consumer.on_neg_request_accepted
@@ -68,6 +69,7 @@ Consumer
       ~Consumer.respond_to_negotiation_request_
       ~Consumer.respond_to_renegotiation_request
       ~Consumer.set_renegotiation_agenda
+      ~Consumer.sign_all_contracts
       ~Consumer.sign_contract
       ~Consumer.step
       ~Consumer.step_
@@ -111,6 +113,7 @@ Consumer
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -130,6 +133,7 @@ Consumer
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

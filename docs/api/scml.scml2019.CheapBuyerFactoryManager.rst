@@ -74,6 +74,7 @@ CheapBuyerFactoryManager
       ~CheapBuyerFactoryManager.on_contract_nullified
       ~CheapBuyerFactoryManager.on_contract_signed
       ~CheapBuyerFactoryManager.on_contract_signed_
+      ~CheapBuyerFactoryManager.on_contracts_finalized
       ~CheapBuyerFactoryManager.on_event
       ~CheapBuyerFactoryManager.on_inventory_change
       ~CheapBuyerFactoryManager.on_neg_request_accepted
@@ -100,6 +101,7 @@ CheapBuyerFactoryManager
       ~CheapBuyerFactoryManager.respond_to_negotiation_request_
       ~CheapBuyerFactoryManager.respond_to_renegotiation_request
       ~CheapBuyerFactoryManager.set_renegotiation_agenda
+      ~CheapBuyerFactoryManager.sign_all_contracts
       ~CheapBuyerFactoryManager.sign_contract
       ~CheapBuyerFactoryManager.step
       ~CheapBuyerFactoryManager.step_
@@ -171,6 +173,7 @@ CheapBuyerFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -197,6 +200,7 @@ CheapBuyerFactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

@@ -42,6 +42,7 @@ InsuranceCompany
       ~InsuranceCompany.on_contract_executed
       ~InsuranceCompany.on_contract_signed
       ~InsuranceCompany.on_contract_signed_
+      ~InsuranceCompany.on_contracts_finalized
       ~InsuranceCompany.on_event
       ~InsuranceCompany.on_neg_request_accepted
       ~InsuranceCompany.on_neg_request_accepted_
@@ -56,6 +57,7 @@ InsuranceCompany
       ~InsuranceCompany.respond_to_negotiation_request_
       ~InsuranceCompany.respond_to_renegotiation_request
       ~InsuranceCompany.set_renegotiation_agenda
+      ~InsuranceCompany.sign_all_contracts
       ~InsuranceCompany.sign_contract
       ~InsuranceCompany.step
       ~InsuranceCompany.step_
@@ -92,6 +94,7 @@ InsuranceCompany
    .. automethod:: on_contract_executed
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_neg_request_accepted
    .. automethod:: on_neg_request_accepted_
@@ -106,6 +109,7 @@ InsuranceCompany
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

@@ -49,6 +49,7 @@ ReactiveMiner
       ~ReactiveMiner.on_contract_nullified
       ~ReactiveMiner.on_contract_signed
       ~ReactiveMiner.on_contract_signed_
+      ~ReactiveMiner.on_contracts_finalized
       ~ReactiveMiner.on_event
       ~ReactiveMiner.on_inventory_change
       ~ReactiveMiner.on_neg_request_accepted
@@ -69,6 +70,7 @@ ReactiveMiner
       ~ReactiveMiner.respond_to_renegotiation_request
       ~ReactiveMiner.set_profiles
       ~ReactiveMiner.set_renegotiation_agenda
+      ~ReactiveMiner.sign_all_contracts
       ~ReactiveMiner.sign_contract
       ~ReactiveMiner.step
       ~ReactiveMiner.step_
@@ -112,6 +114,7 @@ ReactiveMiner
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -132,6 +135,7 @@ ReactiveMiner
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_profiles
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

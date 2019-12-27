@@ -49,6 +49,7 @@ FactoryManager
       ~FactoryManager.on_contract_nullified
       ~FactoryManager.on_contract_signed
       ~FactoryManager.on_contract_signed_
+      ~FactoryManager.on_contracts_finalized
       ~FactoryManager.on_event
       ~FactoryManager.on_inventory_change
       ~FactoryManager.on_neg_request_accepted
@@ -70,6 +71,7 @@ FactoryManager
       ~FactoryManager.respond_to_negotiation_request_
       ~FactoryManager.respond_to_renegotiation_request
       ~FactoryManager.set_renegotiation_agenda
+      ~FactoryManager.sign_all_contracts
       ~FactoryManager.sign_contract
       ~FactoryManager.step
       ~FactoryManager.step_
@@ -113,6 +115,7 @@ FactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -134,6 +137,7 @@ FactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

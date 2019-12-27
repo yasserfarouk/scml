@@ -49,6 +49,7 @@ SCMLAgent
       ~SCMLAgent.on_contract_nullified
       ~SCMLAgent.on_contract_signed
       ~SCMLAgent.on_contract_signed_
+      ~SCMLAgent.on_contracts_finalized
       ~SCMLAgent.on_event
       ~SCMLAgent.on_inventory_change
       ~SCMLAgent.on_neg_request_accepted
@@ -68,6 +69,7 @@ SCMLAgent
       ~SCMLAgent.respond_to_negotiation_request_
       ~SCMLAgent.respond_to_renegotiation_request
       ~SCMLAgent.set_renegotiation_agenda
+      ~SCMLAgent.sign_all_contracts
       ~SCMLAgent.sign_contract
       ~SCMLAgent.step
       ~SCMLAgent.step_
@@ -111,6 +113,7 @@ SCMLAgent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -130,6 +133,7 @@ SCMLAgent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

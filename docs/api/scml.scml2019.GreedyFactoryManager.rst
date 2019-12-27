@@ -51,6 +51,7 @@ GreedyFactoryManager
       ~GreedyFactoryManager.on_contract_nullified
       ~GreedyFactoryManager.on_contract_signed
       ~GreedyFactoryManager.on_contract_signed_
+      ~GreedyFactoryManager.on_contracts_finalized
       ~GreedyFactoryManager.on_event
       ~GreedyFactoryManager.on_inventory_change
       ~GreedyFactoryManager.on_neg_request_accepted
@@ -72,6 +73,7 @@ GreedyFactoryManager
       ~GreedyFactoryManager.respond_to_negotiation_request_
       ~GreedyFactoryManager.respond_to_renegotiation_request
       ~GreedyFactoryManager.set_renegotiation_agenda
+      ~GreedyFactoryManager.sign_all_contracts
       ~GreedyFactoryManager.sign_contract
       ~GreedyFactoryManager.step
       ~GreedyFactoryManager.step_
@@ -118,6 +120,7 @@ GreedyFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -139,6 +142,7 @@ GreedyFactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

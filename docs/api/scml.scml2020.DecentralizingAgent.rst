@@ -33,6 +33,7 @@ DecentralizingAgent
       ~DecentralizingAgent.checkpoint_info
       ~DecentralizingAgent.confirm_external_sales
       ~DecentralizingAgent.confirm_external_supplies
+      ~DecentralizingAgent.confirm_production
       ~DecentralizingAgent.create
       ~DecentralizingAgent.create_negotiation_request
       ~DecentralizingAgent.from_checkpoint
@@ -51,6 +52,7 @@ DecentralizingAgent
       ~DecentralizingAgent.on_contract_nullified
       ~DecentralizingAgent.on_contract_signed
       ~DecentralizingAgent.on_contract_signed_
+      ~DecentralizingAgent.on_contracts_finalized
       ~DecentralizingAgent.on_event
       ~DecentralizingAgent.on_failures
       ~DecentralizingAgent.on_neg_request_accepted
@@ -66,6 +68,7 @@ DecentralizingAgent
       ~DecentralizingAgent.respond_to_negotiation_request_
       ~DecentralizingAgent.respond_to_renegotiation_request
       ~DecentralizingAgent.set_renegotiation_agenda
+      ~DecentralizingAgent.sign_all_contracts
       ~DecentralizingAgent.sign_contract
       ~DecentralizingAgent.start_negotiations
       ~DecentralizingAgent.step
@@ -94,6 +97,7 @@ DecentralizingAgent
    .. automethod:: checkpoint_info
    .. automethod:: confirm_external_sales
    .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
    .. automethod:: from_checkpoint
@@ -112,6 +116,7 @@ DecentralizingAgent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_failures
    .. automethod:: on_neg_request_accepted
@@ -127,6 +132,7 @@ DecentralizingAgent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: start_negotiations
    .. automethod:: step

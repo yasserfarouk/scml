@@ -29,6 +29,7 @@ AWI
       ~AWI.outputs
       ~AWI.profile
       ~AWI.relative_time
+      ~AWI.settings
       ~AWI.state
 
    .. rubric:: Methods Summary
@@ -75,6 +76,7 @@ AWI
    .. autoattribute:: outputs
    .. autoattribute:: profile
    .. autoattribute:: relative_time
+   .. autoattribute:: settings
    .. autoattribute:: state
 
    .. rubric:: Methods Documentation

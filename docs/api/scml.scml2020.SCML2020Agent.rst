@@ -31,6 +31,7 @@ SCML2020Agent
       ~SCML2020Agent.checkpoint_info
       ~SCML2020Agent.confirm_external_sales
       ~SCML2020Agent.confirm_external_supplies
+      ~SCML2020Agent.confirm_production
       ~SCML2020Agent.create
       ~SCML2020Agent.create_negotiation_request
       ~SCML2020Agent.from_checkpoint
@@ -45,6 +46,7 @@ SCML2020Agent
       ~SCML2020Agent.on_contract_nullified
       ~SCML2020Agent.on_contract_signed
       ~SCML2020Agent.on_contract_signed_
+      ~SCML2020Agent.on_contracts_finalized
       ~SCML2020Agent.on_event
       ~SCML2020Agent.on_failures
       ~SCML2020Agent.on_neg_request_accepted
@@ -60,6 +62,7 @@ SCML2020Agent
       ~SCML2020Agent.respond_to_negotiation_request_
       ~SCML2020Agent.respond_to_renegotiation_request
       ~SCML2020Agent.set_renegotiation_agenda
+      ~SCML2020Agent.sign_all_contracts
       ~SCML2020Agent.sign_contract
       ~SCML2020Agent.step
       ~SCML2020Agent.step_
@@ -85,6 +88,7 @@ SCML2020Agent
    .. automethod:: checkpoint_info
    .. automethod:: confirm_external_sales
    .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
    .. automethod:: from_checkpoint
@@ -99,6 +103,7 @@ SCML2020Agent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_failures
    .. automethod:: on_neg_request_accepted
@@ -114,6 +119,7 @@ SCML2020Agent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

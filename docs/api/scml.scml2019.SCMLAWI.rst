@@ -16,6 +16,7 @@ SCMLAWI
       ~SCMLAWI.processes
       ~SCMLAWI.products
       ~SCMLAWI.relative_time
+      ~SCMLAWI.settings
       ~SCMLAWI.state
 
    .. rubric:: Methods Summary
@@ -62,6 +63,7 @@ SCMLAWI
    .. autoattribute:: processes
    .. autoattribute:: products
    .. autoattribute:: relative_time
+   .. autoattribute:: settings
    .. autoattribute:: state
 
    .. rubric:: Methods Documentation

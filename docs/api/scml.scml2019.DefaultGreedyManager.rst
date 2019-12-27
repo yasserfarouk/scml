@@ -51,6 +51,7 @@ DefaultGreedyManager
       ~DefaultGreedyManager.on_contract_nullified
       ~DefaultGreedyManager.on_contract_signed
       ~DefaultGreedyManager.on_contract_signed_
+      ~DefaultGreedyManager.on_contracts_finalized
       ~DefaultGreedyManager.on_event
       ~DefaultGreedyManager.on_inventory_change
       ~DefaultGreedyManager.on_neg_request_accepted
@@ -72,6 +73,7 @@ DefaultGreedyManager
       ~DefaultGreedyManager.respond_to_negotiation_request_
       ~DefaultGreedyManager.respond_to_renegotiation_request
       ~DefaultGreedyManager.set_renegotiation_agenda
+      ~DefaultGreedyManager.sign_all_contracts
       ~DefaultGreedyManager.sign_contract
       ~DefaultGreedyManager.step
       ~DefaultGreedyManager.step_
@@ -118,6 +120,7 @@ DefaultGreedyManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -139,6 +142,7 @@ DefaultGreedyManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

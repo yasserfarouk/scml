@@ -31,6 +31,7 @@ RandomAgent
       ~RandomAgent.checkpoint_info
       ~RandomAgent.confirm_external_sales
       ~RandomAgent.confirm_external_supplies
+      ~RandomAgent.confirm_production
       ~RandomAgent.create
       ~RandomAgent.create_negotiation_request
       ~RandomAgent.create_ufun
@@ -47,6 +48,7 @@ RandomAgent
       ~RandomAgent.on_contract_nullified
       ~RandomAgent.on_contract_signed
       ~RandomAgent.on_contract_signed_
+      ~RandomAgent.on_contracts_finalized
       ~RandomAgent.on_event
       ~RandomAgent.on_failures
       ~RandomAgent.on_neg_request_accepted
@@ -62,6 +64,7 @@ RandomAgent
       ~RandomAgent.respond_to_negotiation_request_
       ~RandomAgent.respond_to_renegotiation_request
       ~RandomAgent.set_renegotiation_agenda
+      ~RandomAgent.sign_all_contracts
       ~RandomAgent.sign_contract
       ~RandomAgent.start_negotiations
       ~RandomAgent.step
@@ -88,6 +91,7 @@ RandomAgent
    .. automethod:: checkpoint_info
    .. automethod:: confirm_external_sales
    .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
    .. automethod:: create_ufun
@@ -104,6 +108,7 @@ RandomAgent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_failures
    .. automethod:: on_neg_request_accepted
@@ -119,6 +124,7 @@ RandomAgent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: start_negotiations
    .. automethod:: step

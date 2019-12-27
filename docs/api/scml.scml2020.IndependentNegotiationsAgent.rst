@@ -31,6 +31,7 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.checkpoint_info
       ~IndependentNegotiationsAgent.confirm_external_sales
       ~IndependentNegotiationsAgent.confirm_external_supplies
+      ~IndependentNegotiationsAgent.confirm_production
       ~IndependentNegotiationsAgent.create
       ~IndependentNegotiationsAgent.create_negotiation_request
       ~IndependentNegotiationsAgent.create_ufun
@@ -47,6 +48,7 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.on_contract_nullified
       ~IndependentNegotiationsAgent.on_contract_signed
       ~IndependentNegotiationsAgent.on_contract_signed_
+      ~IndependentNegotiationsAgent.on_contracts_finalized
       ~IndependentNegotiationsAgent.on_event
       ~IndependentNegotiationsAgent.on_failures
       ~IndependentNegotiationsAgent.on_neg_request_accepted
@@ -62,6 +64,7 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.respond_to_negotiation_request_
       ~IndependentNegotiationsAgent.respond_to_renegotiation_request
       ~IndependentNegotiationsAgent.set_renegotiation_agenda
+      ~IndependentNegotiationsAgent.sign_all_contracts
       ~IndependentNegotiationsAgent.sign_contract
       ~IndependentNegotiationsAgent.start_negotiations
       ~IndependentNegotiationsAgent.step
@@ -88,6 +91,7 @@ IndependentNegotiationsAgent
    .. automethod:: checkpoint_info
    .. automethod:: confirm_external_sales
    .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
    .. automethod:: create_ufun
@@ -104,6 +108,7 @@ IndependentNegotiationsAgent
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_failures
    .. automethod:: on_neg_request_accepted
@@ -119,6 +124,7 @@ IndependentNegotiationsAgent
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: start_negotiations
    .. automethod:: step

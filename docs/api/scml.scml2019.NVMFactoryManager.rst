@@ -50,6 +50,7 @@ NVMFactoryManager
       ~NVMFactoryManager.on_contract_nullified
       ~NVMFactoryManager.on_contract_signed
       ~NVMFactoryManager.on_contract_signed_
+      ~NVMFactoryManager.on_contracts_finalized
       ~NVMFactoryManager.on_event
       ~NVMFactoryManager.on_inventory_change
       ~NVMFactoryManager.on_neg_request_accepted
@@ -73,6 +74,7 @@ NVMFactoryManager
       ~NVMFactoryManager.respond_to_negotiation_request_
       ~NVMFactoryManager.respond_to_renegotiation_request
       ~NVMFactoryManager.set_renegotiation_agenda
+      ~NVMFactoryManager.sign_all_contracts
       ~NVMFactoryManager.sign_contract
       ~NVMFactoryManager.step
       ~NVMFactoryManager.step_
@@ -117,6 +119,7 @@ NVMFactoryManager
    .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_inventory_change
    .. automethod:: on_neg_request_accepted
@@ -140,6 +143,7 @@ NVMFactoryManager
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

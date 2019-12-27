@@ -45,6 +45,7 @@ DefaultBank
       ~DefaultBank.on_contract_executed
       ~DefaultBank.on_contract_signed
       ~DefaultBank.on_contract_signed_
+      ~DefaultBank.on_contracts_finalized
       ~DefaultBank.on_event
       ~DefaultBank.on_neg_request_accepted
       ~DefaultBank.on_neg_request_accepted_
@@ -59,6 +60,7 @@ DefaultBank
       ~DefaultBank.respond_to_negotiation_request_
       ~DefaultBank.respond_to_renegotiation_request
       ~DefaultBank.set_renegotiation_agenda
+      ~DefaultBank.sign_all_contracts
       ~DefaultBank.sign_contract
       ~DefaultBank.step
       ~DefaultBank.step_
@@ -98,6 +100,7 @@ DefaultBank
    .. automethod:: on_contract_executed
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
+   .. automethod:: on_contracts_finalized
    .. automethod:: on_event
    .. automethod:: on_neg_request_accepted
    .. automethod:: on_neg_request_accepted_
@@ -112,6 +115,7 @@ DefaultBank
    .. automethod:: respond_to_negotiation_request_
    .. automethod:: respond_to_renegotiation_request
    .. automethod:: set_renegotiation_agenda
+   .. automethod:: sign_all_contracts
    .. automethod:: sign_contract
    .. automethod:: step
    .. automethod:: step_

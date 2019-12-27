@@ -1,57 +1,57 @@
-FactorySimulator
+FastFactorySimulator
 ====================
 
 .. currentmodule:: scml.scml2019
 
-.. autoclass:: FactorySimulator
+.. autoclass:: FastFactorySimulator
    :show-inheritance:
 
    .. rubric:: Attributes Summary
 
    .. autosummary::
 
-      ~FactorySimulator.final_balance
-      ~FactorySimulator.fixed_before
-      ~FactorySimulator.initial_storage
-      ~FactorySimulator.initial_wallet
-      ~FactorySimulator.max_storage
-      ~FactorySimulator.n_lines
-      ~FactorySimulator.n_steps
+      ~FastFactorySimulator.final_balance
+      ~FastFactorySimulator.fixed_before
+      ~FastFactorySimulator.initial_storage
+      ~FastFactorySimulator.initial_wallet
+      ~FastFactorySimulator.max_storage
+      ~FastFactorySimulator.n_lines
+      ~FastFactorySimulator.n_steps
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~FactorySimulator.add_loan
-      ~FactorySimulator.available_storage_at
-      ~FactorySimulator.available_storage_to
-      ~FactorySimulator.balance_at
-      ~FactorySimulator.balance_to
-      ~FactorySimulator.bookmark
-      ~FactorySimulator.buy
-      ~FactorySimulator.delete_bookmark
-      ~FactorySimulator.fix_before
-      ~FactorySimulator.init
-      ~FactorySimulator.line_schedules_at
-      ~FactorySimulator.line_schedules_to
-      ~FactorySimulator.loans_at
-      ~FactorySimulator.loans_to
-      ~FactorySimulator.pay
-      ~FactorySimulator.receive
-      ~FactorySimulator.reserve
-      ~FactorySimulator.reserved_storage_at
-      ~FactorySimulator.reserved_storage_to
-      ~FactorySimulator.rollback
-      ~FactorySimulator.schedule
-      ~FactorySimulator.sell
-      ~FactorySimulator.set_state
-      ~FactorySimulator.storage_at
-      ~FactorySimulator.storage_to
-      ~FactorySimulator.total_storage_at
-      ~FactorySimulator.total_storage_to
-      ~FactorySimulator.transport_to
-      ~FactorySimulator.wallet_at
-      ~FactorySimulator.wallet_to
+      ~FastFactorySimulator.add_loan
+      ~FastFactorySimulator.available_storage_at
+      ~FastFactorySimulator.available_storage_to
+      ~FastFactorySimulator.balance_at
+      ~FastFactorySimulator.balance_to
+      ~FastFactorySimulator.bookmark
+      ~FastFactorySimulator.buy
+      ~FastFactorySimulator.delete_bookmark
+      ~FastFactorySimulator.fix_before
+      ~FastFactorySimulator.init
+      ~FastFactorySimulator.line_schedules_at
+      ~FastFactorySimulator.line_schedules_to
+      ~FastFactorySimulator.loans_at
+      ~FastFactorySimulator.loans_to
+      ~FastFactorySimulator.pay
+      ~FastFactorySimulator.receive
+      ~FastFactorySimulator.reserve
+      ~FastFactorySimulator.reserved_storage_at
+      ~FastFactorySimulator.reserved_storage_to
+      ~FastFactorySimulator.rollback
+      ~FastFactorySimulator.schedule
+      ~FastFactorySimulator.sell
+      ~FastFactorySimulator.set_state
+      ~FastFactorySimulator.storage_at
+      ~FastFactorySimulator.storage_to
+      ~FastFactorySimulator.total_storage_at
+      ~FastFactorySimulator.total_storage_to
+      ~FastFactorySimulator.transport_to
+      ~FastFactorySimulator.wallet_at
+      ~FastFactorySimulator.wallet_to
 
    .. rubric:: Attributes Documentation
 
