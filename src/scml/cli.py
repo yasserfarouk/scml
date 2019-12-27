@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
 import json
+import math
 import os
 import pathlib
 import sys
@@ -1489,9 +1490,33 @@ def run2019(
             f" (rounds/successful negotiation: {world.n_negotiation_rounds_successful:5.2f}, "
             f"rounds/broken negotiation: {world.n_negotiation_rounds_failed:5.2f})"
         )
+        total = (
+            world.contract_dropping_fraction
+            + world.contract_nullification_fraction
+            + world.contract_err_fraction
+            + world.breach_fraction
+            + world.contract_execution_fraction
+        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate))
+        n_signed = n_contracts - n_cancelled
+        n_dropped = int(round(n_signed * world.contract_dropping_fraction))
+        n_nullified = int(round(n_signed * world.contract_nullification_fraction))
+        n_erred = int(round(n_signed * world.contract_err_fraction))
+        n_breached = int(round(n_signed * world.breach_fraction))
+        n_executed = int(round(n_signed * world.contract_execution_fraction))
+
         print_and_log(
-            f"Cancelled: {world.cancellation_rate:0.0%}, Executed: {world.contract_execution_fraction:0.0%}"
-            f", Breached: {world.breach_rate:0.0%}, N. Executed: {n_executed}, Business size: "
+            f"Cancelled: {world.cancellation_rate:0.1%}, "
+            f"Executed: {world.contract_execution_fraction:0.1%}"
+            f", Breached: {world.breach_fraction:0.1%}"
+            f", Erred: {world.contract_err_fraction:0.1%}"
+            f", Nullified: {world.contract_nullification_fraction:0.1%}"
+            f", Dropped: {world.contract_dropping_fraction:0.1%}"
+            f", N. Executed: {n_executed} (accounted for {total: 0.2%})\n"
+            f"Negotiated: {n_negs} Concluded: {n_contracts} Signed: {n_signed} Dropped: {n_dropped}  "
+            f"Nullified: {n_nullified} "
+            f"Erred {n_erred} Breached {n_breached} (b. level {world.breach_level:0.1%}) => Executed: {n_executed}\n"
+            f"Business size: "
             f"{world.business_size}\n"
             f"Winners: {winners}\n"
             f"Running Time {humanize_time(elapsed)}"
@@ -2009,9 +2034,32 @@ def run2020(
             f" (rounds/successful negotiation: {world.n_negotiation_rounds_successful:5.2f}, "
             f"rounds/broken negotiation: {world.n_negotiation_rounds_failed:5.2f})"
         )
+        total = (
+            world.contract_dropping_fraction
+            + world.contract_nullification_fraction
+            + world.contract_err_fraction
+            + world.breach_fraction
+            + world.contract_execution_fraction
+        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate))
+        n_signed = n_contracts - n_cancelled
+        n_dropped = int(round(n_signed * world.contract_dropping_fraction))
+        n_nullified = int(round(n_signed * world.contract_nullification_fraction))
+        n_erred = int(round(n_signed * world.contract_err_fraction))
+        n_breached = int(round(n_signed * world.breach_fraction))
+        n_executed = int(round(n_signed * world.contract_execution_fraction))
         print_and_log(
-            f"Cancelled: {world.cancellation_rate:0.0%}, Executed: {world.contract_execution_fraction:0.0%}"
-            f", Breached: {world.breach_rate:0.0%}, N. Executed: {n_executed}, Business size: "
+            f"Cancelled: {world.cancellation_rate:0.0%}"
+            f", Executed: {world.contract_execution_fraction:0.0%}"
+            f", Breached: {world.breach_fraction:0.0%}"
+            f", Erred: {world.contract_err_fraction:0.0%}"
+            f", Nullified: {world.contract_nullification_fraction:0.0%}"
+            f", Dropped: {world.contract_dropping_fraction:0.1%}"
+            f", N. Executed: {n_executed} (accounted for {total: 0.2%})\n"
+            f"Negotiated: {n_negs} Concluded: {n_contracts} Signed: {n_signed} Dropped: {n_dropped}  "
+            f"Nullified: {n_nullified} "
+            f"Erred {n_erred} Breached {n_breached} (b. level {world.breach_level:0.1%}) => Executed: {n_executed}\n"
+            f"Business size: "
             f"{world.business_size}\n"
             f"Welfare (Excluding Bankrupt): {world.welfare(False)} ({world.relative_welfare(False):5.03%}), "
             f"Welfare (Including Bankrupt): {world.welfare(True)} ({world.relative_welfare(True):5.03%})\n"

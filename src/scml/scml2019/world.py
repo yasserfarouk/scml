@@ -2481,9 +2481,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             "quantity": contract.agreement["quantity"],
             "unit_price": contract.agreement["unit_price"],
             "signed_at": contract.signed_at if contract.signed_at is not None else -1,
-            "nullified_at": contract.nullified_at
-            if contract.nullified_at is not None
-            else -1,
+            "nullified_at": contract.nullified_at,
             "concluded_at": contract.concluded_at,
             "penalty": contract.agreement.get("penalty", np.nan),
             "signing_delay": contract.agreement.get("signing_delay", 0),
@@ -2508,63 +2506,3 @@ class SCMLWorld(TimeInAgreementMixin, World):
 
     def contract_size(self, contract: Contract) -> float:
         return contract.agreement["unit_price"] * contract.agreement["quantity"]
-
-    @property
-    def business_size(self) -> float:
-        """The total business size defined as the total money transferred within the system"""
-        return sum(self.stats["activity_level"])
-
-    @property
-    def agreement_rate(self) -> float:
-        """Fraction of negotiations ending in agreement and leading to signed contracts"""
-        n_negs = sum(self.stats["n_negotiations"])
-        n_contracts = len(self._saved_contracts)
-        return n_contracts / n_negs if n_negs != 0 else np.nan
-
-    @property
-    def cancellation_rate(self) -> float:
-        """Fraction of negotiations ending in agreement and leading to signed contracts"""
-        n_negs = sum(self.stats["n_negotiations"])
-        n_contracts = len(self._saved_contracts)
-        n_signed_contracts = len(
-            [_ for _ in self._saved_contracts.values() if _["signed"]]
-        )
-        return (1.0 - n_signed_contracts / n_contracts) if n_contracts != 0 else np.nan
-
-    @property
-    def n_negotiation_rounds_successful(self) -> float:
-        """Average number of rounds in a successful negotiation"""
-        n_negs = sum(self.stats["n_contracts_concluded"])
-        if n_negs == 0:
-            return np.nan
-        return sum(self.stats["n_negotiation_rounds_successful"]) / n_negs
-
-    @property
-    def n_negotiation_rounds_failed(self) -> float:
-        """Average number of rounds in a successful negotiation"""
-        n_negs = sum(self.stats["n_negotiations"]) - sum(
-            self.stats["n_contracts_concluded"]
-        )
-        if n_negs == 0:
-            return np.nan
-        return sum(self.stats["n_negotiation_rounds_failed"]) / n_negs
-
-    @property
-    def contract_execution_fraction(self) -> float:
-        """Fraction of signed contracts successfully executed"""
-        n_executed = sum(self.stats["n_contracts_executed"])
-        n_signed_contracts = len(
-            [_ for _ in self._saved_contracts.values() if _["signed"]]
-        )
-        return n_executed / n_signed_contracts if n_signed_contracts > 0 else np.nan
-
-    @property
-    def breach_rate(self) -> float:
-        """Fraction of signed contracts that led to breaches"""
-        n_breaches = sum(self.stats["n_breaches"])
-        n_signed_contracts = len(
-            [_ for _ in self._saved_contracts.values() if _["signed"]]
-        )
-        if n_signed_contracts != 0:
-            return n_breaches / n_signed_contracts
-        return np.nan

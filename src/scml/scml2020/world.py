@@ -470,7 +470,7 @@ class Factory:
                 lines = [line]
         steps += step[0]
         possible = min(repeats, len(steps))
-        if possible < 1:
+        if possible < repeats:
             return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         if method.startswith("l"):
             steps, lines = steps[-possible + 1 :], lines[-possible + 1 :]
@@ -1213,7 +1213,6 @@ class AWI(AgentWorldInterface):
         return self.state.n_processes
 
 
-
 class SCML2020Agent(Agent):
     """Base class for all SCML2020 agents (factory managers)"""
 
@@ -1252,7 +1251,7 @@ class SCML2020Agent(Agent):
 
     @abstractmethod
     def on_contract_nullified(
-        self, contract: Contract, compensation_money: int, compensation_fraction: float
+        self, contract: Contract, compensation_money: int, new_quantity: int
     ) -> None:
         """
         Called whenever a contract is nullified (because the partner is bankrupt)
@@ -1261,7 +1260,15 @@ class SCML2020Agent(Agent):
 
             contract: The contract being nullified
             compensation_money: The compensation money that is already added to the agent's wallet
-            compensation_fraction: The fraction of the contract's total to be compensated. The rest is lost.
+            new_quantity: The new quantity that will actually be executed for this contract at its delivery time.
+
+        Remarks:
+
+            - compensation_money and new_quantity will never be both nonzero
+            - compensation_money and new_quantity may both be zero which means that the contract will be cancelled
+              without compensation
+            - compensation_money will be nonzero iff immediate_compensation is enabled for this world
+
 
         """
 
@@ -1330,7 +1337,9 @@ class SCML2020Agent(Agent):
             None to reject the negotiation, otherwise a negotiator
         """
 
-    def confirm_production(self, commands: np.ndarray, balance: int, inventory) -> np.ndarray:
+    def confirm_production(
+        self, commands: np.ndarray, balance: int, inventory
+    ) -> np.ndarray:
         """
         Called just before production starts at every time-step allowing the agent to change what is to be
         produced in its factory
@@ -1480,15 +1489,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         borrow_on_breach=True,
         bankruptcy_limit=1.0,
         breach_penalty=0.15,
-        financial_report_period=5,
         interest_rate=0.05,
+        financial_report_period=5,
         # compensation parameters (for victims of bankrupt agents)
         compensation_fraction=1.0,
         compensate_immediately=False,
         compensate_before_past_debt=True,
         # external contracts parameters
         external_force_max=True,
-        external_buy_missing=True,
+        external_buy_missing=False,
         external_no_borrow=False,
         external_no_bankruptcy=False,
         external_penalty=0.15,
@@ -1553,24 +1562,44 @@ class SCML2020World(TimeInAgreementMixin, World):
             name=name,
             **kwargs,
         )
-        self.bulletin_board.record("settings", buy_missing_products, "buy_missing_products")
+        self.bulletin_board.record(
+            "settings", buy_missing_products, "buy_missing_products"
+        )
         self.bulletin_board.record("settings", borrow_on_breach, "borrow_on_breach")
         self.bulletin_board.record("settings", bankruptcy_limit, "bankruptcy_limit")
         self.bulletin_board.record("settings", breach_penalty, "breach_penalty")
-        self.bulletin_board.record("settings", financial_report_period, "financial_report_period")
+        self.bulletin_board.record(
+            "settings", financial_report_period, "financial_report_period"
+        )
         self.bulletin_board.record("settings", interest_rate, "interest_rate")
-        self.bulletin_board.record("settings", compensation_fraction, "compensation_fraction")
-        self.bulletin_board.record("settings", compensate_immediately, "compensate_immediately")
-        self.bulletin_board.record("settings", compensate_before_past_debt, "compensate_before_past_debt")
+        self.bulletin_board.record(
+            "settings", compensation_fraction, "compensation_fraction"
+        )
+        self.bulletin_board.record(
+            "settings", compensate_immediately, "compensate_immediately"
+        )
+        self.bulletin_board.record(
+            "settings", compensate_before_past_debt, "compensate_before_past_debt"
+        )
         self.bulletin_board.record("settings", external_force_max, "external_force_max")
-        self.bulletin_board.record("settings", external_buy_missing, "external_buy_missing")
+        self.bulletin_board.record(
+            "settings", external_buy_missing, "external_buy_missing"
+        )
         self.bulletin_board.record("settings", external_no_borrow, "external_no_borrow")
-        self.bulletin_board.record("settings", external_no_bankruptcy, "external_no_bankruptcy")
+        self.bulletin_board.record(
+            "settings", external_no_bankruptcy, "external_no_bankruptcy"
+        )
         self.bulletin_board.record("settings", external_penalty, "external_penalty")
         self.bulletin_board.record("settings", production_confirm, "production_confirm")
-        self.bulletin_board.record("settings", production_buy_missing, "production_buy_missing")
-        self.bulletin_board.record("settings", production_no_borrow, "production_no_borrow")
-        self.bulletin_board.record("settings", production_no_bankruptcy, "production_no_bankruptcy")
+        self.bulletin_board.record(
+            "settings", production_buy_missing, "production_buy_missing"
+        )
+        self.bulletin_board.record(
+            "settings", production_no_borrow, "production_no_borrow"
+        )
+        self.bulletin_board.record(
+            "settings", production_no_bankruptcy, "production_no_bankruptcy"
+        )
         self.bulletin_board.record("settings", production_penalty, "production_penalty")
 
         if self.info is None:
@@ -1579,7 +1608,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             process_inputs=process_inputs,
             process_outputs=process_outputs,
             catalog_prices=catalog_prices,
-            agent_types_final=agent_types,
+            agent_types_final=[get_full_type_name(_) for _ in agent_types],
             agent_params_final=agent_params,
             initial_balance_final=initial_balance,
             buy_missing_products=buy_missing_products,
@@ -1745,7 +1774,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 production_penalty=self.production_penalty,
                 production_no_borrow=self.production_no_borrow,
                 production_no_bankruptcy=self.production_no_bankruptcy,
-                confirm_production = self.confirm_production,
+                confirm_production=self.confirm_production,
             )
             for i, profile in enumerate(profiles)
         ]
@@ -1756,7 +1785,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.i2f = self.factories
 
         self.breach_prob = dict(zip((_.id for _ in agents), itertools.repeat(0.0)))
-        self.breach_level = dict(zip((_.id for _ in agents), itertools.repeat(0.0)))
+        self._breach_level = dict(zip((_.id for _ in agents), itertools.repeat(0.0)))
         self.agent_n_contracts = dict(zip((_.id for _ in agents), itertools.repeat(0)))
 
         n_processes = len(process_inputs)
@@ -2227,7 +2256,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             cash=factory.current_balance,
             assets=inventory,
             breach_prob=self.breach_prob[agent.id],
-            breach_level=self.breach_level[agent.id],
+            breach_level=self._breach_level[agent.id],
             is_bankrupt=bankrupt,
             agent_name=agent.name,
         )
@@ -2283,6 +2312,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                 )
                 f.step(sales, supply)
 
+        # remove contracts saved in factories for this step
+        for factory in self.factories:
+            factory.contracts[self.current_step] = []
+
     def contract_size(self, contract: Contract) -> float:
         return contract.agreement["quantity"] * contract.agreement["unit_price"]
 
@@ -2298,10 +2331,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             "delivery_time": contract.agreement["time"],
             "quantity": contract.agreement["quantity"],
             "unit_price": contract.agreement["unit_price"],
-            "signed_at": contract.signed_at if contract.signed_at is not None else -1,
-            "nullified_at": contract.nullified_at
-            if contract.nullified_at is not None
-            else -1,
+            "signed_at": contract.signed_at,
+            "nullified_at": contract.nullified_at,
             "concluded_at": contract.concluded_at,
             "signatures": "|".join(str(_) for _ in contract.signatures),
             "issues": contract.issues if not self.compact else None,
@@ -2357,7 +2388,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                 self._stats[f"inventory_{a.name}_output_{p}"].append(
                     f.current_inventory[p]
                 )
-            prod.append(np.sum(f.commands[self.current_step, :] != NO_COMMAND) / f.profile.n_lines)
+            prod.append(
+                np.sum(f.commands[self.current_step, :] != NO_COMMAND)
+                / f.profile.n_lines
+            )
             self._stats[f"productivity_{a.name}"].append(prod[-1])
             self._stats[f"assets_{a.name}"].append(
                 np.sum(f.current_inventory * self.catalog_prices)
@@ -2380,11 +2414,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         self._n_production_failures = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
-
-    @property
-    def business_size(self) -> float:
-        """The total business size defined as the total money transferred within the system"""
-        return sum(self.stats["activity_level"])
 
     @property
     def productivity(self) -> float:
@@ -2422,61 +2451,6 @@ class SCML2020World(TimeInAgreementMixin, World):
     def num_bankrupt(self) -> float:
         """The fraction of factories that went bankrupt"""
         return sum([f.is_bankrupt for f in self.factories])
-
-    @property
-    def agreement_rate(self) -> float:
-        """Fraction of negotiations ending in agreement and leading to signed contracts"""
-        n_negs = sum(self.stats["n_negotiations"])
-        n_contracts = len(self._saved_contracts)
-        return n_contracts / n_negs if n_negs != 0 else np.nan
-
-    @property
-    def cancellation_rate(self) -> float:
-        """Fraction of negotiations ending in agreement and leading to signed contracts"""
-        n_negs = sum(self.stats["n_negotiations"])
-        n_contracts = len(self._saved_contracts)
-        n_signed_contracts = len(
-            [_ for _ in self._saved_contracts.values() if _["signed"]]
-        )
-        return (1.0 - n_signed_contracts / n_contracts) if n_contracts != 0 else np.nan
-
-    @property
-    def n_negotiation_rounds_successful(self) -> float:
-        """Average number of rounds in a successful negotiation"""
-        n_negs = sum(self.stats["n_contracts_concluded"])
-        if n_negs == 0:
-            return np.nan
-        return sum(self.stats["n_negotiation_rounds_successful"]) / n_negs
-
-    @property
-    def n_negotiation_rounds_failed(self) -> float:
-        """Average number of rounds in a successful negotiation"""
-        n_negs = sum(self.stats["n_negotiations"]) - sum(
-            self.stats["n_contracts_concluded"]
-        )
-        if n_negs == 0:
-            return np.nan
-        return sum(self.stats["n_negotiation_rounds_failed"]) / n_negs
-
-    @property
-    def contract_execution_fraction(self) -> float:
-        """Fraction of signed contracts successfully executed"""
-        n_executed = sum(self.stats["n_contracts_executed"])
-        n_signed_contracts = len(
-            [_ for _ in self._saved_contracts.values() if _["signed"]]
-        )
-        return n_executed / n_signed_contracts if n_signed_contracts > 0 else np.nan
-
-    @property
-    def breach_rate(self) -> float:
-        """Fraction of signed contracts that led to breaches"""
-        n_breaches = sum(self.stats["n_breaches"])
-        n_signed_contracts = len(
-            [_ for _ in self._saved_contracts.values() if _["signed"]]
-        )
-        if n_signed_contracts != 0:
-            return n_breaches / n_signed_contracts
-        return np.nan
 
     def order_contracts_for_execution(
         self, contracts: Collection[Contract]
@@ -2523,7 +2497,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.breach_prob[agent_id] = (
             self.breach_prob[agent_id] * n_contracts + (level > 0)
         ) / (n_contracts + 1)
-        self.breach_level[agent_id] = (
+        self._breach_level[agent_id] = (
             self.breach_prob[agent_id] * n_contracts + level
         ) / (n_contracts + 1)
 
@@ -2553,6 +2527,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             any(self.a2f[_].is_bankrupt for _ in contract.partners)
             or contract.agreement["time"] >= self.n_steps
         ):
+            super().on_contract_cancelled(contract)
             return
         super().on_contract_signed(contract)
         self.logdebug(f"SIGNED {str(contract)}")
@@ -2568,9 +2543,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             ContractInfo(q, u, product, not is_seller, agent, contract)
         )
 
-    def nullify_contract(self, contract: Contract):
+    def nullify_contract(self, contract: Contract, new_quantity: int):
         self.__n_nullified += 1
         contract.nullified_at = self.current_step
+        contract.annotation["new_quantity"] = new_quantity
 
     def __register_breach(
         self, agent_id: str, level: float, contract_total: float, factory: Factory
@@ -2603,14 +2579,14 @@ class SCML2020World(TimeInAgreementMixin, World):
             self.penalties += penalty
         return 0
 
-    def start_contract_execution(self, contract: Contract) -> Set[Breach]:
+    def start_contract_execution(self, contract: Contract) -> Optional[Set[Breach]]:
         self.logdebug(f"Executing {str(contract)}")
         # get contract info
         breaches = set()
-        if self.compensate_immediately and any(
+        if self.compensate_immediately and (contract.nullified_at >= 0 or any(
             self.a2f[a].is_bankrupt for a in contract.partners
-        ):
-            return breaches
+        )):
+            return None
         product = contract.annotation["product"]
         buyer_id, seller_id = (
             contract.annotation["buyer"],
@@ -2628,18 +2604,13 @@ class SCML2020World(TimeInAgreementMixin, World):
                 f"Contract {str(contract)} has zero quantity of unit price!!! will be ignored"
             )
             return breaches
-        p = q * u
-        assert t == self.current_step
-        self.agent_n_contracts[buyer_id] += 1
-        self.agent_n_contracts[seller_id] += 1
-        missing_product = q - seller_factory.current_inventory[product]
-        missing_money = p - buyer_factory.current_balance
 
         # if the contract is already nullified, take care of it
-        if contract.nullified_at is not None:
+        if contract.nullified_at >= 0:
             self.compensation_factory._inventory[product] = 0
             self.compensation_factory._balance = 0
             for c in self.compensation_records.get(contract.id, []):
+                q = min(q, c.quantity)
                 if c.product >= 0 and c.quantity > 0:
                     assert c.product == product
                     self.compensation_factory._inventory[product] += c.quantity
@@ -2648,13 +2619,18 @@ class SCML2020World(TimeInAgreementMixin, World):
                     seller_factory = self.compensation_factory
                 else:
                     buyer_factory = self.compensation_factory
+
         elif seller_factory == buyer_factory:
-            self.logwarning(
-                f"Seller factory {seller_factory.agent_id} and Buyer factory {buyer_factory.agent_id} are the same."
-                f" This is most likely happening because you have two compensation records for the "
-                f"same contract!!"
-            )
-            return breaches
+            # means that both the seller and buyer are bankrupt
+            return None
+
+        p = q * u
+        assert t == self.current_step
+        self.agent_n_contracts[buyer_id] += 1
+        self.agent_n_contracts[seller_id] += 1
+        missing_product = q - seller_factory.current_inventory[product]
+        missing_money = p - buyer_factory.current_balance
+
         # if there are no breaches, just execute the contract
         if missing_money <= 0 and missing_product <= 0:
             self._execute(
@@ -2757,7 +2733,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             total_owed += contract.q * contract.u
             if (
                 self.a2f[contract.partner].is_bankrupt
-                or contract.contract.nullified_at is not None
+                or contract.contract.nullified_at >= 0
             ):
                 continue
             nulled_contracts.append(contract)
@@ -2778,9 +2754,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             victim = self.agents[contract.partner]
             victim_factory = self.a2f.get(victim.id, None)
             # calculate compensation (as money)
-            compensation = min(available, fraction * contract.q * contract.u)
+            compensation_quantity = int(fraction * contract.q)
+            compensation = min(available, compensation_quantity * contract.u)
             if compensation < 0:
-                self.nullify_contract(contract)
+                self.nullify_contract(contract.contract, 0)
                 continue
             if self.compensate_immediately:
                 # pay immediate compensation if indicated
@@ -2806,9 +2783,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             victim.on_contract_nullified(
                 contract.contract,
                 compensation if self.compensate_immediately else 0,
-                fraction,
+                compensation_quantity,
             )
-            self.nullify_contract(contract.contract)
+            self.nullify_contract(contract.contract, compensation_quantity)
             self.record_bankrupt(factory)
 
     @property
