@@ -2372,7 +2372,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             )
 
     def post_step_stats(self):
-        self._stats["n_contracts_nullified"].append(self.__n_nullified)
+        self._stats["n_contracts_nullified_now"].append(self.__n_nullified)
         self._stats["n_bankrupt"].append(self.__n_bankrupt)
         market_size = 0
         self._stats[f"_balance_society"].append(self.penalties)

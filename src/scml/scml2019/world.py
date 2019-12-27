@@ -1520,7 +1520,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         # noinspection PyProtectedMember
         cfps = self.bulletin_board._data["cfps"]
         self._stats["n_cfps_on_board_after"].append(len(cfps) if cfps else 0)
-        self._stats["n_contracts_nullified"].append(self.__n_nullified)
+        self._stats["n_contracts_nullified_now"].append(self.__n_nullified)
         self._stats["n_bankrupt"].append(self.__n_bankrupt)
         market_size = 0
         self._stats[f"_balance_bank"].append(self.bank.wallet)
