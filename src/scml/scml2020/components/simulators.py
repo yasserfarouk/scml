@@ -718,7 +718,7 @@ class FactorySimulator(AbstractFactorySimulator):
             self._n_products,
             self._n_products - 1,
         )
-        n_lines = self._n_lines
+        self._n_lines = profile.n_lines
         self._wallet = np.ones(n_steps) * initial_balance
         if initial_inventory is None:
             initial_inventory = np.zeros(n_products, dtype=int)
@@ -728,7 +728,6 @@ class FactorySimulator(AbstractFactorySimulator):
             initial_inventory.reshape((n_products, 1)), n_steps, axis=1
         )
         self._profile = profile
-        self._n_lines = n_lines
         self.commands = (
             np.ones(shape=(self._n_lines, self._n_steps), dtype=int) * NO_COMMAND
         )
