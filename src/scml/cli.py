@@ -1512,7 +1512,7 @@ def run2019(
             f", Erred: {world.contract_err_fraction:0.1%}"
             f", Nullified: {world.contract_nullification_fraction:0.1%}"
             f", Dropped: {world.contract_dropping_fraction:0.1%}"
-            f", N. Executed: {n_executed} (accounted for {total: 0.2%})\n"
+            f" (Sum:{total: 0.2%})\n"
             f"Negotiated: {n_negs} Concluded: {n_contracts} Signed: {n_signed} Dropped: {n_dropped}  "
             f"Nullified: {n_nullified} "
             f"Erred {n_erred} Breached {n_breached} (b. level {world.breach_level:0.1%}) => Executed: {n_executed}\n"
@@ -2062,13 +2062,13 @@ def run2020(
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
         print_and_log(
-            f"Cancelled: {world.cancellation_rate:0.0%}"
-            f", Executed: {world.contract_execution_fraction:0.0%}"
-            f", Breached: {world.breach_fraction:0.0%}"
-            f", Erred: {world.contract_err_fraction:0.0%}"
-            f", Nullified: {world.contract_nullification_fraction:0.0%}"
+            f"Cancelled: {world.cancellation_rate:0.1%}"
+            f", Executed: {world.contract_execution_fraction:0.1%}"
+            f", Breached: {world.breach_fraction:0.1%}"
+            f", Erred: {world.contract_err_fraction:0.1%}"
+            f", Nullified: {world.contract_nullification_fraction:0.1%}"
             f", Dropped: {world.contract_dropping_fraction:0.1%}"
-            f", N. Executed: {n_executed} (accounted for {total: 0.2%})\n"
+            f" (Sum:{total: 0.0%})\n"
             f"Negotiated: {n_negs} Concluded: {n_contracts} Signed: {n_signed} Dropped: {n_dropped}  "
             f"Nullified: {n_nullified} "
             f"Erred {n_erred} Breached {n_breached} (b. level {world.breach_level:0.1%}) => Executed: {n_executed}\n"

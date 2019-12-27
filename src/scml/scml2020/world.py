@@ -2531,7 +2531,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             any(self.a2f[_].is_bankrupt for _ in contract.partners)
             or contract.agreement["time"] >= self.n_steps
         ):
-            super().on_contract_cancelled(contract)
+            self.ignore_contract(contract)
             return
         super().on_contract_signed(contract)
         self.logdebug(f"SIGNED {str(contract)}")
