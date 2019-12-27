@@ -31,7 +31,7 @@ from negmas import (
 )
 from negmas.events import Notifier, Notification
 from negmas.helpers import instantiate, get_class
-from scml.scml2020 import AWI, NO_COMMAND
+from scml.scml2020 import AWI, NO_COMMAND, ANY_LINE
 
 from .do_nothing import DoNothingAgent
 
@@ -508,10 +508,11 @@ class DecentralizingAgent(DoNothingAgent):
                     self.sales_needed[t + 1] += max(1, int(q * self.production_factor))
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        contracts = sorted(contracts, key=lambda x: x.agreement["time"])
         signatures = [None] * len(contracts)
-        consumed = 0
+        taken = 0
+        s = self.awi.current_step
         for i, contract in enumerate(contracts):
-            s = self.awi.current_step
             q, u, t = (
                 contract.agreement["quantity"],
                 contract.agreement["unit_price"],
@@ -520,19 +521,23 @@ class DecentralizingAgent(DoNothingAgent):
 
             # check that I can produce the required quantities even in principle
             if contract.annotation["seller"] == self.id:
-                q = contract.agreement["quantity"]
-                steps, lines = self.awi.available_for_production(
-                    q, (s, t), -1, override=False, method="all"
-                )
-                if len(steps) - consumed < q:
-                    continue
-                consumed += q
+                trange = (s, t)
+                secured, needed, negotiating = self.sales_secured, self.sales_needed, self.sales_negotiating
+            else:
+                trange = (t+1, self.awi.n_steps - 1)
+                secured, needed, negotiating = self.supplies_secured, self.supplies_needed, self.supplies_negotiating
 
-                if self.sales_secured[s:t+1].sum() + q <= self.sales_needed[s:t+1].sum():
-                    signatures[i] = self.id
+            steps, lines = self.awi.available_for_production(
+                q, trange, ANY_LINE, override=False, method="all"
+            )
+            if len(steps) - taken < q:
                 continue
-            if self.supplies_secured[s:t+1].sum() + q <= self.supplies_needed[s:t+1].sum():
+            taken += q
+
+            if secured[trange[0]:trange[1]+1].sum() + q + \
+                taken * self.agreement_fraction <= needed[trange[0]:trange[1]+1].sum():
                 signatures[i] = self.id
+
 
         return signatures
 
@@ -552,12 +557,12 @@ class DecentralizingAgent(DoNothingAgent):
         return commands
 
     def on_contract_nullified(
-        self, contract: Contract, compensation_money: int, compensation_fraction: float
+        self, contract: Contract, compensation_money: int, new_quantity: int
     ) -> None:
-        if compensation_fraction < 1.0:
+        q = contract.agreement["quantity"]
+        if new_quantity < q:
             t = contract.agreement["time"]
-            q = contract.agreement["quantity"]
-            missing = int(compensation_fraction * q)
+            missing = q - new_quantity
             if t < self.awi.current_step:
                 return
             if contract.annotation["seller"] == self.id:
@@ -571,7 +576,7 @@ class DecentralizingAgent(DoNothingAgent):
                 self.supplies_secured[t] += missing
                 if t < self.awi.n_steps - 1:
                     self.sales_needed[t+1] -= missing
-                if self.buyers[t] is not None and self.sellers[t].controller is not None:
+                if self.buyers[t] is not None and self.buyers[t].controller is not None:
                     self.buyers[t].controller.target += missing
 
     def all_negotiations_concluded(
@@ -604,7 +609,8 @@ class DecentralizingAgent(DoNothingAgent):
             )
             controllers, generator = self.buyers, self.generate_buy_negotiations
 
-        negotiating[time_range[0] : time_range[1] + 1] -= expected // (time_range[1] + 1 - time_range[0])
+        if time_range[1] + 1 - time_range[0] > 0:
+            negotiating[time_range[0] : time_range[1] + 1] -= expected // (time_range[1] + 1 - time_range[0])
         self.awi.loginfo(f"Killing Controller {str(controllers[controller_index].controller)}")
         controllers[controller_index].controller = None
         if quantity <= target:
@@ -830,8 +836,8 @@ class DecentralizingAgent(DoNothingAgent):
 
     def _trange(self, step, is_seller):
         if is_seller:
-            return step, self.awi.n_steps - 1
-        return self.awi.current_step + 1, step
+            return step + 1, self.awi.n_steps - 1
+        return self.awi.current_step + 1, step - 1
 
     def _get_controller(self, mechanism) -> StepController:
         neg = self._running_negotiations[mechanism.id]

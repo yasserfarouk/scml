@@ -4,14 +4,17 @@ from negmas.helpers import unique_name
 from pytest import mark
 from hypothesis import given, settings
 import hypothesis.strategies as st
+
+from scml import FactorySimulator
 from scml.scml2020 import (
     SCML2020World,
     DoNothingAgent,
     FactoryProfile,
     RandomAgent,
     BuyCheapSellExpensiveAgent,
-    INFINITE_COST,
+    INFINITE_COST
 )
+from scml.scml2020.components import FactorySimulator
 import random
 
 random.seed(0)
@@ -27,7 +30,7 @@ active_types = [_ for _ in types if _ != DoNothingAgent]
 
 def generate_world(
     agent_types,
-    n_processes=2,
+    n_processes=3,
     n_steps=10,
     n_agents_per_process=2,
     n_lines=10,
@@ -233,3 +236,18 @@ def test_generate():
         )
     )
     world.run()
+    assert True
+
+
+def test_a_tiny_world():
+    world = generate_world(
+        [DecentralizingAgent],
+        n_processes=2,
+        n_steps=5,
+        n_agents_per_process=2,
+        n_lines=5,
+        initial_balance=10_000,
+        buy_missing_products=True,
+    )
+    world.run()
+    assert True

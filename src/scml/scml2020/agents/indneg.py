@@ -238,67 +238,76 @@ class IndependentNegotiationsAgent(DoNothingAgent):
                 negotiator=self.negotiator(not to_buy, issues=issues),
             )
 
-    def sign_contract(self, contract: Contract) -> Optional[str]:
-        step = contract.agreement["time"]
-        if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
-            return None
-        if contract.annotation["seller"] == self.id:
-            q = contract.agreement["quantity"]
-            steps, lines = self.awi.available_for_production(
-                q, (self.awi.current_step + 1, step), -1, override=False, method="all"
-            )
-            if len(steps) < q:
-                return None
-        return self.id
-
-    def on_contract_signed(self, contract: Contract) -> None:
-        is_seller = contract.annotation["seller"] == self.id
-        step = contract.agreement["time"]
-        # find the earliest time I can do anything about this contract
-        earliest_production = self.awi.current_step
-        if step > self.awi.n_steps - 1 or step < earliest_production:
-            return
-        if is_seller:
-            # if I am a seller, I will schedule production then buy my needs to produce
-            output_product = contract.annotation["product"]
-            input_product = output_product - 1
-            if input_product >= 0:
-                steps, _ = self.awi.schedule_production(
-                    process=input_product,
-                    repeats=contract.agreement["quantity"],
-                    step=(earliest_production, step - 1),
-                    line=-1,
+    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        results = [None] * len(contracts)
+        for i, contract in enumerate( contracts):
+            step = contract.agreement["time"]
+            if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
+                continue
+            if contract.annotation["seller"] == self.id:
+                q = contract.agreement["quantity"]
+                steps, lines = self.awi.available_for_production(
+                    q, (self.awi.current_step + 1, step), -1, override=False, method="all"
                 )
-                if len(steps) < 1:
-                    return
-                scheduled_at = steps.min()
+                if len(steps) < q:
+                    continue
+            results[i] = self.id
+        return results
+
+    def on_contracts_finalized(
+        self,
+        signed: List[Contract],
+        cancelled: List[Contract],
+        rejectors: List[List[str]],
+    ) -> None:
+        for contract in signed:
+            is_seller = contract.annotation["seller"] == self.id
+            step = contract.agreement["time"]
+            # find the earliest time I can do anything about this contract
+            earliest_production = self.awi.current_step
+            if step > self.awi.n_steps - 1 or step < earliest_production:
+                continue
+            if is_seller:
+                # if I am a seller, I will schedule production then buy my needs to produce
+                output_product = contract.annotation["product"]
+                input_product = output_product - 1
+                if input_product >= 0:
+                    steps, _ = self.awi.schedule_production(
+                        process=input_product,
+                        repeats=contract.agreement["quantity"],
+                        step=(earliest_production, step - 1),
+                        line=-1,
+                    )
+                    if len(steps) < 1:
+                        continue
+                    scheduled_at = steps.min()
+                    n_inputs = self.awi.inputs[input_product]
+                    cost = self.costs[input_product]
+                    n_outputs = self.awi.outputs[input_product]
+                    self.start_negotiations(
+                        product=input_product,
+                        quantity=max(
+                            1, contract.agreement["quantity"] * n_inputs // n_outputs
+                        ),
+                        unit_price=(n_outputs * contract.agreement["unit_price"] - cost)
+                        // n_inputs,
+                        time=scheduled_at - 1,
+                        to_buy=True,
+                    )
+                continue
+
+            # I am a buyer. I need not produce anything but I need to negotiate to sell the production of what I bought
+            input_product = contract.annotation["product"]
+            output_product = input_product + 1
+            if output_product < self.awi.n_products:
                 n_inputs = self.awi.inputs[input_product]
                 cost = self.costs[input_product]
                 n_outputs = self.awi.outputs[input_product]
                 self.start_negotiations(
-                    product=input_product,
-                    quantity=max(
-                        1, contract.agreement["quantity"] * n_inputs // n_outputs
-                    ),
-                    unit_price=(n_outputs * contract.agreement["unit_price"] - cost)
-                    // n_inputs,
-                    time=scheduled_at - 1,
-                    to_buy=True,
+                    product=output_product,
+                    quantity=max(1, contract.agreement["quantity"] * n_inputs / n_outputs),
+                    unit_price=(cost + contract.agreement["unit_price"] * n_inputs)
+                    // n_outputs,
+                    time=step - 1,
+                    to_buy=False,
                 )
-            return
-
-        # I am a buyer. I need not produce anything but I need to negotiate to sell the production of what I bought
-        input_product = contract.annotation["product"]
-        output_product = input_product + 1
-        if output_product < self.awi.n_products:
-            n_inputs = self.awi.inputs[input_product]
-            cost = self.costs[input_product]
-            n_outputs = self.awi.outputs[input_product]
-            self.start_negotiations(
-                product=output_product,
-                quantity=max(1, contract.agreement["quantity"] * n_inputs / n_outputs),
-                unit_price=(cost + contract.agreement["unit_price"] * n_inputs)
-                // n_outputs,
-                time=step - 1,
-                to_buy=False,
-            )
