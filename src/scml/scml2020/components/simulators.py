@@ -698,17 +698,11 @@ class FactorySimulator(AbstractFactorySimulator):
         self,
         profile: FactoryProfile,
         initial_balance: int,
-        buy_missing_products: bool,
-        borrow_on_breach: bool,
-        borrow_for_production: bool,
         bankruptcy_limit: int,
         breach_penalty: float,
         initial_inventory: np.ndarray = None,
     ):
         super().__init__(initial_balance=initial_balance, profile=profile)
-        self.buy_missing_products = buy_missing_products
-        self.borrow_on_breach = borrow_on_breach
-        self.borrow_for_production = borrow_for_production
         self.bankruptcy_limit = bankruptcy_limit
         self.breach_penalty = breach_penalty
         n_steps, n_products, n_processes = (
@@ -749,6 +743,10 @@ class FactorySimulator(AbstractFactorySimulator):
     def final_balance(self) -> int:
         return self._wallet[-1]
 
+    def is_bankrupt(self) -> bool:
+        """Checks if the agent will go bankrupt given all the info so far"""
+        return np.min(self._wallet) < self.bankruptcy_limit
+
     def wallet_to(self, t: int) -> np.array:
         return self._wallet[: t + 1]
 
@@ -770,21 +768,21 @@ class FactorySimulator(AbstractFactorySimulator):
         if ignore_money_shortage:
             b -= payment
             return True
-        if self.interest_rate < 1e-4:
-            b -= payment
-            if b.min() < self.bankruptcy_limit:
-                b += payment
-                return False
-            return True
-        backup = b.copy()
-        for i in range(len(b)):
-            b[i] -= payment
-            if b[i] < self.bankruptcy_limit:
-                self._wallet[t:] = backup
-                return False
-            if b[i] < 0 <= b[i] + payment:
-                payment -= int(math.ceil(self.interest_rate * b[i]))
+        b -= payment
+        if b.min() < self.bankruptcy_limit:
+            b += payment
+            return False
         return True
+        # interest rate computation. Ignored for now
+        # backup = b.copy()
+        # for i in range(len(b)):
+        #     b[i] -= payment
+        #     if b[i] < self.bankruptcy_limit:
+        #         self._wallet[t:] = backup
+        #         return False
+        #     if b[i] < 0 <= b[i] + payment:
+        #         payment -= int(math.ceil(self.interest_rate * b[i]))
+        # return True
 
     def transport_to(
         self,
@@ -969,14 +967,10 @@ class FactorySimulator(AbstractFactorySimulator):
                     ignore_money_shortage
                     or (
                         self._wallet[s] >= cost
-                        or (
-                            self.borrow_for_production
-                            and self._wallet[s] - cost >= self.bankruptcy_limit
-                        )
                     )
                 )):
                     continue
-                scheduled +=1
+                scheduled += 1
                 self.commands[s, l] = process
                 self._inventory[process, s] -= 1
                 self._inventory[process + 1, s] += 1

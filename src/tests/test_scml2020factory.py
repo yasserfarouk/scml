@@ -31,14 +31,14 @@ def create_factory():
         # compensation parameters (for victims of bankrupt agents)
         compensate_before_past_debt=False,
         # external contracts parameters
-        external_no_borrow=False,
-        external_no_bankruptcy=True,
-        external_penalty=0.15,
+        exogenous_no_borrow=False,
+        exogenous_no_bankruptcy=True,
+        exogenous_penalty=0.15,
         production_no_borrow=False,
         production_no_bankruptcy=True,
         production_penalty=0.15,
         production_buy_missing=False,
-        external_buy_missing=False,
+        exogenous_buy_missing=False,
         catalog_prices=np.random.randint(1, 20, size=PROCESSES + 1, dtype=int),
     )
 
@@ -135,9 +135,6 @@ class TestFactory:
 
 
 def test_simulator_runs():
-    buy_missing_products = False
-    borrow_on_breach = True
-    borrow_for_production = False
     breach_penalty = 0.15
     profile = create_profile()
     factory = create_factory()
@@ -145,9 +142,15 @@ def test_simulator_runs():
     simulator = FactorySimulator(
         profile=profile,
         initial_balance=factory.initial_balance,
-        buy_missing_products=buy_missing_products,
-        borrow_on_breach=borrow_on_breach,
-        borrow_for_production=borrow_for_production,
         bankruptcy_limit=bankruptcy_limit,
         breach_penalty=breach_penalty,
     )
+    assert simulator.balance_at(simulator.n_steps - 1) == factory.initial_balance
+    assert np.all(simulator.inventory_at(simulator.n_steps - 1) == 0)
+    assert not simulator.is_bankrupt()
+    assert not simulator.pay(
+        factory.initial_balance * 3, t=1, ignore_money_shortage=False
+    )
+    assert simulator.balance_at(simulator.n_steps - 1) == factory.initial_balance
+    simulator.pay(factory.initial_balance * 3, t=1, ignore_money_shortage=True)
+    assert simulator.is_bankrupt()

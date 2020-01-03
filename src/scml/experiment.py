@@ -342,11 +342,11 @@ def main(worlds, factorial, variables, name, steps, compact, log, jobs):
         "borrow_on_breach": [True, False],
         "buy_missing_products": [True, False],
         "production_buy_missing": [True, False],
-        "external_buy_missing": [True, False],
+        "exogenous_buy_missing": [True, False],
         "production_no_borrow": [True, False],
-        "external_no_borrow": [True, False],
-        "external_force_max": [True, False],
-        "breach_penalty;production_penalty;external_penalty": [
+        "exogenous_no_borrow": [True, False],
+        "exogenous_force_max": [True, False],
+        "breach_penalty;production_penalty;exogenous_penalty": [
             (0.15, 0.15, 0.15),
             (0.25, 0.25, 0.25),
         ],
@@ -377,19 +377,19 @@ def main(worlds, factorial, variables, name, steps, compact, log, jobs):
         Constraint(
             condition_vars=["borrow_on_breach"],
             condition_values=[[False]],
-            conditioned_var="external_no_borrow",
+            conditioned_var="exogenous_no_borrow",
             feasible_values=[True],
         ),
         Constraint(
-            condition_vars=["external_force_max"],
+            condition_vars=["exogenous_force_max"],
             condition_values=[[False]],
             conditioned_var="production_no_borrow",
             feasible_values=[False],
         ),
         Constraint(
-            condition_vars=["external_force_max"],
+            condition_vars=["exogenous_force_max"],
             condition_values=[[True]],
-            conditioned_var="external_buy_missing",
+            conditioned_var="exogenous_buy_missing",
             feasible_values=[True],
         ),
     )

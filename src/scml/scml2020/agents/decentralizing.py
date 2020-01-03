@@ -267,7 +267,7 @@ class DecentralizingAgent(DoNothingAgent):
             negotiator_params if negotiator_params is not None else dict()
         )
         self.horizon = horizon
-        self.external_horizon = None
+        self.exogenous_horizon = None
         self.input_product: int = -1
         self.output_product: int = -1
         self.process: int = -1
@@ -292,7 +292,7 @@ class DecentralizingAgent(DoNothingAgent):
     def init(self):
         awi: AWI
         awi = self.awi  # type: ignore
-        self.external_horizon = awi.bb_read("settings", "external_horizon")
+        self.exogenous_horizon = awi.bb_read("settings", "exogenous_horizon")
         self.buyers: List[ControllerInfo] = [
             ControllerInfo(None, i, False, tuple(), 0, 0, False)
             for i in range(self.awi.n_steps)
@@ -331,8 +331,8 @@ class DecentralizingAgent(DoNothingAgent):
         self.production_factor = self.n_outputs / self.n_inputs
         self.supplies_secured = np.zeros(awi.n_steps, dtype=int)
         self.sales_secured = np.zeros(awi.n_steps, dtype=int)
-        self.supplies_secured[:self.external_horizon] = awi.profile.external_supplies[:self.external_horizon, self.input_product]
-        self.sales_secured[:self.external_horizon] = awi.profile.external_sales[:self.external_horizon, self.output_product]
+        self.supplies_secured[:self.exogenous_horizon] = awi.profile.exogenous_supplies[:self.exogenous_horizon, self.input_product]
+        self.sales_secured[:self.exogenous_horizon] = awi.profile.exogenous_sales[:self.exogenous_horizon, self.output_product]
         self.supplies_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_secured = np.zeros(awi.n_steps, dtype=int)
@@ -358,9 +358,9 @@ class DecentralizingAgent(DoNothingAgent):
         # self.sales_needed = self.sales_needed.cumsum()
         # self.sales_secured = self.sales_secured.cumsum()
 
-        inprices = awi.profile.external_supply_prices[:, self.input_product]
+        inprices = awi.profile.exogenous_supply_prices[:, self.input_product]
         inprices[self.supplies_secured == 0] = 0
-        outprices = awi.profile.external_sale_prices[:, self.output_product]
+        outprices = awi.profile.exogenous_sale_prices[:, self.output_product]
         outprices[self.sales_secured == 0] = 0
 
         self.input_cost = np.maximum(
@@ -373,16 +373,16 @@ class DecentralizingAgent(DoNothingAgent):
     def step(self):
         """Generates buy and sell negotiations as needed"""
         s = self.awi.current_step
-        if self.external_horizon != self.awi.n_steps:
-            nxt = s + self.external_horizon
+        if self.exogenous_horizon != self.awi.n_steps:
+            nxt = s + self.exogenous_horizon
             if nxt < self.awi.n_steps:
-                self.supplies_secured[nxt] += self.awi.profile.external_supplies[nxt]
+                self.supplies_secured[nxt] += self.awi.profile.exogenous_supplies[nxt]
                 if nxt + 1 < self.awi.n_steps:
-                    self.sales_needed[nxt + 1] += self.awi.profile.external_supplies[nxt]
+                    self.sales_needed[nxt + 1] += self.awi.profile.exogenous_supplies[nxt]
 
-                self.sales_secured[nxt] += self.awi.profile.external_sales[nxt]
+                self.sales_secured[nxt] += self.awi.profile.exogenous_sales[nxt]
                 if nxt - 1 >= 0:
-                    self.supplies_needed[nxt - 1] += self.awi.profile.external_sales[nxt]
+                    self.supplies_needed[nxt - 1] += self.awi.profile.exogenous_sales[nxt]
         if s == 0:
             last = min(self.awi.n_steps - 1, self.horizon + 2)
             for step in range(1, last):
@@ -632,7 +632,7 @@ class DecentralizingAgent(DoNothingAgent):
             generator(step=controller_index)
             return
 
-    def confirm_external_sales(
+    def confirm_exogenous_sales(
         self, quantities: np.ndarray, unit_prices: np.ndarray
     ) -> np.ndarray:
         p, s = self.output_product, self.awi.current_step
@@ -641,7 +641,7 @@ class DecentralizingAgent(DoNothingAgent):
         )
         return quantities
 
-    def confirm_external_supplies(
+    def confirm_exogenous_supplies(
         self, quantities: np.ndarray, unit_prices: np.ndarray
     ) -> np.ndarray:
         p, s = self.input_product, self.awi.current_step

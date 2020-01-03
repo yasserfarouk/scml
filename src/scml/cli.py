@@ -350,21 +350,21 @@ def tournament(ctx, ignore_warnings):
     type=float,
     default=None,
     help="SCML2020: The fraction of production slots (lines/steps) that can be occupied with production given the "
-    "external contracts",
+    "exogenous contracts",
 )
 @click.option(
     "--productivity-min",
     type=float,
     default=0.8,
     help="SCML2020: The minimum fraction of production slots (lines/steps) that can be occupied with production given the "
-    "external contracts",
+    "exogenous contracts",
 )
 @click.option(
     "--productivity-max",
     type=float,
     default=1.0,
     help="SCML2020: The maximum fraction of production slots (lines/steps) that can be occupied with production given the "
-    "external contracts",
+    "exogenous contracts",
 )
 @click.option(
     "--cash-availability",
@@ -409,19 +409,19 @@ def tournament(ctx, ignore_warnings):
     " of the chain become more costly to run than those near the raw material)",
 )
 @click.option(
-    "--equal-external-supplies/--variable-external-supplies",
+    "--equal-exogenous-supplies/--variable-exogenous-supplies",
     default=False,
-    help="SCML2020: Whether external supplies are equal for all agents executing process 0",
+    help="SCML2020: Whether exogenous supplies are equal for all agents executing process 0",
 )
 @click.option(
-    "--equal-external-sales/--variable-external-sales",
+    "--equal-exogenous-sales/--variable-exogenous-sales",
     default=False,
-    help="SCML2020: Whether external sales are equal for all agents executing the last prodess",
+    help="SCML2020: Whether exogenous sales are equal for all agents executing the last prodess",
 )
 @click.option(
     "--buy-missing/--inventory-breach",
     default=True,
-    help="SCML2020: If true, missing products will be assumed to be bought from an external source at a price"
+    help="SCML2020: If true, missing products will be assumed to be bought from an exogenous source at a price"
     " higher than both the catalog price and the unit price in the contract.",
 )
 @click.option(
@@ -463,11 +463,11 @@ def tournament(ctx, ignore_warnings):
     help="SCML2020: Interest rate for negative balances (borrowed money)",
 )
 @click.option(
-    "--force-external/--choose-external-quantity",
+    "--force-exogenous/--choose-exogenous-quantity",
     default=True,
-    help="SCML2020: Whether the external contracts are forced to their full quantity"
+    help="SCML2020: Whether the exogenous contracts are forced to their full quantity"
     " or agents can choose the quantity they want up to the value in the "
-    "external contract.",
+    "exogenous contract.",
 )
 @click.option(
     "--balance",
@@ -520,8 +520,8 @@ def create(
     costs_min,
     costs_max,
     increasing_costs,
-    equal_external_supplies,
-    equal_external_sales,
+    equal_exogenous_supplies,
+    equal_exogenous_sales,
     profit_mean,
     profit_std,
     productivity,
@@ -536,7 +536,7 @@ def create(
     penalty,
     reports,
     interest,
-    force_external,
+    force_exogenous,
     borrow_to_produce,
     balance,
     processes,
@@ -566,8 +566,8 @@ def create(
                 "process_outputs": outputs,
                 "production_costs": costs,
                 "cost_increases_with_level": increasing_costs,
-                "equal_external_supply": equal_external_supplies,
-                "equal_external_sales": equal_external_sales,
+                "equal_exogenous_supply": equal_exogenous_supplies,
+                "equal_exogenous_sales": equal_exogenous_sales,
                 "max_productivity": productivity,
                 "cash_availability": cash_availability,
                 "profit_means": profit_mean,
@@ -577,10 +577,10 @@ def create(
                 "bankruptcy_limit": bankruptcy_limit,
                 "breach_penalty": penalty,
                 "production_penalty": penalty,
-                "external_penalty": penalty,
+                "exogenous_penalty": penalty,
                 "financial_report_period": reports,
                 "interest_rate": interest,
-                "external_force_max": force_external,
+                "exogenous_force_max": force_exogenous,
                 "production_no_borrow": not borrow_to_produce,
                 "production_no_bankruptcy": not borrow_to_produce,
                 "initial_balance": balance,
@@ -1624,21 +1624,21 @@ def run2019(
     type=float,
     default=None,
     help="The fraction of production slots (lines/steps) that can be occupied with production given the "
-    "external contracts",
+    "exogenous contracts",
 )
 @click.option(
     "--productivity-min",
     type=float,
     default=0.8,
     help="The minimum fraction of production slots (lines/steps) that can be occupied with production given the "
-    "external contracts",
+    "exogenous contracts",
 )
 @click.option(
     "--productivity-max",
     type=float,
     default=1.0,
     help="The maximum fraction of production slots (lines/steps) that can be occupied with production given the "
-    "external contracts",
+    "exogenous contracts",
 )
 @click.option(
     "--cash-availability",
@@ -1683,19 +1683,19 @@ def run2019(
     " of the chain become more costly to run than those near the raw material)",
 )
 @click.option(
-    "--equal-external-supplies/--variable-external-supplies",
+    "--equal-exogenous-supplies/--variable-exogenous-supplies",
     default=False,
-    help="Whether external supplies are equal for all agents executing process 0",
+    help="Whether exogenous supplies are equal for all agents executing process 0",
 )
 @click.option(
-    "--equal-external-sales/--variable-external-sales",
+    "--equal-exogenous-sales/--variable-exogenous-sales",
     default=False,
-    help="Whether external sales are equal for all agents executing the last prodess",
+    help="Whether exogenous sales are equal for all agents executing the last prodess",
 )
 @click.option(
     "--buy-missing/--inventory-breach",
     default=True,
-    help="If true, missing products will be assumed to be bought from an external source at a price"
+    help="If true, missing products will be assumed to be bought from an exogenous source at a price"
     " higher than both the catalog price and the unit price in the contract.",
 )
 @click.option(
@@ -1734,11 +1734,11 @@ def run2019(
     help="Interest rate for negative balances (borrowed money)",
 )
 @click.option(
-    "--force-external/--choose-external-quantity",
+    "--force-exogenous/--choose-exogenous-quantity",
     default=True,
-    help="Whether the external contracts are forced to their full quantity"
+    help="Whether the exogenous contracts are forced to their full quantity"
     " or agents can choose the quantity they want up to the value in the "
-    "external contract.",
+    "exogenous contract.",
 )
 @click.option(
     "--competitors",
@@ -1826,8 +1826,8 @@ def run2020(
     costs_min,
     costs_max,
     increasing_costs,
-    equal_external_supplies,
-    equal_external_sales,
+    equal_exogenous_supplies,
+    equal_exogenous_sales,
     profit_mean,
     profit_std,
     productivity,
@@ -1842,7 +1842,7 @@ def run2020(
     penalty,
     reports,
     interest,
-    force_external,
+    force_exogenous,
     borrow_to_produce,
 ):
     if balance < 0:
@@ -1873,8 +1873,8 @@ def run2020(
             "process_outputs": outputs,
             "production_costs": costs,
             "cost_increases_with_level": increasing_costs,
-            "equal_external_supply": equal_external_supplies,
-            "equal_external_sales": equal_external_sales,
+            "equal_exogenous_supply": equal_exogenous_supplies,
+            "equal_exogenous_sales": equal_exogenous_sales,
             "max_productivity": productivity,
             "cash_availability": cash_availability,
             "profit_means": profit_mean,
@@ -1884,10 +1884,10 @@ def run2020(
             "bankruptcy_limit": bankruptcy_limit,
             "breach_penalty": penalty,
             "production_penalty": penalty,
-            "external_penalty": penalty,
+            "exogenous_penalty": penalty,
             "financial_report_period": reports,
             "interest_rate": interest,
-            "external_force_max": force_external,
+            "exogenous_force_max": force_exogenous,
             "production_no_borrow": not borrow_to_produce,
             "production_no_bankruptcy": not borrow_to_produce,
             "n_agents_per_process": factories,

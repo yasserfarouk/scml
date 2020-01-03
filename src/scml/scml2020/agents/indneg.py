@@ -94,13 +94,13 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         final = min(earliest + self.horizon - 1, self.awi.n_steps)
 
         # if I have external inputs, negotiate to sell them (after production)
-        supplies = self.awi.profile.external_supplies[earliest:final, input_products]
+        supplies = self.awi.profile.exogenous_supplies[earliest:final, input_products]
         quantity = np.sum(supplies, axis=0)
 
         # find the supply prices
         prices = (
             np.sum(
-                self.awi.profile.external_supply_prices[earliest:final, input_products]
+                self.awi.profile.exogenous_supply_prices[earliest:final, input_products]
                 * supplies
             )
             // quantity
@@ -124,12 +124,12 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             )
 
         # if I have external outputs, negotiate to buy corresponding inputs
-        sales = self.awi.profile.external_sales[earliest:final, output_products]
+        sales = self.awi.profile.exogenous_sales[earliest:final, output_products]
         quantity = np.sum(sales, axis=0)
         prices = (
             np.sum(
                 sales
-                * self.awi.profile.external_sale_prices[earliest:final, output_products]
+                * self.awi.profile.exogenous_sale_prices[earliest:final, output_products]
             )
             // quantity
         )
@@ -171,12 +171,12 @@ class IndependentNegotiationsAgent(DoNothingAgent):
     ) -> Optional[Negotiator]:
         return self.negotiator(annotation["seller"] == self.id, issues=issues)
 
-    def confirm_external_sales(
+    def confirm_exogenous_sales(
         self, quantities: np.ndarray, unit_prices: np.ndarray
     ) -> np.ndarray:
         return quantities
 
-    def confirm_external_supplies(
+    def confirm_exogenous_supplies(
         self, quantities: np.ndarray, unit_prices: np.ndarray
     ) -> np.ndarray:
         return quantities

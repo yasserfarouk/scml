@@ -156,25 +156,25 @@ class FactoryProfile:
 
     __slots__ = [
         "costs",
-        "external_sales",
-        "external_supplies",
-        "external_sale_prices",
-        "external_supply_prices",
+        "exogenous_sales",
+        "exogenous_supplies",
+        "exogenous_sale_prices",
+        "exogenous_supply_prices",
     ]
     costs: np.ndarray
     """An n_lines * n_processes array giving the cost of executing any process (INVALID_COST indicates infinity)"""
-    external_sales: np.ndarray
+    exogenous_sales: np.ndarray
     """A n_steps * n_products array giving guaranteed sales of different products for the whole simulation time"""
-    external_supplies: np.ndarray
+    exogenous_supplies: np.ndarray
     """A n_steps * n_products array giving guaranteed sales of different products for the whole simulation time"""
-    external_sale_prices: np.ndarray
-    """A n_steps * n_products array giving guaranteed unit prices for the `external_quantities` . It will be zero
-    for times and products for which there are no guaranteed quantities (i.e. (external_quantities[...] == 0) =>
-     (external_prices[...] == 0) )"""
-    external_supply_prices: np.ndarray
-    """A n_steps * n_products array giving guaranteed unit prices for the `external_quantities` . It will be zero
-    for times and products for which there are no guaranteed quantities (i.e. (external_quantities[...] == 0) =>
-     (external_prices[...] == 0) )"""
+    exogenous_sale_prices: np.ndarray
+    """A n_steps * n_products array giving guaranteed unit prices for the `exogenous_quantities` . It will be zero
+    for times and products for which there are no guaranteed quantities (i.e. (exogenous_quantities[...] == 0) =>
+     (exogenous_prices[...] == 0) )"""
+    exogenous_supply_prices: np.ndarray
+    """A n_steps * n_products array giving guaranteed unit prices for the `exogenous_quantities` . It will be zero
+    for times and products for which there are no guaranteed quantities (i.e. (exogenous_quantities[...] == 0) =>
+     (exogenous_prices[...] == 0) )"""
 
     @property
     def n_lines(self):
@@ -182,11 +182,11 @@ class FactoryProfile:
 
     @property
     def n_products(self):
-        return self.external_sales.shape[1]
+        return self.exogenous_sales.shape[1]
 
     @property
     def n_steps(self):
-        return self.external_sales.shape[0]
+        return self.exogenous_sales.shape[0]
 
     @property
     def n_processes(self):
@@ -206,8 +206,8 @@ class Failure:
     step: int
     """The step at which the failure happened"""
     process: int
-    """The process that failed to execute (if `external_contract_failure` and `is_inventory` , then this will be the
-    process that would have generated the needed product. and if `external_contract_failure` and not `is_inventory`
+    """The process that failed to execute (if `exogenous_contract_failure` and `is_inventory` , then this will be the
+    process that would have generated the needed product. and if `exogenous_contract_failure` and not `is_inventory`
     , then it is not valid)"""
 
 
@@ -258,10 +258,10 @@ class Factory:
         compensate_before_past_debt: bool,
         buy_missing_products: bool,
         production_buy_missing: bool,
-        external_buy_missing: bool,
-        external_penalty: float,
-        external_no_bankruptcy: bool,
-        external_no_borrow: bool,
+        exogenous_buy_missing: bool,
+        exogenous_penalty: float,
+        exogenous_no_bankruptcy: bool,
+        exogenous_no_borrow: bool,
         production_penalty: float,
         production_no_bankruptcy: bool,
         production_no_borrow: bool,
@@ -272,12 +272,12 @@ class Factory:
     ):
         self.confirm_production = confirm_production
         self.production_buy_missing = production_buy_missing
-        self.external_buy_missing = external_buy_missing
+        self.exogenous_buy_missing = exogenous_buy_missing
         self.compensate_before_past_debt = compensate_before_past_debt
         self.buy_missing_products = buy_missing_products
-        self.external_penalty = external_penalty
-        self.external_no_bankruptcy = external_no_bankruptcy
-        self.external_no_borrow = external_no_borrow
+        self.exogenous_penalty = exogenous_penalty
+        self.exogenous_no_bankruptcy = exogenous_no_bankruptcy
+        self.exogenous_no_borrow = exogenous_no_borrow
         self.production_penalty = production_penalty
         self.production_no_bankruptcy = production_no_bankruptcy
         self.production_no_borrow = production_no_borrow
@@ -292,7 +292,7 @@ class Factory:
         )
         """An n_steps * n_lines array giving the process scheduled for each line at every step. -1 indicates an empty
         line. """
-        # self.predicted_inventory = profile.external_quantities.copy()
+        # self.predicted_inventory = profile.exogenous_quantities.copy()
         """An n_steps * n_products array giving the inventory content at different steps. For steps in the past and
         present, this is the *actual* value of the inventory at that time. For steps in the future, this is a
         *prediction* of the inventory at that step."""
@@ -305,7 +305,7 @@ class Factory:
         )
         """Current inventory"""
         # self.predicted_balance = initial_balance - np.sum(
-        #     profile.external_quantities * profile.external_prices, axis=-1
+        #     profile.exogenous_quantities * profile.exogenous_prices, axis=-1
         # )
         """An n_steps vector giving the wallet balance at different steps. For steps in the past and
         present, this is the *actual* value of the balance at that time. For steps in the future, this is a
@@ -556,7 +556,7 @@ class Factory:
         # if it is possible to pay for all the supplies, do that directly without checks
         #    otherwise do normal transactions to check for bankruptcy (either way we do not report breaches)
         if np.max(accepted_supplies) > 0:
-            prices = profile.external_supply_prices[step, :] * accepted_supplies
+            prices = profile.exogenous_supply_prices[step, :] * accepted_supplies
             supply_money = np.sum(prices)
             if self._balance - supply_money >= self.min_balance:
                 self._balance -= supply_money
@@ -565,17 +565,17 @@ class Factory:
                 for p, (q, u) in enumerate(
                     zip(
                         accepted_supplies.tolist(),
-                        profile.external_supply_prices[step, :].tolist(),
+                        profile.exogenous_supply_prices[step, :].tolist(),
                     )
                 ):
                     self.buy(
                         p,
                         q,
                         u,
-                        self.external_buy_missing,
-                        self.external_penalty,
-                        self.external_no_bankruptcy,
-                        self.external_no_borrow,
+                        self.exogenous_buy_missing,
+                        self.exogenous_penalty,
+                        self.exogenous_no_bankruptcy,
+                        self.exogenous_no_borrow,
                     )
                     if self.is_bankrupt:
                         break
@@ -589,14 +589,14 @@ class Factory:
 
             if np.all(in_inventory):
                 self._balance += np.sum(
-                    accepted_sales * profile.external_sale_prices[step, :]
+                    accepted_sales * profile.exogenous_sale_prices[step, :]
                 )
                 self._inventory -= accepted_sales
             else:
                 for p, (q, u) in enumerate(
                     zip(
                         accepted_sales.tolist(),
-                        profile.external_sale_prices[step, :].tolist(),
+                        profile.exogenous_sale_prices[step, :].tolist(),
                     )
                 ):
                     if q < 1:
@@ -605,10 +605,10 @@ class Factory:
                         p,
                         -q,
                         u,
-                        self.external_buy_missing,
-                        self.external_penalty,
-                        self.external_no_bankruptcy,
-                        self.external_no_borrow,
+                        self.exogenous_buy_missing,
+                        self.exogenous_penalty,
+                        self.exogenous_no_bankruptcy,
+                        self.exogenous_no_borrow,
                     )
                     if self.is_bankrupt:
                         break
@@ -1143,10 +1143,10 @@ class AWI(AgentWorldInterface):
     def profile(self) -> FactoryProfile:
         """Gets the profile (static private information) associated with the agent"""
         profile = self._world.a2f[self.agent.id].profile
-        s = min(self.n_steps, self.current_step+self._world.external_horizon)
+        s = min(self.n_steps, self.current_step+self._world.exogenous_horizon)
         return FactoryProfile(
-            profile.costs, profile.external_sales[:s], profile.external_supplies[:s], profile.external_sale_prices[:s]
-            , profile.external_supply_prices[:s]
+            profile.costs, profile.exogenous_sales[:s], profile.exogenous_supplies[:s], profile.exogenous_sale_prices[:s]
+            , profile.exogenous_supply_prices[:s]
         )
 
     @property
@@ -1314,7 +1314,7 @@ class SCML2020Agent(Agent):
         """
 
     @abstractmethod
-    def confirm_external_sales(
+    def confirm_exogenous_sales(
         self, quantities: np.ndarray, unit_prices: np.ndarray
     ) -> np.ndarray:
         """
@@ -1331,7 +1331,7 @@ class SCML2020Agent(Agent):
         """
 
     @abstractmethod
-    def confirm_external_supplies(
+    def confirm_exogenous_supplies(
         self, quantities: np.ndarray, unit_prices: np.ndarray
     ) -> np.ndarray:
         """
@@ -1482,10 +1482,10 @@ class _SystemAgent(SCML2020Agent):
     def on_failures(self, failures: List[Failure]) -> None:
         pass
 
-    def confirm_external_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_exogenous_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         return quantities
 
-    def confirm_external_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_exogenous_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
         return quantities
 
     def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],
@@ -1532,9 +1532,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         initial_balance: The initial balance in each agent's wallet. All agents will start with this same value.
         breach_penalty: The total penalty paid upon a breach will be calculated as (breach_level * breach_penalty *
                         contract_quantity * contract_unit_price).
-        external_supply_limit: An n_steps * n_products array giving the total supply available of each product over time.
+        exogenous_supply_limit: An n_steps * n_products array giving the total supply available of each product over time.
                       Only affects guaranteed supply.
-        external_sales_limit: An n_steps * n_products array giving the total sales to happen for each product over time.
+        exogenous_sales_limit: An n_steps * n_products array giving the total sales to happen for each product over time.
                      Only affects guaranteed sales.
         financial_report_period: The number of steps between financial reports. If < 1, it is a fraction of n_steps
         borrow_on_breach: If true, agents will be forced to borrow money on breach as much as possible to honor the
@@ -1562,14 +1562,14 @@ class SCML2020World(TimeInAgreementMixin, World):
                                      pay past debt then whatever remains will be used for compensation. Notice that
                                      in all cases, the trigger of bankruptcy will be paid before compensation and
                                      past debts.
-        external_force_max: If true, agents are not asked to confirm guaranteed transactions and they
+        exogenous_force_max: If true, agents are not asked to confirm guaranteed transactions and they
                             are carried out up to bankruptcy
-        external_no_borrow: If true, agents will not borrow if they fail to satisfy an external transaction. The
+        exogenous_no_borrow: If true, agents will not borrow if they fail to satisfy an external transaction. The
                             transaction will just fail silently
-        external_no_bankruptcy: If true, agents will not go bankrupt because of an external transaction. The
+        exogenous_no_bankruptcy: If true, agents will not go bankrupt because of an external transaction. The
                                 transaction will just fail silently
-        external_penalty: The penalty paid for failure to honor external contracts
-        external_horizon: The horizon for revealing external contracts
+        exogenous_penalty: The penalty paid for failure to honor external contracts
+        exogenous_horizon: The horizon for revealing external contracts
         production_no_borrow: If true, agents will not borrow if they fail to satisfy its production need to execute
                               a scheduled production command
         production_no_bankruptcy: If true, agents will not go bankrupt because of an production related transaction.
@@ -1613,14 +1613,14 @@ class SCML2020World(TimeInAgreementMixin, World):
         compensate_immediately=False,
         compensate_before_past_debt=True,
         # external contracts parameters
-        external_force_max=True,
-        external_buy_missing=False,
-        external_no_borrow=False,
-        external_no_bankruptcy=False,
-        external_penalty=0.15,
-        external_supply_limit: np.ndarray = None,
-        external_sales_limit: np.ndarray = None,
-        external_horizon: int = None,
+        exogenous_force_max=True,
+        exogenous_buy_missing=False,
+        exogenous_no_borrow=False,
+        exogenous_no_bankruptcy=False,
+        exogenous_penalty=0.15,
+        exogenous_supply_limit: np.ndarray = None,
+        exogenous_sales_limit: np.ndarray = None,
+        exogenous_horizon: int = None,
         # production failure parameters
         production_confirm=True,
         production_buy_missing=False,
@@ -1647,12 +1647,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         agent_name_reveals_type: bool = True,
         **kwargs,
     ):
-        if external_horizon is None:
-            external_horizon = n_steps
-        self.external_horizon = external_horizon
+        if exogenous_horizon is None:
+            exogenous_horizon = n_steps
+        self.exogenous_horizon = exogenous_horizon
         self.buy_missing_products = buy_missing_products
         self.production_buy_missing = production_buy_missing
-        self.external_buy_missing = external_buy_missing
+        self.exogenous_buy_missing = exogenous_buy_missing
         kwargs["log_to_file"] = not no_logs
         if compact:
             kwargs["log_screen_level"] = logging.CRITICAL
@@ -1693,7 +1693,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             "settings", financial_report_period, "financial_report_period"
         )
         self.bulletin_board.record("settings", interest_rate, "interest_rate")
-        self.bulletin_board.record("settings", external_horizon, "external_horizon")
+        self.bulletin_board.record("settings", exogenous_horizon, "exogenous_horizon")
         self.bulletin_board.record(
             "settings", compensation_fraction, "compensation_fraction"
         )
@@ -1703,15 +1703,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.bulletin_board.record(
             "settings", compensate_before_past_debt, "compensate_before_past_debt"
         )
-        self.bulletin_board.record("settings", external_force_max, "external_force_max")
+        self.bulletin_board.record("settings", exogenous_force_max, "exogenous_force_max")
         self.bulletin_board.record(
-            "settings", external_buy_missing, "external_buy_missing"
+            "settings", exogenous_buy_missing, "exogenous_buy_missing"
         )
-        self.bulletin_board.record("settings", external_no_borrow, "external_no_borrow")
+        self.bulletin_board.record("settings", exogenous_no_borrow, "exogenous_no_borrow")
         self.bulletin_board.record(
-            "settings", external_no_bankruptcy, "external_no_bankruptcy"
+            "settings", exogenous_no_bankruptcy, "exogenous_no_bankruptcy"
         )
-        self.bulletin_board.record("settings", external_penalty, "external_penalty")
+        self.bulletin_board.record("settings", exogenous_penalty, "exogenous_penalty")
         self.bulletin_board.record("settings", production_confirm, "production_confirm")
         self.bulletin_board.record(
             "settings", production_buy_missing, "production_buy_missing"
@@ -1735,7 +1735,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             initial_balance_final=initial_balance,
             buy_missing_products=buy_missing_products,
             production_buy_missing=production_buy_missing,
-            external_buy_missing=external_buy_missing,
+            exogenous_buy_missing=exogenous_buy_missing,
             borrow_on_breach=borrow_on_breach,
             bankruptcy_limit=bankruptcy_limit,
             breach_penalty=breach_penalty,
@@ -1744,12 +1744,12 @@ class SCML2020World(TimeInAgreementMixin, World):
             compensation_fraction=compensation_fraction,
             compensate_immediately=compensate_immediately,
             compensate_before_past_debt=compensate_before_past_debt,
-            external_force_max=external_force_max,
-            external_no_borrow=external_no_borrow,
-            external_no_bankruptcy=external_no_bankruptcy,
-            external_penalty=external_penalty,
-            external_supply_limit=external_supply_limit,
-            external_sales_limit=external_sales_limit,
+            exogenous_force_max=exogenous_force_max,
+            exogenous_no_borrow=exogenous_no_borrow,
+            exogenous_no_bankruptcy=exogenous_no_bankruptcy,
+            exogenous_penalty=exogenous_penalty,
+            exogenous_supply_limit=exogenous_supply_limit,
+            exogenous_sales_limit=exogenous_sales_limit,
             production_no_borrow=production_no_borrow,
             production_no_bankruptcy=production_no_bankruptcy,
             production_penalty=production_penalty,
@@ -1769,9 +1769,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.breach_penalty = breach_penalty
         self.bulletin_board.add_section("reports_time")
         self.bulletin_board.add_section("reports_agent")
-        self.external_no_borrow = external_no_borrow
-        self.external_no_bankruptcy = external_no_bankruptcy
-        self.external_penalty = external_penalty
+        self.exogenous_no_borrow = exogenous_no_borrow
+        self.exogenous_no_bankruptcy = exogenous_no_bankruptcy
+        self.exogenous_penalty = exogenous_penalty
         self.production_no_borrow = production_no_borrow
         self.production_no_bankruptcy = production_no_bankruptcy
         self.production_penalty = production_penalty
@@ -1788,7 +1788,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.n_processes = len(process_inputs)
         self.borrow_on_breach = borrow_on_breach
         self.interest_rate = interest_rate
-        self.external_force_max = external_force_max
+        self.exogenous_force_max = exogenous_force_max
         self.compensate_before_past_debt = compensate_before_past_debt
         self.confirm_production = production_confirm
         self.financial_reports_period = (
@@ -1808,18 +1808,18 @@ class SCML2020World(TimeInAgreementMixin, World):
         )
         assert self.n_products == self.n_processes + 1
 
-        if external_supply_limit is None:
+        if exogenous_supply_limit is None:
             self.supply_limit = sys.maxsize * np.ones(
                 (n_steps, self.n_products), dtype=int
             )
         else:
-            self.supply_limit = external_supply_limit
-        if external_sales_limit is None:
+            self.supply_limit = exogenous_supply_limit
+        if exogenous_sales_limit is None:
             self.sales_limit = sys.maxsize * np.ones(
                 (n_steps, self.n_products), dtype=int
             )
         else:
-            self.sales_limit = external_sales_limit
+            self.sales_limit = exogenous_sales_limit
         n_agents = len(profiles)
         if agent_name_reveals_position or agent_name_reveals_type:
             default_names = [f"{_:02}" for _ in range(n_agents)]
@@ -1900,11 +1900,11 @@ class SCML2020World(TimeInAgreementMixin, World):
                 catalog_prices=catalog_prices,
                 compensate_before_past_debt=self.compensate_before_past_debt,
                 buy_missing_products=self.buy_missing_products,
-                external_buy_missing=self.external_buy_missing,
+                exogenous_buy_missing=self.exogenous_buy_missing,
                 production_buy_missing=self.production_buy_missing,
-                external_penalty=self.external_penalty,
-                external_no_bankruptcy=self.external_no_bankruptcy,
-                external_no_borrow=self.external_no_borrow,
+                exogenous_penalty=self.exogenous_penalty,
+                exogenous_no_bankruptcy=self.exogenous_no_bankruptcy,
+                exogenous_no_borrow=self.exogenous_no_borrow,
                 production_penalty=self.production_penalty,
                 production_no_borrow=self.production_no_borrow,
                 production_no_bankruptcy=self.production_no_bankruptcy,
@@ -2006,10 +2006,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             compensate_before_past_debt=True,
             buy_missing_products=False,
             production_buy_missing=False,
-            external_buy_missing=False,
-            external_penalty=0.0,
-            external_no_bankruptcy=True,
-            external_no_borrow=True,
+            exogenous_buy_missing=False,
+            exogenous_penalty=0.0,
+            exogenous_no_bankruptcy=True,
+            exogenous_no_borrow=True,
             production_penalty=0.0,
             production_no_borrow=True,
             production_no_bankruptcy=True,
@@ -2034,8 +2034,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = 10_000,
         cost_increases_with_level=False,
         horizon: Union[Tuple[float, float], float] = (0.5, 0.8),
-        equal_external_supply=False,
-        equal_external_sales=False,
+        equal_exogenous_supply=False,
+        equal_exogenous_sales=False,
         use_exogenous_contracts=True,
         exogenous_control: Union[Tuple[float, float], float] = (0.0, 1.0),
         cash_availability: Union[Tuple[float, float], float] = 1.0,
@@ -2067,12 +2067,12 @@ class SCML2020World(TimeInAgreementMixin, World):
                           np.median, np.min, np.max or any Callable[[list[float]], float] and is used to summarize
                           production costs at every level.
             horizon: The horizon used for revealing external supply/sales as a fraction of n_steps
-            equal_external_supply: If true, external supply will be distributed equally among all agents in the first
+            equal_exogenous_supply: If true, external supply will be distributed equally among all agents in the first
                                    layer
-            equal_external_sales: If true, external sales will be distributed equally among all agents in the last
+            equal_exogenous_sales: If true, external sales will be distributed equally among all agents in the last
                                    layer
             use_exogenous_contracts: If true, external supply and sales are revealed as exogenous contracts instead
-                                     of using external_* parts of the factory profile
+                                     of using exogenous_* parts of the factory profile
             cash_availability: The fraction of the total money needs of the agent to work at maximum capacity that
                                is available as `initial_balance` . This is only effective if `initial_balance` is set
                                to `None` .
@@ -2109,8 +2109,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             max_productivity=max_productivity,
             initial_balance=initial_balance,
             cost_increases_with_level=cost_increases_with_level,
-            equal_external_sales=equal_external_sales,
-            equal_external_supply=equal_external_supply,
+            equal_exogenous_sales=equal_exogenous_sales,
+            equal_exogenous_supply=equal_exogenous_supply,
             cash_availability=cash_availability,
             profit_basis="min"
             if profit_basis == np.min
@@ -2221,37 +2221,37 @@ class SCML2020World(TimeInAgreementMixin, World):
             assert quantities[-1][0] == 0
             assert np.sum(quantities[-1] == 0) >= n_startup
         # - divide the quantity at every level between factories
-        if equal_external_supply:
-            external_supplies = np.maximum(
+        if equal_exogenous_supply:
+            exogenous_supplies = np.maximum(
                 1, np.round(quantities[0] / n_agents_per_process[0]).astype(int)
             ).tolist()
-            external_supplies = [
-                np.array([external_supplies[p]] * n_agents_per_process[p])
+            exogenous_supplies = [
+                np.array([exogenous_supplies[p]] * n_agents_per_process[p])
                 for p in range(n_processes)
             ]
         else:
-            external_supplies = []
+            exogenous_supplies = []
             for s in range(n_steps):
-                external_supplies.append(
+                exogenous_supplies.append(
                     integer_cut(quantities[0][s], n_agents_per_process[0], 0)
                 )
-                assert sum(external_supplies[-1]) == quantities[0][s]
-        if equal_external_sales:
-            external_sales = np.maximum(
+                assert sum(exogenous_supplies[-1]) == quantities[0][s]
+        if equal_exogenous_sales:
+            exogenous_sales = np.maximum(
                 1, np.round(quantities[-1] / n_agents_per_process[-1]).astype(int)
             ).tolist()
-            external_sales = [
-                np.array([external_sales[p]] * n_agents_per_process[p])
+            exogenous_sales = [
+                np.array([exogenous_sales[p]] * n_agents_per_process[p])
                 for p in range(n_processes)
             ]
         else:
-            external_sales = []
+            exogenous_sales = []
             for s in range(n_steps):
-                external_sales.append(
+                exogenous_sales.append(
                     integer_cut(quantities[-1][s], n_agents_per_process[-1], 0)
                 )
-                assert sum(external_sales[-1]) == quantities[-1][s]
-        # - now external_supplies and external_sales are both n_steps lists of n_agents_per_process[p] vectors (jagged)
+                assert sum(exogenous_sales[-1]) == quantities[-1][s]
+        # - now exogenous_supplies and exogenous_sales are both n_steps lists of n_agents_per_process[p] vectors (jagged)
 
         # assign prices to the quantities given the profits
         catalog_prices = np.zeros(n_products, dtype=int)
@@ -2275,7 +2275,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         input_costs = np.zeros((n_processes, n_steps), dtype=int)
         for step in range(n_steps):
             input_costs[0, step] = np.sum(
-                external_supplies[step] * supply_prices[:, step][:]
+                exogenous_supplies[step] * supply_prices[:, step][:]
             )
 
         input_quantity = np.zeros((n_processes, n_steps), dtype=int)
@@ -2338,18 +2338,18 @@ class SCML2020World(TimeInAgreementMixin, World):
                 esale_prices = np.zeros((n_steps, n_products), dtype=int)
                 esupply_prices = np.zeros((n_steps, n_products), dtype=int)
                 if l == 0:
-                    esupplies[:, 0] = [external_supplies[s][a] for s in range(n_steps)]
+                    esupplies[:, 0] = [exogenous_supplies[s][a] for s in range(n_steps)]
                     esupply_prices[:, 0] = supply_prices[a, :]
                 if l == n_processes - 1:
-                    esales[:, -1] = [external_sales[s][a] for s in range(n_steps)]
+                    esales[:, -1] = [exogenous_sales[s][a] for s in range(n_steps)]
                     esale_prices[:, -1] = sale_prices[a, :]
                 profiles.append(
                     FactoryProfile(
                         costs=costs[nxt],
-                        external_sales=esales,
-                        external_supplies=esupplies,
-                        external_sale_prices=esale_prices,
-                        external_supply_prices=esupply_prices,
+                        exogenous_sales=esales,
+                        exogenous_supplies=esupplies,
+                        exogenous_sale_prices=esale_prices,
+                        exogenous_supply_prices=esupply_prices,
                     )
                 )
                 nxt += 1
@@ -2394,7 +2394,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             for indx, profile in enumerate(profiles):
                 input_product = process_of_agent[indx]
                 for step, (sale, price) in enumerate(
-                    zip(profile.external_sales[input_product + 1, :], profile.external_sale_prices[ input_product  +1, :])
+                    zip(profile.exogenous_sales[input_product + 1, :], profile.exogenous_sale_prices[ input_product  +1, :])
                 ):
                     if sale == 0:
                         continue
@@ -2428,7 +2428,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                                 )
                             )
                 for step, (supply, price) in enumerate(
-                    zip(profile.external_supplies[input_product, :], profile.external_supply_prices[input_product, :])
+                    zip(profile.exogenous_supplies[input_product, :], profile.exogenous_supply_prices[input_product, :])
                 ):
                     if supply == 0:
                         continue
@@ -2461,13 +2461,13 @@ class SCML2020World(TimeInAgreementMixin, World):
                                     buyer=indx,
                                 )
                             )
-                profile.external_sales = np.zeros_like(profile.external_sales)
-                profile.external_supplies = np.zeros_like(profile.external_supplies)
-                profile.external_sale_prices = np.zeros_like(
-                    profile.external_sale_prices
+                profile.exogenous_sales = np.zeros_like(profile.exogenous_sales)
+                profile.exogenous_supplies = np.zeros_like(profile.exogenous_supplies)
+                profile.exogenous_sale_prices = np.zeros_like(
+                    profile.exogenous_sale_prices
                 )
-                profile.external_supply_prices = np.zeros_like(
-                    profile.external_supply_prices
+                profile.exogenous_supply_prices = np.zeros_like(
+                    profile.exogenous_supply_prices
                 )
 
         return dict(
@@ -2562,11 +2562,11 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         # do external transactions and step factories
         # -------------------------------------------
-        if self.external_force_max:
+        if self.exogenous_force_max:
             for a, f, p in self.afp:
                 if f.is_bankrupt:
                     continue
-                f.step(p.external_sales[s, :], p.external_supplies[s, :])
+                f.step(p.exogenous_sales[s, :], p.exogenous_supplies[s, :])
         else:
             afp_randomized = [
                 self.afp[_] for _ in np.random.permutation(np.arange(len(self.afp)))
@@ -2574,11 +2574,11 @@ class SCML2020World(TimeInAgreementMixin, World):
             for a, f, p in afp_randomized:
                 if f.is_bankrupt:
                     continue
-                supply = a.confirm_external_supplies(
-                    p.external_supplies[s].copy(), p.external_supply_prices[s].copy()
+                supply = a.confirm_exogenous_supplies(
+                    p.exogenous_supplies[s].copy(), p.exogenous_supply_prices[s].copy()
                 )
-                sales = a.confirm_external_sales(
-                    p.external_sales[s].copy(), p.external_sale_prices[s].copy()
+                sales = a.confirm_exogenous_sales(
+                    p.exogenous_sales[s].copy(), p.exogenous_sale_prices[s].copy()
                 )
                 f.step(sales, supply)
 
