@@ -85,7 +85,7 @@ ContractInfo = namedtuple(
 CompensationRecord = namedtuple(
     "CompensationRecord", ["product", "quantity", "money", "seller_bankrupt", "factory"]
 )
-"""A record of delayed compensation used when a factory goes bankrupt to keep honoring its future contracts to the 
+"""A record of delayed compensation used when a factory goes bankrupt to keep honoring its future contracts to the
 limit possible"""
 
 
@@ -185,8 +185,8 @@ class Failure:
     step: int
     """The step at which the failure happened"""
     process: int
-    """The process that failed to execute (if `external_contract_failure` and `is_inventory` , then this will be the 
-    process that would have generated the needed product. and if `external_contract_failure` and not `is_inventory` 
+    """The process that failed to execute (if `external_contract_failure` and `is_inventory` , then this will be the
+    process that would have generated the needed product. and if `external_contract_failure` and not `is_inventory`
     , then it is not valid)"""
 
 
@@ -197,7 +197,7 @@ class FactoryState:
     balance: int
     """Current balance in the wallet"""
     commands: np.ndarray
-    """n_steps * n_lines array giving the process scheduled on each line at every step for the 
+    """n_steps * n_lines array giving the process scheduled on each line at every step for the
     whole simulation"""
     inventory_changes: np.ndarray
     """Changes in the inventory in the last step"""
@@ -271,8 +271,8 @@ class Factory:
         """An n_steps * n_lines array giving the process scheduled for each line at every step. -1 indicates an empty
         line. """
         # self.predicted_inventory = profile.external_quantities.copy()
-        """An n_steps * n_products array giving the inventory content at different steps. For steps in the past and 
-        present, this is the *actual* value of the inventory at that time. For steps in the future, this is a 
+        """An n_steps * n_products array giving the inventory content at different steps. For steps in the past and
+        present, this is the *actual* value of the inventory at that time. For steps in the future, this is a
         *prediction* of the inventory at that step."""
         self._balance = initial_balance
         """Current balance"""
@@ -281,16 +281,16 @@ class Factory:
         # self.predicted_balance = initial_balance - np.sum(
         #     profile.external_quantities * profile.external_prices, axis=-1
         # )
-        """An n_steps vector giving the wallet balance at different steps. For steps in the past and 
-        present, this is the *actual* value of the balance at that time. For steps in the future, this is a 
+        """An n_steps vector giving the wallet balance at different steps. For steps in the past and
+        present, this is the *actual* value of the balance at that time. For steps in the future, this is a
         *prediction* of the balance at that step."""
         self.agent_id = agent_id
         """A unique ID for the agent owning the factory"""
         self.inputs = inputs
-        """An n_process array giving the number of inputs needed for each process 
+        """An n_process array giving the number of inputs needed for each process
         (of the product with the same index)"""
         self.outputs = outputs
-        """An n_process array giving the number of outputs produced by each process 
+        """An n_process array giving the number of outputs produced by each process
         (of the product with the next index)"""
         self.inventory_changes = np.zeros(len(inputs) + 1, dtype=int)
         """Changes in the inventory in the last step"""
@@ -1485,7 +1485,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         agent_params: List[Dict[str, Any]] = None,
         initial_balance: Union[np.ndarray, Tuple[int, int], int] = 1000,
         # breach processing parameters
-        buy_missing_products=True,
+        buy_missing_products=False,
         borrow_on_breach=True,
         bankruptcy_limit=1.0,
         breach_penalty=0.15,
