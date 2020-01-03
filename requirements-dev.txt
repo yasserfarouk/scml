@@ -2,4 +2,5 @@ coverage
 jinja2
 matrix
 tox
+pysnooper
 -r docs/requirements.txt
