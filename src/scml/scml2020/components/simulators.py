@@ -703,11 +703,9 @@ class FactorySimulator(AbstractFactorySimulator):
         borrow_for_production: bool,
         bankruptcy_limit: int,
         breach_penalty: float,
-        interest_rate: float,
         initial_inventory: np.ndarray = None,
     ):
         super().__init__(initial_balance=initial_balance, profile=profile)
-        self.interest_rate = interest_rate
         self.buy_missing_products = buy_missing_products
         self.borrow_on_breach = borrow_on_breach
         self.borrow_for_production = borrow_for_production

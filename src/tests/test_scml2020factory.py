@@ -139,7 +139,6 @@ def test_simulator_runs():
     borrow_on_breach = True
     borrow_for_production = False
     breach_penalty = 0.15
-    interest_rate = 0.05
     profile = create_profile()
     factory = create_factory()
     bankruptcy_limit = factory.initial_balance
@@ -151,5 +150,4 @@ def test_simulator_runs():
         borrow_for_production=borrow_for_production,
         bankruptcy_limit=bankruptcy_limit,
         breach_penalty=breach_penalty,
-        interest_rate=interest_rate,
     )
