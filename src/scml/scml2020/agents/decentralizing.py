@@ -267,6 +267,7 @@ class DecentralizingAgent(DoNothingAgent):
             negotiator_params if negotiator_params is not None else dict()
         )
         self.horizon = horizon
+        self.external_horizon = None
         self.input_product: int = -1
         self.output_product: int = -1
         self.process: int = -1
@@ -291,6 +292,7 @@ class DecentralizingAgent(DoNothingAgent):
     def init(self):
         awi: AWI
         awi = self.awi  # type: ignore
+        self.external_horizon = awi.bb_read("settings", "external_horizon")
         self.buyers: List[ControllerInfo] = [
             ControllerInfo(None, i, False, tuple(), 0, 0, False)
             for i in range(self.awi.n_steps)
@@ -318,16 +320,19 @@ class DecentralizingAgent(DoNothingAgent):
 
         self.predicted_demand = adjust(self.predicted_demand, True)
         self.predicted_supply = adjust(self.predicted_supply, False)
-        if self.input_product == 0 or self.output_product == awi.n_products - 1:
-            self.predicted_supply = np.zeros(awi.n_steps, dtype=int)
-            self.predicted_demand = np.zeros(awi.n_steps, dtype=int)
+        # enable this only if using external transactions not exogenous contracts
+        # if self.input_product == 0 or self.output_product == awi.n_products - 1:
+        #     self.predicted_supply = np.zeros(awi.n_steps, dtype=int)
+        #     self.predicted_demand = np.zeros(awi.n_steps, dtype=int)
         self.process = self.input_product
         self.pcost = int(np.ceil(np.mean(awi.profile.costs[:, self.process])))
         self.n_inputs = awi.inputs[self.process]
         self.n_outputs = awi.outputs[self.process]
         self.production_factor = self.n_outputs / self.n_inputs
-        self.supplies_secured = awi.profile.external_supplies[:, self.input_product]
-        self.sales_secured = awi.profile.external_sales[:, self.output_product]
+        self.supplies_secured = np.zeros(awi.n_steps, dtype=int)
+        self.sales_secured = np.zeros(awi.n_steps, dtype=int)
+        self.supplies_secured[:self.external_horizon] = awi.profile.external_supplies[:self.external_horizon, self.input_product]
+        self.sales_secured[:self.external_horizon] = awi.profile.external_sales[:self.external_horizon, self.output_product]
         self.supplies_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_secured = np.zeros(awi.n_steps, dtype=int)
@@ -368,7 +373,16 @@ class DecentralizingAgent(DoNothingAgent):
     def step(self):
         """Generates buy and sell negotiations as needed"""
         s = self.awi.current_step
+        if self.external_horizon != self.awi.n_steps:
+            nxt = s + self.external_horizon
+            if nxt < self.awi.n_steps:
+                self.supplies_secured[nxt] += self.awi.profile.external_supplies[nxt]
+                if nxt + 1 < self.awi.n_steps:
+                    self.sales_needed[nxt + 1] += self.awi.profile.external_supplies[nxt]
 
+                self.sales_secured[nxt] += self.awi.profile.external_sales[nxt]
+                if nxt - 1 >= 0:
+                    self.supplies_needed[nxt - 1] += self.awi.profile.external_sales[nxt]
         if s == 0:
             last = min(self.awi.n_steps - 1, self.horizon + 2)
             for step in range(1, last):

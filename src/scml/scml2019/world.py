@@ -1403,7 +1403,10 @@ class SCMLWorld(TimeInAgreementMixin, World):
             for aid in agents:
                 self._report_receivers[aid].discard(agent)
 
-    def simulation_step(self):
+    def simulation_step_before_execution(self):
+        pass
+
+    def simulation_step_after_execution(self):
         """A step of SCML simulation"""
 
         # publish financial reports
