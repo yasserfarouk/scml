@@ -79,32 +79,37 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             np.sum(self.awi.profile.costs, axis=0) / self.awi.profile.n_lines
         ).astype(int)
 
+        self.expected_sales = np.zeros(self.awi.n_steps)
+        self.expected_supplies = np.zeros(self.awi.n_steps)
+        n = len(self.awi.profile.exogenous_sales)
+        self.expected_sales[:n] = self.awi.profile.exogenous_sales[:, self.awi.my_output_product]
+        self.expected_supplies[:n] = self.awi.profile.exogenous_supplies[:, self.awi.my_input_product]
+
     def step(self):
         """Every `horizon` steps, create new negotiations based on external supplies and sales."""
 
         # avoid division by zero error in numpy
         np.seterr(divide="ignore")
 
+        # update expected sales and supplies
+        n = len(self.awi.profile.exogenous_sales)
+        self.expected_sales[n-1] += self.awi.profile.exogenous_sales[n-1, self.awi.my_output_product]
+        self.expected_supplies[n-1] += self.awi.profile.exogenous_supplies[n-1, self.awi.my_input_product]
+
         # only run this process once every `horizon` steps
         if self.awi.current_step % self.horizon != 0:
             return
         input_products = self.awi.my_input_products
         output_products = self.awi.my_output_products
-        earliest = self.awi.current_step + 1
+        earliest = self.awi.current_step
         final = min(earliest + self.horizon - 1, self.awi.n_steps)
 
         # if I have external inputs, negotiate to sell them (after production)
-        supplies = self.awi.profile.exogenous_supplies[earliest:final, input_products]
-        quantity = np.sum(supplies, axis=0)
+        supplies = self.expected_supplies[earliest:final]
+        quantity = np.sum(supplies)
 
         # find the supply prices
-        prices = (
-            np.sum(
-                self.awi.profile.exogenous_supply_prices[earliest:final, input_products]
-                * supplies
-            )
-            // quantity
-        )
+        prices = self.awi.catalog_prices
 
         # for every step and product, start negotiations to sell the output of this external supply
         nonzero = np.transpose(np.nonzero(supplies))
@@ -124,15 +129,8 @@ class IndependentNegotiationsAgent(DoNothingAgent):
             )
 
         # if I have external outputs, negotiate to buy corresponding inputs
-        sales = self.awi.profile.exogenous_sales[earliest:final, output_products]
+        sales = self.expected_sales[earliest:final]
         quantity = np.sum(sales, axis=0)
-        prices = (
-            np.sum(
-                sales
-                * self.awi.profile.exogenous_sale_prices[earliest:final, output_products]
-            )
-            // quantity
-        )
         nonzero = np.transpose(np.nonzero(sales))
         for step, o in nonzero:
             output_product = output_products[o]
@@ -242,16 +240,20 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         results = [None] * len(contracts)
         for i, contract in enumerate( contracts):
             step = contract.agreement["time"]
-            if step > self.awi.n_steps - 1 or step < self.awi.current_step + 1:
+            q = contract.agreement["quantity"]
+            if step > self.awi.n_steps - 1 or step < self.awi.current_step:
                 continue
             if contract.annotation["seller"] == self.id:
-                q = contract.agreement["quantity"]
                 steps, lines = self.awi.available_for_production(
-                    q, (self.awi.current_step + 1, step), -1, override=False, method="all"
+                    q, (self.awi.current_step, step), -1, override=False, method="all"
                 )
                 if len(steps) < q:
                     continue
             results[i] = self.id
+            if contract.annotation["seller"] == self.id:
+                self.expected_sales[step] += q
+            else:
+                self.expected_supplies[step] += q
         return results
 
     def on_contracts_finalized(
