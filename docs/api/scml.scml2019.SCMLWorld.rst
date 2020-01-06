@@ -73,13 +73,19 @@ SCMLWorld
       ~SCMLWorld.from_config
       ~SCMLWorld.get_dropped_contracts
       ~SCMLWorld.get_private_state
+      ~SCMLWorld.ignore_contract
       ~SCMLWorld.init
       ~SCMLWorld.join
       ~SCMLWorld.logdebug
+      ~SCMLWorld.logdebug_agent
       ~SCMLWorld.logerror
+      ~SCMLWorld.logerror_agent
       ~SCMLWorld.loginfo
+      ~SCMLWorld.loginfo_agent
       ~SCMLWorld.logwarning
+      ~SCMLWorld.logwarning_agent
       ~SCMLWorld.make_bankrupt
+      ~SCMLWorld.n_saved_contracts
       ~SCMLWorld.nullify_contract
       ~SCMLWorld.on_contract_cancelled
       ~SCMLWorld.on_contract_concluded
@@ -109,7 +115,8 @@ SCMLWorld
       ~SCMLWorld.set_miners
       ~SCMLWorld.set_processes
       ~SCMLWorld.set_products
-      ~SCMLWorld.simulation_step
+      ~SCMLWorld.simulation_step_after_execution
+      ~SCMLWorld.simulation_step_before_execution
       ~SCMLWorld.start_contract_execution
       ~SCMLWorld.step
       ~SCMLWorld.unregister_interest
@@ -179,13 +186,19 @@ SCMLWorld
    .. automethod:: from_config
    .. automethod:: get_dropped_contracts
    .. automethod:: get_private_state
+   .. automethod:: ignore_contract
    .. automethod:: init
    .. automethod:: join
    .. automethod:: logdebug
+   .. automethod:: logdebug_agent
    .. automethod:: logerror
+   .. automethod:: logerror_agent
    .. automethod:: loginfo
+   .. automethod:: loginfo_agent
    .. automethod:: logwarning
+   .. automethod:: logwarning_agent
    .. automethod:: make_bankrupt
+   .. automethod:: n_saved_contracts
    .. automethod:: nullify_contract
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_concluded
@@ -215,7 +228,8 @@ SCMLWorld
    .. automethod:: set_miners
    .. automethod:: set_processes
    .. automethod:: set_products
-   .. automethod:: simulation_step
+   .. automethod:: simulation_step_after_execution
+   .. automethod:: simulation_step_before_execution
    .. automethod:: start_contract_execution
    .. automethod:: step
    .. automethod:: unregister_interest

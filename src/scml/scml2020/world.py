@@ -1599,7 +1599,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         profiles: List[FactoryProfile],
         agent_types: List[Type[SCML2020Agent]],
         agent_params: List[Dict[str, Any]] = None,
-        exogenous_contracts: Iterable[ExogenousContract] = (),
+        exogenous_contracts: Collection[ExogenousContract] = (),
         initial_balance: Union[np.ndarray, Tuple[int, int], int] = 1000,
         # breach processing parameters
         buy_missing_products=False,
@@ -1723,6 +1723,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             "settings", production_no_bankruptcy, "production_no_bankruptcy"
         )
         self.bulletin_board.record("settings", production_penalty, "production_penalty")
+        self.bulletin_board.record("settings", len(exogenous_contracts) > 0, "has_exogenous_contracts")
 
         if self.info is None:
             self.info = {}
@@ -2030,15 +2031,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
         profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
-        max_productivity: Union[np.ndarray, Tuple[float, float], float] = (0.8, 1.0),
-        initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = 10_000,
-        cost_increases_with_level=False,
-        horizon: Union[Tuple[float, float], float] = (0.5, 0.8),
+        max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
+        initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
+        cost_increases_with_level=True,
+        horizon: Union[Tuple[float, float], float] = (0.5, 0.9),
         equal_exogenous_supply=False,
         equal_exogenous_sales=False,
         use_exogenous_contracts=True,
         exogenous_control: Union[Tuple[float, float], float] = (0.0, 1.0),
-        cash_availability: Union[Tuple[float, float], float] = 1.0,
+        cash_availability: Union[Tuple[float, float], float] = 2.5,
         profit_basis=np.mean,
         force_signing=False,
         **kwargs,
@@ -2359,9 +2360,11 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         assert nxt == n_agents
         if initial_balance is None:
+            # every agent at every level will have just enough to do all the needed to do cash_availability fraction of
+            # production (even though it may not have enough lines to do so)
             cash_availability = _realin(cash_availability)
             balance = np.ceil(
-                np.sum(total_costs, axis=1) / n_agents_per_process
+                np.sum(total_costs, axis=1) # / n_agents_per_process
             ).astype(int)
             initial_balance = []
             for b, a in zip(balance, n_agents_per_process):
@@ -2452,7 +2455,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                                 continue
                             exogenous.append(
                                 ExogenousContract(
-                                    product=input_product + 1,
+                                    product=input_product,
                                     quantity=q,
                                     unit_price=price,
                                     time=step,

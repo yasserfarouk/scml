@@ -29,8 +29,8 @@ DoNothingAgent
 
       ~DoNothingAgent.checkpoint
       ~DoNothingAgent.checkpoint_info
-      ~DoNothingAgent.confirm_external_sales
-      ~DoNothingAgent.confirm_external_supplies
+      ~DoNothingAgent.confirm_exogenous_sales
+      ~DoNothingAgent.confirm_exogenous_supplies
       ~DoNothingAgent.confirm_production
       ~DoNothingAgent.create
       ~DoNothingAgent.create_negotiation_request
@@ -86,8 +86,8 @@ DoNothingAgent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_external_sales
-   .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_exogenous_sales
+   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request

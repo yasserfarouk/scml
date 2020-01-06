@@ -29,8 +29,8 @@ RandomAgent
 
       ~RandomAgent.checkpoint
       ~RandomAgent.checkpoint_info
-      ~RandomAgent.confirm_external_sales
-      ~RandomAgent.confirm_external_supplies
+      ~RandomAgent.confirm_exogenous_sales
+      ~RandomAgent.confirm_exogenous_supplies
       ~RandomAgent.confirm_production
       ~RandomAgent.create
       ~RandomAgent.create_negotiation_request
@@ -89,8 +89,8 @@ RandomAgent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_external_sales
-   .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_exogenous_sales
+   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request

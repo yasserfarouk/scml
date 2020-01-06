@@ -31,6 +31,7 @@ from negmas import (
 )
 from negmas.events import Notifier, Notification
 from negmas.helpers import instantiate, get_class
+from pprint import pformat
 from scml.scml2020 import AWI, NO_COMMAND, ANY_LINE
 
 from .do_nothing import DoNothingAgent
@@ -135,9 +136,11 @@ class StepController(SAOController, AspirationMixin, Notifier):
         return self.__negotiator.respond(offer=offer, state=state)
 
     def __str__(self):
-        return f"{'selling' if self.is_seller else 'buying'} p{self.product} [{self.step}] " \
-               f"secured {self.secured} of {self.target} for {self.__parent.name} " \
-               f"({self.completed} completed of {len(self.negotiators)} negotiators)"
+        return (
+            f"{'selling' if self.is_seller else 'buying'} p{self.product} [{self.step}] "
+            f"secured {self.secured} of {self.target} for {self.__parent.name} "
+            f"({len([_ for _ in self.completed.values() if _])} completed of {len(self.completed)} negotiators)"
+        )
 
     def create_negotiator(
         self,
@@ -191,8 +194,10 @@ class StepController(SAOController, AspirationMixin, Notifier):
                 self.retries[partner] += 1
                 neg = self.create_negotiator()
                 self.completed[neg.id] = False
-                awi.loginfo(f"{str(self)} negotiating with {partner} on u={self.urange}"
-                            f", q=(1,{self.target-self.secured}), u=({tmin}, {tmax})")
+                awi.loginfo(
+                    f"{str(self)} negotiating with {partner} on u={self.urange}"
+                    f", q=(1,{self.target-self.secured}), u=({tmin}, {tmax})"
+                )
                 awi.request_negotiation(
                     not self.is_seller,
                     product=self.product,
@@ -201,16 +206,14 @@ class StepController(SAOController, AspirationMixin, Notifier):
                     time=(tmin, tmax),
                     partner=partner,
                     negotiator=neg,
-                    extra=dict(
-                        controller_index=self.step,
-                        is_seller=self.is_seller,
-                    ),
+                    extra=dict(controller_index=self.step, is_seller=self.is_seller),
                 )
 
 
 @dataclass
 class ControllerInfo:
     """Keeps a record of information about one of the controllers used by the agent"""
+
     controller: StepController
     time_step: int
     is_seller: bool
@@ -288,6 +291,7 @@ class DecentralizingAgent(DoNothingAgent):
         self.supplies_negotiating = None
         self.sales_negotiating = None
         self.agreement_fraction = agreement_fraction
+        self.use_exogenous_contracts = True
 
     def init(self):
         awi: AWI
@@ -313,17 +317,23 @@ class DecentralizingAgent(DoNothingAgent):
                 return np.array(x)
             predicted = int(x) * np.ones(awi.n_steps, dtype=int)
             if demand:
-                predicted[:self.output_product] = 0
+                predicted[: self.input_product + 1] = 0
             else:
-                predicted[self.input_product-awi.n_processes:] = 0
+                predicted[self.input_product - awi.n_processes :] = 0
             return predicted
 
         self.predicted_demand = adjust(self.predicted_demand, True)
         self.predicted_supply = adjust(self.predicted_supply, False)
-        # enable this only if using external transactions not exogenous contracts
-        # if self.input_product == 0 or self.output_product == awi.n_products - 1:
-        #     self.predicted_supply = np.zeros(awi.n_steps, dtype=int)
-        #     self.predicted_demand = np.zeros(awi.n_steps, dtype=int)
+        self.use_exogenous_contracts = awi.bb_read(
+            "settings", "has_exogenous_contracts"
+        )
+        if (
+            not self.use_exogenous_contracts
+            and (self.input_product == 0
+            or self.output_product == awi.n_products - 1)
+        ):
+            self.predicted_supply = np.zeros(awi.n_steps, dtype=int)
+            self.predicted_demand = np.zeros(awi.n_steps, dtype=int)
         self.process = self.input_product
         self.pcost = int(np.ceil(np.mean(awi.profile.costs[:, self.process])))
         self.n_inputs = awi.inputs[self.process]
@@ -331,18 +341,24 @@ class DecentralizingAgent(DoNothingAgent):
         self.production_factor = self.n_outputs / self.n_inputs
         self.supplies_secured = np.zeros(awi.n_steps, dtype=int)
         self.sales_secured = np.zeros(awi.n_steps, dtype=int)
-        self.supplies_secured[:self.exogenous_horizon] = awi.profile.exogenous_supplies[:self.exogenous_horizon, self.input_product]
-        self.sales_secured[:self.exogenous_horizon] = awi.profile.exogenous_sales[:self.exogenous_horizon, self.output_product]
+        self.supplies_secured[
+            : self.exogenous_horizon
+        ] = awi.profile.exogenous_supplies[: self.exogenous_horizon, self.input_product]
+        self.sales_secured[: self.exogenous_horizon] = awi.profile.exogenous_sales[
+            : self.exogenous_horizon, self.output_product
+        ]
         self.supplies_needed = np.zeros(awi.n_steps, dtype=int)
+        self.sales_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_secured = np.zeros(awi.n_steps, dtype=int)
-        self.supplies_needed[:-1] = np.floor(
-            self.predicted_demand[1:] / self.production_factor
-        ).astype(int)
-        self.sales_needed = np.zeros(awi.n_steps, dtype=int)
-        self.sales_needed[1:] = np.floor(
-            self.predicted_supply[:-1] * self.production_factor
-        ).astype(int)
+        if awi.my_input_product != 0 or self.use_exogenous_contracts:
+            self.supplies_needed[:-1] = np.floor(
+                self.predicted_demand[1:] / self.production_factor
+            ).astype(int)
+        if awi.my_output_product != awi.n_products - 1 or self.use_exogenous_contracts:
+            self.sales_needed[1:] = np.floor(
+                self.predicted_supply[:-1] * self.production_factor
+            ).astype(int)
         self.supplies_needed[:-1] += np.ceil(
             self.sales_secured[1:] / self.production_factor
         ).astype(int)
@@ -352,12 +368,9 @@ class DecentralizingAgent(DoNothingAgent):
 
         self.supplies_negotiating = np.zeros_like(self.supplies_needed)
         self.sales_negotiating = np.zeros_like(self.sales_needed)
-
-        # self.supplies_needed = self.supplies_needed.cumsum()
-        # self.supplies_secured = self.supplies_secured.cumsum()
-        # self.sales_needed = self.sales_needed.cumsum()
-        # self.sales_secured = self.sales_secured.cumsum()
-
+        self.production_needed[:-1] = np.minimum(
+            self.supplies_needed[:-1], self.sales_needed[1:]
+        )
         inprices = awi.profile.exogenous_supply_prices[:, self.input_product]
         inprices[self.supplies_secured == 0] = 0
         outprices = awi.profile.exogenous_sale_prices[:, self.output_product]
@@ -369,20 +382,65 @@ class DecentralizingAgent(DoNothingAgent):
         self.output_price = np.maximum(
             outprices, self.awi.catalog_prices[self.output_product]
         )
+        self.awi.logdebug_agent(f"Initialized\n{pformat(self._debug_state())}")
+
+    def _debug_state(self):
+        return {
+            "supplies_secured": self.supplies_secured.tolist(),
+            "supplies_needed": self.supplies_needed.tolist(),
+            "supplies_negotiating": self.supplies_negotiating.tolist(),
+            "sales_secured": self.sales_secured.tolist(),
+            "sales_needed": self.sales_needed.tolist(),
+            "sales_negotiating": self.sales_negotiating.tolist(),
+            "production_secured": self.production_secured.tolist(),
+            "production_needed": self.production_needed.tolist(),
+            "buyers": [
+                f"step: {_.controller.step} secured {_.controller.secured} of {_.controller.target} units "
+                f"[Completed {len([_ for _ in _.controller.completed.values() if _])} "
+                f"of {len(_.controller.completed)}]"
+                for _ in self.buyers
+                if _ is not None and _.controller is not None
+            ],
+            "sellers": [
+                f"step: {_.controller.step} secured {_.controller.secured} of {_.controller.target} units "
+                f"[Completed {len([_ for _ in _.controller.completed.values() if _])} "
+                f"of {len(_.controller.completed)}]"
+                for _ in self.sellers
+                if _ is not None and _.controller is not None
+            ],
+            "buy_negotiations": [
+                _.annotation["seller"]
+                for _ in self.running_negotiations
+                if _.annotation["buyer"] == self.id
+            ],
+            "sell_negotiations": [
+                _.annotation["buyer"]
+                for _ in self.running_negotiations
+                if _.annotation["seller"] == self.id
+            ],
+            "_balance": self.awi.state.balance,
+            "_input_inventory": self.awi.state.inventory[self.awi.my_input_product],
+            "_output_inventory": self.awi.state.inventory[self.awi.my_output_product],
+        }
 
     def step(self):
         """Generates buy and sell negotiations as needed"""
+        self.awi.logdebug_agent(f"Enter step:\n{pformat(self._debug_state())}")
         s = self.awi.current_step
-        if self.exogenous_horizon != self.awi.n_steps:
+        if self.exogenous_horizon != self.awi.n_steps and self.use_exogenous_contracts:
             nxt = s + self.exogenous_horizon
             if nxt < self.awi.n_steps:
                 self.supplies_secured[nxt] += self.awi.profile.exogenous_supplies[nxt]
                 if nxt + 1 < self.awi.n_steps:
-                    self.sales_needed[nxt + 1] += self.awi.profile.exogenous_supplies[nxt]
+                    self.sales_needed[nxt + 1] += self.awi.profile.exogenous_supplies[
+                        nxt
+                    ]
 
                 self.sales_secured[nxt] += self.awi.profile.exogenous_sales[nxt]
                 if nxt - 1 >= 0:
-                    self.supplies_needed[nxt - 1] += self.awi.profile.exogenous_sales[nxt]
+                    self.supplies_needed[nxt - 1] += self.awi.profile.exogenous_sales[
+                        nxt
+                    ]
         if s == 0:
             last = min(self.awi.n_steps - 1, self.horizon + 2)
             for step in range(1, last):
@@ -391,9 +449,11 @@ class DecentralizingAgent(DoNothingAgent):
         else:
             nxt = s + self.horizon + 1
             if nxt > self.awi.n_steps - 1:
+                self.awi.logdebug_agent(f"End step:\n{pformat(self._debug_state())}")
                 return
             self.generate_buy_negotiations(nxt)
             self.generate_sell_negotiations(nxt)
+        self.awi.logdebug_agent(f"End step:\n{pformat(self._debug_state())}")
 
     def respond_to_negotiation_request(
         self,
@@ -415,28 +475,35 @@ class DecentralizingAgent(DoNothingAgent):
         if is_seller:
             assert annotation["product"] == self.output_product
             target = (
-                self.sales_needed[tmin: tmax + 1].sum()
-                - self.sales_secured[tmin: tmax + 1].sum()
+                self.sales_needed[tmin : tmax + 1].sum()
+                - self.sales_secured[tmin : tmax + 1].sum()
             )
             if target <= 0:
                 return None
             self.sales_negotiating[tmin : tmax + 1] += int(
-                math.ceil(self.agreement_fraction * issues[QUANTITY].max_value) // (tmax + 1 - tmin)
+                math.ceil(self.agreement_fraction * issues[QUANTITY].max_value)
+                // (tmax + 1 - tmin)
             )
         else:
             assert annotation["product"] == self.input_product
             target = (
-                self.supplies_needed[tmin: tmax + 1].sum()
-                - self.supplies_secured[tmin: tmax + 1].sum()
+                self.supplies_needed[tmin : tmax + 1].sum()
+                - self.supplies_secured[tmin : tmax + 1].sum()
             )
             if target <= 0:
                 return None
             self.supplies_negotiating[
                 issues[TIME].min_value : issues[TIME].max_value + 1
-            ] += int(math.ceil(self.agreement_fraction * issues[QUANTITY].max_value)) // (issues[TIME].max_value + 1 - issues[TIME].min_value)
+            ] += int(
+                math.ceil(self.agreement_fraction * issues[QUANTITY].max_value)
+            ) // (
+                issues[TIME].max_value + 1 - issues[TIME].min_value
+            )
 
-        self.awi.loginfo(f"Accepting request from {initiator}: {[str(_) for _ in mechanism.issues]} "
-                         f"({Issue.num_outcomes(mechanism.issues)})")
+        self.awi.loginfo(
+            f"Accepting request from {initiator}: {[str(_) for _ in mechanism.issues]} "
+            f"({Issue.num_outcomes(mechanism.issues)})"
+        )
         # create a controller for the time-step if one does not exist or use the one already running
         if controller_info.controller is None:
             controller = self.add_controller(
@@ -478,6 +545,12 @@ class DecentralizingAgent(DoNothingAgent):
         cancelled: List[Contract],
         rejectors: List[List[str]],
     ) -> None:
+        self.awi.logdebug_agent(
+            f"Enter Contracts Finalized:\n"
+            f"Signed {pformat([self._format(_) for _ in signed])}\n"
+            f"Cancelled {pformat([self._format(_) for _ in cancelled])}\n"
+            f"{pformat(self._debug_state())}"
+        )
         consumed = 0
         for contract in signed:
             is_seller = contract.annotation["seller"] == self.id
@@ -491,10 +564,10 @@ class DecentralizingAgent(DoNothingAgent):
                 output_product = contract.annotation["product"]
                 input_product = output_product - 1
                 self.output_price[t] = (
-                                           self.output_price[t]
-                                           * (self.catalog_n_equivalent + self.sales_secured[t])
-                                           + u * q
-                                       ) / (self.sales_secured[t] + q)
+                    self.output_price[t]
+                    * (self.catalog_n_equivalent + self.sales_secured[t])
+                    + u * q
+                ) / (self.sales_secured[t] + q)
                 self.sales_secured[t] += q
                 if input_product >= 0 and t > 0:
                     steps, lines = self.awi.available_for_production(
@@ -502,7 +575,7 @@ class DecentralizingAgent(DoNothingAgent):
                     )
                     q = min(len(steps) - consumed, q)
                     consumed += q
-                    self.production_needed[t-1] += q
+                    self.production_needed[t - 1] += q
                     if contract.annotation["caller"] != self.id:
                         self.supplies_needed[t - 1] += max(
                             1, int(math.ceil(q / self.production_factor))
@@ -513,15 +586,29 @@ class DecentralizingAgent(DoNothingAgent):
             input_product = contract.annotation["product"]
             output_product = input_product + 1
             self.input_cost[t] = (
-                                     self.input_cost[t] * (self.catalog_n_equivalent + self.supplies_secured[t])
-                                     + u * q
-                                 ) / (self.supplies_secured[t] + q)
+                self.input_cost[t]
+                * (self.catalog_n_equivalent + self.supplies_secured[t])
+                + u * q
+            ) / (self.supplies_secured[t] + q)
             self.supplies_secured[t] += q
             if output_product < self.awi.n_products and t < self.awi.n_steps - 1:
                 if contract.annotation["caller"] != self.id:
                     self.sales_needed[t + 1] += max(1, int(q * self.production_factor))
+        self.awi.logdebug_agent(
+            f"Exit Contracts Finalized:\n{pformat(self._debug_state())}"
+        )
+
+    def _format(self, c: Contract):
+        return (
+            f"{f'>' if c.annotation['seller'] == self.id else '<'}"
+            f"{c.annotation['buyer'] if c.annotation['seller'] == self.id else c.annotation['seller']}: "
+            f"{c.agreement['quantity']} of {c.annotation['product']} @ {c.agreement['unit_price']} on {c.agreement['time']}"
+        )
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        self.awi.logdebug_agent(
+            f"Enter Sign Contracts {pformat([self._format(_) for _ in contracts])}:\n{pformat(self._debug_state())}"
+        )
         contracts = sorted(contracts, key=lambda x: x.agreement["time"])
         signatures = [None] * len(contracts)
         taken = 0
@@ -532,14 +619,24 @@ class DecentralizingAgent(DoNothingAgent):
                 contract.agreement["unit_price"],
                 contract.agreement["time"],
             )
-
+            # check that the contract is executable in principle
+            if t <= s and len(contract.issues) == 3:
+                continue
             # check that I can produce the required quantities even in principle
             if contract.annotation["seller"] == self.id:
                 trange = (s, t)
-                secured, needed, negotiating = self.sales_secured, self.sales_needed, self.sales_negotiating
+                secured, needed, negotiating = (
+                    self.sales_secured,
+                    self.sales_needed,
+                    self.sales_negotiating,
+                )
             else:
-                trange = (t+1, self.awi.n_steps - 1)
-                secured, needed, negotiating = self.supplies_secured, self.supplies_needed, self.supplies_negotiating
+                trange = (t + 1, self.awi.n_steps - 1)
+                secured, needed, negotiating = (
+                    self.supplies_secured,
+                    self.supplies_needed,
+                    self.supplies_negotiating,
+                )
 
             steps, lines = self.awi.available_for_production(
                 q, trange, ANY_LINE, override=False, method="all"
@@ -548,23 +645,28 @@ class DecentralizingAgent(DoNothingAgent):
                 continue
             taken += q
 
-            if secured[trange[0]:trange[1]+1].sum() + q + \
-                taken * self.agreement_fraction <= needed[trange[0]:trange[1]+1].sum():
+            if (
+                secured[trange[0] : trange[1] + 1].sum()
+                + q
+                + taken * self.agreement_fraction
+                <= needed[trange[0] : trange[1] + 1].sum()
+            ):
                 signatures[i] = self.id
-
-
+        self.awi.logdebug_agent(f"Exit Sign Contracts:\n{pformat(self._debug_state())}")
         return signatures
 
-    def confirm_production(self, commands: np.ndarray, balance: int, inventory) -> np.ndarray:
+    def confirm_production(
+        self, commands: np.ndarray, balance: int, inventory
+    ) -> np.ndarray:
         commands = np.ones_like(commands) * NO_COMMAND
         awi: AWI
         awi = self.awi
         s = awi.current_step
         inputs = awi.state.inventory[self.input_product]
-        n_needed = max(0, min(awi.n_lines, self.production_needed[:s+1].sum()))
+        n_needed = max(0, min(awi.n_lines, self.production_needed[: s + 1].sum()))
         if inputs < n_needed:
             if s < awi.n_steps - 1:
-                self.production_needed[s+1] += inputs - n_needed
+                self.production_needed[s + 1] += inputs - n_needed
             n_needed = inputs
         commands[:n_needed] = self.input_product
         self.production_needed[s] -= n_needed
@@ -582,14 +684,17 @@ class DecentralizingAgent(DoNothingAgent):
             if contract.annotation["seller"] == self.id:
                 self.sales_secured[t] -= missing
                 if t > 0:
-                    self.production_needed[t-1] -= missing
-                    self.supplies_needed[t-1] -= missing
-                if self.sellers[t] is not None and self.sellers[t].controller is not None:
+                    self.production_needed[t - 1] -= missing
+                    self.supplies_needed[t - 1] -= missing
+                if (
+                    self.sellers[t] is not None
+                    and self.sellers[t].controller is not None
+                ):
                     self.sellers[t].controller.target -= missing
             else:
                 self.supplies_secured[t] += missing
                 if t < self.awi.n_steps - 1:
-                    self.sales_needed[t+1] -= missing
+                    self.sales_needed[t + 1] -= missing
                 if self.buyers[t] is not None and self.buyers[t].controller is not None:
                     self.buyers[t].controller.target += missing
 
@@ -624,8 +729,12 @@ class DecentralizingAgent(DoNothingAgent):
             controllers, generator = self.buyers, self.generate_buy_negotiations
 
         if time_range[1] + 1 - time_range[0] > 0:
-            negotiating[time_range[0] : time_range[1] + 1] -= expected // (time_range[1] + 1 - time_range[0])
-        self.awi.loginfo(f"Killing Controller {str(controllers[controller_index].controller)}")
+            negotiating[time_range[0] : time_range[1] + 1] -= expected // (
+                time_range[1] + 1 - time_range[0]
+            )
+        self.awi.loginfo(
+            f"Killing Controller {str(controllers[controller_index].controller)}"
+        )
         controllers[controller_index].controller = None
         if quantity <= target:
             secured[time_range[0]] += quantity
@@ -745,9 +854,11 @@ class DecentralizingAgent(DoNothingAgent):
         controller = self.add_controller(
             is_seller, qvalues[1], uvalues, expected_quantity, step
         )
-        awi.loginfo(f"Requesting {'selling' if is_seller else 'buying'} negotiation "
-                    f"on u={uvalues}, q={qvalues}, t={tvalues}"
-                    f" with {str(partners)} using {str(controller)}")
+        awi.loginfo(
+            f"Requesting {'selling' if is_seller else 'buying'} negotiation "
+            f"on u={uvalues}, q={qvalues}, t={tvalues}"
+            f" with {str(partners)} using {str(controller)}"
+        )
         self.awi.request_negotiations(
             is_buy=not is_seller,
             product=product,
@@ -759,9 +870,13 @@ class DecentralizingAgent(DoNothingAgent):
             extra=dict(controller_index=step, is_seller=is_seller),
         )
         if is_seller:
-            self.sales_negotiating[tvalues[0]: tvalues[1] + 1] += expected_quantity // (tvalues[1] + 1 - tvalues[0])
+            self.sales_negotiating[
+                tvalues[0] : tvalues[1] + 1
+            ] += expected_quantity // (tvalues[1] + 1 - tvalues[0])
         else:
-            self.supplies_negotiating[tvalues[0]: tvalues[1] + 1] += expected_quantity  // (tvalues[1] + 1 - tvalues[0])
+            self.supplies_negotiating[
+                tvalues[0] : tvalues[1] + 1
+            ] += expected_quantity // (tvalues[1] + 1 - tvalues[0])
 
     def max_production_till(self, step) -> int:
         """Returns the maximum number of units that can be produced until the given step given current production
@@ -850,7 +965,7 @@ class DecentralizingAgent(DoNothingAgent):
 
     def _trange(self, step, is_seller):
         if is_seller:
-            return step + 1, self.awi.n_steps - 1
+            return max(step, self.awi.current_step + 1), self.awi.n_steps - 1
         return self.awi.current_step + 1, step - 1
 
     def _get_controller(self, mechanism) -> StepController:
@@ -863,4 +978,3 @@ class DecentralizingAgent(DoNothingAgent):
         #     else:
         #         return self.buyers[controller_index].controller
         # else:
-

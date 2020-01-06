@@ -44,9 +44,13 @@ AWI
       ~AWI.cancel_production
       ~AWI.execute
       ~AWI.logdebug
+      ~AWI.logdebug_agent
       ~AWI.logerror
+      ~AWI.logerror_agent
       ~AWI.loginfo
+      ~AWI.loginfo_agent
       ~AWI.logwarning
+      ~AWI.logwarning_agent
       ~AWI.order_production
       ~AWI.request_negotiation
       ~AWI.request_negotiation_about
@@ -89,9 +93,13 @@ AWI
    .. automethod:: cancel_production
    .. automethod:: execute
    .. automethod:: logdebug
+   .. automethod:: logdebug_agent
    .. automethod:: logerror
+   .. automethod:: logerror_agent
    .. automethod:: loginfo
+   .. automethod:: loginfo_agent
    .. automethod:: logwarning
+   .. automethod:: logwarning_agent
    .. automethod:: order_production
    .. automethod:: request_negotiation
    .. automethod:: request_negotiation_about

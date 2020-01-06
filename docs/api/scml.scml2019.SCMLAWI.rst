@@ -35,9 +35,13 @@ SCMLAWI
       ~SCMLAWI.hide_inventory
       ~SCMLAWI.is_bankrupt
       ~SCMLAWI.logdebug
+      ~SCMLAWI.logdebug_agent
       ~SCMLAWI.logerror
+      ~SCMLAWI.logerror_agent
       ~SCMLAWI.loginfo
+      ~SCMLAWI.loginfo_agent
       ~SCMLAWI.logwarning
+      ~SCMLAWI.logwarning_agent
       ~SCMLAWI.receive_financial_reports
       ~SCMLAWI.register_cfp
       ~SCMLAWI.register_interest
@@ -80,9 +84,13 @@ SCMLAWI
    .. automethod:: hide_inventory
    .. automethod:: is_bankrupt
    .. automethod:: logdebug
+   .. automethod:: logdebug_agent
    .. automethod:: logerror
+   .. automethod:: logerror_agent
    .. automethod:: loginfo
+   .. automethod:: loginfo_agent
    .. automethod:: logwarning
+   .. automethod:: logwarning_agent
    .. automethod:: receive_financial_reports
    .. automethod:: register_cfp
    .. automethod:: register_interest

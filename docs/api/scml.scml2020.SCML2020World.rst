@@ -76,12 +76,18 @@ SCML2020World
       ~SCML2020World.generate
       ~SCML2020World.get_dropped_contracts
       ~SCML2020World.get_private_state
+      ~SCML2020World.ignore_contract
       ~SCML2020World.init
       ~SCML2020World.join
       ~SCML2020World.logdebug
+      ~SCML2020World.logdebug_agent
       ~SCML2020World.logerror
+      ~SCML2020World.logerror_agent
       ~SCML2020World.loginfo
+      ~SCML2020World.loginfo_agent
       ~SCML2020World.logwarning
+      ~SCML2020World.logwarning_agent
+      ~SCML2020World.n_saved_contracts
       ~SCML2020World.nullify_contract
       ~SCML2020World.on_contract_cancelled
       ~SCML2020World.on_contract_concluded
@@ -104,7 +110,8 @@ SCML2020World
       ~SCML2020World.run_negotiations
       ~SCML2020World.save_config
       ~SCML2020World.set_bulletin_board
-      ~SCML2020World.simulation_step
+      ~SCML2020World.simulation_step_after_execution
+      ~SCML2020World.simulation_step_before_execution
       ~SCML2020World.start_contract_execution
       ~SCML2020World.step
       ~SCML2020World.unregister_stats_monitor
@@ -177,12 +184,18 @@ SCML2020World
    .. automethod:: generate
    .. automethod:: get_dropped_contracts
    .. automethod:: get_private_state
+   .. automethod:: ignore_contract
    .. automethod:: init
    .. automethod:: join
    .. automethod:: logdebug
+   .. automethod:: logdebug_agent
    .. automethod:: logerror
+   .. automethod:: logerror_agent
    .. automethod:: loginfo
+   .. automethod:: loginfo_agent
    .. automethod:: logwarning
+   .. automethod:: logwarning_agent
+   .. automethod:: n_saved_contracts
    .. automethod:: nullify_contract
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_concluded
@@ -205,7 +218,8 @@ SCML2020World
    .. automethod:: run_negotiations
    .. automethod:: save_config
    .. automethod:: set_bulletin_board
-   .. automethod:: simulation_step
+   .. automethod:: simulation_step_after_execution
+   .. automethod:: simulation_step_before_execution
    .. automethod:: start_contract_execution
    .. automethod:: step
    .. automethod:: unregister_stats_monitor

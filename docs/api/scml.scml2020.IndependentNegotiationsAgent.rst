@@ -29,8 +29,8 @@ IndependentNegotiationsAgent
 
       ~IndependentNegotiationsAgent.checkpoint
       ~IndependentNegotiationsAgent.checkpoint_info
-      ~IndependentNegotiationsAgent.confirm_external_sales
-      ~IndependentNegotiationsAgent.confirm_external_supplies
+      ~IndependentNegotiationsAgent.confirm_exogenous_sales
+      ~IndependentNegotiationsAgent.confirm_exogenous_supplies
       ~IndependentNegotiationsAgent.confirm_production
       ~IndependentNegotiationsAgent.create
       ~IndependentNegotiationsAgent.create_negotiation_request
@@ -89,8 +89,8 @@ IndependentNegotiationsAgent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_external_sales
-   .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_exogenous_sales
+   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request

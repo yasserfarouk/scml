@@ -31,8 +31,8 @@ DecentralizingAgent
       ~DecentralizingAgent.all_negotiations_concluded
       ~DecentralizingAgent.checkpoint
       ~DecentralizingAgent.checkpoint_info
-      ~DecentralizingAgent.confirm_external_sales
-      ~DecentralizingAgent.confirm_external_supplies
+      ~DecentralizingAgent.confirm_exogenous_sales
+      ~DecentralizingAgent.confirm_exogenous_supplies
       ~DecentralizingAgent.confirm_production
       ~DecentralizingAgent.create
       ~DecentralizingAgent.create_negotiation_request
@@ -95,8 +95,8 @@ DecentralizingAgent
    .. automethod:: all_negotiations_concluded
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_external_sales
-   .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_exogenous_sales
+   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request

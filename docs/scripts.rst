@@ -18,7 +18,7 @@ version               Prints SCML version (and NegMAS version)
 Tournament Command (scml tournament)
 --------------------------------------
 
-The Tournament command (`tournament`) allows you to run a tournament between different agents in some world and
+The Tournament command (`tournament` ) allows you to run a tournament between different agents in some world and
 compare their relative performance. The tool is general enough to support several world types.
 
 

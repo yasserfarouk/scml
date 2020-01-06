@@ -29,8 +29,8 @@ SCML2020Agent
 
       ~SCML2020Agent.checkpoint
       ~SCML2020Agent.checkpoint_info
-      ~SCML2020Agent.confirm_external_sales
-      ~SCML2020Agent.confirm_external_supplies
+      ~SCML2020Agent.confirm_exogenous_sales
+      ~SCML2020Agent.confirm_exogenous_supplies
       ~SCML2020Agent.confirm_production
       ~SCML2020Agent.create
       ~SCML2020Agent.create_negotiation_request
@@ -86,8 +86,8 @@ SCML2020Agent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_external_sales
-   .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_exogenous_sales
+   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request

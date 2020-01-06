@@ -1972,8 +1972,6 @@ def run2020(
         data = data.loc[
             data.signed_at >= 0,
             [
-                "seller_type",
-                "buyer_type",
                 "seller_name",
                 "buyer_name",
                 "delivery_time",
@@ -1985,8 +1983,6 @@ def run2020(
             ],
         ]
         data.columns = [
-            "seller_type",
-            "buyer_type",
             "seller",
             "buyer",
             "t",
@@ -2013,9 +2009,13 @@ def run2020(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
+        d2["Catalog"] = world.catalog_prices[
+            d2["product"].str.slice(start=-1).astype(int).values
+        ]
         d2["Product"] = d2["product"]
-        d2 = d2.loc[:, ["Product", "uprice", "quantity"]]
-        d2.columns = ["Product", "Avg. Unit Price", "Total Quantity"]
+        d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog"]]
+
+        d2.columns = ["Product", "Quantity", "Avg. Price", "Catalog"]
         print_and_log(tabulate(d2, headers="keys", tablefmt="psql"))
 
         n_executed = sum(world.stats["n_contracts_executed"])

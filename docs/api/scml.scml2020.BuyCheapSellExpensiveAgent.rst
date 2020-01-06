@@ -29,8 +29,8 @@ BuyCheapSellExpensiveAgent
 
       ~BuyCheapSellExpensiveAgent.checkpoint
       ~BuyCheapSellExpensiveAgent.checkpoint_info
-      ~BuyCheapSellExpensiveAgent.confirm_external_sales
-      ~BuyCheapSellExpensiveAgent.confirm_external_supplies
+      ~BuyCheapSellExpensiveAgent.confirm_exogenous_sales
+      ~BuyCheapSellExpensiveAgent.confirm_exogenous_supplies
       ~BuyCheapSellExpensiveAgent.confirm_production
       ~BuyCheapSellExpensiveAgent.create
       ~BuyCheapSellExpensiveAgent.create_negotiation_request
@@ -89,8 +89,8 @@ BuyCheapSellExpensiveAgent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_external_sales
-   .. automethod:: confirm_external_supplies
+   .. automethod:: confirm_exogenous_sales
+   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
