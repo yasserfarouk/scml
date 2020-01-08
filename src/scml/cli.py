@@ -293,7 +293,7 @@ def tournament(ctx, ignore_warnings):
 )
 @click.option(
     "--factories-max",
-    default=10,
+    default=6,
     type=int,
     help="SCML2020: Maximum number of agents per production level",
 )
@@ -477,6 +477,20 @@ def tournament(ctx, ignore_warnings):
     " automatically calculated by the system. It will go up with process level",
 )
 @click.option(
+    "--horizon",
+    default=0.1,
+    type=float,
+    help="SCML2020: The exogenous contract revelation horizon as a fraction of the number of steps.",
+)
+@click.option(
+    "--exogenous-contracts/--exogenous-transactions",
+    default=True,
+    help="SCML2020: Whether to use exogenous contracts of exogenous transactions. In the earlier, the agent receives "
+    "exogenous contracts (not resulting from negotiation) through its sign_all_contracts and on_contracts_"
+    "finalized alogside normal negotiated contracts. In the later case, there are dedicated exogenous supplies "
+    "and sales in the agent profile.",
+)
+@click.option(
     "--processes",
     default=3,
     type=int,
@@ -542,6 +556,8 @@ def create(
     processes,
     factories_min,
     factories_max,
+    horizon,
+    exogenous_contracts,
 ):
     if balance < 0:
         balance = None
@@ -803,6 +819,8 @@ def create(
             log_negotiations=log_negs,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            horizon=horizon,
+            use_exogenous_contracts=exogenous_contracts,
             **kwargs,
         )
     elif ttype.lower() in ("anac2019collusion", "anac2019"):
@@ -869,6 +887,8 @@ def create(
             log_negotiations=log_negs,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            horizon=horizon,
+            use_exogenous_contracts=exogenous_contracts,
             **kwargs,
         )
     elif ttype.lower() == "anac2019sabotage":
