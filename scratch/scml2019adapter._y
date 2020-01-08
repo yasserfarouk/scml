@@ -1,0 +1,419 @@
+"""Implements an agent that does nothing"""
+from typing import List, Optional, Dict, Any, Union
+
+import numpy as np
+from negmas import Contract, Breach, AgentMechanismInterface, MechanismState, Issue, Negotiator, RandomUtilityFunction
+from negmas import AspirationNegotiator
+from negmas.helpers import instantiate, unique_name
+
+from scml.scml2019 import FactoryManager, ProductionFailure, RunningCommandInfo, ManufacturingProfile, Process, \
+    InputOutput, MissingInput, Product, CFP, SCMLAWI
+from scml.scml2020.world import SCML2020Agent, Failure, AWI
+
+__all__ = ["SCML2019Adapter"]
+
+QUANTITY = 0
+TIME = 1
+UNIT_PRICE = 2
+
+
+class AdapterAWI:
+    def __init__(self, awi2019: SCMLAWI, awi2020: AWI):
+        self.awi2019 = awi2019
+        self.awi2020 = awi2020
+        
+    def register_cfp(self, cfp: CFP) -> None:
+        """Registers a CFP"""
+        pass
+
+    def register_interest(self, products: List[int]) -> None:
+        """registers interest in receiving callbacks about CFPs related to these products"""
+        pass
+
+    def unregister_interest(self, products: List[int]) -> None:
+        """registers interest in receiving callbacks about CFPs related to these products"""
+        pass
+
+    def remove_cfp(self, cfp: CFP) -> bool:
+        """Removes a CFP"""
+        pass
+
+    def evaluate_insurance(self, contract: Contract, t: int = None) -> Optional[float]:
+        """Can be called to evaluate the premium for insuring the given contract against breaches committed by others
+
+        Args:
+
+            contract: hypothetical contract
+            t: time at which the policy is to be bought. If None, it means current step
+        """
+        return None
+
+    def buy_insurance(self, contract: Contract) -> bool:
+        """Buys insurance for the contract by the premium calculated by the insurance company.
+
+        Remarks:
+            The agent can call `evaluate_insurance` to find the premium that will be used.
+        """
+        return False
+
+    def _create_annotation(self, cfp: "CFP", partner: str = None):
+        """Creates full annotation based on a cfp that the agent is receiving"""
+        return {}
+
+    def request_negotiation(
+        self,
+        cfp: CFP,
+        req_id: str,
+        roles: List[str] = None,
+        mechanism_name: str = None,
+        mechanism_params: Dict[str, Any] = None,
+    ) -> bool:
+        """
+        Requests a negotiation with the publisher of a given CFP
+
+        Args:
+
+            cfp: The CFP to negotiate about
+            req_id: A string that is passed back to the caller in all callbacks related to this negotiation
+            roles: The roles of the CFP publisher and the agent (in that order). By default no roles are passed (None)
+            mechanism_name: The mechanism type to use. If not given the default mechanism from the world will be used
+            mechanism_params: Parameters of the mechanism
+
+        Returns:
+            Success of failure of the negotiation request
+
+        Remarks:
+
+            - The `SCML2019Agent` class implements another request_negotiation method that does not receive a `req_id`. This
+              helper method is recommended as it generates the required req_id and passes it keeping track of requested
+              negotiations (and later of running negotiations). Call this method direclty *only* if you do not
+              intend to use the `requested_negotiations` and `running_negotiations` properties of the `SCML2019Agent` class
+
+        """
+        self.awi2020.request_negotiation()
+        
+    def request_negotiation_about(
+        self,
+        issues: List[Issue],
+        partners: List[str],
+        req_id: str,
+        roles: List[str] = None,
+        annotation: Optional[Dict[str, Any]] = None,
+        mechanism_name: str = None,
+        mechanism_params: Dict[str, Any] = None,
+    ):
+        """
+        Overrides the method of the same name in the base class to disable it in SCM Worlds.
+
+        **Do not call this method**
+
+        """
+        raise RuntimeError(
+            "request_negotiation_about should never be called directly in the SCM world"
+            ", call request_negotiation instead."
+        )
+
+    def is_bankrupt(self, agent_id: str) -> bool:
+        """
+        Checks whether the given agent is bankrupt
+
+        Args:
+            agent_id: Agent ID
+
+        Returns:
+            The bankruptcy state of the agent
+
+        """
+        return bool(self.bb_read("bankruptcy", key=agent_id))
+
+    def reports_for(self, agent_id: str) -> List[FinancialReport]:
+        """
+        Gets all financial reports of an agent (in the order of their publication)
+
+        Args:
+            agent_id: Agent ID
+
+        Returns:
+
+        """
+        reports = self.bb_read("reports_agent", key=agent_id)
+        if reports is None:
+            return []
+        return reports
+
+    def reports_at(self, step: int = None) -> Dict[str, FinancialReport]:
+        """
+        Gets all financial reports of all agents at a given step
+
+        Args:
+
+            step: Step at which the reports are required. If None, the last set of reports is returned
+
+        Returns:
+
+            A dictionary with agent IDs in keys and their financial reports at the given time as values
+        """
+        if step is None:
+            reports = self.bb_query(section="reports_time", query=None)
+            reports = self.bb_read(
+                "reports_time", key=str(max([int(_) for _ in reports.keys()]))
+            )
+        else:
+            reports = self.bb_read("reports_time", key=str(step))
+        if reports is None:
+            return {}
+        return reports
+
+    def receive_financial_reports(
+        self, receive: bool = True, agents: Optional[List[str]] = None
+    ) -> None:
+        """
+        Registers/unregisters interest in receiving financial reports
+
+        Args:
+            receive: True to receive and False to stop receiving
+            agents: If given reception is enabled/disabled only for the given set of agents.
+
+        Remarks:
+
+            - by default financial reports are not sent to any agents. To opt-in to receive financial reports, call this
+              method.
+
+        """
+        self._world.receive_financial_reports(self.agent, receive, agents)
+
+    @property
+    def state(self) -> FactoryState:
+        """Returns the private state of the agent in that world.
+
+        In the SCML world, that is a reference to its factory. You are allowed to read information from the returned
+        `Factory` but **not to modify it or call ANY methods on it that modify the state**.
+
+
+        """
+        return self._world.get_private_state(self.agent)
+
+    @property
+    def products(self) -> List[Product]:
+        """Products in the world"""
+        return self._world.products
+
+    @property
+    def processes(self) -> List[Process]:
+        """Processes in the world"""
+        return self._world.processes
+
+    # sugar functions (implementing actions that can all be done through execute
+
+    def schedule_production(
+        self,
+        profile: int,
+        step: int,
+        contract: Optional[Contract] = None,
+        override: bool = True,
+    ) -> None:
+        """
+        Schedules production on the agent's factory
+
+        Args:
+            profile: Index of the profile in the agent's `compiled_profiles` list
+            step: The step to start production according to the given profile
+            contract: The contract for which the production is scheduled (optional)
+            override: Whether to override existing production jobs schedules at the same time.
+
+        """
+        self.execute(
+            action=Action(
+                type="run",
+                params={
+                    "profile": profile,
+                    "time": step,
+                    "contract": contract,
+                    "override": override,
+                },
+            )
+        )
+
+    def stop_production(
+        self, line: int, step: int, contract: Optional[Contract], override: bool = True
+    ):
+        """
+        Stops/cancels production scheduled at the given line at the given time.
+
+        Args:
+            line: One of the factory lines (index)
+            step: Step to stop/cancel production at
+            contract: The contract for which the job is scheduled (optional)
+            override: Whether to override existing production jobs schedules at the same time.
+        """
+        self.execute(action=Action(type="stop", params={"line": line, "time": step}))
+
+    cancel_production = stop_production
+    """
+    Stops/cancels production scheduled at the given line at the given time.
+
+    Args:
+        line: One of the factory lines (index)
+        step: Step to stop/cancel production at
+    """
+
+    def schedule_job(self, job: Job, contract: Optional[Contract]):
+        """
+        Schedules production using a `Job` object. This can be used to schedule any kind of job
+
+        Args:
+            job: The job description
+            contract: The contract for which the job is scheduled (optional)
+
+        Remarks:
+
+            - Notice that actions that require the profile member of Job (run) never use the line member and vice versa.
+        """
+        self.execute(
+            action=Action(
+                type=job.action,
+                params={
+                    "profile": job.profile,
+                    "time": job.time,
+                    "line": job.line,
+                    "contract": contract,
+                    "override": job.override,
+                },
+            )
+        )
+
+    def hide_inventory(self, product: int, quantity: int) -> None:
+        """
+        Hides the given quantity of the given product so that it is not accessible by the simulator and does not appear
+        in reports etc.
+
+        Args:
+            product: product index
+            quantity: the amount of the product to hide
+
+        Remarks:
+
+            - if the current quantity in storage of the product is less than the amount to be hidden, whatever quantity
+              exists is hidden
+            - hiding is always immediate
+        """
+        self.execute(
+            action=Action(
+                type="hide_product", params={"product": product, "quantity": quantity}
+            )
+        )
+
+    def hide_funds(self, amount: float) -> None:
+        """
+        Hides the given amount of money so that it is not accessible by the simulator and does not appear
+        in reports etc.
+
+        Args:
+            amount: The amount of money to hide
+
+        Remarks:
+
+            - if the current cash in the agent's wallet is less than the amount to be hidden, all the cash is hidden.
+            - hiding is always immediate
+        """
+        self.execute(action=Action(type="hide_funds", params={"amount": amount}))
+
+    def unhide_inventory(self, product: int, quantity: int) -> None:
+        """
+        Un-hides the given quantity of the given product so that it is not accessible by the simulator and does not appear
+        in reports etc.
+
+        Args:
+            product: product index
+            quantity: the amount of the product to hide
+
+        Remarks:
+
+            - if the current quantity in storage of the product is less than the amount to be hidden, whatever quantity
+              exists is hidden
+            - hiding is always immediate
+        """
+        self.execute(
+            action=Action(
+                type="unhide_product", params={"product": product, "quantity": quantity}
+            )
+        )
+
+    def unhide_funds(self, amount: float) -> None:
+        """
+        Un-hides the given amount of money so that it is not accessible by the simulator and does not appear
+        in reports etc.
+
+        Args:
+            amount: The amount of money to unhide
+
+        Remarks:
+
+            - if the current cash in the agent's wallet is less than the amount to be hidden, all the cash is hidden.
+            - hiding is always immediate
+        """
+        self.execute(action=Action(type="unhide_funds", params={"amount": amount}))
+
+    
+    
+
+class SCML2019Adapter(SCML2020Agent):
+    """An agent that adapts an SCML2019 agent to play in an SCML2020 simulation"""
+
+    def __init__(self, base: Union[str, FactoryManager], name: str = None, type_postfix: str = "", **kwargs):
+        super().__init__(name=name, type_postfix=type_postfix)
+        self.__base = instantiate(class_name=base, name=name, type_postfix=type_postfix, **kwargs) if isinstance(base, str) else base
+        self.__base.id = self.id
+        self.__products: List[Product] = []
+        self.__processes: List[Process] = []
+        self.__profiles: List[ManufacturingProfile] = []
+
+    def on_contract_nullified(self, contract: Contract, compensation_money: int, new_quantity: int) -> None:
+        partner = contract.partners[0] if contract.partners[1] == self.id else contract.partners[1]
+        if compensation_money != 0.0:
+            self.__base.on_contract_nullified(contract, bankrupt_partner=partner, compensation=compensation_money)
+
+    def on_failures(self, failures: List[Failure]) -> None:
+
+        fs = []
+        for f in failures:
+            command = RunningCommandInfo(profile=self.__profiles[f.process], beg=f.step, end=f.step, step=f.step, paused=False, action="run", updates={})
+            missing_inputs = [MissingInput(product=f.process, quantity=1)] if f.is_inventory else []
+            missing_money = self.awi.profile.costs[f.process] if not f.is_inventory else 0.0
+            fs.append(
+                ProductionFailure(line=f.line, command=command, missing_inputs=missing_inputs, missing_money=missing_money, missing_space=0)
+            )
+        self.__base.on_production_failure(fs)
+
+    def confirm_exogenous_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+        return np.zeros_like(quantities)
+
+    def confirm_exogenous_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+        return np.zeros_like(quantities)
+
+    def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],
+                                       mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
+        cfp = CFP(is_buy=annotation["is_buy"], publisher=initiator, product=annotation["product"], time=issues[TIME].values
+                  , unit_price=issues[UNIT_PRICE].values, quantity=issues[QUANTITY].values,money_resolution=1.0, id=unique_name("cfp"))
+        return self.__base.respond_to_negotiation_request(cfp, partner=initiator)
+
+    def step(self):
+        return self.__base.step()
+
+    def init(self):
+        
+        return self.__base.init()
+
+    def on_negotiation_failure(self, partners: List[str], annotation: Dict[str, Any],
+                               mechanism: AgentMechanismInterface, state: MechanismState) -> None:
+        pass
+
+    def on_negotiation_success(self, contract: Contract, mechanism: AgentMechanismInterface) -> None:
+        pass
+
+    def on_contract_executed(self, contract: Contract) -> None:
+        pass
+
+    def on_contract_breached(self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]) -> None:
+        pass
+

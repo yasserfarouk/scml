@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.2.0 (2019.1.8)
+----------------
+
+* new interface for singing and callbacks
+* new interface for exogenous contracts
+* improved decentralizing strategy
+
 0.1.5 (2019.12.11)
 ------------------
 
