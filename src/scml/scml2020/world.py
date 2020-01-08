@@ -846,7 +846,7 @@ class Factory:
         )
 
         # sell everything on the agent's inventory
-        total = int(np.sum(self._inventory * self.catalog_prices))
+        total = int(np.sum(self._inventory * self.world.liquidation_rate * self.catalog_prices))
         pay_back = min(required, total)
         available = total - required
 
@@ -1542,7 +1542,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         interest_rate: The interest at which loans grow over time (it only affect a factory when its balance is
                        negative)
         bankruptcy_limit: The maximum amount that be be borrowed (including interest). The balance of any factory cannot
-                      go lower than - borrow_limit or the agent will go bankrupt immediately
+                          go lower than - borrow_limit or the agent will go bankrupt immediately
+        liquidation_rate: The rate at which future contracts get liquidated when an agent gets bankrupt. It should be
+                          between zero and one.
         compensation_fraction: Fraction of a contract to be compensated (at most) if a partner goes bankrupt. Notice
                                that this fraction is not guaranteed because the bankrupt agent may not have enough
                                assets to pay all of its standing contracts to this level of compensation. In such
@@ -1605,6 +1607,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         buy_missing_products=False,
         borrow_on_breach=True,
         bankruptcy_limit=1.0,
+        liquidation_rate=1.0,
         breach_penalty=0.15,
         interest_rate=0.05,
         financial_report_period=5,
@@ -1653,6 +1656,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.buy_missing_products = buy_missing_products
         self.production_buy_missing = production_buy_missing
         self.exogenous_buy_missing = exogenous_buy_missing
+        self.liquidation_rate = liquidation_rate
         kwargs["log_to_file"] = not no_logs
         if compact:
             kwargs["log_screen_level"] = logging.CRITICAL
@@ -2998,7 +3002,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         Returns:
 
         """
-        agent_id = factory.agent_id
         # get all future contracts of the bankrupt agent that are not executed
         contracts = list(
             itertools.chain(
