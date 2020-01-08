@@ -146,7 +146,7 @@
     "pycharm": {}
    },
    "source": [
-    "As the [documentation](http://www.yasserm.com/negmas/negmas.apps.scml.html?highlight=on_negotiation_request#negmas.apps.scml.SCMLAgent.on_negotiation_request) states, this function is called whenever your factory manager receives a request from another agent to negotiate. You can either return `None` if you do not want to accept this negotiation or create  a `Negotiator` that represents your agent in it.\n",
+    "As the [documentation](http://www.yasserm.com/negmas/negmas.apps.scml.html?highlight=on_negotiation_request#negmas.apps.scml.SCML2019Agent.on_negotiation_request) states, this function is called whenever your factory manager receives a request from another agent to negotiate. You can either return `None` if you do not want to accept this negotiation or create  a `Negotiator` that represents your agent in it.\n",
     "\n",
     "\n",
     "Your do-nothing agent is almost ready. Let's try it:"
@@ -617,7 +617,7 @@
     "**You can download a skeleton for developing your factory manager in either python or java [here](http://www.yasserm.com/scml/scml.zip).**\n",
     "\n",
     "\n",
-    "For more details, refer to [the detailed description of the SCM world](http://www.yasserm.com/scml/scml.pdf) and the ``Agent``, ``SCMLAgent``, and ``FactoryManager`` documentation at [NegMAS library documentation](http://negmas.readthedocs.io)\n",
+    "For more details, refer to [the detailed description of the SCM world](http://www.yasserm.com/scml/scml.pdf) and the ``Agent``, ``SCML2019Agent``, and ``FactoryManager`` documentation at [NegMAS library documentation](http://negmas.readthedocs.io)\n",
     "\n"
    ]
   },
