@@ -347,12 +347,13 @@ def balance_calculator2020(
         WorldRunResults giving the names, scores, and types of factory managers.
 
     """
-    inventory_catalog_price_weight = scoring_context.get("inventory_catalog_price_weight",
-                                                         inventory_catalog_price_weight)
-    inventory_trading_average_weight = scoring_context.get("inventory_trading_average_weight",
-                                                           inventory_trading_average_weight)
-    trading_average_discount = scoring_context.get("trading_average_discount", trading_average_discount)
-    trading_average_condition = scoring_context.get("trading_average_condition", trading_average_condition)
+    if scoring_context is not None:
+        inventory_catalog_price_weight = scoring_context.get("inventory_catalog_price_weight",
+                                                             inventory_catalog_price_weight)
+        inventory_trading_average_weight = scoring_context.get("inventory_trading_average_weight",
+                                                               inventory_trading_average_weight)
+        trading_average_discount = scoring_context.get("trading_average_discount", trading_average_discount)
+        trading_average_condition = scoring_context.get("trading_average_condition", trading_average_condition)
     assert len(worlds) == 1
     world = worlds[0]
     result = WorldRunResults(
@@ -380,6 +381,7 @@ def balance_calculator2020(
         result.types.append(agent_type)
         if dry_run:
             result.scores.append(None)
+            continue
         final_balance = factory.current_balance
         if inventory_catalog_price_weight != 0.0:
             final_balance += inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices
@@ -389,7 +391,7 @@ def balance_calculator2020(
 
         if normalize:
             result.scores.append(
-                ( - factory.initial_balance)
+                (final_balance - factory.initial_balance)
                 / factory.initial_balance
             )
         else:

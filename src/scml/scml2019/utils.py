@@ -1039,6 +1039,7 @@ def balance_calculator(
         result.types.append(manager.type_name)
         if dry_run:
             result.scores.append(None)
+            continue
         if normalize:
             result.scores.append(
                 (factory.total_balance - factory.initial_balance)
