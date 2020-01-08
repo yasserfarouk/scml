@@ -8,7 +8,7 @@ from negmas.situated import Agent, RenegotiationRequest, Contract, Breach
 from .common import *
 
 if TYPE_CHECKING:
-    from .agent import SCMLAgent
+    from .agent import SCML2019Agent
 
 __all__ = ["DefaultBank", "Bank"]
 
@@ -116,7 +116,7 @@ class DefaultBank(Bank):
         self.storage: Dict[int, int] = defaultdict(int)
         self.wallet: float = 0.0
         self.disabled = disabled
-        self.loans: Dict[SCMLAgent, List[Loan]] = defaultdict(list)
+        self.loans: Dict[SCML2019Agent, List[Loan]] = defaultdict(list)
         self.minimum_balance = minimum_balance
         self.interest_rate = interest_rate
         self.interest_max = interest_max
@@ -138,7 +138,7 @@ class DefaultBank(Bank):
 
     def _evaluate_loan(
         self,
-        agent: "SCMLAgent",
+        agent: "SCML2019Agent",
         amount: float,
         n_installments: int,
         starts_at: int,
@@ -174,7 +174,7 @@ class DefaultBank(Bank):
         )
 
     def evaluate_loan(
-        self, agent: "SCMLAgent", amount: float, start_at: int, n_installments: int
+        self, agent: "SCML2019Agent", amount: float, start_at: int, n_installments: int
     ) -> Optional[Loan]:
         """Evaluates the interest that will be imposed on the agent to buy_loan that amount"""
         if self.disabled:
@@ -189,7 +189,7 @@ class DefaultBank(Bank):
 
     def _buy_loan(
         self,
-        agent: "SCMLAgent",
+        agent: "SCML2019Agent",
         loan: Loan,
         beneficiary: Agent,
         contract: Optional[Contract],
@@ -217,7 +217,7 @@ class DefaultBank(Bank):
 
     def buy_loan(
         self,
-        agent: "SCMLAgent",
+        agent: "SCML2019Agent",
         amount: float,
         n_installments: int,
         beneficiary: Agent,

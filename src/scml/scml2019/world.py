@@ -37,7 +37,7 @@ from negmas.situated import (
     Agent,
     TimeInAgreementMixin,
 )
-from .agent import SCMLAgent
+from .agent import SCML2019Agent
 from .bank import DefaultBank
 from .common import *
 from .consumers import JustInTimeConsumer, ConsumptionProfile, Consumer
@@ -266,7 +266,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         self.default_price_for_products_without_one = (
             default_price_for_products_without_one
         )
-        self.agents: Dict[str, SCMLAgent] = {}  # just to help static type checkers
+        self.agents: Dict[str, SCML2019Agent] = {}  # just to help static type checkers
         if balance_at_max_interest is None:
             balance_at_max_interest = initial_wallet_balances
         self.strip_annotations = strip_annotations
@@ -361,7 +361,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         self.set_consumers(consumers)
         self.set_factory_managers(factory_managers)
 
-        self._report_receivers: Dict[str, Set[SCMLAgent]] = defaultdict(set)
+        self._report_receivers: Dict[str, Set[SCML2019Agent]] = defaultdict(set)
         # self._remove_processes_not_used_by_factories()
         # self._remove_products_not_used_by_processes()
         if catalog_prices_are_public or avg_process_cost_is_public:
@@ -371,7 +371,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             for factory in self.factories:
                 factory._wallet = initial_wallet_balances
 
-        self.f2a: Dict[str, SCMLAgent] = {}
+        self.f2a: Dict[str, SCML2019Agent] = {}
         self.a2f: Dict[str, Factory] = {}
         for factory, agent in zip(self.factories, self.factory_managers):
             self.f2a[factory.id] = agent
@@ -391,12 +391,12 @@ class SCMLWorld(TimeInAgreementMixin, World):
             self.f2a[factory.id] = agent
             self.a2f[agent.id] = factory
 
-        self.__interested_agents: List[List[SCMLAgent]] = [[]] * len(self.products)
+        self.__interested_agents: List[List[SCML2019Agent]] = [[]] * len(self.products)
         self.n_new_cfps = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
-        self._transport: Dict[int, List[Tuple[SCMLAgent, int, int]]] = defaultdict(list)
-        self._transfer: Dict[int, List[Tuple[SCMLAgent, float]]] = defaultdict(list)
+        self._transport: Dict[int, List[Tuple[SCML2019Agent, int, int]]] = defaultdict(list)
+        self._transfer: Dict[int, List[Tuple[SCML2019Agent, float]]] = defaultdict(list)
         self.transfer_delay = transfer_delay
 
         self._n_production_failures = 0
@@ -1391,7 +1391,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         )
 
     def receive_financial_reports(
-        self, agent: SCMLAgent, receive: bool, agents: Optional[List[str]]
+        self, agent: SCML2019Agent, receive: bool, agents: Optional[List[str]]
     ):
         """Registers interest/disinterest in receiving financial reports"""
         if agents is None:
@@ -1815,8 +1815,8 @@ class SCMLWorld(TimeInAgreementMixin, World):
 
     def _move_product(
         self,
-        buyer: SCMLAgent,
-        seller: SCMLAgent,
+        buyer: SCML2019Agent,
+        seller: SCML2019Agent,
         product_id: int,
         quantity: int,
         money: float,
@@ -2138,8 +2138,8 @@ class SCMLWorld(TimeInAgreementMixin, World):
 
     def _move_product_force(
         self,
-        buyer: SCMLAgent,
-        seller: SCMLAgent,
+        buyer: SCML2019Agent,
+        seller: SCML2019Agent,
         product_id: int,
         quantity: int,
         money: float,
@@ -2181,13 +2181,13 @@ class SCMLWorld(TimeInAgreementMixin, World):
                     (seller, available_money)
                 )
 
-    def register_interest(self, agent: SCMLAgent, products: List[int]) -> None:
+    def register_interest(self, agent: SCML2019Agent, products: List[int]) -> None:
         for product in products:
             self.__interested_agents[product] = list(
                 set(self.__interested_agents[product] + [agent])
             )
 
-    def unregister_interest(self, agent: SCMLAgent, products: List[int]) -> None:
+    def unregister_interest(self, agent: SCML2019Agent, products: List[int]) -> None:
         for product in products:
             try:
                 self.__interested_agents[product].remove(agent)
@@ -2196,7 +2196,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
 
     def make_bankrupt(
         self,
-        agent: SCMLAgent,
+        agent: SCML2019Agent,
         amount: float,
         beneficiary: Agent,
         contract: Optional[Contract],
@@ -2290,7 +2290,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         contract.nullified_at = self.current_step
 
     def evaluate_insurance(
-        self, contract: Contract, agent: SCMLAgent, t: int = None
+        self, contract: Contract, agent: SCML2019Agent, t: int = None
     ) -> Optional[float]:
         """Can be called to evaluate the premium for insuring the given contract against breachs committed by others
 
@@ -2307,7 +2307,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             contract=contract, insured=agent, against=against[0], t=t
         )
 
-    def buy_insurance(self, contract: Contract, agent: SCMLAgent) -> bool:
+    def buy_insurance(self, contract: Contract, agent: SCML2019Agent) -> bool:
         """Buys insurance for the contract by the premium calculated by the insurance company.
 
         Remarks:

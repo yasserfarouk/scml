@@ -23,10 +23,10 @@ from .common import (
 if TYPE_CHECKING:
     from .awi import SCMLAWI
 
-__all__ = ["SCMLAgent"]
+__all__ = ["SCML2019Agent"]
 
 
-class SCMLAgent(Agent):
+class SCML2019Agent(Agent):
     """The base for all SCM Agents"""
 
     def __init__(self, name: str = None):
@@ -42,7 +42,7 @@ class SCMLAgent(Agent):
         self.compiled_profiles: List[ManufacturingProfileCompiled] = []
         """All the profiles to be used by the factory belonging to this agent compiled to use indices"""
         self.immediate_negotiations = False
-        """Whether or not negotiations start immediately upon registration (default is to start on the next production 
+        """Whether or not negotiations start immediately upon registration (default is to start on the next production
         step)"""
         self.negotiation_speed_multiple: int = 1
         """The number of negotiation rounds (steps) conducted in a single production step"""
@@ -97,7 +97,7 @@ class SCMLAgent(Agent):
 
         factory = self.awi.state
         if factory is None:
-            raise ValueError("Cannot init any SCMLAgent without specifying a factory")
+            raise ValueError("Cannot init any SCML2019Agent without specifying a factory")
         profiles = factory.profiles
         self.line_profiles = defaultdict(list)
         self.process_profiles = defaultdict(list)

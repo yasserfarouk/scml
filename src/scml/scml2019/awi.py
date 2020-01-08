@@ -214,10 +214,10 @@ class SCMLAWI(AgentWorldInterface):
 
         Remarks:
 
-            - The `SCMLAgent` class implements another request_negotiation method that does not receive a `req_id`. This
+            - The `SCML2019Agent` class implements another request_negotiation method that does not receive a `req_id`. This
               helper method is recommended as it generates the required req_id and passes it keeping track of requested
               negotiations (and later of running negotiations). Call this method direclty *only* if you do not
-              intend to use the `requested_negotiations` and `running_negotiations` properties of the `SCMLAgent` class
+              intend to use the `requested_negotiations` and `running_negotiations` properties of the `SCML2019Agent` class
 
         """
         if self._world.prevent_cfp_tampering:
@@ -400,7 +400,7 @@ class SCMLAWI(AgentWorldInterface):
     Stops/cancels production scheduled at the given line at the given time.
 
     Args:
-        line: One of the factory lines (index) 
+        line: One of the factory lines (index)
         step: Step to stop/cancel production at
     """
 

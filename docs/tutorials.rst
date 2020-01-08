@@ -8,6 +8,4 @@ applicability to a variety of problems.
 .. toctree::
     :maxdepth: 2
 
-    tutorials/01.run_scml2019
-    tutorials/02.develop_scml_agent2019
-    tutorials/03.run_scml2020
+    tutorials/01.run_scml2020

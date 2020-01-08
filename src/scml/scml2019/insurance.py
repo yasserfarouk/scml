@@ -6,7 +6,7 @@ from negmas import Mechanism, AgentMechanismInterface, MechanismState
 from negmas.negotiators import Negotiator
 from negmas.outcomes import Issue
 from negmas.situated import Agent, RenegotiationRequest, Breach, Contract
-from .agent import SCMLAgent
+from .agent import SCML2019Agent
 from .common import InsurancePolicy, Factory
 
 if TYPE_CHECKING:
@@ -120,15 +120,15 @@ class DefaultInsuranceCompany(InsuranceCompany):
         raise ValueError("The insurance company does not receive callbacks")
 
     def evaluate_insurance(
-        self, contract: Contract, insured: SCMLAgent, against: SCMLAgent, t: int = None
+        self, contract: Contract, insured: SCML2019Agent, against: SCML2019Agent, t: int = None
     ) -> Optional[float]:
         """Can be called to evaluate the premium for insuring the given contract against breaches committed by others
 
         Args:
 
-            against: The `SCMLAgent` to insure against
+            against: The `SCML2019Agent` to insure against
             contract: hypothetical contract
-            insured: The `SCMLAgent` to buy the insurance
+            insured: The `SCML2019Agent` to buy the insurance
             t: time at which the policy is to be bought. If None, it means current step
 
         Remarks:
@@ -168,7 +168,7 @@ class DefaultInsuranceCompany(InsuranceCompany):
         )
 
     def buy_insurance(
-        self, contract: Contract, insured: SCMLAgent, against: SCMLAgent
+        self, contract: Contract, insured: SCML2019Agent, against: SCML2019Agent
     ) -> Optional[InsurancePolicy]:
         """Buys insurance for the contract at the premium calculated by the insurance company.
 
@@ -204,7 +204,7 @@ class DefaultInsuranceCompany(InsuranceCompany):
         self.insured_contracts[(contract, against.id)] = policy
         return policy
 
-    def is_insured(self, contract: Contract, perpetrator: SCMLAgent) -> bool:
+    def is_insured(self, contract: Contract, perpetrator: SCML2019Agent) -> bool:
         """
 
         Args:

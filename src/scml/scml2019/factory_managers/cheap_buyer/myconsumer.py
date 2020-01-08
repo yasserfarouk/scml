@@ -1,12 +1,12 @@
 from negmas import Negotiator, Contract, Breach, RenegotiationRequest, AgentMechanismInterface, MechanismState
 from typing import Optional, List, Dict, Any
 
-from scml.scml2019 import SCMLAgent, FinancialReport, Loan
+from scml.scml2019 import SCML2019Agent, FinancialReport, Loan
 from .ConsumerUtilityFunction import ConsumerUtilityFunction
 from .MyNegotiator2 import MyNegotiator2
 
 
-class MyConsumer(SCMLAgent):
+class MyConsumer(SCML2019Agent):
 
     def __init__(self, agent, name):
         self.alpha = 1

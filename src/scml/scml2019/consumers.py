@@ -18,7 +18,7 @@ from negmas.situated import Contract, Breach
 from negmas.situated import RenegotiationRequest
 from negmas.utilities import ComplexWeightedUtilityFunction, MappingUtilityFunction
 from .common import CFP
-from .agent import SCMLAgent
+from .agent import SCML2019Agent
 from .helpers import pos_gauss
 
 if True:  #
@@ -90,7 +90,7 @@ class ConsumptionProfile:
         self.schedule[time % len(self.schedule)] = value
 
 
-class Consumer(SCMLAgent, ABC):
+class Consumer(SCML2019Agent, ABC):
     """Base class of all consumer classes"""
 
     pass

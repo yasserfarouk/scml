@@ -12,7 +12,7 @@ from negmas.negotiators import Negotiator
 from negmas.situated import Contract, Breach
 from negmas.situated import RenegotiationRequest
 from negmas.utilities import LinearUtilityAggregationFunction
-from .agent import SCMLAgent
+from .agent import SCML2019Agent
 from .helpers import pos_gauss
 
 if True:
@@ -56,7 +56,7 @@ class MiningProfile:
         )
 
 
-class Miner(SCMLAgent, ABC):
+class Miner(SCML2019Agent, ABC):
     """Base class of all miners"""
 
 

@@ -115,10 +115,10 @@ class Process:
     name: str
     """Object name"""
     inputs: List[InputOutput]
-    """list of input product name + quantity required and time of consumption relative to the time required for 
+    """list of input product name + quantity required and time of consumption relative to the time required for
     production (value from 0 to 1)"""
     outputs: List[InputOutput]
-    """list of output product names, quantity required and when it becomes available relative to the time required for 
+    """list of output product names, quantity required and when it becomes available relative to the time required for
     production (value from 0 to 1)"""
     historical_cost: Optional[float]
     """Average cost for running this process in some world. Filled by the world"""
@@ -332,7 +332,7 @@ class Job:
     line: int
     """Index of the line on which the job is to be scheduled. Notice that it will be ignored for `run` actions."""
     action: str
-    """The command type. For the current implementation it can be run/pause/resume/stop/cancel with `cancel` cancelling 
+    """The command type. For the current implementation it can be run/pause/resume/stop/cancel with `cancel` cancelling
     any other command type."""
     contract: Optional[Contract]
     """The sell contract associated with the command"""
@@ -544,7 +544,7 @@ class CFP(OutcomeType):
                True or False. If both are OK, just do not add this key
 
              publisher
-               A string or `SCMLAgent` specifying a specific publisher
+               A string or `SCML2019Agent` specifying a specific publisher
 
              publishers
                A list of publishers (see publisher key)
@@ -1052,7 +1052,7 @@ class InsurancePolicy:
     premium: float
     contract: Contract
     at_time: int
-    against: "SCMLAgent"
+    against: "SCML2019Agent"
 
 
 @dataclass

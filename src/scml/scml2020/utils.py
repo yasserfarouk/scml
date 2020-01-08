@@ -110,7 +110,7 @@ def anac2020_config_generator(
     non_competitor_params: Optional[Tuple[Dict[str, Any]]] = None,
     compact: bool = True,
     *,
-    n_steps: Union[int, Tuple[int, int]] = (50, 100),
+    n_steps: Union[int, Tuple[int, int]] = (50, 200),
     n_processes: Tuple[int, int] = (2, 5),
     min_factories_per_level: int = 2,  # strictly guaranteed
     max_factories_per_level: int = 6,  # not strictly guaranteed
@@ -344,7 +344,7 @@ def balance_calculator2020(
     )
     initial_balances = []
     is_default = world.info["is_default"]
-    factories = world.factories
+    factories = [_ for _ in world.factories if _.agent_id != "SYSTEM"]
     agents = [world.agents[f.agent_id] for f in factories]
     agent_types = world.agent_unique_types
     if len(set(agent_types)) == len(set(world.agent_types)):

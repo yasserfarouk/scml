@@ -23,10 +23,15 @@ class DoNothingAgent(SCML2020Agent):
                                        mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
         return None
 
-    def sign_contract(self, contract: Contract) -> Optional[str]:
-        return self.id
+    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        return [None] * len(contracts)
 
-    def on_contract_signed(self, contract: Contract) -> None:
+    def on_contracts_finalized(
+        self,
+        signed: List[Contract],
+        cancelled: List[Contract],
+        rejectors: List[List[str]],
+    ) -> None:
         pass
 
     def step(self):

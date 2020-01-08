@@ -23,7 +23,7 @@ https://negmas.readthedocs.io/en/latest/api/scml.scml2019.SCMLAWI.html
 - For properties/methods available to all kinds of agents in all kinds of worlds, check the list here:
 https://negmas.readthedocs.io/en/latest/api/negmas.situated.AgentWorldInterface.html
 
-The SCMLAgent class itself has some helper properties/methods that internally call the AWI. These include:
+The SCML2019Agent class itself has some helper properties/methods that internally call the AWI. These include:
 
 - request_negotiation(): Generates a unique identifier for this negotiation request and passes it to the AWI through a
                          call of awi.request_negotiation(). It is recommended to use this method always to request

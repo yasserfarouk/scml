@@ -30,7 +30,7 @@ from negmas.outcomes import Issue, Outcome
 from negmas.sao import _ShadowSAONegotiator, AspirationNegotiator, SAOController
 from negmas.utilities import UtilityValue
 
-from scml.scml2019.agent import SCMLAgent
+from scml.scml2019.agent import SCML2019Agent
 from scml.scml2019.awi import _ShadowSCMLAWI, SCMLAWI
 from scml.scml2019.common import DEFAULT_NEGOTIATOR, ProductionReport
 from scml.scml2019.common import (
@@ -70,7 +70,7 @@ __all__ = [
 ]
 
 
-class FactoryManager(SCMLAgent, ABC):
+class FactoryManager(SCML2019Agent, ABC):
     """Base factory manager class that will be inherited by participant negmas in ANAC 2019.
 
     The agent can access the world simulation in one of two ways:
