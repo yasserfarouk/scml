@@ -321,6 +321,10 @@ def balance_calculator2020(
     scoring_context: Dict[str, Any],
     dry_run: bool,
     ignore_default=True,
+    inventory_catalog_price_weight=0.0,
+    inventory_trading_average_weight=0.0,
+    trading_average_discount=1.0,
+    trading_average_condition="executed",
 ) -> WorldRunResults:
     """A scoring function that scores factory managers' performance by the final balance only ignoring whatever still
     in their inventory.
@@ -332,11 +336,23 @@ def balance_calculator2020(
         dry_run: A boolean specifying whether this is a dry_run. For dry runs, only names and types are expected in
                  the returned `WorldRunResults`
         ignore_default: Whether to ignore non-competitors (default agents)
+        inventory_catalog_price_weight: The weight assigned to catalog price
+        inventory_trading_average_weight: The weight assigned to trading price average
+        trading_average_discount: A discount factor for calculating trading average
+        trading_average_condition: The condition of contracts to be considered when calculating trading average. See
+                                   `trading_prices` for more details
+
 
     Returns:
         WorldRunResults giving the names, scores, and types of factory managers.
 
     """
+    inventory_catalog_price_weight = scoring_context.get("inventory_catalog_price_weight",
+                                                         inventory_catalog_price_weight)
+    inventory_trading_average_weight = scoring_context.get("inventory_trading_average_weight",
+                                                           inventory_trading_average_weight)
+    trading_average_discount = scoring_context.get("trading_average_discount", trading_average_discount)
+    trading_average_condition = scoring_context.get("trading_average_condition", trading_average_condition)
     assert len(worlds) == 1
     world = worlds[0]
     result = WorldRunResults(
@@ -364,13 +380,20 @@ def balance_calculator2020(
         result.types.append(agent_type)
         if dry_run:
             result.scores.append(None)
+        final_balance = factory.current_balance
+        if inventory_catalog_price_weight != 0.0:
+            final_balance += inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices
+        if inventory_trading_average_weight != 0.0:
+            trading_prices = world.trading_prices(trading_average_discount, trading_average_condition)
+            final_balance += inventory_trading_average_weight * factory.current_inventory * trading_prices
+
         if normalize:
             result.scores.append(
-                (factory.current_balance - factory.initial_balance)
+                ( - factory.initial_balance)
                 / factory.initial_balance
             )
         else:
-            result.scores.append(factory.current_balance - factory.initial_balance)
+            result.scores.append(final_balance - factory.initial_balance)
     return result
 
 

@@ -846,7 +846,9 @@ class Factory:
         )
 
         # sell everything on the agent's inventory
-        total = int(np.sum(self._inventory * self.world.liquidation_rate * self.catalog_prices))
+        total = int(
+            np.sum(self._inventory * self.world.liquidation_rate * self.catalog_prices)
+        )
         pay_back = min(required, total)
         available = total - required
 
@@ -1143,10 +1145,13 @@ class AWI(AgentWorldInterface):
     def profile(self) -> FactoryProfile:
         """Gets the profile (static private information) associated with the agent"""
         profile = self._world.a2f[self.agent.id].profile
-        s = min(self.n_steps, self.current_step+self._world.exogenous_horizon)
+        s = min(self.n_steps, self.current_step + self._world.exogenous_horizon)
         return FactoryProfile(
-            profile.costs, profile.exogenous_sales[:s], profile.exogenous_supplies[:s], profile.exogenous_sale_prices[:s]
-            , profile.exogenous_supply_prices[:s]
+            profile.costs,
+            profile.exogenous_sales[:s],
+            profile.exogenous_supplies[:s],
+            profile.exogenous_sale_prices[:s],
+            profile.exogenous_supply_prices[:s],
         )
 
     @property
@@ -1476,20 +1481,31 @@ class _SystemAgent(SCML2020Agent):
         self.id = "SYSTEM"
         self.name = "SYSTEM"
 
-    def on_contract_nullified(self, contract: Contract, compensation_money: int, new_quantity: int) -> None:
+    def on_contract_nullified(
+        self, contract: Contract, compensation_money: int, new_quantity: int
+    ) -> None:
         pass
 
     def on_failures(self, failures: List[Failure]) -> None:
         pass
 
-    def confirm_exogenous_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_exogenous_sales(
+        self, quantities: np.ndarray, unit_prices: np.ndarray
+    ) -> np.ndarray:
         return quantities
 
-    def confirm_exogenous_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
+    def confirm_exogenous_supplies(
+        self, quantities: np.ndarray, unit_prices: np.ndarray
+    ) -> np.ndarray:
         return quantities
 
-    def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],
-                                       mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
+    def respond_to_negotiation_request(
+        self,
+        initiator: str,
+        issues: List[Issue],
+        annotation: Dict[str, Any],
+        mechanism: AgentMechanismInterface,
+    ) -> Optional[Negotiator]:
         pass
 
     def step(self):
@@ -1498,17 +1514,26 @@ class _SystemAgent(SCML2020Agent):
     def init(self):
         pass
 
-    def on_negotiation_failure(self, partners: List[str], annotation: Dict[str, Any],
-                               mechanism: AgentMechanismInterface, state: MechanismState) -> None:
+    def on_negotiation_failure(
+        self,
+        partners: List[str],
+        annotation: Dict[str, Any],
+        mechanism: AgentMechanismInterface,
+        state: MechanismState,
+    ) -> None:
         pass
 
-    def on_negotiation_success(self, contract: Contract, mechanism: AgentMechanismInterface) -> None:
+    def on_negotiation_success(
+        self, contract: Contract, mechanism: AgentMechanismInterface
+    ) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]) -> None:
+    def on_contract_breached(
+        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+    ) -> None:
         pass
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
@@ -1707,11 +1732,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.bulletin_board.record(
             "settings", compensate_before_past_debt, "compensate_before_past_debt"
         )
-        self.bulletin_board.record("settings", exogenous_force_max, "exogenous_force_max")
+        self.bulletin_board.record(
+            "settings", exogenous_force_max, "exogenous_force_max"
+        )
         self.bulletin_board.record(
             "settings", exogenous_buy_missing, "exogenous_buy_missing"
         )
-        self.bulletin_board.record("settings", exogenous_no_borrow, "exogenous_no_borrow")
+        self.bulletin_board.record(
+            "settings", exogenous_no_borrow, "exogenous_no_borrow"
+        )
         self.bulletin_board.record(
             "settings", exogenous_no_bankruptcy, "exogenous_no_bankruptcy"
         )
@@ -1727,7 +1756,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             "settings", production_no_bankruptcy, "production_no_bankruptcy"
         )
         self.bulletin_board.record("settings", production_penalty, "production_penalty")
-        self.bulletin_board.record("settings", len(exogenous_contracts) > 0, "has_exogenous_contracts")
+        self.bulletin_board.record(
+            "settings", len(exogenous_contracts) > 0, "has_exogenous_contracts"
+        )
 
         if self.info is None:
             self.info = {}
@@ -1868,12 +1899,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         agent_types.append(_SystemAgent)
         agent_params.append({})
         initial_balance = initial_balance.tolist() + [sys.maxsize // 4]
-        profiles.append(FactoryProfile(INFINITE_COST * np.ones(n_processes, dtype=int),
-                                       np.zeros((n_steps, n_products), dtype=int),
-                                       np.zeros((n_steps, n_products), dtype=int),
-                                       np.zeros((n_steps, n_products), dtype=int),
-                                       np.zeros((n_steps, n_products), dtype=int),
-                                       ))
+        profiles.append(
+            FactoryProfile(
+                INFINITE_COST * np.ones(n_processes, dtype=int),
+                np.zeros((n_steps, n_products), dtype=int),
+                np.zeros((n_steps, n_products), dtype=int),
+                np.zeros((n_steps, n_products), dtype=int),
+                np.zeros((n_steps, n_products), dtype=int),
+            )
+        )
         agents = []
         for i, (atype, aparams) in enumerate(zip(agent_types, agent_params)):
             a = instantiate(atype, **aparams)
@@ -1914,7 +1948,9 @@ class SCML2020World(TimeInAgreementMixin, World):
                 production_no_borrow=self.production_no_borrow,
                 production_no_bankruptcy=self.production_no_bankruptcy,
                 confirm_production=self.confirm_production,
-                initial_inventory=None if i < len(profiles) - 1 else sys.maxsize // 4 * np.ones(n_products, dtype=int)
+                initial_inventory=None
+                if i < len(profiles) - 1
+                else sys.maxsize // 4 * np.ones(n_products, dtype=int),
             )
             for i, profile in enumerate(profiles)
         ]
@@ -1969,7 +2005,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.compensation_records: Dict[str, List[CompensationRecord]] = defaultdict(
             list
         )
-        self.exogenous_contracts: Dict[int: List[Contract]] = defaultdict(list)
+        self.exogenous_contracts: Dict[int : List[Contract]] = defaultdict(list)
         for c in exogenous_contracts:
             seller_id = agents[c.seller].id if c.seller >= 0 else "SYSTEM"
             buyer_id = agents[c.buyer].id if c.buyer >= 0 else "SYSTEM"
@@ -1979,7 +2015,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                     "quantity": c.quantity,
                     "unit_price": c.unit_price,
                 },
-                partners = [buyer_id, seller_id],
+                partners=[buyer_id, seller_id],
                 issues=[],
                 signatures=[],
                 signed_at=-1,
@@ -2188,9 +2224,11 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         process_of_agent = np.empty(n_agents, dtype=int)
         for i, (f, l) in enumerate(zip(first_agent, last_agent)):
-            process_of_agent[f: l] = i
+            process_of_agent[f:l] = i
             if cost_increases_with_level:
-                production_costs[f: l] = np.round(production_costs[f: l] * math.sqrt(i+1)).astype(int)
+                production_costs[f:l] = np.round(
+                    production_costs[f:l] * math.sqrt(i + 1)
+                ).astype(int)
 
         # generate external contract amounts (controlled by productivity):
 
@@ -2368,7 +2406,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             # production (even though it may not have enough lines to do so)
             cash_availability = _realin(cash_availability)
             balance = np.ceil(
-                np.sum(total_costs, axis=1) # / n_agents_per_process
+                np.sum(total_costs, axis=1)  # / n_agents_per_process
             ).astype(int)
             initial_balance = []
             for b, a in zip(balance, n_agents_per_process):
@@ -2401,7 +2439,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             for indx, profile in enumerate(profiles):
                 input_product = process_of_agent[indx]
                 for step, (sale, price) in enumerate(
-                    zip(profile.exogenous_sales[input_product + 1, :], profile.exogenous_sale_prices[ input_product  +1, :])
+                    zip(
+                        profile.exogenous_sales[input_product + 1, :],
+                        profile.exogenous_sale_prices[input_product + 1, :],
+                    )
                 ):
                     if sale == 0:
                         continue
@@ -2435,7 +2476,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                                 )
                             )
                 for step, (supply, price) in enumerate(
-                    zip(profile.exogenous_supplies[input_product, :], profile.exogenous_supply_prices[input_product, :])
+                    zip(
+                        profile.exogenous_supplies[input_product, :],
+                        profile.exogenous_supply_prices[input_product, :],
+                    )
                 ):
                     if supply == 0:
                         continue
@@ -2542,7 +2586,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         # -----------------------------------------
 
         for contract in self.exogenous_contracts[s]:
-            self.on_contract_concluded(contract, to_be_signed_at=contract.to_be_signed_at)
+            self.on_contract_concluded(
+                contract, to_be_signed_at=contract.to_be_signed_at
+            )
 
         # pay interests for negative balances
         # -----------------------------------
@@ -2619,7 +2665,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         }
         if not self.compact:
             c.update(contract.annotation)
-        c["n_neg_steps"] = contract.mechanism_state.step if contract.mechanism_state else 0
+        c["n_neg_steps"] = (
+            contract.mechanism_state.step if contract.mechanism_state else 0
+        )
         return c
 
     def breach_record(self, breach: Breach) -> Dict[str, Any]:
@@ -3080,7 +3128,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             balances = sorted(
                 (
                     (self.a2f[aid].current_balance, agent)
-                    for aid, agent in self.agents.items() if aid != "SYSTEM"
+                    for aid, agent in self.agents.items()
+                    if aid != "SYSTEM"
                 ),
                 key=lambda x: x[0],
                 reverse=True,
@@ -3092,7 +3141,8 @@ class SCML2020World(TimeInAgreementMixin, World):
                         self.a2f[aid].current_balance / self.a2f[aid].initial_balance,
                         agent,
                     )
-                    for aid, agent in self.agents.items() if aid != "SYSTEM"
+                    for aid, agent in self.agents.items()
+                    if aid != "SYSTEM"
                 ),
                 key=lambda x: x[0],
                 reverse=True,
@@ -3100,3 +3150,36 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         max_balance = balances[0][0]
         return [_[1] for _ in balances if _[0] >= max_balance]
+
+    def trading_prices(
+        self, discount: float = 1.0, condition="executed"
+    ) -> np.ndarray:
+        """
+        Calculates the prices at which all products traded using an optional discount factor
+
+        Args:
+            discount: A discount factor to treat older prices less importantly (exponential discounting).
+            condition: The condition for contracts to consider. Possible values are executed, signed, concluded,
+                       nullified
+
+        Returns:
+            an n_products vector of trading prices
+        """
+        prices = np.nan * np.ones((self.n_products, self.n_steps), dtype=float)
+        quantities = np.zeros((self.n_products, self.n_steps), dtype=int)
+        for contract in self.saved_contracts:
+            if contract["condition" + "_at"] < 0:
+                continue
+            p, t, q, u = (
+                contract["product"],
+                contract["delivery_time"],
+                contract["quantity"],
+                contract["unit_price"],
+            )
+            prices[p, t] = (prices[p, t] * quantities[p, t] + u * q) / (
+                quantities[p, t] + q
+            )
+            quantities[p, t] += q
+        discount = np.cumprod(discount * np.ones(self.n_steps))
+        discount /= sum(discount)
+        return np.nansum(np.nanprod(prices, discount), axis=-1)
