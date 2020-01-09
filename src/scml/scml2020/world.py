@@ -877,6 +877,7 @@ class AWI(AgentWorldInterface):
         unit_price: Union[int, Tuple[int, int]],
         time: Union[int, Tuple[int, int]],
         controller: SAOController,
+        negotiators: List[Negotiator] = None,
         partners: List[str] = None,
         extra: Dict[str, Any] = None,
     ) -> bool:
@@ -891,6 +892,8 @@ class AWI(AgentWorldInterface):
             unit_price: The minimum and maximum unit prices. Passing a single value u is equivalent to passing (u,u)
             time: The minimum and maximum delivery step. Passing a single value t is equivalent to passing (t,t)
             controller: The controller to manage the complete set of negotiations
+            negotiators: An optional list of negotiators to use for negotiating with the given partners (in the same
+                         order).
             partners: ID of all the partners to negotiate with.
             extra: Extra information accessible through the negotiation annotation to the caller
 
@@ -900,32 +903,43 @@ class AWI(AgentWorldInterface):
 
         Remarks:
 
+            - You can either use controller or negotiators. One of them must be None.
             - All negotiations will use the following issues **in order**: quantity, time, unit_price
             - Negotiations with bankrupt agents or on invalid products (see next point) will be automatically rejected
             - Valid products for a factory are the following (any other products are not valid):
-                1. Buying an input product (i.e. product $\in$ `my_input_products`
-                1. Seeling an output product (i.e. product $\in$ `my_output_products`
+                1. Buying an input product (i.e. product $\in$ `my_input_products` ) and an output product if the world
+                   settings allows it (see `allow_buying_output`)
+                1. Selling an output product (i.e. product $\in$ `my_output_products` ) and an input product if the
+                   world settings allows it (see `allow_selling_input`)
 
 
         """
+        if controller is not None and negotiators is not None:
+            raise ValueError("You cannot pass both controller and negotiators to request_negotiations")
+        if controller is None and negotiators is None:
+            raise ValueError("You MUST pass either controller or negotiators to request_negotiations")
         if extra is None:
             extra = dict()
-        if (product not in self.my_input_products and is_buy) or (
-            product not in self.my_output_products and not is_buy
+        buyable, sellable = self.my_input_products, self.my_output_products
+        if self._world.allow_selling_input:
+            sellable = set(sellable + self.my_input_products)
+        if self._world.allow_buying_output:
+            buyable = set(buyable + self.my_output_products)
+        if (product not in buyable and is_buy) or (
+            product not in sellable and not is_buy
         ):
             self._world.logwarning(
-                f"{self.agent.name} requested negotiation on {product} "
-                f"({'buying' if is_buy else 'selling'}) but this is not in "
-                f"its ({'inputs' if is_buy else 'outputs'})"
+                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
             )
             return False
         if partners is None:
             partners = (
                 self.all_suppliers[product] if is_buy else self.all_consumers[product]
             )
-        negotiators = [
-            controller.create_negotiator(PassThroughSAONegotiator) for _ in partners
-        ]
+        if negotiators is None:
+            negotiators = [
+                controller.create_negotiator(PassThroughSAONegotiator) for _ in partners
+            ]
         results = [
             self.request_negotiation(
                 is_buy, product, quantity, unit_price, time, partner, negotiator, extra
@@ -970,20 +984,23 @@ class AWI(AgentWorldInterface):
             - All negotiations will use the following issues **in order**: quantity, time, unit_price
             - Negotiations with bankrupt agents or on invalid products (see next point) will be automatically rejected
             - Valid products for a factory are the following (any other products are not valid):
-                1. Buying an input product (i.e. product $\in$ `my_input_products`
-                1. Seeling an output product (i.e. product $\in$ `my_output_products`
+                1. Buying an input product (i.e. product $\in$ `my_input_products` ) and an output product if the world
+                   settings allows it (see `allow_buying_output`)
+                1. Selling an output product (i.e. product $\in$ `my_output_products` ) and an input product if the
+                   world settings allows it (see `allow_selling_input`)
 
 
         """
         if extra is None:
             extra = dict()
-        if (product not in self.my_input_products and is_buy) or (
-            product not in self.my_output_products and not is_buy
-        ):
+        buyable, sellable = self.my_input_products, self.my_output_products
+        if self._world.allow_selling_input:
+            sellable = set(sellable + self.my_input_products)
+        if self._world.allow_buying_output:
+            buyable = set(buyable + self.my_output_products)
+        if (product not in buyable and is_buy) or (product not in sellable and not is_buy):
             self._world.logwarning(
-                f"{self.agent.name} requested negotiation on {product} "
-                f"({'buying' if is_buy else 'selleing'}) but this is not in "
-                f"its ({'inputs' if is_buy else 'outputs'})"
+                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
             )
             return False
         if self._world.a2f[partner].is_bankrupt:
@@ -1555,6 +1572,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         agent_types: An n_agents list of strings/ `SCML2020Agent` classes specifying the type of each agent
         agent_params: An n_agents dictionaries giving the parameters of each agent
         initial_balance: The initial balance in each agent's wallet. All agents will start with this same value.
+        allow_selling_input: Allows agents to sell their input product(s) through negotiation
+        allow_buying_output: Allows agents to buy their output product(s) through negotiation
         breach_penalty: The total penalty paid upon a breach will be calculated as (breach_level * breach_penalty *
                         contract_quantity * contract_unit_price).
         exogenous_supply_limit: An n_steps * n_products array giving the total supply available of each product over time.
@@ -1628,6 +1647,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         agent_params: List[Dict[str, Any]] = None,
         exogenous_contracts: Collection[ExogenousContract] = (),
         initial_balance: Union[np.ndarray, Tuple[int, int], int] = 1000,
+        allow_buying_output=False,
+        allow_selling_input=False,
         # breach processing parameters
         buy_missing_products=False,
         borrow_on_breach=True,
@@ -1677,6 +1698,8 @@ class SCML2020World(TimeInAgreementMixin, World):
     ):
         if exogenous_horizon is None:
             exogenous_horizon = n_steps
+        self.allow_buying_output = allow_buying_output
+        self.allow_selling_input = allow_selling_input
         self.exogenous_horizon = exogenous_horizon
         self.buy_missing_products = buy_missing_products
         self.production_buy_missing = production_buy_missing
