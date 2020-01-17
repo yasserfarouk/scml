@@ -441,7 +441,7 @@ def tournament(ctx, ignore_warnings):
 @click.option(
     "--bankruptcy-limit",
     type=float,
-    default=1.0,
+    default=0.0,
     help="SCML2020: Fraction of the average initial balance that agents are allowed to borrow before going bankrupt",
 )
 @click.option(
@@ -1722,7 +1722,7 @@ def run2019(
 @click.option(
     "--bankruptcy-limit",
     type=float,
-    default=1.0,
+    default=0.0,
     help="Fraction of the average initial balance that agents are allowed to borrow before going bankrupt",
 )
 @click.option(

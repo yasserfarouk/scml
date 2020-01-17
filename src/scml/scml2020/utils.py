@@ -322,9 +322,7 @@ def balance_calculator2020(
     dry_run: bool,
     ignore_default=True,
     inventory_catalog_price_weight=0.0,
-    inventory_trading_average_weight=0.0,
-    trading_average_discount=1.0,
-    trading_average_condition="executed",
+    inventory_trading_average_weight=0.5,
 ) -> WorldRunResults:
     """A scoring function that scores factory managers' performance by the final balance only ignoring whatever still
     in their inventory.
@@ -338,10 +336,6 @@ def balance_calculator2020(
         ignore_default: Whether to ignore non-competitors (default agents)
         inventory_catalog_price_weight: The weight assigned to catalog price
         inventory_trading_average_weight: The weight assigned to trading price average
-        trading_average_discount: A discount factor for calculating trading average
-        trading_average_condition: The condition of contracts to be considered when calculating trading average. See
-                                   `trading_prices` for more details
-
 
     Returns:
         WorldRunResults giving the names, scores, and types of factory managers.
@@ -352,8 +346,6 @@ def balance_calculator2020(
                                                              inventory_catalog_price_weight)
         inventory_trading_average_weight = scoring_context.get("inventory_trading_average_weight",
                                                                inventory_trading_average_weight)
-        trading_average_discount = scoring_context.get("trading_average_discount", trading_average_discount)
-        trading_average_condition = scoring_context.get("trading_average_condition", trading_average_condition)
     assert len(worlds) == 1
     world = worlds[0]
     result = WorldRunResults(
@@ -386,7 +378,7 @@ def balance_calculator2020(
         if inventory_catalog_price_weight != 0.0:
             final_balance += inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices
         if inventory_trading_average_weight != 0.0:
-            trading_prices = world.trading_prices(trading_average_discount, trading_average_condition)
+            trading_prices = world.trading_prices
             final_balance += inventory_trading_average_weight * factory.current_inventory * trading_prices
 
         if normalize:
