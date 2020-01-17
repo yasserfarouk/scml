@@ -31,26 +31,16 @@ def create_factory():
         # compensation parameters (for victims of bankrupt agents)
         compensate_before_past_debt=False,
         # external contracts parameters
-        exogenous_no_borrow=False,
-        exogenous_no_bankruptcy=True,
-        exogenous_penalty=0.15,
         production_no_borrow=False,
         production_no_bankruptcy=True,
         production_penalty=0.15,
         production_buy_missing=False,
-        exogenous_buy_missing=False,
         catalog_prices=np.random.randint(1, 20, size=PROCESSES + 1, dtype=int),
     )
 
 
 def create_profile():
-    return FactoryProfile(
-        np.random.randint(1, 10, (LINES, PROCESSES), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-        np.random.randint(1, 10, (STEPS, PROCESSES + 1), dtype=int),
-    )
+    return FactoryProfile(np.random.randint(1, 10, (LINES, PROCESSES), dtype=int))
 
 
 def create_world():
@@ -77,7 +67,6 @@ def test_factory_profile():
     assert p.n_lines == LINES
     assert p.n_products == PROCESSES + 1
     assert p.n_processes == PROCESSES
-    assert p.n_steps == STEPS
 
 
 class TestFactory:
@@ -144,6 +133,8 @@ def test_simulator_runs():
         initial_balance=factory.initial_balance,
         bankruptcy_limit=bankruptcy_limit,
         breach_penalty=breach_penalty,
+        catalog_prices=np.ones(profile.n_products, dtype=int),
+        n_steps=50,
     )
     assert simulator.balance_at(simulator.n_steps - 1) == factory.initial_balance
     assert np.all(simulator.inventory_at(simulator.n_steps - 1) == 0)

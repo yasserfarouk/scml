@@ -21,7 +21,7 @@ class AdapterAWI:
     def __init__(self, awi2019: SCMLAWI, awi2020: AWI):
         self.awi2019 = awi2019
         self.awi2020 = awi2020
-        
+
     def register_cfp(self, cfp: CFP) -> None:
         """Registers a CFP"""
         pass
@@ -91,7 +91,7 @@ class AdapterAWI:
 
         """
         self.awi2020.request_negotiation()
-        
+
     def request_negotiation_about(
         self,
         issues: List[Issue],
@@ -354,8 +354,8 @@ class AdapterAWI:
         """
         self.execute(action=Action(type="unhide_funds", params={"amount": amount}))
 
-    
-    
+
+
 
 class SCML2019Adapter(SCML2020Agent):
     """An agent that adapts an SCML2019 agent to play in an SCML2020 simulation"""
@@ -385,12 +385,6 @@ class SCML2019Adapter(SCML2020Agent):
             )
         self.__base.on_production_failure(fs)
 
-    def confirm_exogenous_sales(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
-        return np.zeros_like(quantities)
-
-    def confirm_exogenous_supplies(self, quantities: np.ndarray, unit_prices: np.ndarray) -> np.ndarray:
-        return np.zeros_like(quantities)
-
     def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],
                                        mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
         cfp = CFP(is_buy=annotation["is_buy"], publisher=initiator, product=annotation["product"], time=issues[TIME].values
@@ -401,7 +395,7 @@ class SCML2019Adapter(SCML2020Agent):
         return self.__base.step()
 
     def init(self):
-        
+
         return self.__base.init()
 
     def on_negotiation_failure(self, partners: List[str], annotation: Dict[str, Any],

@@ -78,16 +78,17 @@ class FactorySimulator:
         bankruptcy_limit: int,
         breach_penalty: float,
         catalog_prices: np.ndarray,
+        n_steps: int,
         initial_inventory: np.ndarray = None,
     ):
-        self._n_steps = profile.n_steps
+        self._n_steps = n_steps
         n_products = profile.n_products
         self._catalog_prices = catalog_prices
         self._initial_balance = initial_balance
         self._initial_inventory = np.zeros(n_products)
         self._profile = profile
         self._n_products = n_products
-        self._reserved_inventory = np.zeros(shape=(n_products, profile.n_steps))
+        self._reserved_inventory = np.zeros(shape=(n_products, n_steps))
         self._bankrupt_at = NEVER
         self.bankruptcy_limit = bankruptcy_limit
         self.breach_penalty = breach_penalty
@@ -303,7 +304,7 @@ class FactorySimulator:
 
     def balance_to(self, t: int) -> np.array:
         """
-        Returns the balance fo the factory at time t.
+        Returns the balance fo the factory until and including time t.
 
         Args:
             t: time
@@ -315,6 +316,21 @@ class FactorySimulator:
         """
 
         return self._balance[: t + 1]
+
+    def balance_at(self, t: int) -> np.array:
+        """
+        Returns the balance of the factory at time t.
+
+        Args:
+            t: time
+
+        Remarks:
+
+            - The balance is defined as the cash in wallet
+
+        """
+
+        return self._balance[t]
 
     def inventory_to(self, t: int) -> np.array:
         """

@@ -1206,7 +1206,7 @@ class JavaFactoryManager(FactoryManager, JavaCallerMixin):
         return to_java(self.processes)
 
     def getContracts(self):
-        return to_java(self.contracts)
+        return to_java(self.contracts_per_step)
 
     def getRequestedNegotiations(self):
         return to_java(self.requested_negotiations)

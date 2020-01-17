@@ -291,7 +291,6 @@ class DecentralizingAgent(DoNothingAgent):
         self.supplies_negotiating = None
         self.sales_negotiating = None
         self.agreement_fraction = agreement_fraction
-        self.use_exogenous_contracts = True
 
     def init(self):
         awi: AWI
@@ -324,16 +323,6 @@ class DecentralizingAgent(DoNothingAgent):
 
         self.predicted_demand = adjust(self.predicted_demand, True)
         self.predicted_supply = adjust(self.predicted_supply, False)
-        self.use_exogenous_contracts = awi.bb_read(
-            "settings", "has_exogenous_contracts"
-        )
-        if (
-            not self.use_exogenous_contracts
-            and (self.input_product == 0
-            or self.output_product == awi.n_products - 1)
-        ):
-            self.predicted_supply = np.zeros(awi.n_steps, dtype=int)
-            self.predicted_demand = np.zeros(awi.n_steps, dtype=int)
         self.process = self.input_product
         self.pcost = int(np.ceil(np.mean(awi.profile.costs[:, self.process])))
         self.n_inputs = awi.inputs[self.process]
@@ -341,24 +330,16 @@ class DecentralizingAgent(DoNothingAgent):
         self.production_factor = self.n_outputs / self.n_inputs
         self.supplies_secured = np.zeros(awi.n_steps, dtype=int)
         self.sales_secured = np.zeros(awi.n_steps, dtype=int)
-        self.supplies_secured[
-            : self.exogenous_horizon
-        ] = awi.profile.exogenous_supplies[: self.exogenous_horizon, self.input_product]
-        self.sales_secured[: self.exogenous_horizon] = awi.profile.exogenous_sales[
-            : self.exogenous_horizon, self.output_product
-        ]
         self.supplies_needed = np.zeros(awi.n_steps, dtype=int)
         self.sales_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_needed = np.zeros(awi.n_steps, dtype=int)
         self.production_secured = np.zeros(awi.n_steps, dtype=int)
-        if awi.my_input_product != 0 or self.use_exogenous_contracts:
-            self.supplies_needed[:-1] = np.floor(
-                self.predicted_demand[1:] / self.production_factor
-            ).astype(int)
-        if awi.my_output_product != awi.n_products - 1 or self.use_exogenous_contracts:
-            self.sales_needed[1:] = np.floor(
-                self.predicted_supply[:-1] * self.production_factor
-            ).astype(int)
+        self.supplies_needed[:-1] = np.floor(
+            self.predicted_demand[1:] / self.production_factor
+        ).astype(int)
+        self.sales_needed[1:] = np.floor(
+            self.predicted_supply[:-1] * self.production_factor
+        ).astype(int)
         self.supplies_needed[:-1] += np.ceil(
             self.sales_secured[1:] / self.production_factor
         ).astype(int)
@@ -371,10 +352,8 @@ class DecentralizingAgent(DoNothingAgent):
         self.production_needed[:-1] = np.minimum(
             self.supplies_needed[:-1], self.sales_needed[1:]
         )
-        inprices = awi.profile.exogenous_supply_prices[:, self.input_product]
-        inprices[self.supplies_secured == 0] = 0
-        outprices = awi.profile.exogenous_sale_prices[:, self.output_product]
-        outprices[self.sales_secured == 0] = 0
+        inprices = np.zeros(self.awi.n_steps, dtype=int)
+        outprices = np.zeros(self.awi.n_steps, dtype=int)
 
         self.input_cost = np.maximum(
             inprices, self.awi.catalog_prices[self.input_product]
@@ -427,20 +406,6 @@ class DecentralizingAgent(DoNothingAgent):
         """Generates buy and sell negotiations as needed"""
         self.awi.logdebug_agent(f"Enter step:\n{pformat(self._debug_state())}")
         s = self.awi.current_step
-        if self.exogenous_horizon != self.awi.n_steps and self.use_exogenous_contracts:
-            nxt = s + self.exogenous_horizon
-            if nxt < self.awi.n_steps:
-                self.supplies_secured[nxt] += self.awi.profile.exogenous_supplies[nxt]
-                if nxt + 1 < self.awi.n_steps:
-                    self.sales_needed[nxt + 1] += self.awi.profile.exogenous_supplies[
-                        nxt
-                    ]
-
-                self.sales_secured[nxt] += self.awi.profile.exogenous_sales[nxt]
-                if nxt - 1 >= 0:
-                    self.supplies_needed[nxt - 1] += self.awi.profile.exogenous_sales[
-                        nxt
-                    ]
         if s == 0:
             last = min(self.awi.n_steps - 1, self.horizon + 2)
             for step in range(1, last):
@@ -609,7 +574,16 @@ class DecentralizingAgent(DoNothingAgent):
         self.awi.logdebug_agent(
             f"Enter Sign Contracts {pformat([self._format(_) for _ in contracts])}:\n{pformat(self._debug_state())}"
         )
-        contracts = sorted(contracts, key=lambda x: x.agreement["time"])
+        contracts = sorted(
+            contracts,
+            key=lambda x: (
+                x.agreement["time"],
+                0
+                if x.annotation["seller"] == "SYSTEM"
+                or x.annotation["buyer"] == "SYSTEM"
+                else 1,
+            ),
+        )
         signatures = [None] * len(contracts)
         taken = 0
         s = self.awi.current_step
@@ -740,24 +714,6 @@ class DecentralizingAgent(DoNothingAgent):
             secured[time_range[0]] += quantity
             generator(step=controller_index)
             return
-
-    def confirm_exogenous_sales(
-        self, quantities: np.ndarray, unit_prices: np.ndarray
-    ) -> np.ndarray:
-        p, s = self.output_product, self.awi.current_step
-        quantities[p] = max(
-            0, min(quantities[p], self.sales_needed[s] - self.sales_secured[s])
-        )
-        return quantities
-
-    def confirm_exogenous_supplies(
-        self, quantities: np.ndarray, unit_prices: np.ndarray
-    ) -> np.ndarray:
-        p, s = self.input_product, self.awi.current_step
-        quantities[p] = max(
-            0, min(quantities[p], self.supplies_needed[s] - self.supplies_secured[s])
-        )
-        return quantities
 
     def generate_buy_negotiations(self, step):
         """Creates the controller and starts negotiations to acquire all required inputs (supplies) at the given step"""

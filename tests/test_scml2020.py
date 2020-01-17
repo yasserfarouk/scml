@@ -144,7 +144,7 @@ def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balan
         no_logs=NOLOGS,
     )
     world.run()
-    assert len(world.contracts) == 0
+    assert len(world.contracts_per_step) == 0
     for a, f, p in world.afp:
         if (
             a.awi.my_input_product == 0

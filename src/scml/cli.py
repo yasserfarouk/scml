@@ -463,11 +463,10 @@ def tournament(ctx, ignore_warnings):
     help="SCML2020: Interest rate for negative balances (borrowed money)",
 )
 @click.option(
-    "--force-exogenous/--choose-exogenous-quantity",
-    default=True,
+    "--force-exogenous/--sign-exogenous",
+    default=False,
     help="SCML2020: Whether the exogenous contracts are forced to their full quantity"
-    " or agents can choose the quantity they want up to the value in the "
-    "exogenous contract.",
+    " or agents can choose to sign or not sign them.",
 )
 @click.option(
     "--balance",
@@ -481,14 +480,6 @@ def tournament(ctx, ignore_warnings):
     default=0.1,
     type=float,
     help="SCML2020: The exogenous contract revelation horizon as a fraction of the number of steps.",
-)
-@click.option(
-    "--exogenous-contracts/--exogenous-transactions",
-    default=True,
-    help="SCML2020: Whether to use exogenous contracts of exogenous transactions. In the earlier, the agent receives "
-    "exogenous contracts (not resulting from negotiation) through its sign_all_contracts and on_contracts_"
-    "finalized alogside normal negotiated contracts. In the later case, there are dedicated exogenous supplies "
-    "and sales in the agent profile.",
 )
 @click.option(
     "--processes",
@@ -557,7 +548,6 @@ def create(
     factories_min,
     factories_max,
     horizon,
-    exogenous_contracts,
 ):
     if balance < 0:
         balance = None
@@ -593,7 +583,6 @@ def create(
                 "bankruptcy_limit": bankruptcy_limit,
                 "breach_penalty": penalty,
                 "production_penalty": penalty,
-                "exogenous_penalty": penalty,
                 "financial_report_period": reports,
                 "interest_rate": interest,
                 "exogenous_force_max": force_exogenous,
@@ -820,7 +809,6 @@ def create(
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
             horizon=horizon,
-            use_exogenous_contracts=exogenous_contracts,
             **kwargs,
         )
     elif ttype.lower() in ("anac2019collusion", "anac2019"):
@@ -888,7 +876,6 @@ def create(
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
             horizon=horizon,
-            use_exogenous_contracts=exogenous_contracts,
             **kwargs,
         )
     elif ttype.lower() == "anac2019sabotage":
@@ -1754,11 +1741,10 @@ def run2019(
     help="Interest rate for negative balances (borrowed money)",
 )
 @click.option(
-    "--force-exogenous/--choose-exogenous-quantity",
-    default=True,
+    "--force-exogenous/--sign-exogenous",
+    default=False,
     help="Whether the exogenous contracts are forced to their full quantity"
-    " or agents can choose the quantity they want up to the value in the "
-    "exogenous contract.",
+    " or agents can choose to sign or not sign some of them.",
 )
 @click.option(
     "--competitors",
@@ -1904,7 +1890,6 @@ def run2020(
             "bankruptcy_limit": bankruptcy_limit,
             "breach_penalty": penalty,
             "production_penalty": penalty,
-            "exogenous_penalty": penalty,
             "financial_report_period": reports,
             "interest_rate": interest,
             "exogenous_force_max": force_exogenous,

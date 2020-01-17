@@ -256,6 +256,10 @@ class SCMLWorld(TimeInAgreementMixin, World):
             ignore_contract_execution_exceptions=ignore_contract_execution_exceptions,
             batch_signing=False,
             force_signing=False,
+            sign_first=True,
+            sign_last=False,
+            sign_after_execution=False,
+            sign_before_execution=False,
             **kwargs,
         )
         TimeInAgreementMixin.init(self, time_field="time")
@@ -1929,7 +1933,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
                 to_be_signed_at=self.current_step,
                 signed_at=self.current_step,
                 mechanism_state=None,
-                signatures=contract.partners,
+                signatures=dict(zip(contract.partners, contrat.partners)),
             )
             self.on_contract_concluded(new_contract, to_be_signed_at=self.current_step)
             self.on_contract_signed(contract=new_contract)
@@ -2244,7 +2248,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         available = factory.balance - keep_for_beneficiary
         owed = 0.0
         nulled_contracts = []
-        for time, contracts in self.contracts.items():
+        for time, contracts in self.contracts_per_step.items():
             if time < self.current_step:
                 continue
             for contract in contracts:
@@ -2488,7 +2492,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             "concluded_at": contract.concluded_at,
             "penalty": contract.agreement.get("penalty", np.nan),
             "signing_delay": contract.agreement.get("signing_delay", 0),
-            "signatures": "|".join(str(_) for _ in contract.signatures),
+            "signatures": "|".join(str(_) for _ in contract.signatures.values()),
             "issues": contract.issues if not self.compact else None,
             "seller": contract.annotation["seller"],
             "buyer": contract.annotation["buyer"],

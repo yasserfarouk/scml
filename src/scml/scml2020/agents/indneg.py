@@ -72,6 +72,8 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         )
         self.costs: np.ndarray = None
         self.horizon = horizon
+        self.expected_sales = None
+        self.expected_supplies = None
 
     def init(self):
         """Initializes the agent by finding the average production cost."""
@@ -81,20 +83,12 @@ class IndependentNegotiationsAgent(DoNothingAgent):
 
         self.expected_sales = np.zeros(self.awi.n_steps)
         self.expected_supplies = np.zeros(self.awi.n_steps)
-        n = len(self.awi.profile.exogenous_sales)
-        self.expected_sales[:n] = self.awi.profile.exogenous_sales[:, self.awi.my_output_product]
-        self.expected_supplies[:n] = self.awi.profile.exogenous_supplies[:, self.awi.my_input_product]
 
     def step(self):
         """Every `horizon` steps, create new negotiations based on external supplies and sales."""
 
         # avoid division by zero error in numpy
         np.seterr(divide="ignore")
-
-        # update expected sales and supplies
-        n = len(self.awi.profile.exogenous_sales)
-        self.expected_sales[n-1] += self.awi.profile.exogenous_sales[n-1, self.awi.my_output_product]
-        self.expected_supplies[n-1] += self.awi.profile.exogenous_supplies[n-1, self.awi.my_input_product]
 
         # only run this process once every `horizon` steps
         if self.awi.current_step % self.horizon != 0:
@@ -161,16 +155,6 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         mechanism: AgentMechanismInterface,
     ) -> Optional[Negotiator]:
         return self.negotiator(annotation["seller"] == self.id, issues=issues)
-
-    def confirm_exogenous_sales(
-        self, quantities: np.ndarray, unit_prices: np.ndarray
-    ) -> np.ndarray:
-        return quantities
-
-    def confirm_exogenous_supplies(
-        self, quantities: np.ndarray, unit_prices: np.ndarray
-    ) -> np.ndarray:
-        return quantities
 
     def start_negotiations(
         self, product: int, quantity: int, unit_price: int, time: int, to_buy: bool
