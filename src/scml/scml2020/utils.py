@@ -235,10 +235,7 @@ def anac2020_assigner(
         list(params) if params is not None else [dict() for _ in range(n_competitors)]
     )
 
-    try:
-        n_permutations = n_competitors
-    except ArithmeticError:
-        n_permutations = None
+    n_permutations = n_competitors
 
     agent_types = config["agent_types"]
     is_default = [_ is not None for _ in agent_types]
@@ -251,7 +248,6 @@ def anac2020_assigner(
     )
 
     configs = []
-
     def _copy_config(perm_, c, indx):
         new_config = copy.deepcopy(c)
         new_config["world_params"]["name"] += f".{indx:05d}"
@@ -263,13 +259,11 @@ def anac2020_assigner(
         return [new_config]
 
     if n_permutations is not None and max_n_worlds is None:
-        k = 0
         permutation = list(zip(competitors, params))
         assert len(permutation) == len(assignable_factories)
         shuffle(permutation)
         perm = permutation
-        for __ in range(n_permutations):
-            k += 1
+        for k in range(n_permutations):
             perm = copy.deepcopy(perm)
             perm = perm[-1:] + perm[:-1]
             configs.append(_copy_config(perm, config, k))
@@ -394,7 +388,7 @@ def anac2020_tournament(
     competitors: Sequence[Union[str, Type[SCML2020Agent]]],
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: int = 1000,
+    max_worlds_per_config: Optional[int] = None,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     min_factories_per_level: int = 2,
@@ -482,7 +476,7 @@ def anac2020_std(
     competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = 1000,
+    max_worlds_per_config: Optional[int] = None,
     n_runs_per_world: int = 5,
     min_factories_per_level: int = 2,
     tournament_path: str = "./logs/tournaments",

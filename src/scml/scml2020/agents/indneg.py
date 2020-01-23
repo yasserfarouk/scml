@@ -17,13 +17,7 @@ from abc import abstractmethod
 from typing import List, Optional, Dict, Any, Union
 
 import numpy as np
-from negmas import (
-    Contract,
-    AgentMechanismInterface,
-    Issue,
-    Negotiator,
-    SAONegotiator,
-)
+from negmas import Contract, AgentMechanismInterface, Issue, Negotiator, SAONegotiator
 from negmas import AspirationNegotiator
 from negmas.helpers import get_class, instantiate
 
@@ -32,6 +26,7 @@ from .do_nothing import DoNothingAgent
 __all__ = ["IndependentNegotiationsAgent"]
 
 from ..components.production import DemandDrivenProductionStrategy
+from ..world import is_system_agent
 
 
 class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgent):
@@ -74,8 +69,8 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
         )
         self.costs: np.ndarray = None
         self.horizon = horizon
-        self.expected_sales = None
-        self.expected_supplies = None
+        self.expected_outputs = None
+        self.expected_inputs = None
 
     def init(self):
         """Initializes the agent by finding the average production cost."""
@@ -83,8 +78,8 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
             np.sum(self.awi.profile.costs, axis=0) / self.awi.profile.n_lines
         ).astype(int)
 
-        self.expected_sales = np.zeros(self.awi.n_steps)
-        self.expected_supplies = np.zeros(self.awi.n_steps)
+        self.expected_outputs = (self.awi.n_lines // 4) * np.ones(self.awi.n_steps)
+        self.expected_inputs = (self.awi.n_lines // 4) * np.ones(self.awi.n_steps)
 
     def step(self):
         """Every `horizon` steps, create new negotiations based on external supplies and sales."""
@@ -98,19 +93,18 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
         earliest = self.awi.current_step
         final = min(earliest + self.horizon - 1, self.awi.n_steps)
 
-        # if I have external inputs, negotiate to sell them (after production)
-        supplies = self.expected_supplies[earliest:final]
-        quantity = np.sum(supplies)
+        # if I have expected inputs, negotiate to sell them (after production)
+        expected_inputs = self.expected_inputs[earliest:final]
+        quantity = np.sum(expected_inputs)
 
-        # find the supply prices
         prices = self.awi.catalog_prices
         i, o = self.awi.my_input_product, self.awi.my_output_product
 
         # for every step and product, start negotiations to sell the output of this external supply
-        for step in np.nonzero(supplies)[0]:
+        for step in np.nonzero(expected_inputs)[0]:
             price = prices[i]
             self.start_negotiations(
-                product= i + 1,
+                product=i + 1,
                 quantity=max(1, quantity),
                 unit_price=self.costs[i] + price,
                 time=step + final + 1,
@@ -118,9 +112,9 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
             )
 
         # if I have external outputs, negotiate to buy corresponding inputs
-        sales = self.expected_sales[earliest:final]
-        quantity = np.sum(sales)
-        for step in np.nonzero(sales)[0]:
+        expected_outputs = self.expected_outputs[earliest:final]
+        quantity = np.sum(expected_outputs)
+        for step in np.nonzero(expected_outputs)[0]:
             process = o - 1
             cost = self.costs[process]
             self.start_negotiations(
@@ -212,7 +206,18 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         results = [None] * len(contracts)
-        for i, contract in enumerate( contracts):
+        # sort contracts by time and then put system contracts first within each time-step
+        contracts = sorted(
+            contracts,
+            key=lambda x: (
+                x.agreement["time"],
+                0
+                if is_system_agent(x.annotation["seller"])
+                or is_system_agent(x.annotation["buyer"])
+                else 1,
+            ),
+        )
+        for i, contract in enumerate(contracts):
             step = contract.agreement["time"]
             q = contract.agreement["quantity"]
             if step > self.awi.n_steps - 1 or step < self.awi.current_step:
@@ -225,9 +230,9 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
                     continue
             results[i] = self.id
             if contract.annotation["seller"] == self.id:
-                self.expected_sales[step] += q
+                self.expected_outputs[step] += q
             else:
-                self.expected_supplies[step] += q
+                self.expected_inputs[step] += q
         return results
 
     def on_contracts_finalized(
@@ -236,7 +241,9 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
         cancelled: List[Contract],
         rejectors: List[List[str]],
     ) -> None:
+        # call the production strategy
         super().on_contracts_finalized(signed, cancelled, rejectors)
+
         for contract in signed:
             is_seller = contract.annotation["seller"] == self.id
             step = contract.agreement["time"]
@@ -246,6 +253,10 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
                 continue
             if is_seller:
                 # if I am a seller, I will schedule production then buy my needs to produce
+                if not self.can_be_produced(contract.id):
+                    del self.earliest_schedule[contract.id]
+                    continue
+                earliest = self.earliest_schedule.pop(contract.id)
                 output_product = contract.annotation["product"]
                 input_product = output_product - 1
                 if input_product < 0:
@@ -260,7 +271,7 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
                     ),
                     unit_price=(n_outputs * contract.agreement["unit_price"] - cost)
                     // n_inputs,
-                    time=step - 1,
+                    time=earliest - 1,
                     to_buy=True,
                 )
                 continue
@@ -274,7 +285,9 @@ class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgen
                 n_outputs = self.awi.outputs[input_product]
                 self.start_negotiations(
                     product=output_product,
-                    quantity=max(1, contract.agreement["quantity"] * n_inputs / n_outputs),
+                    quantity=max(
+                        1, contract.agreement["quantity"] * n_inputs / n_outputs
+                    ),
                     unit_price=(cost + contract.agreement["unit_price"] * n_inputs)
                     // n_outputs,
                     time=step - 1,

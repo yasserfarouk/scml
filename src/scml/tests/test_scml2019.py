@@ -303,7 +303,7 @@ def test_can_run_a_random_tiny_scml_world_with_no_factory():
         neg_n_steps=20,
         n_miners=2,
         n_consumers=2,
-        ignore_agent_exception=False,
+        ignore_agent_exceptions=False,
         ignore_contract_execution_exceptions=False,
     )
     world.run()

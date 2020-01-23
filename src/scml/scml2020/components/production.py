@@ -7,7 +7,7 @@ __all__ = [
 
 import numpy as np
 from negmas import Contract
-from typing import List
+from typing import List, Dict
 
 from scml.scml2020.common import NO_COMMAND
 
@@ -26,6 +26,11 @@ class SupplyDrivenProductionStrategy:
 
 class DemandDrivenProductionStrategy:
     """A production strategy that produces ONLY when a contract is secured"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.earliest_schedule: Dict[str, int] = dict()
+        """Stores the first time step at which the production for each sell contract is scheduled"""
 
     def on_contracts_finalized(
         self,
@@ -52,3 +57,7 @@ class DemandDrivenProductionStrategy:
                     step=(earliest_production, step - 1),
                     line=-1,
                 )
+                self.earliest_schedule[contract.id] = min(steps) if len(steps) > 0 else -1
+
+    def can_be_produced(self, contract_id: str):
+        return self.earliest_schedule.get(contract_id, -1) >= 0

@@ -2966,12 +2966,12 @@ class SCML2020World(TimeInAgreementMixin, World):
                 )
                 paid = seller_factory.pay(missing_product * effective_unit)
                 paid_for = paid // effective_unit
-                missing_product -= paid_for
-                seller_factory.store(
+                stored = seller_factory.store(
                     product, paid_for, False, 0.0, no_bankruptcy=True, no_borrowing=True
                 )
-                self._spot_quantity[seller_indx, s] += paid_for
-                assert seller_factory.current_inventory[product] >= paid_for
+                missing_product -= stored
+                self._spot_quantity[seller_indx, s] += stored
+                assert seller_factory.current_inventory[product] >= stored
 
         # if there is a money breach (the buyer does not have enough money), register it
         if missing_money <= 0:
