@@ -581,7 +581,7 @@ def create(
                 "buy_missing_products": buy_missing,
                 "borrow_on_breach": borrow,
                 "bankruptcy_limit": bankruptcy_limit,
-                "breach_penalty": penalty,
+                "spot_market_global_loss": penalty,
                 "production_penalty": penalty,
                 "financial_report_period": reports,
                 "interest_rate": interest,
@@ -975,7 +975,7 @@ def create(
 )
 @click.option(
     "--metric",
-    default="mean",
+    default="median",
     type=str,
     help="The statistical metric used for choosing the winners. Possibilities are mean, median, std, var, sum",
 )
@@ -1351,7 +1351,7 @@ def run2019(
             )
             exit(1)
 
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_steps=steps,
         negotiation_speed=neg_speedup,
         n_intermediate_levels=levels,
@@ -1888,7 +1888,7 @@ def run2020(
             "buy_missing_products": buy_missing,
             "borrow_on_breach": borrow,
             "bankruptcy_limit": bankruptcy_limit,
-            "breach_penalty": penalty,
+            "spot_market_global_loss": penalty,
             "production_penalty": penalty,
             "financial_report_period": reports,
             "interest_rate": interest,
@@ -1985,6 +1985,7 @@ def run2020(
                 "product_name",
                 "n_neg_steps",
                 "signed_at",
+                "executed_at",
             ],
         ]
         data.columns = [
@@ -1996,11 +1997,12 @@ def run2020(
             "product",
             "steps",
             "signed",
+            "executed",
         ]
         print_and_log(tabulate(data, headers="keys", tablefmt="psql"))
 
         d2 = (
-            data.loc[(~(data["signed"].isnull())) & (data["signed"] > -1), :]
+            data.loc[(~(data["executed"].isnull())) & (data["executed"] > -1), :]
             .groupby(["product"])
             .apply(
                 lambda x: pd.DataFrame(
@@ -2017,10 +2019,13 @@ def run2020(
         d2["Catalog"] = world.catalog_prices[
             d2["product"].str.slice(start=-1).astype(int).values
         ]
+        d2["Trading"] = world.trading_prices[
+            d2["product"].str.slice(start=-1).astype(int).values
+        ]
         d2["Product"] = d2["product"]
-        d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog"]]
+        d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
-        d2.columns = ["Product", "Quantity", "Avg. Price", "Catalog"]
+        d2.columns = ["Product", "Quantity", "Avg. Price", "Catalog", "Trading"]
         print_and_log(tabulate(d2, headers="keys", tablefmt="psql"))
 
         n_executed = sum(world.stats["n_contracts_executed"])

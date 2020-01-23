@@ -12,7 +12,7 @@ from negmas.helpers import unique_name, get_full_type_name
 from negmas.tournaments import WorldRunResults, TournamentResults, tournament
 
 from scml.scml2020.agents import RandomAgent
-from scml.scml2020.world import SCML2020World
+from scml.scml2020.world import SCML2020World, is_system_agent
 
 if True:
     from typing import (
@@ -192,7 +192,7 @@ def anac2020_config_generator(
         neg_n_steps=20,
         neg_step_time_limit=10,
         negotiation_speed=21,
-        breach_penalty=0.2,
+        spot_market_global_loss=0.2,
         interest_rate=0.08,
         bankruptcy_limit=1.0,
         initial_balance=None,
@@ -353,11 +353,11 @@ def balance_calculator2020(
     )
     initial_balances = []
     is_default = world.info["is_default"]
-    factories = [_ for _ in world.factories if _.agent_id != "SYSTEM"]
+    factories = [_ for _ in world.factories if not is_system_agent(_.agent_id)]
     agents = [world.agents[f.agent_id] for f in factories]
-    agent_types = world.agent_unique_types
+    agent_types = [_ for _ in world.agent_unique_types if not _.startswith("system")]
     if len(set(agent_types)) == len(set(world.agent_types)):
-        agent_types = world.agent_types
+        agent_types = [_ for _ in world.agent_types if not _ == "system"]
     for i, factory in enumerate(factories):
         if is_default[i] and ignore_default:
             continue
@@ -376,10 +376,9 @@ def balance_calculator2020(
             continue
         final_balance = factory.current_balance
         if inventory_catalog_price_weight != 0.0:
-            final_balance += inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices
+            final_balance += np.sum(inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices)
         if inventory_trading_average_weight != 0.0:
-            trading_prices = world.trading_prices
-            final_balance += inventory_trading_average_weight * factory.current_inventory * trading_prices
+            final_balance += np.sum(inventory_trading_average_weight * factory.current_inventory * world.trading_prices)
 
         if normalize:
             result.scores.append(

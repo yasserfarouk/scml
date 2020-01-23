@@ -1,3 +1,4 @@
+import networkx as nx
 import numpy as np
 from negmas import save_stats
 from negmas.helpers import unique_name
@@ -16,6 +17,8 @@ from scml.scml2020 import (
 )
 from scml.scml2020.components import FactorySimulator
 import random
+
+from scml.scml2020.world import is_system_agent
 
 random.seed(0)
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
@@ -59,6 +62,8 @@ def generate_world(
         assert len(world.suppliers[p + 1]) == n_agents_per_process
         assert len(world.consumers[p]) == n_agents_per_process
     for a in world.agents.keys():
+        if is_system_agent(a):
+            continue
         assert len(world.agent_inputs[a]) == 1
         assert len(world.agent_outputs[a]) == 1
         assert len(world.agent_processes[a]) == 1
@@ -184,10 +189,12 @@ def test_something_happens_with_random_agents(buy_missing, n_processes):
     assert len(world.signed_contracts) + len(world.cancelled_contracts) != 0
 
 
-@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
-def test_agents_go_bankrupt(buy_missing, n_processes):
+@given(n_processes=st.integers(2, 4))
+@settings(deadline=300_000, max_examples=3)
+def test_agents_go_bankrupt(n_processes):
+    buy_missing = True
     world = generate_world(
-        [DoNothingAgent],
+        [RandomAgent],
         buy_missing_products=buy_missing,
         n_processes=n_processes,
         name=unique_name(
@@ -198,13 +205,15 @@ def test_agents_go_bankrupt(buy_missing, n_processes):
         ),
         initial_balance=0,
         bankruptcy_limit=0,
-        n_steps=100,
+        n_steps=10,
         compact=COMPACT,
         no_logs=NOLOGS,
     )
     world.run()
-    assert len(world.signed_contracts) + len(world.cancelled_contracts) == 0
+#    assert len(world.signed_contracts) + len(world.cancelled_contracts) == 0
     for a, f, p in world.afp:
+        if is_system_agent(a.id):
+            continue
         if (
             a.awi.my_input_product == 0
             or a.awi.my_input_product == a.awi.n_processes - 1
@@ -251,3 +260,29 @@ def test_a_tiny_world():
     )
     world.run()
     assert True
+
+
+def test_graph():
+    import matplotlib.pyplot as plt
+    world = generate_world(
+        [DecentralizingAgent],
+        n_processes=2,
+        n_steps=10,
+        n_agents_per_process=2,
+        n_lines=5,
+        initial_balance=10_000,
+        buy_missing_products=True,
+    )
+    graph = world.draw(together=True)
+    plt.show()
+    world.step()
+    graph = world.draw(accomulate=False, together=True)
+    plt.show()
+    world.step()
+    graph = world.draw(accomulate=False, together=False)
+    plt.show()
+    world.run()
+    graph = world.draw(accomulate=True, together=False)
+    plt.show()
+    graph = world.draw(accomulate=True, together=True)
+    plt.show()

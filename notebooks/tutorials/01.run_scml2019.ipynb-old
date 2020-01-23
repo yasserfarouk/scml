@@ -74,7 +74,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "There are several ways to create an SCML world. One of the simplest is to use one of the class methods of the `SCMLWorld` class. \n",
+    "There are several ways to create an SCML world. One of the simplest is to use one of the class methods of the `SCML2019World` class. \n",
     "\n",
     "The resulting world will have 100 production steps so simulating it will take several minutes. **To speed up the simulation, use a small number of n_steps (e.g. 10)** \n",
     "\n",
@@ -87,7 +87,7 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "world = SCMLWorld.chain_world(agent_names_reveal_type=True, n_steps=100, n_intermediate_levels=1, compact=True, log_file_name='')"
+    "world = SCML2019World.chain_world(agent_names_reveal_type=True, n_steps=100, n_intermediate_levels=1, compact=True, log_file_name='')"
    ]
   },
   {

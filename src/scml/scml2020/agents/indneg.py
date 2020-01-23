@@ -31,8 +31,10 @@ from .do_nothing import DoNothingAgent
 
 __all__ = ["IndependentNegotiationsAgent"]
 
+from ..components.production import DemandDrivenProductionStrategy
 
-class IndependentNegotiationsAgent(DoNothingAgent):
+
+class IndependentNegotiationsAgent(DemandDrivenProductionStrategy, DoNothingAgent):
     """
     Implements the base class for agents that negotiate independently with different partners.
 
@@ -106,14 +108,11 @@ class IndependentNegotiationsAgent(DoNothingAgent):
 
         # for every step and product, start negotiations to sell the output of this external supply
         for step in np.nonzero(supplies)[0]:
-            process = i
             price = prices[i]
-            output_product = process + 1
-            cost = self.costs[process]
             self.start_negotiations(
-                product=output_product,
+                product= i + 1,
                 quantity=max(1, quantity),
-                unit_price=cost + price,
+                unit_price=self.costs[i] + price,
                 time=step + final + 1,
                 to_buy=False,
             )
@@ -122,14 +121,12 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         sales = self.expected_sales[earliest:final]
         quantity = np.sum(sales)
         for step in np.nonzero(sales)[0]:
-            output_product = o
-            process = output_product - 1
-            price = prices[o]
+            process = o - 1
             cost = self.costs[process]
             self.start_negotiations(
                 product=process,
                 quantity=max(1, quantity),
-                unit_price=price - cost,
+                unit_price=prices[o] - cost,
                 time=step + earliest - 1,
                 to_buy=True,
             )
@@ -239,6 +236,7 @@ class IndependentNegotiationsAgent(DoNothingAgent):
         cancelled: List[Contract],
         rejectors: List[List[str]],
     ) -> None:
+        super().on_contracts_finalized(signed, cancelled, rejectors)
         for contract in signed:
             is_seller = contract.annotation["seller"] == self.id
             step = contract.agreement["time"]
@@ -250,29 +248,21 @@ class IndependentNegotiationsAgent(DoNothingAgent):
                 # if I am a seller, I will schedule production then buy my needs to produce
                 output_product = contract.annotation["product"]
                 input_product = output_product - 1
-                if input_product >= 0:
-                    steps, _ = self.awi.schedule_production(
-                        process=input_product,
-                        repeats=contract.agreement["quantity"],
-                        step=(earliest_production, step - 1),
-                        line=-1,
-                    )
-                    if len(steps) < 1:
-                        continue
-                    scheduled_at = steps.min()
-                    n_inputs = self.awi.inputs[input_product]
-                    cost = self.costs[input_product]
-                    n_outputs = self.awi.outputs[input_product]
-                    self.start_negotiations(
-                        product=input_product,
-                        quantity=max(
-                            1, contract.agreement["quantity"] * n_inputs // n_outputs
-                        ),
-                        unit_price=(n_outputs * contract.agreement["unit_price"] - cost)
-                        // n_inputs,
-                        time=scheduled_at - 1,
-                        to_buy=True,
-                    )
+                if input_product < 0:
+                    continue
+                n_inputs = self.awi.inputs[input_product]
+                cost = self.costs[input_product]
+                n_outputs = self.awi.outputs[input_product]
+                self.start_negotiations(
+                    product=input_product,
+                    quantity=max(
+                        1, contract.agreement["quantity"] * n_inputs // n_outputs
+                    ),
+                    unit_price=(n_outputs * contract.agreement["unit_price"] - cost)
+                    // n_inputs,
+                    time=step - 1,
+                    to_buy=True,
+                )
                 continue
 
             # I am a buyer. I need not produce anything but I need to negotiate to sell the production of what I bought

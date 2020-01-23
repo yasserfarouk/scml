@@ -76,7 +76,7 @@ class FactorySimulator:
         profile: FactoryProfile,
         initial_balance: int,
         bankruptcy_limit: int,
-        breach_penalty: float,
+        spot_market_global_loss: float,
         catalog_prices: np.ndarray,
         n_steps: int,
         initial_inventory: np.ndarray = None,
@@ -91,7 +91,7 @@ class FactorySimulator:
         self._reserved_inventory = np.zeros(shape=(n_products, n_steps))
         self._bankrupt_at = NEVER
         self.bankruptcy_limit = bankruptcy_limit
-        self.breach_penalty = breach_penalty
+        self.spot_market_global_loss = spot_market_global_loss
         n_steps, n_products, n_processes = (
             self._n_steps,
             self._n_products,

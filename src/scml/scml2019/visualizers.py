@@ -4,7 +4,7 @@ from negmas import NamedObject
 from negmas.visualizers import WorldVisualizer, AgentVisualizer, Widget
 
 
-class SCMLAgentVisualizer(AgentVisualizer):
+class SCML2019AgentVisualizer(AgentVisualizer):
     @classmethod
     def widget_kind(cls, widget_name: str) -> str:
         pass
@@ -25,7 +25,7 @@ class SCMLAgentVisualizer(AgentVisualizer):
         return "inventory_wallet"
 
 
-class FactoryManagerVisualizer(SCMLAgentVisualizer):
+class FactoryManagerVisualizer(SCML2019AgentVisualizer):
     @classmethod
     def widget_kind(cls, widget_name: str) -> str:
         pass
@@ -46,7 +46,7 @@ class FactoryManagerVisualizer(SCMLAgentVisualizer):
         return "factory_schedule"
 
 
-class SCMLWorldVisualizer(WorldVisualizer):
+class SCML2019WorldVisualizer(WorldVisualizer):
     @classmethod
     def widget_kind(cls, widget_name: str) -> str:
         pass
@@ -75,9 +75,9 @@ class SCMLWorldVisualizer(WorldVisualizer):
         return ["factory_managers", "miners", "consumers"] + super().children_categories()
 
 
-class BankVisualizer(SCMLAgentVisualizer):
+class BankVisualizer(SCML2019AgentVisualizer):
     pass
 
 
-class InsuranceCompanyVisualizer(SCMLAgentVisualizer):
+class InsuranceCompanyVisualizer(SCML2019AgentVisualizer):
     pass

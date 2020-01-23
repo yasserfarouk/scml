@@ -34,8 +34,8 @@ class DoNothingAgent(SCML2020Agent):
     def init(self):
         pass
 
-    def on_contract_nullified(
-        self, contract: Contract, compensation_money: int, new_quantity: int
+    def on_agent_bankrupt(
+        self, agent: str, contracts: List[Contract], quantities: int, compensation_money: int,
     ) -> None:
         pass
 

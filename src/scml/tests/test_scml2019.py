@@ -23,7 +23,7 @@ from negmas.situated import Contract
 import hypothesis.strategies as st
 
 # def test_can_create_a_random_scml_world():
-#     world = SCMLWorld.random()
+#     world = SCML2019World.random()
 #     assert len(world.products) > 0
 #     assert len(world.processes) > 0
 #     assert len(world.stats['market_size']) == 0
@@ -34,7 +34,7 @@ import hypothesis.strategies as st
 
 
 # def test_can_run_a_random_small_scml_world():
-#     world = SCMLWorld.random_small(log_file_name='', n_steps=200)
+#     world = SCML2019World.random_small(log_file_name='', n_steps=200)
 #     world.run()
 #     print('')
 #     for key in sorted(world.stats.keys()):
@@ -48,7 +48,7 @@ import hypothesis.strategies as st
 #
 #
 # def test_can_run_a_random_small_scml_world_with_delayed_signing():
-#     world = SCMLWorld.random_small(log_file_name='', n_steps=20, default_signing_delay=1)
+#     world = SCML2019World.random_small(log_file_name='', n_steps=20, default_signing_delay=1)
 #     world.run()
 #     print('')
 #     for key in sorted(world.stats.keys()):
@@ -62,7 +62,7 @@ import hypothesis.strategies as st
 #
 #
 # def test_can_run_a_random_small_scml_world_with_money_resolution():
-#     world = SCMLWorld.random_small(log_file_name='', n_steps=20, money_resolution=1)
+#     world = SCML2019World.random_small(log_file_name='', n_steps=20, money_resolution=1)
 #     world.run()
 #     print('')
 #     for key in sorted(world.stats.keys()):
@@ -95,7 +95,7 @@ def test_world_auto_checkpoint(tmp_path, single_checkpoint, checkpoint_every, ex
     filename = "scml"
     n_steps = 5
 
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         log_file_name="",
         n_steps=n_steps,
         n_factories_per_level=1,
@@ -130,7 +130,7 @@ def test_world_auto_checkpoint(tmp_path, single_checkpoint, checkpoint_every, ex
 
 
 def test_world_checkpoint(tmp_path):
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         log_file_name="",
         n_steps=5,
         n_factories_per_level=1,
@@ -147,14 +147,14 @@ def test_world_checkpoint(tmp_path):
 
     file_name = world.checkpoint(tmp_path)
 
-    info = SCMLWorld.checkpoint_info(file_name)
+    info = SCML2019World.checkpoint_info(file_name)
     assert isinstance(info["time"], str)
     assert info["step"] == 2
-    assert info["type"].endswith("SCMLWorld")
+    assert info["type"].endswith("SCML2019World")
     assert info["id"] == world.id
     assert info["name"] == world.name
 
-    w = SCMLWorld.from_checkpoint(file_name)
+    w = SCML2019World.from_checkpoint(file_name)
 
     assert world.current_step == w.current_step
     assert len(world.agents) == len(w.agents)
@@ -166,7 +166,7 @@ def test_world_checkpoint(tmp_path):
 
     world = w
     file_name = world.checkpoint(tmp_path)
-    w = SCMLWorld.from_checkpoint(file_name)
+    w = SCML2019World.from_checkpoint(file_name)
 
     assert world.current_step == w.current_step
     assert len(world.agents) == len(w.agents)
@@ -180,7 +180,7 @@ def test_world_checkpoint(tmp_path):
 
     world = w
     file_name = world.checkpoint(tmp_path)
-    w = SCMLWorld.from_checkpoint(file_name)
+    w = SCML2019World.from_checkpoint(file_name)
 
     assert world.current_step == w.current_step
     assert len(world.agents) == len(w.agents)
@@ -194,7 +194,7 @@ def test_world_checkpoint(tmp_path):
 
 
 def test_can_run_a_random_tiny_scml_world():
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         log_file_name="",
         n_steps=5,
         n_factories_per_level=1,
@@ -220,12 +220,12 @@ def test_can_run_a_random_tiny_scml_world():
 
 
 def test_can_run_a_random_tiny_scml_world_no_immediate():
-    world = SCMLWorld.chain_world(log_file_name="", n_steps=5)
+    world = SCML2019World.chain_world(log_file_name="", n_steps=5)
     world.run()
 
 
 def test_can_run_a_random_tiny_scml_world_with_insurance():
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         log_file_name="",
         n_steps=5
         # , factory_kwargs={'max_insurance_premium': 1e6}
@@ -246,7 +246,7 @@ def test_can_run_a_random_tiny_scml_world_with_insurance():
 # def test_can_run_a_random_tiny_scml_world_with_n_factories(horizon, immediate, signing_delay
 #                                                            , n_factory_levels, n_factories_per_level):
 #     n_steps = 500
-#     world = SCMLWorld.tiny(n_intermediate_levels=n_factory_levels - 1, log_file_name='', n_steps=n_steps
+#     world = SCML2019World.tiny(n_intermediate_levels=n_factory_levels - 1, log_file_name='', n_steps=n_steps
 #                            , n_factories_per_level=n_factories_per_level
 #                            , default_signing_delay=signing_delay
 #                            , consumer_kwargs={'immediate_cfp_update': immediate, 'consumption_horizon': horizon
@@ -274,17 +274,20 @@ def test_can_run_a_random_tiny_scml_world_with_linear_production():
     n_factory_levels = 0
     n_factories_per_level = 2
     n_steps = 10
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=n_factory_levels - 1,
         log_file_name="",
         n_steps=n_steps,
         n_factories_per_level=n_factories_per_level,
         default_signing_delay=signing_delay,
+        negotiation_speed=21,
+        neg_n_steps=20,
         consumer_kwargs={
             "consumption_horizon": horizon,
             "negotiator_type": "negmas.sao.NiceNegotiator",
         },
         miner_kwargs={"negotiator_type": "negmas.sao.NiceNegotiator"},
+        ignore_agent_exceptions=False,
     )
     world.run()
     assert sum(world.stats["n_contracts_concluded"]) > 0
@@ -292,13 +295,16 @@ def test_can_run_a_random_tiny_scml_world_with_linear_production():
 
 def test_can_run_a_random_tiny_scml_world_with_no_factory():
     n_steps = 10
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=-1,
         log_file_name="",
         n_steps=n_steps,
-        negotiation_speed=None,
+        negotiation_speed=21,
+        neg_n_steps=20,
         n_miners=2,
         n_consumers=2,
+        ignore_agent_exception=False,
+        ignore_contract_execution_exceptions=False,
     )
     world.run()
     # print('')
@@ -324,7 +330,7 @@ def test_can_run_a_random_tiny_scml_world_with_no_factory():
 def test_can_run_a_random_tiny_scml_world_with_no_factory_finite_horizon():
     n_steps = 5
     horizon = n_steps // 2
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=-1,
         log_file_name="",
         n_steps=n_steps,
@@ -349,7 +355,7 @@ def test_can_run_a_random_tiny_scml_world_with_no_factory_finite_horizon():
 
 def test_can_run_a_random_tiny_scml_world_with_no_factory_with_delay():
     n_steps = 10
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=-1,
         log_file_name="",
         n_steps=n_steps,
@@ -378,7 +384,7 @@ def test_can_run_a_random_tiny_scml_world_with_no_factory_with_delay():
 def test_can_run_a_random_tiny_scml_world_with_no_factory_with_delay_no_immediate_neg():
     n_steps = 10
     horizon = 4
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=-1,
         log_file_name="",
         n_steps=n_steps,
@@ -406,7 +412,7 @@ def test_scml_picklable(tmp_path):
 
     n_steps = 10
     horizon = 4
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=-1,
         log_file_name="",
         n_steps=n_steps,
@@ -449,7 +455,7 @@ def test_can_run(fm):
     n_factory_levels = 1
     n_factories_per_level = 2
     n_steps = 10
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         n_intermediate_levels=n_factory_levels - 1,
         log_file_name="",
         n_steps=n_steps,

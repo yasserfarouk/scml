@@ -4,7 +4,7 @@ from pprint import pprint
 
 import pytest
 
-from scml.scml2019 import SCMLWorld
+from scml.scml2019 import SCML2019World
 from scml.scml2019.factory_managers import *
 from negmas.helpers import get_class
 from negmas.java import jnegmas_connection, jnegmas_bridge_is_running
@@ -52,7 +52,7 @@ def test_java_factory_manager(java_class):
     with jnegmas_connection(shutdown=SHUTDOWN_AFTER_EVERY_TEST):
         log_file = os.path.expanduser(f'test{java_class.split(".")[-1]}.txt')
         print(log_file)
-        world = SCMLWorld.chain_world(
+        world = SCML2019World.chain_world(
             manager_types=(JFM, GreedyFactoryManager),
             n_steps=5,
             n_factories_per_level=3,
@@ -80,7 +80,7 @@ def test_java_factory_manager(java_class):
 #             f'~/negmas/logs/debug/test{java_class.split(".")[-1]}.txt'
 #         )
 #         print(log_file)
-#         world = SCMLWorld.chain_world(
+#         world = SCML2019World.chain_world(
 #             manager_types=(JFM, GreedyFactoryManager),
 #             n_steps=5,
 #             n_factories_per_level=3,

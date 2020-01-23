@@ -49,7 +49,7 @@ CONSUMER_SIMULATION_PRIORITY = 1
 MANAGER_SIMULATION_PRIORITY = 2
 MINER_SIMULATION_PRIORITY = 3
 
-__all__ = ["SCMLWorld", "Factory"]
+__all__ = ["SCML2019World", "Factory"]
 
 
 def _realin(rng: Union[Tuple[float, float], float]) -> float:
@@ -88,7 +88,7 @@ def _intin(rng: Union[Tuple[int, int], int]) -> int:
     return randint(rng[0], rng[1])
 
 
-class SCMLWorld(TimeInAgreementMixin, World):
+class SCML2019World(TimeInAgreementMixin, World):
     """The `SCML2020World` class running a simulation of supply chain management."""
 
     def __init__(
@@ -257,7 +257,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             batch_signing=False,
             force_signing=False,
             sign_first=True,
-            sign_last=False,
+            sign_last=True,
             sign_after_execution=False,
             sign_before_execution=False,
             **kwargs,
@@ -562,7 +562,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
         miner_kwargs: Dict[str, Any] = None,
         consumption: Union[int, Tuple[int, int]] = (0, 5),
         consumer_kwargs: Dict[str, Any] = None,
-        negotiation_speed: Optional[int] = None,
+        negotiation_speed: Optional[int] = 21,
         manager_types: Sequence[Type[FactoryManager]] = (GreedyFactoryManager,),
         manager_params: Optional[Sequence[Dict[str, Any]]] = None,
         n_default_per_level: int = 0,
@@ -616,7 +616,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             kwargs: Any other parameters are just passed to the world constructor
 
         Returns:
-            SCMLWorld ready to run
+            SCML2019World ready to run
 
         Remarks:
 
@@ -763,7 +763,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             )
             for i in range(n_consumers)
         ]
-        return SCMLWorld(
+        return SCML2019World(
             products=products,
             processes=processes,
             factories=factories,
@@ -868,7 +868,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
 
         Returns:
 
-            `SCMLWorld` The random world generated
+            `SCML2019World` The random world generated
 
         Remarks:
 
@@ -1123,7 +1123,7 @@ class SCMLWorld(TimeInAgreementMixin, World):
             )
             consumer.set_profiles(consumer_profiles)
 
-        return SCMLWorld(
+        return SCML2019World(
             products=products,
             processes=processes,
             factories=factories,

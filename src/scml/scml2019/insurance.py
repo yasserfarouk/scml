@@ -10,7 +10,7 @@ from .agent import SCML2019Agent
 from .common import InsurancePolicy, Factory
 
 if TYPE_CHECKING:
-    from .world import SCMLWorld
+    from .world import SCML2019World
 
 __all__ = ["DefaultInsuranceCompany", "InsuranceCompany"]
 
@@ -20,7 +20,7 @@ class InsuranceCompany(Agent, ABC):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._world: Optional[SCMLWorld] = None
+        self._world: Optional[SCML2019World] = None
 
     def _respond_to_negotiation_request(
         self,

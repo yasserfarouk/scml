@@ -25,7 +25,7 @@ from scml.scml2019.common import (
     Factory,
     DEFAULT_NEGOTIATOR,
 )
-from scml.scml2019.world import SCMLWorld
+from scml.scml2019.world import SCML2019World
 from scml.scml2019.consumers import JustInTimeConsumer, ConsumptionProfile
 from scml.scml2019.factory_managers.builtins import GreedyFactoryManager
 from scml.scml2019.miners import ReactiveMiner, MiningProfile
@@ -838,7 +838,7 @@ def anac2019_world_generator(**kwargs):
         instantiate(mt, **mp)
         for mt, mp in zip(manager_types, itertools.cycle(manager_params))
     ]
-    world = SCMLWorld(
+    world = SCML2019World(
         products=products,
         processes=processes,
         factories=factories,
@@ -881,7 +881,7 @@ def anac2019_world(
     n_default_per_level: int = 5,
     compact: bool = False,
     **kwargs,
-) -> SCMLWorld:
+) -> SCML2019World:
     """
     Creates a world compatible with the ANAC 2019 competition. Note that
 
@@ -917,10 +917,10 @@ def anac2019_world(
         negotiator_type: The negotiation factory used to create all negotiators
         max_storage: maximum storage capacity for all factory managers If None then it is unlimited
         compact: If True, then compact logs will be created to reduce memory footprint
-        kwargs: key-value pairs to be passed as argument to chain_world() and then to SCMLWorld()
+        kwargs: key-value pairs to be passed as argument to chain_world() and then to SCML2019World()
 
     Returns:
-        SCMLWorld ready to run
+        SCML2019World ready to run
 
     Remarks:
 
@@ -958,7 +958,7 @@ def anac2019_world(
     if len(competitors) < 1:
         competitors.append(DefaultGreedyManager)
         params.append(dict())
-    world = SCMLWorld.chain_world(
+    world = SCML2019World.chain_world(
         log_file_name=log_file_name,
         n_steps=n_steps,
         agent_names_reveal_type=agent_names_reveal_type,
@@ -1000,7 +1000,7 @@ def anac2019_world(
 
 
 def balance_calculator(
-    worlds: List[SCMLWorld],
+    worlds: List[SCML2019World],
     scoring_context: Dict[str, Any],
     dry_run: bool,
     ignore_default=True,
@@ -1051,7 +1051,7 @@ def balance_calculator(
 
 
 def sabotage_effectiveness(
-    worlds: List[SCMLWorld], scoring_context: Dict[str, Any], dry_run: bool
+    worlds: List[SCML2019World], scoring_context: Dict[str, Any], dry_run: bool
 ) -> WorldRunResults:
     """A scoring function that scores factory managers' performance by the final balance only ignoring whatever still
     in their inventory.
@@ -1137,7 +1137,7 @@ def anac2019_tournament(
     scheduler_ip: Optional[str] = None,
     scheduler_port: Optional[str] = None,
     tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCMLWorld]], None] = None,
+    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
@@ -1222,7 +1222,7 @@ def anac2019_std(
     scheduler_ip: Optional[str] = None,
     scheduler_port: Optional[str] = None,
     tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCMLWorld]], None] = None,
+    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
     non_competitors: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
     non_competitor_params: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
     name: str = None,
@@ -1324,7 +1324,7 @@ def anac2019_collusion(
     scheduler_ip: Optional[str] = None,
     scheduler_port: Optional[str] = None,
     tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCMLWorld]], None] = None,
+    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
     non_competitors: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
     non_competitor_params: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
     name: str = None,
@@ -1427,7 +1427,7 @@ def anac2019_sabotage(
     scheduler_ip: Optional[str] = None,
     scheduler_port: Optional[str] = None,
     tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCMLWorld]], None] = None,
+    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
     non_competitors: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
     non_competitor_params: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
     name: str = None,

@@ -132,7 +132,7 @@ def test_simulator_runs():
         profile=profile,
         initial_balance=factory.initial_balance,
         bankruptcy_limit=bankruptcy_limit,
-        breach_penalty=breach_penalty,
+        spot_market_global_loss=breach_penalty,
         catalog_prices=np.ones(profile.n_products, dtype=int),
         n_steps=50,
     )

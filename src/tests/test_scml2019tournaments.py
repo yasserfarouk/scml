@@ -1,3 +1,4 @@
+from pathlib import Path
 from pprint import pprint
 
 from scml.scml2019 import (
@@ -16,6 +17,7 @@ def test_std():
         n_configs=1,
         n_runs_per_world=1,
         max_worlds_per_config=2,
+        log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
     assert len(results.total_scores) >= 2
     assert (
