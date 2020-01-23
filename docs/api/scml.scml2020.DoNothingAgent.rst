@@ -29,8 +29,6 @@ DoNothingAgent
 
       ~DoNothingAgent.checkpoint
       ~DoNothingAgent.checkpoint_info
-      ~DoNothingAgent.confirm_exogenous_sales
-      ~DoNothingAgent.confirm_exogenous_supplies
       ~DoNothingAgent.confirm_production
       ~DoNothingAgent.create
       ~DoNothingAgent.create_negotiation_request
@@ -39,11 +37,11 @@ DoNothingAgent
       ~DoNothingAgent.init
       ~DoNothingAgent.init_
       ~DoNothingAgent.notify
+      ~DoNothingAgent.on_agent_bankrupt
       ~DoNothingAgent.on_contract_breached
       ~DoNothingAgent.on_contract_cancelled
       ~DoNothingAgent.on_contract_cancelled_
       ~DoNothingAgent.on_contract_executed
-      ~DoNothingAgent.on_contract_nullified
       ~DoNothingAgent.on_contract_signed
       ~DoNothingAgent.on_contract_signed_
       ~DoNothingAgent.on_contracts_finalized
@@ -86,8 +84,6 @@ DoNothingAgent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_exogenous_sales
-   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
@@ -96,11 +92,11 @@ DoNothingAgent
    .. automethod:: init
    .. automethod:: init_
    .. automethod:: notify
+   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_cancelled_
    .. automethod:: on_contract_executed
-   .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
    .. automethod:: on_contracts_finalized

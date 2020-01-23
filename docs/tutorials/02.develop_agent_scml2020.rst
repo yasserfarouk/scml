@@ -1,0 +1,51 @@
+.. code:: ipython3
+
+    import pandas as pd
+    import numpy as np
+    from time import sleep
+    from pprint import pprint
+
+Developing an agent for SCML2020
+--------------------------------
+
+Let’s see the simplest possible agent (a do-nothing agent)
+
+.. code:: ipython3
+
+    from scml.scml2020 import SCML2020Agent, SCML2020World
+
+.. code:: ipython3
+
+    class MyDoNothing(SCML2020Agent):
+        pass
+
+Now, let’s try to run a simulation with it
+
+.. code:: ipython3
+
+    try:
+        world = SCML2020World(
+            **SCML2020World.generate(agent_types=[MyDoNothing], n_steps=40), 
+            agent_name_reveals_type=False, 
+            construct_graphs=True,
+        )
+    except TypeError as e:
+        print(e)
+
+
+.. parsed-literal::
+
+    Can't instantiate abstract class MyDoNothing with abstract methods init, on_agent_bankrupt, on_contract_breached, on_contract_executed, on_failures, on_negotiation_failure, on_negotiation_success, respond_to_negotiation_request, step
+
+
+We failed - as expected - because we did not implement the abstract
+methods that must be implemented. For a detailed explanation of the role
+of each one of these methods, please refer to `SCML2020
+description <http://www.yasserm.com/scml/scml2020.pdf>`__. Here we will
+only give a brief expanation of the most impor
+
+
+
+Download :download:`Notebook<notebooks/02.develop_agent_scml2020.ipynb>`.
+
+

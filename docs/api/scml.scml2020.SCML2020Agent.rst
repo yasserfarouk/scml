@@ -29,8 +29,6 @@ SCML2020Agent
 
       ~SCML2020Agent.checkpoint
       ~SCML2020Agent.checkpoint_info
-      ~SCML2020Agent.confirm_exogenous_sales
-      ~SCML2020Agent.confirm_exogenous_supplies
       ~SCML2020Agent.confirm_production
       ~SCML2020Agent.create
       ~SCML2020Agent.create_negotiation_request
@@ -39,11 +37,11 @@ SCML2020Agent
       ~SCML2020Agent.init
       ~SCML2020Agent.init_
       ~SCML2020Agent.notify
+      ~SCML2020Agent.on_agent_bankrupt
       ~SCML2020Agent.on_contract_breached
       ~SCML2020Agent.on_contract_cancelled
       ~SCML2020Agent.on_contract_cancelled_
       ~SCML2020Agent.on_contract_executed
-      ~SCML2020Agent.on_contract_nullified
       ~SCML2020Agent.on_contract_signed
       ~SCML2020Agent.on_contract_signed_
       ~SCML2020Agent.on_contracts_finalized
@@ -86,8 +84,6 @@ SCML2020Agent
 
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_exogenous_sales
-   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
@@ -96,11 +92,11 @@ SCML2020Agent
    .. automethod:: init
    .. automethod:: init_
    .. automethod:: notify
+   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_cancelled_
    .. automethod:: on_contract_executed
-   .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
    .. automethod:: on_contracts_finalized

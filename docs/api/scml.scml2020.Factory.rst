@@ -25,6 +25,7 @@ Factory
       ~Factory.order_production
       ~Factory.pay
       ~Factory.schedule_production
+      ~Factory.spot_price
       ~Factory.step
       ~Factory.store
 
@@ -43,5 +44,6 @@ Factory
    .. automethod:: order_production
    .. automethod:: pay
    .. automethod:: schedule_production
+   .. automethod:: spot_price
    .. automethod:: step
    .. automethod:: store

@@ -1,3 +1,10 @@
+.. code:: ipython3
+
+    import pandas as pd
+    import numpy as np
+    from time import sleep
+    from pprint import pprint
+
 Run a session of the SCML world (2020)
 --------------------------------------
 
@@ -13,11 +20,32 @@ Firstly, let’s import everything from the SCML app
     from scml.scml2020 import *
 
 There are several ways to create an SCML world. One of the simplest is
-to use one of the class methods of the ``SCML2020World`` class.
+to use the ``generate`` method of the ``SCML2020World`` class. This will
+create a dict that can be passed to the ``SCML2020World`` constructor as
+keyword arguments.
+
+Here we explicitly set ``construct_graphs`` to True which slows the
+simulation yet allows us to see graph representations of what is
+happening in the world.
 
 .. code:: ipython3
 
-    world = SCML2020World(**SCML2020World.generate(agent_types=[DecentralizingAgent], n_steps=50))
+    world = SCML2020World(
+        **SCML2020World.generate(agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent], n_steps=30), 
+        # agent_name_reveals_type=False, 
+        construct_graphs=True,
+    )
+
+Let’s draw a graph to see what is in this world
+
+.. code:: ipython3
+
+    _, _ = world.draw()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_6_0.png
+
 
 *If you want to just test your installation (and do not care whether you
 get an accurate indicator of agent performance), you can set the number
@@ -27,7 +55,7 @@ Now you can run this world simulation by just calling ``run``.
 
 .. code:: ipython3
 
-    world.run()
+    world.run() # may take few minutes
 
 Let’s see what happened in this run. Firstly, how many negotiations were
 conducted over time
@@ -41,18 +69,19 @@ conducted over time
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_7_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_10_0.png
 
 
 It is clear that many negotiations happened at the beginning of the
-simulation with smaller number later. That is expected as the consumers
-publish their calls for proposals early on.
+simulation with smaller number later. That is expected as the agents at
+the first and last production layer receive more exogenous contracts in
+the beginning.
 
 Several other market statistics are available:
 
 .. code:: ipython3
 
-    pprint(list(_ for _ in world.stats.keys() if "@" not in _ and not _.startswith("_") ))
+    pprint(list(_ for _ in world.stats.keys() if "@" not in _  ))
 
 
 .. parsed-literal::
@@ -72,12 +101,136 @@ Several other market statistics are available:
      'n_negotiation_rounds_failed',
      'n_registered_negotiations_after',
      'activity_level',
+     'step_time',
      'n_contracts_nullified_now',
      'n_bankrupt',
+     'trading_price_0',
+     'sold_quantity_0',
+     'unit_price_0',
+     'trading_price_1',
+     'sold_quantity_1',
+     'unit_price_1',
+     'trading_price_2',
+     'sold_quantity_2',
+     'unit_price_2',
+     'trading_price_3',
+     'sold_quantity_3',
+     'unit_price_3',
+     'trading_price_4',
+     'sold_quantity_4',
+     'unit_price_4',
      'productivity',
      'market_size',
      'production_failures',
-     'bankruptcy']
+     'bankruptcy',
+     'total_time']
+
+
+Let’s start by seeing how long did each step take (note that ``stats``
+access the stats as a Dict[str, List] but ``stats_df`` access the same
+data as a pandas dataframe.
+
+.. code:: ipython3
+
+    plt.bar(range(world.n_steps), world.stats_df['step_time'])
+    plt.xlabel('Simulation Step')
+    plt.ylabel('Time (s)')
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_14_0.png
+
+
+There are statistics specific for each agent that all have
+"_{agent_name}". Lets check what is available for the winner agent:
+
+.. code:: ipython3
+
+    winner = world.winners[0]
+    pprint(list(_ for _ in world.stats.keys() if winner.name in _ ))
+
+
+.. parsed-literal::
+
+    ['spot_market_quantity_00Buy@0',
+     'spot_market_loss_00Buy@0',
+     'balance_00Buy@0',
+     'inventory_00Buy@0_input',
+     'inventory_00Buy@0_output',
+     'productivity_00Buy@0',
+     'assets_00Buy@0',
+     'bankrupt_00Buy@0',
+     'score_00Buy@0']
+
+
+The convension is that agent names has the form {ind}{Type}{process}
+where **ind** is a unique index, **Type** is a shortened version of the
+agent’s type name, and **process** is the process the agnet can run.
+Note that the agent’s input product has the same number as its process
+and its output product has the next number (i.e. an agent that runs
+process 1, has input product 1 and output product 2).
+
+We can see that 8 pieces of information are available (for each
+time-step of the simulation):
+
+-  **bankrupt** If true, the agent is bankrupt.
+-  **balance** The money the agent has in its wallet (account).
+-  **inventory (input)** The number of units of the agent’s input
+   product available in its inventory (by the end of the simulation
+   step).
+-  **inventory (output)** The number of units of the agent’s output
+   product available in its inventory (by the end of the simulation
+   step).
+-  **assets** The value of the agent’s assets (input and output products
+   in inventory) evaluated at the trading price
+-  **spot market quantity** The quantity bought by this agent from the
+   spot market (of its output product on this step). This can only
+   happen as a result of a product-breach.
+-  **spot market loss** The spot market price for the agent. This value
+   will go up the more the agent buys from the spot market and will be
+   used to calculate the price for this agent at future steps. This way
+   agents that depend on the spot market instead of negotiation get
+   punished.
+-  **productivity** The fraction of the agent’s production lines that
+   were active at a given time-step.
+-  **score** The score of the agent according to the evaluation rule of
+   ANAC SCML 2020
+
+Let’s see how did our agent do
+
+.. code:: ipython3
+
+    #show the first and last value of each of the agent statistics
+    pprint({k:(v[0], v[-1]) for k, v in world.stats.items() if winner.name in k })
+
+
+.. parsed-literal::
+
+    {'assets_00Buy@0': (0.0, 2310.0000000000005),
+     'balance_00Buy@0': (22969, 27868),
+     'bankrupt_00Buy@0': (False, False),
+     'inventory_00Buy@0_input': (0, 231),
+     'inventory_00Buy@0_output': (0, 0),
+     'productivity_00Buy@0': (0.0, 0.0),
+     'score_00Buy@0': (0.0, 0.2635726413862162),
+     'spot_market_loss_00Buy@0': (0.15, 27.9285),
+     'spot_market_quantity_00Buy@0': (0, 240)}
+
+
+.. code:: ipython3
+
+    stats = pd.DataFrame(data=world.stats)
+    fig, axs = plt.subplots(2, 3)
+    for ax, key in zip(axs.flatten().tolist(), ["score", "balance", "assets", "productivity", 
+                             "spot_market_quantity", "spot_market_loss"]):
+        ax.plot(stats[f"{key}_{winner}"])
+        ax.set(ylabel=key)
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_19_0.png
 
 
 We can for example check the activity level of this world (defined as
@@ -92,7 +245,7 @@ the total amount of money transferred due to trade)
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_11_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_21_0.png
 
 
 We can see a picture of contracting in this world as follows:
@@ -110,7 +263,7 @@ We can see a picture of contracting in this world as follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_13_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_23_0.png
 
 
 We can also check the breaches that happened
@@ -124,75 +277,804 @@ We can also check the breaches that happened
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_15_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_25_0.png
 
 
-It is also possible to focus on the behavior of some specific agent.
-Let’s first find who was the winner (the factory manager that got
-maximum wealth). Notice that there can be multiple winners
+Notice that there can be multiple winners
 
 .. code:: ipython3
 
-    winner_profits = [round(100.0 * world.stats[f'balance_{_}'][-1] / world.stats[f'balance_{_}'][0] - 100.0, 2) for _ in world.winners]
-    print(f"{world.winners} won at {winner_profits}%")
+    winner_profits = [100 * world.scores()[_.id] for _ in world.winners]
+    winner_types = [_.short_type_name for _ in world.winners]
+    print(f"{world.winners} of type {winner_types} won at {winner_profits}%")
 
 
 .. parsed-literal::
 
-    [04Dec@1] won at [3.88]%
+    [00Buy@0] of type ['buy_cheap_sell_expensive'] won at [26.357264138621623]%
 
 
-What was the balance of this winner over time:
-
-.. code:: ipython3
-
-    for winner in world.winners:
-        plt.plot(world.stats[f'balance_{winner}'], label=f'{winner}\n({winner.__class__.__name__})')
-    plt.legend()
-    plt.xlabel('Simulation Step')
-    plt.ylabel('Winner\'s Balance ($)')
-    plt.show()
-
-
-
-.. image:: 01.run_scml2020_files/01.run_scml2020_19_0.png
-
-
-Let’s check how did its total storage change over time:
+Let’s check how did the first winner’s inventory changes over time:
 
 .. code:: ipython3
 
+    # find the keys in stats for the input and output inventory
     in_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_input')][0]
     out_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_output')][0]
-    for winner in world.winners:
-        plt.plot(world.stats[in_key], label=f"Input Product")
-        plt.plot(world.stats[out_key], label=f"Output Product")
-    plt.xlabel('Simulation Step')
-    plt.ylabel('Player\'s Total Storage (item)')
-    plt.title(f"Inventory of {winner}")
-    plt.legend()
-    plt.show()
+    
+    # find input and output product indices
+    input_product, output_product = winner.awi.my_input_product, winner.awi.my_output_product
+    # draw
+    fig, (quantity, value) = plt.subplots(1, 2)
+    quantity.plot(world.stats[in_key], label=f"Input Product")
+    quantity.plot(world.stats[out_key], label=f"Output Product")
+    quantity.set(xlabel='Simulation Step', ylabel='Winner\'s Total Storage (item)')
+    quantity.legend()
+    value.plot(np.array(world.stats[in_key]) * np.array(world.stats[f"trading_price_{input_product}"])
+                  , label=f"Input Product")
+    value.plot(np.array(world.stats[out_key]) * np.array(world.stats[f"trading_price_{output_product}"])
+                  , label=f"Output Product")
+    value.set(xlabel='Simulation Step', ylabel='Winner\'s Inventory Value ($)')
+    value.legend()
+    fig.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_21_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_29_0.png
 
 
 We can actually check what happens to ALL competitors:
 
 .. code:: ipython3
 
-    for name, _ in sorted(((_.name, _) for _ in world.agents.values() if _.name != "SYSTEM"), key=lambda x: x[0]):    
-        plt.plot(100.0 * (np.asarray(world.stats[f'balance_{name}'])/world.stats[f'balance_{name}'][0] - 1.0), label=name)
-    plt.xlabel('Simulation Step')
-    plt.ylabel('Player Profit (%)')
-    plt.legend()
+    from scml.scml2020.world import is_system_agent
+    fig, (profit, score) = plt.subplots(1, 2)
+    snames = sorted(world.non_system_agent_names)
+    for name in snames:    
+        profit.plot(100.0 * (np.asarray(world.stats[f'balance_{name}'])/world.stats[f'balance_{name}'][0] - 1.0), label=name)
+        score.plot(100 * np.asarray(world.stats[f'score_{name}']), label=name)
+    profit.set(xlabel='Simulation Step', ylabel='Player Profit (%)')
+    profit.legend(loc='lower left')
+    score.set(xlabel='Simulation Step', ylabel='Player Score (%)')
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_31_0.png
+
+
+or just look at the end of the game
+
+.. code:: ipython3
+
+    fig, (score, profit) = plt.subplots(1, 2)
+    final_scores = [100 * world.stats[f"score_{_}"][-1] 
+                    for _ in world.non_system_agent_names]
+    final_profits = [100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100 
+                     for _ in world.non_system_agent_names]
+    plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
+    plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
+    score.bar(world.non_system_agent_names, final_scores)
+    profit.bar(world.non_system_agent_names, final_profits)
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_33_0.png
+
+
+You can inspect what happened in the simulation by plotting different
+output statistics. For example, we can see how did the trading price of
+different products change over the simulation time.
+
+.. code:: ipython3
+
+    fig, axs = plt.subplots(2, 2)
+    for ax, key in zip(axs.flatten().tolist(), ["trading_price", "sold_quantity", "unit_price"]):
+        for p in range(world.n_products):
+            ax.plot(world.stats[f"{key}_{p}"], marker="x", label=f"Product {p}")
+            ax.set_ylabel(key.replace("_", " ").title())
+            ax.legend().set_visible(False)
+    axs[-1, 0].legend(bbox_to_anchor=(1, -.5), ncol=3)
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_35_0.png
+
+
+.. code:: ipython3
+
+    fig, axs = plt.subplots(1, 2)
+    for ax, key in zip(axs.flatten().tolist(), ["spot_market_quantity", "spot_market_loss"]):
+        for a in world.non_system_agent_names:
+            ax.plot(world.stats[f"{key}_{a}"], marker="x", label=f"{a}")
+            ax.set_ylabel(key.replace("_", " ").title())
+            ax.legend().set_visible(False)
+    axs[0].legend(bbox_to_anchor=(1, -.2), ncol=4)
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
+
+
+You can dig futher to understand what happened during this siumulation.
+For example, let’s see some of the contracts that were signed:
+
+.. code:: ipython3
+
+    # create a view with only signed contracts
+    contracts = world.contracts_df
+    signed = contracts.loc[contracts.signed_at>=0, :]
+
+.. code:: ipython3
+
+    fields = ["seller_name", "buyer_name", "delivery_time", "quantity", "unit_price",
+              "signed_at", "executed", "breached", "nullified", "erred"]
+    signed[fields].head()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>seller_name</th>
+          <th>buyer_name</th>
+          <th>delivery_time</th>
+          <th>quantity</th>
+          <th>unit_price</th>
+          <th>signed_at</th>
+          <th>executed</th>
+          <th>breached</th>
+          <th>nullified</th>
+          <th>erred</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>SELLER</td>
+          <td>01Dec@0</td>
+          <td>3</td>
+          <td>1</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>11Dec@3</td>
+          <td>BUYER</td>
+          <td>10</td>
+          <td>3</td>
+          <td>38</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>10Dec@3</td>
+          <td>BUYER</td>
+          <td>12</td>
+          <td>2</td>
+          <td>38</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>SELLER</td>
+          <td>01Dec@0</td>
+          <td>5</td>
+          <td>1</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>SELLER</td>
+          <td>02Dec@0</td>
+          <td>11</td>
+          <td>2</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+Let’s check some of the contracts that were fully executed
+
+.. code:: ipython3
+
+    signed.loc[signed.executed, fields].head()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>seller_name</th>
+          <th>buyer_name</th>
+          <th>delivery_time</th>
+          <th>quantity</th>
+          <th>unit_price</th>
+          <th>signed_at</th>
+          <th>executed</th>
+          <th>breached</th>
+          <th>nullified</th>
+          <th>erred</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>SELLER</td>
+          <td>01Dec@0</td>
+          <td>3</td>
+          <td>1</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>11Dec@3</td>
+          <td>BUYER</td>
+          <td>10</td>
+          <td>3</td>
+          <td>38</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>10Dec@3</td>
+          <td>BUYER</td>
+          <td>12</td>
+          <td>2</td>
+          <td>38</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>SELLER</td>
+          <td>01Dec@0</td>
+          <td>5</td>
+          <td>1</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>SELLER</td>
+          <td>02Dec@0</td>
+          <td>11</td>
+          <td>2</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    signed.loc[signed.breached, fields[:-4] + ["breaches"]].head()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>seller_name</th>
+          <th>buyer_name</th>
+          <th>delivery_time</th>
+          <th>quantity</th>
+          <th>unit_price</th>
+          <th>signed_at</th>
+          <th>breaches</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>5</th>
+          <td>09Buy@3</td>
+          <td>BUYER</td>
+          <td>8</td>
+          <td>2</td>
+          <td>38</td>
+          <td>0</td>
+          <td>09Buy@3:product(0.5)</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>10Dec@3</td>
+          <td>BUYER</td>
+          <td>9</td>
+          <td>1</td>
+          <td>38</td>
+          <td>0</td>
+          <td>10Dec@3:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>09Buy@3</td>
+          <td>BUYER</td>
+          <td>4</td>
+          <td>2</td>
+          <td>38</td>
+          <td>0</td>
+          <td>09Buy@3:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td>10Dec@3</td>
+          <td>BUYER</td>
+          <td>9</td>
+          <td>2</td>
+          <td>38</td>
+          <td>0</td>
+          <td>10Dec@3:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>16</th>
+          <td>11Dec@3</td>
+          <td>BUYER</td>
+          <td>8</td>
+          <td>1</td>
+          <td>38</td>
+          <td>0</td>
+          <td>11Dec@3:product(1.0)</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+We can now see how does the singning day affect delivery day, product
+and quantity
+
+.. code:: ipython3
+
+    fig, ax = plt.subplots(1, 3)
+    for i, x in enumerate(["delivery_time", "quantity", "product_index"]):
+        ax[i].scatter(signed.signed_at, signed[x])
+        ax[i].set(ylabel=x.replace("_", " ").title(), xlabel="Signing Day")
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_44_0.png
+
+
+Did any agents go bankrupt and when?
+
+.. code:: ipython3
+
+    pprint({a: np.nonzero(stats[f"bankrupt_{a}"])[0].tolist()  for a in world.non_system_agent_names})
+
+
+
+.. parsed-literal::
+
+    {'00Buy@0': [],
+     '01Dec@0': [],
+     '02Dec@0': [],
+     '03Buy@1': [],
+     '04Dec@1': [],
+     '05Buy@1': [],
+     '06Dec@2': [],
+     '07Buy@2': [26, 27, 28, 29],
+     '08Dec@2': [],
+     '09Buy@3': [],
+     '10Dec@3': [],
+     '11Dec@3': []}
+
+
+You can see what happened during this simulation by drawing graphs at
+different steps. The meaning of different edge colors can be drawn as
+follows:
+
+.. code:: ipython3
+
+    from negmas import show_edge_colors
+    show_edge_colors()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_48_0.png
+
+
+You can see what happened in this world in a series of graphs using the
+``draw`` method
+
+.. code:: ipython3
+
+    world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_23_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_50_0.png
 
+
+You can also run a simple animation to see what happens at every step
+(you need to download the jupyter notebook and execute it to see the
+animation) :
+
+.. code:: ipython3
+
+    # prepare animation
+    from IPython.display import clear_output
+    from time import perf_counter
+    from negmas.helpers import humanize_time
+    # run the world and animate it
+    draw_every = 5 # draw every 5 steps (drawing is REALLY slow)
+    single_graph = False # show a graph for every event type
+    for s in range(world.n_steps):
+        if s % draw_every != 0:
+            continue
+        world.draw(steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20, 20))
+        plt.show()
+        clear_output(wait=True)
+    world.draw(steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20, 20))
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_52_0.png
+
+
+Note that this graph shows only what happened in the last ``draw_every``
+steps.
+
+Let’s see some statistics about the simulation.
+
+Running a tournament
+--------------------
+
+Now that you can run simple world simulations, let’s try to run a
+complete tournament and see its results. Let’s start by running a
+standard tournament (in which each agent is represented by a single
+factory). Running a collusion tournament will be exactly the same with
+the only difference that ``anac2020_std`` will be replaced with
+``anac2020_collusion``.
+
+Note that in the real competition we use thousands of configurations and
+longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
+
+.. code:: ipython3
+
+    from scml.scml2020.utils import anac2020_std
+
+.. code:: ipython3
+
+    # may take a long time
+    results = anac2020_std(
+        competitors=[ DecentralizingAgent, RandomAgent, BuyCheapSellExpensiveAgent ],  
+        n_configs=4, # number of different configurations to generate 
+        n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
+        n_steps = 10, # number of days (simulation steps) per simulation
+        print_exceptions=True,
+    ) 
+
+Who was the winner?
+
+.. code:: ipython3
+
+    results.winners
+
+
+
+
+.. parsed-literal::
+
+    ['decentralizing_agent']
+
+
+
+How many simulations were actually run?
+
+.. code:: ipython3
+
+    len(results.scores.run_id.unique())
+
+
+
+
+.. parsed-literal::
+
+    12
+
+
+
+The total number of simulations :math:`n_{s}` will be
+:math:`n_t \times n_c \times n_r` where :math:`n_t` is the number of
+competitor agent types, :math:`n_c` is the number of configurations, and
+:math:`n_r` is the number of runs per configuration
+
+We can also see the scores that every agent type got
+
+.. code:: ipython3
+
+    results.score_stats
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>agent_type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>12.0</td>
+          <td>-0.261077</td>
+          <td>0.601918</td>
+          <td>-1.506046</td>
+          <td>-0.166176</td>
+          <td>-0.143092</td>
+          <td>0.124975</td>
+          <td>0.309321</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>decentralizing_agent</td>
+          <td>12.0</td>
+          <td>0.067284</td>
+          <td>0.055988</td>
+          <td>0.022247</td>
+          <td>0.033031</td>
+          <td>0.044340</td>
+          <td>0.086584</td>
+          <td>0.217533</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>random_agent</td>
+          <td>12.0</td>
+          <td>-0.400688</td>
+          <td>0.507554</td>
+          <td>-1.638861</td>
+          <td>-0.377281</td>
+          <td>-0.245760</td>
+          <td>-0.127157</td>
+          <td>0.085775</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+We can even get the scores of every agent belonging to every agent type
+at every simulation
+
+.. code:: ipython3
+
+    results.scores.loc[:, ["agent_name", "agent_type", "score"]].head()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>agent_name</th>
+          <th>agent_type</th>
+          <th>score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>02Ran@1</td>
+          <td>random_agent</td>
+          <td>-0.241947</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>03Dec@1</td>
+          <td>decentralizing_agent</td>
+          <td>0.033647</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>04Buy@1</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>-0.140841</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>02Dec@1</td>
+          <td>decentralizing_agent</td>
+          <td>0.030435</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>03Buy@1</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>-0.145342</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+or inspect any statistic we like
+
+.. code:: ipython3
+
+    ax = sns.violinplot(data=results.stats, x="step", y="activity_level")
+    ax.set(ylabel="Activity Level (Business Size)", xlabel="Step Number", yscale="log")
+    
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_66_0.png
+
+
+Let’s see how did the location at the production graph affect the score
+of each type.
+
+.. code:: ipython3
+
+    results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
+    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], x="level", y="score", hue="agent_type")
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_68_0.png
+
+
+Now that you can run simulations and complete tournament, let’s see how
+are we going to develop a new agent for the SCML2020 league
+:math:`\rightarrow`
 
 
 

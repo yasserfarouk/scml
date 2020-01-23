@@ -11,23 +11,19 @@ FactoryProfile
    .. autosummary::
 
       ~FactoryProfile.costs
-      ~FactoryProfile.exogenous_sale_prices
-      ~FactoryProfile.exogenous_sales
-      ~FactoryProfile.exogenous_supplies
-      ~FactoryProfile.exogenous_supply_prices
+      ~FactoryProfile.input_products
       ~FactoryProfile.n_lines
       ~FactoryProfile.n_processes
       ~FactoryProfile.n_products
-      ~FactoryProfile.n_steps
+      ~FactoryProfile.output_products
+      ~FactoryProfile.processes
 
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: costs
-   .. autoattribute:: exogenous_sale_prices
-   .. autoattribute:: exogenous_sales
-   .. autoattribute:: exogenous_supplies
-   .. autoattribute:: exogenous_supply_prices
+   .. autoattribute:: input_products
    .. autoattribute:: n_lines
    .. autoattribute:: n_processes
    .. autoattribute:: n_products
-   .. autoattribute:: n_steps
+   .. autoattribute:: output_products
+   .. autoattribute:: processes

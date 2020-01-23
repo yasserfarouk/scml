@@ -31,8 +31,6 @@ DecentralizingAgent
       ~DecentralizingAgent.all_negotiations_concluded
       ~DecentralizingAgent.checkpoint
       ~DecentralizingAgent.checkpoint_info
-      ~DecentralizingAgent.confirm_exogenous_sales
-      ~DecentralizingAgent.confirm_exogenous_supplies
       ~DecentralizingAgent.confirm_production
       ~DecentralizingAgent.create
       ~DecentralizingAgent.create_negotiation_request
@@ -45,11 +43,11 @@ DecentralizingAgent
       ~DecentralizingAgent.max_consumption_till
       ~DecentralizingAgent.max_production_till
       ~DecentralizingAgent.notify
+      ~DecentralizingAgent.on_agent_bankrupt
       ~DecentralizingAgent.on_contract_breached
       ~DecentralizingAgent.on_contract_cancelled
       ~DecentralizingAgent.on_contract_cancelled_
       ~DecentralizingAgent.on_contract_executed
-      ~DecentralizingAgent.on_contract_nullified
       ~DecentralizingAgent.on_contract_signed
       ~DecentralizingAgent.on_contract_signed_
       ~DecentralizingAgent.on_contracts_finalized
@@ -95,8 +93,6 @@ DecentralizingAgent
    .. automethod:: all_negotiations_concluded
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_exogenous_sales
-   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
@@ -109,11 +105,11 @@ DecentralizingAgent
    .. automethod:: max_consumption_till
    .. automethod:: max_production_till
    .. automethod:: notify
+   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_cancelled_
    .. automethod:: on_contract_executed
-   .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
    .. automethod:: on_contracts_finalized

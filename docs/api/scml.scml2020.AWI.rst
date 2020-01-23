@@ -43,6 +43,7 @@ AWI
       ~AWI.bb_remove
       ~AWI.cancel_production
       ~AWI.execute
+      ~AWI.is_system
       ~AWI.logdebug
       ~AWI.logdebug_agent
       ~AWI.logerror
@@ -92,6 +93,7 @@ AWI
    .. automethod:: bb_remove
    .. automethod:: cancel_production
    .. automethod:: execute
+   .. automethod:: is_system
    .. automethod:: logdebug
    .. automethod:: logdebug_agent
    .. automethod:: logerror

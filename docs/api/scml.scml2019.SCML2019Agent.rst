@@ -1,78 +1,78 @@
-SCMLAgent
-=========
+SCML2019Agent
+=============
 
 .. currentmodule:: scml.scml2019
 
-.. autoclass:: SCMLAgent
+.. autoclass:: SCML2019Agent
    :show-inheritance:
 
    .. rubric:: Attributes Summary
 
    .. autosummary::
 
-      ~SCMLAgent.accepted_negotiation_requests
-      ~SCMLAgent.awi
-      ~SCMLAgent.id
-      ~SCMLAgent.initialized
-      ~SCMLAgent.name
-      ~SCMLAgent.negotiation_requests
-      ~SCMLAgent.requested_negotiations
-      ~SCMLAgent.running_negotiations
-      ~SCMLAgent.short_type_name
-      ~SCMLAgent.type_name
-      ~SCMLAgent.unsigned_contracts
-      ~SCMLAgent.uuid
+      ~SCML2019Agent.accepted_negotiation_requests
+      ~SCML2019Agent.awi
+      ~SCML2019Agent.id
+      ~SCML2019Agent.initialized
+      ~SCML2019Agent.name
+      ~SCML2019Agent.negotiation_requests
+      ~SCML2019Agent.requested_negotiations
+      ~SCML2019Agent.running_negotiations
+      ~SCML2019Agent.short_type_name
+      ~SCML2019Agent.type_name
+      ~SCML2019Agent.unsigned_contracts
+      ~SCML2019Agent.uuid
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~SCMLAgent.can_expect_agreement
-      ~SCMLAgent.checkpoint
-      ~SCMLAgent.checkpoint_info
-      ~SCMLAgent.confirm_contract_execution
-      ~SCMLAgent.confirm_loan
-      ~SCMLAgent.confirm_partial_execution
-      ~SCMLAgent.create
-      ~SCMLAgent.create_negotiation_request
-      ~SCMLAgent.from_checkpoint
-      ~SCMLAgent.from_config
-      ~SCMLAgent.init
-      ~SCMLAgent.init_
-      ~SCMLAgent.notify
-      ~SCMLAgent.on_agent_bankrupt
-      ~SCMLAgent.on_cash_transfer
-      ~SCMLAgent.on_contract_breached
-      ~SCMLAgent.on_contract_cancelled
-      ~SCMLAgent.on_contract_cancelled_
-      ~SCMLAgent.on_contract_executed
-      ~SCMLAgent.on_contract_nullified
-      ~SCMLAgent.on_contract_signed
-      ~SCMLAgent.on_contract_signed_
-      ~SCMLAgent.on_contracts_finalized
-      ~SCMLAgent.on_event
-      ~SCMLAgent.on_inventory_change
-      ~SCMLAgent.on_neg_request_accepted
-      ~SCMLAgent.on_neg_request_accepted_
-      ~SCMLAgent.on_neg_request_rejected
-      ~SCMLAgent.on_neg_request_rejected_
-      ~SCMLAgent.on_negotiation_failure
-      ~SCMLAgent.on_negotiation_failure_
-      ~SCMLAgent.on_negotiation_success
-      ~SCMLAgent.on_negotiation_success_
-      ~SCMLAgent.on_new_cfp
-      ~SCMLAgent.on_new_report
-      ~SCMLAgent.on_remove_cfp
-      ~SCMLAgent.read_config
-      ~SCMLAgent.request_negotiation
-      ~SCMLAgent.respond_to_negotiation_request
-      ~SCMLAgent.respond_to_negotiation_request_
-      ~SCMLAgent.respond_to_renegotiation_request
-      ~SCMLAgent.set_renegotiation_agenda
-      ~SCMLAgent.sign_all_contracts
-      ~SCMLAgent.sign_contract
-      ~SCMLAgent.step
-      ~SCMLAgent.step_
+      ~SCML2019Agent.can_expect_agreement
+      ~SCML2019Agent.checkpoint
+      ~SCML2019Agent.checkpoint_info
+      ~SCML2019Agent.confirm_contract_execution
+      ~SCML2019Agent.confirm_loan
+      ~SCML2019Agent.confirm_partial_execution
+      ~SCML2019Agent.create
+      ~SCML2019Agent.create_negotiation_request
+      ~SCML2019Agent.from_checkpoint
+      ~SCML2019Agent.from_config
+      ~SCML2019Agent.init
+      ~SCML2019Agent.init_
+      ~SCML2019Agent.notify
+      ~SCML2019Agent.on_agent_bankrupt
+      ~SCML2019Agent.on_cash_transfer
+      ~SCML2019Agent.on_contract_breached
+      ~SCML2019Agent.on_contract_cancelled
+      ~SCML2019Agent.on_contract_cancelled_
+      ~SCML2019Agent.on_contract_executed
+      ~SCML2019Agent.on_contract_nullified
+      ~SCML2019Agent.on_contract_signed
+      ~SCML2019Agent.on_contract_signed_
+      ~SCML2019Agent.on_contracts_finalized
+      ~SCML2019Agent.on_event
+      ~SCML2019Agent.on_inventory_change
+      ~SCML2019Agent.on_neg_request_accepted
+      ~SCML2019Agent.on_neg_request_accepted_
+      ~SCML2019Agent.on_neg_request_rejected
+      ~SCML2019Agent.on_neg_request_rejected_
+      ~SCML2019Agent.on_negotiation_failure
+      ~SCML2019Agent.on_negotiation_failure_
+      ~SCML2019Agent.on_negotiation_success
+      ~SCML2019Agent.on_negotiation_success_
+      ~SCML2019Agent.on_new_cfp
+      ~SCML2019Agent.on_new_report
+      ~SCML2019Agent.on_remove_cfp
+      ~SCML2019Agent.read_config
+      ~SCML2019Agent.request_negotiation
+      ~SCML2019Agent.respond_to_negotiation_request
+      ~SCML2019Agent.respond_to_negotiation_request_
+      ~SCML2019Agent.respond_to_renegotiation_request
+      ~SCML2019Agent.set_renegotiation_agenda
+      ~SCML2019Agent.sign_all_contracts
+      ~SCML2019Agent.sign_contract
+      ~SCML2019Agent.step
+      ~SCML2019Agent.step_
 
    .. rubric:: Attributes Documentation
 

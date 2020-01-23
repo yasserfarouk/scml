@@ -27,10 +27,9 @@ RandomAgent
 
    .. autosummary::
 
+      ~RandomAgent.can_be_produced
       ~RandomAgent.checkpoint
       ~RandomAgent.checkpoint_info
-      ~RandomAgent.confirm_exogenous_sales
-      ~RandomAgent.confirm_exogenous_supplies
       ~RandomAgent.confirm_production
       ~RandomAgent.create
       ~RandomAgent.create_negotiation_request
@@ -41,11 +40,11 @@ RandomAgent
       ~RandomAgent.init_
       ~RandomAgent.negotiator
       ~RandomAgent.notify
+      ~RandomAgent.on_agent_bankrupt
       ~RandomAgent.on_contract_breached
       ~RandomAgent.on_contract_cancelled
       ~RandomAgent.on_contract_cancelled_
       ~RandomAgent.on_contract_executed
-      ~RandomAgent.on_contract_nullified
       ~RandomAgent.on_contract_signed
       ~RandomAgent.on_contract_signed_
       ~RandomAgent.on_contracts_finalized
@@ -87,10 +86,9 @@ RandomAgent
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: can_be_produced
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_exogenous_sales
-   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
@@ -101,11 +99,11 @@ RandomAgent
    .. automethod:: init_
    .. automethod:: negotiator
    .. automethod:: notify
+   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_cancelled_
    .. automethod:: on_contract_executed
-   .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
    .. automethod:: on_contracts_finalized

@@ -27,10 +27,9 @@ IndependentNegotiationsAgent
 
    .. autosummary::
 
+      ~IndependentNegotiationsAgent.can_be_produced
       ~IndependentNegotiationsAgent.checkpoint
       ~IndependentNegotiationsAgent.checkpoint_info
-      ~IndependentNegotiationsAgent.confirm_exogenous_sales
-      ~IndependentNegotiationsAgent.confirm_exogenous_supplies
       ~IndependentNegotiationsAgent.confirm_production
       ~IndependentNegotiationsAgent.create
       ~IndependentNegotiationsAgent.create_negotiation_request
@@ -41,11 +40,11 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.init_
       ~IndependentNegotiationsAgent.negotiator
       ~IndependentNegotiationsAgent.notify
+      ~IndependentNegotiationsAgent.on_agent_bankrupt
       ~IndependentNegotiationsAgent.on_contract_breached
       ~IndependentNegotiationsAgent.on_contract_cancelled
       ~IndependentNegotiationsAgent.on_contract_cancelled_
       ~IndependentNegotiationsAgent.on_contract_executed
-      ~IndependentNegotiationsAgent.on_contract_nullified
       ~IndependentNegotiationsAgent.on_contract_signed
       ~IndependentNegotiationsAgent.on_contract_signed_
       ~IndependentNegotiationsAgent.on_contracts_finalized
@@ -87,10 +86,9 @@ IndependentNegotiationsAgent
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: can_be_produced
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_exogenous_sales
-   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
@@ -101,11 +99,11 @@ IndependentNegotiationsAgent
    .. automethod:: init_
    .. automethod:: negotiator
    .. automethod:: notify
+   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_cancelled_
    .. automethod:: on_contract_executed
-   .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
    .. automethod:: on_contracts_finalized

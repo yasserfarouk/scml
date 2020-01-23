@@ -27,10 +27,9 @@ BuyCheapSellExpensiveAgent
 
    .. autosummary::
 
+      ~BuyCheapSellExpensiveAgent.can_be_produced
       ~BuyCheapSellExpensiveAgent.checkpoint
       ~BuyCheapSellExpensiveAgent.checkpoint_info
-      ~BuyCheapSellExpensiveAgent.confirm_exogenous_sales
-      ~BuyCheapSellExpensiveAgent.confirm_exogenous_supplies
       ~BuyCheapSellExpensiveAgent.confirm_production
       ~BuyCheapSellExpensiveAgent.create
       ~BuyCheapSellExpensiveAgent.create_negotiation_request
@@ -41,11 +40,11 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.init_
       ~BuyCheapSellExpensiveAgent.negotiator
       ~BuyCheapSellExpensiveAgent.notify
+      ~BuyCheapSellExpensiveAgent.on_agent_bankrupt
       ~BuyCheapSellExpensiveAgent.on_contract_breached
       ~BuyCheapSellExpensiveAgent.on_contract_cancelled
       ~BuyCheapSellExpensiveAgent.on_contract_cancelled_
       ~BuyCheapSellExpensiveAgent.on_contract_executed
-      ~BuyCheapSellExpensiveAgent.on_contract_nullified
       ~BuyCheapSellExpensiveAgent.on_contract_signed
       ~BuyCheapSellExpensiveAgent.on_contract_signed_
       ~BuyCheapSellExpensiveAgent.on_contracts_finalized
@@ -87,10 +86,9 @@ BuyCheapSellExpensiveAgent
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: can_be_produced
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: confirm_exogenous_sales
-   .. automethod:: confirm_exogenous_supplies
    .. automethod:: confirm_production
    .. automethod:: create
    .. automethod:: create_negotiation_request
@@ -101,11 +99,11 @@ BuyCheapSellExpensiveAgent
    .. automethod:: init_
    .. automethod:: negotiator
    .. automethod:: notify
+   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
    .. automethod:: on_contract_cancelled
    .. automethod:: on_contract_cancelled_
    .. automethod:: on_contract_executed
-   .. automethod:: on_contract_nullified
    .. automethod:: on_contract_signed
    .. automethod:: on_contract_signed_
    .. automethod:: on_contracts_finalized
