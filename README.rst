@@ -17,7 +17,7 @@ Overview
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
 .. |docs| image:: https://readthedocs.org/projects/scml/badge/?style=flat
-    :target: https://readthedocs.org/projects/scml
+    :target: http://www.yasserm.com/scml/scml2020docs
     :alt: Documentation Status
 
 .. |travis| image:: https://api.travis-ci.org/yasserfarouk/scml.svg?branch=master
@@ -90,7 +90,7 @@ Documentation
 =============
 
 
-https://scml.readthedocs.io/
+http://www.yasserm.com/scml/scml2020docs/
 
 
 Development
