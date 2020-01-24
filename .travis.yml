@@ -16,13 +16,7 @@ matrix:
     - os: osx
       language: generic
       env:
-        - TOXENV=py27
-    - env:
-        - TOXENV=py27,codecov,coveralls
-      python: '2.7'
-    - env:
-        - TOXENV=py35,codecov,coveralls
-      python: '3.5'
+        - TOXENV=py37
     - env:
         - TOXENV=py36,codecov,coveralls
       python: '3.6'
@@ -36,13 +30,6 @@ matrix:
     - env:
         - TOXENV=py38,codecov,coveralls
       python: '3.8'
-    - env:
-        - TOXENV=pypy,codecov,coveralls
-      python: 'pypy'
-    - env:
-        - TOXENV=pypy3,codecov,coveralls
-        - TOXPYTHON=pypy3
-      python: 'pypy3'
 before_install:
   - python --version
   - uname -a
@@ -50,7 +37,6 @@ before_install:
   - |
     if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
       [[ $TOXENV =~ py3 ]] && brew upgrade python
-      [[ $TOXENV =~ py2 ]] && brew install python@2
       export PATH="/usr/local/opt/python/libexec/bin:${PATH}"
     fi
 install:
