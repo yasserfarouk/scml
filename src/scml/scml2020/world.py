@@ -63,6 +63,7 @@ __all__ = [
     "FinancialReport",
     "FactoryProfile",
     "Factory",
+    "Failure",
 ]
 
 
@@ -2952,7 +2953,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 Breach(
                     contract=contract,
                     perpetrator=seller_id,
-                    victims=buyer_id,
+                    victims=[buyer_id],
                     level=product_breach_level,
                     type="product",
                 )
@@ -2982,7 +2983,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 Breach(
                     contract=contract,
                     perpetrator=buyer_id,
-                    victims=seller_id,
+                    victims=[seller_id],
                     level=money_breach_level,
                     type="money",
                 )

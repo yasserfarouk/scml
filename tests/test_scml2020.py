@@ -263,7 +263,6 @@ def test_a_tiny_world():
 
 
 def test_graph():
-    import matplotlib.pyplot as plt
     world = generate_world(
         [DecentralizingAgent],
         n_processes=2,
@@ -273,16 +272,21 @@ def test_graph():
         initial_balance=10_000,
         buy_missing_products=True,
     )
-    graph = world.draw(together=True)
-    plt.show()
+    world.graph(together=True)
     world.step()
-    graph = world.draw(accomulate=False, together=True)
-    plt.show()
-    world.step()
-    graph = world.draw(accomulate=False, together=False)
-    plt.show()
+    world.graph(steps=None, together=True)
+    world.graph(steps=None, together=False)
     world.run()
-    graph = world.draw(accomulate=True, together=False)
-    plt.show()
-    graph = world.draw(accomulate=True, together=True)
-    plt.show()
+    world.graph((0, world.n_steps), together=False)
+    world.graph((0, world.n_steps), together=True)
+
+
+def test_graphs_lead_to_no_unknown_nodes():
+    world = SCML2020World(
+        **SCML2020World.generate(agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent],
+                                 n_steps=10),
+        construct_graphs=True,
+    )
+    world.graph((0, world.n_steps))
+
+

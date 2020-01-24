@@ -31,8 +31,8 @@ happening in the world.
 .. code:: ipython3
 
     world = SCML2020World(
-        **SCML2020World.generate(agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent], n_steps=30), 
-        # agent_name_reveals_type=False, 
+        **SCML2020World.generate(agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent], 
+                                 n_steps=30), 
         construct_graphs=True,
     )
 
@@ -207,15 +207,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_00Buy@0': (0.0, 2310.0000000000005),
-     'balance_00Buy@0': (22969, 27868),
+    {'assets_00Buy@0': (0.0, 3977.484235551573),
+     'balance_00Buy@0': (27919, 35748),
      'bankrupt_00Buy@0': (False, False),
-     'inventory_00Buy@0_input': (0, 231),
-     'inventory_00Buy@0_output': (0, 0),
+     'inventory_00Buy@0_input': (0, 253),
+     'inventory_00Buy@0_output': (0, 52),
      'productivity_00Buy@0': (0.0, 0.0),
-     'score_00Buy@0': (0.0, 0.2635726413862162),
-     'spot_market_loss_00Buy@0': (0.15, 27.9285),
-     'spot_market_quantity_00Buy@0': (0, 240)}
+     'score_00Buy@0': (0.0, 0.35165092294766237),
+     'spot_market_loss_00Buy@0': (0.15, 26.502),
+     'spot_market_quantity_00Buy@0': (0, 0)}
 
 
 .. code:: ipython3
@@ -291,7 +291,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [00Buy@0] of type ['buy_cheap_sell_expensive'] won at [26.357264138621623]%
+    [00Buy@0] of type ['buy_cheap_sell_expensive'] won at [35.16509229476624]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -453,36 +453,36 @@ For example, let’s see some of the contracts that were signed:
         <tr>
           <th>0</th>
           <td>SELLER</td>
-          <td>01Dec@0</td>
+          <td>02Buy@0</td>
+          <td>0</td>
           <td>3</td>
-          <td>1</td>
           <td>10</td>
           <td>0</td>
-          <td>True</td>
+          <td>False</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>11Dec@3</td>
-          <td>BUYER</td>
-          <td>10</td>
-          <td>3</td>
-          <td>38</td>
+          <td>SELLER</td>
+          <td>01Buy@0</td>
           <td>0</td>
-          <td>True</td>
+          <td>1</td>
+          <td>10</td>
+          <td>0</td>
+          <td>False</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>10Dec@3</td>
-          <td>BUYER</td>
-          <td>12</td>
-          <td>2</td>
-          <td>38</td>
+          <td>SELLER</td>
+          <td>01Buy@0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>10</td>
           <td>0</td>
           <td>True</td>
           <td>False</td>
@@ -491,23 +491,23 @@ For example, let’s see some of the contracts that were signed:
         </tr>
         <tr>
           <th>3</th>
-          <td>SELLER</td>
-          <td>01Dec@0</td>
-          <td>5</td>
-          <td>1</td>
-          <td>10</td>
+          <td>10Buy@3</td>
+          <td>BUYER</td>
+          <td>8</td>
+          <td>3</td>
+          <td>47</td>
           <td>0</td>
-          <td>True</td>
           <td>False</td>
+          <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
           <th>4</th>
           <td>SELLER</td>
-          <td>02Dec@0</td>
-          <td>11</td>
-          <td>2</td>
+          <td>01Buy@0</td>
+          <td>9</td>
+          <td>1</td>
           <td>10</td>
           <td>0</td>
           <td>True</td>
@@ -564,49 +564,10 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>0</th>
-          <td>SELLER</td>
-          <td>01Dec@0</td>
-          <td>3</td>
-          <td>1</td>
-          <td>10</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>11Dec@3</td>
-          <td>BUYER</td>
-          <td>10</td>
-          <td>3</td>
-          <td>38</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
           <th>2</th>
-          <td>10Dec@3</td>
-          <td>BUYER</td>
-          <td>12</td>
-          <td>2</td>
-          <td>38</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>3</th>
           <td>SELLER</td>
-          <td>01Dec@0</td>
-          <td>5</td>
+          <td>01Buy@0</td>
+          <td>1</td>
           <td>1</td>
           <td>10</td>
           <td>0</td>
@@ -618,9 +579,48 @@ Let’s check some of the contracts that were fully executed
         <tr>
           <th>4</th>
           <td>SELLER</td>
-          <td>02Dec@0</td>
-          <td>11</td>
+          <td>01Buy@0</td>
+          <td>9</td>
+          <td>1</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>SELLER</td>
+          <td>02Buy@0</td>
+          <td>10</td>
           <td>2</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>SELLER</td>
+          <td>00Buy@0</td>
+          <td>4</td>
+          <td>2</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td>SELLER</td>
+          <td>00Buy@0</td>
+          <td>2</td>
+          <td>5</td>
           <td>10</td>
           <td>0</td>
           <td>True</td>
@@ -672,54 +672,54 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>5</th>
-          <td>09Buy@3</td>
+          <th>3</th>
+          <td>10Buy@3</td>
           <td>BUYER</td>
           <td>8</td>
-          <td>2</td>
-          <td>38</td>
+          <td>3</td>
+          <td>47</td>
           <td>0</td>
-          <td>09Buy@3:product(0.5)</td>
+          <td>10Buy@3:product(0.6666666666666666)</td>
         </tr>
         <tr>
           <th>6</th>
-          <td>10Dec@3</td>
+          <td>10Buy@3</td>
           <td>BUYER</td>
-          <td>9</td>
-          <td>1</td>
-          <td>38</td>
+          <td>10</td>
+          <td>4</td>
+          <td>47</td>
           <td>0</td>
-          <td>10Dec@3:product(1.0)</td>
+          <td>10Buy@3:product(0.75)</td>
         </tr>
         <tr>
-          <th>8</th>
-          <td>09Buy@3</td>
+          <th>7</th>
+          <td>11Buy@3</td>
           <td>BUYER</td>
           <td>4</td>
-          <td>2</td>
-          <td>38</td>
-          <td>0</td>
-          <td>09Buy@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>9</th>
-          <td>10Dec@3</td>
-          <td>BUYER</td>
-          <td>9</td>
-          <td>2</td>
-          <td>38</td>
-          <td>0</td>
-          <td>10Dec@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>16</th>
-          <td>11Dec@3</td>
-          <td>BUYER</td>
-          <td>8</td>
           <td>1</td>
-          <td>38</td>
+          <td>47</td>
           <td>0</td>
-          <td>11Dec@3:product(1.0)</td>
+          <td>11Buy@3:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>09Dec@3</td>
+          <td>BUYER</td>
+          <td>6</td>
+          <td>2</td>
+          <td>47</td>
+          <td>0</td>
+          <td>09Dec@3:product(0.5)</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td>10Buy@3</td>
+          <td>BUYER</td>
+          <td>5</td>
+          <td>1</td>
+          <td>47</td>
+          <td>0</td>
+          <td>10Buy@3:product(1.0)</td>
         </tr>
       </tbody>
     </table>
@@ -754,17 +754,17 @@ Did any agents go bankrupt and when?
 .. parsed-literal::
 
     {'00Buy@0': [],
-     '01Dec@0': [],
-     '02Dec@0': [],
-     '03Buy@1': [],
-     '04Dec@1': [],
-     '05Buy@1': [],
+     '01Buy@0': [],
+     '02Buy@0': [],
+     '03Buy@1': [27, 28, 29],
+     '04Buy@1': [27, 28, 29],
+     '05Buy@1': [26, 27, 28, 29],
      '06Dec@2': [],
-     '07Buy@2': [26, 27, 28, 29],
-     '08Dec@2': [],
-     '09Buy@3': [],
-     '10Dec@3': [],
-     '11Dec@3': []}
+     '07Dec@2': [],
+     '08Buy@2': [25, 26, 27, 28, 29],
+     '09Dec@3': [],
+     '10Buy@3': [],
+     '11Buy@3': []}
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -934,37 +934,37 @@ We can also see the scores that every agent type got
           <th>0</th>
           <td>buy_cheap_sell_expensive_agent</td>
           <td>12.0</td>
-          <td>-0.261077</td>
-          <td>0.601918</td>
-          <td>-1.506046</td>
-          <td>-0.166176</td>
-          <td>-0.143092</td>
-          <td>0.124975</td>
-          <td>0.309321</td>
+          <td>-0.143376</td>
+          <td>0.629573</td>
+          <td>-1.633215</td>
+          <td>-0.177260</td>
+          <td>-0.017646</td>
+          <td>0.327702</td>
+          <td>0.407855</td>
         </tr>
         <tr>
           <th>1</th>
           <td>decentralizing_agent</td>
           <td>12.0</td>
-          <td>0.067284</td>
-          <td>0.055988</td>
-          <td>0.022247</td>
-          <td>0.033031</td>
-          <td>0.044340</td>
-          <td>0.086584</td>
-          <td>0.217533</td>
+          <td>0.094315</td>
+          <td>0.077274</td>
+          <td>-0.014788</td>
+          <td>0.056159</td>
+          <td>0.084603</td>
+          <td>0.125045</td>
+          <td>0.288193</td>
         </tr>
         <tr>
           <th>2</th>
           <td>random_agent</td>
           <td>12.0</td>
-          <td>-0.400688</td>
-          <td>0.507554</td>
-          <td>-1.638861</td>
-          <td>-0.377281</td>
-          <td>-0.245760</td>
-          <td>-0.127157</td>
-          <td>0.085775</td>
+          <td>-0.899693</td>
+          <td>0.713635</td>
+          <td>-1.711207</td>
+          <td>-1.557293</td>
+          <td>-0.970758</td>
+          <td>-0.256738</td>
+          <td>0.026957</td>
         </tr>
       </tbody>
     </table>
@@ -1010,33 +1010,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>02Ran@1</td>
-          <td>random_agent</td>
-          <td>-0.241947</td>
+          <td>00Dec@0</td>
+          <td>decentralizing_agent</td>
+          <td>0.123573</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>03Dec@1</td>
-          <td>decentralizing_agent</td>
-          <td>0.033647</td>
+          <td>07Ran@3</td>
+          <td>random_agent</td>
+          <td>-1.541393</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>04Buy@1</td>
+          <td>08Buy@3</td>
           <td>buy_cheap_sell_expensive_agent</td>
-          <td>-0.140841</td>
+          <td>-0.280800</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>02Dec@1</td>
-          <td>decentralizing_agent</td>
-          <td>0.030435</td>
+          <td>00Buy@0</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>0.167718</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>03Buy@1</td>
-          <td>buy_cheap_sell_expensive_agent</td>
-          <td>-0.145342</td>
+          <td>07Dec@3</td>
+          <td>decentralizing_agent</td>
+          <td>0.015531</td>
         </tr>
       </tbody>
     </table>
