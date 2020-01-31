@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.2.2 (2019.1.31)
+-----------------
+
+* adding components
+* adding second tutorial
+
 0.2.1 (2019.1.23)
 -----------------
 
