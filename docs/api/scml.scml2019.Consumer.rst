@@ -63,6 +63,8 @@ Consumer
       ~Consumer.on_new_cfp
       ~Consumer.on_new_report
       ~Consumer.on_remove_cfp
+      ~Consumer.on_simulation_step_ended
+      ~Consumer.on_simulation_step_started
       ~Consumer.read_config
       ~Consumer.request_negotiation
       ~Consumer.respond_to_negotiation_request
@@ -127,6 +129,8 @@ Consumer
    .. automethod:: on_new_cfp
    .. automethod:: on_new_report
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

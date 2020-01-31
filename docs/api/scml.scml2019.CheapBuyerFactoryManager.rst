@@ -90,6 +90,8 @@ CheapBuyerFactoryManager
       ~CheapBuyerFactoryManager.on_production_failure
       ~CheapBuyerFactoryManager.on_production_success
       ~CheapBuyerFactoryManager.on_remove_cfp
+      ~CheapBuyerFactoryManager.on_simulation_step_ended
+      ~CheapBuyerFactoryManager.on_simulation_step_started
       ~CheapBuyerFactoryManager.post_cfps
       ~CheapBuyerFactoryManager.post_cfps_2
       ~CheapBuyerFactoryManager.process_raw_materials
@@ -189,6 +191,8 @@ CheapBuyerFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: post_cfps
    .. automethod:: post_cfps_2
    .. automethod:: process_raw_materials

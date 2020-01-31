@@ -102,6 +102,8 @@ JavaDoNothingFactoryManager
       ~JavaDoNothingFactoryManager.on_production_failure
       ~JavaDoNothingFactoryManager.on_production_success
       ~JavaDoNothingFactoryManager.on_remove_cfp
+      ~JavaDoNothingFactoryManager.on_simulation_step_ended
+      ~JavaDoNothingFactoryManager.on_simulation_step_started
       ~JavaDoNothingFactoryManager.read_config
       ~JavaDoNothingFactoryManager.requestNegotiation
       ~JavaDoNothingFactoryManager.request_negotiation
@@ -213,6 +215,8 @@ JavaDoNothingFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: requestNegotiation
    .. automethod:: request_negotiation

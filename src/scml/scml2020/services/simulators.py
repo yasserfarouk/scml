@@ -129,7 +129,7 @@ class FactorySimulator:
 
     @property
     def initial_balance(self) -> int:
-        """Initial cash in wallet"""
+        """Initial cash in balance"""
         return self._initial_balance
 
     @property
@@ -311,7 +311,7 @@ class FactorySimulator:
 
         Remarks:
 
-            - The balance is defined as the cash in wallet
+            - The balance is defined as the cash in balance
 
         """
 
@@ -326,7 +326,7 @@ class FactorySimulator:
 
         Remarks:
 
-            - The balance is defined as the cash in wallet
+            - The balance is defined as the cash in balance
 
         """
 
@@ -342,7 +342,7 @@ class FactorySimulator:
 
         Remarks:
 
-            - The balance is defined as the cash in wallet
+            - The balance is defined as the cash in balance
 
         """
 
@@ -405,7 +405,7 @@ class FactorySimulator:
 
             payment: Amount payed
             t: time
-            ignore_money_shortage: If True, shortage in money will be ignored and the wallet can go negative
+            ignore_money_shortage: If True, shortage in money will be ignored and the balance can go negative
 
         Returns:
             Success or failure
@@ -430,7 +430,7 @@ class FactorySimulator:
         # for i in range(len(b)):
         #     b[i] -= payment
         #     if b[i] < self.bankruptcy_limit:
-        #         self._wallet[t:] = backup
+        #         self._balance[t:] = backup
         #         return False
         #     if b[i] < 0 <= b[i] + payment:
         #         payment -= int(math.ceil(self.interest_rate * b[i]))
@@ -490,7 +490,7 @@ class FactorySimulator:
             quantity: quantity to buy
             price: unit price
             t: time
-            ignore_money_shortage: If True, shortage in money will be ignored and the wallet can go negative
+            ignore_money_shortage: If True, shortage in money will be ignored and the balance can go negative
 
         Returns:
 
@@ -509,9 +509,9 @@ class FactorySimulator:
             raise ValueError(
                 f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})"
             )
-        wallet = self._balance.copy()
+        balance = self._balance.copy()
         if not self.pay(price * quantity, t, ignore_money_shortage):
-            self._balance = wallet
+            self._balance = balance
             return False
         return self.transport_to(product, quantity, t, True)
 
@@ -841,7 +841,7 @@ class FactorySimulator:
         return True
 
     def set_state(
-        self, t: int, inventory: np.array, wallet: int, commands: np.array
+        self, t: int, inventory: np.array, balance: int, commands: np.array
     ) -> None:
         """
         Sets the current state at the given time-step. It implicitly causes a fix_before(t + 1)
@@ -850,14 +850,14 @@ class FactorySimulator:
 
             t: Time step to set the state at
             inventory: quantity of every product (array of integers of size `n_products`)
-            wallet: Cash in wallet
+            balance: Cash in balance
             commands: Line schedules (array of process numbers/NO_PRODUCTION of size `n_lines`)
 
         """
         self._inventory[:, t:] += inventory.reshape(
             self._n_products, 1
         ) - self._inventory[:, t].reshape(self._n_products, 1)
-        self._balance[t:] += wallet - self._balance[t]
+        self._balance[t:] += balance - self._balance[t]
         self.commands[:, t] = commands
         self.fix_before(t)
 

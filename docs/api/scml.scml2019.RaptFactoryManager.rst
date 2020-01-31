@@ -67,6 +67,8 @@ RaptFactoryManager
       ~RaptFactoryManager.on_production_failure
       ~RaptFactoryManager.on_production_success
       ~RaptFactoryManager.on_remove_cfp
+      ~RaptFactoryManager.on_simulation_step_ended
+      ~RaptFactoryManager.on_simulation_step_started
       ~RaptFactoryManager.read_config
       ~RaptFactoryManager.request_negotiation
       ~RaptFactoryManager.respond_to_negotiation_request
@@ -136,6 +138,8 @@ RaptFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

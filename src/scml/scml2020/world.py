@@ -1,15 +1,12 @@
 """Implements the world class for the SCML2020 world """
 import copy
-import functools
 import itertools
 import logging
 import math
-import numbers
 import random
-from abc import abstractmethod
-from collections import defaultdict, namedtuple
 import sys
-from dataclasses import dataclass, field
+from collections import defaultdict, namedtuple
+from dataclasses import dataclass
 from typing import (
     Optional,
     Dict,
@@ -23,11 +20,11 @@ from typing import (
     Type,
     Iterable,
 )
-import pandas as pd
+
 import networkx as nx
 import numpy as np
+import pandas as pd
 from matplotlib.axis import Axis
-
 from negmas import (
     Contract,
     Action,
@@ -39,7 +36,6 @@ from negmas import (
     AgentMechanismInterface,
     MechanismState,
     Issue,
-    Entity,
     SAONegotiator,
     SAOController,
     PassThroughSAONegotiator,
@@ -49,11 +45,12 @@ from negmas.situated import (
     World,
     TimeInAgreementMixin,
     BreachProcessing,
-    EDGE_TYPES,
     DEFAULT_EDGE_TYPES,
+    Operations,
 )
-from .common import *
+
 from scml.scml2019.utils import _realin
+from .common import *
 
 __all__ = [
     "FactoryState",
@@ -781,20 +778,6 @@ class Factory:
         return pay_back
 
 
-def is_system_agent(aid: str) -> bool:
-    """
-    Checks whether an agent is a system agent or not
-
-    Args:
-        aid: Agent ID
-    """
-    return (
-        aid.startswith(SYSTEM_SELLER_ID)
-        or aid.startswith(SYSTEM_BUYER_ID)
-        or aid.startswith(COMPENSATION_ID)
-    )
-
-
 class AWI(AgentWorldInterface):
     """The Agent SCML2020World Interface for SCML2020 world allowing a single process per agent"""
 
@@ -988,6 +971,7 @@ class AWI(AgentWorldInterface):
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
+        partial_ok: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Orders the factory to run the given process at the given line at the given step
@@ -1001,6 +985,7 @@ class AWI(AgentWorldInterface):
             line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
             override: Whether to override existing production commands or not
             method: When to schedule the command if step was set to a range. Options are latest, earliest
+            partial_ok: If true, allows partial scheduling
 
         Returns:
             Tuple[int, int] giving the steps and lines at which production is scheduled.
@@ -1012,7 +997,7 @@ class AWI(AgentWorldInterface):
               given
         """
         return self._world.a2f[self.agent.id].schedule_production(
-            process, repeats, step, line, override, method
+            process, repeats, step, line, override, method, partial_ok
         )
 
     def order_production(
@@ -1070,6 +1055,20 @@ class AWI(AgentWorldInterface):
             repeats, step, line, override, method
         )
 
+    def set_commands(self, commands: np.ndarray, step: int = -1) -> None:
+        """
+        Sets the production commands for all lines in the given step
+
+        Args:
+
+            commands: n_lines vector of commands. A command is either a process number to run or `NO_COMMAND` to keep
+                      the line idle
+            step: The step to set the commands at. If < 0, it means current step
+        """
+        if step < 0:
+            step = self._world.current_step
+        self._world.a2f[self.agent.id].commands[step, :] = commands
+
     def cancel_production(self, step: int, line: int) -> bool:
         """
         Cancels any production commands on that line at this step
@@ -1096,6 +1095,26 @@ class AWI(AgentWorldInterface):
     def state(self) -> FactoryState:
         """Receives the factory state"""
         return self._world.a2f[self.agent.id].state
+
+    def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
+        """Returns a dictionary mapping time-steps to financial reports of the given agent"""
+        return self.bb_read("reports_agent", aid)
+
+    def reports_at_step(self, step: int) -> Dict[str, FinancialReport]:
+        """Returns a dictionary mapping agent ID to its financial report for the given time-step"""
+        result = self.bb_read("reports_time", str(step))
+        if result is not None:
+            return result
+        steps = sorted(
+            [
+                int(i)
+                for i in self.bb_query("reports_time", None, query_keys=True).keys()
+            ]
+        )
+        for (s, prev) in zip(steps[1:], steps[:-1]):
+            if s > step:
+                return self.bb_read("reports_time", prev)
+        return self.bb_read("reports_time", str(steps[-1]))
 
     @property
     def profile(self) -> FactoryProfile:
@@ -1213,6 +1232,20 @@ class SCML2020Agent(Agent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def init(self):
+        pass
+
+    def step(self):
+        pass
+
+    def on_contract_breached(
+        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+    ) -> None:
+        pass
+
+    def on_contract_executed(self, contract: Contract) -> None:
+        pass
+
     def _respond_to_negotiation_request(
         self,
         initiator: str,
@@ -1243,7 +1276,25 @@ class SCML2020Agent(Agent):
     def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
         pass
 
-    @abstractmethod
+    @property
+    def internal_state(self) -> Dict[str, Any]:
+        """Returns the internal state of the agent for debugging purposes"""
+        return {}
+
+    def on_negotiation_failure(
+        self,
+        partners: List[str],
+        annotation: Dict[str, Any],
+        mechanism: AgentMechanismInterface,
+        state: MechanismState,
+    ) -> None:
+        """Called whenever a negotiation ends without agreement"""
+
+    def on_negotiation_success(
+        self, contract: Contract, mechanism: AgentMechanismInterface
+    ) -> None:
+        """Called whenever a negotiation ends with agreement"""
+
     def on_agent_bankrupt(
         self,
         agent: str,
@@ -1269,7 +1320,6 @@ class SCML2020Agent(Agent):
 
         """
 
-    @abstractmethod
     def on_failures(self, failures: List[Failure]) -> None:
         """
         Called whenever there are failures either in production or in execution of guaranteed transactions
@@ -1279,7 +1329,6 @@ class SCML2020Agent(Agent):
             failures: A list of `Failure` s.
         """
 
-    @abstractmethod
     def respond_to_negotiation_request(
         self,
         initiator: str,
@@ -1321,6 +1370,7 @@ class SCML2020Agent(Agent):
 
         Remarks:
 
+            - Not called in SCML2020 competition.
             - The inventory will contain zero items of all products that the factory does not buy or sell
             - The default behavior is to just retrun commands confirming production of everything.
         """
@@ -1557,7 +1607,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         borrow_on_breach=True,
         bankruptcy_limit=0.0,
         liquidation_rate=1.0,
-        spot_market_global_loss=0.15,
+        spot_market_global_loss=0.30,
         interest_rate=0.05,
         financial_report_period=5,
         # compensation parameters (for victims of bankrupt agents)
@@ -1568,7 +1618,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         exogenous_horizon: int = None,
         exogenous_force_max: bool = False,
         # production failure parameters
-        production_confirm=True,
+        production_confirm=False,
         production_buy_missing=False,
         production_no_borrow=True,
         production_no_bankruptcy=False,
@@ -1583,11 +1633,13 @@ class SCML2020World(TimeInAgreementMixin, World):
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
         negotiation_speed=21,
+        negotiation_quota_per_step=float("inf"),
+        negotiation_quota_per_simulation=float("inf"),
         # trading price parameters
         trading_price_discount=0.9,
         # spot market parameters
         spot_discount=0.9,
-        spot_multiplier=0.1,
+        spot_multiplier=0.05,
         # simulation parameters
         signing_delay=0,
         force_signing=False,
@@ -1627,7 +1679,11 @@ class SCML2020World(TimeInAgreementMixin, World):
             bulletin_board=None,
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.scml2020.AWI",
-            mechanisms={"negmas.sao.SAOMechanism": {}},
+            mechanisms={
+                "negmas.sao.SAOMechanism": dict(
+                    end_on_no_response=True, avoid_ultimatum=True, dynamic_entry=False
+                )
+            },
             default_signing_delay=signing_delay,
             n_steps=n_steps,
             time_limit=time_limit,
@@ -1637,10 +1693,18 @@ class SCML2020World(TimeInAgreementMixin, World):
             neg_step_time_limit=neg_step_time_limit,
             force_signing=force_signing,
             batch_signing=batch_signing,
-            sign_first=False,
-            sign_last=False,
-            sign_after_execution=False,
-            sign_before_execution=False,
+            negotiation_quota_per_step=negotiation_quota_per_step,
+            negotiation_quota_per_simulation=negotiation_quota_per_simulation,
+            operations=(
+                Operations.StatsUpdate,
+                Operations.SimulationStep,
+                Operations.Negotiations,
+                Operations.ContractSigning,
+                Operations.ContractExecution,
+                Operations.AgentSteps,
+                Operations.SimulationStep,
+                Operations.StatsUpdate,
+            ),
             name=name,
             **kwargs,
         )
@@ -1813,11 +1877,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             a.id = a.name
             self.join(a, i)
             agents.append(a)
-        self.agent_types = [
-            get_class(_)
-            ._type_name()
-            for _ in agent_types
-        ]
+        self.agent_types = [get_class(_)._type_name() for _ in agent_types]
         self.agent_params = [
             {k: v for k, v in _.items() if k != "name"} for _ in agent_params
         ]
@@ -1971,6 +2031,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self._agent_spot_loss = self.spot_market_global_loss * np.ones(
             (n_agents, n_steps)
         )
+        self._agent_spot_quantity = np.zeros((n_agents, n_steps), dtype=int)
 
     @classmethod
     def generate(
@@ -2139,7 +2200,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             process_of_agent[f:l] = i
             if cost_increases_with_level:
                 production_costs[f:l] = np.round(
-                    production_costs[f:l] * math.sqrt(i + 1)
+                    production_costs[f:l] * (i + 1)  # math.sqrt(i + 1)
                 ).astype(int)
 
         # generate external contract amounts (controlled by productivity):
@@ -2320,7 +2381,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             # production (even though it may not have enough lines to do so)
             cash_availability = _realin(cash_availability)
             balance = np.ceil(
-                np.sum(total_costs, axis=1)  # / n_agents_per_process
+                np.sum(total_costs, axis=1) / n_agents_per_process
             ).astype(int)
             initial_balance = []
             for b, a in zip(balance, n_agents_per_process):
@@ -2434,6 +2495,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             n_steps=n_steps,
             info=info,
             force_signing=force_signing,
+            exogenous_horizon=horizon,
             **kwargs,
         )
 
@@ -2476,43 +2538,39 @@ class SCML2020World(TimeInAgreementMixin, World):
         if reports_agent.get(agent.id, None) is None:
             reports_agent[agent.id] = {}
         reports_agent[agent.id][self.current_step] = report
-        if reports_time.get(self.current_step, None) is None:
-            reports_time[self.current_step] = {}
-        reports_time[self.current_step][agent.id] = report
+        if reports_time.get(str(self.current_step), None) is None:
+            reports_time[str(self.current_step)] = {}
+        reports_time[str(self.current_step)][agent.id] = report
 
-    def simulation_step_before_execution(self):
+    def simulation_step(self, stage):
         s = self.current_step
+        if stage == 0:
+            # pay interests for negative balances
+            # -----------------------------------
+            if self.interest_rate > 0.0:
+                for agent, factory, _ in self.afp:
+                    if factory.current_balance < 0 and not factory.is_bankrupt:
+                        to_pay = -int(
+                            math.ceil(self.interest_rate * factory.current_balance)
+                        )
+                        factory.pay(to_pay)
 
-        # pay interests for negative balances
-        # -----------------------------------
-        if self.interest_rate > 0.0:
-            for agent, factory, _ in self.afp:
-                if factory.current_balance < 0 and not factory.is_bankrupt:
-                    to_pay = -int(
-                        math.ceil(self.interest_rate * factory.current_balance)
+            # Register exogenous contracts as concluded
+            # -----------------------------------------
+            for contract in self.exogenous_contracts[s]:
+                self.on_contract_concluded(
+                    contract, to_be_signed_at=contract.to_be_signed_at
+                )
+                if self.exogenous_force_max:
+                    contract.signatures = dict(
+                        zip(contract.partners, contract.partners)
                     )
-                    factory.pay(to_pay)
-
-        # Register exogenous contracts as concluded
-        # -----------------------------------------
-        for contract in self.exogenous_contracts[s]:
-            self.on_contract_concluded(
-                contract, to_be_signed_at=contract.to_be_signed_at
-            )
-            if self.exogenous_force_max:
-                contract.signatures = dict(zip(contract.partners, contract.partners))
-            else:
-                if SYSTEM_SELLER_ID in contract.partners:
-                    contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
                 else:
-                    contract.signatures[SYSTEM_BUYER_ID] = SYSTEM_BUYER_ID
-
-    def simulation_step_after_execution(self):
-        s = self.current_step
-
-        # sign all contracts
-        # ------------------
-        self._process_unsigned()
+                    if SYSTEM_SELLER_ID in contract.partners:
+                        contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
+                    else:
+                        contract.signatures[SYSTEM_BUYER_ID] = SYSTEM_BUYER_ID
+            return
 
         # update trading price information
         # --------------------------------
@@ -2618,6 +2676,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 line=action.params.get("line", -1),
                 override=action.params.get("override", True),
                 method=action.params.get("method", "latest"),
+                repeats=action.params.get("repeats", 1),
             )
             return s >= 0
         elif action.type == "cancel":
@@ -2882,6 +2941,16 @@ class SCML2020World(TimeInAgreementMixin, World):
         #     self.penalties += penalty
         # return 0
 
+    def _spot_loss(self, aid: str) -> float:
+        base = (
+            self._agent_spot_loss[self.a2i[aid], self.current_step] * self.spot_discount
+        )
+        return (
+            base
+            + self._agent_spot_quantity[self.a2i[aid], self.current_step]
+            * self.spot_multiplier
+        )
+
     def start_contract_execution(self, contract: Contract) -> Optional[Set[Breach]]:
         self.logdebug(f"Executing {str(contract)}")
         s = self.current_step
@@ -2924,9 +2993,14 @@ class SCML2020World(TimeInAgreementMixin, World):
                     seller_factory = self.compensation_factory
                 else:
                     buyer_factory = self.compensation_factory
+            else:
+                q = 0
         if seller_factory == buyer_factory:
             # means that both the seller and buyer are bankrupt
             return None
+
+        if q == 0:
+            return breaches
 
         p = q * u
         assert t == self.current_step
@@ -2963,10 +3037,11 @@ class SCML2020World(TimeInAgreementMixin, World):
             if seller_factory != self.compensation_factory:
                 seller_indx = self.a2i[seller_id]
                 effective_unit = seller_factory.spot_price(
-                    product, self._agent_spot_loss[seller_indx, s]
+                    product, self._spot_loss(seller_id)
                 )
                 paid = seller_factory.pay(missing_product * effective_unit)
                 paid_for = paid // effective_unit
+                self._agent_spot_quantity[seller_indx, self.current_step] += paid_for
                 stored = seller_factory.store(
                     product, paid_for, False, 0.0, no_bankruptcy=True, no_borrowing=True
                 )
@@ -3082,7 +3157,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             compensation_quantity = contract.q
             if contract.is_seller:
                 compensation_unit = factory.spot_price(
-                    contract.product, self._agent_spot_loss[self.a2i[factory.agent_id], self.current_step]
+                    contract.product,
+                    self._agent_spot_loss[
+                        self.a2i[factory.agent_id], self.current_step
+                    ],
                 )
             else:
                 compensation_unit = contract.u
@@ -3208,7 +3286,9 @@ class SCML2020World(TimeInAgreementMixin, World):
     def contracts_df(self) -> pd.DataFrame:
         """Returns a pandas data frame with the contracts"""
         contracts = pd.DataFrame(self.saved_contracts)
-        contracts["product_index"] = contracts.product_name.str.replace("p", "").astype(int)
+        contracts["product_index"] = contracts.product_name.str.replace("p", "").astype(
+            int
+        )
         contracts["breached"] = contracts.breaches.str.len() > 0
         contracts["executed"] = contracts.executed_at >= 0
         contracts["erred"] = contracts.erred_at >= 0

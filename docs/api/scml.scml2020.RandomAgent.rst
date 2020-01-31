@@ -14,6 +14,7 @@ RandomAgent
       ~RandomAgent.awi
       ~RandomAgent.id
       ~RandomAgent.initialized
+      ~RandomAgent.internal_state
       ~RandomAgent.name
       ~RandomAgent.negotiation_requests
       ~RandomAgent.requested_negotiations
@@ -27,7 +28,7 @@ RandomAgent
 
    .. autosummary::
 
-      ~RandomAgent.can_be_produced
+      ~RandomAgent.acceptable_unit_price
       ~RandomAgent.checkpoint
       ~RandomAgent.checkpoint_info
       ~RandomAgent.confirm_production
@@ -58,6 +59,8 @@ RandomAgent
       ~RandomAgent.on_negotiation_failure_
       ~RandomAgent.on_negotiation_success
       ~RandomAgent.on_negotiation_success_
+      ~RandomAgent.on_simulation_step_ended
+      ~RandomAgent.on_simulation_step_started
       ~RandomAgent.read_config
       ~RandomAgent.respond_to_negotiation_request
       ~RandomAgent.respond_to_negotiation_request_
@@ -68,6 +71,8 @@ RandomAgent
       ~RandomAgent.start_negotiations
       ~RandomAgent.step
       ~RandomAgent.step_
+      ~RandomAgent.target_quantities
+      ~RandomAgent.target_quantity
 
    .. rubric:: Attributes Documentation
 
@@ -75,6 +80,7 @@ RandomAgent
    .. autoattribute:: awi
    .. autoattribute:: id
    .. autoattribute:: initialized
+   .. autoattribute:: internal_state
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: requested_negotiations
@@ -86,7 +92,7 @@ RandomAgent
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: can_be_produced
+   .. automethod:: acceptable_unit_price
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
    .. automethod:: confirm_production
@@ -117,6 +123,8 @@ RandomAgent
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_
@@ -127,3 +135,5 @@ RandomAgent
    .. automethod:: start_negotiations
    .. automethod:: step
    .. automethod:: step_
+   .. automethod:: target_quantities
+   .. automethod:: target_quantity

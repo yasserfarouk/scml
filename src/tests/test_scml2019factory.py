@@ -128,7 +128,7 @@ def slow_simulator(profiles, products):
     )
 
 
-@given(st.integers(min_value=0, max_value=n_steps * 2))
+@given(st.integers(min_value=0, max_value=n_steps))
 def test_slow_factory_simulator_can_be_checked_at_any_time(slow_simulator, t):
     assert slow_simulator.wallet_at(t) == initial_wallet
     assert slow_simulator.total_storage_at(t) == sum(initial_storage.values())

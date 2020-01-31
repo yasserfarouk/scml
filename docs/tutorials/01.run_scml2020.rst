@@ -1,10 +1,3 @@
-.. code:: ipython3
-
-    import pandas as pd
-    import numpy as np
-    from time import sleep
-    from pprint import pprint
-
 Run a session of the SCML world (2020)
 --------------------------------------
 
@@ -30,9 +23,16 @@ happening in the world.
 
 .. code:: ipython3
 
+    # agent_types = [DecentralizingAgent, BuyCheapSellExpensiveAgent, ReactiveAgent, IndDecentralizingAgent, MovingRangeAgent]
+    agent_types = [DecentralizingAgent, MovingRangeAgent]
+
+.. code:: ipython3
+
     world = SCML2020World(
-        **SCML2020World.generate(agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent], 
-                                 n_steps=30), 
+        **SCML2020World.generate(
+            agent_types=agent_types,
+            n_steps=30
+        ), 
         construct_graphs=True,
     )
 
@@ -88,20 +88,6 @@ Several other market statistics are available:
 
     ['n_registered_negotiations_before',
      'n_contracts_dropped',
-     'n_contracts_executed',
-     'n_contracts_erred',
-     'n_contracts_nullified',
-     'n_contracts_cancelled',
-     'n_breaches',
-     'breach_level',
-     'n_contracts_signed',
-     'n_contracts_concluded',
-     'n_negotiations',
-     'n_negotiation_rounds_successful',
-     'n_negotiation_rounds_failed',
-     'n_registered_negotiations_after',
-     'activity_level',
-     'step_time',
      'n_contracts_nullified_now',
      'n_bankrupt',
      'trading_price_0',
@@ -123,6 +109,22 @@ Several other market statistics are available:
      'market_size',
      'production_failures',
      'bankruptcy',
+     'n_contracts_executed',
+     'n_contracts_erred',
+     'n_contracts_nullified',
+     'n_contracts_cancelled',
+     'n_breaches',
+     'breach_level',
+     'n_contracts_signed',
+     'n_contracts_concluded',
+     'n_negotiations',
+     'n_negotiation_rounds_successful',
+     'n_negotiation_rounds_failed',
+     'n_negotiation_successful',
+     'n_negotiation_failed',
+     'n_registered_negotiations_after',
+     'activity_level',
+     'step_time',
      'total_time']
 
 
@@ -153,15 +155,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_00Buy@0',
-     'spot_market_loss_00Buy@0',
-     'balance_00Buy@0',
-     'inventory_00Buy@0_input',
-     'inventory_00Buy@0_output',
-     'productivity_00Buy@0',
-     'assets_00Buy@0',
-     'bankrupt_00Buy@0',
-     'score_00Buy@0']
+    ['spot_market_quantity_02Dec@0',
+     'spot_market_loss_02Dec@0',
+     'balance_02Dec@0',
+     'inventory_02Dec@0_input',
+     'inventory_02Dec@0_output',
+     'productivity_02Dec@0',
+     'assets_02Dec@0',
+     'bankrupt_02Dec@0',
+     'score_02Dec@0']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -207,15 +209,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_00Buy@0': (0.0, 3977.484235551573),
-     'balance_00Buy@0': (27919, 35748),
-     'bankrupt_00Buy@0': (False, False),
-     'inventory_00Buy@0_input': (0, 253),
-     'inventory_00Buy@0_output': (0, 52),
-     'productivity_00Buy@0': (0.0, 0.0),
-     'score_00Buy@0': (0.0, 0.35165092294766237),
-     'spot_market_loss_00Buy@0': (0.15, 26.502),
-     'spot_market_quantity_00Buy@0': (0, 0)}
+    {'assets_02Dec@0': (162.0, 1248.2477727434095),
+     'balance_02Dec@0': (7196, 10214),
+     'bankrupt_02Dec@0': (False, False),
+     'inventory_02Dec@0_input': (0, 0),
+     'inventory_02Dec@0_output': (9, 51),
+     'productivity_02Dec@0': (0.9, 0.0),
+     'score_02Dec@0': (-0.0012352456766401318, 0.48752729705897674),
+     'spot_market_loss_02Dec@0': (0.3, 0.5565),
+     'spot_market_quantity_02Dec@0': (0, 0)}
 
 
 .. code:: ipython3
@@ -291,7 +293,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [00Buy@0] of type ['buy_cheap_sell_expensive'] won at [35.16509229476624]%
+    [02Dec@0] of type ['decentralizing'] won at [48.75272970589767]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -333,7 +335,7 @@ We can actually check what happens to ALL competitors:
     for name in snames:    
         profit.plot(100.0 * (np.asarray(world.stats[f'balance_{name}'])/world.stats[f'balance_{name}'][0] - 1.0), label=name)
         score.plot(100 * np.asarray(world.stats[f'score_{name}']), label=name)
-    profit.set(xlabel='Simulation Step', ylabel='Player Profit (%)')
+    profit.set(xlabel='Simulation Step', ylabel='Player Profit Ignoring Inventory (%)')
     profit.legend(loc='lower left')
     score.set(xlabel='Simulation Step', ylabel='Player Score (%)')
     fig.show()
@@ -341,6 +343,24 @@ We can actually check what happens to ALL competitors:
 
 
 .. image:: 01.run_scml2020_files/01.run_scml2020_31_0.png
+
+
+.. code:: ipython3
+
+    from scml.scml2020.world import is_system_agent
+    fig, (profit, score) = plt.subplots(1, 2)
+    snames = sorted(world.non_system_agent_names)
+    for name in snames:    
+        profit.plot((np.asarray(world.stats[f'balance_{name}'])), label=name)
+        score.plot(np.asarray(world.stats[f'score_{name}'])*(world.stats[f'balance_{name}'][0]), label=name)
+    profit.set(xlabel='Simulation Step', ylabel='Player Balance ($)')
+    profit.legend(loc='lower left')
+    score.set(xlabel='Simulation Step', ylabel='Player Score Unnormalized ($)')
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_32_0.png
 
 
 or just look at the end of the game
@@ -356,11 +376,35 @@ or just look at the end of the game
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
     score.bar(world.non_system_agent_names, final_scores)
     profit.bar(world.non_system_agent_names, final_profits)
+    score.set(ylabel="Final Score (%)")
+    profit.set(ylabel="Final Profit (%)")
+    
     fig.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_33_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_34_0.png
+
+
+.. code:: ipython3
+
+    fig, (score, profit) = plt.subplots(1, 2)
+    final_scores = [world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0]) 
+                    for _ in world.non_system_agent_names]
+    final_profits = [world.stats[f"balance_{_}"][-1] 
+                     for _ in world.non_system_agent_names]
+    plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
+    plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
+    score.bar(world.non_system_agent_names, final_scores)
+    profit.bar(world.non_system_agent_names, final_profits)
+    score.set(ylabel="Final Unnormalized Score ($)")
+    profit.set(ylabel="Final Balance  ($)")
+    
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_35_0.png
 
 
 You can inspect what happened in the simulation by plotting different
@@ -380,7 +424,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_35_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_37_0.png
 
 
 .. code:: ipython3
@@ -396,7 +440,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_38_0.png
 
 
 You can dig futher to understand what happened during this siumulation.
@@ -412,7 +456,7 @@ For example, let’s see some of the contracts that were signed:
 
     fields = ["seller_name", "buyer_name", "delivery_time", "quantity", "unit_price",
               "signed_at", "executed", "breached", "nullified", "erred"]
-    signed[fields].head()
+    signed[fields].sort_values(["quantity", "unit_price"], ascending=False).head(10)
 
 
 
@@ -451,67 +495,132 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>0</th>
-          <td>SELLER</td>
-          <td>02Buy@0</td>
-          <td>0</td>
-          <td>3</td>
-          <td>10</td>
-          <td>0</td>
+          <th>738</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>18</td>
+          <td>38</td>
+          <td>41</td>
+          <td>12</td>
           <td>False</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>SELLER</td>
-          <td>01Buy@0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>10</td>
-          <td>0</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>SELLER</td>
-          <td>01Buy@0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>10</td>
-          <td>0</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
+        </tr>
+        <tr>
+          <th>353</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>12</td>
+          <td>35</td>
+          <td>43</td>
+          <td>2</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>3</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
+          <th>359</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>12</td>
+          <td>35</td>
+          <td>43</td>
+          <td>2</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>485</th>
+          <td>07Dec@2</td>
+          <td>10Dec@3</td>
+          <td>11</td>
+          <td>32</td>
+          <td>64</td>
+          <td>5</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>432</th>
+          <td>07Dec@2</td>
+          <td>11Dec@3</td>
+          <td>12</td>
+          <td>32</td>
+          <td>59</td>
+          <td>4</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>387</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
           <td>8</td>
+          <td>29</td>
+          <td>40</td>
           <td>3</td>
-          <td>47</td>
-          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>530</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>11</td>
+          <td>25</td>
+          <td>28</td>
+          <td>7</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>542</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>11</td>
+          <td>25</td>
+          <td>28</td>
+          <td>7</td>
           <td>False</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>4</th>
-          <td>SELLER</td>
-          <td>01Buy@0</td>
-          <td>9</td>
-          <td>1</td>
-          <td>10</td>
-          <td>0</td>
+          <th>494</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>14</td>
+          <td>18</td>
+          <td>28</td>
+          <td>6</td>
           <td>True</td>
           <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>549</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>14</td>
+          <td>18</td>
+          <td>28</td>
+          <td>7</td>
+          <td>False</td>
+          <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
@@ -525,7 +634,7 @@ Let’s check some of the contracts that were fully executed
 
 .. code:: ipython3
 
-    signed.loc[signed.executed, fields].head()
+    signed.loc[signed.executed, fields].sort_values(["quantity", "unit_price"], ascending=False).head(10)
 
 
 
@@ -564,65 +673,130 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>2</th>
-          <td>SELLER</td>
-          <td>01Buy@0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>10</td>
-          <td>0</td>
+          <th>387</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>8</td>
+          <td>29</td>
+          <td>40</td>
+          <td>3</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>4</th>
-          <td>SELLER</td>
-          <td>01Buy@0</td>
-          <td>9</td>
-          <td>1</td>
-          <td>10</td>
-          <td>0</td>
+          <th>530</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>11</td>
+          <td>25</td>
+          <td>28</td>
+          <td>7</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>5</th>
-          <td>SELLER</td>
-          <td>02Buy@0</td>
-          <td>10</td>
-          <td>2</td>
-          <td>10</td>
-          <td>0</td>
+          <th>494</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>14</td>
+          <td>18</td>
+          <td>28</td>
+          <td>6</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>8</th>
-          <td>SELLER</td>
-          <td>00Buy@0</td>
+          <th>839</th>
+          <td>06Dec@2</td>
+          <td>11Dec@3</td>
+          <td>21</td>
+          <td>17</td>
+          <td>60</td>
+          <td>15</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>652</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>18</td>
+          <td>17</td>
+          <td>28</td>
+          <td>10</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>436</th>
+          <td>02Dec@0</td>
+          <td>03Dec@1</td>
+          <td>11</td>
+          <td>17</td>
+          <td>26</td>
           <td>4</td>
-          <td>2</td>
-          <td>10</td>
-          <td>0</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>12</th>
-          <td>SELLER</td>
-          <td>00Buy@0</td>
-          <td>2</td>
-          <td>5</td>
-          <td>10</td>
-          <td>0</td>
+          <th>428</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>12</td>
+          <td>16</td>
+          <td>28</td>
+          <td>4</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>570</th>
+          <td>02Dec@0</td>
+          <td>03Dec@1</td>
+          <td>16</td>
+          <td>16</td>
+          <td>28</td>
+          <td>8</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>254</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>6</td>
+          <td>16</td>
+          <td>26</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>290</th>
+          <td>02Dec@0</td>
+          <td>03Dec@1</td>
+          <td>7</td>
+          <td>16</td>
+          <td>26</td>
+          <td>1</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -636,7 +810,7 @@ Let’s check some of the contracts that were fully executed
 
 .. code:: ipython3
 
-    signed.loc[signed.breached, fields[:-4] + ["breaches"]].head()
+    signed.loc[signed.breached, fields[:-4] + ["breaches"]].sort_values(["quantity", "unit_price"], ascending=False).head(10)
 
 
 
@@ -672,54 +846,104 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>3</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
-          <td>8</td>
-          <td>3</td>
-          <td>47</td>
-          <td>0</td>
-          <td>10Buy@3:product(0.6666666666666666)</td>
+          <th>738</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>18</td>
+          <td>38</td>
+          <td>41</td>
+          <td>12</td>
+          <td>03Dec@1:product(0.2894736842105263)</td>
         </tr>
         <tr>
-          <th>6</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
-          <td>10</td>
-          <td>4</td>
-          <td>47</td>
-          <td>0</td>
-          <td>10Buy@3:product(0.75)</td>
-        </tr>
-        <tr>
-          <th>7</th>
-          <td>11Buy@3</td>
-          <td>BUYER</td>
-          <td>4</td>
-          <td>1</td>
-          <td>47</td>
-          <td>0</td>
-          <td>11Buy@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>10</th>
-          <td>09Dec@3</td>
-          <td>BUYER</td>
-          <td>6</td>
+          <th>353</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>12</td>
+          <td>35</td>
+          <td>43</td>
           <td>2</td>
-          <td>47</td>
-          <td>0</td>
-          <td>09Dec@3:product(0.5)</td>
+          <td>03Dec@1:product(0.7142857142857143)</td>
         </tr>
         <tr>
-          <th>11</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
+          <th>359</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>12</td>
+          <td>35</td>
+          <td>43</td>
+          <td>2</td>
+          <td>03Dec@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>485</th>
+          <td>07Dec@2</td>
+          <td>10Dec@3</td>
+          <td>11</td>
+          <td>32</td>
+          <td>64</td>
           <td>5</td>
-          <td>1</td>
-          <td>47</td>
-          <td>0</td>
-          <td>10Buy@3:product(1.0)</td>
+          <td>07Dec@2:product(0.4375)</td>
+        </tr>
+        <tr>
+          <th>432</th>
+          <td>07Dec@2</td>
+          <td>11Dec@3</td>
+          <td>12</td>
+          <td>32</td>
+          <td>59</td>
+          <td>4</td>
+          <td>07Dec@2:product(0.6875)</td>
+        </tr>
+        <tr>
+          <th>542</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>11</td>
+          <td>25</td>
+          <td>28</td>
+          <td>7</td>
+          <td>03Dec@1:product(0.72)</td>
+        </tr>
+        <tr>
+          <th>549</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>14</td>
+          <td>18</td>
+          <td>28</td>
+          <td>7</td>
+          <td>00Dec@0:product(0.6666666666666666)</td>
+        </tr>
+        <tr>
+          <th>703</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>16</td>
+          <td>17</td>
+          <td>26</td>
+          <td>11</td>
+          <td>00Dec@0:product(0.11764705882352941)</td>
+        </tr>
+        <tr>
+          <th>346</th>
+          <td>00Dec@0</td>
+          <td>03Dec@1</td>
+          <td>10</td>
+          <td>16</td>
+          <td>28</td>
+          <td>2</td>
+          <td>00Dec@0:product(0.125)</td>
+        </tr>
+        <tr>
+          <th>914</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>21</td>
+          <td>16</td>
+          <td>28</td>
+          <td>17</td>
+          <td>03Dec@1:product(0.625)</td>
         </tr>
       </tbody>
     </table>
@@ -740,31 +964,45 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_44_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_46_0.png
+
+
+.. code:: ipython3
+
+    fig, ax = plt.subplots(1, 3)
+    for i, x in enumerate(["delivery_time", "unit_price", "product_index"]):
+        ax[i].scatter(signed.quantity, signed[x])
+        ax[i].set(ylabel=x.replace("_", " ").title(), xlabel="Quantity")
+    fig.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_47_0.png
 
 
 Did any agents go bankrupt and when?
 
 .. code:: ipython3
 
-    pprint({a: np.nonzero(stats[f"bankrupt_{a}"])[0].tolist()  for a in world.non_system_agent_names})
-
+    bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"])[0]
+            for a in world.non_system_agent_names}
+    pprint({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
 
 
 .. parsed-literal::
 
-    {'00Buy@0': [],
-     '01Buy@0': [],
-     '02Buy@0': [],
-     '03Buy@1': [27, 28, 29],
-     '04Buy@1': [27, 28, 29],
-     '05Buy@1': [26, 27, 28, 29],
-     '06Dec@2': [],
-     '07Dec@2': [],
-     '08Buy@2': [25, 26, 27, 28, 29],
-     '09Dec@3': [],
-     '10Buy@3': [],
-     '11Buy@3': []}
+    {'00Dec@0': 'No',
+     '01Mov@0': 'No',
+     '02Dec@0': 'No',
+     '03Dec@1': 'No',
+     '04Mov@1': 'No',
+     '05Mov@1': 'No',
+     '06Dec@2': 'No',
+     '07Dec@2': 'No',
+     '08Mov@2': 'No',
+     '09Mov@3': 'No',
+     '10Dec@3': 'No',
+     '11Dec@3': 'No'}
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -778,7 +1016,7 @@ follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_48_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_51_0.png
 
 
 You can see what happened in this world in a series of graphs using the
@@ -791,7 +1029,7 @@ You can see what happened in this world in a series of graphs using the
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_50_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_53_0.png
 
 
 You can also run a simple animation to see what happens at every step
@@ -805,20 +1043,21 @@ animation) :
     from time import perf_counter
     from negmas.helpers import humanize_time
     # run the world and animate it
-    draw_every = 5 # draw every 5 steps (drawing is REALLY slow)
+    draw_every = 1 # draw every 5 steps (drawing is REALLY slow)
     single_graph = False # show a graph for every event type
+    what = ["contracts-signed", "contracts-breached", "contracts-executed",]
     for s in range(world.n_steps):
         if s % draw_every != 0:
             continue
-        world.draw(steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20, 20))
+        world.draw(what=what, steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20, 5))
         plt.show()
         clear_output(wait=True)
-    world.draw(steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20, 20))
+    world.draw(what=what, steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20,5))
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_52_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_55_0.png
 
 
 Note that this graph shows only what happened in the last ``draw_every``
@@ -845,10 +1084,11 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
+    tournament_types = agent_types + [RandomAgent]
     # may take a long time
     results = anac2020_std(
-        competitors=[ DecentralizingAgent, RandomAgent, BuyCheapSellExpensiveAgent ],  
-        n_configs=4, # number of different configurations to generate 
+        competitors=tournament_types,  
+        n_configs=12, # number of different configurations to generate 
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
         n_steps = 10, # number of days (simulation steps) per simulation
         print_exceptions=True,
@@ -880,7 +1120,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    12
+    36
 
 
 
@@ -932,44 +1172,193 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>buy_cheap_sell_expensive_agent</td>
-          <td>12.0</td>
-          <td>-0.143376</td>
-          <td>0.629573</td>
-          <td>-1.633215</td>
-          <td>-0.177260</td>
-          <td>-0.017646</td>
-          <td>0.327702</td>
-          <td>0.407855</td>
+          <td>decentralizing_agent</td>
+          <td>36.0</td>
+          <td>0.641585</td>
+          <td>0.382862</td>
+          <td>0.013917</td>
+          <td>0.437722</td>
+          <td>0.624334</td>
+          <td>0.850786</td>
+          <td>1.811421</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>decentralizing_agent</td>
-          <td>12.0</td>
-          <td>0.094315</td>
-          <td>0.077274</td>
-          <td>-0.014788</td>
-          <td>0.056159</td>
-          <td>0.084603</td>
-          <td>0.125045</td>
-          <td>0.288193</td>
+          <td>moving_range_agent</td>
+          <td>36.0</td>
+          <td>0.017210</td>
+          <td>0.098589</td>
+          <td>-0.164224</td>
+          <td>-0.029696</td>
+          <td>0.005919</td>
+          <td>0.055612</td>
+          <td>0.268376</td>
         </tr>
         <tr>
           <th>2</th>
           <td>random_agent</td>
-          <td>12.0</td>
-          <td>-0.899693</td>
-          <td>0.713635</td>
-          <td>-1.711207</td>
-          <td>-1.557293</td>
-          <td>-0.970758</td>
-          <td>-0.256738</td>
-          <td>0.026957</td>
+          <td>36.0</td>
+          <td>-0.171960</td>
+          <td>0.116389</td>
+          <td>-0.456237</td>
+          <td>-0.241420</td>
+          <td>-0.167361</td>
+          <td>-0.121497</td>
+          <td>0.000000</td>
         </tr>
       </tbody>
     </table>
     </div>
 
+
+
+You can also do statistical significance testing using ttest or kstest
+(with multi-comparison correction)
+
+.. code:: ipython3
+
+    results.kstest
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>a</th>
+          <th>b</th>
+          <th>t</th>
+          <th>p</th>
+          <th>n_a</th>
+          <th>n_b</th>
+          <th>n_effective</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>random_agent</td>
+          <td>moving_range_agent</td>
+          <td>0.694444</td>
+          <td>1.365966e-08</td>
+          <td>36</td>
+          <td>36</td>
+          <td>36</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>random_agent</td>
+          <td>decentralizing_agent</td>
+          <td>1.000000</td>
+          <td>4.519646e-21</td>
+          <td>36</td>
+          <td>36</td>
+          <td>36</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>moving_range_agent</td>
+          <td>decentralizing_agent</td>
+          <td>0.805556</td>
+          <td>6.657934e-12</td>
+          <td>36</td>
+          <td>36</td>
+          <td>36</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+see the total score
+
+.. code:: ipython3
+
+    results.total_scores
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>agent_type</th>
+          <th>score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>decentralizing_agent</td>
+          <td>0.624334</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>moving_range_agent</td>
+          <td>0.005919</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>random_agent</td>
+          <td>-0.167361</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+or the aggregated statistics of the world. For example, let’s draw the
+activity level for different simulations.
+
+.. code:: ipython3
+
+    plt.errorbar(range(len(results.agg_stats)),
+                 results.agg_stats.activity_level_mean, 
+                 np.sqrt(results.agg_stats.activity_level_var)
+                 )
+    plt.xlabel("Simulation Number")
+    plt.ylabel("Activity Level")
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_71_0.png
 
 
 We can even get the scores of every agent belonging to every agent type
@@ -1010,33 +1399,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Dec@0</td>
-          <td>decentralizing_agent</td>
-          <td>0.123573</td>
+          <td>00Ran@0</td>
+          <td>random_agent</td>
+          <td>-0.274163</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>07Ran@3</td>
-          <td>random_agent</td>
-          <td>-1.541393</td>
+          <td>01Mov@0</td>
+          <td>moving_range_agent</td>
+          <td>-0.028083</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>08Buy@3</td>
-          <td>buy_cheap_sell_expensive_agent</td>
-          <td>-0.280800</td>
+          <td>02Dec@1</td>
+          <td>decentralizing_agent</td>
+          <td>0.013917</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>00Buy@0</td>
-          <td>buy_cheap_sell_expensive_agent</td>
-          <td>0.167718</td>
+          <td>02Mov@1</td>
+          <td>moving_range_agent</td>
+          <td>0.000000</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>07Dec@3</td>
+          <td>03Dec@1</td>
           <td>decentralizing_agent</td>
-          <td>0.015531</td>
+          <td>1.275761</td>
         </tr>
       </tbody>
     </table>
@@ -1049,13 +1438,13 @@ or inspect any statistic we like
 .. code:: ipython3
 
     ax = sns.violinplot(data=results.stats, x="step", y="activity_level")
-    ax.set(ylabel="Activity Level (Business Size)", xlabel="Step Number", yscale="log")
+    ax.set(ylabel="Activity Level / Business Size ($)", xlabel="Step Number", yscale="log")
     
     fig.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_66_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_75_0.png
 
 
 Let’s see how did the location at the production graph affect the score
@@ -1064,17 +1453,20 @@ of each type.
 .. code:: ipython3
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
-    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], x="level", y="score", hue="agent_type")
+    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
+                 x="level", y="score", hue="agent_type")
+    plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_68_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
 
 
 Now that you can run simulations and complete tournament, let’s see how
 are we going to develop a new agent for the SCML2020 league
 :math:`\rightarrow`
+
 
 
 

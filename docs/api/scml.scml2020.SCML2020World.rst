@@ -123,13 +123,13 @@ SCML2020World
       ~SCML2020World.save_config
       ~SCML2020World.scores
       ~SCML2020World.set_bulletin_board
-      ~SCML2020World.simulation_step_after_execution
-      ~SCML2020World.simulation_step_before_execution
+      ~SCML2020World.simulation_step
       ~SCML2020World.start_contract_execution
       ~SCML2020World.step
       ~SCML2020World.trading_prices_for
       ~SCML2020World.unregister_stats_monitor
       ~SCML2020World.unregister_world_monitor
+      ~SCML2020World.update_stats
       ~SCML2020World.welfare
 
    .. rubric:: Attributes Documentation
@@ -245,11 +245,11 @@ SCML2020World
    .. automethod:: save_config
    .. automethod:: scores
    .. automethod:: set_bulletin_board
-   .. automethod:: simulation_step_after_execution
-   .. automethod:: simulation_step_before_execution
+   .. automethod:: simulation_step
    .. automethod:: start_contract_execution
    .. automethod:: step
    .. automethod:: trading_prices_for
    .. automethod:: unregister_stats_monitor
    .. automethod:: unregister_world_monitor
+   .. automethod:: update_stats
    .. automethod:: welfare

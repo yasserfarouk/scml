@@ -68,6 +68,8 @@ SAHAFactoryManager
       ~SAHAFactoryManager.on_production_failure
       ~SAHAFactoryManager.on_production_success
       ~SAHAFactoryManager.on_remove_cfp
+      ~SAHAFactoryManager.on_simulation_step_ended
+      ~SAHAFactoryManager.on_simulation_step_started
       ~SAHAFactoryManager.read_config
       ~SAHAFactoryManager.recalculate_prices
       ~SAHAFactoryManager.request_negotiation
@@ -139,6 +141,8 @@ SAHAFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: recalculate_prices
    .. automethod:: request_negotiation

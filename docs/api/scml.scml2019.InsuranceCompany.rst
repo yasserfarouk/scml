@@ -52,6 +52,8 @@ InsuranceCompany
       ~InsuranceCompany.on_negotiation_failure_
       ~InsuranceCompany.on_negotiation_success
       ~InsuranceCompany.on_negotiation_success_
+      ~InsuranceCompany.on_simulation_step_ended
+      ~InsuranceCompany.on_simulation_step_started
       ~InsuranceCompany.read_config
       ~InsuranceCompany.respond_to_negotiation_request
       ~InsuranceCompany.respond_to_negotiation_request_
@@ -104,6 +106,8 @@ InsuranceCompany
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_

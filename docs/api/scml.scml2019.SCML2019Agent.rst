@@ -63,6 +63,8 @@ SCML2019Agent
       ~SCML2019Agent.on_new_cfp
       ~SCML2019Agent.on_new_report
       ~SCML2019Agent.on_remove_cfp
+      ~SCML2019Agent.on_simulation_step_ended
+      ~SCML2019Agent.on_simulation_step_started
       ~SCML2019Agent.read_config
       ~SCML2019Agent.request_negotiation
       ~SCML2019Agent.respond_to_negotiation_request
@@ -127,6 +129,8 @@ SCML2019Agent
    .. automethod:: on_new_cfp
    .. automethod:: on_new_report
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

@@ -65,6 +65,8 @@ JustInTimeConsumer
       ~JustInTimeConsumer.on_new_cfp
       ~JustInTimeConsumer.on_new_report
       ~JustInTimeConsumer.on_remove_cfp
+      ~JustInTimeConsumer.on_simulation_step_ended
+      ~JustInTimeConsumer.on_simulation_step_started
       ~JustInTimeConsumer.read_config
       ~JustInTimeConsumer.register_product_cfps
       ~JustInTimeConsumer.request_negotiation
@@ -133,6 +135,8 @@ JustInTimeConsumer
    .. automethod:: on_new_cfp
    .. automethod:: on_new_report
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: register_product_cfps
    .. automethod:: request_negotiation

@@ -129,12 +129,13 @@ def anac2020_config_generator(
 
     n_processes = randint(*n_processes)
     n_agents = n_agents_per_competitor * n_competitors
-    n_default_managers = (
+    n_default_managers = max(
+        0,
         min(
             n_processes * max_factories_per_level,
             max(0, n_processes * min_factories_per_level),
         )
-        - n_agents
+        - n_agents,
     )
     n_defaults = integer_cut(n_default_managers, n_processes, 0)
 
@@ -248,6 +249,7 @@ def anac2020_assigner(
     )
 
     configs = []
+
     def _copy_config(perm_, c, indx):
         new_config = copy.deepcopy(c)
         new_config["world_params"]["name"] += f".{indx:05d}"
@@ -336,10 +338,12 @@ def balance_calculator2020(
 
     """
     if scoring_context is not None:
-        inventory_catalog_price_weight = scoring_context.get("inventory_catalog_price_weight",
-                                                             inventory_catalog_price_weight)
-        inventory_trading_average_weight = scoring_context.get("inventory_trading_average_weight",
-                                                               inventory_trading_average_weight)
+        inventory_catalog_price_weight = scoring_context.get(
+            "inventory_catalog_price_weight", inventory_catalog_price_weight
+        )
+        inventory_trading_average_weight = scoring_context.get(
+            "inventory_trading_average_weight", inventory_trading_average_weight
+        )
     assert len(worlds) == 1
     world = worlds[0]
     result = WorldRunResults(
@@ -370,14 +374,21 @@ def balance_calculator2020(
             continue
         final_balance = factory.current_balance
         if inventory_catalog_price_weight != 0.0:
-            final_balance += np.sum(inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices)
+            final_balance += np.sum(
+                inventory_catalog_price_weight
+                * factory.current_inventory
+                * world.catalog_prices
+            )
         if inventory_trading_average_weight != 0.0:
-            final_balance += np.sum(inventory_trading_average_weight * factory.current_inventory * world.trading_prices)
+            final_balance += np.sum(
+                inventory_trading_average_weight
+                * factory.current_inventory
+                * world.trading_prices
+            )
 
         if normalize:
             result.scores.append(
-                (final_balance - factory.initial_balance)
-                / factory.initial_balance
+                (final_balance - factory.initial_balance) / factory.initial_balance
             )
         else:
             result.scores.append(final_balance - factory.initial_balance)
@@ -568,6 +579,7 @@ def anac2020_std(
         score_calculator=balance_calculator2020,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
+        metric="median",
         **kwargs,
     )
 
@@ -671,5 +683,6 @@ def anac2020_collusion(
         score_calculator=balance_calculator2020,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
+        metric="median",
         **kwargs,
     )

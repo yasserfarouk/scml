@@ -55,6 +55,8 @@ DefaultBank
       ~DefaultBank.on_negotiation_failure_
       ~DefaultBank.on_negotiation_success
       ~DefaultBank.on_negotiation_success_
+      ~DefaultBank.on_simulation_step_ended
+      ~DefaultBank.on_simulation_step_started
       ~DefaultBank.read_config
       ~DefaultBank.respond_to_negotiation_request
       ~DefaultBank.respond_to_negotiation_request_
@@ -110,6 +112,8 @@ DefaultBank
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_

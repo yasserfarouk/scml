@@ -67,6 +67,8 @@ InsuranceFraudFactoryManager
       ~InsuranceFraudFactoryManager.on_production_failure
       ~InsuranceFraudFactoryManager.on_production_success
       ~InsuranceFraudFactoryManager.on_remove_cfp
+      ~InsuranceFraudFactoryManager.on_simulation_step_ended
+      ~InsuranceFraudFactoryManager.on_simulation_step_started
       ~InsuranceFraudFactoryManager.read_config
       ~InsuranceFraudFactoryManager.request_negotiation
       ~InsuranceFraudFactoryManager.respond_to_negotiation_request
@@ -136,6 +138,8 @@ InsuranceFraudFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

@@ -84,7 +84,7 @@ class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
         self.secured_quantities = dict(zip(profiles.keys(), itertools.repeat(0)))
 
     def register_product_cfps(
-        self, p: int, t: int, profile: ConsumptionProfile, sp: {}
+        self, p: int, t: int, profile: ConsumptionProfile, sp = dict()
     ):
         current_schedule = profile.schedule_at(t)
         product = self.products[p]
@@ -277,7 +277,7 @@ class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
         )
         if self.immediate_cfp_update and new_quantity != old_quantity:
             self.register_product_cfps(
-                p=cfp.product, t=t, profile=self.profiles[cfp.product]
+                p=cfp.product, t=t, profile=self.profiles[cfp.product], sp={}
             )
         for negotiation in self._running_negotiations.values():
             self.notify(

@@ -102,6 +102,8 @@ JavaGreedyFactoryManager
       ~JavaGreedyFactoryManager.on_production_failure
       ~JavaGreedyFactoryManager.on_production_success
       ~JavaGreedyFactoryManager.on_remove_cfp
+      ~JavaGreedyFactoryManager.on_simulation_step_ended
+      ~JavaGreedyFactoryManager.on_simulation_step_started
       ~JavaGreedyFactoryManager.read_config
       ~JavaGreedyFactoryManager.requestNegotiation
       ~JavaGreedyFactoryManager.request_negotiation
@@ -213,6 +215,8 @@ JavaGreedyFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: requestNegotiation
    .. automethod:: request_negotiation

@@ -63,6 +63,8 @@ ReactiveMiner
       ~ReactiveMiner.on_new_cfp
       ~ReactiveMiner.on_new_report
       ~ReactiveMiner.on_remove_cfp
+      ~ReactiveMiner.on_simulation_step_ended
+      ~ReactiveMiner.on_simulation_step_started
       ~ReactiveMiner.read_config
       ~ReactiveMiner.request_negotiation
       ~ReactiveMiner.respond_to_negotiation_request
@@ -128,6 +130,8 @@ ReactiveMiner
    .. automethod:: on_new_cfp
    .. automethod:: on_new_report
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

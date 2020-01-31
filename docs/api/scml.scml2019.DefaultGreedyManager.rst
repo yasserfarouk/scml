@@ -67,6 +67,8 @@ DefaultGreedyManager
       ~DefaultGreedyManager.on_production_failure
       ~DefaultGreedyManager.on_production_success
       ~DefaultGreedyManager.on_remove_cfp
+      ~DefaultGreedyManager.on_simulation_step_ended
+      ~DefaultGreedyManager.on_simulation_step_started
       ~DefaultGreedyManager.read_config
       ~DefaultGreedyManager.request_negotiation
       ~DefaultGreedyManager.respond_to_negotiation_request
@@ -136,6 +138,8 @@ DefaultGreedyManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

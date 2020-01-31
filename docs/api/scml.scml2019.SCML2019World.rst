@@ -118,13 +118,13 @@ SCML2019World
       ~SCML2019World.set_miners
       ~SCML2019World.set_processes
       ~SCML2019World.set_products
-      ~SCML2019World.simulation_step_after_execution
-      ~SCML2019World.simulation_step_before_execution
+      ~SCML2019World.simulation_step
       ~SCML2019World.start_contract_execution
       ~SCML2019World.step
       ~SCML2019World.unregister_interest
       ~SCML2019World.unregister_stats_monitor
       ~SCML2019World.unregister_world_monitor
+      ~SCML2019World.update_stats
 
    .. rubric:: Attributes Documentation
 
@@ -234,10 +234,10 @@ SCML2019World
    .. automethod:: set_miners
    .. automethod:: set_processes
    .. automethod:: set_products
-   .. automethod:: simulation_step_after_execution
-   .. automethod:: simulation_step_before_execution
+   .. automethod:: simulation_step
    .. automethod:: start_contract_execution
    .. automethod:: step
    .. automethod:: unregister_interest
    .. automethod:: unregister_stats_monitor
    .. automethod:: unregister_world_monitor
+   .. automethod:: update_stats

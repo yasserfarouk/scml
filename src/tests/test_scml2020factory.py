@@ -9,7 +9,7 @@ from hypothesis import given, example
 from scml.scml2020 import FactoryProfile, Factory, NO_COMMAND, FactoryState
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 
-from scml.scml2020.components import FactorySimulator
+from scml.scml2020.components.simulation import FactorySimulator
 
 PROCESSES = 5
 LINES = 10

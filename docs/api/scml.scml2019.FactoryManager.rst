@@ -65,6 +65,8 @@ FactoryManager
       ~FactoryManager.on_production_failure
       ~FactoryManager.on_production_success
       ~FactoryManager.on_remove_cfp
+      ~FactoryManager.on_simulation_step_ended
+      ~FactoryManager.on_simulation_step_started
       ~FactoryManager.read_config
       ~FactoryManager.request_negotiation
       ~FactoryManager.respond_to_negotiation_request
@@ -131,6 +133,8 @@ FactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

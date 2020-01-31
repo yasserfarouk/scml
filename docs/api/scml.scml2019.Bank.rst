@@ -52,6 +52,8 @@ Bank
       ~Bank.on_negotiation_failure_
       ~Bank.on_negotiation_success
       ~Bank.on_negotiation_success_
+      ~Bank.on_simulation_step_ended
+      ~Bank.on_simulation_step_started
       ~Bank.read_config
       ~Bank.respond_to_negotiation_request
       ~Bank.respond_to_negotiation_request_
@@ -104,6 +106,8 @@ Bank
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_

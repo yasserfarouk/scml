@@ -24,7 +24,7 @@ from typing import (
 import numpy as np
 import yaml
 
-from negmas import AgentMechanismInterface
+from negmas import AgentMechanismInterface, Negotiator, UtilityFunction
 from negmas.events import Event, EventSource
 from negmas.helpers import instantiate, unique_name
 from negmas.outcomes import Issue
@@ -36,7 +36,7 @@ from negmas.situated import (
     Contract,
     Agent,
     TimeInAgreementMixin,
-)
+    Operations)
 from .agent import SCML2019Agent
 from .bank import DefaultBank
 from .common import *
@@ -256,10 +256,15 @@ class SCML2019World(TimeInAgreementMixin, World):
             ignore_contract_execution_exceptions=ignore_contract_execution_exceptions,
             batch_signing=False,
             force_signing=False,
-            sign_first=True,
-            sign_last=True,
-            sign_after_execution=False,
-            sign_before_execution=False,
+            operations = (
+                Operations.StatsUpdate,
+                Operations.Negotiations,
+                Operations.ContractSigning,
+                Operations.AgentSteps,
+                Operations.ContractExecution,
+                Operations.ContractSigning,
+                Operations.StatsUpdate,
+            ),
             **kwargs,
         )
         TimeInAgreementMixin.init(self, time_field="time")
@@ -1407,10 +1412,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             for aid in agents:
                 self._report_receivers[aid].discard(agent)
 
-    def simulation_step_before_execution(self):
-        pass
-
-    def simulation_step_after_execution(self):
+    def simulation_step(self, stage):
         """A step of SCML simulation"""
 
         # publish financial reports
@@ -2354,11 +2356,25 @@ class SCML2019World(TimeInAgreementMixin, World):
                     annotation["cfp"] = cfp_
         return annotation
 
+
+    # def run_negotiation(
+    #     self,
+    #     caller: "Agent",
+    #     issues: Collection[Issue],
+    #     partners: Collection["Agent"],
+    #     roles: Collection[str] = None,
+    #     annotation: Optional[Dict[str, Any]] = None,
+    #     mechanism_name: str = None,
+    #     mechanism_params: Dict[str, Any] = None,
+    # ) -> Optional[Tuple[Contract, AgentMechanismInterface]]:
     def run_negotiation(
         self,
         caller: "Agent",
         issues: Collection[Issue],
         partners: Collection["Agent"],
+        negotiator: Negotiator,
+        ufun: UtilityFunction = None,
+        caller_role: str = None,
         roles: Collection[str] = None,
         annotation: Optional[Dict[str, Any]] = None,
         mechanism_name: str = None,
@@ -2375,6 +2391,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             roles=roles,
             mechanism_name=mechanism_name,
             mechanism_params=mechanism_params,
+            negotiator=negotiator, ufun=ufun
         )
 
     def run_negotiations(
@@ -2382,10 +2399,14 @@ class SCML2019World(TimeInAgreementMixin, World):
         caller: "Agent",
         issues: Union[List[Issue], List[List[Issue]]],
         partners: List[List["Agent"]],
+        negotiators: List[Negotiator],
+        ufuns: List[UtilityFunction] = None,
+        caller_roles: List[str] = None,
         roles: Optional[List[Optional[List[str]]]] = None,
         annotations: Optional[List[Optional[Dict[str, Any]]]] = None,
         mechanism_names: Optional[Union[str, List[str]]] = None,
         mechanism_params: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
+        all_or_none: bool = False,
     ) -> List[Tuple[Contract, AgentMechanismInterface]]:
         if annotations is None:
             return None
@@ -2399,6 +2420,8 @@ class SCML2019World(TimeInAgreementMixin, World):
             mechanism_names=mechanism_names,
             mechanism_params=mechanism_params,
             partners=partners,
+            negotiators=negotiators,
+            ufuns=ufuns,
         )
 
     def request_negotiation_about(

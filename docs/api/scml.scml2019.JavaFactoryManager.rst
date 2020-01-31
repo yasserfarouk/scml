@@ -102,6 +102,8 @@ JavaFactoryManager
       ~JavaFactoryManager.on_production_failure
       ~JavaFactoryManager.on_production_success
       ~JavaFactoryManager.on_remove_cfp
+      ~JavaFactoryManager.on_simulation_step_ended
+      ~JavaFactoryManager.on_simulation_step_started
       ~JavaFactoryManager.read_config
       ~JavaFactoryManager.requestNegotiation
       ~JavaFactoryManager.request_negotiation
@@ -213,6 +215,8 @@ JavaFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: requestNegotiation
    .. automethod:: request_negotiation

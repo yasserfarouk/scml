@@ -121,8 +121,10 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if not on_rtd:  # only set the theme if we're building docs locally
     html_theme = 'sphinx_rtd_theme'
-
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    # import zerovm_sphinx_theme
+    # html_theme_path = [zerovm_sphinx_theme.theme_path]
+    # html_theme = 'zerovm'
 # theme options for sphinx_rtd_theme
 html_theme_options = {
     # 'typekit_id': 'hiw1hhg',

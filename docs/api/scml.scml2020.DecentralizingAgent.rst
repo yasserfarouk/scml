@@ -14,6 +14,7 @@ DecentralizingAgent
       ~DecentralizingAgent.awi
       ~DecentralizingAgent.id
       ~DecentralizingAgent.initialized
+      ~DecentralizingAgent.internal_state
       ~DecentralizingAgent.name
       ~DecentralizingAgent.negotiation_requests
       ~DecentralizingAgent.requested_negotiations
@@ -27,8 +28,10 @@ DecentralizingAgent
 
    .. autosummary::
 
+      ~DecentralizingAgent.acceptable_unit_price
       ~DecentralizingAgent.add_controller
       ~DecentralizingAgent.all_negotiations_concluded
+      ~DecentralizingAgent.can_be_produced
       ~DecentralizingAgent.checkpoint
       ~DecentralizingAgent.checkpoint_info
       ~DecentralizingAgent.confirm_production
@@ -36,12 +39,8 @@ DecentralizingAgent
       ~DecentralizingAgent.create_negotiation_request
       ~DecentralizingAgent.from_checkpoint
       ~DecentralizingAgent.from_config
-      ~DecentralizingAgent.generate_buy_negotiations
-      ~DecentralizingAgent.generate_sell_negotiations
       ~DecentralizingAgent.init
       ~DecentralizingAgent.init_
-      ~DecentralizingAgent.max_consumption_till
-      ~DecentralizingAgent.max_production_till
       ~DecentralizingAgent.notify
       ~DecentralizingAgent.on_agent_bankrupt
       ~DecentralizingAgent.on_contract_breached
@@ -61,6 +60,9 @@ DecentralizingAgent
       ~DecentralizingAgent.on_negotiation_failure_
       ~DecentralizingAgent.on_negotiation_success
       ~DecentralizingAgent.on_negotiation_success_
+      ~DecentralizingAgent.on_simulation_step_ended
+      ~DecentralizingAgent.on_simulation_step_started
+      ~DecentralizingAgent.predict_quantity
       ~DecentralizingAgent.read_config
       ~DecentralizingAgent.respond_to_negotiation_request
       ~DecentralizingAgent.respond_to_negotiation_request_
@@ -71,6 +73,8 @@ DecentralizingAgent
       ~DecentralizingAgent.start_negotiations
       ~DecentralizingAgent.step
       ~DecentralizingAgent.step_
+      ~DecentralizingAgent.target_quantities
+      ~DecentralizingAgent.target_quantity
 
    .. rubric:: Attributes Documentation
 
@@ -78,6 +82,7 @@ DecentralizingAgent
    .. autoattribute:: awi
    .. autoattribute:: id
    .. autoattribute:: initialized
+   .. autoattribute:: internal_state
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: requested_negotiations
@@ -89,8 +94,10 @@ DecentralizingAgent
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: acceptable_unit_price
    .. automethod:: add_controller
    .. automethod:: all_negotiations_concluded
+   .. automethod:: can_be_produced
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
    .. automethod:: confirm_production
@@ -98,12 +105,8 @@ DecentralizingAgent
    .. automethod:: create_negotiation_request
    .. automethod:: from_checkpoint
    .. automethod:: from_config
-   .. automethod:: generate_buy_negotiations
-   .. automethod:: generate_sell_negotiations
    .. automethod:: init
    .. automethod:: init_
-   .. automethod:: max_consumption_till
-   .. automethod:: max_production_till
    .. automethod:: notify
    .. automethod:: on_agent_bankrupt
    .. automethod:: on_contract_breached
@@ -123,6 +126,9 @@ DecentralizingAgent
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
+   .. automethod:: predict_quantity
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_
@@ -133,3 +139,5 @@ DecentralizingAgent
    .. automethod:: start_negotiations
    .. automethod:: step
    .. automethod:: step_
+   .. automethod:: target_quantities
+   .. automethod:: target_quantity

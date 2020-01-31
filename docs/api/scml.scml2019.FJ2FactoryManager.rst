@@ -69,6 +69,8 @@ FJ2FactoryManager
       ~FJ2FactoryManager.on_production_failure
       ~FJ2FactoryManager.on_production_success
       ~FJ2FactoryManager.on_remove_cfp
+      ~FJ2FactoryManager.on_simulation_step_ended
+      ~FJ2FactoryManager.on_simulation_step_started
       ~FJ2FactoryManager.read_config
       ~FJ2FactoryManager.request_negotiation
       ~FJ2FactoryManager.respond_to_negotiation_request
@@ -140,6 +142,8 @@ FJ2FactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

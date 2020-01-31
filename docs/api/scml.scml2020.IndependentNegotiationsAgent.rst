@@ -14,6 +14,7 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.awi
       ~IndependentNegotiationsAgent.id
       ~IndependentNegotiationsAgent.initialized
+      ~IndependentNegotiationsAgent.internal_state
       ~IndependentNegotiationsAgent.name
       ~IndependentNegotiationsAgent.negotiation_requests
       ~IndependentNegotiationsAgent.requested_negotiations
@@ -27,7 +28,7 @@ IndependentNegotiationsAgent
 
    .. autosummary::
 
-      ~IndependentNegotiationsAgent.can_be_produced
+      ~IndependentNegotiationsAgent.acceptable_unit_price
       ~IndependentNegotiationsAgent.checkpoint
       ~IndependentNegotiationsAgent.checkpoint_info
       ~IndependentNegotiationsAgent.confirm_production
@@ -58,6 +59,8 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.on_negotiation_failure_
       ~IndependentNegotiationsAgent.on_negotiation_success
       ~IndependentNegotiationsAgent.on_negotiation_success_
+      ~IndependentNegotiationsAgent.on_simulation_step_ended
+      ~IndependentNegotiationsAgent.on_simulation_step_started
       ~IndependentNegotiationsAgent.read_config
       ~IndependentNegotiationsAgent.respond_to_negotiation_request
       ~IndependentNegotiationsAgent.respond_to_negotiation_request_
@@ -68,6 +71,8 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.start_negotiations
       ~IndependentNegotiationsAgent.step
       ~IndependentNegotiationsAgent.step_
+      ~IndependentNegotiationsAgent.target_quantities
+      ~IndependentNegotiationsAgent.target_quantity
 
    .. rubric:: Attributes Documentation
 
@@ -75,6 +80,7 @@ IndependentNegotiationsAgent
    .. autoattribute:: awi
    .. autoattribute:: id
    .. autoattribute:: initialized
+   .. autoattribute:: internal_state
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: requested_negotiations
@@ -86,7 +92,7 @@ IndependentNegotiationsAgent
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: can_be_produced
+   .. automethod:: acceptable_unit_price
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
    .. automethod:: confirm_production
@@ -117,6 +123,8 @@ IndependentNegotiationsAgent
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_
@@ -127,3 +135,5 @@ IndependentNegotiationsAgent
    .. automethod:: start_negotiations
    .. automethod:: step
    .. automethod:: step_
+   .. automethod:: target_quantities
+   .. automethod:: target_quantity

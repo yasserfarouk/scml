@@ -14,6 +14,7 @@ DoNothingAgent
       ~DoNothingAgent.awi
       ~DoNothingAgent.id
       ~DoNothingAgent.initialized
+      ~DoNothingAgent.internal_state
       ~DoNothingAgent.name
       ~DoNothingAgent.negotiation_requests
       ~DoNothingAgent.requested_negotiations
@@ -55,6 +56,8 @@ DoNothingAgent
       ~DoNothingAgent.on_negotiation_failure_
       ~DoNothingAgent.on_negotiation_success
       ~DoNothingAgent.on_negotiation_success_
+      ~DoNothingAgent.on_simulation_step_ended
+      ~DoNothingAgent.on_simulation_step_started
       ~DoNothingAgent.read_config
       ~DoNothingAgent.respond_to_negotiation_request
       ~DoNothingAgent.respond_to_negotiation_request_
@@ -71,6 +74,7 @@ DoNothingAgent
    .. autoattribute:: awi
    .. autoattribute:: id
    .. autoattribute:: initialized
+   .. autoattribute:: internal_state
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: requested_negotiations
@@ -110,6 +114,8 @@ DoNothingAgent
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_

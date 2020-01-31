@@ -14,6 +14,7 @@ SCML2020Agent
       ~SCML2020Agent.awi
       ~SCML2020Agent.id
       ~SCML2020Agent.initialized
+      ~SCML2020Agent.internal_state
       ~SCML2020Agent.name
       ~SCML2020Agent.negotiation_requests
       ~SCML2020Agent.requested_negotiations
@@ -55,6 +56,8 @@ SCML2020Agent
       ~SCML2020Agent.on_negotiation_failure_
       ~SCML2020Agent.on_negotiation_success
       ~SCML2020Agent.on_negotiation_success_
+      ~SCML2020Agent.on_simulation_step_ended
+      ~SCML2020Agent.on_simulation_step_started
       ~SCML2020Agent.read_config
       ~SCML2020Agent.respond_to_negotiation_request
       ~SCML2020Agent.respond_to_negotiation_request_
@@ -71,6 +74,7 @@ SCML2020Agent
    .. autoattribute:: awi
    .. autoattribute:: id
    .. autoattribute:: initialized
+   .. autoattribute:: internal_state
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: requested_negotiations
@@ -110,6 +114,8 @@ SCML2020Agent
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_

@@ -8,6 +8,10 @@ __all__ =[
     "NO_COMMAND",
     "ANY_LINE",
     "INFINITE_COST",
+    "QUANTITY",
+    "TIME",
+    "UNIT_PRICE",
+    "is_system_agent",
 ]
 
 SYSTEM_SELLER_ID = "SELLER"
@@ -34,3 +38,35 @@ NO_COMMAND = -1
 
 INFINITE_COST = sys.maxsize // 2
 """A constant indicating an invalid cost for lines incapable of running some process"""
+
+
+QUANTITY = 0
+"""Index of quantity in negotiation issues"""
+
+
+TIME = 1
+"""Index of time in negotiation issues"""
+
+
+UNIT_PRICE = 2
+"""Index of unit price in negotiation issues"""
+
+
+def is_system_agent(aid: str) -> bool:
+    """
+    Checks whether an agent is a system agent or not
+
+    Args:
+
+        aid: Agent ID
+
+    Returns:
+
+        True if the ID is for a system agent.
+    """
+    return (
+        aid.startswith(SYSTEM_SELLER_ID)
+        or aid.startswith(SYSTEM_BUYER_ID)
+        or aid.startswith(COMPENSATION_ID)
+    )
+

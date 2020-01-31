@@ -63,6 +63,8 @@ Miner
       ~Miner.on_new_cfp
       ~Miner.on_new_report
       ~Miner.on_remove_cfp
+      ~Miner.on_simulation_step_ended
+      ~Miner.on_simulation_step_started
       ~Miner.read_config
       ~Miner.request_negotiation
       ~Miner.respond_to_negotiation_request
@@ -127,6 +129,8 @@ Miner
    .. automethod:: on_new_cfp
    .. automethod:: on_new_report
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: request_negotiation
    .. automethod:: respond_to_negotiation_request

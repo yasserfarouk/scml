@@ -14,6 +14,7 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.awi
       ~BuyCheapSellExpensiveAgent.id
       ~BuyCheapSellExpensiveAgent.initialized
+      ~BuyCheapSellExpensiveAgent.internal_state
       ~BuyCheapSellExpensiveAgent.name
       ~BuyCheapSellExpensiveAgent.negotiation_requests
       ~BuyCheapSellExpensiveAgent.requested_negotiations
@@ -27,7 +28,7 @@ BuyCheapSellExpensiveAgent
 
    .. autosummary::
 
-      ~BuyCheapSellExpensiveAgent.can_be_produced
+      ~BuyCheapSellExpensiveAgent.acceptable_unit_price
       ~BuyCheapSellExpensiveAgent.checkpoint
       ~BuyCheapSellExpensiveAgent.checkpoint_info
       ~BuyCheapSellExpensiveAgent.confirm_production
@@ -58,6 +59,8 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.on_negotiation_failure_
       ~BuyCheapSellExpensiveAgent.on_negotiation_success
       ~BuyCheapSellExpensiveAgent.on_negotiation_success_
+      ~BuyCheapSellExpensiveAgent.on_simulation_step_ended
+      ~BuyCheapSellExpensiveAgent.on_simulation_step_started
       ~BuyCheapSellExpensiveAgent.read_config
       ~BuyCheapSellExpensiveAgent.respond_to_negotiation_request
       ~BuyCheapSellExpensiveAgent.respond_to_negotiation_request_
@@ -68,6 +71,8 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.start_negotiations
       ~BuyCheapSellExpensiveAgent.step
       ~BuyCheapSellExpensiveAgent.step_
+      ~BuyCheapSellExpensiveAgent.target_quantities
+      ~BuyCheapSellExpensiveAgent.target_quantity
 
    .. rubric:: Attributes Documentation
 
@@ -75,6 +80,7 @@ BuyCheapSellExpensiveAgent
    .. autoattribute:: awi
    .. autoattribute:: id
    .. autoattribute:: initialized
+   .. autoattribute:: internal_state
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: requested_negotiations
@@ -86,7 +92,7 @@ BuyCheapSellExpensiveAgent
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: can_be_produced
+   .. automethod:: acceptable_unit_price
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
    .. automethod:: confirm_production
@@ -117,6 +123,8 @@ BuyCheapSellExpensiveAgent
    .. automethod:: on_negotiation_failure_
    .. automethod:: on_negotiation_success
    .. automethod:: on_negotiation_success_
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: respond_to_negotiation_request
    .. automethod:: respond_to_negotiation_request_
@@ -127,3 +135,5 @@ BuyCheapSellExpensiveAgent
    .. automethod:: start_negotiations
    .. automethod:: step
    .. automethod:: step_
+   .. automethod:: target_quantities
+   .. automethod:: target_quantity

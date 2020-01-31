@@ -102,6 +102,8 @@ JavaDummyMiddleMan
       ~JavaDummyMiddleMan.on_production_failure
       ~JavaDummyMiddleMan.on_production_success
       ~JavaDummyMiddleMan.on_remove_cfp
+      ~JavaDummyMiddleMan.on_simulation_step_ended
+      ~JavaDummyMiddleMan.on_simulation_step_started
       ~JavaDummyMiddleMan.read_config
       ~JavaDummyMiddleMan.requestNegotiation
       ~JavaDummyMiddleMan.request_negotiation
@@ -213,6 +215,8 @@ JavaDummyMiddleMan
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: read_config
    .. automethod:: requestNegotiation
    .. automethod:: request_negotiation

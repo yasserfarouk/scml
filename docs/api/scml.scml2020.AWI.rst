@@ -53,12 +53,15 @@ AWI
       ~AWI.logwarning
       ~AWI.logwarning_agent
       ~AWI.order_production
+      ~AWI.reports_at_step
+      ~AWI.reports_of_agent
       ~AWI.request_negotiation
       ~AWI.request_negotiation_about
       ~AWI.request_negotiations
       ~AWI.run_negotiation
       ~AWI.run_negotiations
       ~AWI.schedule_production
+      ~AWI.set_commands
 
    .. rubric:: Attributes Documentation
 
@@ -103,9 +106,12 @@ AWI
    .. automethod:: logwarning
    .. automethod:: logwarning_agent
    .. automethod:: order_production
+   .. automethod:: reports_at_step
+   .. automethod:: reports_of_agent
    .. automethod:: request_negotiation
    .. automethod:: request_negotiation_about
    .. automethod:: request_negotiations
    .. automethod:: run_negotiation
    .. automethod:: run_negotiations
    .. automethod:: schedule_production
+   .. automethod:: set_commands

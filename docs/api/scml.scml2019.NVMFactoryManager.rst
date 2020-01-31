@@ -66,6 +66,8 @@ NVMFactoryManager
       ~NVMFactoryManager.on_production_failure
       ~NVMFactoryManager.on_production_success
       ~NVMFactoryManager.on_remove_cfp
+      ~NVMFactoryManager.on_simulation_step_ended
+      ~NVMFactoryManager.on_simulation_step_started
       ~NVMFactoryManager.plot_results
       ~NVMFactoryManager.print_debug_info
       ~NVMFactoryManager.read_config
@@ -135,6 +137,8 @@ NVMFactoryManager
    .. automethod:: on_production_failure
    .. automethod:: on_production_success
    .. automethod:: on_remove_cfp
+   .. automethod:: on_simulation_step_ended
+   .. automethod:: on_simulation_step_started
    .. automethod:: plot_results
    .. automethod:: print_debug_info
    .. automethod:: read_config
