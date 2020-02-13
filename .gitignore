@@ -90,4 +90,5 @@ logs
 /my_results
 /my_results/*
 tags
-
+/docs/_build/*
+/docs/_build
