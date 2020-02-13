@@ -111,6 +111,7 @@ SCML2019World
       ~SCML2019World.run
       ~SCML2019World.run_negotiation
       ~SCML2019World.run_negotiations
+      ~SCML2019World.run_with_progress
       ~SCML2019World.save_config
       ~SCML2019World.set_bulletin_board
       ~SCML2019World.set_consumers
@@ -227,6 +228,7 @@ SCML2019World
    .. automethod:: run
    .. automethod:: run_negotiation
    .. automethod:: run_negotiations
+   .. automethod:: run_with_progress
    .. automethod:: save_config
    .. automethod:: set_bulletin_board
    .. automethod:: set_consumers

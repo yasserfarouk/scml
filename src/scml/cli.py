@@ -21,6 +21,7 @@ import progressbar
 import yaml
 from tabulate import tabulate
 
+
 import negmas
 from negmas import save_stats
 

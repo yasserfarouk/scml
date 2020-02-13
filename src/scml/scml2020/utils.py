@@ -11,7 +11,7 @@ from negmas.helpers import unique_name, get_full_type_name
 
 from negmas.tournaments import WorldRunResults, TournamentResults, tournament
 
-from scml.scml2020.agents import RandomAgent
+from scml.scml2020.agents import DecentralizingAgent
 from scml.scml2020.world import SCML2020World, is_system_agent
 
 if True:
@@ -40,7 +40,7 @@ __all__ = [
     "DefaultAgent",
 ]
 
-DefaultAgent = RandomAgent
+DefaultAgent = DecentralizingAgent
 
 
 def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
@@ -111,7 +111,7 @@ def anac2020_config_generator(
     compact: bool = True,
     *,
     n_steps: Union[int, Tuple[int, int]] = (50, 200),
-    n_processes: Tuple[int, int] = (2, 5),
+    n_processes: Tuple[int, int] = (3, 5),
     min_factories_per_level: int = 2,  # strictly guaranteed
     max_factories_per_level: int = 6,  # not strictly guaranteed
     n_lines: int = 10,
@@ -140,11 +140,13 @@ def anac2020_config_generator(
     n_defaults = integer_cut(n_default_managers, n_processes, 0)
 
     n_a_list = integer_cut(n_agents, n_processes, 0)
+
     for i, n_a in enumerate(n_a_list):
         if n_a + n_defaults[i] < min_factories_per_level:
             n_defaults[i] = min_factories_per_level - n_a
         if n_a + n_defaults[i] > max_factories_per_level and n_defaults[i] > 1:
             n_defaults[i] = max(1, min_factories_per_level - n_a)
+
     n_f_list = [a + b for a, b in zip(n_defaults, n_a_list)]
     n_factories = sum(n_f_list)
 
@@ -589,7 +591,7 @@ def anac2020_collusion(
     competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = 1000,
+    max_worlds_per_config: Optional[int] = None,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     min_factories_per_level: int = 2,

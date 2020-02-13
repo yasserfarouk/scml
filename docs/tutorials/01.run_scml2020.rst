@@ -23,16 +23,16 @@ happening in the world.
 
 .. code:: ipython3
 
-    # agent_types = [DecentralizingAgent, BuyCheapSellExpensiveAgent, ReactiveAgent, IndDecentralizingAgent, MovingRangeAgent]
-    agent_types = [DecentralizingAgent, MovingRangeAgent]
+    agent_types = [DecentralizingAgent, BuyCheapSellExpensiveAgent,
+                   IndDecentralizingAgent, MovingRangeAgent]
 
 .. code:: ipython3
 
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
-            n_steps=30
-        ), 
+            n_steps=50
+        ),
         construct_graphs=True,
     )
 
@@ -55,7 +55,13 @@ Now you can run this world simulation by just calling ``run``.
 
 .. code:: ipython3
 
-    world.run() # may take few minutes
+    world.run_with_progress() # may take few minutes
+
+
+.. parsed-literal::
+
+    100%|██████████| 30/30 [00:35<00:00,  1.19s/it]
+
 
 Let’s see what happened in this run. Firstly, how many negotiations were
 conducted over time
@@ -155,15 +161,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_02Dec@0',
-     'spot_market_loss_02Dec@0',
-     'balance_02Dec@0',
-     'inventory_02Dec@0_input',
-     'inventory_02Dec@0_output',
-     'productivity_02Dec@0',
-     'assets_02Dec@0',
-     'bankrupt_02Dec@0',
-     'score_02Dec@0']
+    ['spot_market_quantity_01Dec@0',
+     'spot_market_loss_01Dec@0',
+     'balance_01Dec@0',
+     'inventory_01Dec@0_input',
+     'inventory_01Dec@0_output',
+     'productivity_01Dec@0',
+     'assets_01Dec@0',
+     'bankrupt_01Dec@0',
+     'score_01Dec@0']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -209,22 +215,22 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_02Dec@0': (162.0, 1248.2477727434095),
-     'balance_02Dec@0': (7196, 10214),
-     'bankrupt_02Dec@0': (False, False),
-     'inventory_02Dec@0_input': (0, 0),
-     'inventory_02Dec@0_output': (9, 51),
-     'productivity_02Dec@0': (0.9, 0.0),
-     'score_02Dec@0': (-0.0012352456766401318, 0.48752729705897674),
-     'spot_market_loss_02Dec@0': (0.3, 0.5565),
-     'spot_market_quantity_02Dec@0': (0, 0)}
+    {'assets_01Dec@0': (160.0, 1002.4457754466567),
+     'balance_01Dec@0': (7310, 9583),
+     'bankrupt_01Dec@0': (False, False),
+     'inventory_01Dec@0_input': (0, 0),
+     'inventory_01Dec@0_output': (10, 45),
+     'productivity_01Dec@0': (1.0, 0.0),
+     'score_01Dec@0': (-0.002699055330634278, 0.3608937770206921),
+     'spot_market_loss_01Dec@0': (0.3, 0.8535000000000001),
+     'spot_market_quantity_01Dec@0': (0, 0)}
 
 
 .. code:: ipython3
 
     stats = pd.DataFrame(data=world.stats)
     fig, axs = plt.subplots(2, 3)
-    for ax, key in zip(axs.flatten().tolist(), ["score", "balance", "assets", "productivity", 
+    for ax, key in zip(axs.flatten().tolist(), ["score", "balance", "assets", "productivity",
                              "spot_market_quantity", "spot_market_loss"]):
         ax.plot(stats[f"{key}_{winner}"])
         ax.set(ylabel=key)
@@ -255,8 +261,8 @@ We can see a picture of contracting in this world as follows:
 .. code:: ipython3
 
     plt.plot(world.stats['n_contracts_concluded'], label='Concluded Contracts')
-    plt.plot(world.stats['n_contracts_cancelled'], label='Cancelled Contracts') 
-    plt.plot(world.stats['n_contracts_signed'], label='Signed Contracts') 
+    plt.plot(world.stats['n_contracts_cancelled'], label='Cancelled Contracts')
+    plt.plot(world.stats['n_contracts_signed'], label='Signed Contracts')
     plt.plot(world.stats['n_contracts_executed'], label='Executed Contracts')
     plt.legend()
     plt.xlabel('Simulation Step')
@@ -293,7 +299,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [02Dec@0] of type ['decentralizing'] won at [48.75272970589767]%
+    [01Dec@0] of type ['decentralizing'] won at [36.08937770206921]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -303,7 +309,7 @@ Let’s check how did the first winner’s inventory changes over time:
     # find the keys in stats for the input and output inventory
     in_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_input')][0]
     out_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_output')][0]
-    
+
     # find input and output product indices
     input_product, output_product = winner.awi.my_input_product, winner.awi.my_output_product
     # draw
@@ -332,7 +338,7 @@ We can actually check what happens to ALL competitors:
     from scml.scml2020.world import is_system_agent
     fig, (profit, score) = plt.subplots(1, 2)
     snames = sorted(world.non_system_agent_names)
-    for name in snames:    
+    for name in snames:
         profit.plot(100.0 * (np.asarray(world.stats[f'balance_{name}'])/world.stats[f'balance_{name}'][0] - 1.0), label=name)
         score.plot(100 * np.asarray(world.stats[f'score_{name}']), label=name)
     profit.set(xlabel='Simulation Step', ylabel='Player Profit Ignoring Inventory (%)')
@@ -350,7 +356,7 @@ We can actually check what happens to ALL competitors:
     from scml.scml2020.world import is_system_agent
     fig, (profit, score) = plt.subplots(1, 2)
     snames = sorted(world.non_system_agent_names)
-    for name in snames:    
+    for name in snames:
         profit.plot((np.asarray(world.stats[f'balance_{name}'])), label=name)
         score.plot(np.asarray(world.stats[f'score_{name}'])*(world.stats[f'balance_{name}'][0]), label=name)
     profit.set(xlabel='Simulation Step', ylabel='Player Balance ($)')
@@ -368,9 +374,9 @@ or just look at the end of the game
 .. code:: ipython3
 
     fig, (score, profit) = plt.subplots(1, 2)
-    final_scores = [100 * world.stats[f"score_{_}"][-1] 
+    final_scores = [100 * world.stats[f"score_{_}"][-1]
                     for _ in world.non_system_agent_names]
-    final_profits = [100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100 
+    final_profits = [100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100
                      for _ in world.non_system_agent_names]
     plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
@@ -378,7 +384,7 @@ or just look at the end of the game
     profit.bar(world.non_system_agent_names, final_profits)
     score.set(ylabel="Final Score (%)")
     profit.set(ylabel="Final Profit (%)")
-    
+
     fig.show()
 
 
@@ -389,9 +395,9 @@ or just look at the end of the game
 .. code:: ipython3
 
     fig, (score, profit) = plt.subplots(1, 2)
-    final_scores = [world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0]) 
+    final_scores = [world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0])
                     for _ in world.non_system_agent_names]
-    final_profits = [world.stats[f"balance_{_}"][-1] 
+    final_profits = [world.stats[f"balance_{_}"][-1]
                      for _ in world.non_system_agent_names]
     plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
@@ -399,7 +405,7 @@ or just look at the end of the game
     profit.bar(world.non_system_agent_names, final_profits)
     score.set(ylabel="Final Unnormalized Score ($)")
     profit.set(ylabel="Final Balance  ($)")
-    
+
     fig.show()
 
 
@@ -468,11 +474,11 @@ For example, let’s see some of the contracts that were signed:
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -495,25 +501,25 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>738</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>18</td>
-          <td>38</td>
-          <td>41</td>
-          <td>12</td>
+          <th>615</th>
+          <td>05Buy@1</td>
+          <td>07Dec@2</td>
+          <td>19</td>
+          <td>35</td>
+          <td>25</td>
+          <td>10</td>
           <td>False</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>353</th>
+          <th>323</th>
           <td>03Dec@1</td>
-          <td>07Dec@2</td>
+          <td>06Buy@2</td>
           <td>12</td>
-          <td>35</td>
-          <td>43</td>
+          <td>30</td>
+          <td>36</td>
           <td>2</td>
           <td>False</td>
           <td>True</td>
@@ -521,12 +527,12 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>359</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>12</td>
-          <td>35</td>
-          <td>43</td>
+          <th>290</th>
+          <td>05Buy@1</td>
+          <td>08Dec@2</td>
+          <td>9</td>
+          <td>30</td>
+          <td>25</td>
           <td>2</td>
           <td>False</td>
           <td>True</td>
@@ -534,25 +540,38 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>485</th>
+          <th>297</th>
+          <td>05Buy@1</td>
           <td>07Dec@2</td>
-          <td>10Dec@3</td>
-          <td>11</td>
-          <td>32</td>
-          <td>64</td>
-          <td>5</td>
+          <td>12</td>
+          <td>30</td>
+          <td>25</td>
+          <td>2</td>
           <td>False</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>432</th>
+          <th>364</th>
+          <td>05Buy@1</td>
           <td>07Dec@2</td>
-          <td>11Dec@3</td>
+          <td>9</td>
+          <td>30</td>
+          <td>25</td>
+          <td>3</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>389</th>
+          <td>05Buy@1</td>
+          <td>08Dec@2</td>
           <td>12</td>
-          <td>32</td>
-          <td>59</td>
+          <td>30</td>
+          <td>25</td>
           <td>4</td>
           <td>False</td>
           <td>True</td>
@@ -560,38 +579,25 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>387</th>
-          <td>03Dec@1</td>
-          <td>07Dec@2</td>
-          <td>8</td>
-          <td>29</td>
-          <td>40</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>530</th>
-          <td>03Dec@1</td>
+          <th>391</th>
+          <td>05Buy@1</td>
           <td>07Dec@2</td>
           <td>11</td>
+          <td>30</td>
           <td>25</td>
-          <td>28</td>
-          <td>7</td>
-          <td>True</td>
+          <td>4</td>
           <td>False</td>
+          <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>542</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>11</td>
+          <th>493</th>
+          <td>05Buy@1</td>
+          <td>08Dec@2</td>
+          <td>10</td>
           <td>25</td>
-          <td>28</td>
+          <td>25</td>
           <td>7</td>
           <td>False</td>
           <td>True</td>
@@ -599,26 +605,26 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>494</th>
-          <td>00Dec@0</td>
+          <th>821</th>
+          <td>01Dec@0</td>
           <td>03Dec@1</td>
-          <td>14</td>
-          <td>18</td>
-          <td>28</td>
-          <td>6</td>
+          <td>22</td>
+          <td>19</td>
+          <td>25</td>
+          <td>16</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>549</th>
-          <td>00Dec@0</td>
+          <th>243</th>
+          <td>01Dec@0</td>
           <td>03Dec@1</td>
-          <td>14</td>
+          <td>10</td>
           <td>18</td>
-          <td>28</td>
-          <td>7</td>
+          <td>23</td>
+          <td>1</td>
           <td>False</td>
           <td>True</td>
           <td>False</td>
@@ -646,11 +652,11 @@ Let’s check some of the contracts that were fully executed
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -673,130 +679,130 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>387</th>
+          <th>821</th>
+          <td>01Dec@0</td>
           <td>03Dec@1</td>
-          <td>07Dec@2</td>
-          <td>8</td>
-          <td>29</td>
-          <td>40</td>
-          <td>3</td>
+          <td>22</td>
+          <td>19</td>
+          <td>25</td>
+          <td>16</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>530</th>
+          <th>240</th>
+          <td>01Dec@0</td>
+          <td>03Dec@1</td>
+          <td>6</td>
+          <td>17</td>
+          <td>23</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>688</th>
+          <td>08Dec@2</td>
+          <td>10Ind@3</td>
+          <td>20</td>
+          <td>15</td>
+          <td>48</td>
+          <td>12</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>933</th>
+          <td>07Dec@2</td>
+          <td>11Buy@3</td>
+          <td>29</td>
+          <td>15</td>
+          <td>48</td>
+          <td>23</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>585</th>
+          <td>01Dec@0</td>
+          <td>05Buy@1</td>
+          <td>16</td>
+          <td>14</td>
+          <td>25</td>
+          <td>9</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>875</th>
           <td>03Dec@1</td>
           <td>07Dec@2</td>
+          <td>21</td>
+          <td>14</td>
+          <td>25</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>217</th>
+          <td>01Dec@0</td>
+          <td>05Buy@1</td>
+          <td>7</td>
+          <td>12</td>
+          <td>23</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>573</th>
+          <td>08Dec@2</td>
+          <td>11Buy@3</td>
+          <td>13</td>
+          <td>12</td>
+          <td>18</td>
+          <td>9</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>210</th>
+          <td>01Dec@0</td>
+          <td>05Buy@1</td>
+          <td>6</td>
           <td>11</td>
           <td>25</td>
-          <td>28</td>
-          <td>7</td>
+          <td>1</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>494</th>
-          <td>00Dec@0</td>
+          <th>824</th>
           <td>03Dec@1</td>
-          <td>14</td>
-          <td>18</td>
-          <td>28</td>
-          <td>6</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>839</th>
-          <td>06Dec@2</td>
-          <td>11Dec@3</td>
-          <td>21</td>
-          <td>17</td>
-          <td>60</td>
-          <td>15</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>652</th>
-          <td>00Dec@0</td>
-          <td>03Dec@1</td>
-          <td>18</td>
-          <td>17</td>
-          <td>28</td>
+          <td>07Dec@2</td>
+          <td>26</td>
           <td>10</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>436</th>
-          <td>02Dec@0</td>
-          <td>03Dec@1</td>
-          <td>11</td>
-          <td>17</td>
-          <td>26</td>
-          <td>4</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>428</th>
-          <td>00Dec@0</td>
-          <td>03Dec@1</td>
-          <td>12</td>
+          <td>38</td>
           <td>16</td>
-          <td>28</td>
-          <td>4</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>570</th>
-          <td>02Dec@0</td>
-          <td>03Dec@1</td>
-          <td>16</td>
-          <td>16</td>
-          <td>28</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>254</th>
-          <td>00Dec@0</td>
-          <td>03Dec@1</td>
-          <td>6</td>
-          <td>16</td>
-          <td>26</td>
-          <td>1</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>290</th>
-          <td>02Dec@0</td>
-          <td>03Dec@1</td>
-          <td>7</td>
-          <td>16</td>
-          <td>26</td>
-          <td>1</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -822,11 +828,11 @@ Let’s check some of the contracts that were fully executed
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -846,104 +852,104 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>738</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>18</td>
-          <td>38</td>
-          <td>41</td>
-          <td>12</td>
-          <td>03Dec@1:product(0.2894736842105263)</td>
-        </tr>
-        <tr>
-          <th>353</th>
-          <td>03Dec@1</td>
+          <th>615</th>
+          <td>05Buy@1</td>
           <td>07Dec@2</td>
-          <td>12</td>
+          <td>19</td>
           <td>35</td>
-          <td>43</td>
-          <td>2</td>
-          <td>03Dec@1:product(0.7142857142857143)</td>
-        </tr>
-        <tr>
-          <th>359</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>12</td>
-          <td>35</td>
-          <td>43</td>
-          <td>2</td>
-          <td>03Dec@1:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>485</th>
-          <td>07Dec@2</td>
-          <td>10Dec@3</td>
-          <td>11</td>
-          <td>32</td>
-          <td>64</td>
-          <td>5</td>
-          <td>07Dec@2:product(0.4375)</td>
-        </tr>
-        <tr>
-          <th>432</th>
-          <td>07Dec@2</td>
-          <td>11Dec@3</td>
-          <td>12</td>
-          <td>32</td>
-          <td>59</td>
-          <td>4</td>
-          <td>07Dec@2:product(0.6875)</td>
-        </tr>
-        <tr>
-          <th>542</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>11</td>
           <td>25</td>
-          <td>28</td>
-          <td>7</td>
-          <td>03Dec@1:product(0.72)</td>
+          <td>10</td>
+          <td>05Buy@1:product(1.0)</td>
         </tr>
         <tr>
-          <th>549</th>
-          <td>00Dec@0</td>
+          <th>323</th>
           <td>03Dec@1</td>
-          <td>14</td>
-          <td>18</td>
-          <td>28</td>
-          <td>7</td>
-          <td>00Dec@0:product(0.6666666666666666)</td>
+          <td>06Buy@2</td>
+          <td>12</td>
+          <td>30</td>
+          <td>36</td>
+          <td>2</td>
+          <td>06Buy@2:money(0.4073745342976112)</td>
         </tr>
         <tr>
-          <th>703</th>
-          <td>00Dec@0</td>
-          <td>03Dec@1</td>
-          <td>16</td>
-          <td>17</td>
-          <td>26</td>
+          <th>290</th>
+          <td>05Buy@1</td>
+          <td>08Dec@2</td>
+          <td>9</td>
+          <td>30</td>
+          <td>25</td>
+          <td>2</td>
+          <td>05Buy@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>297</th>
+          <td>05Buy@1</td>
+          <td>07Dec@2</td>
+          <td>12</td>
+          <td>30</td>
+          <td>25</td>
+          <td>2</td>
+          <td>05Buy@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>364</th>
+          <td>05Buy@1</td>
+          <td>07Dec@2</td>
+          <td>9</td>
+          <td>30</td>
+          <td>25</td>
+          <td>3</td>
+          <td>05Buy@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>389</th>
+          <td>05Buy@1</td>
+          <td>08Dec@2</td>
+          <td>12</td>
+          <td>30</td>
+          <td>25</td>
+          <td>4</td>
+          <td>05Buy@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>391</th>
+          <td>05Buy@1</td>
+          <td>07Dec@2</td>
           <td>11</td>
-          <td>00Dec@0:product(0.11764705882352941)</td>
+          <td>30</td>
+          <td>25</td>
+          <td>4</td>
+          <td>05Buy@1:product(1.0)</td>
         </tr>
         <tr>
-          <th>346</th>
-          <td>00Dec@0</td>
+          <th>493</th>
+          <td>05Buy@1</td>
+          <td>08Dec@2</td>
+          <td>10</td>
+          <td>25</td>
+          <td>25</td>
+          <td>7</td>
+          <td>05Buy@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>243</th>
+          <td>01Dec@0</td>
           <td>03Dec@1</td>
           <td>10</td>
-          <td>16</td>
-          <td>28</td>
-          <td>2</td>
-          <td>00Dec@0:product(0.125)</td>
+          <td>18</td>
+          <td>23</td>
+          <td>1</td>
+          <td>01Dec@0:product(0.4444444444444444)</td>
         </tr>
         <tr>
-          <th>914</th>
-          <td>03Dec@1</td>
-          <td>06Dec@2</td>
-          <td>21</td>
-          <td>16</td>
-          <td>28</td>
-          <td>17</td>
-          <td>03Dec@1:product(0.625)</td>
+          <th>315</th>
+          <td>01Dec@0</td>
+          <td>05Buy@1</td>
+          <td>10</td>
+          <td>18</td>
+          <td>23</td>
+          <td>2</td>
+          <td>01Dec@0:product(1.0)</td>
         </tr>
       </tbody>
     </table>
@@ -984,25 +990,25 @@ Did any agents go bankrupt and when?
 
 .. code:: ipython3
 
-    bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"])[0]
+    bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
             for a in world.non_system_agent_names}
     pprint({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
 
 
 .. parsed-literal::
 
-    {'00Dec@0': 'No',
-     '01Mov@0': 'No',
-     '02Dec@0': 'No',
+    {'00Mov@0': 'No',
+     '01Dec@0': 'No',
+     '02Rea@0': 'No',
      '03Dec@1': 'No',
      '04Mov@1': 'No',
-     '05Mov@1': 'No',
-     '06Dec@2': 'No',
+     '05Buy@1': 'at: 19',
+     '06Buy@2': 'at: 5',
      '07Dec@2': 'No',
-     '08Mov@2': 'No',
-     '09Mov@3': 'No',
-     '10Dec@3': 'No',
-     '11Dec@3': 'No'}
+     '08Dec@2': 'No',
+     '09Buy@3': 'No',
+     '10Ind@3': 'No',
+     '11Buy@3': 'No'}
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -1040,24 +1046,56 @@ animation) :
 
     # prepare animation
     from IPython.display import clear_output
+    from IPython.display import HTML
     from time import perf_counter
     from negmas.helpers import humanize_time
-    # run the world and animate it
+    import gif
+    from pathlib import Path
+
+    # define animation parameters
     draw_every = 1 # draw every 5 steps (drawing is REALLY slow)
     single_graph = False # show a graph for every event type
-    what = ["contracts-signed", "contracts-breached", "contracts-executed",]
-    for s in range(world.n_steps):
+    # what = ["contracts-signed", "contracts-breached", "contracts-executed",]
+    fps = 5
+
+    # define the animation function. Simply draw the world
+    @gif.frame
+    def plot_frame(s):
+        world.draw(#what=what,
+                   steps=(s-draw_every, s),
+                   together=single_graph, ncols=3, figsize=(20, 20))
+
+    # create frames
+    frames = []
+    for s in tqdm(range(world.n_steps)):
         if s % draw_every != 0:
             continue
-        world.draw(what=what, steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20, 5))
-        plt.show()
-        clear_output(wait=True)
-    world.draw(what=what, steps=(s-draw_every, s), together=single_graph, ncols=3, figsize=(20,5))
-    plt.show()
+        frames.append(plot_frame(s))
+
+    path = Path.cwd() / "run.gif"
+    path.unlink(missing_ok=True)
+    gif.save(frames, str(path), duration=1000 // fps)
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_55_0.png
+.. parsed-literal::
+
+    HBox(children=(FloatProgress(value=0.0, max=30.0), HTML(value='')))
+
+
+.. parsed-literal::
+
+
+
+
+then show the animation
+
+.. code:: ipython3
+
+    HTML('<img src="run.gif">')
+
+
+.. image:: run.gif
 
 
 Note that this graph shows only what happened in the last ``draw_every``
@@ -1087,12 +1125,12 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
     tournament_types = agent_types + [RandomAgent]
     # may take a long time
     results = anac2020_std(
-        competitors=tournament_types,  
-        n_configs=12, # number of different configurations to generate 
+        competitors=tournament_types,
+        n_configs=12, # number of different configurations to generate
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
         n_steps = 10, # number of days (simulation steps) per simulation
         print_exceptions=True,
-    ) 
+    )
 
 Who was the winner?
 
@@ -1120,7 +1158,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    36
+    72
 
 
 
@@ -1145,11 +1183,11 @@ We can also see the scores that every agent type got
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1172,39 +1210,75 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>decentralizing_agent</td>
-          <td>36.0</td>
-          <td>0.641585</td>
-          <td>0.382862</td>
-          <td>0.013917</td>
-          <td>0.437722</td>
-          <td>0.624334</td>
-          <td>0.850786</td>
-          <td>1.811421</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>72.0</td>
+          <td>-0.180349</td>
+          <td>0.145148</td>
+          <td>-0.723072</td>
+          <td>-0.239448</td>
+          <td>-0.161767</td>
+          <td>-0.095383</td>
+          <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>moving_range_agent</td>
-          <td>36.0</td>
-          <td>0.017210</td>
-          <td>0.098589</td>
-          <td>-0.164224</td>
-          <td>-0.029696</td>
-          <td>0.005919</td>
-          <td>0.055612</td>
-          <td>0.268376</td>
+          <td>decentralizing_agent</td>
+          <td>72.0</td>
+          <td>0.553033</td>
+          <td>0.434996</td>
+          <td>-0.088440</td>
+          <td>0.219679</td>
+          <td>0.522013</td>
+          <td>0.714262</td>
+          <td>2.069087</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>random_agent</td>
-          <td>36.0</td>
-          <td>-0.171960</td>
-          <td>0.116389</td>
-          <td>-0.456237</td>
-          <td>-0.241420</td>
-          <td>-0.167361</td>
-          <td>-0.121497</td>
+          <td>ind_decentralizing_agent</td>
+          <td>72.0</td>
+          <td>0.477987</td>
+          <td>0.381690</td>
+          <td>-0.115599</td>
+          <td>0.166823</td>
+          <td>0.454950</td>
+          <td>0.649887</td>
+          <td>1.627096</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>moving_range_agent</td>
+          <td>72.0</td>
+          <td>-0.034101</td>
+          <td>0.075726</td>
+          <td>-0.214662</td>
+          <td>-0.094222</td>
           <td>0.000000</td>
+          <td>0.009356</td>
+          <td>0.162977</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>random_agent</td>
+          <td>72.0</td>
+          <td>-0.348557</td>
+          <td>0.331758</td>
+          <td>-2.245792</td>
+          <td>-0.432253</td>
+          <td>-0.259521</td>
+          <td>-0.182042</td>
+          <td>0.000000</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>reactive_agent</td>
+          <td>72.0</td>
+          <td>-0.069270</td>
+          <td>0.085413</td>
+          <td>-0.352044</td>
+          <td>-0.139779</td>
+          <td>-0.000611</td>
+          <td>0.000000</td>
+          <td>0.064471</td>
         </tr>
       </tbody>
     </table>
@@ -1229,11 +1303,11 @@ You can also do statistical significance testing using ttest or kstest
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1254,33 +1328,153 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>random_agent</td>
-          <td>moving_range_agent</td>
-          <td>0.694444</td>
-          <td>1.365966e-08</td>
-          <td>36</td>
-          <td>36</td>
-          <td>36</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>decentralizing_agent</td>
+          <td>0.972222</td>
+          <td>1.391151e-38</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>random_agent</td>
-          <td>decentralizing_agent</td>
-          <td>1.000000</td>
-          <td>4.519646e-21</td>
-          <td>36</td>
-          <td>36</td>
-          <td>36</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>ind_decentralizing_agent</td>
+          <td>0.930556</td>
+          <td>6.499180e-34</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
         </tr>
         <tr>
           <th>2</th>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>random_agent</td>
+          <td>0.375000</td>
+          <td>6.717478e-05</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>reactive_agent</td>
+          <td>0.430556</td>
+          <td>2.263760e-06</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>buy_cheap_sell_expensive_agent</td>
           <td>moving_range_agent</td>
+          <td>0.569444</td>
+          <td>4.087548e-11</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>5</th>
           <td>decentralizing_agent</td>
-          <td>0.805556</td>
-          <td>6.657934e-12</td>
-          <td>36</td>
-          <td>36</td>
-          <td>36</td>
+          <td>ind_decentralizing_agent</td>
+          <td>0.125000</td>
+          <td>6.306886e-01</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>decentralizing_agent</td>
+          <td>random_agent</td>
+          <td>0.972222</td>
+          <td>1.391151e-38</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>decentralizing_agent</td>
+          <td>reactive_agent</td>
+          <td>0.930556</td>
+          <td>6.499180e-34</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>decentralizing_agent</td>
+          <td>moving_range_agent</td>
+          <td>0.861111</td>
+          <td>1.036965e-27</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td>ind_decentralizing_agent</td>
+          <td>random_agent</td>
+          <td>0.944444</td>
+          <td>2.321136e-35</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>ind_decentralizing_agent</td>
+          <td>reactive_agent</td>
+          <td>0.888889</td>
+          <td>5.083159e-30</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td>ind_decentralizing_agent</td>
+          <td>moving_range_agent</td>
+          <td>0.819444</td>
+          <td>1.421599e-24</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td>random_agent</td>
+          <td>reactive_agent</td>
+          <td>0.680556</td>
+          <td>3.583836e-16</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>13</th>
+          <td>random_agent</td>
+          <td>moving_range_agent</td>
+          <td>0.819444</td>
+          <td>1.421599e-24</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>14</th>
+          <td>reactive_agent</td>
+          <td>moving_range_agent</td>
+          <td>0.250000</td>
+          <td>2.186591e-02</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
         </tr>
       </tbody>
     </table>
@@ -1304,11 +1498,11 @@ see the total score
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1325,17 +1519,32 @@ see the total score
         <tr>
           <th>0</th>
           <td>decentralizing_agent</td>
-          <td>0.624334</td>
+          <td>0.522013</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>moving_range_agent</td>
-          <td>0.005919</td>
+          <td>ind_decentralizing_agent</td>
+          <td>0.454950</td>
         </tr>
         <tr>
           <th>2</th>
+          <td>moving_range_agent</td>
+          <td>0.000000</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>reactive_agent</td>
+          <td>-0.000611</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>-0.161767</td>
+        </tr>
+        <tr>
+          <th>5</th>
           <td>random_agent</td>
-          <td>-0.167361</td>
+          <td>-0.259521</td>
         </tr>
       </tbody>
     </table>
@@ -1349,7 +1558,7 @@ activity level for different simulations.
 .. code:: ipython3
 
     plt.errorbar(range(len(results.agg_stats)),
-                 results.agg_stats.activity_level_mean, 
+                 results.agg_stats.activity_level_mean,
                  np.sqrt(results.agg_stats.activity_level_var)
                  )
     plt.xlabel("Simulation Number")
@@ -1358,7 +1567,7 @@ activity level for different simulations.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_71_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_73_0.png
 
 
 We can even get the scores of every agent belonging to every agent type
@@ -1378,11 +1587,11 @@ at every simulation
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1399,33 +1608,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Ran@0</td>
-          <td>random_agent</td>
-          <td>-0.274163</td>
+          <td>00Buy@0</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>-0.248597</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>01Mov@0</td>
-          <td>moving_range_agent</td>
-          <td>-0.028083</td>
+          <td>02Dec@1</td>
+          <td>decentralizing_agent</td>
+          <td>0.740044</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>02Dec@1</td>
-          <td>decentralizing_agent</td>
-          <td>0.013917</td>
+          <td>04Ind@2</td>
+          <td>ind_decentralizing_agent</td>
+          <td>0.950249</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>02Mov@1</td>
-          <td>moving_range_agent</td>
-          <td>0.000000</td>
+          <td>05Ran@2</td>
+          <td>random_agent</td>
+          <td>-0.229736</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>03Dec@1</td>
-          <td>decentralizing_agent</td>
-          <td>1.275761</td>
+          <td>09Rea@3</td>
+          <td>reactive_agent</td>
+          <td>0.000000</td>
         </tr>
       </tbody>
     </table>
@@ -1439,12 +1648,12 @@ or inspect any statistic we like
 
     ax = sns.violinplot(data=results.stats, x="step", y="activity_level")
     ax.set(ylabel="Activity Level / Business Size ($)", xlabel="Step Number", yscale="log")
-    
+
     fig.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_75_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
 
 
 Let’s see how did the location at the production graph affect the score
@@ -1453,14 +1662,14 @@ of each type.
 .. code:: ipython3
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
-    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
+    sns.lineplot(data=results.scores[["agent_type", "level", "score"]],
                  x="level", y="score", hue="agent_type")
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_79_0.png
 
 
 Now that you can run simulations and complete tournament, let’s see how

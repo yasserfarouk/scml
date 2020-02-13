@@ -76,6 +76,8 @@ setup(
         'negmas',
         'tqdm',
         'joblib',
+        'jupyter',
+        'gif',
     ],
     extras_require={
         # eg:

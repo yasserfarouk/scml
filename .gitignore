@@ -78,3 +78,14 @@ tests/logs
 src/tests/logs
 **/my_results
 AVERAGE_STEPS.txt
+.venv
+venv
+/.venv
+/venv
+logs
+/logs
+/logs/*
+**/logs
+*/logs
+/my_results
+/my_results/*
