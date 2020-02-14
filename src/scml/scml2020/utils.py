@@ -217,7 +217,11 @@ def anac2020_config_generator(
             n_processes[0],
         )
         n_processes = len(n_f_list)
-        n_defaults = integer_cut(n_default_managers, n_processes, 0, [max_factories_per_level - _ for _ in n_f_list])
+        n_defaults = [0] * n_processes
+        while n_default_managers > 0:
+            indx = randint(0, n_processes - 1)
+            n_defaults[indx] += 1
+            n_default_managers -= 1
 
     n_factories = sum(n_f_list)
 
