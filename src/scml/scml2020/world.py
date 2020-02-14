@@ -1376,6 +1376,10 @@ class SCML2020Agent(Agent):
         """
         return commands
 
+    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        """Signs all contracts"""
+        return [self.id] * len(contracts)
+
 
 def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
     """

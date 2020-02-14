@@ -5,13 +5,14 @@ control of negotiations to buy/sell the required number of items of its input/ou
 import numpy as np
 from typing import Tuple
 
-from scml.scml2020.components import FixedERPStrategy, FixedTradePredictionStrategy
+from scml.scml2020.components import FixedTradePredictionStrategy
 from scml.scml2020.components import StepNegotiationManager
 from scml.scml2020.components.production import TradeDrivenProductionStrategy
-from .do_nothing import DoNothingAgent
 from ..components.trading import ReactiveTradingStrategy
 
 __all__ = ["ReactiveAgent"]
+
+from ..world import SCML2020Agent
 
 
 class ReactiveAgent(
@@ -19,7 +20,7 @@ class ReactiveAgent(
     ReactiveTradingStrategy,
     TradeDrivenProductionStrategy,
     FixedTradePredictionStrategy,
-    DoNothingAgent
+    SCML2020Agent
 ):
 
     def acceptable_unit_price(self, step: int, sell: bool) -> int:

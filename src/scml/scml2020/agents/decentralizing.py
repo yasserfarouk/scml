@@ -18,6 +18,8 @@ from ..components.trading import PredictionBasedTradingStrategy
 
 __all__ = ["DecentralizingAgent", "IndDecentralizingAgent"]
 
+from ..world import SCML2020Agent
+
 class _NegotiationCallbacks:
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
@@ -49,7 +51,7 @@ class DecentralizingAgent(
     StepNegotiationManager,
     PredictionBasedTradingStrategy,
     SupplyDrivenProductionStrategy,
-    DoNothingAgent,
+    SCML2020Agent,
 ):
     pass
 
@@ -59,7 +61,7 @@ class IndDecentralizingAgent(
     IndependentNegotiationsManager,
     PredictionBasedTradingStrategy,
     SupplyDrivenProductionStrategy,
-    DoNothingAgent,
+    SCML2020Agent,
 ):
     def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
         if is_seller:

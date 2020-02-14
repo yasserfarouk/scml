@@ -475,8 +475,8 @@ def anac2020_tournament(
     agent_names_reveal_type=False,
     n_configs: int = 5,
     max_worlds_per_config: Optional[int] = None,
-    n_runs_per_world: int = 5,
-    n_agents_per_competitor: int = 5,
+    n_runs_per_world: int = 2,
+    n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
     total_timeout: Optional[int] = None,
@@ -502,7 +502,7 @@ def anac2020_tournament(
                                  beginning).
         n_configs: The number of different world configs (up to competitor assignment) to be generated.
         max_worlds_per_config: The maximum number of worlds to run per config. If None, then all possible assignments
-                             of competitors within each config will be tried (all permutations).
+                             of competitors within each config will be tried (by rotating agents over factories).
         n_runs_per_world: Number of runs per world. All of these world runs will have identical competitor assignment
                           and identical world configuration.
         n_agents_per_competitor: Number of agents per competitor
@@ -655,6 +655,8 @@ def anac2020_std(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
+        n_competitors_per_world=5,
+        round_robin=True,
         **kwargs,
     )
 
@@ -665,8 +667,8 @@ def anac2020_collusion(
     agent_names_reveal_type=False,
     n_configs: int = 5,
     max_worlds_per_config: Optional[int] = None,
-    n_runs_per_world: int = 5,
-    n_agents_per_competitor: int = 5,
+    n_runs_per_world: int = 2,
+    n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
     total_timeout: Optional[int] = None,
@@ -759,5 +761,7 @@ def anac2020_collusion(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
+        n_competitors_per_world=3,
+        round_robin=True,
         **kwargs,
     )

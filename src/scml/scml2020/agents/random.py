@@ -1,9 +1,6 @@
 """Implements a randomly behaving agent"""
-from typing import List, Optional, Dict, Any
 
-import numpy as np
-from negmas import Contract, Breach, AgentMechanismInterface, MechanismState, Issue, Negotiator, RandomUtilityFunction
-from negmas import AspirationNegotiator
+from negmas import Issue, RandomUtilityFunction
 
 from .indneg import IndependentNegotiationsAgent
 

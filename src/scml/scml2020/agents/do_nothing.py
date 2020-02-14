@@ -1,7 +1,6 @@
 """Implements an agent that does nothing"""
 from typing import List, Optional, Dict, Any
 
-import numpy as np
 from negmas import (
     Contract,
     Breach,
@@ -9,10 +8,7 @@ from negmas import (
     MechanismState,
     Issue,
     Negotiator,
-    RandomUtilityFunction,
 )
-from negmas import AspirationNegotiator
-
 from scml.scml2020.world import SCML2020Agent, Failure
 
 __all__ = ["DoNothingAgent"]
@@ -31,7 +27,7 @@ class DoNothingAgent(SCML2020Agent):
         return None
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        return [self.id] * len(contracts)
+        return [None] * len(contracts)
 
     def on_contracts_finalized(
         self,

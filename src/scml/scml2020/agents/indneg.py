@@ -12,29 +12,22 @@ The main assumptions of the agents based on `IndependentNegotiationsAgent` are:
 1. All production processes take one input time and generate one output type.
 
 """
-import math
-from abc import abstractmethod
-from typing import List, Optional, Dict, Any, Union
 
 import numpy as np
-from negmas import AspirationNegotiator
-from negmas import Contract, AgentMechanismInterface, Issue, Negotiator, SAONegotiator
-from negmas.helpers import get_class, instantiate
-
-from .do_nothing import DoNothingAgent
 
 __all__ = ["IndependentNegotiationsAgent"]
 
 from ..components.trading import ReactiveTradingStrategy
 from ..components.negotiation import IndependentNegotiationsManager
 from ..components.prediction import FixedTradePredictionStrategy
+from ..world import SCML2020Agent
 
 
 class IndependentNegotiationsAgent(
     IndependentNegotiationsManager,
     FixedTradePredictionStrategy,
     ReactiveTradingStrategy,
-    DoNothingAgent,
+    SCML2020Agent,
 ):
     """
     Implements the base class for agents that negotiate independently with different partners.
