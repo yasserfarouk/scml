@@ -119,7 +119,9 @@ def integer_cut_dynamic(
     sizes = sorted(sizes, reverse=True)
     for i, x in enumerate(sizes):
         can_remove = x - l_min
-        sizes[i] -= min(can_remove, to_remove)
+        removed = min(can_remove, to_remove)
+        sizes[i] -= removed
+        to_remove -= removed
         if sum(sizes) == n:
             break
     sizes = [_ for _ in sizes if _ > 0]
