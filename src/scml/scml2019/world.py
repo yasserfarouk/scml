@@ -255,6 +255,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             ignore_agent_exceptions=ignore_agent_exceptions,
             ignore_contract_execution_exceptions=ignore_contract_execution_exceptions,
             batch_signing=False,
+            no_logs=compact,
             force_signing=False,
             operations = (
                 Operations.StatsUpdate,

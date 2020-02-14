@@ -106,6 +106,7 @@ SCML2020World
       ~SCML2020World.on_contract_processed
       ~SCML2020World.on_contract_signed
       ~SCML2020World.on_event
+      ~SCML2020World.on_exception
       ~SCML2020World.order_contracts_for_execution
       ~SCML2020World.post_step_stats
       ~SCML2020World.pre_step_stats
@@ -229,6 +230,7 @@ SCML2020World
    .. automethod:: on_contract_processed
    .. automethod:: on_contract_signed
    .. automethod:: on_event
+   .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats

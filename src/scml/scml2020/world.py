@@ -1695,6 +1695,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             batch_signing=batch_signing,
             negotiation_quota_per_step=negotiation_quota_per_step,
             negotiation_quota_per_simulation=negotiation_quota_per_simulation,
+            no_logs=no_logs,
             operations=(
                 Operations.StatsUpdate,
                 Operations.SimulationStep,

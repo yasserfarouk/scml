@@ -256,6 +256,7 @@ def anac2020_config_generator(
         get_full_type_name(_) if isinstance(_, SCML2020Agent) else _
         for _ in agent_types
     ]
+    no_logs = compact
     world_params = dict(
         name=world_name,
         agent_types=agent_types,
@@ -274,6 +275,7 @@ def anac2020_config_generator(
         n_steps=n_steps,
         n_lines=n_lines,
         compact=compact,
+        no_logs=no_logs,
     )
     world_params.update(kwargs)
     config = {

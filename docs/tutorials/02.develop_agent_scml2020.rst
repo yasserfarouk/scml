@@ -65,7 +65,14 @@ a combination of three main strategies/components:
 
 2. **Negotiation Control Strategy**: This component is responsible for
    proactively request negotiations, responding to negotiation requests
-   and actually conducting concurrent negotaitions.
+   and actually conducting concurrent negotaitions. This component can
+   further be divided into two subcomponents:
+
+-  a pre negotiation component that decides which negotiations to accept
+   and which to engage in (**negotiation manager**)
+-  The **negotiation algorithm** used to carry out the negotiations
+   decided by the negotiation manger.
+
 3. **Production Strategy**: Decides what to produce at every time-step.
 
 You are free to organize your agent in a different way but - for the
@@ -89,6 +96,20 @@ executed.
 Components also reveal some useful members to other components and the
 main agent either as data-members, methods, or properties. Let’s see an
 example
+
+.. code:: ipython3
+
+    from IPython.display import HTML
+    HTML('<img src="anatomy.png">')
+
+
+
+
+.. raw:: html
+
+    <img src="anatomy.png">
+
+
 
 .. code:: ipython3
 
@@ -250,7 +271,7 @@ Now let’s test our agent with its new production strategy.
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_18_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_19_0.png
 
 
 As expected nothing happens. Our agent is still outside the market
@@ -278,7 +299,7 @@ which can be used by other components:
 There are two built-in trading strategies provided:
 
 1. ``NoTradingStrategy`` Simply sign any contracts that can in principle
-   be satisifed given the production capacity (i.e. n. lines) of the
+   be satisifed given the production capacity (i.e. n. lines) of the
    factory. Other than that there is no strategy. This strategy is not
    expected to work well but is useful as a baseline.
 2. ``PredictionBasedTradingStrategy`` This strategy use a trade
@@ -311,7 +332,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_21_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_22_0.png
 
 
 The last piece of the buzzle to complete our agent is to add a
@@ -396,7 +417,7 @@ Let’s add a simple implementation of both
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_27_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_28_0.png
 
 
 Our agent is now doing things in the market. It buys and sells and
@@ -416,7 +437,7 @@ commits breaches. How well is it doing? Let’s see how did our agents do
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_29_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_30_0.png
 
 
 Not as good as the comparison agent :-( yet better than random :-)
@@ -873,7 +894,7 @@ Let’s see how did our simple new agent do:
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_40_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_41_0.png
 
 
 .. code:: ipython3
@@ -882,7 +903,7 @@ Let’s see how did our simple new agent do:
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_41_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_42_0.png
 
 
 OK not bad. It is better than the original agent we developed using only
