@@ -907,7 +907,8 @@ Let’s see how did our simple new agent do:
 
 
 OK not bad. It is better than the original agent we developed using only
-built-in compoenents.
+built-in compoenents. If we re-run this notebook, we may get a different
+result though.
 
 
 

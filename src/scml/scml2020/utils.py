@@ -221,6 +221,8 @@ def anac2020_config_generator(
         n_defaults = [0] * n_processes
         while n_default_managers > 0:
             indx = randint(0, n_processes - 1)
+            if n_f_list[indx] <= n_defaults[indx]:
+                continue
             n_defaults[indx] += 1
             n_default_managers -= 1
 
@@ -660,7 +662,7 @@ def anac2020_std(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
-        n_competitors_per_world=5,
+        n_competitors_per_world=4,
         round_robin=True,
         **kwargs,
     )
@@ -766,7 +768,7 @@ def anac2020_collusion(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
-        n_competitors_per_world=3,
+        n_competitors_per_world=2,
         round_robin=True,
         **kwargs,
     )
