@@ -106,7 +106,7 @@ def integer_cut_dynamic(
     sizes = [l_min] * min_levels
 
     for i in range(len(sizes)):
-        sizes[i] += randint(l_min, l_max - l_min)
+        sizes[i] += randint(0, l_max - l_min)
 
     while sum(sizes) < n:
         i = randint(l_min, l_max)
@@ -124,7 +124,7 @@ def integer_cut_dynamic(
             break
     sizes = [_ for _ in sizes if _ > 0]
     shuffle(sizes)
-    assert sum(sizes) == n
+    assert sum(sizes) == n, f"n={n}\nsizes={sizes}"
     return sizes
 
 
