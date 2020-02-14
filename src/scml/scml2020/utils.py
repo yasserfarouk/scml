@@ -43,27 +43,89 @@ __all__ = [
 DefaultAgent = DecentralizingAgent
 
 
-def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
+def integer_cut(
+    n: int,
+    l: int,
+    l_m: Union[int, List[int]],
+    l_max: Union[int, List[int]] = float("inf"),
+) -> List[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
     Args:
         n: total
         l: number of levels
         l_m: minimum per level
+        l_max: maximum per level. Can be set to infinity
 
     Returns:
 
     """
     if not isinstance(l_m, Iterable):
         l_m = [l_m] * l
+    if not isinstance(l_max, Iterable):
+        l_max = [l_max] * l
     sizes = np.asarray(l_m)
     if n < sizes.sum():
         raise ValueError(
             f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
         )
+    maxs = np.asarray(l_max)
+    if n > maxs.sum():
+        raise ValueError(
+            f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {maxs.sum()}"
+        )
+    # TODO  That is most likely the most stupid way to do it. We just try blindly. There MUST be a better way
     while sizes.sum() < n:
-        sizes[randint(0, l - 1)] += 1
+        indx = randint(0, l - 1)
+        if sizes[indx] >= l_max[indx]:
+            continue
+        sizes[indx] += 1
     return list(sizes.tolist())
+
+
+def integer_cut_dynamic(
+    n: int, l_min: int, l_max: int, min_levels: int = 0
+) -> List[int]:
+    """
+    Generates a list random integers that sum to n where each of them is between l_m and l_max
+
+    Args:
+        n: total
+        l_min: minimum per level
+        l_max: maximum per level. Can be set to infinity
+        min_levels: THe minimum number of levels to use
+
+    Returns:
+
+    """
+    if n < min_levels * l_min:
+        raise ValueError(
+            f"Cannot cut {n} into at least {min_levels} numbers each is at least {l_min}"
+        )
+
+    sizes = [l_min] * min_levels
+
+    for i in range(len(sizes)):
+        sizes[i] += randint(l_min, l_max - l_min)
+
+    while sum(sizes) < n:
+        i = randint(l_min, l_max)
+        sizes.append(i)
+
+    to_remove = sum(sizes) - n
+    if to_remove == 0:
+        return sizes
+
+    sizes = sorted(sizes, reverse=True)
+    for i, x in enumerate(sizes):
+        can_remove = x - l_min
+        sizes[i] -= min(can_remove, to_remove)
+        if sum(sizes) == n:
+            break
+    sizes = [_ for _ in sizes if _ > 0]
+    shuffle(sizes)
+    assert sum(sizes) == n
+    return sizes
 
 
 def _realin(rng: Union[Tuple[float, float], float]) -> float:
@@ -111,10 +173,14 @@ def anac2020_config_generator(
     compact: bool = True,
     *,
     n_steps: Union[int, Tuple[int, int]] = (50, 200),
-    n_processes: Tuple[int, int] = (3, 5),
+    n_processes: Tuple[int, int] = (
+        3,
+        5,
+    ),  # minimum is strictly guarantee but maximum is only guaranteed if selec_n_levels_first
     min_factories_per_level: int = 2,  # strictly guaranteed
-    max_factories_per_level: int = 6,  # not strictly guaranteed
+    max_factories_per_level: int = 6,  # not strictly guaranteed except if select_n_levels_first is False
     n_lines: int = 10,
+    select_n_levels_first=False,
     **kwargs,
 ) -> List[Dict[str, Any]]:
 
@@ -127,27 +193,30 @@ def anac2020_config_generator(
 
     n_steps = _intin(n_steps)
 
-    n_processes = randint(*n_processes)
-    n_agents = n_agents_per_competitor * n_competitors
-    n_default_managers = max(
-        0,
-        min(
-            n_processes * max_factories_per_level,
-            max(0, n_processes * min_factories_per_level),
+    if select_n_levels_first:
+        n_processes = randint(*n_processes)
+        n_agents = n_agents_per_competitor * n_competitors
+        n_default_managers = max(0, n_processes * min_factories_per_level)
+        n_defaults = integer_cut(n_default_managers, n_processes, 0)
+        n_a_list = integer_cut(n_agents, n_processes, 0)
+        for i, n_a in enumerate(n_a_list):
+            if n_a + n_defaults[i] < min_factories_per_level:
+                n_defaults[i] = min_factories_per_level - n_a
+            if n_a + n_defaults[i] > max_factories_per_level and n_defaults[i] > 1:
+                n_defaults[i] = max(1, min_factories_per_level - n_a)
+        n_f_list = [a + b for a, b in zip(n_defaults, n_a_list)]
+    else:
+        n_agents = n_agents_per_competitor * n_competitors
+        n_default_managers = max(0, n_processes[0] * min_factories_per_level - n_agents)
+        n_f_list = integer_cut_dynamic(
+            n_agents + n_default_managers,
+            min_factories_per_level,
+            max_factories_per_level,
+            n_processes[0],
         )
-        - n_agents,
-    )
-    n_defaults = integer_cut(n_default_managers, n_processes, 0)
+        n_processes = len(n_f_list)
+        n_defaults = integer_cut(n_default_managers, n_processes, 0, [max_factories_per_level - _ for _ in n_f_list])
 
-    n_a_list = integer_cut(n_agents, n_processes, 0)
-
-    for i, n_a in enumerate(n_a_list):
-        if n_a + n_defaults[i] < min_factories_per_level:
-            n_defaults[i] = min_factories_per_level - n_a
-        if n_a + n_defaults[i] > max_factories_per_level and n_defaults[i] > 1:
-            n_defaults[i] = max(1, min_factories_per_level - n_a)
-
-    n_f_list = [a + b for a, b in zip(n_defaults, n_a_list)]
     n_factories = sum(n_f_list)
 
     if non_competitor_params is None:
@@ -405,7 +474,7 @@ def anac2020_tournament(
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     min_factories_per_level: int = 2,
-    tournament_path: str = "./logs/tournaments",
+    tournament_path: str = None,
     total_timeout: Optional[int] = None,
     parallelism="parallel",
     scheduler_ip: Optional[str] = None,
@@ -492,7 +561,7 @@ def anac2020_std(
     max_worlds_per_config: Optional[int] = None,
     n_runs_per_world: int = 5,
     min_factories_per_level: int = 2,
-    tournament_path: str = "./logs/tournaments",
+    tournament_path: str = None,
     total_timeout: Optional[int] = None,
     parallelism="parallel",
     scheduler_ip: Optional[str] = None,
@@ -595,7 +664,7 @@ def anac2020_collusion(
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     min_factories_per_level: int = 2,
-    tournament_path: str = "./logs/tournaments",
+    tournament_path: str = None,
     total_timeout: Optional[int] = None,
     parallelism="parallel",
     scheduler_ip: Optional[str] = None,
