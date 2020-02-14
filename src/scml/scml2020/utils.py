@@ -208,13 +208,14 @@ def anac2020_config_generator(
                 n_defaults[i] = max(1, min_factories_per_level - n_a)
         n_f_list = [a + b for a, b in zip(n_defaults, n_a_list)]
     else:
+        min_n_processes = randint(*n_processes)
         n_agents = n_agents_per_competitor * n_competitors
-        n_default_managers = max(0, n_processes[0] * min_factories_per_level - n_agents)
+        n_default_managers = max(0, min_n_processes * min_factories_per_level - n_agents)
         n_f_list = integer_cut_dynamic(
             n_agents + n_default_managers,
             min_factories_per_level,
             max_factories_per_level,
-            n_processes[0],
+            min_n_processes,
         )
         n_processes = len(n_f_list)
         n_defaults = [0] * n_processes
