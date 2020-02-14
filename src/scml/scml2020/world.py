@@ -2236,7 +2236,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             quantities[-1][0] = 0
             assert quantities[-1][-1] == 0 or p >= n_startup - 1
             assert quantities[-1][0] == 0
-            assert np.sum(quantities[-1] == 0) >= n_startup
+            # assert np.sum(quantities[-1] == 0) >= n_startup
         # - divide the quantity at every level between factories
         if equal_exogenous_supply:
             exogenous_supplies = np.maximum(
