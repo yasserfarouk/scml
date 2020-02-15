@@ -662,7 +662,7 @@ def anac2020_std(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
-        n_competitors_per_world=4,
+        n_competitors_per_world=2,
         round_robin=True,
         **kwargs,
     )
