@@ -504,9 +504,9 @@ class Factory:
         initial_inventory = self._inventory.copy()
 
         if self.confirm_production:
-            self.commands[step, :] = self.world.agents[
-                self.agent_id
-            ].confirm_production(
+            self.commands[step, :] = self.world.call(
+                self.world.agents[self.agent_id],
+                self.world.agents[self.agent_id].confirm_production,
                 self.commands[step, :],
                 self.current_balance,
                 self.current_inventory.copy(),
