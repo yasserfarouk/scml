@@ -2,6 +2,27 @@
 Changelog
 =========
 
+0.2.3 (2019.2.15)
+-----------------
+
+* adding more details to tournament runs
+* update to tournament utilities of SCML2020
+* doc update and correcting a bug in world generation
+* better initialization of production graph depth
+* correcting default factory assignments (if any)
+* making do_nothing agent really do nothing in scml2020
+* removing unnecessary assertion
+* correcting world generation using the new width first approach
+* correcting world generation using the new width first approach
+* documentation update
+* adding no_logs option to SCMLWorld2019 and SCMLWorld2020
+* changing default logging location for SCML2019 and SCML2020 to ~/negmas/logs/tournament
+* changing the way worlds are generated in SCML2020 to minimize the number of agents per level allowing the depth to increase
+* removing built docs from the repository
+* modification to .gitignore
+* updating .gitignore
+
+
 0.2.2 (2019.1.31)
 -----------------
 
