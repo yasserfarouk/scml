@@ -777,7 +777,7 @@ def create(
         )
     elif ttype.lower() == "anac2020std":
         if non_competitors is None:
-            non_competitors = (scml.scml2020.utils.DefaultAgent,)
+            non_competitors = (scml.scml2020.utils.DefaultAgents,)
             non_competitor_params = ({},)
         print(f"Tournament will be run between {len(all_competitors)} agents: ")
         pprint(all_competitors)

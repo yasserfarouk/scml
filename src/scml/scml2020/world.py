@@ -2149,7 +2149,10 @@ class SCML2020World(TimeInAgreementMixin, World):
         n_steps = intin(n_steps)
         exogenous_control = realin(exogenous_control)
         np.errstate(divide="ignore")
-        n_startup = n_processes if n_processes < n_steps - 1 else 1
+        n_startup = n_processes
+        if n_steps <= n_startup:
+            raise ValueError(f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}")
+
         horizon = max(1, min(n_steps, int(realin(horizon) * n_steps)))
         process_inputs = make_array(process_inputs, n_processes, dtype=int)
         process_outputs = make_array(process_outputs, n_processes, dtype=int)

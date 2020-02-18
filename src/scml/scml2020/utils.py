@@ -11,7 +11,7 @@ from negmas.helpers import unique_name, get_full_type_name
 
 from negmas.tournaments import WorldRunResults, TournamentResults, tournament
 
-from scml.scml2020.agents import DecentralizingAgent
+from scml.scml2020.agents import DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent
 from scml.scml2020.world import SCML2020World, is_system_agent
 
 if True:
@@ -37,10 +37,11 @@ __all__ = [
     "anac2020_collusion",
     "anac2020_std",
     "balance_calculator2020",
-    "DefaultAgent",
+    "DefaultAgents",
 ]
 
-DefaultAgent = DecentralizingAgent
+ROUND_ROBIN = True
+DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent]
 
 
 def integer_cut(
@@ -187,7 +188,8 @@ def anac2020_config_generator(
 ) -> List[Dict[str, Any]]:
 
     if non_competitors is None:
-        non_competitors = tuple(DefaultAgent)
+        non_competitors = DefaultAgents
+        non_competitor_params = [dict() for _ in non_competitors]
     if isinstance(n_processes, Iterable):
         n_processes = tuple(n_processes)
     else:
@@ -435,9 +437,9 @@ def balance_calculator2020(
     is_default = world.info["is_default"]
     factories = [_ for _ in world.factories if not is_system_agent(_.agent_id)]
     agents = [world.agents[f.agent_id] for f in factories]
-    agent_types = [_ for _ in world.agent_unique_types if not _.startswith("system")]
+    agent_types = [_ for _ in world.agent_unique_types if not _.startswith("system_agent")]
     if len(set(agent_types)) == len(set(world.agent_types)):
-        agent_types = [_ for _ in world.agent_types if not _ == "system"]
+        agent_types = [_ for _ in world.agent_types if not _.startswith("system_agent")]
     for i, factory in enumerate(factories):
         if is_default[i] and ignore_default:
             continue
@@ -633,8 +635,8 @@ def anac2020_std(
 
     """
     if non_competitors is None:
-        non_competitors = (DefaultAgent,)
-        non_competitor_params = ({},)
+        non_competitors = DefaultAgents
+        non_competitor_params = [dict() for _ in non_competitors]
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -663,13 +665,13 @@ def anac2020_std(
         compact=compact,
         metric="median",
         n_competitors_per_world=2,
-        round_robin=True,
+        round_robin=ROUND_ROBIN,
         **kwargs,
     )
 
 
 def anac2020_collusion(
-    competitors: Sequence[Union[str, Type[DefaultAgent]]],
+    competitors: Sequence[Union[str, Type]],
     competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
@@ -739,8 +741,8 @@ def anac2020_collusion(
 
     """
     if non_competitors is None:
-        non_competitors = (DefaultAgent,)
-        non_competitor_params = ({},)
+        non_competitors = DefaultAgents
+        non_competitor_params = [dict() for _ in non_competitors]
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -769,6 +771,6 @@ def anac2020_collusion(
         compact=compact,
         metric="median",
         n_competitors_per_world=2,
-        round_robin=True,
+        round_robin=ROUND_ROBIN,
         **kwargs,
     )
