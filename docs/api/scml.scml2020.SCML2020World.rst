@@ -68,6 +68,7 @@ SCML2020World
       ~SCML2020World.announce
       ~SCML2020World.append_stats
       ~SCML2020World.breach_record
+      ~SCML2020World.call
       ~SCML2020World.checkpoint
       ~SCML2020World.checkpoint_final_step
       ~SCML2020World.checkpoint_info
@@ -192,6 +193,7 @@ SCML2020World
    .. automethod:: announce
    .. automethod:: append_stats
    .. automethod:: breach_record
+   .. automethod:: call
    .. automethod:: checkpoint
    .. automethod:: checkpoint_final_step
    .. automethod:: checkpoint_info

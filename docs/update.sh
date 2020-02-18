@@ -35,3 +35,8 @@ done
 echo "------------------------------------------------"
 make clean
 rm -r api
+mkdir ./tutorials
+cp ../notebooks/tutorials/*.png ./tutorials
+cp ../notebooks/tutorials/*.gif ./tutorials
+cp ../notebooks/tutorials/*.png ./tutorials/02.develop_agent_scml2020_files/
+cp ../notebooks/tutorials/*.gif ./tutorials/01.run_scml2020_files/

@@ -56,6 +56,7 @@ SCML2019World
       ~SCML2019World.assign_managers
       ~SCML2019World.breach_record
       ~SCML2019World.buy_insurance
+      ~SCML2019World.call
       ~SCML2019World.chain_world
       ~SCML2019World.checkpoint
       ~SCML2019World.checkpoint_final_step
@@ -174,6 +175,7 @@ SCML2019World
    .. automethod:: assign_managers
    .. automethod:: breach_record
    .. automethod:: buy_insurance
+   .. automethod:: call
    .. automethod:: chain_world
    .. automethod:: checkpoint
    .. automethod:: checkpoint_final_step
