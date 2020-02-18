@@ -9,6 +9,7 @@ Contents
    installation
    usage
    tutorials
+   faq
 
    modules/scml2019
    modules/scml2020

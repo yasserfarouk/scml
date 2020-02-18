@@ -91,6 +91,7 @@ SCML2020World
       ~SCML2020World.graph
       ~SCML2020World.ignore_contract
       ~SCML2020World.init
+      ~SCML2020World.is_basic_stat
       ~SCML2020World.join
       ~SCML2020World.logdebug
       ~SCML2020World.logdebug_agent
@@ -216,6 +217,7 @@ SCML2020World
    .. automethod:: graph
    .. automethod:: ignore_contract
    .. automethod:: init
+   .. automethod:: is_basic_stat
    .. automethod:: join
    .. automethod:: logdebug
    .. automethod:: logdebug_agent
