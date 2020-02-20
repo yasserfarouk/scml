@@ -116,6 +116,7 @@ SCML2019World
       ~SCML2019World.run_negotiations
       ~SCML2019World.run_with_progress
       ~SCML2019World.save_config
+      ~SCML2019World.save_gif
       ~SCML2019World.set_bulletin_board
       ~SCML2019World.set_consumers
       ~SCML2019World.set_factory_managers
@@ -236,6 +237,7 @@ SCML2019World
    .. automethod:: run_negotiations
    .. automethod:: run_with_progress
    .. automethod:: save_config
+   .. automethod:: save_gif
    .. automethod:: set_bulletin_board
    .. automethod:: set_consumers
    .. automethod:: set_factory_managers

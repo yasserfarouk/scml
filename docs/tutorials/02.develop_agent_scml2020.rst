@@ -165,8 +165,11 @@ running).
 
 **To successfully use components to construct your agent, you need to
 remember to always call the ``super`` version of every method you
-overrided in your agent class to allow all components to run.** For a
-clear explanation of hte use of ``super`` refer to `Hettinger’s
+overrided in your agent class to allow all components to run except if
+you want to completey override the behavior of all components that use
+this callback.**. As a rule of thump, callbacks that start with “on\_”,
+“init”, and “step” should call super, the rest should not. For a clear
+explanation of the use of ``super`` refer to `Hettinger’s
 post <https://rhettinger.wordpress.com/2011/05/26/super-considered-super/>`__.
 
 Production Strategy
@@ -316,8 +319,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
     from scml.scml2020.components.production import DemandDrivenProductionStrategy
     from scml.scml2020.components.trading import PredictionBasedTradingStrategy
-    from scml.scml2020 import DoNothingAgent
-    class MyAgent(PredictionBasedTradingStrategy, DemandDrivenProductionStrategy, DoNothingAgent):
+    class MyAgent(PredictionBasedTradingStrategy, DemandDrivenProductionStrategy, SCML2020Agent):
         """My agent"""
 
 .. code:: ipython3
@@ -348,7 +350,7 @@ to see how it works.
 .. code:: ipython3
 
     from scml.scml2020.components.negotiation import IndependentNegotiationsManager
-    class MyAgent(IndependentNegotiationsManager, PredictionBasedTradingStrategy, DemandDrivenProductionStrategy, DoNothingAgent):
+    class MyAgent(IndependentNegotiationsManager, PredictionBasedTradingStrategy, DemandDrivenProductionStrategy, SCML2020Agent):
         pass
 
 .. code:: ipython3
@@ -386,7 +388,7 @@ Let’s add a simple implementation of both
 
     from negmas import LinearUtilityFunction
     class MyAgent(IndependentNegotiationsManager, PredictionBasedTradingStrategy
-                  , DemandDrivenProductionStrategy, DoNothingAgent):
+                  , DemandDrivenProductionStrategy, SCML2020Agent):
         def target_quantity(self, step: int, sell: bool) -> int:
             """A fixed target quantity of half my production capacity"""
             return self.awi.n_lines // 2
@@ -874,7 +876,7 @@ our new negotiation manager.
 .. code:: ipython3
 
     class MyNewAgent(MyNegotiationManager, PredictionBasedTradingStrategy, 
-                  DemandDrivenProductionStrategy, DoNothingAgent):
+                  DemandDrivenProductionStrategy, SCML2020Agent):
         pass
 
 Let’s see how did our simple new agent do:

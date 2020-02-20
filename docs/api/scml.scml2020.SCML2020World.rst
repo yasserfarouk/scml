@@ -125,6 +125,7 @@ SCML2020World
       ~SCML2020World.run_negotiations
       ~SCML2020World.run_with_progress
       ~SCML2020World.save_config
+      ~SCML2020World.save_gif
       ~SCML2020World.scores
       ~SCML2020World.set_bulletin_board
       ~SCML2020World.simulation_step
@@ -251,6 +252,7 @@ SCML2020World
    .. automethod:: run_negotiations
    .. automethod:: run_with_progress
    .. automethod:: save_config
+   .. automethod:: save_gif
    .. automethod:: scores
    .. automethod:: set_bulletin_board
    .. automethod:: simulation_step
