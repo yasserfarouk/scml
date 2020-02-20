@@ -568,7 +568,6 @@ class Factory:
         Returns:
             The unit price
         """
-        # breakpoint()
         return int(np.ceil(self.world.trading_prices[product] * (1 + spot_loss)))
 
     def store(
