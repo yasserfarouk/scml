@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.2.4 (2019.2.21)
+-----------------
+
+* [speed] improvement in tournament running
+* [bugfix] handling very short simulations
+
 0.2.3 (2019.2.15)
 -----------------
 
