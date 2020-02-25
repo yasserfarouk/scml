@@ -92,3 +92,10 @@ logs
 tags
 /docs/_build/*
 /docs/_build
+tags
+.vscode
+.*
+.eggs
+.venv
+venv
+my_results

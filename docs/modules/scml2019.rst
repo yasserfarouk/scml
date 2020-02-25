@@ -5,4 +5,3 @@ SCML2019
 .. automodapi:: scml.scml2019
     :members:
     :show-inheritance:
-    :inherited-members:

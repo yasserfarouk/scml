@@ -6,4 +6,3 @@ SCML2020
 .. automodapi:: scml.scml2020
     :members:
     :show-inheritance:
-    :inherited-members:
