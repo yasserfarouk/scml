@@ -19,12 +19,6 @@ ManufacturingProfileCompiled
       ~ManufacturingProfileCompiled.resumption_cost
       ~ManufacturingProfileCompiled.running_pause_cost
 
-   .. rubric:: Methods Summary
-
-   .. autosummary::
-
-      ~ManufacturingProfileCompiled.from_manufacturing_profile
-
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: cancellation_cost
@@ -35,7 +29,3 @@ ManufacturingProfileCompiled
    .. autoattribute:: process
    .. autoattribute:: resumption_cost
    .. autoattribute:: running_pause_cost
-
-   .. rubric:: Methods Documentation
-
-   .. automethod:: from_manufacturing_profile

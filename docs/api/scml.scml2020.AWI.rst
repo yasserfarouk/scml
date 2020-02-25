@@ -13,8 +13,6 @@ AWI
       ~AWI.all_consumers
       ~AWI.all_suppliers
       ~AWI.catalog_prices
-      ~AWI.current_step
-      ~AWI.default_signing_delay
       ~AWI.inputs
       ~AWI.my_consumers
       ~AWI.my_input_product
@@ -25,11 +23,8 @@ AWI
       ~AWI.n_lines
       ~AWI.n_processes
       ~AWI.n_products
-      ~AWI.n_steps
       ~AWI.outputs
       ~AWI.profile
-      ~AWI.relative_time
-      ~AWI.settings
       ~AWI.state
 
    .. rubric:: Methods Summary
@@ -37,29 +32,13 @@ AWI
    .. autosummary::
 
       ~AWI.available_for_production
-      ~AWI.bb_query
-      ~AWI.bb_read
-      ~AWI.bb_record
-      ~AWI.bb_remove
       ~AWI.cancel_production
-      ~AWI.execute
       ~AWI.is_system
-      ~AWI.logdebug
-      ~AWI.logdebug_agent
-      ~AWI.logerror
-      ~AWI.logerror_agent
-      ~AWI.loginfo
-      ~AWI.loginfo_agent
-      ~AWI.logwarning
-      ~AWI.logwarning_agent
       ~AWI.order_production
       ~AWI.reports_at_step
       ~AWI.reports_of_agent
       ~AWI.request_negotiation
-      ~AWI.request_negotiation_about
       ~AWI.request_negotiations
-      ~AWI.run_negotiation
-      ~AWI.run_negotiations
       ~AWI.schedule_production
       ~AWI.set_commands
 
@@ -68,8 +47,6 @@ AWI
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
    .. autoattribute:: catalog_prices
-   .. autoattribute:: current_step
-   .. autoattribute:: default_signing_delay
    .. autoattribute:: inputs
    .. autoattribute:: my_consumers
    .. autoattribute:: my_input_product
@@ -80,38 +57,19 @@ AWI
    .. autoattribute:: n_lines
    .. autoattribute:: n_processes
    .. autoattribute:: n_products
-   .. autoattribute:: n_steps
    .. autoattribute:: outputs
    .. autoattribute:: profile
-   .. autoattribute:: relative_time
-   .. autoattribute:: settings
    .. autoattribute:: state
 
    .. rubric:: Methods Documentation
 
    .. automethod:: available_for_production
-   .. automethod:: bb_query
-   .. automethod:: bb_read
-   .. automethod:: bb_record
-   .. automethod:: bb_remove
    .. automethod:: cancel_production
-   .. automethod:: execute
    .. automethod:: is_system
-   .. automethod:: logdebug
-   .. automethod:: logdebug_agent
-   .. automethod:: logerror
-   .. automethod:: logerror_agent
-   .. automethod:: loginfo
-   .. automethod:: loginfo_agent
-   .. automethod:: logwarning
-   .. automethod:: logwarning_agent
    .. automethod:: order_production
    .. automethod:: reports_at_step
    .. automethod:: reports_of_agent
    .. automethod:: request_negotiation
-   .. automethod:: request_negotiation_about
    .. automethod:: request_negotiations
-   .. automethod:: run_negotiation
-   .. automethod:: run_negotiations
    .. automethod:: schedule_production
    .. automethod:: set_commands

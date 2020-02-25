@@ -30,14 +30,9 @@ CFP
 
    .. autosummary::
 
-      ~CFP.asdict
-      ~CFP.astuple
       ~CFP.from_java
-      ~CFP.get
-      ~CFP.keys
       ~CFP.satisfies
       ~CFP.to_java
-      ~CFP.values
 
    .. rubric:: Attributes Documentation
 
@@ -59,11 +54,6 @@ CFP
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: asdict
-   .. automethod:: astuple
    .. automethod:: from_java
-   .. automethod:: get
-   .. automethod:: keys
    .. automethod:: satisfies
    .. automethod:: to_java
-   .. automethod:: values
