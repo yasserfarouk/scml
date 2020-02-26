@@ -160,8 +160,8 @@ def _intin(rng: Union[Tuple[int, int], int]) -> int:
 
         the int within the given range
     """
-    if isinstance(rng, int):
-        return rng
+    if not isinstance(rng, Iterable):
+        return int(rng)
     if rng[0] == rng[1]:
         return rng[0]
     return randint(rng[0], rng[1])
@@ -664,7 +664,7 @@ def anac2020_std(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
-        n_competitors_per_world=2,
+        n_competitors_per_world=randint(2, min(4, len(competitors))),
         round_robin=ROUND_ROBIN,
         **kwargs,
     )
@@ -770,7 +770,7 @@ def anac2020_collusion(
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
-        n_competitors_per_world=2,
+        n_competitors_per_world=randint(2, min(4, len(competitors))),
         round_robin=ROUND_ROBIN,
         **kwargs,
     )
