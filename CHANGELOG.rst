@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.2.5 (2019.2.21)
+-----------------
+
+* [Documentation] Removing inherited members to make the documentation easier to
+  follow
+* [CLI] Improving the display of run2020 command
+
 0.2.4 (2019.2.21)
 -----------------
 
