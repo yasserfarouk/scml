@@ -2,7 +2,16 @@
 Changelog
 =========
 
-0.2.5 (2019.2.21)
+0.2.6 (2019.2.27)
+-----------------
+
+* [testing] correcting a test to ignore system agents when checking for
+  bankruptcy
+* [minor] Reformating using Black
+* [bugfix] Resolving a but in the CLI tournament command that prevented it from
+  running with default parameters
+
+0.2.5 (2019.2.27)
 -----------------
 
 * [Documentation] Removing inherited members to make the documentation easier to
