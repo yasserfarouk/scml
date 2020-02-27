@@ -2761,10 +2761,11 @@ class SCML2020World(TimeInAgreementMixin, World):
 
     def welfare(self, include_bankrupt: bool = False) -> float:
         """Total welfare of all agents"""
+        scores = self.scores()
         return sum(
-            f.current_balance - f.initial_balance
+            scores[f.agent_id] * f.initial_balance
             for f in self.factories
-            if include_bankrupt or not f.is_bankrupt
+            if (include_bankrupt or not f.is_bankrupt) and not is_system_agent(f.agent_id)
         )
 
     def relative_welfare(self, include_bankrupt: bool = False) -> Optional[float]:
@@ -3325,6 +3326,13 @@ class SCML2020World(TimeInAgreementMixin, World):
         """Returns names of all agents except system agents"""
         return [_ for _ in self.agents.keys() if not is_system_agent(_)]
 
+    @property
+    def agreement_fraction(self) -> float:
+        """Fraction of negotiations ending in agreement and leading to signed contracts"""
+        n_negs = sum(self.stats["n_negotiations"])
+        n_contracts = self.n_saved_contracts(True)
+        return n_contracts / n_negs if n_negs != 0 else np.nan
+        
     system_agent_ids = system_agent_names
     non_system_agent_ids = non_system_agent_names
 

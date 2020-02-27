@@ -1775,6 +1775,11 @@ def run2019(
     "includes reducing logs dramatically.",
 )
 @click.option(
+    "--show-contracts/--no-contracts",
+    default=True,
+    help="Show or do not show all signed contracts",
+)
+@click.option(
     "--raise-exceptions/--ignore-exceptions",
     default=True,
     help="Whether to ignore agent exceptions",
@@ -1851,6 +1856,7 @@ def run2020(
     interest,
     force_exogenous,
     borrow_to_produce,
+    show_contracts,
 ):
     if balance < 0:
         balance = None
@@ -2000,7 +2006,8 @@ def run2020(
             "signed",
             "executed",
         ]
-        print_and_log(tabulate(data, headers="keys", tablefmt="psql"))
+        if show_contracts:
+            print_and_log(tabulate(data, headers="keys", tablefmt="psql"))
 
         d2 = (
             data.loc[(~(data["executed"].isnull())) & (data["executed"] > -1), :]
@@ -2054,7 +2061,7 @@ def run2020(
         ]
         print_and_log(
             f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
-            f"{world.agreement_rate:0.0%}]"
+            f"{world.agreement_fraction:0.0%}]"
             f" (rounds/successful negotiation: {world.n_negotiation_rounds_successful:5.2f}, "
             f"rounds/broken negotiation: {world.n_negotiation_rounds_failed:5.2f})"
         )
@@ -2065,13 +2072,27 @@ def run2020(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = int(round(n_contracts * world.cancellation_rate))
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
+        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
+        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        n_exogenous = len(exogenous)
+        n_negotiated = len(negotiated)
+        n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
+        n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
+        print_and_log(
+            f"Exogenous Contracts: {n_exogenous} of which {n_exogenous_signed} "
+            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+        )
+        print_and_log(
+            f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
+            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+        )
         print_and_log(
             f"Cancelled: {world.cancellation_rate:0.1%}"
             f", Executed: {world.contract_execution_fraction:0.1%}"
