@@ -98,7 +98,9 @@ class ExecutionRatePredictionStrategy:
 
     @abstractmethod
     def predict_quantity(self, contract: Contract):
-        raise NotImplementedError("predict_quantity should be implemented by some other component.")
+        raise NotImplementedError(
+            "predict_quantity should be implemented by some other component."
+        )
 
 
 class FixedTradePredictionStrategy(TradePredictionStrategy):
@@ -216,6 +218,7 @@ class FixedERPStrategy(ExecutionRatePredictionStrategy):
           disallowing any other components after it in the MRO to call this method. Usually methods that do some
           action (i.e. not starting with `on_`) are overridden this way.
     """
+
     def __init__(self, *args, execution_fraction=0.5, **kwargs):
         super().__init__(*args, **kwargs)
         self._execution_fraction = execution_fraction
@@ -274,9 +277,7 @@ class MeanERPStrategy(ExecutionRatePredictionStrategy):
     @property
     def internal_state(self):
         state = super().internal_state
-        state.update({
-            "execution_fraction": self._execution_fraction
-        })
+        state.update({"execution_fraction": self._execution_fraction})
         return state
 
     def on_contract_executed(self, contract: Contract) -> None:
@@ -285,7 +286,7 @@ class MeanERPStrategy(ExecutionRatePredictionStrategy):
         q = contract.agreement["quantity"]
         self._total_quantity += q
         self._execution_fraction = (
-                                       self._execution_fraction * old_total + q
+            self._execution_fraction * old_total + q
         ) / self._total_quantity
 
     def on_contract_breached(
@@ -296,7 +297,5 @@ class MeanERPStrategy(ExecutionRatePredictionStrategy):
         q = contract.agreement["quantity"] * max(b.level for b in breaches)
         self._total_quantity += q
         self._execution_fraction = (
-                                       self._execution_fraction * old_total + q
+            self._execution_fraction * old_total + q
         ) / self._total_quantity
-
-

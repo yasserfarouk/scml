@@ -44,6 +44,7 @@ class IndependentNegotiationsAgent(
         - It does not assume that the agent has a single production process.
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

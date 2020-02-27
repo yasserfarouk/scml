@@ -36,7 +36,8 @@ The SCML2019Agent class itself has some helper properties/methods that internall
 - products, processes: shortcuts to awi.products and awi.processes
 """
 import sys
-sys.path.append('/'.join(__file__.split('/')[:-1]))
+
+sys.path.append("/".join(__file__.split("/")[:-1]))
 import os
 import time
 from typing import Any, List, Dict, Union, Type, Optional, Collection
@@ -57,11 +58,15 @@ from .myutilityfunction import MyUtilityFunction
 
 class CheapBuyerFactoryManager(GreedyFactoryManager):
     """"""
+
     # TODO : READ SELL CFPS
-    def __init__(self, name=None,
-                 scheduler_type: Union[str, Type[Scheduler]] = MyScheduler,
-                 negotiator_type='my_negotiator.Mynegotiator',
-                 riskiness=1):
+    def __init__(
+        self,
+        name=None,
+        scheduler_type: Union[str, Type[Scheduler]] = MyScheduler,
+        negotiator_type="my_negotiator.Mynegotiator",
+        riskiness=1,
+    ):
         if os.path.exists("logs"):
             shutil.rmtree("logs")
         self.name = name
@@ -101,9 +106,11 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         self.NEGOTIATOR_ID_FIXED_PART = "NEGOTIATOR_ID_SELLER"
         self.sell_contract_cancellations = 0
         self.buy_contract_cancellations = 0
-        super(CheapBuyerFactoryManager, self).__init__(scheduler_type=scheduler_type,
-                                                       negotiator_type=negotiator_type,
-                                                       riskiness=riskiness)
+        super(CheapBuyerFactoryManager, self).__init__(
+            scheduler_type=scheduler_type,
+            negotiator_type=negotiator_type,
+            riskiness=riskiness,
+        )
         self.ufun_factory = MyUtilityFunction
         """"""
 
@@ -117,7 +124,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
             for j in range(number_of_lines):
                 line_idleness.append(0)
             self.line_idlenesses.append(line_idleness)
-        self.scheduler_params = {'strategy': 'earliest_feasible'}
+        self.scheduler_params = {"strategy": "earliest_feasible"}
         self.negotiation_margin = max(
             self.negotiation_margin,
             int(round(len(self.products) * max(0.0, 1.0 - self.riskiness))),
@@ -133,9 +140,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
             #         ),
             #     )
             # )
-            self.consumer: MyConsumer = MyConsumer(
-                agent=self, name=self.name
-            )
+            self.consumer: MyConsumer = MyConsumer(agent=self, name=self.name)
             self.consumer.id = self.id
             self.consumer.awi = self.awi
             self.consumer.init_()
@@ -187,7 +192,7 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         super().step()
         balance = str(self.get_balance())
         amount_of_raw_materials = self.get_amount_of_raw_materials()
-        amount_of_final_products = (self.get_amount_of_final_products())
+        amount_of_final_products = self.get_amount_of_final_products()
         successful_buying_negotiations = len(self.successful_buying_negotiations)
         successful_selling_negotiations = len(self.successful_selling_negotiations)
         failed_buying_negotiations = len(self.failed_buying_negotiations)
@@ -200,7 +205,10 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         average_selling_price = self.get_average_selling_price()
         sell_contract_cancellations = self.sell_contract_cancellations
         buy_contract_cancellations = self.buy_contract_cancellations
-        available_cfps = self.awi.bb_query(section="cfps", query={"is_buy": True, "products": list(self.producing.keys())})
+        available_cfps = self.awi.bb_query(
+            section="cfps",
+            query={"is_buy": True, "products": list(self.producing.keys())},
+        )
         # print("STEP : " + str(self.current_step)
         #       +"\nWALLET : " + balance
         #       +"\nRAW MATERIAL : " + str(amount_of_raw_materials)
@@ -225,7 +233,6 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
 
         for cfp in available_cfps.values():
             self.respond_to_cfp(cfp=cfp)
-
 
         jobs = []
         # step = self.awi.current_step
@@ -309,33 +316,37 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         return self.simulator.wallet_at(self.current_step)
 
     def get_amount_of_raw_materials(self):
-        return (self.simulator.storage_at(self.current_step)[self.raw_material_type])
+        return self.simulator.storage_at(self.current_step)[self.raw_material_type]
 
     def post_cfps(self):
         alpha = 16
         for step in range(15):
-            my_cfp = CFP(is_buy=True,
-                         product=self.raw_material_type,
-                         publisher=self.id,
-                         quantity=(1, step + alpha),
-                         time=min(step + self.current_step, self.awi.n_steps-2),
-                         unit_price=(0.5, self.get_target_price()),
-                         money_resolution=0.1,
-                         id="NORMAL : " + str(time),
-                         penalty=10000)
+            my_cfp = CFP(
+                is_buy=True,
+                product=self.raw_material_type,
+                publisher=self.id,
+                quantity=(1, step + alpha),
+                time=min(step + self.current_step, self.awi.n_steps - 2),
+                unit_price=(0.5, self.get_target_price()),
+                money_resolution=0.1,
+                id="NORMAL : " + str(time),
+                penalty=10000,
+            )
             self.awi.register_cfp(my_cfp)
 
     def post_cfps_2(self):
         for step in range(10):
-            my_cfp = CFP(is_buy=True,
-                         product=self.raw_material_type,
-                         publisher=self.id,
-                         quantity=(1, 1+random.randint(0, 10)),
-                         time=random.randint(0, 15) + self.current_step,
-                         unit_price=(0.5, self.get_target_price()),
-                         money_resolution=0.1,
-                         id="NORMAL : " + str(time),
-                         penalty=10000)
+            my_cfp = CFP(
+                is_buy=True,
+                product=self.raw_material_type,
+                publisher=self.id,
+                quantity=(1, 1 + random.randint(0, 10)),
+                time=random.randint(0, 15) + self.current_step,
+                unit_price=(0.5, self.get_target_price()),
+                money_resolution=0.1,
+                id="NORMAL : " + str(time),
+                penalty=10000,
+            )
             self.awi.register_cfp(my_cfp)
 
     def estimate_weighted_demand(self):
@@ -344,19 +355,29 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
             weight = cfp.max_quantity - cfp.min_quantity + 1
             estimated_average_demand = (cfp.max_quantity + cfp.min_quantity) / 2
             weighted_estimated_average_demand = estimated_average_demand / weight
-            self.weighted_sum_of_estimated_demands[product] = round(self.weighted_sum_of_estimated_demands[product]
-                                                                    + weighted_estimated_average_demand, 2)
+            self.weighted_sum_of_estimated_demands[product] = round(
+                self.weighted_sum_of_estimated_demands[product]
+                + weighted_estimated_average_demand,
+                2,
+            )
 
-            self.unweighted_estimated_demands_for_each_step.append(self.weighted_sum_of_estimated_demands)
+            self.unweighted_estimated_demands_for_each_step.append(
+                self.weighted_sum_of_estimated_demands
+            )
 
     def estimate_unweighted_demand(self):
         for cfp in self.cfps_in_this_step:
             product = cfp.product
             estimated_average_demand = (cfp.max_quantity + cfp.min_quantity) / 2
-            self.unweighted_sum_of_estimated_demands[product] = round(self.unweighted_sum_of_estimated_demands[product]
-                                                                      + estimated_average_demand, 2)
+            self.unweighted_sum_of_estimated_demands[product] = round(
+                self.unweighted_sum_of_estimated_demands[product]
+                + estimated_average_demand,
+                2,
+            )
 
-        self.weighted_estimated_demands_for_each_step.append(self.unweighted_sum_of_estimated_demands)
+        self.weighted_estimated_demands_for_each_step.append(
+            self.unweighted_sum_of_estimated_demands
+        )
 
     def initialize_weighted_sum_of_estimated_demands(self):
         weighted_sum_of_estimated_demands = {}
@@ -371,8 +392,8 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         return unweighted_sum_of_estimated_demands
 
     def on_new_cfp(self, cfp: CFP) -> None:
-        #self.respond_to_cfp(cfp)
-        #print("CFP RECEIVED : "+str(cfp))
+        # self.respond_to_cfp(cfp)
+        # print("CFP RECEIVED : "+str(cfp))
         #
         # cfps: list[CFP] = self.cfps_in_this_step.get(cfp.publisher)
         # if cfps is None:
@@ -389,14 +410,23 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
 
     def is_cfp_acceptable_2(self, cfp) -> bool:
         is_agent_bankrupt = self.awi.is_bankrupt(cfp.publisher)
-        is_interested = cfp.satisfies(query={"is_buy": True, "products": list(self.producing.keys())})
+        is_interested = cfp.satisfies(
+            query={"is_buy": True, "products": list(self.producing.keys())}
+        )
         is_raw_material_bought = self.get_average_buying_price() != float("inf")
         have_final_products = self.get_amount_of_final_products() > 0
-        return is_interested and not is_agent_bankrupt and is_raw_material_bought and have_final_products
+        return (
+            is_interested
+            and not is_agent_bankrupt
+            and is_raw_material_bought
+            and have_final_products
+        )
 
     def is_cfp_acceptable(self, cfp) -> bool:
         is_agent_bankrupt = self.awi.is_bankrupt(cfp.publisher)
-        is_interested = cfp.satisfies(query={"is_buy": True, "products": list(self.producing.keys())})
+        is_interested = cfp.satisfies(
+            query={"is_buy": True, "products": list(self.producing.keys())}
+        )
         can_produce = self.can_produce(cfp)
         can_expect_agreement = self.can_expect_agreement(cfp, self.negotiation_margin)
         if is_agent_bankrupt:
@@ -412,14 +442,24 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
             """"""
             # print("AGREEMENT NOT EXPECTED, ", end='')
         # print()
-        return not is_agent_bankrupt and is_interested and can_produce and can_expect_agreement
+        return (
+            not is_agent_bankrupt
+            and is_interested
+            and can_produce
+            and can_expect_agreement
+        )
 
     def accept_negotiation(self, cfp) -> bool:
-        ufun = SellerUtilityFunction(unit_cost=self.get_average_buying_price() + self.get_process_cost())
+        ufun = SellerUtilityFunction(
+            unit_cost=self.get_average_buying_price() + self.get_process_cost()
+        )
         negotiator_id = self.NEGOTIATOR_ID_FIXED_PART + " : " + str(self.negotiator_id)
-        negotiator = MyNegotiator2(ufun=ufun, name=negotiator_id,
-                                   strategy=MyNegotiator2.STRATEGY_TIME_BASED_CONCESSION,
-                                   reserved_value=1)
+        negotiator = MyNegotiator2(
+            ufun=ufun,
+            name=negotiator_id,
+            strategy=MyNegotiator2.STRATEGY_TIME_BASED_CONCESSION,
+            reserved_value=1,
+        )
         response = self.request_negotiation(negotiator=negotiator, cfp=cfp, ufun=ufun)
         if response:
             self.negotiators[negotiator.name] = negotiator
@@ -427,47 +467,68 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         return response
 
     def accept_negotiation_old(self, cfp):
-        negotiation_steps_data_holder: NegotiationStepsDataHolder = self.number_of_negotiation_steps.get(cfp.publisher)
+        negotiation_steps_data_holder: NegotiationStepsDataHolder = self.number_of_negotiation_steps.get(
+            cfp.publisher
+        )
         average_number_of_steps = 0
         if negotiation_steps_data_holder is not None:
-            average_number_of_steps = negotiation_steps_data_holder.get_average_number_of_negotiation_steps()
-        alpha_and_beta = self.get_alpha_and_beta(average_number_of_steps, gamma=self.gamma)
-        ufun = self.ufun_factory(agent=self, annotation=self._create_annotation(cfp=cfp),
-                                 ufun_id=self.negotiator_id,
-                                 alpha=alpha_and_beta[0],
-                                 beta=alpha_and_beta[1],
-                                 average_number_of_steps=average_number_of_steps)
-        ufun.reserved_value = (cfp.money_resolution if cfp.money_resolution is not None else 0.1)
-        neg = self.negotiator_type(name=self.negotiator_id, ufun=ufun, cfp=cfp, partner_id=cfp.publisher)
+            average_number_of_steps = (
+                negotiation_steps_data_holder.get_average_number_of_negotiation_steps()
+            )
+        alpha_and_beta = self.get_alpha_and_beta(
+            average_number_of_steps, gamma=self.gamma
+        )
+        ufun = self.ufun_factory(
+            agent=self,
+            annotation=self._create_annotation(cfp=cfp),
+            ufun_id=self.negotiator_id,
+            alpha=alpha_and_beta[0],
+            beta=alpha_and_beta[1],
+            average_number_of_steps=average_number_of_steps,
+        )
+        ufun.reserved_value = (
+            cfp.money_resolution if cfp.money_resolution is not None else 0.1
+        )
+        neg = self.negotiator_type(
+            name=self.negotiator_id, ufun=ufun, cfp=cfp, partner_id=cfp.publisher
+        )
         self.request_negotiation(negotiator=neg, cfp=cfp, ufun=ufun)
 
     def write_to_file(self, averaged_estimated_demands, filename):
         import os
-        os.makedirs('/'.join(__file__.split('/')[:-1]) + "/logs", exist_ok=True)
-        with open('/'.join(__file__.split('/')[:-1]) + "/logs/" + filename, "a") as myfile:
+
+        os.makedirs("/".join(__file__.split("/")[:-1]) + "/logs", exist_ok=True)
+        with open(
+            "/".join(__file__.split("/")[:-1]) + "/logs/" + filename, "a"
+        ) as myfile:
             myfile.write(str(averaged_estimated_demands) + "\n")
 
     def get_unweighted_estimated_average_demands(self):
         averaged_estimated_demands = self.cumulative_demands
         for key in averaged_estimated_demands.keys():
-            averaged_estimated_demands[key] = round(averaged_estimated_demands[key] / self.current_step, 10)
+            averaged_estimated_demands[key] = round(
+                averaged_estimated_demands[key] / self.current_step, 10
+            )
         return averaged_estimated_demands
 
     def add_to_cumulative_estimated_demands(self, cfp):
-        self.cumulative_demands[cfp.product] = \
-            self.cumulative_demands[cfp.product] + ((cfp.min_quantity + cfp.max_quantity) / 2)
+        self.cumulative_demands[cfp.product] = self.cumulative_demands[cfp.product] + (
+            (cfp.min_quantity + cfp.max_quantity) / 2
+        )
 
     def generateDecoyCFPs(self):
         for i in range(1, 100):
-            decoyCFP = CFP(is_buy=True,
-                           product=int(random.uniform(1, len(self.products))),
-                           publisher=self.id,
-                           signing_delay=int(random.uniform(1, 9)),
-                           quantity=1,
-                           time=int(random.uniform(1, 5)),
-                           unit_price=(0, 100),
-                           money_resolution=0.1,
-                           id="DECOY : " + str(i))
+            decoyCFP = CFP(
+                is_buy=True,
+                product=int(random.uniform(1, len(self.products))),
+                publisher=self.id,
+                signing_delay=int(random.uniform(1, 9)),
+                quantity=1,
+                time=int(random.uniform(1, 5)),
+                unit_price=(0, 100),
+                money_resolution=0.1,
+                id="DECOY : " + str(i),
+            )
             self.decoyCFPs.append(decoyCFP)
             self.awi.register_cfp(decoyCFP)
 
@@ -498,14 +559,14 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         """"""
 
     def on_negotiation_failure(
-            self,
-            partners: List[str],
-            annotation: Dict[str, Any],
-            mechanism: AgentMechanismInterface,
-            state: MechanismState,
+        self,
+        partners: List[str],
+        annotation: Dict[str, Any],
+        mechanism: AgentMechanismInterface,
+        state: MechanismState,
     ) -> None:
         negotiator_id = None
-        if annotation.get('buyer') == self.id:
+        if annotation.get("buyer") == self.id:
 
             for participant in mechanism.participants:
                 if self.consumer.NEGOTIATOR_ID_FIXED_PART in participant.id:
@@ -513,7 +574,12 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
                     break
             negotiator = self.consumer.get_negotiator(negotiator_id)
             self.failed_buying_negotiations.append(negotiator)
-            self.consumer.on_negotiation_failure(partners=partners, annotation=annotation, mechanism=mechanism, state=state)
+            self.consumer.on_negotiation_failure(
+                partners=partners,
+                annotation=annotation,
+                mechanism=mechanism,
+                state=state,
+            )
         else:
             for participant in mechanism.participants:
                 if self.NEGOTIATOR_ID_FIXED_PART in participant.id:
@@ -522,13 +588,17 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
             negotiator = self.negotiators.get(negotiator_id)
             self.failed_selling_negotiations.append(negotiator)
 
-        super().on_negotiation_failure(partners=partners, annotation=annotation, mechanism=mechanism, state=state)
+        super().on_negotiation_failure(
+            partners=partners, annotation=annotation, mechanism=mechanism, state=state
+        )
 
     def can_produce(self, cfp: CFP, assume_no_further_negotiations=False) -> bool:
         """Whether or not we can produce the required item in time"""
         self.number_of_evaluations = self.number_of_evaluations + 1
         if cfp.product not in self.producing.keys():
-            self.number_of_condition_satisfaction = self.number_of_condition_satisfaction + 1
+            self.number_of_condition_satisfaction = (
+                self.number_of_condition_satisfaction + 1
+            )
             return False
         agreement = SCMLAgreement(
             time=cfp.max_time, unit_price=cfp.max_unit_price, quantity=cfp.min_quantity
@@ -536,7 +606,9 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         min_concluded_at = self.awi.current_step + 1 - int(self.immediate_negotiations)
         min_sign_at = min_concluded_at + self.awi.default_signing_delay
         if cfp.max_time < min_sign_at + 1:  # 1 is minimum time to produce the product
-            self.number_of_condition_satisfaction = self.number_of_condition_satisfaction + 1
+            self.number_of_condition_satisfaction = (
+                self.number_of_condition_satisfaction + 1
+            )
             return False
         with temporary_transaction(self.scheduler):
             schedule = self.scheduler.schedule(
@@ -555,27 +627,28 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
                 start_at=min_sign_at,
             )
         result = schedule.valid and self.can_secure_needs(
-            schedule=schedule, step=self.awi.current_step)
+            schedule=schedule, step=self.awi.current_step
+        )
 
         if not result:
-            self.number_of_condition_satisfaction = self.number_of_condition_satisfaction + 1
+            self.number_of_condition_satisfaction = (
+                self.number_of_condition_satisfaction + 1
+            )
         return result
 
     def respond_to_negotiation_request(
-            self, cfp: "CFP", partner: str
+        self, cfp: "CFP", partner: str
     ) -> Optional[Negotiator]:
         self._negotiation_requests += 1
-        #print("NEGOTIATION REQUESTED : "+str(cfp))
+        # print("NEGOTIATION REQUESTED : "+str(cfp))
 
         if partner == self.id or self.awi.is_bankrupt(partner):
             return None
 
-        return self.consumer.respond_to_negotiation_request(
-            cfp=cfp, partner=partner
-        )
+        return self.consumer.respond_to_negotiation_request(cfp=cfp, partner=partner)
 
     def on_negotiation_success(
-            self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: AgentMechanismInterface
     ) -> None:
         negotiator_id = None
 
@@ -608,10 +681,12 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
     #     if cause == "transport":
     #         self.amount_receivable -= quantity
 
-        #print("NEGOTIATION SUCCESS : "+str(mechanism.state))
+    # print("NEGOTIATION SUCCESS : "+str(mechanism.state))
 
     def add_negotiation_step_data(self, mechanism, partner_id):
-        data_holder: NegotiationStepsDataHolder = self.number_of_negotiation_steps.get(partner_id)
+        data_holder: NegotiationStepsDataHolder = self.number_of_negotiation_steps.get(
+            partner_id
+        )
         if data_holder is None:
             data_holder = NegotiationStepsDataHolder()
         data_holder.add_new_data(number_of_negotiation_steps=mechanism.state.step)
@@ -625,23 +700,28 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
     def on_contract_signed(self, contract: Contract):
         if contract.annotation.get("seller") == self.id:
             self.amount_sold += contract.agreement.get("quantity")
-            self.total_revenue += contract.agreement.get("unit_price") * contract.agreement.get("quantity")
+            self.total_revenue += contract.agreement.get(
+                "unit_price"
+            ) * contract.agreement.get("quantity")
         else:
             self.amount_receivable += contract.agreement.get("quantity")
-            self.total_cost += contract.agreement.get("quantity") * contract.agreement.get("unit_price")
+            self.total_cost += contract.agreement.get(
+                "quantity"
+            ) * contract.agreement.get("unit_price")
         # print("AVERAGE SELLING PRICE ", self.get_average_selling_price())
-        #super().on_contract_signed(contract=contract)
+        # super().on_contract_signed(contract=contract)
 
     def get_average_selling_price(self):
         if self.amount_sold > 0:
             return self.total_revenue / self.amount_sold
         else:
             return float("inf")
+
     def get_average_buying_price(self):
         if self.amount_receivable > 0:
-            return self.total_cost/self.amount_receivable
+            return self.total_cost / self.amount_receivable
         else:
-            return float('inf')
+            return float("inf")
 
     def total_utility(self, contracts: Collection[Contract] = ()) -> float:
         """Calculates the total utility for the agent of a collection of contracts"""
@@ -664,8 +744,9 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
         """Calculates the total utility for the agent of a collection of contracts"""
         total = 0
         for contract in contracts:
-            total += (contract.agreement.get("unit_price") - self.get_average_selling_price()) * contract.agreement.get(
-                "quantity")
+            total += (
+                contract.agreement.get("unit_price") - self.get_average_selling_price()
+            ) * contract.agreement.get("quantity")
         return total
 
     def get_target_price(self):
@@ -677,25 +758,31 @@ class CheapBuyerFactoryManager(GreedyFactoryManager):
 
     def sign_contract(self, contract: Contract):
         if contract.annotation.get("buyer") == self.id:
-            cost = contract.agreement.get("quantity") * contract.agreement.get("unit_price")
+            cost = contract.agreement.get("quantity") * contract.agreement.get(
+                "unit_price"
+            )
             if self.get_balance() >= cost:
-                #self.awi.hide_funds(amount=cost)
+                # self.awi.hide_funds(amount=cost)
                 return self.id
         else:
-            product_type = contract.annotation.get('cfp').get('product')
-            available_product_quantity = self.simulator.storage_at(self.current_step)[product_type]
+            product_type = contract.annotation.get("cfp").get("product")
+            available_product_quantity = self.simulator.storage_at(self.current_step)[
+                product_type
+            ]
             required_production_quantity = contract.agreement.get("quantity")
             if available_product_quantity >= required_production_quantity:
-                #self.awi.hide_inventory(product=product_type, quantity=required_production_quantity)
+                # self.awi.hide_inventory(product=product_type, quantity=required_production_quantity)
                 return self.id
         return None
 
     def process_raw_materials(self, quantity=10):
         for profile in range(int(min(quantity, self.get_amount_of_raw_materials()))):
-            self.awi.schedule_production(profile=profile,
-                                         contract=None,
-                                         step=self.current_step - 1,
-                                         override=False)
+            self.awi.schedule_production(
+                profile=profile,
+                contract=None,
+                step=self.current_step - 1,
+                override=False,
+            )
 
     def get_process_cost(self):
         return self.line_profiles[0][0].cost

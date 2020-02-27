@@ -1,8 +1,6 @@
 from scml.scml2020.services import FactorySimulator
 
-__all__ = [
-    "Simulation"
-]
+__all__ = ["Simulation"]
 
 
 class Simulation:

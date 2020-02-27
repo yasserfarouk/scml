@@ -777,8 +777,8 @@ def create(
         )
     elif ttype.lower() == "anac2020std":
         if non_competitors is None:
-            non_competitors = (scml.scml2020.utils.DefaultAgents,)
-            non_competitor_params = ({},)
+            non_competitors = scml.scml2020.utils.DefaultAgents
+            non_competitor_params = tuple({} for _ in range(len(non_competitors)))
         print(f"Tournament will be run between {len(all_competitors)} agents: ")
         pprint(all_competitors)
         print("Non-competitors are: ")
@@ -846,6 +846,9 @@ def create(
             **kwargs,
         )
     elif ttype.lower() in ("anac2020collusion", "anac2020"):
+        if non_competitors is None:
+            non_competitors = scml.scml2020.utils.DefaultAgents
+            non_competitor_params = tuple({} for _ in range(len(non_competitors)))
         print(f"Tournament will be run between {len(all_competitors)} agents: ")
         pprint(all_competitors)
         print("Non-competitors are: ")
@@ -1014,7 +1017,7 @@ def run(
     )
     end_time = humanize_time(perf_counter() - start)
     results = evaluate_tournament(
-        tournament_path=tpath, verbose=verbosity > 0, metric=metric
+        tournament_path=tpath, verbose=verbosity > 0, metric=metric, recursive=False
     )
     display_results(results, metric)
     print(f"Finished in {end_time}")
@@ -2072,7 +2075,9 @@ def run2020(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
+        n_cancelled = (
+            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
+        )
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))

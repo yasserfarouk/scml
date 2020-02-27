@@ -447,8 +447,19 @@ def test_scml_picklable(tmp_path):
     assert sum(w.stats["n_breaches"]) == 0, "No breaches"
     assert sum(w.stats["market_size"]) == 0, "No change in the market size"
 
-@mark.parametrize(["fm"], [(GreedyFactoryManager,), (NVMFactoryManager,), (FJ2FactoryManager,)
-    , (InsuranceFraudFactoryManager,), (RaptFactoryManager,), (SAHAFactoryManager,), (CheapBuyerFactoryManager,)])
+
+@mark.parametrize(
+    ["fm"],
+    [
+        (GreedyFactoryManager,),
+        (NVMFactoryManager,),
+        (FJ2FactoryManager,),
+        (InsuranceFraudFactoryManager,),
+        (RaptFactoryManager,),
+        (SAHAFactoryManager,),
+        (CheapBuyerFactoryManager,),
+    ],
+)
 def test_can_run(fm):
     horizon = None
     signing_delay = 0

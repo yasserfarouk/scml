@@ -9,7 +9,11 @@ from scml.scml2020.common import is_system_agent
 from scml.scml2020.common import ANY_LINE
 from scml.scml2020.components.prediction import MeanERPStrategy
 
-__all__ = ["TradingStrategy", "ReactiveTradingStrategy", "PredictionBasedTradingStrategy"]
+__all__ = [
+    "TradingStrategy",
+    "ReactiveTradingStrategy",
+    "PredictionBasedTradingStrategy",
+]
 
 
 class TradingStrategy:
@@ -70,25 +74,37 @@ class TradingStrategy:
     @property
     def internal_state(self):
         state = super().internal_state
-        state.update({
-            "inputs_secured": self.inputs_secured if self.inputs_secured is not None else None,
-            "inputs_needed": self.inputs_needed if self.inputs_needed is not None else None,
-            "outputs_secured": self.outputs_secured if self.outputs_secured is not None else None,
-            "outputs_needed": self.outputs_needed if self.outputs_needed is not None else None,
-            "buy_negotiations": [
-                _.annotation["seller"]
-                for _ in self.running_negotiations
-                if _.annotation["buyer"] == self.id
-            ],
-            "sell_negotiations": [
-                _.annotation["buyer"]
-                for _ in self.running_negotiations
-                if _.annotation["seller"] == self.id
-            ],
-            "_balance": self.awi.state.balance,
-            "_input_inventory": self.awi.state.inventory[self.awi.my_input_product],
-            "_output_inventory": self.awi.state.inventory[self.awi.my_output_product],
-        })
+        state.update(
+            {
+                "inputs_secured": self.inputs_secured
+                if self.inputs_secured is not None
+                else None,
+                "inputs_needed": self.inputs_needed
+                if self.inputs_needed is not None
+                else None,
+                "outputs_secured": self.outputs_secured
+                if self.outputs_secured is not None
+                else None,
+                "outputs_needed": self.outputs_needed
+                if self.outputs_needed is not None
+                else None,
+                "buy_negotiations": [
+                    _.annotation["seller"]
+                    for _ in self.running_negotiations
+                    if _.annotation["buyer"] == self.id
+                ],
+                "sell_negotiations": [
+                    _.annotation["buyer"]
+                    for _ in self.running_negotiations
+                    if _.annotation["seller"] == self.id
+                ],
+                "_balance": self.awi.state.balance,
+                "_input_inventory": self.awi.state.inventory[self.awi.my_input_product],
+                "_output_inventory": self.awi.state.inventory[
+                    self.awi.my_output_product
+                ],
+            }
+        )
         return state
 
 
@@ -162,7 +178,9 @@ class ReactiveTradingStrategy(SignAllPossible, TradingStrategy):
                 continue
             if is_seller:
                 # if I am a seller, I will schedule production then buy my needs to produce
-                steps, _ = self.awi.available_for_production(repeats=q, step=(this_step+1, t-1))
+                steps, _ = self.awi.available_for_production(
+                    repeats=q, step=(this_step + 1, t - 1)
+                )
                 if len(steps) < 1:
                     continue
                 self.inputs_needed[min(steps)] += q
@@ -204,6 +222,7 @@ class PredictionBasedTradingStrategy(
 
 
     """
+
     def init(self):
         super().init()
         # If I expect to sell x outputs at step t, I should buy  x inputs at t-1

@@ -84,7 +84,7 @@ class MyScheduleDrivenConsumer(ScheduleDrivenConsumer):
         self.secured_quantities = dict(zip(profiles.keys(), itertools.repeat(0)))
 
     def register_product_cfps(
-        self, p: int, t: int, profile: ConsumptionProfile, sp = dict()
+        self, p: int, t: int, profile: ConsumptionProfile, sp=dict()
     ):
         current_schedule = profile.schedule_at(t)
         product = self.products[p]

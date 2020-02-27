@@ -20,6 +20,7 @@ __all__ = ["DecentralizingAgent", "IndDecentralizingAgent"]
 
 from ..world import SCML2020Agent
 
+
 class _NegotiationCallbacks:
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])

@@ -11,7 +11,11 @@ from negmas.helpers import unique_name, get_full_type_name
 
 from negmas.tournaments import WorldRunResults, TournamentResults, tournament
 
-from scml.scml2020.agents import DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent
+from scml.scml2020.agents import (
+    DecentralizingAgent,
+    BuyCheapSellExpensiveAgent,
+    RandomAgent,
+)
 from scml.scml2020.world import SCML2020World, is_system_agent
 
 if True:
@@ -212,7 +216,9 @@ def anac2020_config_generator(
     else:
         min_n_processes = randint(*n_processes)
         n_agents = n_agents_per_competitor * n_competitors
-        n_default_managers = max(0, min_n_processes * min_factories_per_level - n_agents)
+        n_default_managers = max(
+            0, min_n_processes * min_factories_per_level - n_agents
+        )
         n_f_list = integer_cut_dynamic(
             n_agents + n_default_managers,
             min_factories_per_level,
@@ -437,7 +443,9 @@ def balance_calculator2020(
     is_default = world.info["is_default"]
     factories = [_ for _ in world.factories if not is_system_agent(_.agent_id)]
     agents = [world.agents[f.agent_id] for f in factories]
-    agent_types = [_ for _ in world.agent_unique_types if not _.startswith("system_agent")]
+    agent_types = [
+        _ for _ in world.agent_unique_types if not _.startswith("system_agent")
+    ]
     if len(set(agent_types)) == len(set(world.agent_types)):
         agent_types = [_ for _ in world.agent_types if not _.startswith("system_agent")]
     for i, factory in enumerate(factories):

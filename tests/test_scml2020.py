@@ -13,7 +13,7 @@ from scml.scml2020 import (
     FactoryProfile,
     RandomAgent,
     BuyCheapSellExpensiveAgent,
-    INFINITE_COST
+    INFINITE_COST,
 )
 from scml.scml2020.components import FactorySimulator
 import random
@@ -210,7 +210,7 @@ def test_agents_go_bankrupt(n_processes):
         no_logs=NOLOGS,
     )
     world.run()
-#    assert len(world.signed_contracts) + len(world.cancelled_contracts) == 0
+    #    assert len(world.signed_contracts) + len(world.cancelled_contracts) == 0
     for a, f, p in world.afp:
         if is_system_agent(a.id):
             continue
@@ -283,10 +283,9 @@ def test_graph():
 
 def test_graphs_lead_to_no_unknown_nodes():
     world = SCML2020World(
-        **SCML2020World.generate(agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent],
-                                 n_steps=10),
+        **SCML2020World.generate(
+            agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent], n_steps=10
+        ),
         construct_graphs=True,
     )
     world.graph((0, world.n_steps))
-
-

@@ -60,7 +60,6 @@ class Miner(SCML2019Agent, ABC):
     """Base class of all miners"""
 
 
-
 class ReactiveMiner(Miner):
     """Raw Material Generator"""
 

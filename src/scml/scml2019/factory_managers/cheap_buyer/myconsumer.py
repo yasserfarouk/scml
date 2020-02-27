@@ -1,4 +1,11 @@
-from negmas import Negotiator, Contract, Breach, RenegotiationRequest, AgentMechanismInterface, MechanismState
+from negmas import (
+    Negotiator,
+    Contract,
+    Breach,
+    RenegotiationRequest,
+    AgentMechanismInterface,
+    MechanismState,
+)
 from typing import Optional, List, Dict, Any
 
 from scml.scml2019 import SCML2019Agent, FinancialReport, Loan
@@ -7,7 +14,6 @@ from .MyNegotiator2 import MyNegotiator2
 
 
 class MyConsumer(SCML2019Agent):
-
     def __init__(self, agent, name):
         self.alpha = 1
         self.beta = 0
@@ -31,13 +37,20 @@ class MyConsumer(SCML2019Agent):
     def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
         pass
 
-    def on_negotiation_failure(self, partners: List[str], annotation: Dict[str, Any],
-                               mechanism: AgentMechanismInterface, state: MechanismState) -> None:
+    def on_negotiation_failure(
+        self,
+        partners: List[str],
+        annotation: Dict[str, Any],
+        mechanism: AgentMechanismInterface,
+        state: MechanismState,
+    ) -> None:
         if self.agent.get_amount_of_raw_materials() > 200:
             self.reserved_value = max(0, self.reserved_value - 0.001)
         pass
 
-    def on_negotiation_success(self, contract: Contract, mechanism: AgentMechanismInterface) -> None:
+    def on_negotiation_success(
+        self, contract: Contract, mechanism: AgentMechanismInterface
+    ) -> None:
         self.reserved_value = min(1, self.reserved_value + 0.01)
         pass
 
@@ -47,11 +60,14 @@ class MyConsumer(SCML2019Agent):
     def on_contract_cancelled(self, contract: Contract, rejectors: List[str]) -> None:
         pass
 
-    def set_renegotiation_agenda(self, contract: Contract, breaches: List[Breach]) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(
+        self, contract: Contract, breaches: List[Breach]
+    ) -> Optional[RenegotiationRequest]:
         pass
 
-    def respond_to_renegotiation_request(self, contract: Contract, breaches: List[Breach],
-                                         agenda: RenegotiationRequest) -> Optional[Negotiator]:
+    def respond_to_renegotiation_request(
+        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
+    ) -> Optional[Negotiator]:
         pass
 
     def sign_contract(self, contract: Contract) -> Optional[str]:
@@ -60,19 +76,25 @@ class MyConsumer(SCML2019Agent):
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]) -> None:
+    def on_contract_breached(
+        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+    ) -> None:
         pass
 
     def confirm_loan(self, loan: Loan, bankrupt_if_rejected: bool) -> bool:
         pass
 
-    def on_contract_nullified(self, contract: Contract, bankrupt_partner: str, compensation: float) -> None:
+    def on_contract_nullified(
+        self, contract: Contract, bankrupt_partner: str, compensation: float
+    ) -> None:
         pass
 
     def on_agent_bankrupt(self, agent_id: str) -> None:
         pass
 
-    def confirm_partial_execution(self, contract: Contract, breaches: List[Breach]) -> bool:
+    def confirm_partial_execution(
+        self, contract: Contract, breaches: List[Breach]
+    ) -> bool:
         pass
 
     def confirm_contract_execution(self, contract: Contract) -> bool:
@@ -99,10 +121,13 @@ class MyConsumer(SCML2019Agent):
         if self.awi.is_bankrupt(partner):
             return None
         ufun = ConsumerUtilityFunction(target_price=self.get_target_price())
-        negotiator_id = self.NEGOTIATOR_ID_FIXED_PART+" : "+str(self.negotiator_id)
-        negotiator = MyNegotiator2(name=negotiator_id, ufun=ufun,
-                                   strategy=MyNegotiator2.STRATEGY_TIME_BASED_CONCESSION,
-                                   reserved_value=self.reserved_value)
+        negotiator_id = self.NEGOTIATOR_ID_FIXED_PART + " : " + str(self.negotiator_id)
+        negotiator = MyNegotiator2(
+            name=negotiator_id,
+            ufun=ufun,
+            strategy=MyNegotiator2.STRATEGY_TIME_BASED_CONCESSION,
+            reserved_value=self.reserved_value,
+        )
         self.negotiators[negotiator_id] = negotiator
         self.negotiator_id += 1
         return negotiator

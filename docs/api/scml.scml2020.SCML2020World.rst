@@ -10,6 +10,7 @@ SCML2020World
 
    .. autosummary::
 
+      ~SCML2020World.agreement_fraction
       ~SCML2020World.bankruptcy_rate
       ~SCML2020World.contracts_df
       ~SCML2020World.non_system_agent_ids
@@ -55,6 +56,7 @@ SCML2020World
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agreement_fraction
    .. autoattribute:: bankruptcy_rate
    .. autoattribute:: contracts_df
    .. autoattribute:: non_system_agent_ids

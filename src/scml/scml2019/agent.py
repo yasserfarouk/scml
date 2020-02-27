@@ -97,7 +97,9 @@ class SCML2019Agent(Agent):
 
         factory = self.awi.state
         if factory is None:
-            raise ValueError("Cannot init any SCML2019Agent without specifying a factory")
+            raise ValueError(
+                "Cannot init any SCML2019Agent without specifying a factory"
+            )
         profiles = factory.profiles
         self.line_profiles = defaultdict(list)
         self.process_profiles = defaultdict(list)

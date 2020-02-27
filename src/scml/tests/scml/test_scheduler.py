@@ -3,12 +3,7 @@ import itertools
 
 from pytest import fixture
 
-from scml.scml2019 import (
-    Product,
-    Process,
-    InputOutput,
-    ManufacturingProfile,
-)
+from scml.scml2019 import Product, Process, InputOutput, ManufacturingProfile
 from scml.scml2019.simulators import SlowFactorySimulator
 from scml.scml2019.world import Factory
 

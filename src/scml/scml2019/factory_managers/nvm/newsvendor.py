@@ -1,5 +1,6 @@
 import sys
-sys.path.append('/'.join(__file__.split('/')[:-1]))
+
+sys.path.append("/".join(__file__.split("/")[:-1]))
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -12,12 +13,12 @@ def compute_min_expectation(dict_data, size) -> dict:
     :return:
     """
     # What if we received an empty dictionary? Then we assume the random variable X has no support.
-    ret = {'min_0': 0}
+    ret = {"min_0": 0}
     temp = 1
     for i in range(1, size):
         # The dictionary only stores the values where X has positive probability. All other values are assumed to be zero.
         temp -= dict_data[str(i - 1)] if str(i - 1) in dict_data else 0
-        ret['min_' + str(i)] = ret['min_' + str(i - 1)] + temp
+        ret["min_" + str(i)] = ret["min_" + str(i - 1)] + temp
     return ret
 
 
@@ -36,14 +37,14 @@ def solve_nvp(dict_q_out, dict_q_inn, p_out, p_inn, size):
     print(f"**** SOLVING NVP: p_out = {p_out}, p_inn = {p_inn}, size = {size} ****")
     data = []
     for q in range(0, size):
-        temp = p_out * dict_q_out['min_' + str(q)] - p_inn * dict_q_inn['min_' + str(q)]
-        print(q, '\t', temp)
+        temp = p_out * dict_q_out["min_" + str(q)] - p_inn * dict_q_inn["min_" + str(q)]
+        print(q, "\t", temp)
         data += [(q, temp)]
         if temp >= opt_revenue:
             y_opt_temp = q
             opt_revenue = temp
-    df = pd.DataFrame(data, columns=['y', 'expected_revenue'])
-    plt.scatter(df['y'], df['expected_revenue'])
-    plt.axhline(0, color='black')
+    df = pd.DataFrame(data, columns=["y", "expected_revenue"])
+    plt.scatter(df["y"], df["expected_revenue"])
+    plt.axhline(0, color="black")
     plt.show()
     return y_opt_temp

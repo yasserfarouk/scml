@@ -21,10 +21,10 @@ class Mynegotiator(AspirationNegotiator):
         issues = self.cfp.issues
         self.normalized_utilities = {}
         for issue in issues:
-            self.estimated_issue_weights[issue.name] = 1/len(issues)
+            self.estimated_issue_weights[issue.name] = 1 / len(issues)
             self.estimated_issue_values[issue.name] = {}
             for value in issue.values:
-                self.estimated_issue_values[value] = 1/len(issue.values)
+                self.estimated_issue_values[value] = 1 / len(issue.values)
         """"""
         super(Mynegotiator, self).__init__(name=name, ufun=ufun, partner_id=partner_id)
 
@@ -36,9 +36,10 @@ class Mynegotiator(AspirationNegotiator):
         my_offer = self.propose(state=state)
         my_utility = self.get_normalized_utility(my_offer)
         offered_utility = self.get_normalized_utility(offer)
-        asp = (self.aspiration(state.relative_time)
-               * (self.ufun_max - self.ufun_min)
-               + self.ufun_min)
+        asp = (
+            self.aspiration(state.relative_time) * (self.ufun_max - self.ufun_min)
+            + self.ufun_min
+        )
 
         if self._utility_function is None:
             return ResponseType.REJECT_OFFER
@@ -60,15 +61,15 @@ class Mynegotiator(AspirationNegotiator):
         optm_rat = round(tot_util * 0.10)  # current_r + optm_r, increases the rank
         pesm_rat = round(tot_util * 0.05)  # current_r - pes_r, decreases the rank
         aspiration = self.aspiration(state.relative_time)
-        asp = (aspiration *
-               (self.ufun_max - self.ufun_min)
-               + self.ufun_min)
+        asp = aspiration * (self.ufun_max - self.ufun_min) + self.ufun_min
 
         if not self.offers:
             return self._random_offer(init_rat)
         o = self.offers[self._ami.id]
         before_ix = len(o) - 1 if len(o) > 1 else len(o) - 2
-        current_u = self.get_normalized_utility(o[-1])  #  our utility from opponent offer
+        current_u = self.get_normalized_utility(
+            o[-1]
+        )  #  our utility from opponent offer
         cbefore_u = self.get_normalized_utility(o[before_ix])
         current_r = self._current_ranking(current_u, util_lst)
         return self._decide_offer(
@@ -80,7 +81,7 @@ class Mynegotiator(AspirationNegotiator):
             t_util=tot_util,
             asp=asp,
             u_list=util_lst,
-            init_r=init_rat
+            init_r=init_rat,
         )
 
     def _get_util(self):
@@ -95,13 +96,12 @@ class Mynegotiator(AspirationNegotiator):
 
     def _current_ranking(self, current_u, u_list):
         for i, u in enumerate(u_list):
-            if u <= current_u: return i
+            if u <= current_u:
+                return i
         return round(len(u_list) / 2)  # median
 
     def _random_offer(self, init_r):
-        return self.ordered_outcomes[
-            random.randint(0, init_r)
-        ][1]
+        return self.ordered_outcomes[random.randint(0, init_r)][1]
 
     def _decide_offer(self, c_u, b_u, c_r, optm_r, pesm_r, t_util, asp, u_list, init_r):
         if c_u < self.reserved_value:
@@ -110,23 +110,13 @@ class Mynegotiator(AspirationNegotiator):
             return self._random_offer(init_r)
         if c_u == b_u:
             return self._equality_offer(
-                c_r=c_r,
-                pesm_r=pesm_r,
-                optm_r=optm_r,
-                u_list=u_list,
-                t_util=t_util
+                c_r=c_r, pesm_r=pesm_r, optm_r=optm_r, u_list=u_list, t_util=t_util
             )
         if c_u < b_u:
-            return self._selfish_offer(
-                c_r=c_r,
-                optm_r=optm_r
-            )
+            return self._selfish_offer(c_r=c_r, optm_r=optm_r)
         if c_u > b_u:
             return self._generous_offer(
-                c_r=c_r,
-                pesm_r=pesm_r,
-                u_list=u_list,
-                t_util=t_util
+                c_r=c_r, pesm_r=pesm_r, u_list=u_list, t_util=t_util
             )
 
     def _selfish_offer(self, c_r, optm_r):
@@ -153,16 +143,13 @@ class Mynegotiator(AspirationNegotiator):
         # in case opponent offers equal utility rate with the one before, we propose selfish offers
         return self._selfish_offer(c_r, optm_r)
 
-
-
-
     def on_leave(self, state: MechanismState) -> None:
-        #print("ON LEAVE CALLED : "+self.name)
+        # print("ON LEAVE CALLED : "+self.name)
         super().on_leave(state)
         """"""
 
     def on_negotiation_end(self, state: MechanismState) -> None:
-        #print("ON NEGOTIATION END CALLED : " + self.name)
+        # print("ON NEGOTIATION END CALLED : " + self.name)
         super().on_negotiation_end(state)
 
     def normalize(self):
@@ -179,9 +166,15 @@ class Mynegotiator(AspirationNegotiator):
                 self.ordered_outcomes[index] = (0, outcome[1])
             else:
                 if isBiggestNegative:
-                    self.ordered_outcomes[index] = ((max_utility/outcome[0]), outcome[1])
+                    self.ordered_outcomes[index] = (
+                        (max_utility / outcome[0]),
+                        outcome[1],
+                    )
                 else:
-                    self.ordered_outcomes[index] = (max(0, (outcome[0]/max_utility)), outcome[1])
+                    self.ordered_outcomes[index] = (
+                        max(0, (outcome[0] / max_utility)),
+                        outcome[1],
+                    )
         a = 0
 
     def on_ufun_changed(self):
@@ -219,17 +212,21 @@ class Mynegotiator(AspirationNegotiator):
                     current_value = offer.get(key)
                     previous_value = previous_offer.get(key)
                     if current_value == previous_value:
-                        self.estimated_issue_weights[key] = self.estimated_issue_weights.get(key) + self.n
+                        self.estimated_issue_weights[key] = (
+                            self.estimated_issue_weights.get(key) + self.n
+                        )
 
             if len(partner_offers) > 1:
                 weight_sum = 0
                 for key in self.estimated_issue_weights.keys():
                     weight_sum += self.estimated_issue_weights.get(key)
                 for key in self.estimated_issue_weights.keys():
-                    self.estimated_issue_weights[key] = self.estimated_issue_weights.get(key)/weight_sum
+                    self.estimated_issue_weights[key] = (
+                        self.estimated_issue_weights.get(key) / weight_sum
+                    )
 
             frequencies = {}
-            #@ todo : Frequency heurstic
+            # @ todo : Frequency heurstic
 
     def notify_ufun_changed(self):
         self.on_ufun_changed()
@@ -240,6 +237,7 @@ class Mynegotiator(AspirationNegotiator):
         result = self.propose(state=state)
         self.my_last_proposal = result
         return result
+
     def respond_(self, state: MechanismState, offer: "Outcome") -> "ResponseType":
         if self._ufun_modified:
             self.on_ufun_changed()

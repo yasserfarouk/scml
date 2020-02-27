@@ -31,6 +31,23 @@ Now you want to access the file *myfile.csv* when you are inside *myagent.py*. T
     import pathlib
     path_2_myfile = pathlib.Path(__file__).parent.parent / "data" / "myfile.csv"
 
+Can my agent pass data to my other agents between worlds?
+---------------------------------------------------------
+**NO** Passing data to your agents between world simulations will lead to 
+disqualification. 
+
+Can my agent read data from the HDD outside my agent's folder?
+--------------------------------------------------------------
+**NO** Your agent can only read files that you submitted to us in your zip file. 
+It cannot modify these files in anyway during the competition. 
+It cannot read from anywhere else in secondary storage. Trying to do
+so will lead to disqualification.
+
+Can my agent write data to the HDD during the simulation?
+---------------------------------------------------------
+**NO** The agent is not allowed to write anything to the hard disk during the 
+competition.
+
 Can I print to the screen to debug my agent?
 --------------------------------------------
 **PLEASE DO NOT**
@@ -83,6 +100,12 @@ But something like this::
         main()
 
 This way, importing your module will not run the world simulation.
+
+I ran a simulation using "scml run2020" command. Where are my log files?
+------------------------------------------------------------------------
+
+If you did not pass a log location through "--log", you will find the log files
+at *~/negmas/logs/scml/scml2020/[date-time-uuid]* 
 
 
 

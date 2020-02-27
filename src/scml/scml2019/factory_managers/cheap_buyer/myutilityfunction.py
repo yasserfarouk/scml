@@ -4,19 +4,23 @@ from negmas import UtilityValue, SAOState
 from typing import Optional, Dict, Any
 
 from scml.scml2019.common import SCMLAgreement, INVALID_UTILITY
-from scml.scml2019.factory_managers.builtins import AveragingNegotiatorUtility, GreedyFactoryManager
+from scml.scml2019.factory_managers.builtins import (
+    AveragingNegotiatorUtility,
+    GreedyFactoryManager,
+)
 
 
-class MyUtilityFunction (AveragingNegotiatorUtility):
+class MyUtilityFunction(AveragingNegotiatorUtility):
     """"""
+
     def __init__(
-            self,
-            agent: GreedyFactoryManager,
-            annotation: Dict[str, Any],
-            ufun_id=-1,
-            alpha=1,
-            beta=0,
-            average_number_of_steps=0
+        self,
+        agent: GreedyFactoryManager,
+        annotation: Dict[str, Any],
+        ufun_id=-1,
+        alpha=1,
+        beta=0,
+        average_number_of_steps=0,
     ):
         self.agent = agent
         self.annotation = annotation
@@ -74,8 +78,13 @@ class MyUtilityFunction (AveragingNegotiatorUtility):
         step_0_trimmed_running_negotiations = self.agent.running_negotiations
         index = 0
         while index < len(step_0_trimmed_running_negotiations):
-            if step_0_trimmed_running_negotiations[index].negotiator._ami.state.step == 0:
-                step_0_trimmed_running_negotiations.remove(step_0_trimmed_running_negotiations[index])
+            if (
+                step_0_trimmed_running_negotiations[index].negotiator._ami.state.step
+                == 0
+            ):
+                step_0_trimmed_running_negotiations.remove(
+                    step_0_trimmed_running_negotiations[index]
+                )
                 index -= 1
             index += 1
         if len(step_0_trimmed_running_negotiations) > 0:
@@ -94,20 +103,27 @@ class MyUtilityFunction (AveragingNegotiatorUtility):
                     max_steps = negotiator._ami.n_steps
                     step = negotiator._ami.state.step
                     probability_of_acceptance = step / (
-                            (self.alpha * max_steps) + (self.beta * self.average_number_of_steps))
+                        (self.alpha * max_steps)
+                        + (self.beta * self.average_number_of_steps)
+                    )
                     probability_of_acceptances.append(probability_of_acceptance)
-                    if current_offer is not None and random.random() < probability_of_acceptance:
+                    if (
+                        current_offer is not None
+                        and random.random() < probability_of_acceptance
+                    ):
                         hypothetical.append(self._contract(current_offer))
                 hypothetical_utility = self.agent.total_utility(hypothetical)
-                u1 = (hypothetical_utility - base_util)
+                u1 = hypothetical_utility - base_util
                 u2 = self.agent.get_total_profit(hypothetical)
                 resultant_utility = (u1 * self.weight_of_u1) + (u2 * self.weight_of_u2)
                 result += resultant_utility
                 count += 1
-                average_utility = result/count
+                average_utility = result / count
                 results.append(resultant_utility)
                 if count > 1:
-                    percentage_utility_difference = abs((average_utility - resultant_utility)/average_utility)
+                    percentage_utility_difference = abs(
+                        (average_utility - resultant_utility) / average_utility
+                    )
             return average_utility
         else:
             hypothetical = [self._contract(agreement)]
@@ -124,8 +140,13 @@ class MyUtilityFunction (AveragingNegotiatorUtility):
         step_0_trimmed_running_negotiations = self.agent.running_negotiations
         index = 0
         while index < len(step_0_trimmed_running_negotiations):
-            if step_0_trimmed_running_negotiations[index].negotiator._ami.state.step == 0:
-                step_0_trimmed_running_negotiations.remove(step_0_trimmed_running_negotiations[index])
+            if (
+                step_0_trimmed_running_negotiations[index].negotiator._ami.state.step
+                == 0
+            ):
+                step_0_trimmed_running_negotiations.remove(
+                    step_0_trimmed_running_negotiations[index]
+                )
                 index -= 1
             index += 1
 
@@ -140,19 +161,29 @@ class MyUtilityFunction (AveragingNegotiatorUtility):
                 max_steps = negotiator._ami.n_steps
                 step = negotiator._ami.state.step
                 probability_of_acceptance = step / (
-                        (self.alpha * max_steps) + (self.beta * self.average_number_of_steps))
-                hypothetical_utility_with_reject_case = self.agent.total_utility(hypothetical)
+                    (self.alpha * max_steps)
+                    + (self.beta * self.average_number_of_steps)
+                )
+                hypothetical_utility_with_reject_case = self.agent.total_utility(
+                    hypothetical
+                )
                 if current_offer is not None:
                     hypothetical.append(self._contract(current_offer))
-                    hypothetical_utility_with_accept_case = self.agent.total_utility(hypothetical)
-                    weighted_hypothetical_utility = probability_of_acceptance * hypothetical_utility_with_accept_case\
-                                                    + (1 - probability_of_acceptance) * hypothetical_utility_with_reject_case
+                    hypothetical_utility_with_accept_case = self.agent.total_utility(
+                        hypothetical
+                    )
+                    weighted_hypothetical_utility = (
+                        probability_of_acceptance
+                        * hypothetical_utility_with_accept_case
+                        + (1 - probability_of_acceptance)
+                        * hypothetical_utility_with_reject_case
+                    )
                     weighted_utility = weighted_hypothetical_utility - base_util
                 else:
                     weighted_utility = hypothetical_utility_with_reject_case - base_util
                 total_utility += weighted_utility
                 count += 1
-            return total_utility/count
+            return total_utility / count
         else:
             hypothetical = [self._contract(agreement)]
             base_util = self.agent.simulator.final_balance
@@ -175,4 +206,3 @@ class MyUtilityFunction (AveragingNegotiatorUtility):
     #     binary_combinations = list(itertools.product([0, 1], repeat=len(self.agent.running_negotiations)))
     #     for negotiation in self.agent.running_negotiations:
     #         state = negotiation.negotiator._ami.state
-

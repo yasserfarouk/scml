@@ -10,13 +10,15 @@ class MyNegotiator2(SAONegotiator):
     STRATEGY_TIME_BASED_CONCESSION = "time_based_concession"
     STRATEGY_INTERVAL = "interval_strategy"
 
-    def __init__(self
-                 , name
-                 , ufun
-                 , concession_coefficient=10
-                 , strategy=STRATEGY_ONLY_THE_BEST
-                 , interval=0.05
-                 , reserved_value=1):
+    def __init__(
+        self,
+        name,
+        ufun,
+        concession_coefficient=10,
+        strategy=STRATEGY_ONLY_THE_BEST,
+        interval=0.05,
+        reserved_value=1,
+    ):
         super(MyNegotiator2, self).__init__(name=name, ufun=ufun)
         self.ordered_outcomes = []
         self.ufun = ufun
@@ -37,7 +39,9 @@ class MyNegotiator2(SAONegotiator):
             our_offer = self.propose_interval()
         else:
             our_offer = self.propose_only_the_best(state)
-        self.our_offers.append("STEP : " + str(state.step) + " OFFER : " + str(our_offer))
+        self.our_offers.append(
+            "STEP : " + str(state.step) + " OFFER : " + str(our_offer)
+        )
         return our_offer
 
     def respond(self, state: MechanismState, offer: "Outcome") -> "ResponseType":
@@ -65,9 +69,11 @@ class MyNegotiator2(SAONegotiator):
         if biggest_utility == 0:
             a = 0
         for outcome in self.ordered_outcomes:
-            self.ordered_outcomes[index] = outcome[0]/biggest_utility, outcome[1]
-            self.utility_values_of_offers[str(self.ordered_outcomes[index][1])] = self.ordered_outcomes[index][0]
-            index = index+1
+            self.ordered_outcomes[index] = outcome[0] / biggest_utility, outcome[1]
+            self.utility_values_of_offers[
+                str(self.ordered_outcomes[index][1])
+            ] = self.ordered_outcomes[index][0]
+            index = index + 1
 
     def propose_(self, state: MechanismState) -> Optional["Outcome"]:
         if self._ufun_modified:
@@ -114,7 +120,9 @@ class MyNegotiator2(SAONegotiator):
             return ResponseType.REJECT_OFFER
 
     def get_concession_score(self, state):
-        return 1 + (self.reserved_valuee - 1)*math.pow(state.relative_time, self.concession_coefficient)
+        return 1 + (self.reserved_valuee - 1) * math.pow(
+            state.relative_time, self.concession_coefficient
+        )
 
     def propose_interval(self):
         candidate_offers = []

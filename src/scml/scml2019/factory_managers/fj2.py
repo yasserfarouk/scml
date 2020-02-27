@@ -20,7 +20,7 @@ class FJ2FactoryManager(GreedyFactoryManager):
                 is_buy=False,
                 publisher=self.id,
                 product=product.id,
-                time=(self.awi.current_step+2, self.awi.current_step+6),
+                time=(self.awi.current_step + 2, self.awi.current_step + 6),
                 unit_price=0.0000893,
                 quantity=(5, 10),
             )
@@ -47,7 +47,7 @@ class FJ2FactoryManager(GreedyFactoryManager):
             super().on_contract_signed(contract)
 
     def respond_to_negotiation_request(
-            self, cfp: "CFP", partner: str
+        self, cfp: "CFP", partner: str
     ) -> Optional[Negotiator]:
         if self.is_my_cheat_cfp(cfp):
             return NiceNegotiator()

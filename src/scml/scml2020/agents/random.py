@@ -11,5 +11,7 @@ class RandomAgent(IndependentNegotiationsAgent):
     """An agent that negotiates randomly."""
 
     def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
-        return RandomUtilityFunction(outcomes if outcomes is not None else Issue.enumerate(issues, astype=tuple)
-                                     , reserved_value=0.0)
+        return RandomUtilityFunction(
+            outcomes if outcomes is not None else Issue.enumerate(issues, astype=tuple),
+            reserved_value=0.0,
+        )

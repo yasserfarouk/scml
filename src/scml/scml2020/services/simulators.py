@@ -9,18 +9,9 @@ import numpy as np
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 
-from scml.scml2020 import (
-    FactoryProfile,
-    NO_COMMAND,
-    ANY_STEP,
-    ANY_LINE,
-)
+from scml.scml2020 import FactoryProfile, NO_COMMAND, ANY_STEP, ANY_LINE
 
-__all__ = [
-    "FactorySimulator",
-    "transaction",
-    "temporary_transaction",
-]
+__all__ = ["FactorySimulator", "transaction", "temporary_transaction"]
 
 
 @dataclass
@@ -43,7 +34,7 @@ class _Bookmark:
     )
 
 
-NEVER = sys.maxsize # indicates infinite future time
+NEVER = sys.maxsize  # indicates infinite future time
 
 
 @dataclass
@@ -190,7 +181,7 @@ class FactorySimulator:
 
             - A `NO_COMMAND` value means no production, otherwise the index of the process being run
         """
-        return self.commands[:, : t]
+        return self.commands[:, :t]
 
     def reserved_inventory_to(self, t: int) -> np.array:
         """
@@ -703,12 +694,10 @@ class FactorySimulator:
                 return False
             scheduled = 0
             for s, l in zip(steps, lines):
-                if not ((ignore_inventory_shortage or self._inventory[process, s] >= 1) and (
-                    ignore_money_shortage
-                    or (
-                        self._balance[s] >= cost
-                    )
-                )):
+                if not (
+                    (ignore_inventory_shortage or self._inventory[process, s] >= 1)
+                    and (ignore_money_shortage or (self._balance[s] >= cost))
+                ):
                     continue
                 scheduled += 1
                 self.commands[s, l] = process

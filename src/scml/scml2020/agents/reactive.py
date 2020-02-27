@@ -20,9 +20,8 @@ class ReactiveAgent(
     ReactiveTradingStrategy,
     TradeDrivenProductionStrategy,
     FixedTradePredictionStrategy,
-    SCML2020Agent
+    SCML2020Agent,
 ):
-
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
         if sell:
@@ -45,4 +44,4 @@ class ReactiveAgent(
         else:
             needed, secured = self.inputs_needed, self.inputs_secured
 
-        return needed[steps[0]: steps[1]] - secured[steps[0]: steps[1]]
+        return needed[steps[0] : steps[1]] - secured[steps[0] : steps[1]]

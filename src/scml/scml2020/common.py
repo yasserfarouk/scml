@@ -1,6 +1,6 @@
 import sys
 
-__all__ =[
+__all__ = [
     "SYSTEM_BUYER_ID",
     "SYSTEM_SELLER_ID",
     "COMPENSATION_ID",
@@ -69,4 +69,3 @@ def is_system_agent(aid: str) -> bool:
         or aid.startswith(SYSTEM_BUYER_ID)
         or aid.startswith(COMPENSATION_ID)
     )
-

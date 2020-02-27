@@ -4,13 +4,23 @@ from negmas import Contract
 from typing import Collection, Optional, List, Callable, Dict, Any
 
 from scml.scml2019.common import (
-    NO_PRODUCTION, Job, ProductionNeed, ManufacturingProfileCompiled, ProductManufacturingInfo, Process,
-    Product)
-from scml.scml2019.factory_managers.builtins import ScheduleInfo, FactorySimulator, SCMLAgreement
+    NO_PRODUCTION,
+    Job,
+    ProductionNeed,
+    ManufacturingProfileCompiled,
+    ProductManufacturingInfo,
+    Process,
+    Product,
+)
+from scml.scml2019.factory_managers.builtins import (
+    ScheduleInfo,
+    FactorySimulator,
+    SCMLAgreement,
+)
 from scml.scml2019.schedulers import Scheduler
 from scml.scml2019.schedulers import transaction
 
-INVALID_UTILITY = float('-inf')
+INVALID_UTILITY = float("-inf")
 
 
 class MyScheduler(Scheduler):
@@ -282,26 +292,25 @@ class MyScheduler(Scheduler):
                     )
             jobs: List[Job] = []
             needs: List[ProductionNeed] = []
-            current_schedule = simulator.line_schedules_to(
-                t - ensure_storage_for - 1
-            )
+            current_schedule = simulator.line_schedules_to(t - ensure_storage_for - 1)
             if self.strategy == "earliest_feasible":
                 number_of_rows = current_schedule.shape[0]
                 number_of_columns = current_schedule.shape[1]
                 empty_slots = []
-                #bookmark = simulator.bookmark()
+                # bookmark = simulator.bookmark()
                 with transaction(simulator) as bookmark:
                     for time in range(number_of_columns):
                         for line in range(number_of_rows):
                             if current_schedule[line][time] == NO_PRODUCTION:
                                 info = self.producing[pid][line]
                                 job = Job(
-                                line=line,
-                                action="run",
-                                time=max(time, start),
-                                profile=info.profile,
-                                contract=contract,
-                                override=False)
+                                    line=line,
+                                    action="run",
+                                    time=max(time, start),
+                                    profile=info.profile,
+                                    contract=contract,
+                                    override=False,
+                                )
                                 if not simulator.schedule(
                                     job,
                                     override=False,
@@ -320,18 +329,29 @@ class MyScheduler(Scheduler):
                                     for i in process.inputs:
                                         pind, quantity = i.product, i.quantity
                                         # I need the input to be available the step before production
-                                        step = min(start + time + int(math.floor(i.step * length)) - 1, self.awi.n_steps-1)
+                                        step = min(
+                                            start
+                                            + time
+                                            + int(math.floor(i.step * length))
+                                            - 1,
+                                            self.awi.n_steps - 1,
+                                        )
                                         if step < 0:
                                             break
                                         available = max(
                                             0,
-                                            self.simulator.available_storage_at(step)[pind]
+                                            self.simulator.available_storage_at(step)[
+                                                pind
+                                            ]
                                             - quantity,
                                         )
                                         if available >= quantity:
                                             instore, tobuy = quantity, 0
                                         else:
-                                            instore, tobuy = available, quantity - available
+                                            instore, tobuy = (
+                                                available,
+                                                quantity - available,
+                                            )
                                         if tobuy > 0 or instore > 0:
                                             if step < start:
                                                 break
@@ -384,7 +404,7 @@ class MyScheduler(Scheduler):
                             failed_contracts=[],
                             final_balance=self.simulator.balance_at(end - 1),
                         )
-                        #print(str(current_schedule)+"\n")
+                        # print(str(current_schedule)+"\n")
                         return schedule
                     simulator.rollback(bookmark)
                     return ScheduleInfo(
@@ -474,5 +494,3 @@ class MyScheduler(Scheduler):
             return schedule
 
         return schedule
-
-

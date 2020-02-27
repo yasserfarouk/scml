@@ -1,8 +1,4 @@
-
-__all__ = [
-    "SignAll",
-    "SignAllPossible",
-]
+__all__ = ["SignAll", "SignAllPossible"]
 
 from typing import List, Optional
 
@@ -34,6 +30,7 @@ class SignAll:
           disallowing any other components after it in the MRO to call this method. Usually methods that do some
           action (i.e. not starting with `on_`) are overridden this way.
     """
+
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         # calls the super class to allow it to do any book-keeping.
         return [self.id] * len(contracts)
@@ -64,6 +61,7 @@ class SignAllPossible:
           disallowing any other components after it in the MRO to call this method. Usually methods that do some
           action (i.e. not starting with `on_`) are overridden this way.
     """
+
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         results = [None] * len(contracts)
         # sort contracts by time and then put system contracts first within each time-step

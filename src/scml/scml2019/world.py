@@ -36,7 +36,8 @@ from negmas.situated import (
     Contract,
     Agent,
     TimeInAgreementMixin,
-    Operations)
+    Operations,
+)
 from .agent import SCML2019Agent
 from .bank import DefaultBank
 from .common import *
@@ -257,7 +258,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             batch_signing=False,
             no_logs=compact,
             force_signing=False,
-            operations = (
+            operations=(
                 Operations.StatsUpdate,
                 Operations.Negotiations,
                 Operations.ContractSigning,
@@ -405,7 +406,9 @@ class SCML2019World(TimeInAgreementMixin, World):
         self.n_new_cfps = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
-        self._transport: Dict[int, List[Tuple[SCML2019Agent, int, int]]] = defaultdict(list)
+        self._transport: Dict[int, List[Tuple[SCML2019Agent, int, int]]] = defaultdict(
+            list
+        )
         self._transfer: Dict[int, List[Tuple[SCML2019Agent, float]]] = defaultdict(list)
         self.transfer_delay = transfer_delay
 
@@ -2357,7 +2360,6 @@ class SCML2019World(TimeInAgreementMixin, World):
                     annotation["cfp"] = cfp_
         return annotation
 
-
     # def run_negotiation(
     #     self,
     #     caller: "Agent",
@@ -2392,7 +2394,8 @@ class SCML2019World(TimeInAgreementMixin, World):
             roles=roles,
             mechanism_name=mechanism_name,
             mechanism_params=mechanism_params,
-            negotiator=negotiator, ufun=ufun
+            negotiator=negotiator,
+            ufun=ufun,
         )
 
     def run_negotiations(

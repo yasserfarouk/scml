@@ -1,4 +1,3 @@
-
 from click.testing import CliRunner
 
 from scml.cli import cli as main

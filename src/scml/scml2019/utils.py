@@ -7,12 +7,7 @@ from random import randint, random, shuffle, choices
 
 import numpy as np
 from negmas import Agent
-from negmas.helpers import (
-    get_class,
-    instantiate,
-    unique_name,
-    get_full_type_name,
-)
+from negmas.helpers import get_class, instantiate, unique_name, get_full_type_name
 from negmas.java import to_dict
 from negmas.situated import Entity
 from negmas.tournaments import WorldRunResults, TournamentResults, tournament

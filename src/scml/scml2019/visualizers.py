@@ -17,7 +17,9 @@ class SCML2019AgentVisualizer(AgentVisualizer):
     def widget_params(cls, widget_name: str) -> Dict[str, Type]:
         pass
 
-    def render_widget(self, name: str, params: Dict[str, Any] = None) -> Optional[Widget]:
+    def render_widget(
+        self, name: str, params: Dict[str, Any] = None
+    ) -> Optional[Widget]:
         pass
 
     @classmethod
@@ -38,7 +40,9 @@ class FactoryManagerVisualizer(SCML2019AgentVisualizer):
     def widget_params(cls, widget_name: str) -> Dict[str, Type]:
         pass
 
-    def render_widget(self, name: str, params: Dict[str, Any] = None) -> Optional[Widget]:
+    def render_widget(
+        self, name: str, params: Dict[str, Any] = None
+    ) -> Optional[Widget]:
         pass
 
     @classmethod
@@ -59,7 +63,9 @@ class SCML2019WorldVisualizer(WorldVisualizer):
     def widget_params(cls, widget_name: str) -> Dict[str, Type]:
         pass
 
-    def render_widget(self, name: str, params: Dict[str, Any] = None) -> Optional[Widget]:
+    def render_widget(
+        self, name: str, params: Dict[str, Any] = None
+    ) -> Optional[Widget]:
         pass
 
     @classmethod
@@ -72,7 +78,11 @@ class SCML2019WorldVisualizer(WorldVisualizer):
 
     @classmethod
     def children_categories(cls) -> List[str]:
-        return ["factory_managers", "miners", "consumers"] + super().children_categories()
+        return [
+            "factory_managers",
+            "miners",
+            "consumers",
+        ] + super().children_categories()
 
 
 class BankVisualizer(SCML2019AgentVisualizer):

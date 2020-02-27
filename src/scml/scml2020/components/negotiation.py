@@ -634,7 +634,9 @@ class IndependentNegotiationsManager(NegotiationManager):
 
     def negotiator(self, is_seller: bool, issues=None, outcomes=None) -> SAONegotiator:
         """Creates a negotiator"""
-        if outcomes is None and (issues is None or not Issue.enumerate(issues, astype=tuple)):
+        if outcomes is None and (
+            issues is None or not Issue.enumerate(issues, astype=tuple)
+        ):
             return None
         params = self.negotiator_params
         params["ufun"] = self.create_ufun(

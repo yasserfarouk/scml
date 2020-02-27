@@ -120,7 +120,11 @@ class DefaultInsuranceCompany(InsuranceCompany):
         raise ValueError("The insurance company does not receive callbacks")
 
     def evaluate_insurance(
-        self, contract: Contract, insured: SCML2019Agent, against: SCML2019Agent, t: int = None
+        self,
+        contract: Contract,
+        insured: SCML2019Agent,
+        against: SCML2019Agent,
+        t: int = None,
     ) -> Optional[float]:
         """Can be called to evaluate the premium for insuring the given contract against breaches committed by others
 

@@ -436,21 +436,21 @@ class Factory:
         if override:
             if line < 0:
                 steps, lines = np.nonzero(
-                    self.commands[step[0]: step[1], :] >= NO_COMMAND
+                    self.commands[step[0] : step[1], :] >= NO_COMMAND
                 )
             else:
                 steps = np.nonzero(
-                    self.commands[step[0]: step[1], line] >= NO_COMMAND
+                    self.commands[step[0] : step[1], line] >= NO_COMMAND
                 )[0]
                 lines = [line]
         else:
             if line < 0:
                 steps, lines = np.nonzero(
-                    self.commands[step[0]: step[1], :] == NO_COMMAND
+                    self.commands[step[0] : step[1], :] == NO_COMMAND
                 )
             else:
                 steps = np.nonzero(
-                    self.commands[step[0]: step[1], line] == NO_COMMAND
+                    self.commands[step[0] : step[1], line] == NO_COMMAND
                 )[0]
                 lines = [line]
         steps += step[0]
@@ -458,7 +458,7 @@ class Factory:
         if possible < repeats:
             return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         if method.startswith("l"):
-            steps, lines = steps[-possible + 1:], lines[-possible + 1:]
+            steps, lines = steps[-possible + 1 :], lines[-possible + 1 :]
         elif method == "all":
             pass
         else:
@@ -1949,12 +1949,18 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.agent_processes = {k: np.array(v) for k, v in self.agent_processes.items()}
         self.agent_inputs = {k: np.array(v) for k, v in self.agent_inputs.items()}
         self.agent_outputs = {k: np.array(v) for k, v in self.agent_outputs.items()}
-        assert all(len(v) == 1 or is_system_agent(self.agents[k].id) for k, v in
-                   self.agent_outputs.items()), f"Not all agent outputs are singular:\n{self.agent_outputs}"
-        assert all(len(v) == 1 or is_system_agent(self.agents[k].id) for k, v in
-                   self.agent_inputs.items()), f"Not all agent inputs are singular:\n{self.agent_outputs}"
-        assert all(self.agent_inputs[k][0] == self.agent_outputs[k] - 1 for k in
-                   self.agent_inputs.keys()), f"Some agents have outputs != input+1\n{self.agent_outputs}\n{self.agent_inputs}"
+        assert all(
+            len(v) == 1 or is_system_agent(self.agents[k].id)
+            for k, v in self.agent_outputs.items()
+        ), f"Not all agent outputs are singular:\n{self.agent_outputs}"
+        assert all(
+            len(v) == 1 or is_system_agent(self.agents[k].id)
+            for k, v in self.agent_inputs.items()
+        ), f"Not all agent inputs are singular:\n{self.agent_outputs}"
+        assert all(
+            self.agent_inputs[k][0] == self.agent_outputs[k] - 1
+            for k in self.agent_inputs.keys()
+        ), f"Some agents have outputs != input+1\n{self.agent_outputs}\n{self.agent_inputs}"
         self._n_production_failures = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
@@ -1966,7 +1972,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.compensation_records: Dict[str, List[CompensationRecord]] = defaultdict(
             list
         )
-        self.exogenous_contracts: Dict[int: List[Contract]] = defaultdict(list)
+        self.exogenous_contracts: Dict[int : List[Contract]] = defaultdict(list)
         for c in exogenous_contracts:
             seller_id = agents[c.seller].id if c.seller >= 0 else SYSTEM_SELLER_ID
             buyer_id = agents[c.buyer].id if c.buyer >= 0 else SYSTEM_BUYER_ID
@@ -2150,7 +2156,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         np.errstate(divide="ignore")
         n_startup = n_processes
         if n_steps <= n_startup:
-            raise ValueError(f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}")
+            raise ValueError(
+                f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}"
+            )
 
         horizon = max(1, min(n_steps, int(realin(horizon) * n_steps)))
         process_inputs = make_array(process_inputs, n_processes, dtype=int)
@@ -2290,10 +2298,10 @@ class SCML2020World(TimeInAgreementMixin, World):
         manufacturing_costs = np.zeros((n_processes, n_steps), dtype=int)
         for p in range(n_processes):
             manufacturing_costs[p, :] = profit_basis(
-                costs[first_agent[p]: last_agent[p], :, p]
+                costs[first_agent[p] : last_agent[p], :, p]
             )
             manufacturing_costs[p, :p] = 0
-            manufacturing_costs[p, p - n_startup:] = 0
+            manufacturing_costs[p, p - n_startup :] = 0
 
         profits = np.zeros((n_processes, n_steps))
         for p in range(n_processes):
@@ -2324,20 +2332,20 @@ class SCML2020World(TimeInAgreementMixin, World):
         output_total_prices = np.ceil(total_costs * (1 + profits)).astype(int)
 
         for p in range(1, n_processes):
-            input_costs[p, p:] = output_total_prices[p - 1, p - 1: -1]
-            input_quantity[p, p:] = output_quantity[p - 1, p - 1: -1]
+            input_costs[p, p:] = output_total_prices[p - 1, p - 1 : -1]
+            input_quantity[p, p:] = output_quantity[p - 1, p - 1 : -1]
             active_lines[p, :] = input_quantity[p, :] // process_inputs[p]
             output_quantity[p, :] = active_lines[p, :] * process_outputs[p]
-            manufacturing_costs[p, p: p - n_startup] *= active_lines[
-                                                        p, p: p - n_startup
-                                                        ]
+            manufacturing_costs[p, p : p - n_startup] *= active_lines[
+                p, p : p - n_startup
+            ]
             total_costs[p, :] = input_costs[p, :] + manufacturing_costs[p, :]
             output_total_prices[p, :] = np.ceil(
                 total_costs[p, :] * (1 + profits[p, :])
             ).astype(int)
         sale_prices[:, n_startup:] = np.ceil(
-            output_total_prices[-1, n_startup - 1: -1]
-            / output_quantity[-1, n_startup - 1: -1]
+            output_total_prices[-1, n_startup - 1 : -1]
+            / output_quantity[-1, n_startup - 1 : -1]
         ).astype(int)
         product_prices = np.zeros((n_products, n_steps))
         product_prices[0, :-n_startup] = catalog_prices[0]
@@ -2351,7 +2359,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         ).astype(int)[:, :-1]
         catalog_prices = np.ceil(
             [
-                profit_basis(product_prices[p, p: p + n_steps - n_startup])
+                profit_basis(product_prices[p, p : p + n_steps - n_startup])
                 for p in range(n_products)
             ]
         ).astype(int)
@@ -2404,7 +2412,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 input_quantities=input_quantity,
                 output_quantities=output_quantity,
                 expected_productivity=float(np.sum(active_lines))
-                                      / np.sum(n_lines * n_steps * n_agents_per_process),
+                / np.sum(n_lines * n_steps * n_agents_per_process),
                 expected_n_products=np.sum(active_lines, axis=-1),
                 expected_income=max_income,
                 expected_welfare=float(np.sum(max_income)),
@@ -2765,7 +2773,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         return sum(
             scores[f.agent_id] * f.initial_balance
             for f in self.factories
-            if (include_bankrupt or not f.is_bankrupt) and not is_system_agent(f.agent_id)
+            if (include_bankrupt or not f.is_bankrupt)
+            and not is_system_agent(f.agent_id)
         )
 
     def relative_welfare(self, include_bankrupt: bool = False) -> Optional[float]:
@@ -2863,11 +2872,11 @@ class SCML2020World(TimeInAgreementMixin, World):
         """Registers execution of the contract in the agent's stats"""
         n_contracts = self.agent_n_contracts[agent_id] - 1
         self.breach_prob[agent_id] = (
-                                         self.breach_prob[agent_id] * n_contracts + (level > 0)
-                                     ) / (n_contracts + 1)
+            self.breach_prob[agent_id] * n_contracts + (level > 0)
+        ) / (n_contracts + 1)
         self._breach_level[agent_id] = (
-                                           self.breach_prob[agent_id] * n_contracts + level
-                                       ) / (n_contracts + 1)
+            self.breach_prob[agent_id] * n_contracts + level
+        ) / (n_contracts + 1)
 
     def record_bankrupt(self, factory: Factory) -> None:
         """Records agent bankruptcy"""
@@ -3227,11 +3236,11 @@ class SCML2020World(TimeInAgreementMixin, World):
                 continue
             factory = self.a2f[aid]
             scores[aid] = (
-                              factory.current_balance
-                              + assets_multiplier
-                              * np.sum(factory.current_inventory * self.trading_prices)
-                              - factory.initial_balance
-                          ) / factory.initial_balance
+                factory.current_balance
+                + assets_multiplier
+                * np.sum(factory.current_inventory * self.trading_prices)
+                - factory.initial_balance
+            ) / factory.initial_balance
         return scores
 
     @property
@@ -3332,7 +3341,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         n_negs = sum(self.stats["n_negotiations"])
         n_contracts = self.n_saved_contracts(True)
         return n_contracts / n_negs if n_negs != 0 else np.nan
-        
+
     system_agent_ids = system_agent_names
     non_system_agent_ids = non_system_agent_names
 
