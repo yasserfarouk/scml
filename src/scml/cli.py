@@ -2091,7 +2091,7 @@ def run2020(
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
-            f"Exogenous Contracts: {n_exogenous} of which {n_exogenous_signed} "
+            f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
             f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
         )
         print_and_log(
@@ -2099,8 +2099,11 @@ def run2020(
             f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
         )
         print_and_log(
-            f"Cancelled: {world.cancellation_rate:0.1%}"
-            f", Executed: {world.contract_execution_fraction:0.1%}"
+            f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
+            f" were signed ({1-world.cancellation_rate:0.1%})"
+        )
+        print_and_log(
+            f"Executed: {world.contract_execution_fraction:0.1%}"
             f", Breached: {world.breach_fraction:0.1%}"
             f", Erred: {world.contract_err_fraction:0.1%}"
             f", Nullified: {world.contract_nullification_fraction:0.1%}"
