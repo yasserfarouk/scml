@@ -10,3 +10,4 @@ applicability to a variety of problems.
 
     tutorials/01.run_scml2020
     tutorials/02.develop_agent_scml2020
+    tutorials/03.logs_and_stats

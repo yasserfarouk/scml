@@ -1635,7 +1635,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
         negotiation_speed=21,
-        negotiation_quota_per_step=float("inf"),
+        negotiation_quota_per_step=None,
         negotiation_quota_per_simulation=float("inf"),
         # trading price parameters
         trading_price_discount=0.9,
@@ -1652,6 +1652,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         agent_name_reveals_type: bool = True,
         **kwargs,
     ):
+        if negotiation_quota_per_step is None:
+            negotiation_quota_per_step = len(agent_types) * n_steps // 2
         if exogenous_horizon is None:
             exogenous_horizon = n_steps
         self.allow_buying_output = allow_buying_output
