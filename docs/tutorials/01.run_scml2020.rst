@@ -60,7 +60,7 @@ Now you can run this world simulation by just calling ``run``.
 
 .. parsed-literal::
 
-    100%|██████████| 50/50 [05:11<00:00,  6.24s/it]
+    100%|██████████| 50/50 [04:00<00:00,  4.82s/it]
 
 
 Let’s see what happened in this run. Firstly, how many negotiations were
@@ -161,15 +161,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_00Dec@0',
-     'spot_market_loss_00Dec@0',
-     'balance_00Dec@0',
-     'inventory_00Dec@0_input',
-     'inventory_00Dec@0_output',
-     'productivity_00Dec@0',
-     'assets_00Dec@0',
-     'bankrupt_00Dec@0',
-     'score_00Dec@0']
+    ['spot_market_quantity_01Dec@0',
+     'spot_market_loss_01Dec@0',
+     'balance_01Dec@0',
+     'inventory_01Dec@0_input',
+     'inventory_01Dec@0_output',
+     'productivity_01Dec@0',
+     'assets_01Dec@0',
+     'bankrupt_01Dec@0',
+     'score_01Dec@0']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -215,15 +215,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_00Dec@0': (162.0, 483.28091511614116),
-     'balance_00Dec@0': (18008, 22287),
-     'bankrupt_00Dec@0': (False, False),
-     'inventory_00Dec@0_input': (0, 0),
-     'inventory_00Dec@0_output': (9, 24),
-     'productivity_00Dec@0': (0.9, 0.0),
-     'score_00Dec@0': (-0.0004972925185103326, 0.24481381686142506),
-     'spot_market_loss_00Dec@0': (0.3, 2.352),
-     'spot_market_quantity_00Dec@0': (0, 0)}
+    {'assets_01Dec@0': (180.0, 1816.7419578817287),
+     'balance_01Dec@0': (11747, 19078),
+     'bankrupt_01Dec@0': (False, False),
+     'inventory_01Dec@0_input': (0, 0),
+     'inventory_01Dec@0_output': (9, 75),
+     'productivity_01Dec@0': (0.9, 0.5),
+     'score_01Dec@0': (0.0, 0.6884659101918446),
+     'spot_market_loss_01Dec@0': (0.3, 1.4745000000000001),
+     'spot_market_quantity_01Dec@0': (0, 0)}
 
 
 .. code:: ipython3
@@ -299,7 +299,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [00Dec@0] of type ['decentralizing'] won at [24.481381686142505]%
+    [01Dec@0] of type ['decentralizing'] won at [68.84659101918446]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -501,132 +501,132 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>703</th>
-          <td>07Buy@2</td>
+          <th>894</th>
+          <td>07Dec@2</td>
           <td>09Dec@3</td>
-          <td>9</td>
-          <td>66</td>
-          <td>31</td>
-          <td>2</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>722</th>
-          <td>06Buy@2</td>
-          <td>09Dec@3</td>
-          <td>10</td>
-          <td>65</td>
-          <td>31</td>
-          <td>2</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>733</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>9</td>
-          <td>62</td>
-          <td>31</td>
-          <td>2</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>700</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>10</td>
-          <td>61</td>
-          <td>31</td>
-          <td>2</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>698</th>
-          <td>07Buy@2</td>
-          <td>10Dec@3</td>
-          <td>8</td>
-          <td>53</td>
-          <td>31</td>
-          <td>2</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>916</th>
-          <td>08Ind@2</td>
-          <td>09Dec@3</td>
-          <td>15</td>
-          <td>46</td>
-          <td>31</td>
-          <td>4</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>709</th>
-          <td>06Buy@2</td>
-          <td>09Dec@3</td>
-          <td>7</td>
-          <td>45</td>
-          <td>31</td>
-          <td>2</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>905</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>22</td>
-          <td>45</td>
-          <td>31</td>
-          <td>4</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2254</th>
-          <td>05Dec@1</td>
-          <td>08Ind@2</td>
-          <td>36</td>
-          <td>38</td>
-          <td>35</td>
           <td>26</td>
+          <td>59</td>
+          <td>35</td>
+          <td>17</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>918</th>
+          <td>00Buy@0</td>
+          <td>05Ind@1</td>
+          <td>22</td>
+          <td>44</td>
+          <td>10</td>
+          <td>18</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>953</th>
+          <td>07Dec@2</td>
+          <td>10Ind@3</td>
+          <td>25</td>
+          <td>41</td>
+          <td>51</td>
+          <td>19</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>913</th>
-          <td>06Buy@2</td>
+          <th>1274</th>
+          <td>06Dec@2</td>
           <td>09Dec@3</td>
-          <td>24</td>
-          <td>31</td>
-          <td>31</td>
-          <td>4</td>
+          <td>37</td>
+          <td>39</td>
+          <td>35</td>
+          <td>29</td>
+          <td>True</td>
           <td>False</td>
           <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1158</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>35</td>
+          <td>38</td>
+          <td>42</td>
+          <td>25</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>815</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>23</td>
+          <td>32</td>
+          <td>42</td>
+          <td>15</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>924</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>25</td>
+          <td>30</td>
+          <td>42</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>387</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>15</td>
+          <td>28</td>
+          <td>29</td>
+          <td>3</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>395</th>
+          <td>05Ind@1</td>
+          <td>06Dec@2</td>
+          <td>17</td>
+          <td>28</td>
+          <td>29</td>
+          <td>3</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>398</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>17</td>
+          <td>28</td>
+          <td>29</td>
+          <td>3</td>
+          <td>False</td>
+          <td>True</td>
           <td>False</td>
           <td>False</td>
         </tr>
@@ -679,77 +679,51 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>2254</th>
-          <td>05Dec@1</td>
-          <td>08Ind@2</td>
-          <td>36</td>
-          <td>38</td>
-          <td>35</td>
-          <td>26</td>
+          <th>953</th>
+          <td>07Dec@2</td>
+          <td>10Ind@3</td>
+          <td>25</td>
+          <td>41</td>
+          <td>51</td>
+          <td>19</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1247</th>
-          <td>05Dec@1</td>
-          <td>08Ind@2</td>
-          <td>14</td>
-          <td>28</td>
-          <td>35</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2450</th>
-          <td>08Ind@2</td>
+          <th>1274</th>
+          <td>06Dec@2</td>
           <td>09Dec@3</td>
-          <td>39</td>
-          <td>23</td>
-          <td>45</td>
-          <td>34</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>828</th>
-          <td>08Ind@2</td>
-          <td>09Dec@3</td>
-          <td>27</td>
-          <td>22</td>
-          <td>48</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2399</th>
-          <td>08Ind@2</td>
-          <td>10Dec@3</td>
           <td>37</td>
-          <td>20</td>
-          <td>45</td>
-          <td>31</td>
+          <td>39</td>
+          <td>35</td>
+          <td>29</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1725</th>
-          <td>00Dec@0</td>
-          <td>03Ind@1</td>
+          <th>1158</th>
+          <td>03Dec@1</td>
+          <td>06Dec@2</td>
+          <td>35</td>
+          <td>38</td>
+          <td>42</td>
+          <td>25</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>815</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
           <td>23</td>
-          <td>20</td>
-          <td>26</td>
+          <td>32</td>
+          <td>42</td>
           <td>15</td>
           <td>True</td>
           <td>False</td>
@@ -757,52 +731,78 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>2222</th>
-          <td>04Dec@1</td>
-          <td>08Ind@2</td>
-          <td>35</td>
-          <td>19</td>
-          <td>37</td>
+          <th>924</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
           <td>25</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2225</th>
-          <td>04Dec@1</td>
-          <td>07Buy@2</td>
           <td>30</td>
-          <td>19</td>
-          <td>35</td>
-          <td>25</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2449</th>
-          <td>03Ind@1</td>
-          <td>07Buy@2</td>
-          <td>39</td>
-          <td>19</td>
-          <td>35</td>
-          <td>34</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2288</th>
-          <td>00Dec@0</td>
-          <td>05Dec@1</td>
-          <td>37</td>
-          <td>19</td>
+          <td>42</td>
           <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>334</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>9</td>
           <td>27</td>
+          <td>29</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1109</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>34</td>
+          <td>27</td>
+          <td>29</td>
+          <td>24</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1424</th>
+          <td>03Dec@1</td>
+          <td>07Dec@2</td>
+          <td>42</td>
+          <td>22</td>
+          <td>45</td>
+          <td>33</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>202</th>
+          <td>01Dec@0</td>
+          <td>05Ind@1</td>
+          <td>5</td>
+          <td>22</td>
+          <td>29</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>396</th>
+          <td>05Ind@1</td>
+          <td>06Dec@2</td>
+          <td>7</td>
+          <td>22</td>
+          <td>29</td>
+          <td>3</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -852,104 +852,104 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>703</th>
-          <td>07Buy@2</td>
+          <th>894</th>
+          <td>07Dec@2</td>
           <td>09Dec@3</td>
-          <td>9</td>
-          <td>66</td>
-          <td>31</td>
-          <td>2</td>
-          <td>07Buy@2:product(1.0)</td>
+          <td>26</td>
+          <td>59</td>
+          <td>35</td>
+          <td>17</td>
+          <td>07Dec@2:product(0.3728813559322034)</td>
         </tr>
         <tr>
-          <th>722</th>
-          <td>06Buy@2</td>
-          <td>09Dec@3</td>
-          <td>10</td>
-          <td>65</td>
-          <td>31</td>
-          <td>2</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>733</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>9</td>
-          <td>62</td>
-          <td>31</td>
-          <td>2</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>700</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>10</td>
-          <td>61</td>
-          <td>31</td>
-          <td>2</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>698</th>
-          <td>07Buy@2</td>
-          <td>10Dec@3</td>
-          <td>8</td>
-          <td>53</td>
-          <td>31</td>
-          <td>2</td>
-          <td>07Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>916</th>
-          <td>08Ind@2</td>
-          <td>09Dec@3</td>
-          <td>15</td>
-          <td>46</td>
-          <td>31</td>
-          <td>4</td>
-          <td>08Ind@2:product(0.5869565217391305)</td>
-        </tr>
-        <tr>
-          <th>709</th>
-          <td>06Buy@2</td>
-          <td>09Dec@3</td>
-          <td>7</td>
-          <td>45</td>
-          <td>31</td>
-          <td>2</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>2070</th>
-          <td>01Ind@0</td>
-          <td>05Dec@1</td>
-          <td>30</td>
-          <td>27</td>
-          <td>18</td>
+          <th>918</th>
+          <td>00Buy@0</td>
+          <td>05Ind@1</td>
           <td>22</td>
-          <td>01Ind@0:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>737</th>
-          <td>01Ind@0</td>
-          <td>04Dec@1</td>
-          <td>13</td>
-          <td>24</td>
+          <td>44</td>
+          <td>10</td>
           <td>18</td>
-          <td>2</td>
-          <td>01Ind@0:product(0.5833333333333334)</td>
+          <td>00Buy@0:product(1.0)</td>
         </tr>
         <tr>
-          <th>983</th>
-          <td>00Dec@0</td>
-          <td>05Dec@1</td>
+          <th>387</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>15</td>
+          <td>28</td>
+          <td>29</td>
+          <td>3</td>
+          <td>05Ind@1:product(0.6428571428571429)</td>
+        </tr>
+        <tr>
+          <th>395</th>
+          <td>05Ind@1</td>
+          <td>06Dec@2</td>
+          <td>17</td>
+          <td>28</td>
+          <td>29</td>
+          <td>3</td>
+          <td>05Ind@1:product(0.7857142857142857)</td>
+        </tr>
+        <tr>
+          <th>398</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
+          <td>17</td>
+          <td>28</td>
+          <td>29</td>
+          <td>3</td>
+          <td>05Ind@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>389</th>
+          <td>05Ind@1</td>
+          <td>06Dec@2</td>
           <td>14</td>
+          <td>27</td>
+          <td>29</td>
+          <td>3</td>
+          <td>05Ind@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>827</th>
+          <td>05Ind@1</td>
+          <td>07Dec@2</td>
           <td>24</td>
-          <td>18</td>
+          <td>27</td>
+          <td>29</td>
+          <td>15</td>
+          <td>05Ind@1:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>319</th>
+          <td>00Buy@0</td>
+          <td>03Dec@1</td>
+          <td>13</td>
+          <td>26</td>
+          <td>20</td>
+          <td>2</td>
+          <td>00Buy@0:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>491</th>
+          <td>00Buy@0</td>
+          <td>03Dec@1</td>
+          <td>14</td>
+          <td>26</td>
+          <td>20</td>
           <td>5</td>
-          <td>00Dec@0:product(0.5833333333333334)</td>
+          <td>00Buy@0:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>382</th>
+          <td>05Ind@1</td>
+          <td>06Dec@2</td>
+          <td>12</td>
+          <td>23</td>
+          <td>29</td>
+          <td>3</td>
+          <td>05Ind@1:product(0.8695652173913043)</td>
         </tr>
       </tbody>
     </table>
@@ -997,17 +997,17 @@ Did any agents go bankrupt and when?
 
 .. parsed-literal::
 
-    {'00Dec@0': 'No',
-     '01Ind@0': 'No',
-     '02Mov@0': 'No',
-     '03Ind@1': 'No',
-     '04Dec@1': 'No',
-     '05Dec@1': 'No',
-     '06Buy@2': 'at: 17',
-     '07Buy@2': 'at: 43',
-     '08Ind@2': 'No',
+    {'00Buy@0': 'at: 44',
+     '01Dec@0': 'No',
+     '02Ind@0': 'No',
+     '03Dec@1': 'No',
+     '04Mov@1': 'No',
+     '05Ind@1': 'No',
+     '06Dec@2': 'No',
+     '07Dec@2': 'No',
+     '08Mov@2': 'No',
      '09Dec@3': 'No',
-     '10Dec@3': 'No',
+     '10Ind@3': 'No',
      '11Mov@3': 'No'}
 
 
@@ -1102,10 +1102,7 @@ then show the animation
 
 
 
-Note that this graph shows only what happened in the last ``draw_every``
-steps.
 
-Let’s see some statistics about the simulation.
 
 Running a tournament
 --------------------
@@ -1162,7 +1159,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    60
+    360
 
 
 
@@ -1215,62 +1212,62 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>buy_cheap_sell_expensive_agent</td>
-          <td>60.0</td>
-          <td>-0.460880</td>
-          <td>0.399413</td>
-          <td>-2.202297</td>
-          <td>-0.512401</td>
-          <td>-0.321267</td>
-          <td>-0.249171</td>
-          <td>-0.044618</td>
+          <td>216.0</td>
+          <td>-0.302752</td>
+          <td>0.244144</td>
+          <td>-2.199082</td>
+          <td>-0.351935</td>
+          <td>-0.254840</td>
+          <td>-0.162698</td>
+          <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
           <td>decentralizing_agent</td>
-          <td>60.0</td>
-          <td>0.180795</td>
-          <td>0.205134</td>
-          <td>-0.123303</td>
-          <td>0.034685</td>
-          <td>0.142906</td>
-          <td>0.323354</td>
-          <td>0.657287</td>
+          <td>216.0</td>
+          <td>0.242393</td>
+          <td>0.221589</td>
+          <td>-0.234289</td>
+          <td>0.091022</td>
+          <td>0.208479</td>
+          <td>0.375037</td>
+          <td>0.925906</td>
         </tr>
         <tr>
           <th>2</th>
           <td>ind_decentralizing_agent</td>
-          <td>60.0</td>
-          <td>0.161280</td>
-          <td>0.199404</td>
-          <td>-0.122533</td>
-          <td>0.023384</td>
-          <td>0.120836</td>
-          <td>0.239894</td>
-          <td>0.832956</td>
+          <td>216.0</td>
+          <td>0.201464</td>
+          <td>0.207846</td>
+          <td>-0.286673</td>
+          <td>0.067038</td>
+          <td>0.186204</td>
+          <td>0.308236</td>
+          <td>1.066977</td>
         </tr>
         <tr>
           <th>3</th>
           <td>moving_range_agent</td>
-          <td>60.0</td>
-          <td>-0.052376</td>
-          <td>0.081866</td>
-          <td>-0.211015</td>
-          <td>-0.108780</td>
-          <td>-0.052406</td>
+          <td>216.0</td>
+          <td>-0.053234</td>
+          <td>0.058514</td>
+          <td>-0.174604</td>
+          <td>-0.096965</td>
+          <td>-0.056727</td>
           <td>0.000000</td>
-          <td>0.146121</td>
+          <td>0.164784</td>
         </tr>
         <tr>
           <th>4</th>
           <td>random_agent</td>
-          <td>60.0</td>
-          <td>-0.538307</td>
-          <td>0.375828</td>
-          <td>-1.905989</td>
-          <td>-0.540328</td>
-          <td>-0.391387</td>
-          <td>-0.352393</td>
-          <td>-0.162312</td>
+          <td>216.0</td>
+          <td>-0.493496</td>
+          <td>0.370456</td>
+          <td>-2.182909</td>
+          <td>-0.567227</td>
+          <td>-0.409735</td>
+          <td>-0.279704</td>
+          <td>0.000000</td>
         </tr>
       </tbody>
     </table>
@@ -1321,102 +1318,102 @@ You can also do statistical significance testing using ttest or kstest
         <tr>
           <th>0</th>
           <td>ind_decentralizing_agent</td>
-          <td>decentralizing_agent</td>
-          <td>0.133333</td>
-          <td>6.647506e-01</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>0.865741</td>
+          <td>5.459773e-84</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>1</th>
           <td>ind_decentralizing_agent</td>
-          <td>random_agent</td>
-          <td>1.000000</td>
-          <td>2.070074e-35</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>decentralizing_agent</td>
+          <td>0.111111</td>
+          <td>1.390187e-01</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>2</th>
           <td>ind_decentralizing_agent</td>
-          <td>buy_cheap_sell_expensive_agent</td>
-          <td>0.983333</td>
-          <td>2.484089e-33</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>moving_range_agent</td>
+          <td>0.805556</td>
+          <td>2.089590e-70</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>3</th>
           <td>ind_decentralizing_agent</td>
-          <td>moving_range_agent</td>
-          <td>0.633333</td>
-          <td>1.306907e-11</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>random_agent</td>
+          <td>0.930556</td>
+          <td>9.574645e-102</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>4</th>
+          <td>buy_cheap_sell_expensive_agent</td>
           <td>decentralizing_agent</td>
-          <td>random_agent</td>
-          <td>1.000000</td>
-          <td>2.070074e-35</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>0.916667</td>
+          <td>1.407858e-97</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>decentralizing_agent</td>
           <td>buy_cheap_sell_expensive_agent</td>
-          <td>0.983333</td>
-          <td>2.484089e-33</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>moving_range_agent</td>
+          <td>0.773148</td>
+          <td>6.274375e-64</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>6</th>
-          <td>decentralizing_agent</td>
-          <td>moving_range_agent</td>
-          <td>0.650000</td>
-          <td>2.904237e-12</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>random_agent</td>
+          <td>0.375000</td>
+          <td>6.518987e-14</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>7</th>
-          <td>random_agent</td>
-          <td>buy_cheap_sell_expensive_agent</td>
-          <td>0.366667</td>
-          <td>5.569711e-04</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>decentralizing_agent</td>
+          <td>moving_range_agent</td>
+          <td>0.796296</td>
+          <td>1.675537e-68</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>8</th>
+          <td>decentralizing_agent</td>
           <td>random_agent</td>
-          <td>moving_range_agent</td>
-          <td>0.983333</td>
-          <td>2.484089e-33</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>0.976852</td>
+          <td>5.758035e-118</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
         <tr>
           <th>9</th>
-          <td>buy_cheap_sell_expensive_agent</td>
           <td>moving_range_agent</td>
-          <td>0.850000</td>
-          <td>2.164592e-22</td>
-          <td>60</td>
-          <td>60</td>
-          <td>60</td>
+          <td>random_agent</td>
+          <td>0.912037</td>
+          <td>3.067648e-96</td>
+          <td>216</td>
+          <td>216</td>
+          <td>216</td>
         </tr>
       </tbody>
     </table>
@@ -1461,27 +1458,27 @@ see the total score
         <tr>
           <th>0</th>
           <td>decentralizing_agent</td>
-          <td>0.142906</td>
+          <td>0.208479</td>
         </tr>
         <tr>
           <th>1</th>
           <td>ind_decentralizing_agent</td>
-          <td>0.120836</td>
+          <td>0.186204</td>
         </tr>
         <tr>
           <th>2</th>
           <td>moving_range_agent</td>
-          <td>-0.052406</td>
+          <td>-0.056727</td>
         </tr>
         <tr>
           <th>3</th>
           <td>buy_cheap_sell_expensive_agent</td>
-          <td>-0.321267</td>
+          <td>-0.254840</td>
         </tr>
         <tr>
           <th>4</th>
           <td>random_agent</td>
-          <td>-0.391387</td>
+          <td>-0.409735</td>
         </tr>
       </tbody>
     </table>
@@ -1547,31 +1544,31 @@ at every simulation
           <th>0</th>
           <td>00Ind@0</td>
           <td>ind_decentralizing_agent</td>
-          <td>0.626623</td>
+          <td>0.677668</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>01Dec@0</td>
-          <td>decentralizing_agent</td>
-          <td>0.322342</td>
+          <td>02Buy@1</td>
+          <td>buy_cheap_sell_expensive_agent</td>
+          <td>-0.273807</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>02Ran@1</td>
-          <td>random_agent</td>
-          <td>-1.372634</td>
+          <td>04Dec@2</td>
+          <td>decentralizing_agent</td>
+          <td>0.212667</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>04Buy@2</td>
+          <td>02Buy@1</td>
           <td>buy_cheap_sell_expensive_agent</td>
-          <td>-0.334364</td>
+          <td>-0.337673</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>05Mov@2</td>
-          <td>moving_range_agent</td>
-          <td>-0.134590</td>
+          <td>04Dec@2</td>
+          <td>decentralizing_agent</td>
+          <td>0.254079</td>
         </tr>
       </tbody>
     </table>

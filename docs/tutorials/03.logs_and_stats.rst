@@ -99,25 +99,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: test_world: World Created[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: test_world: World Created[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: 00DoN@0 joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 00DoN@0 joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: 01DoN@0 joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 01DoN@0 joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: 02DoN@0 joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 02DoN@0 joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: 03DoN@1 joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 03DoN@1 joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: 04DoN@1 joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 04DoN@1 joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: 05DoN@1 joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 05DoN@1 joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: SELLER joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: SELLER joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: BUYER joined[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: BUYER joined[0m
     
-    [32m2020-03-01 23:47:27 - INFO - 0/10 [10.00%]: This is a test message[0m
+    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: This is a test message[0m
     
 
 
@@ -177,9 +177,9 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    [0m2020-03-01 23:47:28 - DEBUG - 0/10 [10.00%]: Initialized
+    [0m2020-03-03 12:06:08 - DEBUG - 0/10 [10.00%]: Initialized
     
-    {'_balance': 1955,
+    {'_balance': 2300,
     
      '_input_inventory': 0,
     
@@ -476,16 +476,16 @@ Here are some of the most important parameters stored in this file:
 | nProducts          | Number of products in the world                 |
 +--------------------+-------------------------------------------------+
 | spotDiscount       | Spot market parameter (See                      |
-|                    | http://www.yasserm.com/scml/scml.pdf)           |
+|                    | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
 | spotMarketGlobalLo | Spot market parameter (See                      |
-| ss                 | http://www.yasserm.com/scml/scml.pdf)           |
+| ss                 | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
 | spotMultiplier     | Spot market parameter (See                      |
-|                    | http://www.yasserm.com/scml/scml.pdf)           |
+|                    | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
 | tradingPriceDiscou | Trading price estimation parameter (See         |
-| nt                 | http://www.yasserm.com/scml/scml.pdf)           |
+| nt                 | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
 | consumers          | All consumers of every product                  |
 +--------------------+-------------------------------------------------+
