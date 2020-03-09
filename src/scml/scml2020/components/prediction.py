@@ -27,6 +27,13 @@ class TradePredictionStrategy:
         - `input_cost` : n_steps vector giving the predicted input cost at every time-step
         - `output_price` : n_steps vector giving the predicted output price at every time-step
 
+    Hooks Into:
+        - `init`
+
+    Abstract:
+        - `trade_prediction_init`: Called during init() to initialize the trade prediction.
+        - `trade_prediction_step`: Called during step() to update the trade prediction.
+
     Remarks:
         - `Attributes` section describes the attributes that can be used to construct the component (passed to its
           `__init__` method).
@@ -63,6 +70,37 @@ class TradePredictionStrategy:
         self.output_price: np.ndarray = None
         """Expected unit price of the output"""
         self._add_trade = add_trade
+
+    @abstractmethod
+    def trade_prediction_init(self) -> None:
+        """Will be called to update expected_outputs, expected_inputs,
+        input_cost, output_cost during init()"""
+
+    def trade_prediction_step(self) -> None:
+        """Will be called at every step to update the prediction"""
+
+    def init(self):
+        self.input_cost = self.awi.catalog_prices[self.awi.my_input_product] * np.ones(
+            self.awi.n_steps, dtype=int
+        )
+        self.output_price = self.awi.catalog_prices[
+            self.awi.my_output_product
+        ] * np.ones(self.awi.n_steps, dtype=int)
+
+        inp = self.awi.my_input_product
+
+        def adjust(x):
+            return max(1, self.awi.n_lines // 2) * np.ones(self.awi.n_steps, dtype=int)
+
+        # adjust predicted demand and supply
+        self.expected_outputs = adjust(self.expected_outputs)
+        self.expected_inputs = adjust(self.expected_inputs)
+        self.trade_prediction_init()
+        super().init()
+
+    def step(self):
+        self.trade_prediction_step()
+        super().step()
 
 
 class ExecutionRatePredictionStrategy:
@@ -131,14 +169,7 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
 
     """
 
-    def init(self):
-        self.input_cost = self.awi.catalog_prices[self.awi.my_input_product] * np.ones(
-            self.awi.n_steps, dtype=int
-        )
-        self.output_price = self.awi.catalog_prices[
-            self.awi.my_output_product
-        ] * np.ones(self.awi.n_steps, dtype=int)
-
+    def trade_prediction_init(self):
         inp = self.awi.my_input_product
 
         def adjust(x, demand):
@@ -157,7 +188,9 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
         # adjust predicted demand and supply
         self.expected_outputs = adjust(self.expected_outputs, True)
         self.expected_inputs = adjust(self.expected_inputs, False)
-        super().init()
+
+    def trade_prediction_step(self):
+        pass
 
     @property
     def internal_state(self):
