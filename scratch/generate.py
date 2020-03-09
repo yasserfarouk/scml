@@ -6,21 +6,22 @@ from scml.scml2020.utils import (
 )
 from scml.scml2020 import SCML2020Agent
 from scml.scml2020.agents import (
-    DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent
+    DecentralizingAgent,
+    BuyCheapSellExpensiveAgent,
+    RandomAgent,
 )
 
 COMPETITORS = [DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent]
 
+
 def generate_world(
-    n_steps: int,
-    competitors: List[Union[str, SCML2020Agent]],
-    n_agents_per_competitor,
+    n_steps: int, competitors: List[Union[str, SCML2020Agent]], n_agents_per_competitor
 ):
     config = anac2020_config_generator(
         n_competitors=len(competitors),
         n_agents_per_competitor=n_agents_per_competitor,
         n_steps=n_steps,
-    ) 
+    )
     assigned = anac2020_assigner(
         config,
         max_n_worlds=None,
@@ -29,6 +30,7 @@ def generate_world(
         params=[dict() for _ in competitors],
     )
     return [anac2020_world_generator(**(a[0])) for a in assigned]
+
 
 if __name__ == "__main__":
     worlds = generate_world(10, COMPETITORS, 1)

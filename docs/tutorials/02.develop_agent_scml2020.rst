@@ -122,14 +122,14 @@ example
     Base class for all trading strategies.
     
         Provides:
-            - `inputs_needed` (np.ndarray):  How many items of the input product do I need at every time step
-              (n_steps vector)
-            - `outputs_needed` (np.ndarray):  How many items of the output product do I need at every time step
-              (n_steps vector)
-            - `inputs_secured` (np.ndarray):  How many items of the output product do I need at every time step
-              (n_steps vector)
-            - `outputs_secured` (np.ndarray):  How many units of the output product I have already secured per step
-                  (n_steps vector)
+            - `inputs_needed` (np.ndarray):  How many items of the input product do
+              I need to buy at every time step (n_steps vector)
+            - `outputs_needed` (np.ndarray):  How many items of the output product
+              do I need to sell at every time step (n_steps vector)
+            - `inputs_secured` (np.ndarray):  How many items of the input product I
+              already contracted to buy (n_steps vector)
+            - `outputs_secured` (np.ndarray):  How many units of the output product
+              I already contracted to sell (n_steps vector)
     
         Hooks Into:
             - `init`
@@ -910,7 +910,58 @@ Let’s see how did our simple new agent do:
 
 OK not bad. It is better than the original agent we developed using only
 built-in compoenents. If we re-run this notebook, we may get a different
-result though.
+result because we do a single world simulation and for a small number of
+steps. In the acutal competition thousands of simulations will be run so
+the restuls will be more trustable.
+
+Overriding an agent directly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You do not need to know what are the components used by an agent to base
+your design on it. Let’s say that we want to base our design on
+``DecentralizingAgent`` and we will just change the prediction strategy
+it uses to predict the expected supply and demand.
+
+This is done using a ``FixedTradePredictionStrategy``. We can just
+create a new *trade prediction strategy* and use it in our agent. This
+is an example:
+
+.. code:: ipython3
+
+    from scml.scml2020.components import TradePredictionStrategy
+    class MyPredictor(TradePredictionStrategy):
+        def trade_prediction_init(self):
+            inp = self.awi.my_input_product
+            self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+            self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+    
+    class MyFinalAgent(MyPredictor, DecentralizingAgent):
+        pass
+
+That was much less typing. Notice that the order of ``MyPredictor`` and
+``DecentralizingAgent`` is very important becuase it is used to
+calculate the method calling order (MRO) in python. If you reverse them,
+you will not get any errors but your code will never be called.
+
+Let’s test it
+
+.. code:: ipython3
+
+    world = SCML2020World(
+        **SCML2020World.generate([ComparisonAgent, MyAgent, MyNewAgent, MyFinalAgent]
+                                 , n_steps=10), 
+        construct_graphs=True
+    )
+    world.run()
+    show_agent_scores(world)
+
+
+
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_46_0.png
+
+
+This final agent was first than our first attempt but worse than the
+second.
 
 
 

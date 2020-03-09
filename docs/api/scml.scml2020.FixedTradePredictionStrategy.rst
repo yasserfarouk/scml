@@ -16,8 +16,9 @@ FixedTradePredictionStrategy
 
    .. autosummary::
 
-      ~FixedTradePredictionStrategy.init
       ~FixedTradePredictionStrategy.on_contracts_finalized
+      ~FixedTradePredictionStrategy.trade_prediction_init
+      ~FixedTradePredictionStrategy.trade_prediction_step
 
    .. rubric:: Attributes Documentation
 
@@ -25,5 +26,6 @@ FixedTradePredictionStrategy
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: init
    .. automethod:: on_contracts_finalized
+   .. automethod:: trade_prediction_init
+   .. automethod:: trade_prediction_step
