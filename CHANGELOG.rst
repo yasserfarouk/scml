@@ -2,6 +2,17 @@
 Changelog
 =========
 
+0.2.7 (2019.3.09)
+-----------------
+* Documentation update
+* Adding trading_strategy_init/step functions.
+* Correcting a bug in n_competitors_per_world.
+* allowing control of the number of participants per simulation explicitly in scml2020
+* [SCML2020] Activating negotiation step quota
+* [Doc] Adding a tutorial about logs and stats
+* correcting the display in scml run2020
+* removing the docs from the package to save space
+
 0.2.6 (2019.2.27)
 -----------------
 
