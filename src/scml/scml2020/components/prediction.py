@@ -29,6 +29,7 @@ class TradePredictionStrategy:
 
     Hooks Into:
         - `init`
+        - `step`
 
     Abstract:
         - `trade_prediction_init`: Called during init() to initialize the trade prediction.
@@ -146,7 +147,6 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
     Predicts a fixed amount of trade both for the input and output products.
 
     Hooks Into:
-        - `init`
         - `internal_state`
         - `on_contracts_finalized`
 

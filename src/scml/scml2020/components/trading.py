@@ -20,14 +20,14 @@ class TradingStrategy:
     """Base class for all trading strategies.
 
     Provides:
-        - `inputs_needed` (np.ndarray):  How many items of the input product do I need at every time step
-          (n_steps vector)
-        - `outputs_needed` (np.ndarray):  How many items of the output product do I need at every time step
-          (n_steps vector)
-        - `inputs_secured` (np.ndarray):  How many items of the output product do I need at every time step
-          (n_steps vector)
-        - `outputs_secured` (np.ndarray):  How many units of the output product I have already secured per step
-              (n_steps vector)
+        - `inputs_needed` (np.ndarray):  How many items of the input product do
+          I need to buy at every time step (n_steps vector)
+        - `outputs_needed` (np.ndarray):  How many items of the output product
+          do I need to sell at every time step (n_steps vector)
+        - `inputs_secured` (np.ndarray):  How many items of the input product I
+          already contracted to buy (n_steps vector)
+        - `outputs_secured` (np.ndarray):  How many units of the output product
+          I already contracted to sell (n_steps vector)
 
     Hooks Into:
         - `init`
