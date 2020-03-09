@@ -631,7 +631,7 @@ def anac2020_std(
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
-        n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number 
+        n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
         kwargs: Arguments to pass to the `world_generator` function
 
@@ -646,7 +646,10 @@ def anac2020_std(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = randint(2, min(4, len(competitors)))
+        n_competitors_per_world = kwargs.get(
+            "n_competitors_per_world", randint(2, min(4, len(competitors)))
+        )
+    kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents
         non_competitor_params = [dict() for _ in non_competitors]
@@ -739,7 +742,7 @@ def anac2020_collusion(
         non_competitors: A list of agent types that will not be competing in the sabotage competition but will exist
                          in the world
         non_competitor_params: parameters of non competitor agents
-        n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number 
+        n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
@@ -757,7 +760,10 @@ def anac2020_collusion(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = randint(2, min(4, len(competitors)))
+        n_competitors_per_world = kwargs.get(
+            "n_competitors_per_world", randint(2, min(4, len(competitors)))
+        )
+    kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents
         non_competitor_params = [dict() for _ in non_competitors]
