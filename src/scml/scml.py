@@ -97,6 +97,7 @@ def shortest_unique_names(strs: List[str], sep="."):
     Finds the shortest unique strings starting from the end of each input
     string based on the separator.
 
+    The final strings will only be unique if the inputs are unique.
 
     Example:
         given ["a.b.c", "d.e.f", "a.d.c"] it will generate ["b.c", "f", "d.c"]
@@ -107,16 +108,21 @@ def shortest_unique_names(strs: List[str], sep="."):
         return names
     locs = defaultdict(list)
     for i, s in enumerate(names):
-        locs[s].appen(i)
-    mapping = {}
+        locs[s].append(i)
+    mapping = {"": ""}
     for s, l in locs.items():
+        if len(s) < 1:
+            continue
         if len(l) == 1:
             mapping[strs[l[0]]] = s
             continue
-        strs = [sep.join(lsts[_][:-1]) for _ in l]
-        prefixes = shortest_unique_names(strs, sep)
+        strs_new = [sep.join(lsts[_][:-1]) for _ in l]
+        prefixes = shortest_unique_names(strs_new, sep)
         for loc, prefix in zip(l, prefixes):
-            mapping[strs[loc]] = sep.join(prefix, s)
+            x = sep.join([prefix, s])
+            if x.startswith(sep):
+                x = x[len(sep):]
+            mapping[strs[loc]] = x
     return [mapping[_] for _ in strs]
 
 
@@ -698,6 +704,10 @@ def tournament2020(
 
 def display_results(results, metric):
     viewmetric = ["50%" if metric == "median" else metric]
+    strs = results.score_stats["agent_type"].values.tolist()
+    short_names = shortest_unique_names(strs)
+    mapping = dict(zip(strs, short_names))
+    results.score_stats["agent_type"] = short_names
     print(
         tabulate(
             results.score_stats.sort_values(by=viewmetric, ascending=False),
@@ -706,8 +716,12 @@ def display_results(results, metric):
         )
     )
     if metric in ("mean", "sum"):
+        results.ttest["a"] = [mapping[_] for _ in results.ttest["a"]]
+        results.ttest["b"] = [mapping[_] for _ in results.ttest["b"]]
         print(tabulate(results.ttest, headers="keys", tablefmt="psql"))
     else:
+        results.kstest["a"] = [mapping[_] for _ in results.kstest["a"]]
+        results.kstest["b"] = [mapping[_] for _ in results.kstest["b"]]
         print(tabulate(results.kstest, headers="keys", tablefmt="psql"))
 
     agg_stats = results.agg_stats.loc[
