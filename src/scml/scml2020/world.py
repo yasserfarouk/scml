@@ -1158,22 +1158,28 @@ class AWI(AgentWorldInterface):
     @property
     def my_input_product(self) -> int:
         """Returns a list of products that are inputs to at least one process the agent can run"""
-        return self._world.agent_inputs[self.agent.id][0]
+        products = self._world.agent_inputs.get(self.agent.id, np.empty(0, dtype=int))
+        if len(products) < 1:
+            return -1
+        return products[0]
 
     @property
     def my_output_product(self) -> int:
         """Returns a list of products that are outputs to at least one process the agent can run"""
-        return self._world.agent_outputs[self.agent.id][0]
+        products = self._world.agent_outputs.get(self.agent.id, np.empty(0, dtype=int))
+        if len(products) < 1:
+            return self.n_products
+        return products[0]
 
     @property
     def my_input_products(self) -> np.ndarray:
         """Returns a list of products that are inputs to at least one process the agent can run"""
-        return self._world.agent_inputs[self.agent.id]
+        return self._world.agent_inputs.get(self.agent.id, np.empty(0, dtype=int))
 
     @property
     def my_output_products(self) -> np.ndarray:
         """Returns a list of products that are outputs to at least one process the agent can run"""
-        return self._world.agent_outputs[self.agent.id]
+        return self._world.agent_outputs.get(self.agent.id, np.empty(0, dtype=int))
 
     @property
     def my_suppliers(self) -> List[str]:
@@ -1185,7 +1191,7 @@ class AWI(AgentWorldInterface):
             - If the agent have multiple input products, suppliers of a specific product $p$ can be found using:
               **self.all_suppliers[p]**.
         """
-        return self._world.agent_suppliers[self.agent.id]
+        return self._world.agent_suppliers.get(self.agent.id, [])
 
     @property
     def my_consumers(self) -> List[str]:
@@ -1197,7 +1203,7 @@ class AWI(AgentWorldInterface):
             - If the agent have multiple output products, consumers of a specific product $p$ can be found using:
               **self.all_consumers[p]**.
         """
-        return self._world.agent_consumers[self.agent.id]
+        return self._world.agent_consumers.get(self.agent.id, [])
 
     @property
     def n_lines(self) -> int:
@@ -1235,6 +1241,15 @@ class SCML2020Agent(Agent):
 
     def step(self):
         pass
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "type": self.type_name,
+            "level": self.awi.my_input_product if self.awi else None,
+            "levels": self.awi.my_input_products if self.awi else None,
+        }
 
     def on_contract_breached(
         self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
@@ -1930,6 +1945,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.agent_consumers: Dict[str, List[str]] = defaultdict(list)
         self.agent_suppliers: Dict[str, List[str]] = defaultdict(list)
 
+        self.consumers[n_products - 1].append(SYSTEM_BUYER_ID)
+        self.agent_processes[SYSTEM_BUYER_ID] = []
+        self.agent_inputs[SYSTEM_BUYER_ID] = [n_products - 1]
+        self.agent_outputs[SYSTEM_BUYER_ID] = []
+        self.suppliers[0].append(SYSTEM_SELLER_ID)
+        self.agent_processes[SYSTEM_SELLER_ID] = []
+        self.agent_inputs[SYSTEM_SELLER_ID] = []
+        self.agent_outputs[SYSTEM_SELLER_ID] = [0]
+
         for p in range(n_processes):
             for agent_id, profile in zip(self.agents.keys(), profiles):
                 if is_system_agent(agent_id):
@@ -1960,7 +1984,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             for k, v in self.agent_inputs.items()
         ), f"Not all agent inputs are singular:\n{self.agent_outputs}"
         assert all(
-            self.agent_inputs[k][0] == self.agent_outputs[k] - 1
+            is_system_agent(k) or self.agent_inputs[k][0] == self.agent_outputs[k] - 1
             for k in self.agent_inputs.keys()
         ), f"Some agents have outputs != input+1\n{self.agent_outputs}\n{self.agent_inputs}"
         self._n_production_failures = 0
@@ -3045,15 +3069,6 @@ class SCML2020World(TimeInAgreementMixin, World):
             self.__register_contract(seller_id, 0)
         else:
             product_breach_level = missing_product / q
-            breaches.add(
-                Breach(
-                    contract=contract,
-                    perpetrator=seller_id,
-                    victims=[buyer_id],
-                    level=product_breach_level,
-                    type="product",
-                )
-            )
             self.__register_contract(seller_id, product_breach_level)
             self.__register_breach(seller_id, product_breach_level, p, seller_factory)
             if seller_factory != self.compensation_factory:
@@ -3070,6 +3085,17 @@ class SCML2020World(TimeInAgreementMixin, World):
                 missing_product -= stored
                 self._spot_quantity[seller_indx, s] += stored
                 assert seller_factory.current_inventory[product] >= stored
+            if missing_product > 0:
+                product_breach_level = missing_product / q
+                breaches.add(
+                    Breach(
+                        contract=contract,
+                        perpetrator=seller_id,
+                        victims=[buyer_id],
+                        level=product_breach_level,
+                        type="product",
+                    )
+                )
 
         # if there is a money breach (the buyer does not have enough money), register it
         if missing_money <= 0:

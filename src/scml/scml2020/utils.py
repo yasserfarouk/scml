@@ -1,16 +1,11 @@
 import copy
-import itertools
-import math
-import sys
 from os import PathLike
 from random import randint, random, shuffle
 
 import numpy as np
 from negmas import Agent
 from negmas.helpers import unique_name, get_full_type_name
-
 from negmas.tournaments import WorldRunResults, TournamentResults, tournament
-
 from scml.scml2020.agents import (
     DecentralizingAgent,
     BuyCheapSellExpensiveAgent,
@@ -261,9 +256,7 @@ def anac2020_config_generator(
                 else:
                     params_[
                         "name"
-                    ] = (
-                        f"_df_{level}_{j}"
-                    )  # because I use name to know that this is a default agent in evaluate.
+                    ] = f"_df_{level}_{j}"  # because I use name to know that this is a default agent in evaluate.
                     # @todo do not use name to identify default agents in evaluation
                 manager_params[first_in_level + j] = params_
         first_in_level += n_f

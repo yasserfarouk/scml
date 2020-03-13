@@ -99,25 +99,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: test_world: World Created[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: test_world: World Created[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 00DoN@0 joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 00DoN@0 joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 01DoN@0 joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 01DoN@0 joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 02DoN@0 joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 02DoN@0 joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 03DoN@1 joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 03DoN@1 joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 04DoN@1 joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 04DoN@1 joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: 05DoN@1 joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 05DoN@1 joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: SELLER joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: SELLER joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: BUYER joined[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: BUYER joined[0m
     
-    [32m2020-03-03 12:06:08 - INFO - 0/10 [10.00%]: This is a test message[0m
+    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: This is a test message[0m
     
 
 
@@ -177,9 +177,9 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    [0m2020-03-03 12:06:08 - DEBUG - 0/10 [10.00%]: Initialized
+    [0m2020-03-12 12:43:23 - DEBUG - 0/10 [10.00%]: Initialized
     
-    {'_balance': 2300,
+    {'_balance': 2323,
     
      '_input_inventory': 0,
     
@@ -189,9 +189,9 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
     
      'execution_fraction': 0.5,
     
-     'expected_inputs': array([5, 5, 5, 5, 5, 5, 5, 5, 0, 0]),
+     'expected_inputs': array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5]),
     
-     'expected_outputs': array([0, 5, 5, 5, 5, 5, 5, 5, 5, 5]),
+     'expected_outputs': array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5]),
     
      'input_cost': array([10, 10, 10, 10, 10, 10, 10, 10, 10, 10]),
     
@@ -291,6 +291,7 @@ Let’s try changing some of these:
     │   ├── 03Dec@1.txt
     │   ├── 04Dec@1.txt
     │   └── 05Dec@1.txt
+    ├── agents.json
     ├── all_contracts.csv
     ├── breaches.csv
     ├── cancelled_contracts.csv
@@ -302,7 +303,7 @@ Let’s try changing some of these:
     ├── stats.csv
     └── stats.csv.csv
     
-    1 directory, 16 files
+    1 directory, 17 files
 
 
 Now we can see that many more files are created in the log folder. These
@@ -338,6 +339,7 @@ method without needing to enable periodic saving using
     │   ├── 03Dec@1.txt
     │   ├── 04Dec@1.txt
     │   └── 05Dec@1.txt
+    ├── agents.json
     ├── all_contracts.csv
     ├── breaches.csv
     ├── cancelled_contracts.csv
@@ -349,7 +351,7 @@ method without needing to enable periodic saving using
     ├── stats.csv
     └── stats.json
     
-    1 directory, 16 files
+    1 directory, 17 files
 
 
 Getting infromation about a simulation
