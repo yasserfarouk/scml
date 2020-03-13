@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.2.8 (2019.3.13)
+-----------------
+* documentation update (specially the scripts section)
+* Adding a --gui option to scml CLI to run it as a simple GUI
+* Simplifying the parameters of SCML CLI by keeping only the onese that
+  do not conflict with the default parameters used in the competition
+* adding a script call scmladv.py which keep all the detailed parameters
+  used earlied in SCML.
+
 0.2.7 (2019.3.09)
 -----------------
 * Documentation update
