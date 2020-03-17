@@ -106,9 +106,6 @@ class FactorySimulator:
         self._bookmarks: List[_FullBookmark] = []
         self._active_bookmark: Optional[_FullBookmark] = None
 
-    def init(self, *args, **kwargs):
-        self.__init__(*args, **kwargs)
-
     # -----------------
     # FIXED PROPERTIES
     # -----------------
