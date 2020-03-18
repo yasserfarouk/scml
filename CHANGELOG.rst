@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.2.9 (2019.3.19)
+-----------------
+
+* CI using Github Actions
+* consolidating tests outside src directory
+* Adding advanced script and upgrading negmas
+* removing unnecessary init function from simulator
+* showing shorter names in tournament run results
+
 0.2.8 (2019.3.13)
 -----------------
 * documentation update (specially the scripts section)
