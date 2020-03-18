@@ -8,4 +8,4 @@ cp ../notebooks/tutorials/run.gif _build/html/_images/run.gif
 cp ../notebooks/tutorials/anatomy.pdf _build/html/_images/anatomy.pdf
 cp ../notebooks/tutorials/anatomy.png _build/html/_images/anatomy.png
 
-open _build/html/index.html
+# open _build/html/index.html
