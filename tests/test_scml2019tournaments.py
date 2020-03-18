@@ -22,7 +22,7 @@ def test_std():
     assert len(results.total_scores) >= 2
     assert (
         results.total_scores.loc[
-            results.total_scores.agent_type == "do_nothing_factory_manager", "score"
+            results.total_scores.agent_type == "scml.scml2019.factory_managers.builtins.DoNothingFactoryManager", "score"
         ].values[0]
         == 0.0
     )
@@ -39,7 +39,7 @@ def test_collusion():
     assert len(results.total_scores) >= 2
     assert (
         results.total_scores.loc[
-            results.total_scores.agent_type == "do_nothing_factory_manager", "score"
+            results.total_scores.agent_type == "scml.scml2019.factory_managers.builtins.DoNothingFactoryManager", "score"
         ].values[0]
         == 0.0
     )

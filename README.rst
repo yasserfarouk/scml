@@ -10,8 +10,8 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |travis| |requires|
-        | |coveralls| |codecov|
+      - | |CI| |PyPiPublished| |requires|
+        | |codecov|
         | |codacy|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
@@ -20,21 +20,13 @@ Overview
     :target: http://www.yasserm.com/scml/scml2020docs
     :alt: Documentation Status
 
-.. |travis| image:: https://api.travis-ci.org/yasserfarouk/scml.svg?branch=master
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/yasserfarouk/scml
-
 .. |requires| image:: https://requires.io/github/yasserfarouk/scml/requirements.svg?branch=master
     :alt: Requirements Status
     :target: https://requires.io/github/yasserfarouk/scml/requirements/?branch=master
 
-.. |coveralls| image:: https://coveralls.io/repos/yasserfarouk/scml/badge.svg?branch=master&service=github
+.. |codecov| image:: https://codecov.io/gh/yasserfarouk/scml/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/yasserfarouk/scml
     :alt: Coverage Status
-    :target: https://coveralls.io/r/yasserfarouk/scml
-
-.. |codecov| image:: https://codecov.io/github/yasserfarouk/scml/coverage.svg?branch=master
-    :alt: Coverage Status
-    :target: https://codecov.io/github/yasserfarouk/scml
 
 .. |codacy| image:: https://img.shields.io/codacy/grade/f9512287d5d0485a80cf39e75dfc6d22.svg
     :target: https://www.codacy.com/app/yasserfarouk/scml
@@ -60,6 +52,13 @@ Overview
     :alt: Commits since latest release
     :target: https://github.com/yasserfarouk/scml/compare/v0.2.8...master
 
+.. |CI| image:: https://github.com/yasserfarouk/scml/workflows/CI/badge.svg
+    :target: https://www.github.com/yasserfarouk/scml
+    :alt: Build Status
+
+.. |PyPiPublished| image:: https://github.com/yasserfarouk/scml/workflows/PyPI/badge.svg
+    :target: https://pypi.python.org/pypi/scml
+    :alt: Published on Pypi
 
 
 .. end-badges

@@ -1,6 +1,10 @@
+pytest
+hypothesis
 coverage
 jinja2
 matrix
 tox
 pysnooper
+coverage
+Purest-coverage
 -r docs/requirements.txt
