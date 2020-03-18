@@ -6,5 +6,5 @@ matrix
 tox
 pysnooper
 coverage
-Purest-coverage
+pytest-coverage
 -r docs/requirements.txt
