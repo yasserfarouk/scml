@@ -69,10 +69,10 @@ def generate_world(
         assert len(world.agent_outputs[a]) == 1
         assert len(world.agent_processes[a]) == 1
         assert len(world.agent_suppliers[a]) == (
-            n_agents_per_process if world.agent_inputs[a][0] != 0 else 0
+            n_agents_per_process if world.agent_inputs[a][0] != 0 else 1
         )
         assert len(world.agent_consumers[a]) == (
-            n_agents_per_process if world.agent_outputs[a][0] != n_processes else 0
+            n_agents_per_process if world.agent_outputs[a][0] != n_processes else 1
         )
     return world
 

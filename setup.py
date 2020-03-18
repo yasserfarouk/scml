@@ -87,5 +87,8 @@ setup(
         ':python_version=="3.6"': ["dataclasses"]
     },
     setup_requires=["pytest-runner"],
-    entry_points={"console_scripts": ["scml = scml.scml:main"]},
+    entry_points={"console_scripts": [
+        "scml = scml.scml:main",
+        "cliadv = scml.cliadv:cli",
+        ]},
 )

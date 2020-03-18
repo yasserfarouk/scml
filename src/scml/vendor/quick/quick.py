@@ -1,12 +1,12 @@
+import math
 import sys
 from functools import partial
-import math
 
 import click
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
+MAX_ROWS = 21
+
 
 try:
     import qdarkstyle
@@ -25,10 +25,10 @@ class GStyle(object):
         ._OptionLabel {
             font-size: 16px;
             font: bold;
-            font-family: monospace;
+            font-family: arial;
             }
         ._HelpLabel {
-            font-family: serif;
+            font-family: arial;
             font-size: 14px;
             }
         ._InputComboBox{
@@ -51,7 +51,7 @@ class GStyle(object):
             font-size: 16px;
             }
         QToolTip{
-            font-family: serif;
+            font-family: arial;
             }
         """
 
@@ -211,9 +211,7 @@ class GEditDelegate(QtWidgets.QStyledItemDelegate):
 
 def generate_label(opt):
     show_name = getattr(opt, "show_name", _missing)
-    show_name = (
-        opt.name.replace("_", " ").title() if show_name is _missing else show_name
-    )
+    show_name = opt.name if show_name is _missing else show_name
     param = _OptionLabel(show_name)
     param.setToolTip(getattr(opt, "help", None))
     return param
@@ -494,15 +492,18 @@ def multi_text_arguement(opt):
 
 def select_type_validator(tp: click.types.ParamType) -> QtGui.QValidator:
     """ select the right validator for `tp`"""
+
     if isinstance(tp, click.types.IntParamType):
         return QtGui.QIntValidator()
     elif isinstance(tp, click.types.FloatParamType):
         return QtGui.QDoubleValidator()
+
     return None
 
 
 def select_opt_validator(opt):
     """ select the right validator for `opt`"""
+
     return select_type_validator(opt.type)
 
 
@@ -529,6 +530,7 @@ def opt_to_widget(opt):
 
 def _to_widget(opt):
     # customed widget
+
     if isinstance(opt.type, click.types.FuncParamType):
         if hasattr(opt.type.func, "to_widget"):
             return opt.type.func.to_widget()
@@ -538,6 +540,7 @@ def _to_widget(opt):
     if isinstance(opt, click.core.Argument):
         if opt.nargs == 1:
             w, tc = opt_to_widget(opt)
+
             return w, argument_command(tc)
         elif opt.nargs > 1 or opt.nargs == -1:
             return multi_text_arguement(opt)
@@ -549,24 +552,31 @@ def layout_append_opts(layout, opts):
     params_func = []
     widgets = []
     i = 0
+
     for i, para in enumerate(opts):
         widget, value_func = _to_widget(para)
         widgets.append(widget)
         params_func.append(value_func)
+
         for idx, w in enumerate(widget):
+
             if isinstance(w, QtWidgets.QLayout):
                 layout.addLayout(w, i, idx)
             else:
                 layout.addWidget(w, i, idx)
+
     return layout, params_func, widgets
 
 
 def generate_sysargv(cmd_list):
     argv_list = []
+
     for name, func_list in cmd_list:
         argv_list.append(name)
+
         for value_func in func_list:
             argv_list += value_func()
+
     return argv_list
 
 
@@ -610,12 +620,13 @@ class CommandLayout(QtWidgets.QGridLayout):
         self.parent_layout = parent_layout
         self.func = func
         self.run_exit = run_exit
+
         if func.help:
             label = _HelpLabel(func.help)
             label.setWordWrap(True)
             self.addWidget(label, 0, 0, 1, 2)
             frame = _Spliter()
-            self.addWidget(frame, 1, 0, 1, 2)
+            self.addWidget(frame, 1, 0, 1, 4)
         self.params_func, self.widgets = self.append_opts(self.func.params)
 
     def add_sysargv(self):
@@ -626,16 +637,28 @@ class CommandLayout(QtWidgets.QGridLayout):
     def append_opts(self, opts):
         params_func = []
         widgets = []
-        for i, para in enumerate(opts, self.rowCount()):
+
+        def _nwidgets(x):
+            return -len(_to_widget(x)[0])
+
+        opts = sorted(opts, key=_nwidgets)
+        row, col = 0, 0
+        for para in opts:
             widget, value_func = _to_widget(para)
             widgets.append(widget)
             params_func.append(value_func)
+
             for idx, w in enumerate(widget):
                 if isinstance(w, QtWidgets.QLayout):
-                    self.addLayout(w, i, idx)
+                    self.addLayout(w, row + 2, 2 * col + idx)
                 else:
-                    self.addWidget(w, i, idx)
-            self.setRowStretch(i, 5)
+                    self.addWidget(w, row + 2, 2 * col + idx)
+            self.setRowStretch(row, 5)
+            row += 1
+            if row >= MAX_ROWS - 1:
+                row = 0
+                col += 1
+
         return params_func, widgets
 
     def generate_cmd_button(self, label, cmd_slot, tooltip=""):
@@ -644,22 +667,27 @@ class CommandLayout(QtWidgets.QGridLayout):
         button.clicked.connect(self.clean_sysargv)
         button.clicked.connect(self.add_sysargv)
         button.clicked.connect(cmd_slot)
+
         return button
 
     def add_cmd_button(self, label, cmd_slot, pos=None):
         run_button = self.generate_cmd_button(label, cmd_slot)
+
         if pos is None:
-            pos = self.rowCount() + 1, 0
+            # pos = self.rowCount() + 1, 0
+            pos = 0, 2
         self.addWidget(run_button, pos[0], pos[1])
 
     def add_cmd_buttons(self, args):
-        row = self.rowCount() + 1
+        # row = self.rowCount() + 1
+        row = 0
         cmd_layout = QtWidgets.QGridLayout()
         cmd_layout.setHorizontalSpacing(20)
+
         for col, arg in enumerate(args):
             button = self.generate_cmd_button(**arg)
-            cmd_layout.addWidget(button, 0, col)
-        self.addLayout(cmd_layout, row, 0, 1, 2)
+            cmd_layout.addWidget(button, col, 0)
+        self.addLayout(cmd_layout, row, 2, 1, 2)
 
     @QtCore.pyqtSlot()
     def clean_sysargv(self):
@@ -742,8 +770,8 @@ class App(QtWidgets.QWidget):
         output="gui",
         left=10,
         top=10,
-        width=400,
-        height=140,
+        width=800,
+        height=280,
     ):
         """
         Parameters
@@ -770,20 +798,23 @@ class App(QtWidgets.QWidget):
             sys.stdout.textWritten.connect(text.show)
             # sys.stdout.textWritten.connect(text.append)
             # text.show()
+
             return text
         else:
             return None
 
     def initCommandUI(self, func, run_exit, parent_layout=None):
         opt_set = CommandLayout(func, run_exit, parent_layout=parent_layout)
+
         if isinstance(func, click.MultiCommand):
             tabs = _InputTabWidget()
+
             for cmd, f in func.commands.items():
                 sub_opt_set = self.initCommandUI(f, run_exit, parent_layout=opt_set)
                 tab = QtWidgets.QWidget()
                 tab.setLayout(sub_opt_set)
                 tabs.addTab(tab, cmd)
-            opt_set.addWidget(tabs, opt_set.rowCount(), 0, 1, 2)
+            opt_set.addWidget(tabs, opt_set.rowCount(), 0, 1, 4)
             # return opt_set
         elif isinstance(func, click.Command):
             new_thread = getattr(func, "new_thread", self.new_thread)
@@ -801,6 +832,7 @@ class App(QtWidgets.QWidget):
                     },
                 ]
             )
+
         return opt_set
 
     def initUI(self, run_exit, geometry):
@@ -808,7 +840,7 @@ class App(QtWidgets.QWidget):
         self.setWindowTitle(self.title)
         # self.setGeometry(self.left, self.top, self.width, self.height)
         self.setGeometry(geometry)
-        self.opt_set = self.initCommandUI(self.func, run_exit)
+        self.opt_set = self.initCommandUI(self.func, run_exit,)
         self.setLayout(self.opt_set)
         self.show()
 
@@ -826,6 +858,7 @@ class App(QtWidgets.QWidget):
 
     def run_cmd(self, new_thread):
         runcmd = RunCommand(self.func, self.run_exit)
+
         if new_thread:
             self.threadpool.start(runcmd)
         else:
@@ -848,7 +881,7 @@ def gui_it(click_func, style="qdarkstyle", **argvs) -> None:
     argvs["run_exit"] = argvs.get("run_exit", False)
     argvs["new_thread"] = argvs.get("new_thread", False)
 
-    ex = App(click_func, **argvs)
+    _ = App(click_func, **argvs)
     sys.exit(app.exec_())
 
 

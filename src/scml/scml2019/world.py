@@ -2438,6 +2438,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         annotation: Optional[Dict[str, Any]] = None,
         mechanism_name: str = None,
         mechanism_params: Dict[str, Any] = None,
+        group = None,
     ):
         annotation = self._process_annotation(annotation)
         if annotation is None:
@@ -2451,6 +2452,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             roles=roles,
             mechanism_name=mechanism_name,
             mechanism_params=mechanism_params,
+            group=group,
         )
 
     @property
