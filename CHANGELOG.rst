@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.2.10 (2019.3.25)
+------------------
+
+* minor updates to be compatible with the latest negmas
+* documentation update
+* avoid exception if gui is not installed
+
 0.2.9 (2019.3.19)
 -----------------
 
