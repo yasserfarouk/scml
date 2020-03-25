@@ -2079,9 +2079,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 int(math.ceil(missing_money / unit_price)) if unit_price != 0.0 else 0
             )
         elif missing_money <= 0.0 and missing_quantity > 0:
-            quantity -= (
-                missing_quantity
-            )  # int(math.floor(money / unit_price)) if unit_price != 0.0 else 0
+            quantity -= missing_quantity  # int(math.floor(money / unit_price)) if unit_price != 0.0 else 0
         elif missing_money > 0.0 and missing_quantity > 0:
             money_for_available_quantity = (quantity - missing_quantity) * unit_price
             quantity_for_available_money = int(
@@ -2438,7 +2436,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         annotation: Optional[Dict[str, Any]] = None,
         mechanism_name: str = None,
         mechanism_params: Dict[str, Any] = None,
-        group = None,
+        group=None,
     ):
         annotation = self._process_annotation(annotation)
         if annotation is None:

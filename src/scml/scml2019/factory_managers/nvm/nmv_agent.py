@@ -119,9 +119,12 @@ class NVMFactoryManager(DoNothingFactoryManager):
         # Initialize book keeping structures.
         for p in range(0, self.num_intermediate_products + 2):
             self.storage_history[p] = []
-            self.contracted_buys_at_t[p], self.contracted_sales_at_t[
-                p
-            ], self.executed_buys_at_t[p], self.executed_sales_at_t[p] = (
+            (
+                self.contracted_buys_at_t[p],
+                self.contracted_sales_at_t[p],
+                self.executed_buys_at_t[p],
+                self.executed_sales_at_t[p],
+            ) = (
                 {},
                 {},
                 {},

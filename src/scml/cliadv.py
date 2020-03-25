@@ -47,11 +47,15 @@ from scml.scml2020.utils import (
     anac2020_world_generator,
 )
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
+
 try:
     from .vendor.quick.quick import gui_option
 except:
+
     def gui_option(x):
         return x
+
+
 try:
     # disable a warning in yaml 1b1 version
     yaml.warnings({"YAMLLoadWarning": False})
@@ -108,6 +112,7 @@ def print_world_progress(world) -> None:
 
 
 click.option = partial(click.option, show_default=True)
+
 
 @gui_option
 @click.group()

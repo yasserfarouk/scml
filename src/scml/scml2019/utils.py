@@ -360,9 +360,7 @@ def anac2019_config_generator(
                 else:
                     params_[
                         "name"
-                    ] = (
-                        f"_df_{level + 1}_{j}"
-                    )  # because I use name to know that this is a default agent in evaluate.
+                    ] = f"_df_{level + 1}_{j}"  # because I use name to know that this is a default agent in evaluate.
                     # @todo do not use name to identify default agents in evaluation
                 manager_params[first_in_level + j] = params_
         first_in_level += n_f

@@ -15,10 +15,10 @@ from negmas import (
 )
 from negmas.events import Notifier, Notification
 from negmas.helpers import instantiate
+from negmas.common import AgentMechanismInterface
 from negmas.sao import (
     SAOController,
     SAONegotiator,
-    AgentMechanismInterface,
     SAOSyncController,
 )
 

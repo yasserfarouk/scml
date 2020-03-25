@@ -7,6 +7,7 @@ from scml.scml2019.factory_managers.builtins import NegotiatorUtility
 
 class ConsumerUtilityFunction(NegotiatorUtility):
     def __init__(self, target_price):
+        super().__init__(agent=None, annotation=None)
         self.target_price = target_price
         self.reduced_cost = 0.01
 

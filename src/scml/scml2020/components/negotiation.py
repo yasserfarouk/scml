@@ -97,7 +97,7 @@ class NegotiationManager:
         partners: List[str] = None,
     ) -> None:
         """
-        Starts a set of negotiations to by/sell the product with the given limits
+        Starts a set of negotiations to buy/sell the product with the given limits
 
         Args:
             product: product type. If it is an input product, negotiations to buy it will be started otherweise to sell.

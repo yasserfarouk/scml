@@ -827,11 +827,19 @@ class NegotiatorUtility(UtilityFunction):
     ):
         if name is None:
             name = (
-                agent.name
-                + "*"
-                + "*".join(_ for _ in annotation["partners"] if _ != agent.id)
+                (
+                    agent.name
+                    + "*"
+                    + "*".join(_ for _ in annotation["partners"] if _ != agent.id)
+                )
+                if agent is not None
+                else None
             )
-        super().__init__(name=name)
+        super().__init__(
+            name=name,
+            outcome_type=dict,
+            issue_names=["time", "unit_price", "quantity", "penalty", "signing_delay"],
+        )
         self.agent = agent
         self.annotation = annotation
         self.avoid_free_sales = avoid_free_sales
@@ -872,7 +880,7 @@ class NegotiatorUtility(UtilityFunction):
             else False
         )
 
-    def __call__(self, outcome: Outcome) -> Optional[UtilityValue]:
+    def eval(self, outcome: Outcome) -> Optional[UtilityValue]:
         if outcome is None:
             return float("-inf")
         if isinstance(outcome, dict):
