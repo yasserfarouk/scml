@@ -18,7 +18,13 @@ import progressbar
 import yaml
 from tabulate import tabulate
 
-from .vendor.quick.quick import gui_option
+try:
+    from scml.vendor.quick.quick import gui_option
+except:
+
+    def gui_option(x):
+        return x
+
 
 import negmas
 from negmas import save_stats
@@ -121,7 +127,7 @@ def shortest_unique_names(strs: List[str], sep="."):
         for loc, prefix in zip(l, prefixes):
             x = sep.join([prefix, s])
             if x.startswith(sep):
-                x = x[len(sep):]
+                x = x[len(sep) :]
             mapping[strs[loc]] = x
     return [mapping[_] for _ in strs]
 
