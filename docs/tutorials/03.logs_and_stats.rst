@@ -99,25 +99,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: test_world: World Created[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: test_world: World Created[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 00DoN@0 joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: 00DoN@0 joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 01DoN@0 joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: 01DoN@0 joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 02DoN@0 joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: 02DoN@0 joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 03DoN@1 joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: 03DoN@1 joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 04DoN@1 joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: 04DoN@1 joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: 05DoN@1 joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: 05DoN@1 joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: SELLER joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: SELLER joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: BUYER joined[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: BUYER joined[0m
     
-    [32m2020-03-12 12:43:23 - INFO - 0/10 [10.00%]: This is a test message[0m
+    [32m2020-03-23 11:00:36 - INFO - 0/10 [10.00%]: This is a test message[0m
     
 
 
@@ -177,9 +177,9 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    [0m2020-03-12 12:43:23 - DEBUG - 0/10 [10.00%]: Initialized
+    [0m2020-03-23 11:00:36 - DEBUG - 0/10 [10.00%]: Initialized
     
-    {'_balance': 2323,
+    {'_balance': 2644,
     
      '_input_inventory': 0,
     
@@ -494,7 +494,7 @@ Here are some of the most important parameters stored in this file:
 | suppliers          | All suppliers of every product                  |
 +--------------------+-------------------------------------------------+
 
-It is easy to read this file and extract any of these values
+You can check any of these parameters by loading the json file:
 
 .. code:: ipython3
 
@@ -574,15 +574,31 @@ negotiations.csv
 ^^^^^^^^^^^^^^^^
 
 This file stores a record for each negotiation. The most important
-fields are: - **partners**: Gives the names of the partners -
-**requested_at**: The time at which the negotiation was requested -
-**has_errors**: Indicates whether one of the partners broke the protocol
-rules - **current_proposer**: The negotiator that sent the last offer -
-**current_offer** The last offer - **agreement** The agreement if any
-(or None if the negotiation ended with no agreement) - **step** The step
-at which the negotiation ended - **broken** Will be true if one partner
-ended the negotiation - **timedout** will be true if the negotiation
-timed out
+fields are:
+
+-  **partners**: Gives the names of the partners
+-  **partner_ids** The IDs of the partners
+-  **partner_types** The types of the agents to which the partners
+   belong
+-  **issues** Negotiation Issues
+-  **caller** The name of the agent that initated the negotiation
+-  **requested_at**: The time at which the negotiation was requested
+-  **relative_time** The relative time (between zero and one) at which
+   the negotiation ended
+-  **has_errors**: Indicates whether one of the partners broke the
+   protocol rules
+-  **current_proposer**: The negotiator that sent the last offer
+-  **current_offer** The last offer
+-  **agreement** The agreement if any (or None if the negotiation ended
+   with no agreement)
+-  **step** The step at which the negotiation ended
+-  **broken** Will be true if one partner ended the negotiation
+-  **timedout** will be true if the negotiation timed out
+-  **current_proposer_agent** The agent to which the
+   ``current_proposer`` negotiator belongs
+-  **new_offers** The offers exchanged in the last negotiation round
+-  **new_offer_agents** The agents generating the offers exchanged in
+   the last round
 
 all_contracts.csv
 ^^^^^^^^^^^^^^^^^
@@ -593,29 +609,46 @@ exogenous contracts). ``signed_contracts.csv`` and
 and cancelled contracts only respectively. These are all the fields
 stored for every contract:
 
-Partner information - **product**, **product_name**: The product index
-and name - **seller**, **seller_name**, **seller_type**: Seller ID,
-name, and type - **seller**, **buyer_name**, **buyer_type**: Buyer ID,
-name and type
+Partner information:
 
-Agenda - **caller**: Who requested the negotiation - **issues**:
-Negotiation issues - **is_buy**
+-  **product**, **product_name**: The product index and name
+-  **seller**, **seller_name**, **seller_type**: Seller ID, name, and
+   type
+-  **seller**, **buyer_name**, **buyer_type**: Buyer ID, name and type
 
-Agreement (will be ``nan`` if there is no agreement) - **delivery_time**
-- **quantity** - **unit_price**
+Agenda:
 
-Contract Life (-1 means the event did not happen) - **concluded_at**:
-when was the negotiation leadign to this contract concluded -
-**signed_at**: when was the contract signed - **executed_at**: when was
-it executed (will be the same as *delivery_time* - **nullified_at**: If
-nulliied due to bankruptcy of one of the partners, when - **erred_at**:
-Should never happen. - **dropped_at**: The system will drop all contract
-that have delivery times in the past or at a day by the end of that day
+-  **caller**: Who requested the negotiation
+-  **issues**: Negotiation issues
+-  **is_buy**
 
-Other Information - **id**: The unique ID of this contract -
-**signatures**: Will be the IDs of the two partners if the contract was
-signed - **n_neg_steps**: Number of negotaition steps that lead to this
-contract - **breaches**: List of breaches if any
+Agreement (will be ``nan`` if there is no agreement)
+
+-  **delivery_time**
+-  **quantity**
+-  **unit_price**
+
+Contract Life (-1 means the event did not happen):
+
+-  **concluded_at**: when was the negotiation leadign to this contract
+   concluded
+-  **signed_at**: when was the contract signed
+-  **executed_at**: when was it executed (will be the same as
+   *delivery_time*
+-  **nullified_at**: If nulliied due to bankruptcy of one of the
+   partners, when
+-  **erred_at**: Should never happen.
+-  **dropped_at**: The system will drop all contract that have delivery
+   times in the past or at a day by the end of that day
+
+Other Information:
+
+-  **id**: The unique ID of this contract
+-  **signatures**: Will be the IDs of the two partners if the contract
+   was signed
+-  **n_neg_steps**: Number of negotaition steps that lead to this
+   contract
+-  **breaches**: List of breaches if any
 
 breaches.csv
 ^^^^^^^^^^^^
