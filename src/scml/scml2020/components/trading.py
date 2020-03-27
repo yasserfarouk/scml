@@ -236,12 +236,12 @@ class PredictionBasedTradingStrategy(
         cancelled: List[Contract],
         rejectors: List[List[str]],
     ) -> None:
-        self.awi.logdebug_agent(
-            f"Enter Contracts Finalized:\n"
-            f"Signed {pformat([self._format(_) for _ in signed])}\n"
-            f"Cancelled {pformat([self._format(_) for _ in cancelled])}\n"
-            f"{pformat(self.internal_state)}"
-        )
+        # self.awi.logdebug_agent(
+        #     f"Enter Contracts Finalized:\n"
+        #     f"Signed {pformat([self._format(_) for _ in signed])}\n"
+        #     f"Cancelled {pformat([self._format(_) for _ in cancelled])}\n"
+        #     f"{pformat(self.internal_state)}"
+        # )
         super().on_contracts_finalized(signed, cancelled, rejectors)
         consumed = 0
         for contract in signed:
@@ -277,9 +277,9 @@ class PredictionBasedTradingStrategy(
                     # this is a buy contract that I did not expect yet. Update needs accordingly
                     self.outputs_needed[t + 1] += max(1, q)
 
-        self.awi.logdebug_agent(
-            f"Exit Contracts Finalized:\n{pformat(self.internal_state)}"
-        )
+        # self.awi.logdebug_agent(
+        #     f"Exit Contracts Finalized:\n{pformat(self.internal_state)}"
+        # )
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         # sort contracts by time and then put system contracts first within each time-step

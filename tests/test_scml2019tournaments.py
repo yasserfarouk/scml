@@ -1,5 +1,4 @@
 from pathlib import Path
-from pprint import pprint
 
 from scml.scml2019 import (
     anac2019_std,

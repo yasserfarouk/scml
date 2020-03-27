@@ -115,9 +115,9 @@ class NegotiationManager:
         awi = self.awi  # type: ignore
         is_seller = product == self.awi.my_output_product
         if quantity < 1 or unit_price < 1 or step < awi.current_step + 1:
-            awi.logdebug_agent(
-                f"Less than 2 valid issues (q:{quantity}, u:{unit_price}, t:{step})"
-            )
+            # awi.logdebug_agent(
+            #     f"Less than 2 valid issues (q:{quantity}, u:{unit_price}, t:{step})"
+            # )
             return
         # choose ranges for the negotiation agenda.
         qvalues = (1, quantity)
@@ -135,7 +135,7 @@ class NegotiationManager:
         )
 
     def step(self):
-        self.awi.logdebug_agent(f"Enter step:\n{pformat(self.internal_state)}")
+        # self.awi.logdebug_agent(f"Enter step:\n{pformat(self.internal_state)}")
         super().step()
         """Generates buy and sell negotiations as needed"""
         s = self.awi.current_step
@@ -152,7 +152,7 @@ class NegotiationManager:
                 return
             self._generate_negotiations(nxt, False)
             self._generate_negotiations(nxt, True)
-        self.awi.logdebug_agent(f"End step:\n{pformat(self.internal_state)}")
+        # self.awi.logdebug_agent(f"End step:\n{pformat(self.internal_state)}")
 
     def on_contracts_finalized(
         self,
@@ -376,7 +376,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             ControllerInfo(None, i, True, tuple(), 0, 0, False)
             for i in range(self.awi.n_steps)
         ]
-        self.awi.logdebug_agent(f"Initialized\n{pformat(self.internal_state)}")
+        # self.awi.logdebug_agent(f"Initialized\n{pformat(self.internal_state)}")
 
     def _start_negotiations(
         self,
@@ -397,11 +397,11 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         controller = self.add_controller(
             sell, qvalues[1], uvalues, expected_quantity, step
         )
-        self.awi.loginfo_agent(
-            f"Requesting {'selling' if sell else 'buying'} negotiation "
-            f"on u={uvalues}, q={qvalues}, t={tvalues}"
-            f" with {str(partners)} using {str(controller)}"
-        )
+        # self.awi.loginfo_agent(
+        #     f"Requesting {'selling' if sell else 'buying'} negotiation "
+        #     f"on u={uvalues}, q={qvalues}, t={tvalues}"
+        #     f" with {str(partners)} using {str(controller)}"
+        # )
         self.awi.request_negotiations(
             is_buy=not sell,
             product=product,
@@ -433,10 +433,10 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         target = self.target_quantities((tmin, tmax + 1), is_seller).sum()
         if target <= 0:
             return None
-        self.awi.loginfo_agent(
-            f"Accepting request from {initiator}: {[str(_) for _ in mechanism.issues]} "
-            f"({Issue.num_outcomes(mechanism.issues)})"
-        )
+        # self.awi.loginfo_agent(
+        #     f"Accepting request from {initiator}: {[str(_) for _ in mechanism.issues]} "
+        #     f"({Issue.num_outcomes(mechanism.issues)})"
+        # )
         # create a controller for the time-step if one does not exist or use the one already running
         if controller_info.controller is None:
             controller = self.add_controller(
@@ -473,9 +473,9 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         else:
             controllers = self.buyers
 
-        self.awi.logdebug_agent(
-            f"Killing Controller {str(controllers[controller_index].controller)}"
-        )
+        # self.awi.logdebug_agent(
+        #     f"Killing Controller {str(controllers[controller_index].controller)}"
+        # )
         controllers[controller_index].controller = None
         if quantity <= target:
             self._generate_negotiations(step=controller_index, sell=is_seller)
