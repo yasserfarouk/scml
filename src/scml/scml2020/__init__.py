@@ -1,4 +1,10 @@
-"""Implements the SCML 2020 world design"""
+"""Implements the SCML 2020 world design.
+
+The detailed description of this world simulation can be found here_.
+
+.. _here: http://www.yasserm.com/scml/scml2020.pdf
+
+"""
 
 from .common import *
 from .world import *
