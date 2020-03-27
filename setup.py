@@ -88,6 +88,6 @@ setup(
     },
     setup_requires=["pytest-runner"],
     entry_points={
-        "console_scripts": ["scml = scml.scml:main", "cliadv = scml.cliadv:cli",]
+        "console_scripts": ["scml = scml.cli:main", "cliadv = scml.cliadv:cli",]
     },
 )

@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-from scml.scml import main
+from scml.cli import main
 
 
 def test_main():
