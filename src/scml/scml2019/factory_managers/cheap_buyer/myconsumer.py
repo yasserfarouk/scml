@@ -22,7 +22,7 @@ class MyConsumer(SCML2019Agent):
         self.negotiator_id = 0
         self.negotiators = {}
         self.NEGOTIATOR_ID_FIXED_PART = "NEGOTIATOR_ID_BUYER"
-        self.reserved_value = 1
+        self._reserved_val = 1
         super(MyConsumer, self).__init__(name=name)
 
     def step(self):
@@ -45,13 +45,13 @@ class MyConsumer(SCML2019Agent):
         state: MechanismState,
     ) -> None:
         if self.agent.get_amount_of_raw_materials() > 200:
-            self.reserved_value = max(0, self.reserved_value - 0.001)
+            self._reserved_val = max(0, self._reserved_val - 0.001)
         pass
 
     def on_negotiation_success(
         self, contract: Contract, mechanism: AgentMechanismInterface
     ) -> None:
-        self.reserved_value = min(1, self.reserved_value + 0.01)
+        self._reserved_val = min(1, self._reserved_val + 0.01)
         pass
 
     def on_contract_signed(self, contract: Contract) -> None:
@@ -126,7 +126,7 @@ class MyConsumer(SCML2019Agent):
             name=negotiator_id,
             ufun=ufun,
             strategy=MyNegotiator2.STRATEGY_TIME_BASED_CONCESSION,
-            reserved_value=self.reserved_value,
+            reserved_value=self._reserved_val,
         )
         self.negotiators[negotiator_id] = negotiator
         self.negotiator_id += 1

@@ -57,6 +57,8 @@ class MyNegotiator2(SAONegotiator):
 
     def on_ufun_changed(self):
         super().on_ufun_changed()
+        if self._ami is None:
+            return
         outcomes = self._ami.discrete_outcomes()
         self.ordered_outcomes = sorted(
             [(self._utility_function(outcome), outcome) for outcome in outcomes],
@@ -86,7 +88,7 @@ class MyNegotiator2(SAONegotiator):
         return self.respond(state=state, offer=offer)
 
     def get_utility_value(self, offer):
-        return self.utility_values_of_offers[str(offer)]
+        return self.utility_values_of_offers.get(str(offer), 0.0)
 
     def get_our_offers(self):
         return self.our_offers
@@ -95,6 +97,8 @@ class MyNegotiator2(SAONegotiator):
         return self.offers_to_us
 
     def propose_only_the_best(self, state):
+        if self.ordered_outcomes is None or len(self.ordered_outcomes) < 1:
+            self.on_ufun_changed()
         our_offer = self.ordered_outcomes[0][1]
         return our_offer
 
@@ -105,6 +109,8 @@ class MyNegotiator2(SAONegotiator):
             return ResponseType.REJECT_OFFER
 
     def propose_time_based_concession(self, state):
+        if self.ordered_outcomes is None or len(self.ordered_outcomes) < 1:
+            self.on_ufun_changed()
         our_offer = self.ordered_outcomes[0][1]
         concession_score = self.get_concession_score(state)
         for ordered_outcome in self.ordered_outcomes:
