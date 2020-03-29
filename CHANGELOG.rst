@@ -2,6 +2,17 @@
 Changelog
 =========
 
+0.2.11 (2019.3.29)
+------------------
+
+*  bugfix in the CLI when running tournament2019
+*  bugfix in MeanERPrediction for breached contracts
+*  making CheapBuyer compatible with the latest negmas version
+*  doc update
+*  removing all agent logs in built-in agents to speedup simulations
+*  changing cli script name back to cli.py. This was done to avoid a weird import error when running configs that use the cli in pycharm
+*  adding profiling info snapshot to the repository
+
 0.2.10 (2019.3.25)
 ------------------
 
