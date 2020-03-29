@@ -317,7 +317,7 @@ def tournament2019(
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
-            all_competitors[i] = ("scml.scml2019.factory_managers.") + cp
+            all_competitors[i] = ("scml.scml2019.factory_managers.builtins.") + cp
     all_competitors_params = [dict() for _ in range(len(all_competitors))]
     if jcompetitors is not None and len(jcompetitors) > 0:
         jcompetitor_params = [{"java_class_name": _} for _ in jcompetitors.split(";")]
@@ -399,7 +399,7 @@ def tournament2019(
         for i, cp in enumerate(non_competitors):
             if "." not in cp:
                 non_competitors[i] = (
-                    "scml.scml2019.factory_managers."
+                    "scml.scml2019.factory_managers.builtins."
                     # if "2019" in ttype
                     # else "scml.scml2020.agents."
                 ) + cp
