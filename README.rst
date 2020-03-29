@@ -48,9 +48,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.org/project/scml
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/yasserfarouk/scml/v0.2.10.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/yasserfarouk/scml/v0.2.11.svg
     :alt: Commits since latest release
-    :target: https://github.com/yasserfarouk/scml/compare/v0.2.10...master
+    :target: https://github.com/yasserfarouk/scml/compare/v0.2.11...master
 
 .. |CI| image:: https://github.com/yasserfarouk/scml/workflows/CI/badge.svg
     :target: https://www.github.com/yasserfarouk/scml

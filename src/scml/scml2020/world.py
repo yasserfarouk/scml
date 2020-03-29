@@ -1233,9 +1233,6 @@ class AWI(AgentWorldInterface):
 class SCML2020Agent(Agent):
     """Base class for all SCML2020 agents (factory managers)"""
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def init(self):
         pass
 
