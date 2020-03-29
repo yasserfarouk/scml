@@ -327,8 +327,8 @@ class MeanERPStrategy(ExecutionRatePredictionStrategy):
     ) -> None:
         super().on_contract_breached(contract, breaches, resolution)
         old_total = self._total_quantity
-        q = contract.agreement["quantity"] * max(b.level for b in breaches)
-        self._total_quantity += q
+        q = int(contract.agreement["quantity"] * (1.0 - max(b.level for b in breaches)))
+        self._total_quantity += contract.agreement["quantity"]
         self._execution_fraction = (
             self._execution_fraction * old_total + q
         ) / self._total_quantity
