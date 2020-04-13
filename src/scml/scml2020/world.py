@@ -1691,14 +1691,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.compact = compact
         if negotiation_speed == 0:
             negotiation_speed = neg_n_steps + 1
+        mechanisms = kwargs.pop("mechanisms", {})
         super().__init__(
             bulletin_board=None,
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.scml2020.AWI",
             mechanisms={
-                "negmas.sao.SAOMechanism": dict(
+                "negmas.sao.SAOMechanism": mechanisms.get("negmas.sao.SAOMechanism", dict(
                     end_on_no_response=True, avoid_ultimatum=True, dynamic_entry=False
-                )
+                ))
             },
             default_signing_delay=signing_delay,
             n_steps=n_steps,
