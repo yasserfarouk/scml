@@ -75,7 +75,7 @@ setup(
         "prettytable",
         "pulp",
         "python-constraint",
-        "negmas>=0.6.10",
+        "negmas>=0.6.11",
         "tqdm",
         "joblib",
         "jupyter",
