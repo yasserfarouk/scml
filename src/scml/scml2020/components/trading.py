@@ -245,6 +245,8 @@ class PredictionBasedTradingStrategy(
         super().on_contracts_finalized(signed, cancelled, rejectors)
         consumed = 0
         for contract in signed:
+            if contract.annotation["caller"] == self.id:
+                continue
             is_seller = contract.annotation["seller"] == self.id
             q, u, t = (
                 contract.agreement["quantity"],
@@ -273,13 +275,8 @@ class PredictionBasedTradingStrategy(
             output_product = input_product + 1
             self.inputs_secured[t] += q
             if output_product < self.awi.n_products and t < self.awi.n_steps - 1:
-                if contract.annotation["caller"] != self.id:
                     # this is a buy contract that I did not expect yet. Update needs accordingly
                     self.outputs_needed[t + 1] += max(1, q)
-
-        # self.awi.logdebug_agent(
-        #     f"Exit Contracts Finalized:\n{pformat(self.internal_state)}"
-        # )
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         # sort contracts by time and then put system contracts first within each time-step
@@ -296,23 +293,26 @@ class PredictionBasedTradingStrategy(
                 x[0].agreement["unit_price"],
             ),
         )
-        taken = 0
+        sold, bought = 0, 0
         s = self.awi.current_step
         for contract, indx in contracts:
+            is_seller = contract.annotation["seller"] == self.id
             q, u, t = (
                 contract.agreement["quantity"],
                 contract.agreement["unit_price"],
                 contract.agreement["time"],
             )
             # check that the contract is executable in principle
-            if t <= s and len(contract.issues) == 3:
+            if t < s and len(contract.issues) == 3:
                 continue
-            if contract.annotation["seller"] == self.id:
+            if is_seller:
                 trange = (s, t)
                 secured, needed = (self.outputs_secured, self.outputs_needed)
+                taken = sold
             else:
                 trange = (t + 1, self.awi.n_steps - 1)
                 secured, needed = (self.inputs_secured, self.inputs_needed)
+                taken = bought
 
             # check that I can produce the required quantities even in principle
             steps, lines = self.awi.available_for_production(
@@ -326,7 +326,10 @@ class PredictionBasedTradingStrategy(
                 <= needed[trange[0] : trange[1] + 1].sum()
             ):
                 signatures[indx] = self.id
-                taken += self.predict_quantity(contract)
+                if is_seller:
+                    sold += q
+                else:
+                    bought += q
         return signatures
 
     def _format(self, c: Contract):
