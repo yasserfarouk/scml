@@ -2,7 +2,15 @@
 Changelog
 =========
 
-0.2.11 (2019.3.29)
+0.2.12 (2020.4.13)
+------------------
+
+* forcing negmas 0.6.11 or newer
+* documentation update
+* enabling setting the mechanism parameters in SCML2020World
+* bugfix in PredictionBasedTradingStrategy
+
+0.2.11 (2020.3.29)
 ------------------
 
 *  bugfix in the CLI when running tournament2019
@@ -13,14 +21,14 @@ Changelog
 *  changing cli script name back to cli.py. This was done to avoid a weird import error when running configs that use the cli in pycharm
 *  adding profiling info snapshot to the repository
 
-0.2.10 (2019.3.25)
+0.2.10 (2020.3.25)
 ------------------
 
 * minor updates to be compatible with the latest negmas
 * documentation update
 * avoid exception if gui is not installed
 
-0.2.9 (2019.3.19)
+0.2.9 (2020.3.19)
 -----------------
 
 * CI using Github Actions
@@ -29,7 +37,7 @@ Changelog
 * removing unnecessary init function from simulator
 * showing shorter names in tournament run results
 
-0.2.8 (2019.3.13)
+0.2.8 (2020.3.13)
 -----------------
 * documentation update (specially the scripts section)
 * Adding a --gui option to scml CLI to run it as a simple GUI
@@ -38,7 +46,7 @@ Changelog
 * adding a script call scmladv.py which keep all the detailed parameters
   used earlied in SCML.
 
-0.2.7 (2019.3.09)
+0.2.7 (2020.3.09)
 -----------------
 * Documentation update
 * Adding trading_strategy_init/step functions.
@@ -49,7 +57,7 @@ Changelog
 * correcting the display in scml run2020
 * removing the docs from the package to save space
 
-0.2.6 (2019.2.27)
+0.2.6 (2020.2.27)
 -----------------
 
 * [testing] correcting a test to ignore system agents when checking for
@@ -58,20 +66,20 @@ Changelog
 * [bugfix] Resolving a but in the CLI tournament command that prevented it from
   running with default parameters
 
-0.2.5 (2019.2.27)
+0.2.5 (2020.2.27)
 -----------------
 
 * [Documentation] Removing inherited members to make the documentation easier to
   follow
 * [CLI] Improving the display of run2020 command
 
-0.2.4 (2019.2.21)
+0.2.4 (2020.2.21)
 -----------------
 
 * [speed] improvement in tournament running
 * [bugfix] handling very short simulations
 
-0.2.3 (2019.2.15)
+0.2.3 (2020.2.15)
 -----------------
 
 * adding more details to tournament runs
@@ -92,19 +100,19 @@ Changelog
 * updating .gitignore
 
 
-0.2.2 (2019.1.31)
+0.2.2 (2020.1.31)
 -----------------
 
 * adding components
 * adding second tutorial
 
-0.2.1 (2019.1.23)
+0.2.1 (2020.1.23)
 -----------------
 
 * better tutorial
 * better strategies
 
-0.2.0 (2019.1.8)
+0.2.0 (2020.1.8)
 ----------------
 
 * new interface for singing and callbacks
