@@ -790,7 +790,7 @@ class AWI(AgentWorldInterface):
         quantity: Union[int, Tuple[int, int]],
         unit_price: Union[int, Tuple[int, int]],
         time: Union[int, Tuple[int, int]],
-        controller: SAOController,
+        controller: Optional[SAOController],
         negotiators: List[Negotiator] = None,
         partners: List[str] = None,
         extra: Dict[str, Any] = None,
@@ -1698,7 +1698,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             awi_type="scml.scml2020.AWI",
             mechanisms={
                 "negmas.sao.SAOMechanism": mechanisms.get("negmas.sao.SAOMechanism", dict(
-                    end_on_no_response=True, avoid_ultimatum=True, dynamic_entry=False
+                    end_on_no_response=True, avoid_ultimatum=True, dynamic_entry=False, max_wait=negotiation_quota_per_step
                 ))
             },
             default_signing_delay=signing_delay,
