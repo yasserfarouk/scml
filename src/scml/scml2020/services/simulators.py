@@ -305,6 +305,26 @@ class FactorySimulator:
 
         return self._balance[: t + 1]
 
+    def score(self, inventory_weight=0.5) -> float:
+        """
+        Estimates the final score of the agent
+
+        Args:
+            inventory_weight: The weight of the inventory that remains at
+                              the end of the simulation
+
+        Remarks:
+            - It uses the catalog prices for price estimation. This
+              may be inaccurate. There is no way to know the actual
+              trading prices of the market that are used to calculate
+              the real score
+        """
+        return self.balance_at(
+            self.n_steps - 1
+        ) + inventory_weight * self._catalog_prices * self.inventory_at(
+            self.n_steps - 1
+        )
+
     def balance_at(self, t: int) -> np.array:
         """
         Returns the balance of the factory at time t.
