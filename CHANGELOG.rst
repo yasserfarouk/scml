@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.2.13 (2020.4.15)
+------------------
+
+* [docs] Adding more tutorials
+* minor. Maing the controller optional in request_negotiations
+* adding score to FactorySimulator to estimate final score
+
 0.2.12 (2020.4.13)
 ------------------
 
