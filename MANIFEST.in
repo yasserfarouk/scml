@@ -14,5 +14,5 @@ include README.rst
 
 include tox.ini .travis.yml .appveyor.yml
 
-global-exclude *.py[cod] __pycache__/* *.so *.dylib */.hypthesis* logs docs
-buid build/* */_build/* *.py[cod] __pycache__/* *.so *.dylib */.hypthesis* logs
+global-exclude *.py[cod] __pycache__/* *.so *.dylib */.hypthesis* logs/* docs/* */.DS_Store **/.hypothesis* .hypothesis/* scml/.hypothesis/** scml/my_results buid build/* */_build/* *.py[cod] __pycache__/* *.so *.dylib */.hypthesis* logs
+global-exclude .DS_Store

@@ -68,6 +68,7 @@ setup(
     ],
     python_requires=">=3.6",
     install_requires=[
+        'dataclasses; python_version < "3.7"',
         "click",
         "pytest",
         "hypothesis",
@@ -81,9 +82,7 @@ setup(
         "gif",
     ],
     extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        ':python_version=="3.6"': ["dataclasses"]
+        "gui": ["pyqt5"],
     },
     setup_requires=["pytest-runner"],
     entry_points={
