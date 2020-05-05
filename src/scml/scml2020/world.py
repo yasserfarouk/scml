@@ -1697,9 +1697,15 @@ class SCML2020World(TimeInAgreementMixin, World):
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.scml2020.AWI",
             mechanisms={
-                "negmas.sao.SAOMechanism": mechanisms.get("negmas.sao.SAOMechanism", dict(
-                    end_on_no_response=True, avoid_ultimatum=True, dynamic_entry=False, max_wait=negotiation_quota_per_step
-                ))
+                "negmas.sao.SAOMechanism": mechanisms.get(
+                    "negmas.sao.SAOMechanism",
+                    dict(
+                        end_on_no_response=True,
+                        avoid_ultimatum=True,
+                        dynamic_entry=False,
+                        max_wait=negotiation_quota_per_step,
+                    ),
+                )
             },
             default_signing_delay=signing_delay,
             n_steps=n_steps,

@@ -1470,13 +1470,13 @@ is done in the ``on_contracts_finalized`` callback as follows:
 
 -  Find the agreement conditions:
 
-   .. code:: python
+.. code:: python
 
-      t, p, q = (
-          contract.agreement["time"],
-          contract.agreement["unit_price"],
-          contract.agreement["quantity"],
-      )
+       t, p, q = (
+           contract.agreement["time"],
+           contract.agreement["unit_price"],
+           contract.agreement["quantity"],
+       )
 
 -  When the agent gets a contract to sell, it needs to buy the same
    amount of the input material before the deliver time and when it gets
@@ -1487,9 +1487,9 @@ is done in the ``on_contracts_finalized`` callback as follows:
       agent, it already has the corresponding sell/buy contract so it
       should ignore it. This can be tested easily
 
-   .. code:: python
+.. code:: python
 
-      if contract.annotation["caller"] == self.id
+       if contract.annotation["caller"] == self.id
 
 Here is the improved version:
 

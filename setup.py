@@ -75,15 +75,13 @@ setup(
         "prettytable",
         "pulp",
         "python-constraint",
-        "negmas>=0.6.12",
+        "negmas>=0.6.13",
         "tqdm",
         "joblib",
         "jupyter",
         "gif",
     ],
-    extras_require={
-        "gui": ["pyqt5"],
-    },
+    extras_require={"gui": ["pyqt5"],},
     setup_requires=["pytest-runner"],
     entry_points={
         "console_scripts": ["scml = scml.cli:main", "cliadv = scml.cliadv:cli",]
