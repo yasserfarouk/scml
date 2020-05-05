@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.2.14 (2020.5.05)
+------------------
+
+* [docs] documentation and testing update.
+* [setup] Making PyQT optional.
+* [setup] Requiring negmas 0.6.13.
+
 0.2.13 (2020.4.15)
 ------------------
 
