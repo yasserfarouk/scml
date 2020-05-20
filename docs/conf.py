@@ -183,11 +183,13 @@ latex_documents = [
 
 # -- Options for graphviz used in inheritence diagrams -----------------
 
-graphviz_output_format = "png"
-inheritance_node_attrs = dict(
-    shape="rectangle", fontsize=16, height=0.75, color="white"
-)  # , style='filled') # dodgerblue1
-
+graphviz_output_format = "svg"
+inheritance_graph_attrs = dict(
+    randkir="TB", fontsize=11, size='""'
+)  # , size='"16.0, 20.0"')
+# inheritance_node_attrs = dict(
+#     shape="rectangle", fontsize=16, height=0.75, color="yellow"
+# )  # , style='filled') # dodgerblue1
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples

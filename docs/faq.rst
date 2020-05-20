@@ -159,4 +159,55 @@ Note that the later method has the disadvantage of putting your components at th
 means that if you have any classes, functions, etc with a name that is defined in *any* module that appears
 earlier in the path, yours will be hidden.
 
+How can I run simulations with the same parameters as the actual competition (e.g. for training my agent)
+---------------------------------------------------------------------------------------------------------
 
+You can use the `utils` submodule of `scml.scml2020` to generate worlds with the same parameters as in the
+competition. Here is some example script to run `1` such world using three built-in agents::
+
+    from typing import List, Union
+    from scml.scml2020.utils import (
+        anac2020_config_generator,
+        anac2020_world_generator,
+        anac2020_assigner,
+    )
+    from scml.scml2020 import SCML2020Agent
+    from scml.scml2020.agents import (
+        DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent
+    )
+
+    COMPETITORS = [DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent]
+
+    def generate_worlds(
+        competitors: List[Union[str, SCML2020Agent]],
+        n_agents_per_competitor,
+    ):
+        collusion = n_agents_per_competitor != 1
+        config = anac2020_config_generator(
+            n_competitors=len(competitors),
+            n_agents_per_competitor=n_agents_per_competitor,
+            n_steps=(50, 100) if collusion else (50, 200),
+        )
+        assigned = anac2020_assigner(
+            config,
+            max_n_worlds=None,
+            n_agents_per_competitor=n_agents_per_competitor,
+            competitors=competitors,
+            params=[dict() for _ in competitors],
+        )
+        return [anac2020_world_generator(**(a[0])) for a in assigned]
+
+    if __name__ == "__main__":
+        worlds = generate_worlds(COMPETITORS, 1)
+        for world in worlds:
+            world.run()
+            print(world.stats_df.head())
+
+Notice that `generate_worlds` will not generate a single world but a set of them putting the `COMPETITORS`
+in all possible assignments of factories. The detailed process of world generation is described in the appendices of the
+`description
+<http://www.yasserm.com/scml/scml2020.pdf>`_ .
+
+You can change the competitors by just changing the `COMPETITORS` list. Setting the third parameter of `generate_worlds`
+to `1` generates a standard league world and setting it to a random number between 2 and 4 generates a collusion
+league world ( `randint(2, min(4, len(COMPETITORS)))` ).

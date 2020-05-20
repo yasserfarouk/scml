@@ -1,29 +1,21 @@
-import networkx as nx
-import numpy as np
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
 from hypothesis import given, settings
 import hypothesis.strategies as st
 
-from scml import FactorySimulator
 from scml.scml2020 import (
     SCML2020World,
     DoNothingAgent,
-    FactoryProfile,
     RandomAgent,
     BuyCheapSellExpensiveAgent,
     is_system_agent,
-    INFINITE_COST,
 )
-from scml.scml2020.services import FactorySimulator
-import random
-
-from scml.scml2020.world import is_system_agent
-
-random.seed(0)
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 
+import random
+
+random.seed(0)
 
 COMPACT = True
 NOLOGS = True

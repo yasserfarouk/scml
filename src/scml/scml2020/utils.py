@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 ROUND_ROBIN = True
-DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent]
+DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent]
 
 
 def integer_cut(
@@ -573,7 +573,7 @@ def anac2020_std(
     agent_names_reveal_type=False,
     n_configs: int = 5,
     max_worlds_per_config: Optional[int] = None,
-    n_runs_per_world: int = 5,
+    n_runs_per_world: int = 1,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
     total_timeout: Optional[int] = None,
@@ -685,7 +685,7 @@ def anac2020_collusion(
     agent_names_reveal_type=False,
     n_configs: int = 5,
     max_worlds_per_config: Optional[int] = None,
-    n_runs_per_world: int = 2,
+    n_runs_per_world: int = 1,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
