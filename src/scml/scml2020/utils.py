@@ -308,6 +308,9 @@ def anac2020_assigner(
     fair: bool = True,
     competitors: Sequence[Type[Agent]] = (),
     params: Sequence[Dict[str, Any]] = (),
+    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
+    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    exclude_competitors_from_reassignment: bool = True,
 ) -> List[List[Dict[str, Any]]]:
     config = config[0]
     competitors = list(
@@ -323,6 +326,42 @@ def anac2020_assigner(
 
     agent_types = config["agent_types"]
     is_default = [_ is not None for _ in agent_types]
+    # assign non-competitor factories to extra-non-competitors
+    if dynamic_non_competitors is not None:
+        n_extra = len(dynamic_non_competitors)
+        dynamic_non_competitors = list(
+            get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
+            for _ in dynamic_non_competitors
+        )
+        if dynamic_non_competitor_params is None:
+            dynamic_non_competitor_params = [dict() for _ in range(n_extra)]
+        # removing the competitors from the dynamic competitors
+        if exclude_competitors_from_reassignment:
+            # TODO May be use a better way to hash the a parameters than just conversion to str
+            compset = set(zip(competitors, (str(_) for _ in params)))
+            dynset = list(
+                zip(
+                    dynamic_non_competitors,
+                    (str(_) for _ in dynamic_non_competitor_params),
+                )
+            )
+            dynamic_non_competitor_indices = [
+                i for i, _ in enumerate(dynset) if _ not in compset
+            ]
+            dynamic_non_competitors = [
+                dynamic_non_competitors[i] for i in dynamic_non_competitor_indices
+            ]
+            dynamic_non_competitor_params = [
+                dynamic_non_competitor_params[i] for i in dynamic_non_competitor_indices
+            ]
+            n_extra = len(dynamic_non_competitors)
+        if n_extra:
+            for i, isd in enumerate(is_default):
+                if not isd:
+                    continue
+                extra_indx = randint(0, n_extra - 1)
+                config["agent_types"][i] = dynamic_non_competitors[extra_indx]
+                config["agent_params"][i] = dynamic_non_competitor_params[extra_indx]
     assignable_factories = [i for i, mtype in enumerate(agent_types) if mtype is None]
     shuffle(assignable_factories)
     assignable_factories = (
@@ -584,6 +623,9 @@ def anac2020_std(
     world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
     non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
     non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
+    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
+    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    exclude_competitors_from_reassignment: bool = True,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
@@ -621,6 +663,10 @@ def anac2020_std(
         non_competitors: A list of agent types that will not be competing in the sabotage competition but will exist
                          in the world
         non_competitor_params: parameters of non competitor agents
+        dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
+                                 the creation of the final assignment instead when the configuration is created
+        dynamic_non_competitor_params: paramters of dynamic non competitor agents
+        exclude_comptitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -675,6 +721,9 @@ def anac2020_std(
         metric="median",
         n_competitors_per_world=n_competitors_per_world,
         round_robin=ROUND_ROBIN,
+        dynamic_non_competitors=dynamic_non_competitors,
+        dynamic_non_competitor_params=dynamic_non_competitor_params,
+        exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         **kwargs,
     )
 
@@ -697,6 +746,9 @@ def anac2020_collusion(
     world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
     non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
     non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
+    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
+    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    exclude_competitors_from_reassignment: bool = True,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
@@ -735,6 +787,10 @@ def anac2020_collusion(
         non_competitors: A list of agent types that will not be competing in the sabotage competition but will exist
                          in the world
         non_competitor_params: parameters of non competitor agents
+        dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
+                                 the creation of the final assignment instead when the configuration is created
+        dynamic_non_competitor_params: paramters of dynamic non competitor agents
+        exclude_comptitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
         verbose: Verbosity
@@ -789,5 +845,8 @@ def anac2020_collusion(
         metric="median",
         n_competitors_per_world=n_competitors_per_world,
         round_robin=ROUND_ROBIN,
+        dynamic_non_competitors=dynamic_non_competitors,
+        dynamic_non_competitor_params=dynamic_non_competitor_params,
+        exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         **kwargs,
     )
