@@ -666,7 +666,7 @@ def anac2020_std(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_comptitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -790,7 +790,7 @@ def anac2020_collusion(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_comptitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
         verbose: Verbosity
