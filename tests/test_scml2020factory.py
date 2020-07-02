@@ -122,6 +122,43 @@ class TestFactory:
             assert not factory.cancel_production(step, line)
             assert self.confirm_same(state, factory.state)
 
+    def test_step(self):
+        process, step, line = 0, 0, 0
+        factory = create_factory()
+        factory.confirm_production = False
+        assert self.confirm_empty(factory.state)
+        initial_state = copy.deepcopy(factory.state)
+
+        factory.schedule_production(process, 1, step, line)
+        factory.schedule_production(process, 1, step + 1, line)
+        state = factory.state
+        assert not self.confirm_same(initial_state, state)
+        assert len(state.commands[np.nonzero(state.commands == process)]) == 2
+        factory._inventory[process] = 1
+        factory._inventory[process + 1] = 0
+        factory.step()
+        assert factory.current_inventory[process] == 0
+        assert factory.current_inventory[process + 1] == 1
+        assert factory.inventory_changes[process] == -1
+        assert factory.inventory_changes[process + 1] == 1
+        assert sum(factory.inventory_changes) == 0
+        assert (
+            factory.state.balance
+            == factory.initial_balance - factory.profile.costs[line, process]
+        )
+        assert factory.state.balance_change == -factory.profile.costs[line, process]
+        factory.step()
+        assert factory.current_inventory[process] == 0
+        assert factory.current_inventory[process + 1] == 1
+        assert factory.inventory_changes[process] == 0
+        assert factory.inventory_changes[process + 1] == 0
+        assert sum(factory.inventory_changes) == 0
+        assert (
+            factory.state.balance
+            == factory.initial_balance - factory.profile.costs[line, process]
+        )
+        assert factory.state.balance_change == 0
+
 
 def test_simulator_runs():
     breach_penalty = 0.15

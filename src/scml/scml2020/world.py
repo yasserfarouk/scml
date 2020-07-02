@@ -534,6 +534,7 @@ class Factory:
                 continue
 
             # execute the command
+            self._balance -= cost
             self.store(
                 inp,
                 -ins,
