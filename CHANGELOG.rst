@@ -2,6 +2,18 @@
 Changelog
 =========
 
+0.3.0 (2020.7.2)
+----------------
+**This is an important update. All participants in SCML 2020 should upgrade to this version**
+
+* [bugfix] Production cost is not properly discounted. This is an important issue.
+  All simulations were conducted using the same zero production cost for all factories.
+* Speeding up tournament tests (smaller worlds)
+* consistent naming of non-competitors
+* Adding dynamic choice of non-competitors
+* Removing random from the set of default agents
+* Compatibility with NegMAS 0.6.14
+
 0.2.14 (2020.5.05)
 ------------------
 
