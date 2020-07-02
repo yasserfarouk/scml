@@ -49,7 +49,7 @@ class MyAgent9(BaseAgent):
 
 
 # @pytest.mark.parametrize("n", [2])
-@pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7, 8, 9, 10])
+@pytest.mark.parametrize("n", [2, 3])
 def test_std(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2020_std(
@@ -71,7 +71,7 @@ def test_std(n):
     ), f"Agents do not appear the same number of times:\n{df}"
 
 
-@pytest.mark.parametrize("n", [2, 3, 4, 5])
+@pytest.mark.parametrize("n", [2, 3])
 def test_collusion(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2020_collusion(
