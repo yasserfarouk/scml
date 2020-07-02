@@ -33,7 +33,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: "Run pytest for ${{ matrix.python-version }}"
-        run: "python -m pytest ."
+        run: "python -m pytest tests"
 
   package:
     name: "Build & verify package"
