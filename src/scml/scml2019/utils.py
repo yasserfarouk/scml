@@ -482,6 +482,9 @@ def anac2019_sabotage_assigner(
     fair: bool = True,
     competitors: Sequence[Type[Agent]] = (),
     params: Sequence[Dict[str, Any]] = (),
+    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
+    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    exclude_competitors_from_reassignment: bool = True,
 ) -> List[List[Dict[str, Any]]]:
     config = config[0]
     competitors = list(
@@ -649,6 +652,9 @@ def anac2019_assigner(
     fair: bool = True,
     competitors: Sequence[Type[Agent]] = (),
     params: Sequence[Dict[str, Any]] = (),
+    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
+    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    exclude_competitors_from_reassignment: bool = True,
 ) -> List[List[Dict[str, Any]]]:
     config = config[0]
     competitors = list(
