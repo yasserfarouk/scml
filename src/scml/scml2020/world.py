@@ -3026,9 +3026,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         )
         if q <= 0 or u <= 0:
             self.logwarning(
-                f"Contract {str(contract)} has zero quantity of unit price!!! will be ignored"
+                f"Contract {str(contract)} has zero quantity or unit price!!! will be ignored"
             )
-            return breaches
+            return None
 
         # if the contract is already nullified, take care of it
         if contract.nullified_at >= 0:
