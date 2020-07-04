@@ -2930,7 +2930,17 @@ class SCML2020World(TimeInAgreementMixin, World):
             return
         super().on_contract_concluded(contract, to_be_signed_at)
 
-    def on_contract_signed(self, contract: Contract):
+    def is_valid_contact(self, contract: Contract) -> bool:
+        """Checks whether a signed contract is valid"""
+
+        return (
+            contract.agreement["time"] > 0
+            and contract.agreement["time"] < self.n_steps
+            and contract.agreement["unit_price"] > 0
+            and contract.agreement["quantity"] > 0
+        )
+
+    def on_contract_signed(self, contract: Contract) -> bool:
         # we need to cancel this contract if a partner was bankrupt (that is necessary only for
         #  force_signing case as in this case the two partners will be assued to sign no matter what is
         #  their bankruptcy status
@@ -2939,9 +2949,12 @@ class SCML2020World(TimeInAgreementMixin, World):
             any(self.a2f[_].is_bankrupt for _ in contract.partners)
             or contract.agreement["time"] >= self.n_steps
         ):
-            self.ignore_contract(contract)
-            return
-        super().on_contract_signed(contract)
+            self.ignore_contract(contract, as_dropped=False)
+            return False
+        result = super().on_contract_signed(contract)
+        if not result:
+            self.ignore_contract(contract, as_dropped=True)
+            return False
         self.logdebug(f"SIGNED {str(contract)}")
         t = contract.agreement["time"]
         u, q = contract.agreement["unit_price"], contract.agreement["quantity"]
@@ -2954,6 +2967,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.a2f[partner].contracts[t].append(
             ContractInfo(q, u, product, not is_seller, agent, contract)
         )
+        return True
 
     def nullify_contract(self, contract: Contract, new_quantity: int):
         self.__n_nullified += 1
