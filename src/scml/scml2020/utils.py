@@ -724,6 +724,8 @@ def anac2020_std(
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
+        save_video_fraction=0.0,
+        forced_logs_fraction=0.0,
         **kwargs,
     )
 
@@ -848,5 +850,7 @@ def anac2020_collusion(
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
+        save_video_fraction=0.0,
+        forced_logs_fraction=0.0,
         **kwargs,
     )
