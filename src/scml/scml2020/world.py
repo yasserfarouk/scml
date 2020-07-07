@@ -2934,7 +2934,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         """Checks whether a signed contract is valid"""
 
         return (
-            contract.agreement["time"] > 0
+            contract.agreement["time"] >= self.current_step
             and contract.agreement["time"] < self.n_steps
             and contract.agreement["unit_price"] > 0
             and contract.agreement["quantity"] > 0
