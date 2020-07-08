@@ -275,8 +275,8 @@ class PredictionBasedTradingStrategy(
             output_product = input_product + 1
             self.inputs_secured[t] += q
             if output_product < self.awi.n_products and t < self.awi.n_steps - 1:
-                    # this is a buy contract that I did not expect yet. Update needs accordingly
-                    self.outputs_needed[t + 1] += max(1, q)
+                # this is a buy contract that I did not expect yet. Update needs accordingly
+                self.outputs_needed[t + 1] += max(1, q)
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         # sort contracts by time and then put system contracts first within each time-step
@@ -295,6 +295,8 @@ class PredictionBasedTradingStrategy(
         )
         sold, bought = 0, 0
         s = self.awi.current_step
+        catalog_buy = self.awi.catalog_prices[self.awi.my_input_product]
+        catalog_sell = self.awi.catalog_prices[self.awi.my_output_product]
         for contract, indx in contracts:
             is_seller = contract.annotation["seller"] == self.id
             q, u, t = (
@@ -304,6 +306,10 @@ class PredictionBasedTradingStrategy(
             )
             # check that the contract is executable in principle
             if t < s and len(contract.issues) == 3:
+                continue
+            if (is_seller and u < 0.75 * catalog_sell) or (
+                not is_seller and u > 1.25 * catalog_buy
+            ):
                 continue
             if is_seller:
                 trange = (s, t)
