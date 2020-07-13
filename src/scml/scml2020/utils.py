@@ -12,6 +12,7 @@ from scml.scml2020.agents import (
     RandomAgent,
 )
 from scml.scml2020.world import SCML2020World, is_system_agent
+from collections import defaultdict
 
 if True:
     from typing import (
@@ -178,7 +179,7 @@ def anac2020_config_generator(
     n_processes: Tuple[int, int] = (
         3,
         5,
-    ),  # minimum is strictly guarantee but maximum is only guaranteed if selec_n_levels_first
+    ),  # minimum is strictly guarantee but maximum is only guaranteed if select_n_levels_first
     min_factories_per_level: int = 2,  # strictly guaranteed
     max_factories_per_level: int = 6,  # not strictly guaranteed except if select_n_levels_first is False
     n_lines: int = 10,
@@ -485,6 +486,8 @@ def balance_calculator2020(
             continue
         initial_balances.append(factory.initial_balance)
     normalize = all(_ != 0 for _ in initial_balances)
+    extra_scores = defaultdict(float)
+    initial_sums = defaultdict(float)
     for default, factory, manager, agent_type in zip(
         is_default, factories, agents, agent_types
     ):
@@ -509,13 +512,20 @@ def balance_calculator2020(
                 * factory.current_inventory
                 * world.trading_prices
             )
-
+        profit = final_balance - factory.initial_balance
         if normalize:
-            result.scores.append(
-                (final_balance - factory.initial_balance) / factory.initial_balance
-            )
+            result.scores.append(profit / factory.initial_balance)
         else:
-            result.scores.append(final_balance - factory.initial_balance)
+            result.scores.append(profit)
+        extra_scores[agent_type] += profit
+        initial_sums[agent_type] += factory.initial_balance
+    if normalize:
+        for k in extra_scores.keys():
+            extra_scores[k] /= initial_sums[k]
+    extra = []
+    for k, v in extra_scores.items():
+        extra.append(dict(type=k, score=v))
+    result.extra_scores["combined_scores"] = extra
     return result
 
 
