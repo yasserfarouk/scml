@@ -11,9 +11,11 @@ from ..components.trading import PredictionBasedTradingStrategy
 __all__ = ["MovingRangeAgent"]
 
 from ..world import SCML2020Agent
+from ..components import KeepOnlyGoodPrices
 
 
 class MovingRangeAgent(
+    KeepOnlyGoodPrices,
     MovingRangeNegotiationManager,
     PredictionBasedTradingStrategy,
     SupplyDrivenProductionStrategy,

@@ -20,10 +20,12 @@ __all__ = ["IndependentNegotiationsAgent"]
 from ..components.trading import ReactiveTradingStrategy
 from ..components.negotiation import IndependentNegotiationsManager
 from ..components.prediction import FixedTradePredictionStrategy
+from ..components.signing import KeepOnlyGoodPrices
 from ..world import SCML2020Agent
 
 
 class IndependentNegotiationsAgent(
+    KeepOnlyGoodPrices,
     IndependentNegotiationsManager,
     FixedTradePredictionStrategy,
     ReactiveTradingStrategy,
@@ -51,8 +53,8 @@ class IndependentNegotiationsAgent(
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
         if sell:
-            return production_cost + self.input_cost[step]
-        return self.output_price[step] - production_cost
+            return max(production_cost + self.input_cost[step], self.output_price[step])
+        return min(self.output_price[step] - production_cost, self.input_cost[step])
 
     def target_quantity(self, step: int, sell: bool) -> int:
         if sell:

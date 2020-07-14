@@ -7,14 +7,13 @@ from typing import Tuple
 
 from negmas import LinearUtilityFunction
 
-from scml.scml2020.components import FixedERPStrategy
 from scml.scml2020.components import (
     SupplyDrivenProductionStrategy,
     StepNegotiationManager,
     IndependentNegotiationsManager,
 )
-from .do_nothing import DoNothingAgent
 from ..components.trading import PredictionBasedTradingStrategy
+from ..components.signing import KeepOnlyGoodPrices
 
 __all__ = ["DecentralizingAgent", "IndDecentralizingAgent"]
 
@@ -48,6 +47,7 @@ class _NegotiationCallbacks:
 
 
 class DecentralizingAgent(
+    KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     StepNegotiationManager,
     PredictionBasedTradingStrategy,
@@ -58,6 +58,7 @@ class DecentralizingAgent(
 
 
 class IndDecentralizingAgent(
+    KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     IndependentNegotiationsManager,
     PredictionBasedTradingStrategy,

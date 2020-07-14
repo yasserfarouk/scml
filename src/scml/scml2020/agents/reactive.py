@@ -13,9 +13,11 @@ from ..components.trading import ReactiveTradingStrategy
 __all__ = ["ReactiveAgent"]
 
 from ..world import SCML2020Agent
+from ..components.signing import KeepOnlyGoodPrices
 
 
 class ReactiveAgent(
+    KeepOnlyGoodPrices,
     StepNegotiationManager,
     ReactiveTradingStrategy,
     TradeDrivenProductionStrategy,
