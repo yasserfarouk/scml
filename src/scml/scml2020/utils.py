@@ -375,7 +375,7 @@ def anac2020_assigner(
 
     def _copy_config(perm_, c, indx):
         new_config = copy.deepcopy(c)
-        new_config["world_params"]["name"] += f".{indx:05d}"
+        # new_config["world_params"]["name"] += f".{indx:02d}"
         new_config["is_default"] = is_default
         for (a, p_), assignable in zip(perm_, assignable_factories):
             for factory in assignable:
