@@ -387,6 +387,7 @@ def tournament2019(
                 None if max_runs is None else int(round(max_runs / (configs * runs)))
             )
 
+    parallelism = "parallel" if parallel else "serial"
     if len(jcompetitors) > 0:
         print("You are using java-competitors. The tournament will be run serially")
         parallelism = "serial"
@@ -428,6 +429,7 @@ def tournament2019(
         n_competitors_per_world=cw,
         n_configs=configs,
         n_runs_per_world=runs,
+        parallelism=parallelism,
         max_worlds_per_config=worlds_per_config,
         tournament_path=log,
         total_timeout=timeout,
