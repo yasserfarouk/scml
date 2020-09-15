@@ -616,7 +616,6 @@ def anac2019_sabotage_assigner(
                     perm = copy.deepcopy(permutation)
                     shuffle(perm)
                     configs.append(_copy_config(perm, config, k, competitor, c_params))
-
     if agent_names_reveal_type:
         for config_set in configs:
             for config in config_set:
@@ -641,7 +640,6 @@ def anac2019_sabotage_assigner(
                     p["name"] = f'{name_}@{f["id"][1:]}'
                     config["manager_params"][i] = copy.deepcopy(p)
                     nxt = nxt + 1
-
     return configs
 
 

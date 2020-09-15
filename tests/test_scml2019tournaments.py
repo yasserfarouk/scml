@@ -62,5 +62,6 @@ def test_sabotage():
         n_default_managers=1,
         n_agents_per_competitor=2,
         max_worlds_per_config=2,
+        parallelism="serial",
     )
     assert len(results.total_scores) >= 2

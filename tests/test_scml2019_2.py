@@ -448,40 +448,5 @@ def test_scml_picklable(tmp_path):
     assert sum(w.stats["market_size"]) == 0, "No change in the market size"
 
 
-@mark.parametrize(
-    ["fm"],
-    [
-        (GreedyFactoryManager,),
-        (NVMFactoryManager,),
-        (FJ2FactoryManager,),
-        (InsuranceFraudFactoryManager,),
-        (RaptFactoryManager,),
-        (SAHAFactoryManager,),
-        (CheapBuyerFactoryManager,),
-    ],
-)
-def test_can_run(fm):
-    horizon = None
-    signing_delay = 0
-    n_factory_levels = 1
-    n_factories_per_level = 2
-    n_steps = 10
-    world = SCML2019World.chain_world(
-        n_intermediate_levels=n_factory_levels - 1,
-        log_file_name="",
-        n_steps=n_steps,
-        manager_types=(GreedyFactoryManager, fm),
-        n_factories_per_level=n_factories_per_level,
-        default_signing_delay=signing_delay,
-        consumer_kwargs={
-            "consumption_horizon": horizon,
-            "negotiator_type": "negmas.sao.NiceNegotiator",
-        },
-        miner_kwargs={"negotiator_type": "negmas.sao.NiceNegotiator"},
-    )
-    world.run()
-    assert sum(world.stats["n_contracts_concluded"]) > 0
-
-
 if __name__ == "__main__":
     pytest.main(args=[__file__])

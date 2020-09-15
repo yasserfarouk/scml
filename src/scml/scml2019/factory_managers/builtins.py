@@ -824,6 +824,7 @@ class NegotiatorUtility(UtilityFunction):
         name: Optional[str] = None,
         avoid_free_sales: bool = True,
         expected_breach_level: float = 0.5,
+        **kwargs,
     ):
         if name is None:
             name = (
@@ -839,6 +840,7 @@ class NegotiatorUtility(UtilityFunction):
             name=name,
             outcome_type=dict,
             issue_names=["time", "unit_price", "quantity", "penalty", "signing_delay"],
+            **kwargs,
         )
         self.agent = agent
         self.annotation = annotation
