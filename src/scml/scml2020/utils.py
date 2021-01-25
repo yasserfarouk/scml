@@ -702,6 +702,7 @@ def anac2020_std(
     if non_competitors is None:
         non_competitors = DefaultAgents
         non_competitor_params = [dict() for _ in non_competitors]
+    kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -730,7 +731,6 @@ def anac2020_std(
         compact=compact,
         metric="median",
         n_competitors_per_world=n_competitors_per_world,
-        round_robin=ROUND_ROBIN,
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
@@ -828,6 +828,7 @@ def anac2020_collusion(
     if non_competitors is None:
         non_competitors = DefaultAgents
         non_competitor_params = [dict() for _ in non_competitors]
+    kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -856,7 +857,6 @@ def anac2020_collusion(
         compact=compact,
         metric="median",
         n_competitors_per_world=n_competitors_per_world,
-        round_robin=ROUND_ROBIN,
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
