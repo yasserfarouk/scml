@@ -242,6 +242,7 @@ class Factory:
         agent_name: Optional[str] = None,
         confirm_production: bool = True,
         initial_inventory: Optional[np.ndarray] = None,
+        disallow_concurrent_negs_with_same_partners = False,
     ):
         self.confirm_production = confirm_production
         self.production_buy_missing = production_buy_missing
@@ -255,6 +256,7 @@ class Factory:
         self.__profile = profile
         self.world = world
         self.profile = copy.deepcopy(profile)
+        self._disallow_concurrent_negs_with_same_partners=disallow_concurrent_negs_with_same_partners
         """The readonly factory profile (See `FactoryProfile` )"""
         self.commands = NO_COMMAND * np.ones(
             (world.n_steps, profile.n_lines), dtype=int
@@ -863,10 +865,13 @@ class AWI(AgentWorldInterface):
             self.request_negotiation(
                 is_buy, product, quantity, unit_price, time, partner, negotiator, extra
             )
-            if not self._world.a2f[partner].is_bankrupt
+            if not self._world.a2f[partner].is_bankrupt and (tuple(sorted([partner, self.agent.id])) not in self._world._registered_negs)
             else False
             for partner, negotiator in zip(partners, negotiators)
         ]
+        for p, r in zip(partners, results):
+            if r:
+                self._world._registered_negs.add(tuple(sorted([p, self.agent.id])))
         return any(results)
 
     def request_negotiation(
@@ -927,6 +932,8 @@ class AWI(AgentWorldInterface):
         if self._world.a2f[partner].is_bankrupt:
             return False
 
+        if tuple(sorted([partner, self.agent.id])) in self._world._registered_negs:
+            return False
         def values(x: Union[int, Tuple[int, int]]):
             if not isinstance(x, Iterable):
                 return int(x), int(x)
@@ -958,9 +965,12 @@ class AWI(AgentWorldInterface):
             annotation=annotation,
             extra=dict(**extra),
         )
-        return self.request_negotiation_about(
+        result =  self.request_negotiation_about(
             issues=issues, partners=partners, req_id=req_id, annotation=annotation
         )
+        if result:
+            self._world._registered_negs.add(tuple(sorted([partner, self.agent.id])))
+        return result
 
     def schedule_production(
         self,
@@ -2077,6 +2087,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             (n_agents, n_steps)
         )
         self._agent_spot_quantity = np.zeros((n_agents, n_steps), dtype=int)
+        self._registered_negs: Set[Tuple[str]] = set()
 
     @classmethod
     def generate(
@@ -2592,6 +2603,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         reports_time[str(self.current_step)][agent.id] = report
 
     def simulation_step(self, stage):
+        self._registered_negs: Set[Tuple[str]] = set()
         s = self.current_step
         if stage == 0:
             # pay interests for negative balances
