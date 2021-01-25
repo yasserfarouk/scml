@@ -363,9 +363,9 @@ class PredictionBasedTradingStrategy(
                 continue
             if contract.annotation["seller"] == self.id:
                 self.outputs_secured[t] -= missing
-                if t > 0:
-                    self.inputs_needed[t - 1] -= missing
+                # if t > 0:
+                #     self.inputs_needed[t - 1] -= missing
             else:
                 self.inputs_secured[t] += missing
-                if t < self.awi.n_steps - 1:
-                    self.outputs_needed[t + 1] -= missing
+                # if t < self.awi.n_steps - 1:
+                #     self.outputs_needed[t + 1] -= missing
