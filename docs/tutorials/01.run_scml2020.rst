@@ -60,7 +60,7 @@ Now you can run this world simulation by just calling ``run``.
 
 .. parsed-literal::
 
-    100%|██████████| 50/50 [01:32<00:00,  1.84s/it]
+    100%|██████████| 50/50 [01:41<00:00,  2.02s/it]
 
 
 Let’s see what happened in this run. Firstly, how many negotiations were
@@ -92,9 +92,7 @@ Several other market statistics are available:
 
 .. parsed-literal::
 
-    ['n_registered_negotiations_before',
-     'n_contracts_dropped',
-     'n_contracts_nullified_now',
+    ['n_contracts_nullified_now',
      'n_bankrupt',
      'trading_price_0',
      'sold_quantity_0',
@@ -115,10 +113,12 @@ Several other market statistics are available:
      'market_size',
      'production_failures',
      'bankruptcy',
+     'n_registered_negotiations_before',
      'n_contracts_executed',
      'n_contracts_erred',
      'n_contracts_nullified',
      'n_contracts_cancelled',
+     'n_contracts_dropped',
      'n_breaches',
      'breach_level',
      'n_contracts_signed',
@@ -161,15 +161,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_04Dec@1',
-     'spot_market_loss_04Dec@1',
-     'balance_04Dec@1',
-     'inventory_04Dec@1_input',
-     'inventory_04Dec@1_output',
-     'productivity_04Dec@1',
-     'assets_04Dec@1',
-     'bankrupt_04Dec@1',
-     'score_04Dec@1']
+    ['spot_market_quantity_10Dec@3',
+     'spot_market_loss_10Dec@3',
+     'balance_10Dec@3',
+     'inventory_10Dec@3_input',
+     'inventory_10Dec@3_output',
+     'productivity_10Dec@3',
+     'assets_10Dec@3',
+     'bankrupt_10Dec@3',
+     'score_10Dec@3']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -215,15 +215,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_04Dec@1': (0.0, 3581.7277916926996),
-     'balance_04Dec@1': (23598, 24446),
-     'bankrupt_04Dec@1': (False, False),
-     'inventory_04Dec@1_input': (0, 28),
-     'inventory_04Dec@1_output': (0, 90),
-     'productivity_04Dec@1': (0.0, 1.0),
-     'score_04Dec@1': (0.0, 0.11182574353107674),
-     'spot_market_loss_04Dec@1': (0.3, 4.2285),
-     'spot_market_quantity_04Dec@1': (0, 0)}
+    {'assets_10Dec@3': (0.0, 0.0),
+     'balance_10Dec@3': (31855, 32031),
+     'bankrupt_10Dec@3': (False, False),
+     'inventory_10Dec@3_input': (0, 0),
+     'inventory_10Dec@3_output': (0, 0),
+     'productivity_10Dec@3': (0.0, 0.0),
+     'score_10Dec@3': (0.0, 0.00552503531627688),
+     'spot_market_loss_10Dec@3': (0.3, 1.3619999999999999),
+     'spot_market_quantity_10Dec@3': (0, 6)}
 
 
 .. code:: ipython3
@@ -299,7 +299,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [04Dec@1] of type ['decentralizing'] won at [11.182574353107674]%
+    [10Dec@3] of type ['decentralizing'] won at [0.552503531627688]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -501,130 +501,130 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>873</th>
-          <td>07Dec@2</td>
-          <td>10Buy@3</td>
-          <td>18</td>
-          <td>58</td>
-          <td>54</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1644</th>
-          <td>06Dec@2</td>
-          <td>09Ind@3</td>
-          <td>32</td>
-          <td>49</td>
-          <td>54</td>
-          <td>24</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1502</th>
-          <td>07Dec@2</td>
-          <td>10Buy@3</td>
-          <td>31</td>
-          <td>43</td>
-          <td>57</td>
-          <td>21</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1552</th>
-          <td>07Dec@2</td>
-          <td>10Buy@3</td>
-          <td>31</td>
-          <td>43</td>
-          <td>57</td>
-          <td>22</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1550</th>
-          <td>07Dec@2</td>
-          <td>09Ind@3</td>
-          <td>26</td>
-          <td>43</td>
-          <td>54</td>
-          <td>22</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1769</th>
-          <td>02Dec@0</td>
-          <td>03Buy@1</td>
-          <td>31</td>
-          <td>43</td>
-          <td>8</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1256</th>
-          <td>04Dec@1</td>
-          <td>07Dec@2</td>
-          <td>25</td>
+          <th>890</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>9</td>
+          <td>61</td>
           <td>39</td>
+          <td>2</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1060</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>14</td>
+          <td>55</td>
           <td>39</td>
+          <td>4</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1147</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
           <td>15</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1945</th>
-          <td>07Dec@2</td>
-          <td>09Ind@3</td>
-          <td>38</td>
-          <td>36</td>
-          <td>58</td>
-          <td>33</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1046</th>
-          <td>06Dec@2</td>
-          <td>09Ind@3</td>
-          <td>21</td>
-          <td>35</td>
-          <td>53</td>
-          <td>11</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1737</th>
-          <td>04Dec@1</td>
-          <td>07Dec@2</td>
-          <td>37</td>
-          <td>35</td>
+          <td>55</td>
           <td>39</td>
-          <td>27</td>
+          <td>5</td>
+          <td>False</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>982</th>
+          <td>08Ind@2</td>
+          <td>10Dec@3</td>
+          <td>13</td>
+          <td>54</td>
+          <td>39</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1639</th>
+          <td>08Ind@2</td>
+          <td>10Dec@3</td>
+          <td>24</td>
+          <td>50</td>
+          <td>39</td>
+          <td>14</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1336</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>18</td>
+          <td>35</td>
+          <td>21</td>
+          <td>8</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1437</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>19</td>
+          <td>35</td>
+          <td>21</td>
+          <td>10</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1939</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>28</td>
+          <td>35</td>
+          <td>21</td>
+          <td>19</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>2039</th>
+          <td>00Dec@0</td>
+          <td>04Dec@1</td>
+          <td>29</td>
+          <td>35</td>
+          <td>21</td>
+          <td>21</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>2092</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>32</td>
+          <td>35</td>
+          <td>21</td>
+          <td>22</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -679,130 +679,130 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>873</th>
-          <td>07Dec@2</td>
-          <td>10Buy@3</td>
-          <td>18</td>
-          <td>58</td>
+          <th>982</th>
+          <td>08Ind@2</td>
+          <td>10Dec@3</td>
+          <td>13</td>
           <td>54</td>
-          <td>8</td>
+          <td>39</td>
+          <td>3</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1644</th>
-          <td>06Dec@2</td>
-          <td>09Ind@3</td>
-          <td>32</td>
-          <td>49</td>
-          <td>54</td>
+          <th>1639</th>
+          <td>08Ind@2</td>
+          <td>10Dec@3</td>
           <td>24</td>
+          <td>50</td>
+          <td>39</td>
+          <td>14</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1502</th>
-          <td>07Dec@2</td>
-          <td>10Buy@3</td>
-          <td>31</td>
-          <td>43</td>
-          <td>57</td>
+          <th>1336</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>18</td>
+          <td>35</td>
           <td>21</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1552</th>
-          <td>07Dec@2</td>
-          <td>10Buy@3</td>
-          <td>31</td>
-          <td>43</td>
-          <td>57</td>
-          <td>22</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1550</th>
-          <td>07Dec@2</td>
-          <td>09Ind@3</td>
-          <td>26</td>
-          <td>43</td>
-          <td>54</td>
-          <td>22</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1769</th>
-          <td>02Dec@0</td>
-          <td>03Buy@1</td>
-          <td>31</td>
-          <td>43</td>
           <td>8</td>
-          <td>27</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1256</th>
+          <th>1437</th>
+          <td>01Buy@0</td>
           <td>04Dec@1</td>
-          <td>07Dec@2</td>
-          <td>25</td>
-          <td>39</td>
-          <td>39</td>
-          <td>15</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1945</th>
-          <td>07Dec@2</td>
-          <td>09Ind@3</td>
-          <td>38</td>
-          <td>36</td>
-          <td>58</td>
-          <td>33</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1046</th>
-          <td>06Dec@2</td>
-          <td>09Ind@3</td>
+          <td>19</td>
+          <td>35</td>
           <td>21</td>
-          <td>35</td>
-          <td>53</td>
-          <td>11</td>
+          <td>10</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1737</th>
+          <th>1939</th>
+          <td>01Buy@0</td>
           <td>04Dec@1</td>
-          <td>07Dec@2</td>
-          <td>37</td>
+          <td>28</td>
           <td>35</td>
-          <td>39</td>
-          <td>27</td>
+          <td>21</td>
+          <td>19</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>2039</th>
+          <td>00Dec@0</td>
+          <td>04Dec@1</td>
+          <td>29</td>
+          <td>35</td>
+          <td>21</td>
+          <td>21</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>2092</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>32</td>
+          <td>35</td>
+          <td>21</td>
+          <td>22</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1650</th>
+          <td>02Dec@0</td>
+          <td>04Dec@1</td>
+          <td>23</td>
+          <td>28</td>
+          <td>21</td>
+          <td>14</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1112</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>7</td>
+          <td>26</td>
+          <td>21</td>
+          <td>5</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1531</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
+          <td>22</td>
+          <td>25</td>
+          <td>21</td>
+          <td>12</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -852,104 +852,104 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>1768</th>
-          <td>03Buy@1</td>
-          <td>06Dec@2</td>
-          <td>37</td>
-          <td>35</td>
-          <td>27</td>
-          <td>27</td>
-          <td>03Buy@1:product(1.0)</td>
+          <th>890</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>9</td>
+          <td>61</td>
+          <td>39</td>
+          <td>2</td>
+          <td>06Buy@2:product(1.0)</td>
         </tr>
         <tr>
-          <th>1742</th>
-          <td>06Dec@2</td>
-          <td>10Buy@3</td>
-          <td>31</td>
-          <td>11</td>
-          <td>20</td>
-          <td>27</td>
-          <td>10Buy@3:money(0.6454545454545455)</td>
+          <th>1060</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>14</td>
+          <td>55</td>
+          <td>39</td>
+          <td>4</td>
+          <td>06Buy@2:product(1.0)</td>
         </tr>
         <tr>
-          <th>1750</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
-          <td>42</td>
-          <td>5</td>
-          <td>50</td>
-          <td>27</td>
-          <td>10Buy@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1029</th>
-          <td>08Buy@2</td>
-          <td>09Ind@3</td>
-          <td>12</td>
-          <td>5</td>
-          <td>18</td>
-          <td>11</td>
-          <td>08Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1255</th>
-          <td>05Buy@1</td>
-          <td>07Dec@2</td>
-          <td>17</td>
-          <td>5</td>
+          <th>1147</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
           <td>15</td>
-          <td>15</td>
-          <td>05Buy@1:product(1.0)</td>
+          <td>55</td>
+          <td>39</td>
+          <td>5</td>
+          <td>06Buy@2:product(1.0)</td>
         </tr>
         <tr>
-          <th>1274</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
-          <td>31</td>
-          <td>4</td>
-          <td>50</td>
-          <td>16</td>
-          <td>10Buy@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1393</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
-          <td>33</td>
-          <td>4</td>
-          <td>50</td>
-          <td>18</td>
-          <td>10Buy@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1481</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
+          <th>2201</th>
+          <td>01Buy@0</td>
+          <td>04Dec@1</td>
           <td>35</td>
-          <td>4</td>
-          <td>50</td>
-          <td>20</td>
-          <td>10Buy@3:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1528</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
-          <td>36</td>
-          <td>4</td>
-          <td>50</td>
+          <td>25</td>
           <td>21</td>
-          <td>10Buy@3:product(1.0)</td>
+          <td>25</td>
+          <td>01Buy@0:product(1.0)</td>
         </tr>
         <tr>
-          <th>1540</th>
-          <td>10Buy@3</td>
-          <td>BUYER</td>
+          <th>673</th>
+          <td>06Buy@2</td>
+          <td>11Buy@3</td>
+          <td>16</td>
+          <td>15</td>
+          <td>21</td>
+          <td>1</td>
+          <td>06Buy@2:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>655</th>
+          <td>06Buy@2</td>
+          <td>11Buy@3</td>
+          <td>13</td>
+          <td>11</td>
+          <td>21</td>
+          <td>1</td>
+          <td>06Buy@2:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>1146</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>7</td>
+          <td>9</td>
           <td>37</td>
+          <td>5</td>
+          <td>06Buy@2:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>986</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>9</td>
+          <td>9</td>
+          <td>21</td>
+          <td>3</td>
+          <td>06Buy@2:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>1035</th>
+          <td>06Buy@2</td>
+          <td>09Ind@3</td>
+          <td>8</td>
+          <td>9</td>
+          <td>21</td>
           <td>4</td>
-          <td>50</td>
-          <td>22</td>
-          <td>10Buy@3:product(1.0)</td>
+          <td>06Buy@2:product(1.0)</td>
+        </tr>
+        <tr>
+          <th>1041</th>
+          <td>06Buy@2</td>
+          <td>10Dec@3</td>
+          <td>11</td>
+          <td>9</td>
+          <td>21</td>
+          <td>4</td>
+          <td>06Buy@2:product(1.0)</td>
         </tr>
       </tbody>
     </table>
@@ -997,18 +997,18 @@ Did any agents go bankrupt and when?
 
 .. parsed-literal::
 
-    {'00Mov@0': 'No',
-     '01Mov@0': 'No',
+    {'00Dec@0': 'No',
+     '01Buy@0': 'at: 35',
      '02Dec@0': 'No',
-     '03Buy@1': 'at: 37',
+     '03Ind@1': 'No',
      '04Dec@1': 'No',
-     '05Buy@1': 'at: 17',
-     '06Dec@2': 'No',
-     '07Dec@2': 'No',
-     '08Buy@2': 'at: 12',
+     '05Buy@1': 'No',
+     '06Buy@2': 'at: 5',
+     '07Mov@2': 'No',
+     '08Ind@2': 'No',
      '09Ind@3': 'No',
-     '10Buy@3': 'at: 31',
-     '11Mov@3': 'No'}
+     '10Dec@3': 'No',
+     '11Buy@3': 'No'}
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -1092,7 +1092,7 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    tournament_types = agent_types + [RandomAgent]
+    tournament_types = agent_types
     # may take a long time
     results = anac2020_std(
         competitors=tournament_types,  
@@ -1106,6 +1106,8 @@ Who was the winner?
 
 .. code:: ipython3
 
+    # just make names easier to read 
+    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
     results.winners
 
 
@@ -1128,7 +1130,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    240
+    48
 
 
 
@@ -1181,61 +1183,49 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>192.0</td>
-          <td>-0.491562</td>
-          <td>0.549044</td>
-          <td>-2.376789</td>
-          <td>-0.476716</td>
-          <td>-0.298797</td>
-          <td>-0.181984</td>
+          <td>48.0</td>
+          <td>-0.306651</td>
+          <td>0.397624</td>
+          <td>-2.511036</td>
+          <td>-0.283724</td>
+          <td>-0.214143</td>
+          <td>-0.148968</td>
           <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>192.0</td>
-          <td>0.264585</td>
-          <td>0.343465</td>
-          <td>-1.316147</td>
-          <td>0.078159</td>
-          <td>0.243520</td>
-          <td>0.424249</td>
-          <td>1.316472</td>
+          <td>48.0</td>
+          <td>-0.055816</td>
+          <td>0.093124</td>
+          <td>-0.281724</td>
+          <td>-0.102771</td>
+          <td>-0.017290</td>
+          <td>0.000000</td>
+          <td>0.133468</td>
         </tr>
         <tr>
           <th>2</th>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>192.0</td>
-          <td>0.285633</td>
-          <td>0.224596</td>
-          <td>-0.246400</td>
-          <td>0.131413</td>
-          <td>0.264517</td>
-          <td>0.440573</td>
-          <td>1.011765</td>
+          <td>48.0</td>
+          <td>-0.050308</td>
+          <td>0.114654</td>
+          <td>-0.415164</td>
+          <td>-0.104909</td>
+          <td>-0.012596</td>
+          <td>0.006533</td>
+          <td>0.205341</td>
         </tr>
         <tr>
           <th>3</th>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>192.0</td>
-          <td>-0.069871</td>
-          <td>0.086003</td>
-          <td>-0.353001</td>
-          <td>-0.114314</td>
-          <td>-0.079704</td>
+          <td>48.0</td>
+          <td>-0.087232</td>
+          <td>0.102713</td>
+          <td>-0.397466</td>
+          <td>-0.137709</td>
+          <td>-0.076626</td>
           <td>0.000000</td>
-          <td>0.124086</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>scml.scml2020.agents.random.RandomAgent</td>
-          <td>192.0</td>
-          <td>-0.637382</td>
-          <td>0.555812</td>
-          <td>-3.092969</td>
-          <td>-0.650298</td>
-          <td>-0.463156</td>
-          <td>-0.287384</td>
           <td>0.000000</td>
         </tr>
       </tbody>
@@ -1286,103 +1276,63 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.927083</td>
-          <td>1.706484e-89</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
+          <td>0.541667</td>
+          <td>8.289542e-07</td>
+          <td>48</td>
+          <td>48</td>
+          <td>48</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.713542</td>
-          <td>2.319714e-47</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>0.187500</td>
+          <td>3.707026e-01</td>
+          <td>48</td>
+          <td>48</td>
+          <td>48</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.869792</td>
-          <td>1.468612e-75</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>0.270833</td>
+          <td>5.876302e-02</td>
+          <td>48</td>
+          <td>48</td>
+          <td>48</td>
         </tr>
         <tr>
           <th>3</th>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.random.RandomAgent</td>
-          <td>0.307292</td>
-          <td>2.088472e-08</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>0.645833</td>
+          <td>9.685930e-10</td>
+          <td>48</td>
+          <td>48</td>
+          <td>48</td>
         </tr>
         <tr>
           <th>4</th>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.796875</td>
-          <td>5.102674e-61</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
+          <td>0.604167</td>
+          <td>1.745167e-08</td>
+          <td>48</td>
+          <td>48</td>
+          <td>48</td>
         </tr>
         <tr>
           <th>5</th>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.104167</td>
-          <td>2.489808e-01</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.random.RandomAgent</td>
-          <td>0.947917</td>
-          <td>2.129366e-95</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
-        </tr>
-        <tr>
-          <th>7</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.718750</td>
-          <td>3.866189e-48</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
-        </tr>
-        <tr>
-          <th>8</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.random.RandomAgent</td>
-          <td>0.796875</td>
-          <td>5.102674e-61</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
-        </tr>
-        <tr>
-          <th>9</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>scml.scml2020.agents.random.RandomAgent</td>
-          <td>0.927083</td>
-          <td>1.706484e-89</td>
-          <td>192</td>
-          <td>192</td>
-          <td>192</td>
+          <td>0.166667</td>
+          <td>5.220695e-01</td>
+          <td>48</td>
+          <td>48</td>
+          <td>48</td>
         </tr>
       </tbody>
     </table>
@@ -1427,27 +1377,22 @@ see the total score
         <tr>
           <th>0</th>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.264517</td>
+          <td>-0.012596</td>
         </tr>
         <tr>
           <th>1</th>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.243520</td>
+          <td>-0.017290</td>
         </tr>
         <tr>
           <th>2</th>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>-0.079704</td>
+          <td>-0.076626</td>
         </tr>
         <tr>
           <th>3</th>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>-0.298797</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>scml.scml2020.agents.random.RandomAgent</td>
-          <td>-0.463156</td>
+          <td>-0.214143</td>
         </tr>
       </tbody>
     </table>
@@ -1511,52 +1456,38 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Buy@0</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>-0.429885</td>
+          <td>00Mov@0</td>
+          <td>MovingRangeAgent</td>
+          <td>-0.139947</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>02Ind@1</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.781018</td>
+          <td>04Buy@2</td>
+          <td>BuyCheapSellExpensiveAgent</td>
+          <td>-1.117512</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>03Mov@1</td>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>05Dec@2</td>
+          <td>DecentralizingAgent</td>
           <td>0.000000</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>08Dec@4</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.000000</td>
+          <td>06Ind@3</td>
+          <td>IndDecentralizingAgent</td>
+          <td>0.205341</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00Mov@0</td>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>-0.077055</td>
+          <td>00Dec@0</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.112412</td>
         </tr>
       </tbody>
     </table>
     </div>
 
-
-
-or inspect any statistic we like
-
-.. code:: ipython3
-
-    ax = sns.violinplot(data=results.stats, x="step", y="activity_level")
-    ax.set(ylabel="Activity Level / Business Size ($)", xlabel="Step Number", yscale="log")
-    
-    plt.gcf().show()
-
-
-
-.. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
 
 
 Let’s see how did the location at the production graph affect the score
@@ -1565,6 +1496,7 @@ of each type.
 .. code:: ipython3
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
+    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
     sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
                  x="level", y="score", hue="agent_type")
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
@@ -1572,7 +1504,7 @@ of each type.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_79_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
 
 
 Now that you can run simulations and complete tournament, let’s see how
