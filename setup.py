@@ -24,7 +24,7 @@ def read(*names, **kwargs):
 
 setup(
     name="scml",
-    version="0.3.0",
+    version="0.3.1",
     description="ANAC Supply Chain Management League Platform",
     long_description="%s\n%s"
     % (
