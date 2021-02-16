@@ -1,4 +1,5 @@
 """Implements the world class for the SCML2020 world """
+import sys
 import copy
 import itertools
 import logging
@@ -50,13 +51,16 @@ from negmas.situated import (
 )
 
 from scml.scml2019.utils import _realin
+from .common import is_system_agent, SYSTEM_BUYER_ID, SYSTEM_SELLER_ID
 from .common import *
+from ..common import integer_cut, intin, realin, make_array
 
 __all__ = [
     "FactoryState",
     "SCML2020Agent",
     "AWI",
     "SCML2020World",
+    "SCML2021World",
     "FinancialReport",
     "FactoryProfile",
     "Factory",
@@ -71,8 +75,8 @@ ContractInfo = namedtuple(
 CompensationRecord = namedtuple(
     "CompensationRecord", ["product", "quantity", "money", "seller_bankrupt", "factory"]
 )
-"""A record of delayed compensation used when a factory goes bankrupt to keep honoring its future contracts to the
-limit possible"""
+"""A record of delayed compensation used when a factory goes bankrupt to keep
+honoring its future contracts to the limit possible"""
 
 
 @dataclass
@@ -242,7 +246,7 @@ class Factory:
         agent_name: Optional[str] = None,
         confirm_production: bool = True,
         initial_inventory: Optional[np.ndarray] = None,
-        disallow_concurrent_negs_with_same_partners = False,
+        disallow_concurrent_negs_with_same_partners=False,
     ):
         self.confirm_production = confirm_production
         self.production_buy_missing = production_buy_missing
@@ -256,7 +260,9 @@ class Factory:
         self.__profile = profile
         self.world = world
         self.profile = copy.deepcopy(profile)
-        self._disallow_concurrent_negs_with_same_partners=disallow_concurrent_negs_with_same_partners
+        self._disallow_concurrent_negs_with_same_partners = (
+            disallow_concurrent_negs_with_same_partners
+        )
         """The readonly factory profile (See `FactoryProfile` )"""
         self.commands = NO_COMMAND * np.ones(
             (world.n_steps, profile.n_lines), dtype=int
@@ -793,7 +799,7 @@ class AWI(AgentWorldInterface):
         quantity: Union[int, Tuple[int, int]],
         unit_price: Union[int, Tuple[int, int]],
         time: Union[int, Tuple[int, int]],
-        controller: Optional[SAOController],
+        controller: Optional[SAOController] = None,
         negotiators: List[Negotiator] = None,
         partners: List[str] = None,
         extra: Dict[str, Any] = None,
@@ -865,7 +871,11 @@ class AWI(AgentWorldInterface):
             self.request_negotiation(
                 is_buy, product, quantity, unit_price, time, partner, negotiator, extra
             )
-            if not self._world.a2f[partner].is_bankrupt and (tuple(sorted([partner, self.agent.id])) not in self._world._registered_negs)
+            if not self._world.a2f[partner].is_bankrupt
+            and (
+                tuple(sorted([partner, self.agent.id]))
+                not in self._world._registered_negs
+            )
             else False
             for partner, negotiator in zip(partners, negotiators)
         ]
@@ -934,6 +944,7 @@ class AWI(AgentWorldInterface):
 
         if tuple(sorted([partner, self.agent.id])) in self._world._registered_negs:
             return False
+
         def values(x: Union[int, Tuple[int, int]]):
             if not isinstance(x, Iterable):
                 return int(x), int(x)
@@ -965,7 +976,7 @@ class AWI(AgentWorldInterface):
             annotation=annotation,
             extra=dict(**extra),
         )
-        result =  self.request_negotiation_about(
+        result = self.request_negotiation_about(
             issues=issues, partners=partners, req_id=req_id, annotation=annotation
         )
         if result:
@@ -1099,6 +1110,29 @@ class AWI(AgentWorldInterface):
     # ---------------------
     # Information Gathering
     # ---------------------
+
+    @property
+    def trading_prices(self) -> np.ndarray:
+        """Returns the current trading prices of all products"""
+        return (
+            self._world.trading_prices if self._world.publish_trading_prices else None
+        )
+
+    @property
+    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
+        """
+        The exogenous contracts in the current step for all products
+
+        Returns:
+            A list of tuples giving the total quantity and total price of
+            all revealed exogenous contracts of all products at the current
+            step.
+        """
+        return (
+            self._world.exogenous_contracts_summary
+            if self._world.publish_exogenous_summary
+            else None
+        )
 
     @property
     def state(self) -> FactoryState:
@@ -1670,15 +1704,23 @@ class SCML2020World(TimeInAgreementMixin, World):
         force_signing=False,
         batch_signing=True,
         name: str = None,
+        # public information
+        publish_exogenous_summary=True,
+        publish_trading_prices=True,
         # debugging parameters
         agent_name_reveals_position: bool = True,
         agent_name_reveals_type: bool = True,
+        # evaluation paramters
+        inventory_valuation_trading: float = 0.5,
+        inventory_valuation_catalog: float = 0.0,
         **kwargs,
     ):
         if negotiation_quota_per_step is None:
             negotiation_quota_per_step = len(agent_types) * n_steps // 2
         if exogenous_horizon is None:
             exogenous_horizon = n_steps
+        self.publish_exogenous_summary = publish_exogenous_summary
+        self.publish_trading_prices = publish_trading_prices
         self.allow_buying_output = allow_buying_output
         self.allow_selling_input = allow_selling_input
         self.exogenous_horizon = exogenous_horizon
@@ -1689,6 +1731,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.spot_discount = spot_discount
         self.spot_multiplier = spot_multiplier
         self.catalog_quantities = catalog_quantities
+        self.inventory_valuation_trading = inventory_valuation_trading
+        self.inventory_valuation_catalog = inventory_valuation_catalog
         kwargs["log_to_file"] = not no_logs
         if compact:
             kwargs["log_screen_level"] = logging.CRITICAL
@@ -1745,6 +1789,17 @@ class SCML2020World(TimeInAgreementMixin, World):
         )
         self.bulletin_board.record(
             "settings", buy_missing_products, "buy_missing_products"
+        )
+        self.bulletin_board.record(
+            "settings", inventory_valuation_trading, "inventory_valuation_trading"
+        )
+        self.bulletin_board.record(
+            "settings", inventory_valuation_catalog, "inventory_valuation_catalog"
+        )
+        self.bulletin_board.record(
+            "settings",
+            inventory_valuation_trading + inventory_valuation_catalog,
+            "inventory_valuation",
         )
         self.bulletin_board.record("settings", borrow_on_breach, "borrow_on_breach")
         self.bulletin_board.record("settings", bankruptcy_limit, "bankruptcy_limit")
@@ -1817,11 +1872,18 @@ class SCML2020World(TimeInAgreementMixin, World):
             signing_delay=signing_delay,
             agent_name_reveals_position=agent_name_reveals_position,
             agent_name_reveals_type=agent_name_reveals_type,
+            publish_exogenous_summary=publish_exogenous_summary,
+            publish_trading_prices=publish_trading_prices,
         )
         TimeInAgreementMixin.init(self, time_field="time")
         self.spot_market_global_loss = spot_market_global_loss
         self.bulletin_board.add_section("reports_time")
         self.bulletin_board.add_section("reports_agent")
+        if self.publish_exogenous_summary:
+            self.bulletin_board.add_section("exogenous_contracts_summary")
+        if self.publish_trading_prices:
+            self.bulletin_board.add_section("trading_prices")
+
         self.production_no_borrow = production_no_borrow
         self.production_no_bankruptcy = production_no_bankruptcy
         self.production_penalty = production_penalty
@@ -2088,6 +2150,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         )
         self._agent_spot_quantity = np.zeros((n_agents, n_steps), dtype=int)
         self._registered_negs: Set[Tuple[str]] = set()
+        if self.publish_trading_prices:
+            self.bulletin_board.record("trading_prices", self._trading_price[:, 1])
 
     @classmethod
     def generate(
@@ -2104,6 +2168,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
         max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
+        inventory_valuation_trading: Union[
+            np.ndarray, Tuple[float, float], float
+        ] = 0.5,
+        inventory_valuation_catalog: Union[
+            np.ndarray, Tuple[float, float], float
+        ] = 0.0,
         initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
         cost_increases_with_level=True,
         horizon: Union[Tuple[float, float], float] = (0.2, 0.5),
@@ -2130,6 +2200,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             production_costs: Production cost per factory
             profit_means: Mean profitability per production level (i.e. process).
             profit_stddevs:  Std. Dev. of the profitability of every level (i.e. process).
+            inventory_valuation_catalog: The fraction of catalog price to value items at the end.
+            inventory_valuation_trading: The fraction of trading price to value items at the end.
             max_productivity:  Maximum possible productivity per level (i.e. process).
             initial_balance: The initial balance of all agents
             n_agents_per_process: Number of agents per process
@@ -2182,6 +2254,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             equal_exogenous_sales=equal_exogenous_sales,
             equal_exogenous_supply=equal_exogenous_supply,
             cash_availability=cash_availability,
+            inventory_valuation_trading=inventory_valuation_trading,
+            inventory_valuation_catalog=inventory_valuation_catalog,
             profit_basis="min"
             if profit_basis == np.min
             else "mean"
@@ -2192,6 +2266,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             if profit_basis == np.median
             else "unknown",
         )
+        inventory_valuation_trading = realin(inventory_valuation_trading)
+        inventory_valuation_catalog = realin(inventory_valuation_catalog)
         n_processes = intin(n_processes)
         n_steps = intin(n_steps)
         exogenous_control = realin(exogenous_control)
@@ -2556,6 +2632,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             info=info,
             force_signing=force_signing,
             exogenous_horizon=horizon,
+            inventory_valuation_trading=inventory_valuation_trading,
+            inventory_valuation_catalog=inventory_valuation_catalog,
             **kwargs,
         )
 
@@ -2631,6 +2709,30 @@ class SCML2020World(TimeInAgreementMixin, World):
                         contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
                     else:
                         contract.signatures[SYSTEM_BUYER_ID] = SYSTEM_BUYER_ID
+
+            # publish public information
+            # --------------------------
+            if self.publish_trading_prices:
+                self.bulletin_board.record(
+                    "trading_prices", value=self.trading_prices, key=self.current_step,
+                )
+            if self.publish_exogenous_summary:
+                q, p = np.zeros(self.n_products), np.zeros(self.n_products)
+                for contract in self.exogenous_contracts[s]:
+                    product = contract.annotation["product"]
+                    quantity, unit_price = (
+                        contract.agreement["quantity"],
+                        contract.agreement["unit_price"],
+                    )
+                    q[product] += quantity
+                    p[product] += quantity * unit_price
+                self.exogenous_contracts_summary = [(a, b) for a, b in zip(q, p)]
+                self.bulletin_board.record(
+                    "exogenous_contracts_summary",
+                    value=self.exogenous_contracts_summary,
+                    key=self.current_step,
+                )
+
             return
 
         # update trading price information
@@ -3283,12 +3385,24 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.record_bankrupt(factory)
         return nullified_contracts
 
-    def scores(self, assets_multiplier: float = 0.5) -> Dict[str, float]:
-        """Scores of all agents given the asset multiplier.
+    def scores(
+        self,
+        assets_multiplier_trading: Optional[float] = None,
+        assets_multiplier_catalog: Optional[float] = None,
+        assets_multiplier: Optional[float] = None,
+    ) -> Dict[str, float]:
+        """scores of all agents given the asset multiplier.
 
-        Args:
-            assets_multiplier: A multiplier to multiply the assets with.
+        args:
+            assets_multiplier: a multiplier to multiply the assets with.
         """
+        if assets_multiplier is not None and assets_multiplier_trading is None:
+            assets_multiplier_trading = assets_multiplier
+
+        if assets_multiplier_catalog is None:
+            assets_multiplier_catalog = self.inventory_valuation_catalog
+        if assets_multiplier_trading is None:
+            assets_multiplier_trading = self.inventory_valuation_trading
         scores = dict()
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
@@ -3296,9 +3410,18 @@ class SCML2020World(TimeInAgreementMixin, World):
             factory = self.a2f[aid]
             scores[aid] = (
                 factory.current_balance
-                + assets_multiplier
-                * np.sum(factory.current_inventory * self.trading_prices)
-                - factory.initial_balance
+                + (
+                    assets_multiplier_trading
+                    * np.sum(factory.current_inventory * self.trading_prices)
+                )
+                if assets_multiplier_trading
+                else 0.0
+                + (
+                    assets_multiplier_catalog
+                    * np.sum(factory.current_inventory * self.catalog_prices)
+                )
+                if assets_multiplier_catalog
+                else 0.0 - factory.initial_balance
             ) / factory.initial_balance
         return scores
 
@@ -3435,3 +3558,23 @@ class SCML2020World(TimeInAgreementMixin, World):
             figsize=figsize,
             **kwargs,
         )
+
+
+class SCML2021World(SCML2020World):
+    def __init__(self, *args, **kwargs):
+        kwargs["publish_trading_prices"] = True
+        kwargs["publish_exogenous_summary"] = True
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def generate(
+        cls,
+        *args,
+        inventory_valuation_trading: Union[np.ndarray, Tuple[float, float], float] = (
+            0.0,
+            0.5,
+        ),
+        **kwargs,
+    ) -> Dict[str, Any]:
+        kwargs["inventory_valuation_trading"] = inventory_valuation_trading
+        return super().generate(*args, **kwargs)

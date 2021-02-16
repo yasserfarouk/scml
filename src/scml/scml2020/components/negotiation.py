@@ -73,10 +73,13 @@ class NegotiationManager:
           action (i.e. not starting with `on_`) are overridden this way.
     """
 
-    def __init__(self, *args, horizon=5, negotiate_on_signing=True, **kwargs):
+    def __init__(
+        self, *args, horizon=5, negotiate_on_signing=True, logdebug=False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self._horizon = horizon
         self._negotiate_on_signing = negotiate_on_signing
+        self._log = logdebug
 
     def init(self):
         # set horizon to exogenous horizon
@@ -135,7 +138,6 @@ class NegotiationManager:
         )
 
     def step(self):
-        # self.awi.logdebug_agent(f"Enter step:\n{pformat(self.internal_state)}")
         super().step()
         """Generates buy and sell negotiations as needed"""
         s = self.awi.current_step
@@ -152,7 +154,8 @@ class NegotiationManager:
                 return
             self._generate_negotiations(nxt, False)
             self._generate_negotiations(nxt, True)
-        # self.awi.logdebug_agent(f"End step:\n{pformat(self.internal_state)}")
+        if self._log:
+            self.awi.logdebug_agent(f"End step:\n{pformat(self.internal_state)}")
 
     def on_contracts_finalized(
         self,

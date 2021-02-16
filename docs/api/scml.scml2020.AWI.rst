@@ -13,6 +13,7 @@ AWI
       ~AWI.all_consumers
       ~AWI.all_suppliers
       ~AWI.catalog_prices
+      ~AWI.exogenous_contract_summary
       ~AWI.inputs
       ~AWI.my_consumers
       ~AWI.my_input_product
@@ -26,6 +27,7 @@ AWI
       ~AWI.outputs
       ~AWI.profile
       ~AWI.state
+      ~AWI.trading_prices
 
    .. rubric:: Methods Summary
 
@@ -47,6 +49,7 @@ AWI
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
    .. autoattribute:: catalog_prices
+   .. autoattribute:: exogenous_contract_summary
    .. autoattribute:: inputs
    .. autoattribute:: my_consumers
    .. autoattribute:: my_input_product
@@ -60,6 +63,7 @@ AWI
    .. autoattribute:: outputs
    .. autoattribute:: profile
    .. autoattribute:: state
+   .. autoattribute:: trading_prices
 
    .. rubric:: Methods Documentation
 

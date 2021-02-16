@@ -15,7 +15,11 @@ from scml.scml2020.components import (
 from ..components.trading import PredictionBasedTradingStrategy
 from ..components.signing import KeepOnlyGoodPrices
 
-__all__ = ["DecentralizingAgent", "IndDecentralizingAgent"]
+__all__ = [
+    "DecentralizingAgent",
+    "IndDecentralizingAgent",
+    "DecentralizingAgentWithLogging",
+]
 
 from ..world import SCML2020Agent
 
@@ -55,6 +59,24 @@ class DecentralizingAgent(
     SCML2020Agent,
 ):
     pass
+
+
+class DecentralizingAgentWithLogging(
+    KeepOnlyGoodPrices,
+    _NegotiationCallbacks,
+    StepNegotiationManager,
+    PredictionBasedTradingStrategy,
+    SupplyDrivenProductionStrategy,
+    SCML2020Agent,
+):
+    def __init__(self, *args, buying_margin=0.33, selling_margin=0.33, **kwargs):
+        super().__init__(
+            *args,
+            buying_margin=buying_margin,
+            selling_margin=selling_margin,
+            logdebug=True,
+            **kwargs
+        )
 
 
 class IndDecentralizingAgent(

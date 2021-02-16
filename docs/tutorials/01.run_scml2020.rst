@@ -1,4 +1,4 @@
-Run a session of the SCML world (2020)
+Run a session of the SCML world (2021)
 --------------------------------------
 
 The SCML world (Supply Chain Management League) runs on top of
@@ -8,13 +8,19 @@ In this tutorial, you will test a run of this world.
 
 Firstly, let’s import everything from the SCML app
 
+**Note that the 2021 standard and collusion leagues are almost the same
+as 2020 versions with minor changes in the configuration and available
+data to the agent which will be explained later**. All agents developed
+for SCML2020 run with no modification in SCML2021’s standard and
+collusion leagues.
+
 .. code:: ipython3
 
     from scml.scml2020 import *
 
 There are several ways to create an SCML world. One of the simplest is
-to use the ``generate`` method of the ``SCML2020World`` class. This will
-create a dict that can be passed to the ``SCML2020World`` constructor as
+to use the ``generate`` method of the ``SCML2021World`` class. This will
+create a dict that can be passed to the ``SCML2021World`` constructor as
 keyword arguments.
 
 Here we explicitly set ``construct_graphs`` to True which slows the
@@ -28,8 +34,8 @@ happening in the world.
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate(
+    world = SCML2021World(
+        **SCML2021World.generate(
             agent_types=agent_types,
             n_steps=50
         ), 
@@ -60,7 +66,7 @@ Now you can run this world simulation by just calling ``run``.
 
 .. parsed-literal::
 
-    100%|██████████| 50/50 [01:41<00:00,  2.02s/it]
+    100%|██████████| 50/50 [02:14<00:00,  2.68s/it]
 
 
 Let’s see what happened in this run. Firstly, how many negotiations were
@@ -161,15 +167,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_10Dec@3',
-     'spot_market_loss_10Dec@3',
-     'balance_10Dec@3',
-     'inventory_10Dec@3_input',
-     'inventory_10Dec@3_output',
-     'productivity_10Dec@3',
-     'assets_10Dec@3',
-     'bankrupt_10Dec@3',
-     'score_10Dec@3']
+    ['spot_market_quantity_08Mov@2',
+     'spot_market_loss_08Mov@2',
+     'balance_08Mov@2',
+     'inventory_08Mov@2_input',
+     'inventory_08Mov@2_output',
+     'productivity_08Mov@2',
+     'assets_08Mov@2',
+     'bankrupt_08Mov@2',
+     'score_08Mov@2']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -215,15 +221,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_10Dec@3': (0.0, 0.0),
-     'balance_10Dec@3': (31855, 32031),
-     'bankrupt_10Dec@3': (False, False),
-     'inventory_10Dec@3_input': (0, 0),
-     'inventory_10Dec@3_output': (0, 0),
-     'productivity_10Dec@3': (0.0, 0.0),
-     'score_10Dec@3': (0.0, 0.00552503531627688),
-     'spot_market_loss_10Dec@3': (0.3, 1.3619999999999999),
-     'spot_market_quantity_10Dec@3': (0, 6)}
+    {'assets_08Mov@2': (0.0, 0.0),
+     'balance_08Mov@2': (22204, 22204),
+     'bankrupt_08Mov@2': (False, False),
+     'inventory_08Mov@2_input': (0, 0),
+     'inventory_08Mov@2_output': (0, 0),
+     'productivity_08Mov@2': (0.0, 0.0),
+     'score_08Mov@2': (0.0, 0.0),
+     'spot_market_loss_08Mov@2': (0.3, 0.3),
+     'spot_market_quantity_08Mov@2': (0, 0)}
 
 
 .. code:: ipython3
@@ -299,7 +305,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [10Dec@3] of type ['decentralizing'] won at [0.552503531627688]%
+    [08Mov@2] of type ['movingrange'] won at [0.0]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -501,51 +507,77 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>890</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>9</td>
-          <td>61</td>
-          <td>39</td>
-          <td>2</td>
-          <td>False</td>
+          <th>763</th>
+          <td>03Buy@1</td>
+          <td>06Dec@2</td>
+          <td>17</td>
+          <td>79</td>
+          <td>25</td>
+          <td>7</td>
           <td>True</td>
+          <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1060</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>14</td>
-          <td>55</td>
-          <td>39</td>
-          <td>4</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1147</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>15</td>
-          <td>55</td>
-          <td>39</td>
-          <td>5</td>
-          <td>False</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>982</th>
-          <td>08Ind@2</td>
-          <td>10Dec@3</td>
-          <td>13</td>
+          <th>834</th>
+          <td>01Dec@0</td>
+          <td>04Dec@1</td>
+          <td>19</td>
           <td>54</td>
-          <td>39</td>
+          <td>19</td>
+          <td>9</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1296</th>
+          <td>00Ind@0</td>
+          <td>04Dec@1</td>
+          <td>29</td>
+          <td>52</td>
+          <td>19</td>
+          <td>20</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1263</th>
+          <td>06Dec@2</td>
+          <td>09Dec@3</td>
+          <td>29</td>
+          <td>49</td>
+          <td>31</td>
+          <td>19</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>685</th>
+          <td>06Dec@2</td>
+          <td>11Dec@3</td>
+          <td>15</td>
+          <td>45</td>
+          <td>31</td>
+          <td>5</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>582</th>
+          <td>03Buy@1</td>
+          <td>07Dec@2</td>
+          <td>7</td>
+          <td>35</td>
+          <td>25</td>
           <td>3</td>
           <td>True</td>
           <td>False</td>
@@ -553,78 +585,52 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>1639</th>
-          <td>08Ind@2</td>
-          <td>10Dec@3</td>
-          <td>24</td>
-          <td>50</td>
-          <td>39</td>
-          <td>14</td>
+          <th>585</th>
+          <td>05Buy@1</td>
+          <td>06Dec@2</td>
+          <td>13</td>
+          <td>35</td>
+          <td>25</td>
+          <td>3</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1336</th>
-          <td>01Buy@0</td>
+          <th>590</th>
+          <td>03Buy@1</td>
+          <td>06Dec@2</td>
+          <td>7</td>
+          <td>35</td>
+          <td>25</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1082</th>
           <td>04Dec@1</td>
+          <td>06Dec@2</td>
+          <td>25</td>
+          <td>35</td>
+          <td>25</td>
+          <td>15</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1204</th>
+          <td>03Buy@1</td>
+          <td>07Dec@2</td>
+          <td>26</td>
+          <td>35</td>
+          <td>25</td>
           <td>18</td>
-          <td>35</td>
-          <td>21</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1437</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>19</td>
-          <td>35</td>
-          <td>21</td>
-          <td>10</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1939</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>28</td>
-          <td>35</td>
-          <td>21</td>
-          <td>19</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2039</th>
-          <td>00Dec@0</td>
-          <td>04Dec@1</td>
-          <td>29</td>
-          <td>35</td>
-          <td>21</td>
-          <td>21</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2092</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>32</td>
-          <td>35</td>
-          <td>21</td>
-          <td>22</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -679,116 +685,64 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>982</th>
-          <td>08Ind@2</td>
-          <td>10Dec@3</td>
-          <td>13</td>
+          <th>763</th>
+          <td>03Buy@1</td>
+          <td>06Dec@2</td>
+          <td>17</td>
+          <td>79</td>
+          <td>25</td>
+          <td>7</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>834</th>
+          <td>01Dec@0</td>
+          <td>04Dec@1</td>
+          <td>19</td>
           <td>54</td>
-          <td>39</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1639</th>
-          <td>08Ind@2</td>
-          <td>10Dec@3</td>
-          <td>24</td>
-          <td>50</td>
-          <td>39</td>
-          <td>14</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1336</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>18</td>
-          <td>35</td>
-          <td>21</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1437</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
           <td>19</td>
-          <td>35</td>
-          <td>21</td>
-          <td>10</td>
+          <td>9</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1939</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>28</td>
-          <td>35</td>
-          <td>21</td>
-          <td>19</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>2039</th>
-          <td>00Dec@0</td>
+          <th>1296</th>
+          <td>00Ind@0</td>
           <td>04Dec@1</td>
           <td>29</td>
-          <td>35</td>
-          <td>21</td>
-          <td>21</td>
+          <td>52</td>
+          <td>19</td>
+          <td>20</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>2092</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>32</td>
-          <td>35</td>
-          <td>21</td>
-          <td>22</td>
+          <th>1263</th>
+          <td>06Dec@2</td>
+          <td>09Dec@3</td>
+          <td>29</td>
+          <td>49</td>
+          <td>31</td>
+          <td>19</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1650</th>
-          <td>02Dec@0</td>
-          <td>04Dec@1</td>
-          <td>23</td>
-          <td>28</td>
-          <td>21</td>
-          <td>14</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1112</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>7</td>
-          <td>26</td>
-          <td>21</td>
+          <th>685</th>
+          <td>06Dec@2</td>
+          <td>11Dec@3</td>
+          <td>15</td>
+          <td>45</td>
+          <td>31</td>
           <td>5</td>
           <td>True</td>
           <td>False</td>
@@ -796,13 +750,65 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>1531</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>22</td>
+          <th>582</th>
+          <td>03Buy@1</td>
+          <td>07Dec@2</td>
+          <td>7</td>
+          <td>35</td>
           <td>25</td>
-          <td>21</td>
-          <td>12</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>585</th>
+          <td>05Buy@1</td>
+          <td>06Dec@2</td>
+          <td>13</td>
+          <td>35</td>
+          <td>25</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>590</th>
+          <td>03Buy@1</td>
+          <td>06Dec@2</td>
+          <td>7</td>
+          <td>35</td>
+          <td>25</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1082</th>
+          <td>04Dec@1</td>
+          <td>06Dec@2</td>
+          <td>25</td>
+          <td>35</td>
+          <td>25</td>
+          <td>15</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1204</th>
+          <td>03Buy@1</td>
+          <td>07Dec@2</td>
+          <td>26</td>
+          <td>35</td>
+          <td>25</td>
+          <td>18</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -851,106 +857,6 @@ Let’s check some of the contracts that were fully executed
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <th>890</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>9</td>
-          <td>61</td>
-          <td>39</td>
-          <td>2</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1060</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>14</td>
-          <td>55</td>
-          <td>39</td>
-          <td>4</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1147</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>15</td>
-          <td>55</td>
-          <td>39</td>
-          <td>5</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>2201</th>
-          <td>01Buy@0</td>
-          <td>04Dec@1</td>
-          <td>35</td>
-          <td>25</td>
-          <td>21</td>
-          <td>25</td>
-          <td>01Buy@0:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>673</th>
-          <td>06Buy@2</td>
-          <td>11Buy@3</td>
-          <td>16</td>
-          <td>15</td>
-          <td>21</td>
-          <td>1</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>655</th>
-          <td>06Buy@2</td>
-          <td>11Buy@3</td>
-          <td>13</td>
-          <td>11</td>
-          <td>21</td>
-          <td>1</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1146</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>7</td>
-          <td>9</td>
-          <td>37</td>
-          <td>5</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>986</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>9</td>
-          <td>9</td>
-          <td>21</td>
-          <td>3</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1035</th>
-          <td>06Buy@2</td>
-          <td>09Ind@3</td>
-          <td>8</td>
-          <td>9</td>
-          <td>21</td>
-          <td>4</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1041</th>
-          <td>06Buy@2</td>
-          <td>10Dec@3</td>
-          <td>11</td>
-          <td>9</td>
-          <td>21</td>
-          <td>4</td>
-          <td>06Buy@2:product(1.0)</td>
-        </tr>
       </tbody>
     </table>
     </div>
@@ -997,18 +903,18 @@ Did any agents go bankrupt and when?
 
 .. parsed-literal::
 
-    {'00Dec@0': 'No',
-     '01Buy@0': 'at: 35',
-     '02Dec@0': 'No',
-     '03Ind@1': 'No',
+    {'00Ind@0': 'No',
+     '01Dec@0': 'No',
+     '02Buy@0': 'No',
+     '03Buy@1': 'No',
      '04Dec@1': 'No',
      '05Buy@1': 'No',
-     '06Buy@2': 'at: 5',
-     '07Mov@2': 'No',
-     '08Ind@2': 'No',
-     '09Ind@3': 'No',
-     '10Dec@3': 'No',
-     '11Buy@3': 'No'}
+     '06Dec@2': 'No',
+     '07Dec@2': 'No',
+     '08Mov@2': 'No',
+     '09Dec@3': 'No',
+     '10Mov@3': 'No',
+     '11Dec@3': 'No'}
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -1080,21 +986,23 @@ Now that you can run simple world simulations, let’s try to run a
 complete tournament and see its results. Let’s start by running a
 standard tournament (in which each agent is represented by a single
 factory). Running a collusion tournament will be exactly the same with
-the only difference that ``anac2020_std`` will be replaced with
-``anac2020_collusion``.
+the only difference that ``anac2021_std`` will be replaced with
+``anac2021_collusion``.Running a one-shot tournament (new in 2021)
+similarily just requires a change from ``anac2021_std`` to
+``anac2021_oneshot``
 
 Note that in the real competition we use thousands of configurations and
 longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    from scml.scml2020.utils import anac2020_std
+    from scml.scml2020.utils import anac2021_std
 
 .. code:: ipython3
 
     tournament_types = agent_types
     # may take a long time
-    results = anac2020_std(
+    results = anac2021_std(
         competitors=tournament_types,  
         n_configs=12, # number of different configurations to generate 
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
@@ -1115,7 +1023,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['scml.scml2020.agents.decentralizing.IndDecentralizingAgent']
+    ['scml.scml2020.agents.moving.MovingRangeAgent']
 
 
 
@@ -1130,7 +1038,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    48
+    144
 
 
 
@@ -1183,49 +1091,49 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>48.0</td>
-          <td>-0.306651</td>
-          <td>0.397624</td>
-          <td>-2.511036</td>
-          <td>-0.283724</td>
-          <td>-0.214143</td>
-          <td>-0.148968</td>
+          <td>108.0</td>
+          <td>-0.128174</td>
+          <td>0.107585</td>
+          <td>-0.496641</td>
+          <td>-0.207047</td>
+          <td>-0.135914</td>
+          <td>-0.01868</td>
           <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>48.0</td>
-          <td>-0.055816</td>
-          <td>0.093124</td>
-          <td>-0.281724</td>
-          <td>-0.102771</td>
-          <td>-0.017290</td>
-          <td>0.000000</td>
-          <td>0.133468</td>
+          <td>108.0</td>
+          <td>-0.065516</td>
+          <td>0.092068</td>
+          <td>-0.363760</td>
+          <td>-0.121791</td>
+          <td>-0.010660</td>
+          <td>0.00000</td>
+          <td>0.121917</td>
         </tr>
         <tr>
           <th>2</th>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>48.0</td>
-          <td>-0.050308</td>
-          <td>0.114654</td>
-          <td>-0.415164</td>
-          <td>-0.104909</td>
-          <td>-0.012596</td>
-          <td>0.006533</td>
-          <td>0.205341</td>
+          <td>108.0</td>
+          <td>-0.065086</td>
+          <td>0.089533</td>
+          <td>-0.319030</td>
+          <td>-0.126586</td>
+          <td>-0.010538</td>
+          <td>0.00000</td>
+          <td>0.019261</td>
         </tr>
         <tr>
           <th>3</th>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>48.0</td>
-          <td>-0.087232</td>
-          <td>0.102713</td>
-          <td>-0.397466</td>
-          <td>-0.137709</td>
-          <td>-0.076626</td>
+          <td>108.0</td>
+          <td>-0.067592</td>
+          <td>0.092628</td>
+          <td>-0.377111</td>
+          <td>-0.112089</td>
           <td>0.000000</td>
+          <td>0.00000</td>
           <td>0.000000</td>
         </tr>
       </tbody>
@@ -1276,63 +1184,63 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>0.541667</td>
-          <td>8.289542e-07</td>
-          <td>48</td>
-          <td>48</td>
-          <td>48</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>0.064815</td>
+          <td>0.978133</td>
+          <td>108</td>
+          <td>108</td>
+          <td>108</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.187500</td>
-          <td>3.707026e-01</td>
-          <td>48</td>
-          <td>48</td>
-          <td>48</td>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>0.305556</td>
+          <td>0.000075</td>
+          <td>108</td>
+          <td>108</td>
+          <td>108</td>
         </tr>
         <tr>
           <th>2</th>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.270833</td>
-          <td>5.876302e-02</td>
-          <td>48</td>
-          <td>48</td>
-          <td>48</td>
+          <td>0.240741</td>
+          <td>0.003704</td>
+          <td>108</td>
+          <td>108</td>
+          <td>108</td>
         </tr>
         <tr>
           <th>3</th>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.645833</td>
-          <td>9.685930e-10</td>
-          <td>48</td>
-          <td>48</td>
-          <td>48</td>
+          <td>0.361111</td>
+          <td>0.000001</td>
+          <td>108</td>
+          <td>108</td>
+          <td>108</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.604167</td>
-          <td>1.745167e-08</td>
-          <td>48</td>
-          <td>48</td>
-          <td>48</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>0.185185</td>
+          <td>0.049064</td>
+          <td>108</td>
+          <td>108</td>
+          <td>108</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.166667</td>
-          <td>5.220695e-01</td>
-          <td>48</td>
-          <td>48</td>
-          <td>48</td>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>0.342593</td>
+          <td>0.000005</td>
+          <td>108</td>
+          <td>108</td>
+          <td>108</td>
         </tr>
       </tbody>
     </table>
@@ -1376,23 +1284,23 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>-0.012596</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>-0.017290</td>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>-0.010538</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>-0.076626</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>-0.010660</td>
         </tr>
         <tr>
           <th>3</th>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>-0.214143</td>
+          <td>-0.135914</td>
         </tr>
       </tbody>
     </table>
@@ -1456,33 +1364,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Mov@0</td>
-          <td>MovingRangeAgent</td>
-          <td>-0.139947</td>
+          <td>02Dec@1</td>
+          <td>DecentralizingAgent</td>
+          <td>0.0</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>04Buy@2</td>
-          <td>BuyCheapSellExpensiveAgent</td>
-          <td>-1.117512</td>
+          <td>03Ind@1</td>
+          <td>IndDecentralizingAgent</td>
+          <td>0.0</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>05Dec@2</td>
-          <td>DecentralizingAgent</td>
-          <td>0.000000</td>
+          <td>04Buy@2</td>
+          <td>BuyCheapSellExpensiveAgent</td>
+          <td>0.0</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>06Ind@3</td>
-          <td>IndDecentralizingAgent</td>
-          <td>0.205341</td>
+          <td>02Mov@1</td>
+          <td>MovingRangeAgent</td>
+          <td>0.0</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00Dec@0</td>
-          <td>DecentralizingAgent</td>
-          <td>-0.112412</td>
+          <td>03Ind@1</td>
+          <td>IndDecentralizingAgent</td>
+          <td>0.0</td>
         </tr>
       </tbody>
     </table>
@@ -1507,8 +1415,341 @@ of each type.
 .. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
 
 
+Running a One-Shot tournament
+-----------------------------
+
+In 2021, a new track was introduced to the SCM league called the
+SCML-OneShot track which simplified the problem in order to focus
+research efforts on the core many-to-many concurrent negotiation
+challeng. You can run a tournament for this league in almost the same
+way as we did with standard/collusion tournaments using
+``anac2021_oneshot``
+
+Note that in the real competition we use thousands of configurations and
+longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
+
+.. code:: ipython3
+
+    from scml.scml2020.utils import anac2021_oneshot
+    from scml.oneshot.builtin import RandomOneShotAgent, SyncRandomOneShotAgent
+
+.. code:: ipython3
+
+    tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent]
+    # may take a long time
+    results = anac2021_oneshot(
+        competitors=tournament_types,  
+        n_configs=12, # number of different configurations to generate 
+        n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
+        n_steps = 10, # number of days (simulation steps) per simulation
+        print_exceptions=True,
+    ) 
+
+Who was the winner?
+
+.. code:: ipython3
+
+    # just make names easier to read 
+    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
+    results.winners
+
+
+
+
+.. parsed-literal::
+
+    ['scml.oneshot.builtin.SyncRandomOneShotAgent']
+
+
+
+How many simulations were actually run?
+
+.. code:: ipython3
+
+    len(results.scores.run_id.unique())
+
+
+
+
+.. parsed-literal::
+
+    24
+
+
+
+The total number of simulations :math:`n_{s}` will be
+:math:`n_t \times n_c \times n_r` where :math:`n_t` is the number of
+competitor agent types, :math:`n_c` is the number of configurations, and
+:math:`n_r` is the number of runs per configuration
+
+We can also see the scores that every agent type got
+
+.. code:: ipython3
+
+    results.score_stats
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>agent_type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>scml.oneshot.builtin.RandomOneShotAgent</td>
+          <td>24.0</td>
+          <td>-545.159697</td>
+          <td>1049.449844</td>
+          <td>-3347.391552</td>
+          <td>-774.375617</td>
+          <td>-194.133437</td>
+          <td>81.775109</td>
+          <td>477.230628</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>scml.oneshot.builtin.SyncRandomOneShotAgent</td>
+          <td>24.0</td>
+          <td>-344.852631</td>
+          <td>996.994904</td>
+          <td>-2761.109199</td>
+          <td>-226.386078</td>
+          <td>10.332980</td>
+          <td>295.710302</td>
+          <td>484.445238</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+You can also do statistical significance testing using ttest or kstest
+(with multi-comparison correction)
+
+.. code:: ipython3
+
+    results.kstest
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>a</th>
+          <th>b</th>
+          <th>t</th>
+          <th>p</th>
+          <th>n_a</th>
+          <th>n_b</th>
+          <th>n_effective</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>scml.oneshot.builtin.SyncRandomOneShotAgent</td>
+          <td>scml.oneshot.builtin.RandomOneShotAgent</td>
+          <td>0.291667</td>
+          <td>0.262834</td>
+          <td>24</td>
+          <td>24</td>
+          <td>24</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+see the total score
+
+.. code:: ipython3
+
+    results.total_scores
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>agent_type</th>
+          <th>score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>scml.oneshot.builtin.SyncRandomOneShotAgent</td>
+          <td>10.332980</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>scml.oneshot.builtin.RandomOneShotAgent</td>
+          <td>-194.133437</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+We can even get the scores of every agent belonging to every agent type
+at every simulation
+
+.. code:: ipython3
+
+    results.scores.loc[:, ["agent_name", "agent_type", "score"]].head()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>agent_name</th>
+          <th>agent_type</th>
+          <th>score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>04Syn@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>362.031209</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>05Ran@1</td>
+          <td>RandomOneShotAgent</td>
+          <td>-199.356607</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>04Ran@1</td>
+          <td>RandomOneShotAgent</td>
+          <td>-804.039404</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>05Syn@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-223.499552</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>04Syn@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>95.537691</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+Let’s see how did the location at the production graph affect the score
+of each type.
+
+.. code:: ipython3
+
+    results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
+    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
+    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
+                 x="level", y="score", hue="agent_type")
+    plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_94_0.png
+
+
 Now that you can run simulations and complete tournament, let’s see how
-are we going to develop a new agent for the SCML2020 league
+are we going to develop a new agent for the SCML2021 league
 :math:`\rightarrow`
 
 

@@ -8,6 +8,8 @@ from scml.scml2019 import (
 )
 from scml.scml2019.utils import anac2019_sabotage
 
+PARALLELISM = "serial"
+
 
 def test_std():
     results = anac2019_std(
@@ -15,6 +17,7 @@ def test_std():
         n_steps=5,
         n_configs=1,
         n_runs_per_world=1,
+        parallelism=PARALLELISM,
         max_worlds_per_config=2,
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
@@ -36,6 +39,7 @@ def test_collusion():
         n_configs=1,
         n_runs_per_world=1,
         max_worlds_per_config=2,
+        parallelism=PARALLELISM,
     )
     assert len(results.total_scores) >= 2
     assert (
@@ -55,6 +59,7 @@ class Greedy1(GreedyFactoryManager):
 def test_sabotage():
     results = anac2019_sabotage(
         competitors=[DoNothingFactoryManager, Greedy1],
+        parallelism="serial",
         n_steps=5,
         n_configs=1,
         n_runs_per_world=1,
@@ -62,6 +67,5 @@ def test_sabotage():
         n_default_managers=1,
         n_agents_per_competitor=2,
         max_worlds_per_config=2,
-        parallelism="serial",
     )
     assert len(results.total_scores) >= 2

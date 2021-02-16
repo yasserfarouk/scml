@@ -1,12 +1,26 @@
-Developing an agent for SCML2020
+Developing an agent for SCML2021
 --------------------------------
 
 Let’s see the simplest possible agent (a do-nothing agent)
 
+In 2021, we introduced a new track called SCML-OneShot which implements
+a simplified problem in which the agent can focus on the many to many
+concurrent negotiation problem without needing to worry about long term
+planning or production planning as is the case with the standard and
+collusion tracks.
+
 .. code:: ipython3
 
-    from scml.scml2020 import SCML2020Agent, SCML2020World, RandomAgent, DecentralizingAgent
+    from scml.scml2020 import SCML2020Agent, SCML2021World, RandomAgent, DecentralizingAgent
+    from scml.oneshot import SCML2020OneShotWorld, OneShotAgent, OneShotSyncAgent
+    from scml.oneshot.builtin import RandomOneShotAgent, SyncRandomOneShotAgent
     ComparisonAgent = DecentralizingAgent
+    OneShotComparisonAgent = RandomOneShotAgent
+
+Let’s start by looking at the standard/collusion tracks. These two
+tracks have only a minor change in the way agent score is evaluated
+compared with SCML2020 which means that all agents developed for
+SCML2020 will run with no change in SCML2021.
 
 .. code:: ipython3
 
@@ -17,8 +31,8 @@ Now, let’s try to run a simulation with it
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ComparisonAgent, MyDoNothing], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, MyDoNothing], n_steps=10), 
         construct_graphs=True,
     )
 
@@ -38,12 +52,172 @@ Let’s test this agent to confirm that it is really doing nothing
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_8_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_9_0.png
 
 
 You can see that our agent did not do anything in the world. It did
 receive some negotiation requests which it rejected and it did not
-engage in any negotiations
+engage in any negotiations.
+
+what about a similar agent for the ``SCMLOneShotWorld``
+
+.. code:: ipython3
+
+    from negmas import ResponseType
+    class MyOneShotDoNothing(OneShotAgent):
+        """My Agent that does nothing"""
+        def propose(self, negotiator_id, state):
+            return None
+        def respond(self, negotiator_id, state, offer):
+            return ResponseType.END_NEGOTIATION
+        
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate([OneShotComparisonAgent, MyOneShotDoNothing], n_steps=10), 
+        construct_graphs=True,
+    )
+    world.run()
+    
+    world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
+    plt.show()
+
+
+
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_11_0.png
+
+
+One Shot Agent (Negotiation Focused)
+------------------------------------
+
+The two examples of the simplest possible agent in one-shot and standard
+SCML reveal a couple of things. Firstly, there is no way to just
+``do-nothing`` in the one-shot variant. Our agent here simply behaved
+randomly (which is the same kind of behavior of ``RandomOneShotAgent``
+and ``RandomSyncOneShotAgent``).
+
+An overview of the one-shot game is available
+`here <http://www.yasserm.com/scml/overview_oneshot.pdf>`__ and a full
+description for the details-savy person is available
+`here <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__. We suggest
+that you read (or skim) these documents before continuing.
+
+A one-shot agent needs only to do negotiation. The simplest possible
+version (``MyOneShotRandom`` above) just responds to offers from its
+partners and proposes new offers to them.
+
+Comparing the graphs of the two world simulations, we can see
+immediately some differences
+
+-  All negotiation requests are accepted. In fact in the one-shot game,
+   the agent need not consider requesting negotiations or deciding the
+   negotiation agenda as the system takes care of this ensuring that on
+   every simulated day every agent is negotiating with its suppliers and
+   or consumers about trade on that day (and only that day).
+-  Contracts in the one-shot game are always executed (despite not
+   showing that in the graph). There is no concept of a breach. Failure
+   to honor contracts is instead penalized monetarily. Contracts are
+   also never cancelled or nullified. This greatly simplifies the
+   problem as the agent does not need to keep track of contract
+   execution.
+-  Production is too fast that it does not affect the agent reasoning.
+   In the terminology to be presented in the following section, there is
+   no need for an explicit production strategy.
+-  There is no need to consider future negotiations while reasoning
+   about a the current set of negotiations. This greatly simplifies
+   agent design as there is no long-term planning. In the terminology to
+   be presented in the following section, there is no need for a trading
+   strategy
+
+There are two base classes for one-shot agents (``OneShotAgent`` and
+``OneShotSyncAgent``). We have already seen the ``OneShotAgent`` class
+for which you need to override ``propose`` and may also override
+``respond`` to handle negotiations independently. The ``propose`` method
+receives the negotiation state (an object of the type ``SAOState``
+including among other things the current negotiation step, relative
+time, last offer, etc) and is required to return an ``Outcome`` (See
+``negmas`` documentation) as an offer. The ``respond`` method receives a
+negotiation state and an offer (``Outcome``) from the opponent and needs
+to respond to it by a decision from the ``ResponseType`` enumeration
+(``REJECT_OFFER``, ``ACCEPT_OFFER``, and ``END_NEGOTIATION``). Other
+than these two negotiation related callbacks, the agent receives an
+``init`` call just after it joins the simulatin and a ``step`` call
+after each step. The agent is also informed about failure/success of
+negotiations through the
+``on_negotiation_success``/``on_negotiation_failure`` callbacks. That is
+all. A one-shot agent needs to only think about what should it do to
+respond to each of these six callbacks. All of these callbacks except
+``propose`` are optional.
+
+Given that the utility function of the agent is defined in terms of a
+*complete set of contracts*, it is not trivial to define a utility
+function for each negotiation independent from the others (which is why
+this is an inherently concurrent negotiation world). It may be easier
+then to think of all negotiations in a synchronized manner. This means
+that the agent keeps collecting offers from its partners and when it has
+a *complete set*, it responds to all of them. Moreover, to start
+negotiations in which the agent finds itself the first propsoer, it
+needs to define a first proposal for each negotiation. This is whay
+``OneShotSyncAgent`` allows you to do.
+
+Here is an example of writing the do-nothing agent in this form:
+
+.. code:: ipython3
+
+    from negmas import SAOResponse
+    class MySyncOneShotDoNothing(OneShotSyncAgent):
+        """My Agent that does nothing"""
+        def counter_all(self, offers, states):
+            return dict(zip(self.negotiators.keys(), [SAOResponse(ResponseType.END_NEGOTIATION, None)] * len(self.negotiators)))
+        def first_proposals(self):
+            return dict(zip(self.negotiators.keys(), [None] * len(self.negotiators)))
+        
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate([OneShotComparisonAgent, MySyncOneShotDoNothing], n_steps=10), 
+        construct_graphs=True,
+    )
+    world.run()
+    
+    world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
+    plt.show()
+
+
+
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_13_0.png
+
+
+As you can see, in this case, we need to override ``counter_all`` to
+counter offers received from *all* the partners and ``first_proposals``
+to decide a first offer for *each* partner. Notice that this is a
+many-to-many negotiation scenario. This means that if multiple agents at
+every level are using sync variants, loops may happen with the
+possiblity of a deadlock. For that reason the system will randomly break
+such loops when they happen which implies that **``counter_all`` may
+receive a subset of the offers from partners not all of them**. In the
+worst case, ``counter_all`` may receive just one offer each time from
+one of the partners losing all synchronity between responses.
+
+Other than these two negotiation related callbacks, the agent receives
+an ``init`` call just after it joins the simulatin and a ``step`` call
+after each step. The agent is also informed about failure/success of
+negotiations through the
+``on_negotiation_success``/``on_negotiation_failure`` callbacks. That is
+all. A one-shot agent needs to only think about what should it do to
+respond to each of these six callbacks. All of these callbacks except
+``counter_all`` and ``first_proposals`` are optional.
+
+Standard/Collusion Agent (Negotiation + Planning)
+-------------------------------------------------
+
+The full SCML game (standard and collusion leagues) combines negotiation
+with planning. Here the agent needs to consider long-term trading
+strategy, production strategy in addition to its negotiation strategy.
+Because negotiations can be about arbitrary times in the future and
+there is overlap between negotiation and contract execution with the
+possibility of contract cancellation, nulification, and agent
+bankruptcy, this is a more reaslistic, albeit much more complex, game
+compared with the one-shot version we just saw. Please refer to the game
+overview `here <http://www.yasserm.com/scml/overview.pdf>`__ and the
+full game description
+`here <http://www.yasserm.com/scml/scml2021.pdf>`__.
 
 Agent Anatomy
 ~~~~~~~~~~~~~
@@ -264,8 +438,8 @@ Now let’s test our agent with its new production strategy.
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ComparisonAgent, MyDoNothing], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, MyDoNothing], n_steps=10), 
         construct_graphs=True,
     )
     world.run()
@@ -274,7 +448,7 @@ Now let’s test our agent with its new production strategy.
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_19_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_25_0.png
 
 
 As expected nothing happens. Our agent is still outside the market
@@ -324,8 +498,8 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ComparisonAgent, MyAgent], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, MyAgent], n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
@@ -335,11 +509,11 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.59it/s]
+    100%|██████████| 10/10 [00:00<00:00, 21.91it/s]
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_22_1.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_28_1.png
 
 
 The last piece of the buzzle to complete our agent is to add a
@@ -360,8 +534,8 @@ to see how it works.
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ComparisonAgent, MyAgent], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, MyAgent], n_steps=10), 
         construct_graphs=True
     )
     try:
@@ -411,8 +585,8 @@ Let’s add a simple implementation of both
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ComparisonAgent, MyAgent, RandomAgent], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, MyAgent, RandomAgent], n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
@@ -425,11 +599,11 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:05<00:00,  1.94it/s]
+    100%|██████████| 10/10 [00:01<00:00,  6.55it/s]
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_28_1.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_34_1.png
 
 
 Our agent is now doing things in the market. It buys and sells and
@@ -449,7 +623,7 @@ commits breaches. How well is it doing? Let’s see how did our agents do
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_30_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_36_0.png
 
 
 Not as good as the comparison agent :-( yet better than random :-)
@@ -860,8 +1034,8 @@ Let’s see how did our simple new agent do:
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ComparisonAgent, MyAgent, MyNewAgent], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, MyAgent, MyNewAgent], n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
@@ -874,11 +1048,11 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [02:49<00:00, 16.94s/it]
+    100%|██████████| 10/10 [00:51<00:00,  5.20s/it]
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_41_1.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_47_1.png
 
 
 .. code:: ipython3
@@ -887,7 +1061,7 @@ Let’s see how did our simple new agent do:
 
 
 
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_42_0.png
+.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_48_0.png
 
 
 Let’s dig a little deeper and try to understand one of the reasons that
@@ -933,30 +1107,29 @@ average prices they get from their negotiations.
 
     MyNewAgent:
     ===========
-                    price                                   
-                    count mean  std  min  25%  50%  75%  max
-    selling buying                                          
-    False   True    101.0  0.1  0.3  0.0  0.0  0.0  0.0  1.0
-    True    False    58.0  1.0  0.1  0.6  1.0  1.0  1.0  1.0
-            True     43.0  0.2  0.4  0.0  0.0  0.0  0.1  1.0
+                   price                                   
+                   count mean  std  min  25%  50%  75%  max
+    selling buying                                         
+    False   True     6.0  0.8  0.2  0.4  0.7  0.9  1.0  1.0
+    True    True    24.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
     
     MyAgent:
     ========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    78.0  0.7  0.3  0.0  0.5  0.8  1.0  1.0
-    True    False   85.0  0.3  0.3  0.0  0.0  0.0  0.5  1.0
-            True    34.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    False   True    12.0  0.5  0.0  0.5  0.5  0.5  0.5  0.5
+    True    False   11.0  0.7  0.3  0.4  0.5  0.8  1.0  1.0
+            True    20.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
     
     DecentralizingAgent:
     ====================
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    47.0  0.7  0.2  0.5  0.5  0.5  1.0  1.0
-    True    False   83.0  0.2  0.3  0.0  0.0  0.0  0.5  1.0
-            True     7.0  0.7  0.2  0.5  0.5  0.5  0.8  1.0
+    False   True     7.0  0.7  0.3  0.5  0.5  0.5  1.0  1.0
+    True    False   14.0  0.5  0.1  0.5  0.5  0.5  0.5  1.0
+            True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
 
 
 We can see that the new strategy gets lower average prices when buying
@@ -981,8 +1154,8 @@ Let’s try to run our new agent against itself.
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([MyNewAgent], n_steps=10), 
+    world = SCML2021World(
+        **SCML2021World.generate([MyNewAgent], n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
@@ -992,16 +1165,16 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [10:39<00:00, 63.94s/it]
+    100%|██████████| 10/10 [06:16<00:00, 37.67s/it]
 
 .. parsed-literal::
 
     MyNewAgent:
     ===========
-                    price                                   
-                    count mean  std  min  25%  50%  75%  max
-    selling buying                                          
-    True    True    149.0  0.0  0.0  0.0  0.0  0.0  0.0  0.1
+                   price                                   
+                   count mean  std  min  25%  50%  75%  max
+    selling buying                                         
+    True    True    82.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 
 
 .. parsed-literal::
@@ -1182,9 +1355,22 @@ exploring the design space.
     world.run_with_progress()
 
 
-.. parsed-literal::
+::
 
-    100%|██████████| 10/10 [00:19<00:00,  1.96s/it]
+
+    ---------------------------------------------------------------------------
+
+    NameError                                 Traceback (most recent call last)
+
+    <ipython-input-31-c8d9e288849f> in <module>
+    ----> 1 world = SCML2020World(
+          2     **SCML2020World.generate([MyAgent, MyNewAgent, AspirationAgent], n_steps=10),
+          3     construct_graphs=True
+          4 )
+          5 world.run_with_progress()
+
+
+    NameError: name 'SCML2020World' is not defined
 
 
 .. code:: ipython3
@@ -1193,30 +1379,6 @@ exploring the design space.
     for agent_type in ("MyNewAgent", "AspirationAgent"):
         print(f"{agent_type}:\n===========")
         print(analyze_unit_price(world, agent_type))
-
-
-
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_50_0.png
-
-
-.. parsed-literal::
-
-    MyNewAgent:
-    ===========
-                   price                                   
-                   count mean  std  min  25%  50%  75%  max
-    selling buying                                         
-    False   True    80.0  0.0  0.0  0.0  0.0  0.0  0.0  0.2
-    True    False   71.0  1.0  0.1  0.7  1.0  1.0  1.0  1.0
-            True    19.0  0.2  0.4  0.0  0.0  0.0  0.0  1.0
-    AspirationAgent:
-    ===========
-                   price                                   
-                   count mean  std  min  25%  50%  75%  max
-    selling buying                                         
-    False   True    64.0  0.8  0.2  0.5  0.5  0.8  1.0  1.0
-    True    False   88.0  0.0  0.1  0.0  0.0  0.0  0.0  0.5
-
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
 terms of score. It buys at higher prices than ``MyNewAgent`` and sells
@@ -1259,28 +1421,17 @@ Let’s test it
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([AspirationAgent, ComparisonAgent, MyDecentralizingAgent]
+    world = SCML2021World(
+        **SCML2021World.generate([AspirationAgent, ComparisonAgent, MyDecentralizingAgent]
                                  , n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
 
 
-
-.. parsed-literal::
-
-    100%|██████████| 10/10 [00:02<00:00,  4.20it/s]
-
-
 .. code:: ipython3
 
     show_agent_scores(world)
-
-
-
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_56_0.png
-
 
 .. container:: alert alert-block alert-warning
 
@@ -1441,23 +1592,13 @@ The main idea behind this agent is very simple:
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([AspirationAgent, ComparisonAgent, FromScratchAgent]
+    world = SCML2021World(
+        **SCML2021World.generate([AspirationAgent, ComparisonAgent, FromScratchAgent]
                                  , n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
     show_agent_scores(world)
-
-
-.. parsed-literal::
-
-    100%|██████████| 10/10 [00:06<00:00,  1.67it/s]
-
-
-
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_60_1.png
-
 
 This agent will only make profit if by-chance it could get sell
 contracts following buy contracts allowing it to produce.
@@ -1534,23 +1675,13 @@ Here is the improved version:
 
 .. code:: ipython3
 
-    world = SCML2020World(
-        **SCML2020World.generate([ProactiveFromScratch, ComparisonAgent, FromScratchAgent]
+    world = SCML2021World(
+        **SCML2021World.generate([ProactiveFromScratch, ComparisonAgent, FromScratchAgent]
                                  , n_steps=10), 
         construct_graphs=True
     )
     world.run_with_progress()
     show_agent_scores(world)
-
-
-.. parsed-literal::
-
-    100%|██████████| 10/10 [00:13<00:00,  1.36s/it]
-
-
-
-.. image:: 02.develop_agent_scml2020_files/02.develop_agent_scml2020_63_1.png
-
 
 A competition
 ~~~~~~~~~~~~~
@@ -1566,11 +1697,11 @@ module). To run a tournament you will need this code snippet:
 
 .. code:: python
 
-   from scml.scml2020.utils import anac2020_std
+   from scml.scml2020.utils import anac2021_std
    import seaborn as sns
    tournament_types = [ProactiveFromScratch, FromScratchAgent, 
                        MyAgent, MyNewAgent, AspirationAgent]
-   results = anac2020_std(
+   results = anac2021_std(
        competitors=tournament_types,  
        n_configs=20, # number of different configurations to generate 
        n_runs_per_world=1, # number of times to repeat every simulation
