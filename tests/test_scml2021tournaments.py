@@ -56,7 +56,7 @@ def test_oneshot(n):
         n_steps=10,
         n_configs=1,
         n_runs_per_world=1,
-        # parallelism="serial",
+        parallelism="serial",
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
     df = (

@@ -646,6 +646,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         process_inputs = [[i] for i in range(n_processes)]
         process_outputs = [[i + 1] for i in range(n_processes)]
         self.exogenous_dynamic = exogenous_dynamic
+        agent_params = (
+            [copy.deepcopy(_) for _ in agent_params] if agent_params else agent_params
+        )
         self.info.update(
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -797,7 +800,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             agents.append(a)
         self.agent_types = [_.type_name for _ in agents]
         self.agent_params = [
-            {k: v for k, v in _.items() if k != "name"} for _ in agent_params
+            {k: v for k, v in _.items() if k != "name" and k != "obj"}
+            for _ in agent_params
         ]
         self.agent_unique_types = [
             f"{t}{hash(str(p))}" if len(p) > 0 else t
