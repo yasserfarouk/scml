@@ -17,6 +17,7 @@ from scml.scml2019 import (
     FactoryStatusUpdate,
     GreedyScheduler,
     ProductionFailure,
+    SCML2019World,
 )
 from negmas.helpers import unique_name
 from negmas.situated import Contract

@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Any
 
 from negmas import Issue, Negotiator, Mechanism, AgentMechanismInterface, MechanismState
 from negmas.situated import Agent, RenegotiationRequest, Contract, Breach
-from .common import *
+from .common import Factory, Loan
 
 if TYPE_CHECKING:
     from .agent import SCML2019Agent

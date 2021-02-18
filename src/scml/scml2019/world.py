@@ -40,7 +40,8 @@ from negmas.situated import (
 )
 from .agent import SCML2019Agent
 from .bank import DefaultBank
-from .common import *
+from .common import (DEFAULT_NEGOTIATOR, Factory, FactoryState, FinancialReport, InputOutput, Job,
+                     ManufacturingProfile, Process, Product, SCMLAgreement)
 from .consumers import JustInTimeConsumer, ConsumptionProfile, Consumer
 from .factory_managers.builtins import GreedyFactoryManager, FactoryManager
 from .insurance import DefaultInsuranceCompany

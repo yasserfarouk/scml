@@ -4,7 +4,7 @@ Implements an agent-world-interface (see `AgentWorldInterface`) for the SCM worl
 from typing import Optional, List, Dict, Any
 
 from negmas import Issue
-from scml.scml2019.common import *
+from scml.scml2019.common import CFP, FinancialReport, Job, Process, Product
 from scml.scml2019.common import FactoryState
 from negmas.java import to_java, from_java, to_dict
 from negmas.situated import AgentWorldInterface, Contract, Action

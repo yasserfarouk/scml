@@ -58,7 +58,7 @@ from .common import (
     INFINITE_COST,
     ANY_LINE,
 )
-from .common import *
+from .common import ANY_STEP, COMPENSATION_ID, NO_COMMAND
 from ..common import integer_cut, intin, realin, make_array
 
 __all__ = [
