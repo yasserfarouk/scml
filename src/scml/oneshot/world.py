@@ -2,6 +2,7 @@
 Implements the one shot version of SCML
 """
 import sys
+import math
 import random
 import logging
 import itertools
@@ -454,19 +455,11 @@ class _OneShotBaseAgent(Agent):
 
     def on_negotiation_failure(self, *args, **kwargs) -> None:
         """Called whenever a negotiation ends without agreement"""
-        return (
-            self.controller.on_negotiation_failure(*args, **kwargs)
-            if self.controller
-            else None
-        )
+        self.controller.on_negotiation_failure(*args, **kwargs)
 
     def on_negotiation_success(self, *args, **kwargs) -> None:
         """Called whenever a negotiation ends with agreement"""
-        return (
-            self.controller.on_negotiation_success(*args, **kwargs)
-            if self.controller
-            else None
-        )
+        self.controller.on_negotiation_success(*args, **kwargs)
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         """Signs all contracts"""
@@ -589,7 +582,9 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         # debugging parameters
         agent_name_reveals_position: bool = True,
         agent_name_reveals_type: bool = True,
-        # evaluation paramters
+        # evaluation paramters (for compatibility with SCML2020World)
+        inventory_valuation_catalog=0,
+        inventory_valuation_trading=0,
         **kwargs,
     ):
         self._profits: Dict[str, List[float]] = defaultdict(list)
@@ -971,11 +966,13 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
         max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
+        initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
         cost_increases_with_level=True,
         equal_exogenous_supply=False,
         equal_exogenous_sales=False,
         exogenous_control: Union[Tuple[float, float], float] = -1,
-        force_signing=True,
+        cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
+        force_signing=False,
         profit_basis=np.mean,
         storage_cost: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
         delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
@@ -1019,6 +1016,11 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             force_signing: Whether to force contract signatures (exogenous contracts are treated in the same way).
             exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
                                force_signing is False and use_exogenous_contracts is True
+            cash_availability: The fraction of the total money needs of the agent to work at maximum capacity that
+                               is available as `initial_balance` . This is only effective if `initial_balance` is set
+                               to `None` .
+            exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
+                               force_signing is False and use_exogenous_contracts is True
             storage_cost: A range to sample mean-storage costs for all factories from
             delivery_penalty: A range to sample mean-delivery penalty for all factories from
             storage_cost_dev: A range to sample std. dev of storage costs for all factories from
@@ -1053,12 +1055,13 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             profit_means=profit_means,
             profit_stddevs=profit_stddevs,
             max_productivity=max_productivity,
+            initial_balance=initial_balance,
             cost_increases_with_level=cost_increases_with_level,
             equal_exogenous_sales=equal_exogenous_sales,
             equal_exogenous_supply=equal_exogenous_supply,
+            cash_availability=cash_availability,
             price_multiplier=price_multiplier,
             exogenous_price_dev=exogenous_price_dev,
-            cash_availability=float("inf"),
             profit_basis="min"
             if profit_basis == np.min
             else "mean"
@@ -1093,6 +1096,8 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         assert n_agents >= n_processes
         n_products = n_processes + 1
         production_costs = make_array(production_costs, n_agents, dtype=int)
+        if initial_balance is not None:
+            initial_balance = make_array(initial_balance, n_agents, dtype=int)
         if not isinstance(agent_types, Iterable):
             agent_types = [agent_types] * n_agents
             if agent_params is None:
@@ -1324,6 +1329,17 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         )
 
         assert nxt == n_agents
+        if initial_balance is None:
+            # every agent at every level will have just enough to do all the needed to do cash_availability fraction of
+            # production (even though it may not have enough lines to do so)
+            cash_availability = realin(cash_availability)
+            balance = np.ceil(
+                np.sum(total_costs, axis=1) / n_agents_per_process
+            ).astype(int)
+            initial_balance = []
+            for b, a in zip(balance, n_agents_per_process):
+                initial_balance += [int(math.ceil(b * cash_availability))] * a
+        b = np.sum(initial_balance)
         info.update(
             dict(
                 product_prices=product_prices,
@@ -1337,8 +1353,12 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
                 expected_welfare=float(np.sum(max_income)),
                 expected_income_per_step=max_income.sum(axis=0),
                 expected_income_per_process=max_income.sum(axis=-1),
-                expected_mean_profit=float(np.sum(max_income)),
-                expected_profit_sum=float(n_agents * np.sum(max_income)),
+                expected_mean_profit=float(np.sum(max_income))
+                if b != 0
+                else np.sum(max_income),
+                expected_profit_sum=float(n_agents * np.sum(max_income) / b)
+                if b != 0
+                else n_agents * np.sum(max_income),
             )
         )
 
@@ -1440,10 +1460,13 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             exogenous_contracts=exogenous,
             agent_types=agent_types,
             agent_params=agent_params,
+            initial_balance=initial_balance,
             n_steps=n_steps,
             info=info,
-            price_multiplier=price_multiplier,
             force_signing=force_signing,
+            price_multiplier=price_multiplier,
+            inventory_valuation_trading=0,
+            inventory_valuation_catalog=0,
             **kwargs,
         )
 
@@ -1932,7 +1955,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             extra = dict()
         partners = [_ for _ in self.suppliers[product] if not self.is_bankrupt[_]]
         if not partners:
-            return False
+            return True
         if negotiators is None:
             negotiators = [
                 controller.create_negotiator(PassThroughSAONegotiator, name=_)
@@ -2076,3 +2099,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
 
     def get_private_state(self, agent: "Agent") -> dict:
         return agent.awi.state
+    def _contract_record(self, contract):
+        record = super()._contract_record(contract)
+        record["executed_at"] = self.current_step
+        return record

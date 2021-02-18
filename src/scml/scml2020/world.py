@@ -2168,21 +2168,21 @@ class SCML2020World(TimeInAgreementMixin, World):
         profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
         max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
-        inventory_valuation_trading: Union[
-            np.ndarray, Tuple[float, float], float
-        ] = 0.5,
-        inventory_valuation_catalog: Union[
-            np.ndarray, Tuple[float, float], float
-        ] = 0.0,
         initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
         cost_increases_with_level=True,
-        horizon: Union[Tuple[float, float], float] = (0.2, 0.5),
         equal_exogenous_supply=False,
         equal_exogenous_sales=False,
         exogenous_control: Union[Tuple[float, float], float] = (0.2, 0.8),
         cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
         force_signing=False,
         profit_basis=np.mean,
+        horizon: Union[Tuple[float, float], float] = (0.2, 0.5),
+        inventory_valuation_trading: Union[
+            np.ndarray, Tuple[float, float], float
+        ] = 0.5,
+        inventory_valuation_catalog: Union[
+            np.ndarray, Tuple[float, float], float
+        ] = 0.0,
         **kwargs,
     ) -> Dict[str, Any]:
         """
