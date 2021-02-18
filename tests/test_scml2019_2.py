@@ -8,7 +8,7 @@ from typing import List, Dict
 import numpy as np
 import pkg_resources
 import pytest
-from hypothesis import given, settings
+from hypothesis import given, settings, HealthCheck
 
 from scml.scml2019 import *
 from scml.scml2019 import (
@@ -79,7 +79,7 @@ def logdir():
     return pkg_resources.resource_filename("negmas", resource_name="tests")
 
 
-@settings(deadline=None)
+@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
     single_checkpoint=st.booleans(),
     checkpoint_every=st.integers(0, 6),
