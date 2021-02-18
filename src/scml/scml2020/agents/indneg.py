@@ -15,13 +15,14 @@ The main assumptions of the agents based on `IndependentNegotiationsAgent` are:
 
 import numpy as np
 
-__all__ = ["IndependentNegotiationsAgent"]
-
-from ..components.trading import ReactiveTradingStrategy
 from ..components.negotiation import IndependentNegotiationsManager
 from ..components.prediction import FixedTradePredictionStrategy
 from ..components.signing import KeepOnlyGoodPrices
+from ..components.trading import ReactiveTradingStrategy
 from ..world import SCML2020Agent
+
+__all__ = ["IndependentNegotiationsAgent"]
+
 
 
 class IndependentNegotiationsAgent(

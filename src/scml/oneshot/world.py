@@ -1,63 +1,63 @@
 """
 Implements the one shot version of SCML
 """
-import sys
+import copy
+import itertools
+import logging
 import math
 import random
-import logging
-import itertools
+import sys
 from collections import defaultdict
-import pandas as pd
-import copy
 from dataclasses import dataclass
-from typing import (
-    List,
-    Dict,
-    Any,
-    Optional,
-    Iterable,
-    Collection,
-    Type,
-    Tuple,
-    Union,
-    Callable,
-    Set,
-)
-import numpy as np
-from matplotlib.axis import Axis
-import networkx as nx
-from negmas import (
-    World,
-    Agent,
-    Adapter,
-    AgentWorldInterface,
-    Issue,
-    AgentMechanismInterface,
-    RenegotiationRequest,
-    Negotiator,
-    Contract,
-    MechanismState,
-    Breach,
-    PassThroughSAONegotiator,
-    SAOController,
-    # NoContractExecutionMixin,
-    TimeInAgreementMixin,
-    Operations,
-    BreachProcessing,
-    DEFAULT_EDGE_TYPES,
-    SAONegotiator,
-)
-from negmas.helpers import get_full_type_name, get_class, instantiate, unique_name
-from ..common import integer_cut, intin, realin, make_array
-from .ufun import OneShotUFun
-from ..scml2020.common import (
-    SYSTEM_BUYER_ID,
-    SYSTEM_SELLER_ID,
-    is_system_agent,
-    INFINITE_COST,
-)
-from ..scml2020 import FinancialReport
+from typing import Any
+from typing import Callable
+from typing import Collection
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import Union
 
+import networkx as nx
+import numpy as np
+import pandas as pd
+from matplotlib.axis import Axis
+from negmas import DEFAULT_EDGE_TYPES  # NoContractExecutionMixin,
+from negmas import Adapter
+from negmas import Agent
+from negmas import AgentMechanismInterface
+from negmas import AgentWorldInterface
+from negmas import Breach
+from negmas import BreachProcessing
+from negmas import Contract
+from negmas import Issue
+from negmas import MechanismState
+from negmas import Negotiator
+from negmas import Operations
+from negmas import PassThroughSAONegotiator
+from negmas import RenegotiationRequest
+from negmas import SAOController
+from negmas import SAONegotiator
+from negmas import TimeInAgreementMixin
+from negmas import World
+from negmas.helpers import get_class
+from negmas.helpers import get_full_type_name
+from negmas.helpers import instantiate
+from negmas.helpers import unique_name
+
+from .ufun import OneShotUFun
+from ..common import integer_cut
+from ..common import intin
+from ..common import make_array
+from ..common import realin
+from ..scml2020 import FinancialReport
+from ..scml2020.common import INFINITE_COST
+from ..scml2020.common import SYSTEM_BUYER_ID
+from ..scml2020.common import SYSTEM_SELLER_ID
+from ..scml2020.common import is_system_agent
 
 __all__ = ["SCML2020OneShotWorld", "OneShotAWI"]
 

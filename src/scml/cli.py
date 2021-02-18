@@ -1,22 +1,48 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
-from collections import defaultdict
 import math
 import os
 import sys
 import traceback
+from collections import defaultdict
 from functools import partial
 from pathlib import Path
-from pprint import pformat, pprint
+from pprint import pformat
+from pprint import pprint
 from time import perf_counter
-import numpy as np
 from typing import List
+
 import click
 import click_config_file
+import negmas
+import numpy as np
 import pandas as pd
 import progressbar
 import yaml
+from negmas import save_stats
+from negmas.helpers import humanize_time
+from negmas.helpers import load
+from negmas.helpers import unique_name
+from negmas.java import jnegmas_bridge_is_running
 from tabulate import tabulate
+
+import scml
+from scml.oneshot import SCML2020OneShotWorld
+from scml.scml2019 import FactoryManager
+from scml.scml2019 import SCML2019World
+from scml.scml2019.utils import DefaultGreedyManager
+from scml.scml2019.utils import anac2019_collusion
+from scml.scml2019.utils import anac2019_sabotage
+from scml.scml2019.utils import anac2019_std
+from scml.scml2020 import SCML2020Agent
+from scml.scml2020 import SCML2020World
+from scml.scml2020 import SCML2021World
+from scml.scml2020 import is_system_agent
+from scml.scml2020.utils import anac2020_collusion
+from scml.scml2020.utils import anac2020_std
+from scml.scml2020.utils import anac2021_collusion
+from scml.scml2020.utils import anac2021_oneshot
+from scml.scml2020.utils import anac2021_std
 
 try:
     from scml.vendor.quick.quick import gui_option
@@ -26,24 +52,8 @@ except:
         return x
 
 
-import negmas
-from negmas import save_stats
 
-import scml
-from scml.scml2019 import SCML2019World, FactoryManager
-from scml.scml2019.utils import (
-    anac2019_std,
-    anac2019_sabotage,
-    anac2019_collusion,
-    DefaultGreedyManager,
-)
-from negmas.helpers import humanize_time, unique_name, load
-from negmas.java import jnegmas_bridge_is_running
 
-from scml.scml2020.utils import anac2020_std, anac2020_collusion
-from scml.scml2020.utils import anac2021_std, anac2021_collusion, anac2021_oneshot
-from scml.scml2020 import SCML2020Agent, SCML2020World, SCML2021World, is_system_agent
-from scml.oneshot import SCML2020OneShotWorld
 
 try:
     # disable a warning in yaml 1b1 version

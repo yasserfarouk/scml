@@ -3,25 +3,28 @@ import itertools
 import sys
 from collections import defaultdict
 
-import itertools
-from collections import defaultdict
-
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import given, settings, HealthCheck
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis.stateful import Bundle
+from hypothesis.stateful import RuleBasedStateMachine
+from hypothesis.stateful import rule
 from hypothesis.strategies import composite
-from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 from pytest import fixture
 
-from scml.scml2019 import ManufacturingProfile, Product, Process, InputOutput, Job
-from scml.scml2019.simulators import (
-    SlowFactorySimulator,
-    FastFactorySimulator,
-    storage_as_array,
-)
-from scml.scml2019.world import Factory
+from scml.scml2019 import InputOutput
+from scml.scml2019 import Job
+from scml.scml2019 import ManufacturingProfile
+from scml.scml2019 import Process
+from scml.scml2019 import Product
 from scml.scml2019.common import NO_PRODUCTION
+from scml.scml2019.simulators import FastFactorySimulator
+from scml.scml2019.simulators import SlowFactorySimulator
+from scml.scml2019.simulators import storage_as_array
+from scml.scml2019.world import Factory
 
 n_lines = 5
 n_levels = 4

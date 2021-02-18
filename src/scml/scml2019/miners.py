@@ -1,18 +1,21 @@
 from abc import ABC
 from collections import defaultdict
+from dataclasses import dataclass
 from random import random
 
-from dataclasses import dataclass
-from numpy.random import dirichlet
-
-from .common import FinancialReport, DEFAULT_NEGOTIATOR
-from negmas.common import MechanismState, AgentMechanismInterface
+from negmas.common import AgentMechanismInterface
+from negmas.common import MechanismState
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
-from negmas.situated import Contract, Breach
+from negmas.situated import Breach
+from negmas.situated import Contract
 from negmas.situated import RenegotiationRequest
 from negmas.utilities import LinearUtilityAggregationFunction
+from numpy.random import dirichlet
+
 from .agent import SCML2019Agent
+from .common import DEFAULT_NEGOTIATOR
+from .common import FinancialReport
 from .helpers import pos_gauss
 
 if True:

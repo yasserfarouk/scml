@@ -1,65 +1,66 @@
 """Implements the world class for the SCML2020 world """
-import sys
 import copy
 import itertools
 import logging
 import math
 import random
 import sys
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+from collections import namedtuple
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Dict,
-    Any,
-    Union,
-    Tuple,
-    Callable,
-    List,
-    Set,
-    Collection,
-    Type,
-    Iterable,
-)
+from typing import Any
+from typing import Callable
+from typing import Collection
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import Union
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
-from negmas import (
-    Contract,
-    Action,
-    Breach,
-    AgentWorldInterface,
-    Agent,
-    RenegotiationRequest,
-    Negotiator,
-    AgentMechanismInterface,
-    MechanismState,
-    Issue,
-    SAONegotiator,
-    SAOController,
-    PassThroughSAONegotiator,
-)
-from negmas.helpers import instantiate, unique_name, get_class, get_full_type_name
-from negmas.situated import (
-    World,
-    TimeInAgreementMixin,
-    BreachProcessing,
-    DEFAULT_EDGE_TYPES,
-    Operations,
-)
+from negmas import Action
+from negmas import Agent
+from negmas import AgentMechanismInterface
+from negmas import AgentWorldInterface
+from negmas import Breach
+from negmas import Contract
+from negmas import Issue
+from negmas import MechanismState
+from negmas import Negotiator
+from negmas import PassThroughSAONegotiator
+from negmas import RenegotiationRequest
+from negmas import SAOController
+from negmas import SAONegotiator
+from negmas.helpers import get_class
+from negmas.helpers import get_full_type_name
+from negmas.helpers import instantiate
+from negmas.helpers import unique_name
+from negmas.situated import DEFAULT_EDGE_TYPES
+from negmas.situated import BreachProcessing
+from negmas.situated import Operations
+from negmas.situated import TimeInAgreementMixin
+from negmas.situated import World
 
 from scml.scml2019.utils import _realin
-from .common import (
-    is_system_agent,
-    SYSTEM_BUYER_ID,
-    SYSTEM_SELLER_ID,
-    INFINITE_COST,
-    ANY_LINE,
-)
-from .common import ANY_STEP, COMPENSATION_ID, NO_COMMAND
-from ..common import integer_cut, intin, realin, make_array
+
+from .common import ANY_LINE
+from .common import ANY_STEP
+from .common import COMPENSATION_ID
+from .common import INFINITE_COST
+from .common import NO_COMMAND
+from .common import SYSTEM_BUYER_ID
+from .common import SYSTEM_SELLER_ID
+from .common import is_system_agent
+from ..common import integer_cut
+from ..common import intin
+from ..common import make_array
+from ..common import realin
 
 __all__ = [
     "FactoryState",

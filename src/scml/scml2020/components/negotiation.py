@@ -3,26 +3,29 @@ import math
 from abc import abstractmethod
 from dataclasses import dataclass
 from pprint import pformat
-
-from typing import Tuple, List, Union, Any, Optional, Dict
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import numpy as np
-
-from negmas import (
-    SAONegotiator,
-    AspirationNegotiator,
-    Issue,
-    AgentMechanismInterface,
-    Negotiator,
-    UtilityFunction,
-    Contract,
-)
-from negmas.helpers import get_class, instantiate
+from negmas import AgentMechanismInterface
+from negmas import AspirationNegotiator
+from negmas import Contract
+from negmas import Issue
+from negmas import Negotiator
+from negmas import SAONegotiator
+from negmas import UtilityFunction
+from negmas.helpers import get_class
+from negmas.helpers import instantiate
 
 from scml.scml2020 import AWI
-from scml.scml2020.components.prediction import MeanERPStrategy
-from scml.scml2020.services.controllers import StepController, SyncController
 from scml.scml2020.common import TIME
+from scml.scml2020.components.prediction import MeanERPStrategy
+from scml.scml2020.services.controllers import StepController
+from scml.scml2020.services.controllers import SyncController
 
 __all__ = [
     "NegotiationManager",

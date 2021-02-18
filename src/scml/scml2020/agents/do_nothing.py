@@ -1,15 +1,18 @@
 """Implements an agent that does nothing"""
-from typing import List, Optional, Dict, Any
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
-from negmas import (
-    Contract,
-    Breach,
-    AgentMechanismInterface,
-    MechanismState,
-    Issue,
-    Negotiator,
-)
-from scml.scml2020.world import SCML2020Agent, Failure
+from negmas import AgentMechanismInterface
+from negmas import Breach
+from negmas import Contract
+from negmas import Issue
+from negmas import MechanismState
+from negmas import Negotiator
+
+from scml.scml2020.world import Failure
+from scml.scml2020.world import SCML2020Agent
 
 __all__ = ["DoNothingAgent"]
 

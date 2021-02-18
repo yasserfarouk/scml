@@ -1,13 +1,25 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, Tuple, List, Optional, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
-from negmas import Mechanism, AgentMechanismInterface, MechanismState
+from negmas import AgentMechanismInterface
+from negmas import Mechanism
+from negmas import MechanismState
 from negmas.negotiators import Negotiator
 from negmas.outcomes import Issue
-from negmas.situated import Agent, RenegotiationRequest, Breach, Contract
+from negmas.situated import Agent
+from negmas.situated import Breach
+from negmas.situated import Contract
+from negmas.situated import RenegotiationRequest
+
 from .agent import SCML2019Agent
-from .common import InsurancePolicy, Factory
+from .common import Factory
+from .common import InsurancePolicy
 
 if TYPE_CHECKING:
     from .world import SCML2019World

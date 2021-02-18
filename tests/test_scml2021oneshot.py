@@ -1,14 +1,15 @@
+import random
+
+import hypothesis.strategies as st
+from hypothesis import given
+from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
-from hypothesis import given, settings
-import hypothesis.strategies as st
 
-from scml.scml2020 import is_system_agent
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot.builtin import RandomOneShotAgent
-
-import random
+from scml.scml2020 import is_system_agent
 
 random.seed(0)
 

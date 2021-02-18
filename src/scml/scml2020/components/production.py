@@ -5,9 +5,12 @@ __all__ = [
     "TradeDrivenProductionStrategy",
 ]
 
+from typing import Dict
+from typing import List
+from typing import Tuple
+
 import numpy as np
 from negmas import Contract
-from typing import List, Dict, Tuple
 
 from scml.scml2020.common import NO_COMMAND
 

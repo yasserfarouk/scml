@@ -2,18 +2,20 @@
 Implements the `DecentralizingAgent` which creates ony buy and one sell controller for each time-step and relinquishes
 control of negotiations to buy/sell the required number of items of its input/output product.
 """
-import numpy as np
 from typing import Tuple
+
+import numpy as np
 
 from scml.scml2020.components import FixedTradePredictionStrategy
 from scml.scml2020.components import StepNegotiationManager
 from scml.scml2020.components.production import TradeDrivenProductionStrategy
+
+from ..components.signing import KeepOnlyGoodPrices
 from ..components.trading import ReactiveTradingStrategy
+from ..world import SCML2020Agent
 
 __all__ = ["ReactiveAgent"]
 
-from ..world import SCML2020Agent
-from ..components.signing import KeepOnlyGoodPrices
 
 
 class ReactiveAgent(

@@ -1,13 +1,25 @@
 """
 Implements an agent-world-interface (see `AgentWorldInterface`) for the SCM world.
 """
-from typing import Optional, List, Dict, Any
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 from negmas import Issue
-from scml.scml2019.common import CFP, FinancialReport, Job, Process, Product
+from negmas.java import from_java
+from negmas.java import to_dict
+from negmas.java import to_java
+from negmas.situated import Action
+from negmas.situated import AgentWorldInterface
+from negmas.situated import Contract
+
+from scml.scml2019.common import CFP
 from scml.scml2019.common import FactoryState
-from negmas.java import to_java, from_java, to_dict
-from negmas.situated import AgentWorldInterface, Contract, Action
+from scml.scml2019.common import FinancialReport
+from scml.scml2019.common import Job
+from scml.scml2019.common import Process
+from scml.scml2019.common import Product
 
 __all__ = ["SCMLAWI"]
 

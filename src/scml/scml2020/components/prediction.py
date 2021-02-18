@@ -1,6 +1,12 @@
 from abc import abstractmethod
-from typing import Union, Iterable, List, Optional
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Union
+
 import numpy as np
+from negmas import Breach
+from negmas import Contract
 
 __all__ = [
     "TradePredictionStrategy",
@@ -10,7 +16,6 @@ __all__ = [
     "MeanERPStrategy",
 ]
 
-from negmas import Contract, Breach
 
 
 class TradePredictionStrategy:

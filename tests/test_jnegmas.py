@@ -3,11 +3,12 @@ from pathlib import Path
 from pprint import pprint
 
 import pytest
+from negmas.helpers import get_class
+from negmas.java import jnegmas_bridge_is_running
+from negmas.java import jnegmas_connection
 
 from scml.scml2019 import SCML2019World
 from scml.scml2019.factory_managers import *
-from negmas.helpers import get_class
-from negmas.java import jnegmas_connection, jnegmas_bridge_is_running
 
 SHUTDOWN_AFTER_EVERY_TEST = False
 

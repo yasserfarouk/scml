@@ -1,7 +1,11 @@
 """Common functions used in all modules"""
-from typing import Iterable, List, Union, Tuple
-import numpy as np
 import random
+from typing import Iterable
+from typing import List
+from typing import Tuple
+from typing import Union
+
+import numpy as np
 
 __all__ = ["integer_cut", "intin", "realin", "make_array"]
 

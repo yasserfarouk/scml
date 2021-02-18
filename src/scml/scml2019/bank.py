@@ -1,11 +1,24 @@
 """Implements all builtin banks."""
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
-from negmas import Issue, Negotiator, Mechanism, AgentMechanismInterface, MechanismState
-from negmas.situated import Agent, RenegotiationRequest, Contract, Breach
-from .common import Factory, Loan
+from negmas import AgentMechanismInterface
+from negmas import Issue
+from negmas import Mechanism
+from negmas import MechanismState
+from negmas import Negotiator
+from negmas.situated import Agent
+from negmas.situated import Breach
+from negmas.situated import Contract
+from negmas.situated import RenegotiationRequest
+
+from .common import Factory
+from .common import Loan
 
 if TYPE_CHECKING:
     from .agent import SCML2019Agent

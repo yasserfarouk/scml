@@ -1,21 +1,22 @@
 from typing import List
-from negmas import (
-    Agent,
-    AgentWorldInterface,
-    Issue,
-    AgentMechanismInterface,
-    RenegotiationRequest,
-    Negotiator,
-    ResponseType,
-    Contract,
-    MechanismState,
-    Breach,
-    PassThroughSAONegotiator,
-    SAOController,
-    SAOSyncController,
-    MappingUtilityFunction,
-)
-from .common import QUANTITY, UNIT_PRICE
+
+from negmas import Agent
+from negmas import AgentMechanismInterface
+from negmas import AgentWorldInterface
+from negmas import Breach
+from negmas import Contract
+from negmas import Issue
+from negmas import MappingUtilityFunction
+from negmas import MechanismState
+from negmas import Negotiator
+from negmas import PassThroughSAONegotiator
+from negmas import RenegotiationRequest
+from negmas import ResponseType
+from negmas import SAOController
+from negmas import SAOSyncController
+
+from .common import QUANTITY
+from .common import UNIT_PRICE
 
 __all__ = ["OneShotUFun"]
 

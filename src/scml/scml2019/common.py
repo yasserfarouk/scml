@@ -3,14 +3,24 @@ import itertools
 import math
 import sys
 import uuid
-from collections import defaultdict, namedtuple
-from dataclasses import dataclass, field, InitVar
-from typing import Dict, Union, Tuple, Iterable, List, Optional, Any
+from collections import defaultdict
+from collections import namedtuple
+from dataclasses import InitVar
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import numpy as np
-
-from negmas.outcomes import OutcomeType, Issue
-from negmas.situated import Contract, World
+from negmas.outcomes import Issue
+from negmas.outcomes import OutcomeType
+from negmas.situated import Contract
+from negmas.situated import World
 from negmas.utilities import INVALID_UTILITY
 
 INVALID_STEP = -1000

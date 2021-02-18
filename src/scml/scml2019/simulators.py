@@ -2,15 +2,24 @@
 
 import math
 import sys
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Optional
-import numpy as np
-from dataclasses import dataclass, field
 from contextlib import contextmanager
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Dict
+from typing import List
+from typing import Optional
 
-from negmas.java import to_java, to_dict
-from .common import ManufacturingProfile, Job, Factory, NO_PRODUCTION
+import numpy as np
+from negmas.java import to_dict
+from negmas.java import to_java
+
+from .common import NO_PRODUCTION
+from .common import Factory
+from .common import Job
+from .common import ManufacturingProfile
 
 __all__ = [
     "FactorySimulator",

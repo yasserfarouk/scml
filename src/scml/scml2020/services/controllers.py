@@ -1,34 +1,41 @@
 import random
 from collections import defaultdict
-from typing import Tuple, List, Dict, Any, Callable, Union, Type, Optional
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import Union
 
-from negmas import (
-    AspirationMixin,
-    LinearUtilityFunction,
-    PassThroughNegotiator,
-    MechanismState,
-    ResponseType,
-    UtilityFunction,
-    AgentWorldInterface,
-    outcome_is_valid,
-    Outcome,
-)
-from negmas.events import Notifier, Notification
-from negmas.helpers import instantiate
+import numpy as np
+from negmas import AgentWorldInterface
+from negmas import AspirationMixin
+from negmas import Issue
+from negmas import LinearUtilityFunction
+from negmas import MechanismState
+from negmas import Outcome
+from negmas import PassThroughNegotiator
+from negmas import ResponseType
+from negmas import UtilityFunction
+from negmas import outcome_is_valid
 from negmas.common import AgentMechanismInterface
-from negmas.sao import (
-    SAOController,
-    SAONegotiator,
-    SAOSyncController,
-)
+from negmas.events import Notification
+from negmas.events import Notifier
+from negmas.helpers import instantiate
+from negmas.sao import SAOController
+from negmas.sao import SAONegotiator
+from negmas.sao import SAOResponse
+from negmas.sao import SAOState
+from negmas.sao import SAOSyncController
+
+from scml.scml2020.common import QUANTITY
+from scml.scml2020.common import TIME
+from scml.scml2020.common import UNIT_PRICE
 
 __all__ = ["StepController", "SyncController"]
 
-import numpy as np
-from typing import Dict, Tuple, List
-from negmas import ResponseType, Issue
-from negmas.sao import SAOState, SAOResponse
-from scml.scml2020.common import TIME, QUANTITY, UNIT_PRICE
 
 
 class StepController(SAOController, AspirationMixin, Notifier):

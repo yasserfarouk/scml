@@ -1,4 +1,8 @@
-from typing import List, Dict, Any, Optional, Type
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Type
 
 from negmas import NamedObject
 

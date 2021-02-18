@@ -1,27 +1,14 @@
-import copy
 from pathlib import Path
-from pprint import pprint
 
-from pytest import mark
-from typing import List, Dict
-
-import numpy as np
+import hypothesis.strategies as st
 import pkg_resources
 import pytest
-from hypothesis import given, settings, HealthCheck
-
-from scml.scml2019 import *
-from scml.scml2019 import (
-    InputOutput,
-    Job,
-    FactoryStatusUpdate,
-    GreedyScheduler,
-    ProductionFailure,
-    SCML2019World,
-)
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
 from negmas.helpers import unique_name
-from negmas.situated import Contract
-import hypothesis.strategies as st
+
+from scml.scml2019 import SCML2019World
 
 # def test_can_create_a_random_scml_world():
 #     world = SCML2019World.random()

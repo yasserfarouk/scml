@@ -1,20 +1,24 @@
 import copy
+from collections import defaultdict
 from os import PathLike
-from random import randint, random, shuffle
+from random import randint
+from random import random
+from random import shuffle
 
 import numpy as np
 from negmas import Agent
-from negmas.helpers import unique_name, get_full_type_name
-from negmas.tournaments import WorldRunResults, TournamentResults, tournament
-from scml.scml2020.agents import (
-    DecentralizingAgent,
-    BuyCheapSellExpensiveAgent,
-    RandomAgent,
-)
-from scml.scml2020.world import SCML2020World, is_system_agent
-from collections import defaultdict
+from negmas.helpers import get_full_type_name
+from negmas.helpers import unique_name
+from negmas.tournaments import TournamentResults
+from negmas.tournaments import WorldRunResults
+from negmas.tournaments import tournament
 
 from scml.oneshot.world import SCML2020OneShotWorld
+from scml.scml2020.agents import BuyCheapSellExpensiveAgent
+from scml.scml2020.agents import DecentralizingAgent
+from scml.scml2020.agents import RandomAgent
+from scml.scml2020.world import SCML2020World
+from scml.scml2020.world import is_system_agent
 
 if True:
     from typing import (

@@ -1,12 +1,14 @@
-import numpy as np
 from pprint import pformat
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
+import numpy as np
 from negmas import Contract
 
-from scml.scml2020.components import FixedTradePredictionStrategy, SignAllPossible
-from scml.scml2020.common import is_system_agent
 from scml.scml2020.common import ANY_LINE
+from scml.scml2020.common import is_system_agent
+from scml.scml2020.components import FixedTradePredictionStrategy
+from scml.scml2020.components import SignAllPossible
 from scml.scml2020.components.prediction import MeanERPStrategy
 
 __all__ = [

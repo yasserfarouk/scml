@@ -5,23 +5,20 @@ from collections import defaultdict
 
 import numpy as np
 import pytest
-from pytest import fixture, mark
+from pytest import fixture
+from pytest import mark
 
-from scml.scml2019 import (
-    ManufacturingProfile,
-    Product,
-    Process,
-    InputOutput,
-    Job,
-    RunningCommandInfo,
-)
-from scml.scml2019.simulators import (
-    SlowFactorySimulator,
-    FastFactorySimulator,
-    storage_as_array,
-)
-from scml.scml2019.world import Factory
+from scml.scml2019 import InputOutput
+from scml.scml2019 import Job
+from scml.scml2019 import ManufacturingProfile
+from scml.scml2019 import Process
+from scml.scml2019 import Product
+from scml.scml2019 import RunningCommandInfo
 from scml.scml2019.common import NO_PRODUCTION
+from scml.scml2019.simulators import FastFactorySimulator
+from scml.scml2019.simulators import SlowFactorySimulator
+from scml.scml2019.simulators import storage_as_array
+from scml.scml2019.world import Factory
 
 n_lines = 5
 n_levels = 4

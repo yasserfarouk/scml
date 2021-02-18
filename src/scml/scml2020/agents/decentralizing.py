@@ -2,18 +2,18 @@
 Implements the `DecentralizingAgent` which creates ony buy and one sell controller for each time-step and relinquishes
 control of negotiations to buy/sell the required number of items of its input/output product.
 """
-import numpy as np
 from typing import Tuple
 
+import numpy as np
 from negmas import LinearUtilityFunction
 
-from scml.scml2020.components import (
-    SupplyDrivenProductionStrategy,
-    StepNegotiationManager,
-    IndependentNegotiationsManager,
-)
-from ..components.trading import PredictionBasedTradingStrategy
+from scml.scml2020.components import IndependentNegotiationsManager
+from scml.scml2020.components import StepNegotiationManager
+from scml.scml2020.components import SupplyDrivenProductionStrategy
+
 from ..components.signing import KeepOnlyGoodPrices
+from ..components.trading import PredictionBasedTradingStrategy
+from ..world import SCML2020Agent
 
 __all__ = [
     "DecentralizingAgent",
@@ -21,7 +21,6 @@ __all__ = [
     "DecentralizingAgentWithLogging",
 ]
 
-from ..world import SCML2020Agent
 
 
 class _NegotiationCallbacks:

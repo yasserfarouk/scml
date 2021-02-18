@@ -3,12 +3,10 @@ from pathlib import Path
 import pytest
 
 from scml.scml2020.agents import DoNothingAgent
-from scml.scml2020.utils import (
-    anac2020_std,
-    anac2020_collusion,
-    anac2021_std,
-    anac2021_collusion,
-)
+from scml.scml2020.utils import anac2020_collusion
+from scml.scml2020.utils import anac2020_std
+from scml.scml2020.utils import anac2021_collusion
+from scml.scml2020.utils import anac2021_std
 
 BaseAgent = DoNothingAgent
 

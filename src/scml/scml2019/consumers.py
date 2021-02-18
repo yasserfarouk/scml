@@ -3,22 +3,27 @@ import itertools
 import math
 from abc import ABC
 from collections import defaultdict
-from random import random, randint
+from dataclasses import dataclass
+from random import randint
+from random import random
 from typing import TYPE_CHECKING
 
-from dataclasses import dataclass
-from numpy.random import dirichlet
-
-from negmas import AgentMechanismInterface, MechanismState
-from .common import FinancialReport, DEFAULT_NEGOTIATOR
+from negmas import AgentMechanismInterface
+from negmas import MechanismState
 from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
-from negmas.situated import Contract, Breach
+from negmas.situated import Breach
+from negmas.situated import Contract
 from negmas.situated import RenegotiationRequest
-from negmas.utilities import ComplexWeightedUtilityFunction, MappingUtilityFunction
-from .common import CFP
+from negmas.utilities import ComplexWeightedUtilityFunction
+from negmas.utilities import MappingUtilityFunction
+from numpy.random import dirichlet
+
 from .agent import SCML2019Agent
+from .common import CFP
+from .common import DEFAULT_NEGOTIATOR
+from .common import FinancialReport
 from .helpers import pos_gauss
 
 if True:  #

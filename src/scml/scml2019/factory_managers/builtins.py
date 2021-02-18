@@ -1,50 +1,55 @@
 import itertools
 import warnings
-from abc import abstractmethod, ABC
+from abc import ABC
+from abc import abstractmethod
 from collections import defaultdict
 
-from negmas import (
-    Contract,
-    Breach,
-    Negotiator,
-    MechanismState,
-    AgentMechanismInterface,
-    RenegotiationRequest,
-    JavaSAONegotiator,
-    UtilityFunction,
-    JavaUtilityFunction,
-    _ShadowAgentMechanismInterface,
-)
+from negmas import AgentMechanismInterface
+from negmas import Breach
+from negmas import Contract
+from negmas import JavaSAONegotiator
+from negmas import JavaUtilityFunction
+from negmas import MechanismState
+from negmas import Negotiator
+from negmas import RenegotiationRequest
+from negmas import UtilityFunction
+from negmas import _ShadowAgentMechanismInterface
 from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.helpers import snake_case
-from negmas.java import (
-    JavaCallerMixin,
-    to_java,
-    from_java,
-    to_dict,
-    java_link,
-    PYTHON_CLASS_IDENTIFIER,
-)
-from negmas.outcomes import Issue, Outcome
-from negmas.sao import _ShadowSAONegotiator, AspirationNegotiator, SAOController
+from negmas.java import PYTHON_CLASS_IDENTIFIER
+from negmas.java import JavaCallerMixin
+from negmas.java import from_java
+from negmas.java import java_link
+from negmas.java import to_dict
+from negmas.java import to_java
+from negmas.outcomes import Issue
+from negmas.outcomes import Outcome
+from negmas.sao import AspirationNegotiator
+from negmas.sao import SAOController
+from negmas.sao import _ShadowSAONegotiator
 from negmas.utilities import UtilityValue
 
 from scml.scml2019.agent import SCML2019Agent
-from scml.scml2019.awi import _ShadowSCMLAWI, SCMLAWI
-from scml.scml2019.common import DEFAULT_NEGOTIATOR, ProductionReport
-from scml.scml2019.common import (
-    SCMLAgreement,
-    Factory,
-    CFP,
-    Loan,
-    ProductionFailure,
-    FinancialReport,
-)
-from scml.scml2019.consumers import JustInTimeConsumer, ConsumptionProfile
-from scml.scml2019.schedulers import Scheduler, ScheduleInfo, GreedyScheduler
-from scml.scml2019.simulators import FactorySimulator, FastFactorySimulator
-from scml.scml2019.simulators import storage_as_array, temporary_transaction
+from scml.scml2019.awi import SCMLAWI
+from scml.scml2019.awi import _ShadowSCMLAWI
+from scml.scml2019.common import CFP
+from scml.scml2019.common import DEFAULT_NEGOTIATOR
+from scml.scml2019.common import Factory
+from scml.scml2019.common import FinancialReport
+from scml.scml2019.common import Loan
+from scml.scml2019.common import ProductionFailure
+from scml.scml2019.common import ProductionReport
+from scml.scml2019.common import SCMLAgreement
+from scml.scml2019.consumers import ConsumptionProfile
+from scml.scml2019.consumers import JustInTimeConsumer
+from scml.scml2019.schedulers import GreedyScheduler
+from scml.scml2019.schedulers import ScheduleInfo
+from scml.scml2019.schedulers import Scheduler
+from scml.scml2019.simulators import FactorySimulator
+from scml.scml2019.simulators import FastFactorySimulator
+from scml.scml2019.simulators import storage_as_array
+from scml.scml2019.simulators import temporary_transaction
 
 if True:
     from typing import (

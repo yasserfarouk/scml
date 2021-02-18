@@ -1,6 +1,7 @@
 """Implements a randomly behaving agent"""
 
-from negmas import Issue, RandomUtilityFunction
+from negmas import Issue
+from negmas import RandomUtilityFunction
 
 from .indneg import IndependentNegotiationsAgent
 

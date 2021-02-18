@@ -1,11 +1,9 @@
 from pathlib import Path
 
-from scml.scml2019 import (
-    anac2019_std,
-    GreedyFactoryManager,
-    DoNothingFactoryManager,
-    anac2019_collusion,
-)
+from scml.scml2019 import DoNothingFactoryManager
+from scml.scml2019 import GreedyFactoryManager
+from scml.scml2019 import anac2019_collusion
+from scml.scml2019 import anac2019_std
 from scml.scml2019.utils import anac2019_sabotage
 
 PARALLELISM = "serial"

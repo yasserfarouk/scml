@@ -7,46 +7,43 @@ import traceback
 import warnings
 from functools import partial
 from pathlib import Path
-from pprint import pformat, pprint
+from pprint import pformat
+from pprint import pprint
 from time import perf_counter
-import numpy as np
 
 import click
 import click_config_file
+import negmas
+import numpy as np
 import pandas as pd
 import progressbar
 import yaml
+from negmas import save_stats
+from negmas.helpers import camel_case
+from negmas.helpers import humanize_time
+from negmas.helpers import load
+from negmas.helpers import unique_name
+from negmas.java import init_jnegmas_bridge
+from negmas.java import jnegmas_bridge_is_running
+from negmas.tournaments import combine_tournament_stats
+from negmas.tournaments import combine_tournaments
+from negmas.tournaments import create_tournament
+from negmas.tournaments import evaluate_tournament
+from negmas.tournaments import run_tournament
 from tabulate import tabulate
 
-import negmas
-from negmas import save_stats
-
 import scml
-from scml.scml2019.utils import (
-    anac2019_sabotage,
-    anac2019_world_generator,
-    anac2019_config_generator,
-    anac2019_assigner,
-    anac2019_sabotage_config_generator,
-    anac2019_sabotage_assigner,
-    sabotage_effectiveness,
-)
-from negmas.helpers import humanize_time, unique_name, camel_case, load
-from negmas.java import init_jnegmas_bridge, jnegmas_bridge_is_running
-from negmas.tournaments import (
-    create_tournament,
-    run_tournament,
-    evaluate_tournament,
-    combine_tournaments,
-    combine_tournament_stats,
-)
-
-from scml.scml2020.utils import (
-    anac2020_assigner,
-    anac2020_config_generator,
-    anac2020_world_generator,
-)
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
+from scml.scml2019.utils import anac2019_assigner
+from scml.scml2019.utils import anac2019_config_generator
+from scml.scml2019.utils import anac2019_sabotage
+from scml.scml2019.utils import anac2019_sabotage_assigner
+from scml.scml2019.utils import anac2019_sabotage_config_generator
+from scml.scml2019.utils import anac2019_world_generator
+from scml.scml2019.utils import sabotage_effectiveness
+from scml.scml2020.utils import anac2020_assigner
+from scml.scml2020.utils import anac2020_config_generator
+from scml.scml2020.utils import anac2020_world_generator
 
 try:
     from .vendor.quick.quick import gui_option
