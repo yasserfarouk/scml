@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from negmas import (
     AgentMechanismInterface,
     ResponseType,
@@ -21,7 +21,7 @@ __all__ = ["OneShotAgent", "OneShotSyncAgent"]
 class OneShotAgent(SAOController, Entity, ABC):
     """Base class for all agents in the One-Shot game."""
 
-    def __init__(self, owner, ufun, name=None):
+    def __init__(self, owner=None, ufun=None, name=None):
         super().__init__(
             default_negotiator_type=PassThroughSAONegotiator,
             default_negotiator_params=None,
@@ -29,7 +29,12 @@ class OneShotAgent(SAOController, Entity, ABC):
             name=name,
             ufun=ufun,
         )
+        self.awi = owner.awi if owner else None
+
+    def connect_to_adapter(self, owner, ufun):
+        """Connects the agent to its adapter (used internally)"""
         self.awi = owner.awi
+        self.utility_function = ufun
 
     @abstractmethod
     def propose(self, negotiator_id: str, state: MechanismState) -> "Outcome":
@@ -88,11 +93,9 @@ class OneShotAgent(SAOController, Entity, ABC):
     ) -> None:
         """Called whenever a negotiation ends with agreement"""
 
-    def init(self):
-        pass
-
-    def step(self):
-        pass
+    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        """Signs all contracts"""
+        return [self.id] * len(contracts)
 
 
 class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
@@ -121,3 +124,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
     @abstractmethod
     def first_proposals(self) -> Dict[str, "Outcome"]:
         """Gets a set of proposals to use for initializing the negotiation."""
+
+    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        """Signs all contracts"""
+        return [self.id] * len(contracts)

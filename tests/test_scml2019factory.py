@@ -9,7 +9,7 @@ from collections import defaultdict
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import given
+from hypothesis import given, settings, HealthCheck
 from hypothesis.strategies import composite
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 from pytest import fixture
@@ -128,6 +128,7 @@ def slow_simulator(profiles, products):
     )
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(st.integers(min_value=0, max_value=n_steps))
 def test_slow_factory_simulator_can_be_checked_at_any_time(slow_simulator, t):
     assert slow_simulator.wallet_at(t) == initial_wallet

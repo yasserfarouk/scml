@@ -1461,7 +1461,7 @@ def anac2021_oneshot(
     #     competitor_params = [dict() for _ in range(len(competitors))]
     # for t, p in zip(competitors, competitor_params):
     #     p["controller_type"] = get_full_type_name(t)
-    # competitors = ["scml.oneshot.world._OneShotBaseAgent"] * len(competitors)
+    # competitors = ["scml.oneshot.world._OneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
         n_competitors_per_world = kwargs.get(
             "n_competitors_per_world", randint(2, min(4, len(competitors)))

@@ -51,7 +51,13 @@ from negmas.situated import (
 )
 
 from scml.scml2019.utils import _realin
-from .common import is_system_agent, SYSTEM_BUYER_ID, SYSTEM_SELLER_ID
+from .common import (
+    is_system_agent,
+    SYSTEM_BUYER_ID,
+    SYSTEM_SELLER_ID,
+    INFINITE_COST,
+    ANY_LINE,
+)
 from .common import *
 from ..common import integer_cut, intin, realin, make_array
 
@@ -1974,7 +1980,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             a.id = a.name
             self.join(a, i)
             agents.append(a)
-        self.agent_types = [get_class(_)._type_name() for _ in agent_types]
+        self.agent_types = [_.type_name for _ in agents]
         self.agent_params = [
             {k: v for k, v in _.items() if k != "name"} for _ in agent_params
         ]
@@ -2797,10 +2803,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             "id": contract.id,
             "seller_name": self.agents[contract.annotation["seller"]].name,
             "buyer_name": self.agents[contract.annotation["buyer"]].name,
-            "seller_type": self.agents[
-                contract.annotation["seller"]
-            ].__class__.__name__,
-            "buyer_type": self.agents[contract.annotation["buyer"]].__class__.__name__,
+            "seller_type": self.agents[contract.annotation["seller"]].type_name,
+            "buyer_type": self.agents[contract.annotation["buyer"]].type_name,
             "delivery_time": contract.agreement["time"],
             "quantity": contract.agreement["quantity"],
             "unit_price": contract.agreement["unit_price"],

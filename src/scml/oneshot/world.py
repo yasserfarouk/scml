@@ -21,6 +21,7 @@ from typing import (
     Tuple,
     Union,
     Callable,
+    Set,
 )
 import numpy as np
 from matplotlib.axis import Axis
@@ -28,6 +29,7 @@ import networkx as nx
 from negmas import (
     World,
     Agent,
+    Adapter,
     AgentWorldInterface,
     Issue,
     AgentMechanismInterface,
@@ -38,7 +40,8 @@ from negmas import (
     Breach,
     PassThroughSAONegotiator,
     SAOController,
-    NoContractExecutionMixin,
+    # NoContractExecutionMixin,
+    TimeInAgreementMixin,
     Operations,
     BreachProcessing,
     DEFAULT_EDGE_TYPES,
@@ -347,8 +350,14 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.agent_delivery_penalty[self.agent.id]
 
 
-class _OneShotBaseAgent(Agent):
+class _OneShotAdapter(Adapter):
     """The base class of all one-shot agents"""
+
+    def on_negotiation_failure(self, partners, annotation, mechanism, state):
+        return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
+
+    def on_negotiation_success(self, contract, mechanism):
+        return self._obj.on_negotiation_success(contract, mechanism)
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
@@ -357,18 +366,6 @@ class _OneShotBaseAgent(Agent):
         self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
     ) -> None:
         pass
-
-    def __init__(
-        self,
-        controller_type: Union[str, Type["OneShotAgent"]],
-        controller_params: Optional[Dict[str, Any]] = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.controller_type = controller_type
-        self.controller_params = dict() if not controller_params else controller_params
-        self.controller = None
-        self.profile = None
 
     def make_ufun(self):
         awi: OneShotAWI = self.awi
@@ -391,21 +388,9 @@ class _OneShotBaseAgent(Agent):
             delivery_penalty=awi.current_delivery_penalty,
         )
 
-    def make_controller(self) -> Optional[SAOController]:
-        self.controller = instantiate(
-            self.controller_type,
-            owner=self,
-            ufun=self.make_ufun(),
-            **self.controller_params,
-        )
-        return self.controller
-
     def init(self):
-        self.controller = self.make_controller()
-        self.controller.init()
-
-    def step(self):
-        self.controller.step()
+        self.ufun = self.make_ufun()
+        super().init()
 
     def to_dict(self):
         return {
@@ -427,9 +412,7 @@ class _OneShotBaseAgent(Agent):
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
         partner = [_ for _ in partners if _ != self.id][0]
-        if not self.controller:
-            self.controller = self.make_controller()
-        neg = self.controller.create_negotiator(PassThroughSAONegotiator, name=partner)
+        neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner)
         return neg
 
     def set_renegotiation_agenda(
@@ -448,31 +431,23 @@ class _OneShotBaseAgent(Agent):
     def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
         pass
 
-    @property
-    def internal_state(self) -> Dict[str, Any]:
-        """Returns the internal state of the agent for debugging purposes"""
-        return self.controller.internal_state if self.controller else dict()
 
-    def on_negotiation_failure(self, *args, **kwargs) -> None:
-        """Called whenever a negotiation ends without agreement"""
-        self.controller.on_negotiation_failure(*args, **kwargs)
-
-    def on_negotiation_success(self, *args, **kwargs) -> None:
-        """Called whenever a negotiation ends with agreement"""
-        self.controller.on_negotiation_success(*args, **kwargs)
-
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """Signs all contracts"""
-        return [self.id] * len(contracts)
-
-
-class _SystemAgent(_OneShotBaseAgent):
+class _SystemAgent(_OneShotAdapter):
     """Implements an agent for handling system operations"""
 
     def __init__(self, *args, role, **kwargs):
         super().__init__(*args, **kwargs)
         self.id = role
         self.name = role
+        self.profile = None
+
+    @property
+    def type_name(self):
+        return "System"
+
+    @property
+    def short_type_name(self):
+        return "System"
 
     def respond_to_negotiation_request(
         self,
@@ -508,7 +483,7 @@ class _SystemAgent(_OneShotBaseAgent):
         return [self.id] * len(contracts)
 
 
-class SCML2020OneShotWorld(NoContractExecutionMixin, World):
+class SCML2020OneShotWorld(TimeInAgreementMixin, World):
     """Implements the SCML-OneShot variant of the SCM world.
 
     Args:
@@ -676,7 +651,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             process_outputs=process_outputs,
             catalog_prices=catalog_prices,
             agent_types_final=[get_full_type_name(_) for _ in agent_types],
-            agent_params_final=agent_params,
+            agent_params_final=[copy.deepcopy(_) for _ in agent_params],
             initial_balance_final=initial_balance,
             bankruptcy_limit=bankruptcy_limit,
             financial_report_period=financial_report_period,
@@ -699,6 +674,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             publish_trading_prices=publish_trading_prices,
             selected_price_multiplier=price_multiplier,
         )
+        TimeInAgreementMixin.init(self, time_field="time")
         self.bulletin_board.add_section("reports_agent")
         self.bulletin_board.add_section("reports_time")
         if self.publish_exogenous_summary:
@@ -731,10 +707,16 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         )
         # breakpoint()
         agent_types = [get_class(_) for _ in agent_types]
+        for p in agent_params:
+            p["obj"] = get_class(p["controller_type"])(
+                **p.get("controller_params", dict())
+            )
+            del p["controller_type"]
+            if "controller_params" in p.keys():
+                del p["controller_params"]
+
         self.controller_types = [
-            get_class(_["controller_type"])._type_name()
-            if _["controller_type"]
-            else "system_agent"
+            get_class(_["obj"])._type_name() if _["obj"] else "system_agent"
             for _ in agent_params
         ]
         assert (
@@ -747,8 +729,8 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         else:
             default_names = [unique_name("", add_time=False) for _ in range(n_agents)]
         if agent_name_reveals_type:
-            for i, at in enumerate(self.controller_types):
-                default_names[i] += f"{get_class(at).__name__[:3]}"
+            for i, at in enumerate(agent_params):
+                default_names[i] += f"{get_class(at['obj']).__class__.__name__[:3]}"
         agent_levels = [p.level for p in profiles]
         if agent_name_reveals_position:
             for i, l in enumerate(agent_levels):
@@ -776,8 +758,8 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
                     agent_params[i]["name"] = ns
         agent_types += [_SystemAgent, _SystemAgent]
         agent_params += [
-            {"role": SYSTEM_SELLER_ID, "controller_type": None},
-            {"role": SYSTEM_BUYER_ID, "controller_type": None},
+            {"role": SYSTEM_SELLER_ID, "obj": None},
+            {"role": SYSTEM_BUYER_ID, "obj": None},
         ]
         profiles.append(
             OneShotProfile(
@@ -809,17 +791,13 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         for i, (atype, aparams) in enumerate(zip(agent_types, agent_params)):
             a = instantiate(atype, **aparams)
             a.id = a.name
+            if a.adapted_object:
+                a.adapted_object.connect_to_adapter(a, None)
             self.join(a, i)
             agents.append(a)
-        self.agent_types = [
-            get_class(_["controller_type"])._type_name()
-            if _["controller_type"]
-            else "system_agent"
-            for _ in agent_params
-        ]
+        self.agent_types = [_.type_name for _ in agents]
         self.agent_params = [
-            {k: v for k, v in _.items() if k != "name" and k != "controller_type"}
-            for _ in agent_params
+            {k: v for k, v in _.items() if k != "name"} for _ in agent_params
         ]
         self.agent_unique_types = [
             f"{t}{hash(str(p))}" if len(p) > 0 else t
@@ -947,9 +925,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         self.exogenous_pin = defaultdict(int)
         self.exogenous_contracts_summary = None
 
-        self.initial_balances = dict(
-            zip(self.agents.keys(), initial_balance)
-        )
+        self.initial_balances = dict(zip(self.agents.keys(), initial_balance))
 
     @classmethod
     def generate(
@@ -1131,7 +1107,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
 
         for t, p in zip(agent_types, agent_params):
             p["controller_type"] = t
-        agent_types = [_OneShotBaseAgent] * len(agent_types)
+        agent_types = [_OneShotAdapter] * len(agent_types)
         # generate production costs making sure that every agent can do exactly one process
         n_agents_cumsum = n_agents_per_process.cumsum().tolist()
         first_agent = [0] + n_agents_cumsum[:-1]
@@ -1471,7 +1447,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         )
 
     def add_financial_report(
-        self, agent: _OneShotBaseAgent, reports_agent, reports_time
+        self, agent: _OneShotAdapter, reports_agent, reports_time
     ) -> None:
         """
         Records a financial report for the given agent in the agent indexed reports and time indexed reports
@@ -1508,6 +1484,12 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         if reports_time.get(str(self.current_step), None) is None:
             reports_time[str(self.current_step)] = {}
         reports_time[str(self.current_step)][agent.id] = report
+
+    def complete_contract_execution(self, *args, **kwargs):
+        pass
+
+    def start_contract_execution(self, contract: Contract) -> Optional[Set[Breach]]:
+        return set()
 
     def simulation_step(self, stage):
         s = self.current_step
@@ -1685,10 +1667,8 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
             "id": contract.id,
             "seller_name": self.agents[contract.annotation["seller"]].name,
             "buyer_name": self.agents[contract.annotation["buyer"]].name,
-            "seller_type": self.agents[
-                contract.annotation["seller"]
-            ].__class__.__name__,
-            "buyer_type": self.agents[contract.annotation["buyer"]].__class__.__name__,
+            "seller_type": self.agents[contract.annotation["seller"]].type_name,
+            "buyer_type": self.agents[contract.annotation["buyer"]].type_name,
             "delivery_time": contract.agreement["time"],
             "quantity": contract.agreement["quantity"],
             "unit_price": contract.agreement["unit_price"],
@@ -1860,7 +1840,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         return [_ for _ in self.agents.keys() if is_system_agent(_)]
 
     @property
-    def non_system_agents(self) -> List[_OneShotBaseAgent]:
+    def non_system_agents(self) -> List[_OneShotAdapter]:
         """Returns all agents except system agents"""
         return [_ for _ in self.agents.values() if not is_system_agent(_.id)]
 
@@ -2060,7 +2040,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
         for aid, a in self.agents.items():
             if is_system_agent(aid):
                 continue
-            controllers[aid] = a.make_controller()
+            controllers[aid] = a.adapted_object
         for product in range(1, self.n_products):
             for aid in self.consumers[product]:
                 if is_system_agent(aid):
@@ -2099,6 +2079,7 @@ class SCML2020OneShotWorld(NoContractExecutionMixin, World):
 
     def get_private_state(self, agent: "Agent") -> dict:
         return agent.awi.state
+
     def _contract_record(self, contract):
         record = super()._contract_record(contract)
         record["executed_at"] = self.current_step
