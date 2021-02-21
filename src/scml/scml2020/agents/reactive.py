@@ -17,7 +17,6 @@ from ..world import SCML2020Agent
 __all__ = ["ReactiveAgent"]
 
 
-
 class ReactiveAgent(
     KeepOnlyGoodPrices,
     StepNegotiationManager,

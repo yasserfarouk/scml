@@ -24,7 +24,6 @@ from ..world import SCML2020Agent
 __all__ = ["IndependentNegotiationsAgent"]
 
 
-
 class IndependentNegotiationsAgent(
     KeepOnlyGoodPrices,
     IndependentNegotiationsManager,

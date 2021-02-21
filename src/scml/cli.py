@@ -52,9 +52,6 @@ except:
         return x
 
 
-
-
-
 try:
     # disable a warning in yaml 1b1 version
     yaml.warnings({"YAMLLoadWarning": False})
@@ -1411,6 +1408,7 @@ def run2020(
 DEFAULT_STD = (
     "RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent"
 )
+DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.builtin.RandomOneShotAgent;DecentralizingAgent"
 DEFAULT_ONESHOT = "RandomOneShotAgent;SyncRandomOneShotAgent"
 DEFAULT_ONESHOT_FULL = [
     "scml.oneshot.builtin.RandomOneShotAgent",
@@ -1494,7 +1492,7 @@ def run2021(
     oneshot,
 ):
     if not competitors:
-        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD
+        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
     world_type = SCML2020OneShotWorld if oneshot else SCML2021World
     if time <= 0:
         time = None
@@ -1957,7 +1955,6 @@ def tournament2020(
     if non_competitors is None:
         non_competitors = scml.scml2020.utils.DefaultAgents
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
-    # breakpoint()
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
     print("Non-competitors are: ")
@@ -2139,7 +2136,7 @@ def tournament2021(
 ):
     oneshot = ttype == "oneshot"
     if not competitors:
-        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD
+        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
     world_type = SCML2020OneShotWorld if oneshot else SCML2021World
     if len(output) == 0 or output == "none":
         output = None
@@ -2239,7 +2236,11 @@ def tournament2021(
                     non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = DEFAULT_ONESHOT_FULL
+        non_competitors = (
+            DEFAULT_ONESHOT_FULL
+            if ttype == "oneshot"
+            else scml.scml2020.utils.DefaultAgents2021
+        )
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)

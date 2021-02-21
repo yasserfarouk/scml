@@ -7,14 +7,18 @@ from negmas import Contract
 
 from scml.scml2020.common import ANY_LINE
 from scml.scml2020.common import is_system_agent
-from scml.scml2020.components import FixedTradePredictionStrategy
 from scml.scml2020.components import SignAllPossible
-from scml.scml2020.components.prediction import MeanERPStrategy
+from scml.scml2020.components.prediction import (
+    MeanERPStrategy,
+    MarketAwareTradePredictionStrategy,
+    FixedTradePredictionStrategy,
+)
 
 __all__ = [
     "TradingStrategy",
     "ReactiveTradingStrategy",
     "PredictionBasedTradingStrategy",
+    "MarketAwarePredictionBasedTradingStrategy",
 ]
 
 
@@ -371,3 +375,9 @@ class PredictionBasedTradingStrategy(
                 self.inputs_secured[t] += missing
                 # if t < self.awi.n_steps - 1:
                 #     self.outputs_needed[t + 1] -= missing
+
+
+class MarketAwarePredictionBasedTradingStrategy(
+    MarketAwareTradePredictionStrategy, PredictionBasedTradingStrategy
+):
+    pass

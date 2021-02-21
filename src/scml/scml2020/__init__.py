@@ -7,12 +7,22 @@ The detailed description of this world simulation can be found here_.
 """
 
 from .common import *
+from .factory import *
+from .awi import *
 from .world import *
+from .agent import *
 from .components import *
 from .agents import *
 from . import utils
 from .utils import *
 
 __all__ = (
-    common.__all__ + agents.__all__ + world.__all__ + components.__all__ + ["utils"]
+    common.__all__
+    + agents.__all__
+    + world.__all__
+    + components.__all__
+    + factory.__all__
+    + awi.__all__
+    + agent.__all__
+    + ["utils"]
 )

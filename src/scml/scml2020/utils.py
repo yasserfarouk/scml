@@ -15,10 +15,15 @@ from negmas.tournaments import tournament
 
 from scml.oneshot.world import SCML2020OneShotWorld
 from scml.scml2020.agents import BuyCheapSellExpensiveAgent
-from scml.scml2020.agents import DecentralizingAgent
-from scml.scml2020.agents import RandomAgent
+from scml.scml2020.agents import (
+    DecentralizingAgent,
+    MarketAwareDecentralizingAgent,
+    MarketAwareIndDecentralizingAgent,
+    MarketAwareMovingRangeAgent,
+)
 from scml.scml2020.world import SCML2020World
 from scml.scml2020.world import is_system_agent
+from scml.oneshot.builtin import RandomOneShotAgent, SyncRandomOneShotAgent
 
 if True:
     from typing import (
@@ -46,10 +51,22 @@ __all__ = [
     "balance_calculator2021",
     "balance_calculator2021oneshot",
     "DefaultAgents",
+    "DefaultAgents2021",
+    "DefaultAgentsOneShot",
 ]
 
 ROUND_ROBIN = True
 DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent]
+DefaultAgents2021 = [
+    DecentralizingAgent,
+    MarketAwareDecentralizingAgent,
+    MarketAwareIndDecentralizingAgent,
+    RandomOneShotAgent,
+]
+DefaultAgentsOneShot = [
+    RandomOneShotAgent,
+    SyncRandomOneShotAgent,
+]
 
 
 def integer_cut(

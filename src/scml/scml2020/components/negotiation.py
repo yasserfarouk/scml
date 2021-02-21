@@ -77,12 +77,19 @@ class NegotiationManager:
     """
 
     def __init__(
-        self, *args, horizon=5, negotiate_on_signing=True, logdebug=False, **kwargs
+        self,
+        *args,
+        horizon=5,
+        negotiate_on_signing=True,
+        logdebug=False,
+        use_trading_prices=True,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._horizon = horizon
         self._negotiate_on_signing = negotiate_on_signing
         self._log = logdebug
+        self._use_trading = use_trading_prices
 
     def init(self):
         # set horizon to exogenous horizon
@@ -214,12 +221,18 @@ class NegotiationManager:
         )
 
     def _urange(self, step, is_seller, time_range):
+        prices = (
+            self.awi.catalog_prices
+            if not self._use_trading
+            or not self.awi.settings.get("public_trading_prices", False)
+            else self.awi.trading_prices
+        )
         if is_seller:
-            cprice = self.awi.catalog_prices[self.awi.my_output_product]
-            return cprice, 2 * cprice
+            cprice = prices[self.awi.my_output_product]
+            return cprice, 2 * int(cprice + 0.5)
 
-        cprice = self.awi.catalog_prices[self.awi.my_input_product]
-        return 1, cprice
+        cprice = prices[self.awi.my_input_product]
+        return 1, int(cprice)
 
     def _trange(self, step, is_seller):
         if is_seller:
@@ -400,7 +413,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             expected_quantity = int(math.floor(qvalues[1] * self._execution_fraction))
 
         # negotiate with everyone
-        controller = self.add_controller(
+        controller = self.create_controller(
             sell, qvalues[1], uvalues, expected_quantity, step
         )
         # self.awi.loginfo_agent(
@@ -408,7 +421,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         #     f"on u={uvalues}, q={qvalues}, t={tvalues}"
         #     f" with {str(partners)} using {str(controller)}"
         # )
-        self.awi.request_negotiations(
+        if self.awi.request_negotiations(
             is_buy=not sell,
             product=product,
             quantity=qvalues,
@@ -417,7 +430,10 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             partners=partners,
             controller=controller,
             extra=dict(controller_index=step, is_seller=sell),
-        )
+        ):
+            self.add_controller(
+                controller, sell, qvalues[1], uvalues, expected_quantity, step
+            )
 
     def respond_to_negotiation_request(
         self,
@@ -445,7 +461,15 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         # )
         # create a controller for the time-step if one does not exist or use the one already running
         if controller_info.controller is None:
+            controller = self.create_controller(
+                is_seller,
+                target,
+                self._urange(step, is_seller, (tmin, tmax)),
+                int(target),
+                step,
+            )
             controller = self.add_controller(
+                controller,
                 is_seller,
                 target,
                 self._urange(step, is_seller, (tmin, tmax)),
@@ -489,34 +513,13 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
 
     def add_controller(
         self,
+        controller: StepController,
         is_seller: bool,
         target,
         urange: Tuple[int, int],
         expected_quantity: int,
         step: int,
     ) -> StepController:
-        if is_seller and self.sellers[step].controller is not None:
-            return self.sellers[step].controller
-        if not is_seller and self.buyers[step].controller is not None:
-            return self.buyers[step].controller
-        controller = StepController(
-            is_seller=is_seller,
-            target_quantity=target,
-            negotiator_type=self.negotiator_type,
-            negotiator_params=self.negotiator_params,
-            step=step,
-            urange=urange,
-            product=self.awi.my_output_product
-            if is_seller
-            else self.awi.my_input_product,
-            partners=self.awi.my_consumers if is_seller else self.awi.my_suppliers,
-            horizon=self._horizon,
-            negotiations_concluded_callback=functools.partial(
-                self.__class__.all_negotiations_concluded, self
-            ),
-            parent_name=self.name,
-            awi=self.awi,
-        )
         if is_seller:
             assert self.sellers[step].controller is None
             self.sellers[step] = ControllerInfo(
@@ -540,6 +543,37 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
                 False,
             )
         return controller
+
+    def create_controller(
+        self,
+        is_seller: bool,
+        target,
+        urange: Tuple[int, int],
+        expected_quantity: int,
+        step: int,
+    ) -> StepController:
+        if is_seller and self.sellers[step].controller is not None:
+            return self.sellers[step].controller
+        if not is_seller and self.buyers[step].controller is not None:
+            return self.buyers[step].controller
+        return StepController(
+            is_seller=is_seller,
+            target_quantity=target,
+            negotiator_type=self.negotiator_type,
+            negotiator_params=self.negotiator_params,
+            step=step,
+            urange=urange,
+            product=self.awi.my_output_product
+            if is_seller
+            else self.awi.my_input_product,
+            partners=self.awi.my_consumers if is_seller else self.awi.my_suppliers,
+            horizon=self._horizon,
+            negotiations_concluded_callback=functools.partial(
+                self.__class__.all_negotiations_concluded, self
+            ),
+            parent_name=self.name,
+            awi=self.awi,
+        )
 
     def _get_controller(self, mechanism) -> StepController:
         neg = self._running_negotiations[mechanism.id]

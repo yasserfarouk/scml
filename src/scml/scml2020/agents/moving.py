@@ -7,10 +7,10 @@ from scml.scml2020.components import SupplyDrivenProductionStrategy
 
 from ..components import KeepOnlyGoodPrices
 from ..components.trading import PredictionBasedTradingStrategy
+from ..components.prediction import MarketAwareTradePredictionStrategy
 from ..world import SCML2020Agent
 
-__all__ = ["MovingRangeAgent"]
-
+__all__ = ["MovingRangeAgent", "MarketAwareMovingRangeAgent"]
 
 
 class MovingRangeAgent(
@@ -20,4 +20,8 @@ class MovingRangeAgent(
     SupplyDrivenProductionStrategy,
     SCML2020Agent,
 ):
+    pass
+
+
+class MarketAwareMovingRangeAgent(MarketAwareTradePredictionStrategy, MovingRangeAgent):
     pass

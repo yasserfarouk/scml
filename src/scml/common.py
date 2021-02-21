@@ -1,4 +1,5 @@
 """Common functions used in all modules"""
+from dataclasses import dataclass
 import random
 from typing import Iterable
 from typing import List
@@ -7,7 +8,12 @@ from typing import Union
 
 import numpy as np
 
-__all__ = ["integer_cut", "intin", "realin", "make_array"]
+__all__ = [
+    "integer_cut",
+    "intin",
+    "realin",
+    "make_array",
+]
 
 
 def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:

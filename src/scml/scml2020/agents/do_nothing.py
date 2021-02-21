@@ -11,8 +11,8 @@ from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
 
-from scml.scml2020.world import Failure
-from scml.scml2020.world import SCML2020Agent
+from scml.scml2020 import Failure
+from scml.scml2020 import SCML2020Agent
 
 __all__ = ["DoNothingAgent"]
 

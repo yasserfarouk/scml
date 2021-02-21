@@ -35,6 +35,8 @@ class RandomOneShotAgent(OneShotAgent):
 
 class SyncRandomOneShotAgent(OneShotSyncAgent):
     def _random_offer(self, negotiator_id: str):
+        if not self.negotiators[negotiator_id][0].ami:
+            breakpoint()
         return self.negotiators[negotiator_id][0].ami.random_outcomes(1)[0]
 
     def counter_all(

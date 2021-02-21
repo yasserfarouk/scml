@@ -33,7 +33,12 @@ class OneShotAgent(SAOController, Entity, ABC):
         )
         self.awi = owner.awi if owner else None
 
-    def connect_to_adapter(self, owner, ufun):
+    def connect_to_oneshot_adapter(self, owner, ufun):
+        """Connects the agent to its adapter (used internally)"""
+        self.awi = owner._awi
+        self.utility_function = ufun
+
+    def connect_to_2021_adapter(self, owner, ufun):
         """Connects the agent to its adapter (used internally)"""
         self.awi = owner.awi
         self.utility_function = ufun

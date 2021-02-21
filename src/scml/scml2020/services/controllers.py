@@ -37,7 +37,6 @@ from scml.scml2020.common import UNIT_PRICE
 __all__ = ["StepController", "SyncController"]
 
 
-
 class StepController(SAOController, AspirationMixin, Notifier):
     """A controller for managing a set of negotiations about selling or buying (but not both)  starting/ending at some
     specific time-step.
@@ -128,14 +127,20 @@ class StepController(SAOController, AspirationMixin, Notifier):
         return joined
 
     def propose(self, negotiator_id: str, state: MechanismState) -> Optional["Outcome"]:
+        if negotiator_id not in self.negotiators.keys():
+            return None
         self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
         return self.__negotiator.propose(state)
 
     def respond(
         self, negotiator_id: str, state: MechanismState, offer: "Outcome"
     ) -> ResponseType:
+        if negotiator_id not in self.negotiators.keys():
+            return ResponseType.END_NEGOTIATION
         if self.secured >= self.target:
             return ResponseType.END_NEGOTIATION
+        # if negotiator_id not in self.negotiators:
+        #     breakpoint()
         self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
         return self.__negotiator.respond(offer=offer, state=state)
 

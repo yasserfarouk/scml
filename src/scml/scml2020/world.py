@@ -5,7 +5,7 @@ import logging
 import math
 import random
 import sys
-from collections import defaultdict
+from collections import defaultdict, Counter
 from collections import namedtuple
 from dataclasses import dataclass
 from typing import Any
@@ -25,18 +25,11 @@ import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
 from negmas import Action
+
+# from negmas import Adapter
 from negmas import Agent
-from negmas import AgentMechanismInterface
-from negmas import AgentWorldInterface
 from negmas import Breach
 from negmas import Contract
-from negmas import Issue
-from negmas import MechanismState
-from negmas import Negotiator
-from negmas import PassThroughSAONegotiator
-from negmas import RenegotiationRequest
-from negmas import SAOController
-from negmas import SAONegotiator
 from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
@@ -49,1533 +42,36 @@ from negmas.situated import World
 
 from scml.scml2019.utils import _realin
 
-from .common import ANY_LINE
-from .common import ANY_STEP
 from .common import COMPENSATION_ID
 from .common import INFINITE_COST
 from .common import NO_COMMAND
 from .common import SYSTEM_BUYER_ID
 from .common import SYSTEM_SELLER_ID
-from .common import is_system_agent
+from .common import (
+    is_system_agent,
+    FactoryProfile,
+    ExogenousContract,
+    FinancialReport,
+    ContractInfo,
+)
+from .factory import Factory
+from .agent import OneShotAdapter, SCML2020Agent, _SystemAgent
+from ..oneshot.agent import OneShotAgent
 from ..common import integer_cut
 from ..common import intin
 from ..common import make_array
 from ..common import realin
 
 __all__ = [
-    "FactoryState",
-    "SCML2020Agent",
-    "AWI",
     "SCML2020World",
     "SCML2021World",
-    "FinancialReport",
-    "FactoryProfile",
-    "Factory",
-    "Failure",
 ]
-
-ContractInfo = namedtuple(
-    "ContractInfo", ["q", "u", "product", "is_seller", "partner", "contract"]
-)
-"""Information about a contract including a pointer to it"""
 
 CompensationRecord = namedtuple(
     "CompensationRecord", ["product", "quantity", "money", "seller_bankrupt", "factory"]
 )
 """A record of delayed compensation used when a factory goes bankrupt to keep
 honoring its future contracts to the limit possible"""
-
-
-@dataclass
-class ExogenousContract:
-    """Represents a contract to be revealed at revelation_time to buyer and seller between them that is not agreed upon
-    through negotiation but is endogenously given"""
-
-    product: int
-    """Product"""
-    quantity: int
-    """Quantity"""
-    unit_price: int
-    """Unit price"""
-    time: int
-    """Delivery time"""
-    revelation_time: int
-    """Time at which to reveal the contract to both buyer and seller"""
-    seller: int = -1
-    """Seller index in the agents array (-1 means "system")"""
-    buyer: int = -1
-    """Buyer index in the agents array (-1 means "system")"""
-
-
-@dataclass
-class FinancialReport:
-    """A report published periodically by the system showing the financial standing of an agent"""
-
-    __slots__ = [
-        "agent_id",
-        "step",
-        "cash",
-        "assets",
-        "breach_prob",
-        "breach_level",
-        "is_bankrupt",
-        "agent_name",
-    ]
-    agent_id: str
-    """Agent ID"""
-    step: int
-    """Simulation step at the beginning of which the report was published."""
-    cash: int
-    """Cash in the agent's wallet. Negative numbers indicate liabilities."""
-    assets: int
-    """Value of the products in the agent's inventory @ catalog prices. """
-    breach_prob: float
-    """Number of times the agent breached a contract over the total number of contracts it signed."""
-    breach_level: float
-    """Sum of the agent's breach levels so far divided by the number of contracts it signed."""
-    is_bankrupt: bool
-    """Whether the agent is already bankrupt (i.e. incapable of doing any more transactions)."""
-    agent_name: str
-    """Agent name for printing purposes"""
-
-    def __str__(self):
-        bankrupt = "BANKRUPT" if self.is_bankrupt else ""
-        return (
-            f"{self.agent_name} @ {self.step} {bankrupt}: Cash: {self.cash}, Assets: {self.assets}, "
-            f"breach_prob: {self.breach_prob}, breach_level: {self.breach_level} "
-            f"{'(BANKRUPT)' if self.is_bankrupt else ''}"
-        )
-
-
-@dataclass
-class FactoryProfile:
-    """Defines all private information of a factory"""
-
-    __slots__ = ["costs"]
-    costs: np.ndarray
-    """An n_lines * n_processes array giving the cost of executing any process (INVALID_COST indicates infinity)"""
-
-    @property
-    def n_lines(self):
-        return self.costs.shape[0]
-
-    @property
-    def n_products(self):
-        return self.costs.shape[1] + 1
-
-    @property
-    def n_processes(self):
-        return self.costs.shape[1]
-
-    @property
-    def processes(self) -> np.ndarray:
-        """The processes that have valid costs"""
-        return np.nonzero(np.any(self.costs != INFINITE_COST, axis=0))[0]
-
-    @property
-    def input_products(self) -> np.ndarray:
-        """The input products to all processes runnable (See `processes` )"""
-        return np.nonzero(np.any(self.costs != INFINITE_COST, axis=0))[0]
-
-    @property
-    def output_products(self) -> np.ndarray:
-        """The output products to all processes runnable (See `processes` )"""
-        return np.nonzero(np.any(self.costs != INFINITE_COST, axis=0))[0] + 1
-
-
-@dataclass
-class Failure:
-    """A production failure"""
-
-    __slots__ = ["is_inventory", "line", "step", "process"]
-    is_inventory: bool
-    """True if the cause of failure was insufficient inventory. If False, the cause was insufficient funds. Note that
-    if both conditions were true, only insufficient funds (is_inventory=False) will be reported."""
-    line: int
-    """The line at which the failure happened"""
-    step: int
-    """The step at which the failure happened"""
-    process: int
-    """The process that failed to execute"""
-
-
-@dataclass
-class FactoryState:
-    inventory: np.ndarray
-    """An n_products vector giving current quantity of every product in storage"""
-    balance: int
-    """Current balance in the wallet"""
-    commands: np.ndarray
-    """n_steps * n_lines array giving the process scheduled on each line at every step for the
-    whole simulation"""
-    inventory_changes: np.ndarray
-    """Changes in the inventory in the last step"""
-    balance_change: int
-    """Change in the balance in the last step"""
-    contracts: List[List[ContractInfo]]
-    """The An n_steps list of lists containing the contracts of this agent by time-step"""
-
-    @property
-    def n_lines(self) -> int:
-        return self.commands.shape[1]
-
-    @property
-    def n_steps(self) -> int:
-        return self.commands.shape[0]
-
-    @property
-    def n_products(self) -> int:
-        return len(self.inventory)
-
-    @property
-    def n_processes(self) -> int:
-        return len(self.inventory) - 1
-
-
-class Factory:
-    """A simulated factory"""
-
-    def __init__(
-        self,
-        profile: FactoryProfile,
-        initial_balance: int,
-        inputs: np.ndarray,
-        outputs: np.ndarray,
-        catalog_prices: np.ndarray,
-        world: "SCML2020World",
-        compensate_before_past_debt: bool,
-        buy_missing_products: bool,
-        production_buy_missing: bool,
-        production_penalty: float,
-        production_no_bankruptcy: bool,
-        production_no_borrow: bool,
-        agent_id: str,
-        agent_name: Optional[str] = None,
-        confirm_production: bool = True,
-        initial_inventory: Optional[np.ndarray] = None,
-        disallow_concurrent_negs_with_same_partners=False,
-    ):
-        self.confirm_production = confirm_production
-        self.production_buy_missing = production_buy_missing
-        self.compensate_before_past_debt = compensate_before_past_debt
-        self.buy_missing_products = buy_missing_products
-        self.production_penalty = production_penalty
-        self.production_no_bankruptcy = production_no_bankruptcy
-        self.production_no_borrow = production_no_borrow
-        self.catalog_prices = catalog_prices
-        self.initial_balance = initial_balance
-        self.__profile = profile
-        self.world = world
-        self.profile = copy.deepcopy(profile)
-        self._disallow_concurrent_negs_with_same_partners = (
-            disallow_concurrent_negs_with_same_partners
-        )
-        """The readonly factory profile (See `FactoryProfile` )"""
-        self.commands = NO_COMMAND * np.ones(
-            (world.n_steps, profile.n_lines), dtype=int
-        )
-        """An n_steps * n_lines array giving the process scheduled for each line at every step. -1 indicates an empty
-        line. """
-        self._balance = initial_balance
-        """Current balance"""
-        self._inventory = (
-            np.zeros(profile.n_products, dtype=int)
-            if initial_inventory is None
-            else initial_inventory
-        )
-        """Current inventory"""
-        self.agent_id = agent_id
-        """A unique ID for the agent owning the factory"""
-        self.inputs = inputs
-        """An n_process array giving the number of inputs needed for each process
-        (of the product with the same index)"""
-        self.outputs = outputs
-        """An n_process array giving the number of outputs produced by each process
-        (of the product with the next index)"""
-        self.inventory_changes = np.zeros(len(inputs) + 1, dtype=int)
-        """Changes in the inventory in the last step"""
-        self.balance_change = 0
-        """Change in the balance in the last step"""
-        self.min_balance = self.world.bankruptcy_limit
-        """The minimum balance possible"""
-        self.is_bankrupt = False
-        """Will be true when the factory is bankrupt"""
-        self.agent_name = (
-            self.world.agents[agent_id].name
-            if agent_name is None and world
-            else agent_name
-        )
-        """SCML2020Agent names used for logging purposes"""
-        self.contracts: List[List[ContractInfo]] = [[] for _ in range(world.n_steps)]
-        """A list of lists of contracts per time-step (len == n_steps)"""
-
-    @property
-    def state(self) -> FactoryState:
-        return FactoryState(
-            self._inventory.copy(),
-            self._balance,
-            self.commands,
-            self.inventory_changes,
-            self.balance_change,
-            [copy.copy(_.contract) for times in self.contracts for _ in times],
-        )
-
-    @property
-    def current_inventory(self) -> np.ndarray:
-        """Current inventory contents"""
-        return self._inventory
-
-    @property
-    def current_balance(self) -> int:
-        """Current wallet balance"""
-        return self._balance
-
-    def schedule_production(
-        self,
-        process: int,
-        repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
-        line: int = ANY_LINE,
-        override: bool = True,
-        method: str = "latest",
-        partial_ok: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Orders production of the given process on the given step and line.
-
-        Args:
-
-            process: The process index
-            repeats: How many times to repeat the process
-            step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
-                  schedule production at any step in the present or future.
-            line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
-            override: Whether to override any existing commands at that line at that time.
-            method: When to schedule the command if step was set to a range. Options are latest, earliest, all
-            partial_ok: If true, it is OK to produce only a subset of repeats
-
-        Returns:
-
-            Tuple[np.ndarray, np.ndarray] The steps and lines at which production is scheduled.
-
-        Remarks:
-
-            - You cannot order production in the past or in the current step
-            - Ordering production, will automatically update inventory and balance for all simulation steps assuming
-              that this production will be carried out. At the indicated `step` if production was not possible (due
-              to insufficient funds or insufficient inventory of the input product), the predictions for the future
-              will be corrected.
-
-        """
-        if self.is_bankrupt:
-            return np.empty(0, dtype=int), np.empty(0, dtype=int)
-        steps, lines = self.available_for_production(
-            repeats, step, line, override, method
-        )
-        if len(steps) < 1:
-            return np.empty(0, dtype=int), np.empty(0, dtype=int)
-        if len(steps) < repeats:
-            if not partial_ok:
-                return np.empty(0, dtype=int), np.empty(0, dtype=int)
-            repeats = len(steps)
-        self.order_production(process, steps[:repeats], lines[:repeats])
-        return steps, lines
-
-    def order_production(
-        self, process: int, steps: np.ndarray, lines: np.ndarray
-    ) -> None:
-        """
-        Orders production of the given process
-
-        Args:
-            process: The process to run
-            steps: The time steps to run the process at as an np.ndarray
-            lines: The corresponding lines to run the process at
-
-        Remarks:
-
-            - len(steps) must equal len(lines)
-            - No checks are done in this function. It is expected to be used after calling `available_for_production`
-        """
-        if self.is_bankrupt:
-            return
-        if len(steps) > 0:
-            self.commands[steps, lines] = process
-
-    def available_for_production(
-        self,
-        repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
-        line: int = ANY_LINE,
-        override: bool = True,
-        method: str = "latest",
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Finds available times and lines for scheduling production.
-
-        Args:
-
-            repeats: How many times to repeat the process
-            step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
-                  schedule production at any step in the present or future.
-            line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
-            override: Whether to override any existing commands at that line at that time.
-            method: When to schedule the command if step was set to a range. Options are latest, earliest, all
-
-        Returns:
-
-            Tuple[np.ndarray, np.ndarray] The steps and lines at which production is scheduled.
-
-        Remarks:
-
-            - You cannot order production in the past or in the current step
-            - Ordering production, will automatically update inventory and balance for all simulation steps assuming
-              that this production will be carried out. At the indicated `step` if production was not possible (due
-              to insufficient funds or insufficient inventory of the input product), the predictions for the future
-              will be corrected.
-
-        """
-        if self.is_bankrupt:
-            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
-        current_step = self.world.current_step
-        if not isinstance(step, tuple):
-            if step < 0:
-                step = (current_step, self.world.n_steps)
-            else:
-                step = (step, step + 1)
-        else:
-            step = (step[0], step[1] + 1)
-        step = (max(current_step, step[0]), step[1])
-        if step[1] <= step[0]:
-            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
-        if override:
-            if line < 0:
-                steps, lines = np.nonzero(
-                    self.commands[step[0] : step[1], :] >= NO_COMMAND
-                )
-            else:
-                steps = np.nonzero(
-                    self.commands[step[0] : step[1], line] >= NO_COMMAND
-                )[0]
-                lines = [line]
-        else:
-            if line < 0:
-                steps, lines = np.nonzero(
-                    self.commands[step[0] : step[1], :] == NO_COMMAND
-                )
-            else:
-                steps = np.nonzero(
-                    self.commands[step[0] : step[1], line] == NO_COMMAND
-                )[0]
-                lines = [line]
-        steps += step[0]
-        possible = min(repeats, len(steps))
-        if possible < repeats:
-            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
-        if method.startswith("l"):
-            steps, lines = steps[-possible + 1 :], lines[-possible + 1 :]
-        elif method == "all":
-            pass
-        else:
-            steps, lines = steps[:possible], lines[:possible]
-
-        return steps, lines
-
-    def cancel_production(self, step: int, line: int) -> bool:
-        """
-        Cancels pre-ordered production given that it did not start yet.
-
-        Args:
-
-            step: Step to cancel at
-            line: Line to cancel at
-
-        Returns:
-
-            True if step >= self.current_step
-
-        Remarks:
-
-            - Cannot cancel a process in the past or present.
-        """
-        if self.is_bankrupt:
-            return False
-        if step < self.world.current_step or line < 0:
-            return False
-        self.commands[step, line] = NO_COMMAND
-        return True
-
-    def step(self) -> List[Failure]:
-        """
-        Override this method to modify stepping logic.
-        """
-        if self.is_bankrupt:
-            return []
-        step = self.world.current_step
-        profile = self.__profile
-        failures = []
-        initial_balance = self._balance
-        initial_inventory = self._inventory.copy()
-
-        if self.confirm_production:
-            self.commands[step, :] = self.world.call(
-                self.world.agents[self.agent_id],
-                self.world.agents[self.agent_id].confirm_production,
-                self.commands[step, :],
-                self.current_balance,
-                self.current_inventory.copy(),
-            )
-
-        # do production
-        for line in np.nonzero(self.commands[step, :] != NO_COMMAND)[0]:
-            p = self.commands[step, line]
-            cost = profile.costs[line, p]
-            ins, outs = self.inputs[p], self.outputs[p]
-
-            # if execution will lead to bankruptcy or the cost is infinite, ignore this command
-            if self._balance - cost < self.min_balance or cost == INFINITE_COST:
-                failures.append(
-                    Failure(is_inventory=False, line=line, step=step, process=p)
-                )
-                # self._register_failure(step, p, cost, ins, outs)
-                continue
-            inp, outp = p, p + 1
-
-            # if we do not have enough inputs, ignore this command
-            if self._inventory[inp] < ins:
-                failures.append(
-                    Failure(is_inventory=True, line=line, step=step, process=p)
-                )
-                continue
-
-            # execute the command
-            self._balance -= cost
-            self.store(
-                inp,
-                -ins,
-                self.production_buy_missing,
-                self.production_penalty,
-                self.production_no_bankruptcy,
-                self.production_no_borrow,
-            )
-            self.store(
-                outp,
-                outs,
-                self.production_buy_missing,
-                self.production_penalty,
-                self.production_no_bankruptcy,
-                self.production_no_borrow,
-            )
-
-        assert self._balance >= self.min_balance
-        assert np.min(self._inventory) >= 0
-        self.inventory_changes = self._inventory - initial_inventory
-        self.balance_change = self._balance - initial_balance
-        return failures
-
-    def spot_price(self, product: int, spot_loss: float) -> int:
-        """
-        Get the current spot price for buying the given product on the spot market
-
-        Args:
-            product: Product
-            spot_loss: Spot loss specific to that agent
-
-        Returns:
-            The unit price
-        """
-        return int(np.ceil(self.world.trading_prices[product] * (1 + spot_loss)))
-
-    def store(
-        self,
-        product: int,
-        quantity: int,
-        buy_missing: bool,
-        spot_price: float,
-        no_bankruptcy: bool = False,
-        no_borrowing: bool = False,
-    ) -> int:
-        """
-        Stores the given amount of product (signed) to the factory.
-
-        Args:
-            product: Product
-            quantity: quantity to store/take out (-ve means take out)
-            buy_missing: If the quantity is negative and not enough product exists in the market, it buys the product
-                         from the spot-market at an increased price of penalty
-            spot_price: The fraction of unit_price added because we are buying from the spot market. Only effective if
-                     quantity is negative and not enough of the product exists in the inventory
-            no_bankruptcy: Never bankrupt the agent on this transaction
-            no_borrowing: Never borrow for this transaction
-
-        Returns:
-            The quantity actually stored or taken out (always positive)
-        """
-        if self.is_bankrupt:
-            self.world.logwarning(
-                f"{self.agent_name} received a transaction "
-                f"(product: {product}, q: {quantity}) after being bankrupt"
-            )
-            return 0
-        available = self._inventory[product]
-        if available + quantity >= 0:
-            self._inventory[product] += quantity
-            self.inventory_changes[product] += quantity
-            return quantity if quantity > 0 else -quantity
-        # we have an inventory breach here. We know that quantity < 0
-        assert quantity < 0
-        quantity = -quantity
-        if not buy_missing:
-            # if we are not buying from the spot market, pay the penalty for missing products and transfer all available
-            to_pay = int(
-                np.ceil(spot_price * (quantity - available) / quantity)
-                * self.world.trading_prices[product]
-            )
-            self.pay(to_pay, no_bankruptcy, no_borrowing)
-            self._inventory[product] = 0
-            self.inventory_changes[product] -= available
-            return available
-        # we have an inventory breach and should try to buy missing quantity from the spot market
-        effective_unit = self.spot_price(product, spot_price)
-        effective_total = (quantity - available) * effective_unit
-        paid = self.pay(
-            effective_total, no_bankruptcy, no_borrowing, unit=effective_unit
-        )
-        paid_for = int(paid // effective_unit)
-        assert self._inventory[product] + paid_for >= 0, (
-            f"{self.agent_name} had {self._inventory[product]} and paid for {paid_for} ("
-            f"original quantity {quantity})"
-        )
-        self._inventory[product] += paid_for
-        self.inventory_changes[product] += paid_for
-        self.store(product, -quantity, False, 0.0, True, True)
-        return paid_for
-
-    def buy(
-        self,
-        product: int,
-        quantity: int,
-        unit_price: int,
-        buy_missing: bool,
-        penalty: float,
-        no_bankruptcy: bool = False,
-        no_borrowing: bool = False,
-    ) -> Tuple[int, int]:
-        """
-        Executes a transaction to buy/sell involving adding quantity and paying price (both are signed)
-
-        Args:
-            product: The product transacted on
-            quantity: The quantity (added)
-            unit_price: The unit price (paid)
-            buy_missing: If true, attempt buying missing products from the spot market
-            penalty: The penalty as a fraction to be paid for breaches
-            no_bankruptcy: If true, this transaction can never lead to bankruptcy
-            no_borrowing: If true, this transaction can never lead to borrowing
-
-        Returns:
-            Tuple[int, int] The actual quantities bought and the total cost
-        """
-        if self.is_bankrupt:
-            self.world.logwarning(
-                f"{self.agent_name} received a transaction "
-                f"(product: {product}, q: {quantity}, u:{unit_price}) after being bankrupt"
-            )
-            return 0, 0
-        if quantity < 0:
-            # that is a sell contract
-            taken = self.store(
-                product, quantity, buy_missing, penalty, no_bankruptcy, no_borrowing
-            )
-            paid = self.pay(-taken * unit_price, no_bankruptcy, no_borrowing)
-            return taken, paid
-        # that is a buy contract
-        paid = self.pay(quantity * unit_price, no_bankruptcy, no_borrowing)
-        stored = self.store(
-            product,
-            paid // unit_price,
-            buy_missing,
-            penalty,
-            no_bankruptcy,
-            no_borrowing,
-        )
-        return stored, paid
-
-    def pay(
-        self,
-        money: int,
-        no_bankruptcy: bool = False,
-        no_borrowing: bool = False,
-        unit: int = 0,
-    ) -> int:
-        """
-        Pays money
-
-        Args:
-            money: amount to pay
-            no_bankruptcy: If true, this transaction can never lead to bankruptcy
-            no_borrowing: If true, this transaction can never lead to borrowing
-            unit: If nonzero then an integer multiple of unit will be paid
-
-        Returns:
-            The amount actually paid
-
-        """
-        if self.is_bankrupt:
-            self.world.logwarning(
-                f"{self.agent_name} was asked to pay {money} after being bankrupt"
-            )
-            return 0
-        new_balance = self._balance - money
-        if new_balance < self.min_balance:
-            if no_bankruptcy:
-                money = self._balance - self.min_balance
-            else:
-                money = self.bankrupt(money)
-        elif no_borrowing and new_balance < 0:
-            money = self._balance
-        if unit > 0:
-            money = (money // unit) * unit
-        self._balance -= money
-        self.balance_change -= money
-        return money
-
-    def bankrupt(self, required: int) -> int:
-        """
-        Bankruptcy processing for the given agent
-
-        Args:
-            required: The money required after the bankruptcy is processed
-
-        Returns:
-            The amount of money to pay back to the entity that should have been paid `money`
-
-        """
-        self.world.logdebug(
-            f"bankrupting {self.agent_name} (has: {self._balance}, needs {required})"
-        )
-
-        # sell everything on the agent's inventory
-        spot_loss = np.array(
-            self.world._agent_spot_loss[
-                self.world.a2i[self.agent_id], self.world.current_step
-            ]
-        )
-        prices = self.world.trading_prices / (
-            (1 + spot_loss) * (1 + self.world.spot_market_global_loss)
-        )
-
-        total = np.sum(self._inventory * self.world.liquidation_rate * prices)
-        pay_back = min(required, total)
-        available = total - required
-
-        # If past debt is paid before compensation pay it
-        original_balance = self._balance
-        if not self.compensate_before_past_debt:
-            available += original_balance
-
-        compensations = self.world.compensate(available, self)
-        self.is_bankrupt = True
-        for agent in self.world.agents.values():
-            if is_system_agent(agent.id) or agent.id == self.agent_id:
-                continue
-            if agent.id in compensations.keys():
-                info = compensations[agent.id]
-                agent.on_agent_bankrupt(
-                    self.agent_id,
-                    [_[0] for _ in info],
-                    [_[1] for _ in info],
-                    [_[2] for _ in info],
-                )
-            else:
-                agent.on_agent_bankrupt(self.agent_id, [], [], 0)
-        return pay_back
-
-
-class AWI(AgentWorldInterface):
-    """The Agent SCML2020World Interface for SCML2020 world allowing a single process per agent"""
-
-    # --------
-    # Actions
-    # --------
-
-    def request_negotiations(
-        self,
-        is_buy: bool,
-        product: int,
-        quantity: Union[int, Tuple[int, int]],
-        unit_price: Union[int, Tuple[int, int]],
-        time: Union[int, Tuple[int, int]],
-        controller: Optional[SAOController] = None,
-        negotiators: List[Negotiator] = None,
-        partners: List[str] = None,
-        extra: Dict[str, Any] = None,
-    ) -> bool:
-        """
-        Requests a negotiation
-
-        Args:
-
-            is_buy: If True the negotiation is about buying otherwise selling.
-            product: The product to negotiate about
-            quantity: The minimum and maximum quantities. Passing a single value q is equivalent to passing (q,q)
-            unit_price: The minimum and maximum unit prices. Passing a single value u is equivalent to passing (u,u)
-            time: The minimum and maximum delivery step. Passing a single value t is equivalent to passing (t,t)
-            controller: The controller to manage the complete set of negotiations
-            negotiators: An optional list of negotiators to use for negotiating with the given partners (in the same
-                         order).
-            partners: ID of all the partners to negotiate with.
-            extra: Extra information accessible through the negotiation annotation to the caller
-
-        Returns:
-
-            `True` if the partner accepted and the negotiation is ready to start
-
-        Remarks:
-
-            - You can either use controller or negotiators. One of them must be None.
-            - All negotiations will use the following issues **in order**: quantity, time, unit_price
-            - Negotiations with bankrupt agents or on invalid products (see next point) will be automatically rejected
-            - Valid products for a factory are the following (any other products are not valid):
-                1. Buying an input product (i.e. product $\\in$ `my_input_products` ) and an output product if the world
-                   settings allows it (see `allow_buying_output`)
-                1. Selling an output product (i.e. product $\\in$ `my_output_products` ) and an input product if the
-                   world settings allows it (see `allow_selling_input`)
-
-
-        """
-        if controller is not None and negotiators is not None:
-            raise ValueError(
-                "You cannot pass both controller and negotiators to request_negotiations"
-            )
-        if controller is None and negotiators is None:
-            raise ValueError(
-                "You MUST pass either controller or negotiators to request_negotiations"
-            )
-        if extra is None:
-            extra = dict()
-        buyable, sellable = self.my_input_products, self.my_output_products
-        if self._world.allow_selling_input:
-            sellable = set(sellable + self.my_input_products)
-        if self._world.allow_buying_output:
-            buyable = set(buyable + self.my_output_products)
-        if (product not in buyable and is_buy) or (
-            product not in sellable and not is_buy
-        ):
-            self._world.logwarning(
-                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
-            )
-            return False
-        if partners is None:
-            partners = (
-                self.all_suppliers[product] if is_buy else self.all_consumers[product]
-            )
-        if negotiators is None:
-            negotiators = [
-                controller.create_negotiator(PassThroughSAONegotiator) for _ in partners
-            ]
-        results = [
-            self.request_negotiation(
-                is_buy, product, quantity, unit_price, time, partner, negotiator, extra
-            )
-            if not self._world.a2f[partner].is_bankrupt
-            and (
-                tuple(sorted([partner, self.agent.id]))
-                not in self._world._registered_negs
-            )
-            else False
-            for partner, negotiator in zip(partners, negotiators)
-        ]
-        for p, r in zip(partners, results):
-            if r:
-                self._world._registered_negs.add(tuple(sorted([p, self.agent.id])))
-        return any(results)
-
-    def request_negotiation(
-        self,
-        is_buy: bool,
-        product: int,
-        quantity: Union[int, Tuple[int, int]],
-        unit_price: Union[int, Tuple[int, int]],
-        time: Union[int, Tuple[int, int]],
-        partner: str,
-        negotiator: SAONegotiator,
-        extra: Dict[str, Any] = None,
-    ) -> bool:
-        """
-        Requests a negotiation
-
-        Args:
-
-            is_buy: If True the negotiation is about buying otherwise selling.
-            product: The product to negotiate about
-            quantity: The minimum and maximum quantities. Passing a single value q is equivalent to passing (q,q)
-            unit_price: The minimum and maximum unit prices. Passing a single value u is equivalent to passing (u,u)
-            time: The minimum and maximum delivery step. Passing a single value t is equivalent to passing (t,t)
-            partner: ID of the partner to negotiate with.
-            negotiator: The negotiator to use for this negotiation (if the partner accepted to negotiate)
-            extra: Extra information accessible through the negotiation annotation to the caller
-
-        Returns:
-
-            `True` if the partner accepted and the negotiation is ready to start
-
-        Remarks:
-
-            - All negotiations will use the following issues **in order**: quantity, time, unit_price
-            - Negotiations with bankrupt agents or on invalid products (see next point) will be automatically rejected
-            - Valid products for a factory are the following (any other products are not valid):
-                1. Buying an input product (i.e. product $\\in$ `my_input_products` ) and an output product if the world
-                   settings allows it (see `allow_buying_output`)
-                1. Selling an output product (i.e. product $\\in$ `my_output_products` ) and an input product if the
-                   world settings allows it (see `allow_selling_input`)
-
-
-        """
-        if extra is None:
-            extra = dict()
-        buyable, sellable = self.my_input_products, self.my_output_products
-        if self._world.allow_selling_input:
-            sellable = set(sellable + self.my_input_products)
-        if self._world.allow_buying_output:
-            buyable = set(buyable + self.my_output_products)
-        if (product not in buyable and is_buy) or (
-            product not in sellable and not is_buy
-        ):
-            self._world.logwarning(
-                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
-            )
-            return False
-        if self._world.a2f[partner].is_bankrupt:
-            return False
-
-        if tuple(sorted([partner, self.agent.id])) in self._world._registered_negs:
-            return False
-
-        def values(x: Union[int, Tuple[int, int]]):
-            if not isinstance(x, Iterable):
-                return int(x), int(x)
-            return int(x[0]), int(x[1])
-
-        self._world.logdebug(
-            f"{self.agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
-            f" q: {quantity}, u: {unit_price}, t: {time}"
-        )
-
-        annotation = {
-            "product": product,
-            "is_buy": is_buy,
-            "buyer": self.agent.id if is_buy else partner,
-            "seller": partner if is_buy else self.agent.id,
-            "caller": self.agent.id,
-        }
-        issues = [
-            Issue(values(quantity), name="quantity", value_type=int),
-            Issue(values(time), name="time", value_type=int),
-            Issue(values(unit_price), name="unit_price", value_type=int),
-        ]
-        partners = [self.agent.id, partner]
-        extra["negotiator_id"] = negotiator.id
-        req_id = self.agent.create_negotiation_request(
-            issues=issues,
-            partners=partners,
-            negotiator=negotiator,
-            annotation=annotation,
-            extra=dict(**extra),
-        )
-        result = self.request_negotiation_about(
-            issues=issues, partners=partners, req_id=req_id, annotation=annotation
-        )
-        if result:
-            self._world._registered_negs.add(tuple(sorted([partner, self.agent.id])))
-        return result
-
-    def schedule_production(
-        self,
-        process: int,
-        repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
-        line: int = ANY_LINE,
-        override: bool = True,
-        method: str = "latest",
-        partial_ok: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Orders the factory to run the given process at the given line at the given step
-
-        Args:
-
-            process: The process to run
-            repeats: How many times to repeat the process
-            step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
-                  schedule production at any step in the present or future.
-            line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
-            override: Whether to override existing production commands or not
-            method: When to schedule the command if step was set to a range. Options are latest, earliest
-            partial_ok: If true, allows partial scheduling
-
-        Returns:
-            Tuple[int, int] giving the steps and lines at which production is scheduled.
-
-        Remarks:
-
-            - The step cannot be in the past. Production can only be ordered for current and future steps
-            - ordering production of process -1 is equivalent of `cancel_production` only if both step and line are
-              given
-        """
-        return self._world.a2f[self.agent.id].schedule_production(
-            process, repeats, step, line, override, method, partial_ok
-        )
-
-    def order_production(
-        self, process: int, steps: np.ndarray, lines: np.ndarray
-    ) -> None:
-        """
-        Orders production of the given process
-
-        Args:
-            process: The process to run
-            steps: The time steps to run the process at as an np.ndarray
-            lines: The corresponding lines to run the process at
-
-        Remarks:
-
-            - len(steps) must equal len(lines)
-            - No checks are done in this function. It is expected to be used after calling `available_for_production`
-        """
-        return self._world.a2f[self.agent.id].order_production(process, steps, lines)
-
-    def available_for_production(
-        self,
-        repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
-        line: int = ANY_LINE,
-        override: bool = True,
-        method: str = "latest",
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Finds available times and lines for scheduling production.
-
-        Args:
-
-            repeats: How many times to repeat the process
-            step: The simulation step or a range of steps. The special value ANY_STEP gives the factory the freedom to
-                  schedule production at any step in the present or future.
-            line: The production line. The special value ANY_LINE gives the factory the freedom to use any line
-            override: Whether to override any existing commands at that line at that time.
-            method: When to schedule the command if step was set to a range. Options are latest, earliest, all
-
-        Returns:
-
-            Tuple[np.ndarray, np.ndarray] The steps and lines at which production is scheduled.
-
-        Remarks:
-
-            - You cannot order production in the past or in the current step
-            - Ordering production, will automatically update inventory and balance for all simulation steps assuming
-              that this production will be carried out. At the indicated `step` if production was not possible (due
-              to insufficient funds or insufficient inventory of the input product), the predictions for the future
-              will be corrected.
-
-        """
-        return self._world.a2f[self.agent.id].available_for_production(
-            repeats, step, line, override, method
-        )
-
-    def set_commands(self, commands: np.ndarray, step: int = -1) -> None:
-        """
-        Sets the production commands for all lines in the given step
-
-        Args:
-
-            commands: n_lines vector of commands. A command is either a process number to run or `NO_COMMAND` to keep
-                      the line idle
-            step: The step to set the commands at. If < 0, it means current step
-        """
-        if step < 0:
-            step = self._world.current_step
-        self._world.a2f[self.agent.id].commands[step, :] = commands
-
-    def cancel_production(self, step: int, line: int) -> bool:
-        """
-        Cancels any production commands on that line at this step
-
-        Args:
-            step: The step to cancel production at (must be in the future).
-            line: The production line
-
-        Returns:
-
-            success/failure
-
-        Remarks:
-
-            - The step cannot be in the past or the current step. Cancellation can only be ordered for future steps
-        """
-        return self._world.a2f[self.agent.id].cancel_production(step, line)
-
-    # ---------------------
-    # Information Gathering
-    # ---------------------
-
-    @property
-    def trading_prices(self) -> np.ndarray:
-        """Returns the current trading prices of all products"""
-        return (
-            self._world.trading_prices if self._world.publish_trading_prices else None
-        )
-
-    @property
-    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
-        """
-        The exogenous contracts in the current step for all products
-
-        Returns:
-            A list of tuples giving the total quantity and total price of
-            all revealed exogenous contracts of all products at the current
-            step.
-        """
-        return (
-            self._world.exogenous_contracts_summary
-            if self._world.publish_exogenous_summary
-            else None
-        )
-
-    @property
-    def state(self) -> FactoryState:
-        """Receives the factory state"""
-        return self._world.a2f[self.agent.id].state
-
-    def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
-        """Returns a dictionary mapping time-steps to financial reports of the given agent"""
-        return self.bb_read("reports_agent", aid)
-
-    def reports_at_step(self, step: int) -> Dict[str, FinancialReport]:
-        """Returns a dictionary mapping agent ID to its financial report for the given time-step"""
-        result = self.bb_read("reports_time", str(step))
-        if result is not None:
-            return result
-        steps = sorted(
-            [
-                int(i)
-                for i in self.bb_query("reports_time", None, query_keys=True).keys()
-            ]
-        )
-        for (s, prev) in zip(steps[1:], steps[:-1]):
-            if s > step:
-                return self.bb_read("reports_time", prev)
-        return self.bb_read("reports_time", str(steps[-1]))
-
-    @property
-    def profile(self) -> FactoryProfile:
-        """Gets the profile (static private information) associated with the agent"""
-        profile = self._world.a2f[self.agent.id].profile
-        return FactoryProfile(profile.costs)
-
-    @property
-    def all_suppliers(self) -> List[List[str]]:
-        """Returns a list of agent IDs for all suppliers for every product"""
-        return self._world.suppliers
-
-    @property
-    def all_consumers(self) -> List[List[str]]:
-        """Returns a list of agent IDs for all consumers for every product"""
-        return self._world.consumers
-
-    @property
-    def catalog_prices(self) -> np.ndarray:
-        """Returns the catalog prices of all products"""
-        return self._world.catalog_prices
-
-    @property
-    def inputs(self) -> np.ndarray:
-        """Returns the number of inputs to every production process"""
-        return self._world.process_inputs
-
-    @property
-    def outputs(self) -> np.ndarray:
-        """Returns the number of outputs to every production process"""
-        return self._world.process_outputs
-
-    @property
-    def n_products(self) -> int:
-        """Returns the number of products in the system"""
-        return len(self._world.catalog_prices)
-
-    @property
-    def n_processes(self) -> int:
-        """Returns the number of processes in the system"""
-        return self.n_products - 1
-
-    @property
-    def my_input_product(self) -> int:
-        """Returns a list of products that are inputs to at least one process the agent can run"""
-        products = self._world.agent_inputs.get(self.agent.id, np.empty(0, dtype=int))
-        if len(products) < 1:
-            return -1
-        return products[0]
-
-    @property
-    def my_output_product(self) -> int:
-        """Returns a list of products that are outputs to at least one process the agent can run"""
-        products = self._world.agent_outputs.get(self.agent.id, np.empty(0, dtype=int))
-        if len(products) < 1:
-            return self.n_products
-        return products[0]
-
-    @property
-    def my_input_products(self) -> np.ndarray:
-        """Returns a list of products that are inputs to at least one process the agent can run"""
-        return self._world.agent_inputs.get(self.agent.id, np.empty(0, dtype=int))
-
-    @property
-    def my_output_products(self) -> np.ndarray:
-        """Returns a list of products that are outputs to at least one process the agent can run"""
-        return self._world.agent_outputs.get(self.agent.id, np.empty(0, dtype=int))
-
-    @property
-    def my_suppliers(self) -> List[str]:
-        """Returns a list of IDs for all of the agent's suppliers (agents that can supply at least one product it may
-        need).
-
-        Remarks:
-
-            - If the agent have multiple input products, suppliers of a specific product $p$ can be found using:
-              **self.all_suppliers[p]**.
-        """
-        return self._world.agent_suppliers.get(self.agent.id, [])
-
-    @property
-    def my_consumers(self) -> List[str]:
-        """Returns a list of IDs for all the agent's consumers (agents that can consume at least one product it may
-        produce).
-
-        Remarks:
-
-            - If the agent have multiple output products, consumers of a specific product $p$ can be found using:
-              **self.all_consumers[p]**.
-        """
-        return self._world.agent_consumers.get(self.agent.id, [])
-
-    @property
-    def n_lines(self) -> int:
-        """The number of lines in the corresponding factory. You can read `state` to get this among other information"""
-        return self.state.n_lines
-
-    @property
-    def n_products(self) -> int:
-        """Number of products in the world"""
-        return self.state.n_products
-
-    @property
-    def n_processes(self) -> int:
-        """Number of processes in the world"""
-        return self.state.n_processes
-
-    def is_system(self, aid: str) -> bool:
-        """
-        Checks whether an agent is a system agent or not
-
-        Args:
-            aid: Agent ID
-        """
-        return is_system_agent(aid)
-
-
-class SCML2020Agent(Agent):
-    """Base class for all SCML2020 agents (factory managers)"""
-
-    def init(self):
-        pass
-
-    def step(self):
-        pass
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "type": self.type_name,
-            "level": self.awi.my_input_product if self.awi else None,
-            "levels": self.awi.my_input_products if self.awi else None,
-        }
-
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
-        pass
-
-    def on_contract_executed(self, contract: Contract) -> None:
-        pass
-
-    def _respond_to_negotiation_request(
-        self,
-        initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-        role: Optional[str],
-        req_id: Optional[str],
-    ) -> Optional[Negotiator]:
-        return self.respond_to_negotiation_request(
-            initiator, issues, annotation, mechanism
-        )
-
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> Optional[RenegotiationRequest]:
-        return None
-
-    def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
-        return None
-
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
-        pass
-
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
-        pass
-
-    @property
-    def internal_state(self) -> Dict[str, Any]:
-        """Returns the internal state of the agent for debugging purposes"""
-        return {}
-
-    def on_negotiation_failure(
-        self,
-        partners: List[str],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-        state: MechanismState,
-    ) -> None:
-        """Called whenever a negotiation ends without agreement"""
-
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
-    ) -> None:
-        """Called whenever a negotiation ends with agreement"""
-
-    def on_agent_bankrupt(
-        self,
-        agent: str,
-        contracts: List[Contract],
-        quantities: List[int],
-        compensation_money: int,
-    ) -> None:
-        """
-        Called whenever a contract is nullified (because the partner is bankrupt)
-
-        Args:
-
-            agent: The ID of the agent that went bankrupt.
-            contracts: All future contracts between this agent and the bankrupt agent.
-            quantities: The actual quantities that these contracts will be executed at.
-            compensation_money: The compensation money that is already added to the agent's wallet (if ANY).
-
-
-        Remarks:
-
-            - compensation_money will be nonzero iff immediate_compensation is enabled for this world
-
-
-        """
-
-    def on_failures(self, failures: List[Failure]) -> None:
-        """
-        Called whenever there are failures either in production or in execution of guaranteed transactions
-
-        Args:
-
-            failures: A list of `Failure` s.
-        """
-
-    def respond_to_negotiation_request(
-        self,
-        initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-    ) -> Optional[Negotiator]:
-        """
-        Called whenever another agent requests a negotiation with this agent.
-
-        Args:
-            initiator: The ID of the agent that requested this negotiation
-            issues: Negotiation issues
-            annotation: Annotation attached with this negotiation
-            mechanism: The `AgentMechanismInterface` interface to the mechanism to be used for this negotiation.
-
-        Returns:
-            None to reject the negotiation, otherwise a negotiator
-        """
-
-    def confirm_production(
-        self, commands: np.ndarray, balance: int, inventory
-    ) -> np.ndarray:
-        """
-        Called just before production starts at every time-step allowing the agent to change what is to be
-        produced in its factory
-
-        Args:
-
-            commands: an n_lines vector giving the process to be run at every line (NO_COMMAND indicates nothing to be
-                      processed
-            balance: The current balance of the factory
-            inventory: an n_products vector giving the number of items available in the inventory of every product type.
-
-        Returns:
-
-            an n_lines vector giving the process to be run at every line (NO_COMMAND indicates nothing to be
-            processed
-
-        Remarks:
-
-            - Not called in SCML2020 competition.
-            - The inventory will contain zero items of all products that the factory does not buy or sell
-            - The default behavior is to just retrun commands confirming production of everything.
-        """
-        return commands
-
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """Signs all contracts"""
-        return [self.id] * len(contracts)
-
-
-def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
-    """
-    Generates l random integers that sum to n where each of them is at least l_m
-    Args:
-        n: total
-        l: number of levels
-        l_m: minimum per level
-
-    Returns:
-
-    """
-    if not isinstance(l_m, Iterable):
-        l_m = [l_m] * l
-    sizes = np.asarray(l_m)
-    if n < sizes.sum():
-        raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
-        )
-    while sizes.sum() < n:
-        sizes[random.randint(0, l - 1)] += 1
-    return sizes.tolist()
-
-
-def realin(rng: Union[Tuple[float, float], float]) -> float:
-    """
-    Selects a random number within a range if given or the input if it was a float
-
-    Args:
-        rng: Range or single value
-
-    Returns:
-
-        the real within the given range
-    """
-    if isinstance(rng, float):
-        return rng
-    if abs(rng[1] - rng[0]) < 1e-8:
-        return rng[0]
-    return rng[0] + random.random() * (rng[1] - rng[0])
-
-
-def intin(rng: Union[Tuple[int, int], int]) -> int:
-    """
-    Selects a random number within a range if given or the input if it was an int
-
-    Args:
-        rng: Range or single value
-
-    Returns:
-
-        the int within the given range
-    """
-    if isinstance(rng, int):
-        return rng
-    if rng[0] == rng[1]:
-        return rng[0]
-    return random.randint(rng[0], rng[1])
-
-
-def make_array(x: Union[np.ndarray, Tuple[int, int], int], n, dtype=int) -> np.ndarray:
-    """Creates an array with the given choices"""
-    if not isinstance(x, Iterable):
-        return np.ones(n, dtype=dtype) * x
-    if isinstance(x, tuple) and len(x) == 2:
-        if dtype == int:
-            return np.random.randint(x[0], x[1] + 1, n, dtype=dtype)
-        return x[0] + np.random.rand(n) * (x[1] - x[0])
-    x = list(x)
-    if len(x) == n:
-        return np.array(x)
-    return np.array(list(random.choices(x, k=n)))
-
-
-class _SystemAgent(SCML2020Agent):
-    """Implements an agent for handling system operations"""
-
-    def __init__(self, *args, role, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.id = role
-        self.name = role
-
-    def on_agent_bankrupt(
-        self,
-        agent: str,
-        contracts: List[Contract],
-        quantities: List[int],
-        compensation_money: int,
-    ) -> None:
-        pass
-
-    def on_failures(self, failures: List[Failure]) -> None:
-        pass
-
-    def respond_to_negotiation_request(
-        self,
-        initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-    ) -> Optional[Negotiator]:
-        pass
-
-    def step(self):
-        pass
-
-    def init(self):
-        pass
-
-    def on_negotiation_failure(
-        self,
-        partners: List[str],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-        state: MechanismState,
-    ) -> None:
-        pass
-
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
-    ) -> None:
-        pass
-
-    def on_contract_executed(self, contract: Contract) -> None:
-        pass
-
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
-        pass
-
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """Signs all contracts"""
-        return [self.id] * len(contracts)
 
 
 class SCML2020World(TimeInAgreementMixin, World):
@@ -1701,6 +197,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         negotiation_speed=21,
         negotiation_quota_per_step=None,
         negotiation_quota_per_simulation=float("inf"),
+        n_concurrent_negs_between_partners=float("inf"),
         # trading price parameters
         trading_price_discount=0.9,
         # spot market parameters
@@ -1740,6 +237,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.catalog_quantities = catalog_quantities
         self.inventory_valuation_trading = inventory_valuation_trading
         self.inventory_valuation_catalog = inventory_valuation_catalog
+        self.n_concurrent_negs_between_partners = n_concurrent_negs_between_partners
         kwargs["log_to_file"] = not no_logs
         if compact:
             kwargs["log_screen_level"] = logging.CRITICAL
@@ -1795,6 +293,12 @@ class SCML2020World(TimeInAgreementMixin, World):
             **kwargs,
         )
         self.bulletin_board.record(
+            "settings", publish_trading_prices, "public_trading_prices"
+        )
+        self.bulletin_board.record(
+            "settings", publish_exogenous_summary, "public_exogenous_summary"
+        )
+        self.bulletin_board.record(
             "settings", buy_missing_products, "buy_missing_products"
         )
         self.bulletin_board.record(
@@ -1843,6 +347,11 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.bulletin_board.record("settings", production_penalty, "production_penalty")
         self.bulletin_board.record(
             "settings", len(exogenous_contracts) > 0, "has_exogenous_contracts"
+        )
+        self.bulletin_board.record(
+            "settings",
+            n_concurrent_negs_between_partners,
+            "n_concurrent_negs_between_partners",
         )
 
         if self.info is None:
@@ -1933,15 +442,36 @@ class SCML2020World(TimeInAgreementMixin, World):
         else:
             default_names = [unique_name("", add_time=False) for _ in range(n_agents)]
         if agent_name_reveals_type:
-            for i, at in enumerate(agent_types):
-                default_names[i] += f"{at.__name__[:3]}"
+            for i, (at, ap) in enumerate(zip(agent_types, agent_params)):
+                if issubclass(at, OneShotAdapter):
+                    s2 = (
+                        get_class(ap["oneshot_type"])
+                        ._type_name()
+                        .split(".")[-1]
+                        .replace("Agent", "")
+                        .replace("Adapter", "")
+                        .replace("OneShot", "")
+                    )
+                    s2 += f'O({at._type_name().split(".")[-1].replace("Agent", "").replace("OneShot", "").replace("Adapter", "")})'
+                else:
+                    s2 = at._type_name().split(".")[-1].replace("Agent", "")
+                s = "".join([c for c in s2 if c.isupper()])[:3]
+                if len(s) < 3:
+                    s = s[0] + s2[1 : 1 + (3 - len(s))] + s[1:]
+                default_names[i] += f"{s}"
         agent_levels = [
             int(np.nonzero(np.max(p.costs != INFINITE_COST, axis=0).flatten())[0])
             for p in profiles
         ]
+
         if agent_name_reveals_position:
             for i, l in enumerate(agent_levels):
                 default_names[i] += f"@{l:01}"
+
+        # for i, (t_, p_ ) in enumerate(zip(agent_types, agent_params)):
+        #     if issubclass(get_class(t_), Adapter):
+        #         p_["obj"] = get_class(p_["oneshot_type"])(**p_.get("oneshot_params", dict()))
+
         if agent_params is None:
             agent_params = [dict(name=name) for i, name in enumerate(default_names)]
         elif isinstance(agent_params, dict):
@@ -1977,13 +507,14 @@ class SCML2020World(TimeInAgreementMixin, World):
         profiles.append(FactoryProfile(INFINITE_COST * np.ones(n_processes, dtype=int)))
         agents = []
         for i, (atype, aparams) in enumerate(zip(agent_types, agent_params)):
+            # aparams = {k:v for k, v in aparams if k not in ("oneshot_params", "oneshot_type")}
             a = instantiate(atype, **aparams)
             a.id = a.name
             self.join(a, i)
             agents.append(a)
         self.agent_types = [_.type_name for _ in agents]
         self.agent_params = [
-            {k: v for k, v in _.items() if k != "name"} for _ in agent_params
+            {k: v for k, v in _.items() if k not in ("name",)} for _ in agent_params
         ]
         self.agent_unique_types = [
             f"{t}{hash(str(p))}" if len(p) > 0 else t
@@ -2156,7 +687,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             (n_agents, n_steps)
         )
         self._agent_spot_quantity = np.zeros((n_agents, n_steps), dtype=int)
-        self._registered_negs: Set[Tuple[str]] = set()
+        self._registered_negs: Dict[Tuple[str], int] = Counter()
         if self.publish_trading_prices:
             self.bulletin_board.record("trading_prices", self._trading_price[:, 1])
 
@@ -2626,6 +1157,11 @@ class SCML2020World(TimeInAgreementMixin, World):
                                 buyer=indx,
                             )
                         )
+        for i, (t, p) in enumerate(zip(agent_types, agent_params)):
+            if issubclass(get_class(t), OneShotAgent):
+                agent_types[i] = get_full_type_name(OneShotAdapter)
+                agent_params[i] = dict(oneshot_type=t, oneshot_params=p, obj=None)
+
         return dict(
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -2687,8 +1223,14 @@ class SCML2020World(TimeInAgreementMixin, World):
             reports_time[str(self.current_step)] = {}
         reports_time[str(self.current_step)][agent.id] = report
 
+    def negs_between(self, a1, a2):
+        return self._registered_negs[tuple(sorted([a1, a2]))]
+
+    def can_negotiate(self, a1, a2):
+        return self.negs_between(a1, a2) < self.n_concurrent_negs_between_partners
+
     def simulation_step(self, stage):
-        self._registered_negs: Set[Tuple[str]] = set()
+        self._registered_negs: Dict[Tuple[str], int] = Counter()
         s = self.current_step
         if stage == 0:
             # pay interests for negative balances
@@ -2724,16 +1266,21 @@ class SCML2020World(TimeInAgreementMixin, World):
                     "trading_prices", value=self.trading_prices, key=self.current_step,
                 )
             if self.publish_exogenous_summary:
-                q, p = np.zeros(self.n_products), np.zeros(self.n_products)
+                q = (
+                    np.zeros((self.n_products, self.n_steps, 2))
+                    if s == 0
+                    else (self.exogenous_contracts_summary)
+                )
                 for contract in self.exogenous_contracts[s]:
                     product = contract.annotation["product"]
-                    quantity, unit_price = (
+                    quantity, unit_price, t = (
                         contract.agreement["quantity"],
                         contract.agreement["unit_price"],
+                        contract.agreement["time"],
                     )
-                    q[product] += quantity
-                    p[product] += quantity * unit_price
-                self.exogenous_contracts_summary = [(a, b) for a, b in zip(q, p)]
+                    q[product, t, 0] += quantity
+                    q[product, t, 1] += quantity * unit_price
+                self.exogenous_contracts_summary = q
                 self.bulletin_board.record(
                     "exogenous_contracts_summary",
                     value=self.exogenous_contracts_summary,
@@ -3569,6 +2116,7 @@ class SCML2021World(SCML2020World):
     def __init__(self, *args, **kwargs):
         kwargs["publish_trading_prices"] = True
         kwargs["publish_exogenous_summary"] = True
+        kwargs["n_concurrent_negs_between_partners"] = 1
         super().__init__(*args, **kwargs)
 
     @classmethod

@@ -67,30 +67,20 @@ class OneShotState:
     """State of a one-shot agent"""
 
     __slots__ = [
-        "input_quantity",
-        "input_price",
-        "output_quantity",
-        "output_price",
         "exogenous_input_quantity",
         "exogenous_input_price",
         "exogenous_output_quantity",
         "exogenous_output_price",
         "storage_cost",
         "delivery_penalty",
-        "utilities",
     ]
 
-    input_quantity: int
-    input_price: int
-    output_quantity: int
-    output_price: int
     exogenous_input_quantity: int
     exogenous_input_price: int
     exogenous_output_quantity: int
     exogenous_output_price: int
     storage_cost: float
     delivery_penalty: float
-    utilities: List[float]
 
 
 @dataclass
@@ -273,42 +263,12 @@ class OneShotAWI(AgentWorldInterface):
 
     def state(self) -> Any:
         return OneShotState(
-            input_quantity=self._world._input_quantity[self.agent.id],
-            input_price=self._world._input_price[self.agent.id],
-            output_quantity=self._world._output_quantity[self.agent.id],
-            output_price=self._world._output_price[self.agent.id],
             exogenous_input_quantity=self.current_exogenous_input_quantity,
             exogenous_input_price=self.current_exogenous_input_price,
             exogenous_output_quantity=self.current_exogenous_output_quantity,
             exogenous_output_price=self.current_exogenous_output_price,
             storage_cost=self.current_storage_cost,
             delivery_penalty=self.current_delivery_penalty,
-            utilities=self.utilities,
-        )
-
-    @property
-    def utilities(self) -> List[float]:
-        """The utilities received by the agent so far"""
-        return self._world._profits[self.agent.id]
-
-    @property
-    def current_breach_level(self) -> List[float]:
-        """
-        The breach level of the agent indicating how accurately is it matching
-        inputs to outputs.
-        """
-        return sum(self._world._breach_levels[self.agent.id]) / (
-            self._world.current_step + 1
-        )
-
-    @property
-    def current_breach_prob(self) -> List[float]:
-        """
-        The breach probability of the agent so far (i.e. fraction of steps
-        in which it did not exactly match inputs to outputs.)
-        """
-        return sum(self._world._breaches_of[self.agent.id]) / len(
-            self._world._breaches_of[self.agent.id]
         )
 
     @property
@@ -379,10 +339,10 @@ class _OneShotAdapter(Adapter):
         )
         return OneShotUFun(
             owner=self,
-            p_in=pin,
-            p_out=pout,
-            q_in=qin,
-            q_out=qout,
+            pin=pin,
+            pout=pout,
+            qin=qin,
+            qout=qout,
             cost=awi.profile.cost,
             storage_cost=awi.current_storage_cost,
             delivery_penalty=awi.current_delivery_penalty,
@@ -733,7 +693,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             default_names = [unique_name("", add_time=False) for _ in range(n_agents)]
         if agent_name_reveals_type:
             for i, at in enumerate(agent_params):
-                default_names[i] += f"{get_class(at['obj']).__class__.__name__[:3]}"
+                s2 = get_class(at["obj"]).__class__.__name__
+                s = s2.replace("Agent", "").replace("OneShot", "")
+                s = "".join([c for c in s if c.isupper()])[:3]
+                if len(s) < 3:
+                    s = s[0] + s2[1 : 1 + (3 - len(s))] + s[1:]
+                default_names[i] += f"{s}"
         agent_levels = [p.level for p in profiles]
         if agent_name_reveals_position:
             for i, l in enumerate(agent_levels):
@@ -795,7 +760,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             a = instantiate(atype, **aparams)
             a.id = a.name
             if a.adapted_object:
-                a.adapted_object.connect_to_adapter(a, None)
+                a.adapted_object.connect_to_oneshot_adapter(a, None)
             self.join(a, i)
             agents.append(a)
         self.agent_types = [_.type_name for _ in agents]

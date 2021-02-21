@@ -13,14 +13,16 @@ from scml.scml2020.components import SupplyDrivenProductionStrategy
 
 from ..components.signing import KeepOnlyGoodPrices
 from ..components.trading import PredictionBasedTradingStrategy
+from ..components.prediction import MarketAwareTradePredictionStrategy
 from ..world import SCML2020Agent
 
 __all__ = [
     "DecentralizingAgent",
+    "MarketAwareDecentralizingAgent",
     "IndDecentralizingAgent",
+    "MarketAwareIndDecentralizingAgent",
     "DecentralizingAgentWithLogging",
 ]
-
 
 
 class _NegotiationCallbacks:
@@ -50,6 +52,18 @@ class _NegotiationCallbacks:
 
 
 class DecentralizingAgent(
+    KeepOnlyGoodPrices,
+    _NegotiationCallbacks,
+    StepNegotiationManager,
+    PredictionBasedTradingStrategy,
+    SupplyDrivenProductionStrategy,
+    SCML2020Agent,
+):
+    pass
+
+
+class MarketAwareDecentralizingAgent(
+    MarketAwareTradePredictionStrategy,
     KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     StepNegotiationManager,
@@ -90,3 +104,9 @@ class IndDecentralizingAgent(
         if is_seller:
             return LinearUtilityFunction((1, 1, 10))
         return LinearUtilityFunction((1, -1, -10))
+
+
+class MarketAwareIndDecentralizingAgent(
+    MarketAwareTradePredictionStrategy, IndDecentralizingAgent,
+):
+    pass
