@@ -21,9 +21,9 @@ jobs:
           python -m pip install -r requirements-dev.txt
           python -m pip install -e .
     - name: "Install negmas from gitbub"
-      if: startsWith(github.event.ref, 'refs/tags')
+      if: not startsWith(github.event.ref, 'refs/tags')
       run: |
-        python -m pip uninstall negmas
+        yes | python -m pip uninstall negmas
         python -m pip install git+https://github.com/yasserfarouk/negmas.git
     - name: "Get coverage data by running tests"
       run: |
