@@ -61,6 +61,7 @@ from ..common import integer_cut
 from ..common import intin
 from ..common import make_array
 from ..common import realin
+from ..common import distribute_quantities
 
 __all__ = [
     "SCML2020World",
@@ -710,6 +711,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         cost_increases_with_level=True,
         equal_exogenous_supply=False,
         equal_exogenous_sales=False,
+        exogenous_supply_predictability:Union[Tuple[float, float], float] = (0.0, 0.9),
+        exogenous_sales_predictability:Union[Tuple[float, float], float] = (0.0, 0.9),
         exogenous_control: Union[Tuple[float, float], float] = (0.2, 0.8),
         cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
         force_signing=False,
@@ -753,6 +756,12 @@ class SCML2020World(TimeInAgreementMixin, World):
                                    layer
             equal_exogenous_sales: If true, external sales will be distributed equally among all agents in the last
                                    layer
+            exogenous_supply_predictability: How predictable are exogenous supplies of each agent over time. 1.0 means
+                                             that every agent will have the same quantity for all of its contracts over
+                                             time. 0.0 means quantities per agent are completely random
+            exogenous_sales_predictability: How predictable are exogenous supplies of each agent over time. 1.0 means
+                                             that every agent will have the same quantity for all of its contracts over
+                                             time. 0.0 means quantities per agent are completely random
             cash_availability: The fraction of the total money needs of the agent to work at maximum capacity that
                                is available as `initial_balance` . This is only effective if `initial_balance` is set
                                to `None` .
@@ -791,6 +800,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             cost_increases_with_level=cost_increases_with_level,
             equal_exogenous_sales=equal_exogenous_sales,
             equal_exogenous_supply=equal_exogenous_supply,
+            exogenous_supply_predictability=exogenous_supply_predictability,
+            exogenous_sales_predictability=exogenous_sales_predictability,
             cash_availability=cash_availability,
             inventory_valuation_trading=inventory_valuation_trading,
             inventory_valuation_catalog=inventory_valuation_catalog,
@@ -808,6 +819,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         inventory_valuation_catalog = realin(inventory_valuation_catalog)
         n_processes = intin(n_processes)
         n_steps = intin(n_steps)
+        exogenous_sales_predictability = realin(exogenous_sales_predictability)
+        exogenous_supply_predictability = realin(exogenous_supply_predictability)
         exogenous_control = realin(exogenous_control)
         np.errstate(divide="ignore")
         n_startup = n_processes
@@ -911,37 +924,23 @@ class SCML2020World(TimeInAgreementMixin, World):
             assert quantities[-1][-1] == 0 or p >= n_startup - 1
             assert quantities[-1][0] == 0
             # assert np.sum(quantities[-1] == 0) >= n_startup
+
         # - divide the quantity at every level between factories
-        if equal_exogenous_supply:
-            exogenous_supplies = np.maximum(
-                1, np.round(quantities[0] / n_agents_per_process[0]).astype(int)
-            ).tolist()
-            exogenous_supplies = [
-                np.array([exogenous_supplies[p]] * n_agents_per_process[p])
-                for p in range(n_processes)
-            ]
-        else:
-            exogenous_supplies = []
-            for s in range(n_steps):
-                exogenous_supplies.append(
-                    integer_cut(quantities[0][s], n_agents_per_process[0], 0)
-                )
-                assert sum(exogenous_supplies[-1]) == quantities[0][s]
-        if equal_exogenous_sales:
-            exogenous_sales = np.maximum(
-                1, np.round(quantities[-1] / n_agents_per_process[-1]).astype(int)
-            ).tolist()
-            exogenous_sales = [
-                np.array([exogenous_sales[p]] * n_agents_per_process[p])
-                for p in range(n_processes)
-            ]
-        else:
-            exogenous_sales = []
-            for s in range(n_steps):
-                exogenous_sales.append(
-                    integer_cut(quantities[-1][s], n_agents_per_process[-1], 0)
-                )
-                assert sum(exogenous_sales[-1]) == quantities[-1][s]
+        exogenous_supplies = distribute_quantities(
+            equal_exogenous_supply,
+            exogenous_supply_predictability,
+            quantities[0],
+            n_agents_per_process[0],
+            n_steps,
+        )
+        exogenous_sales = distribute_quantities(
+            equal_exogenous_sales,
+            exogenous_sales_predictability,
+            quantities[-1],
+            n_agents_per_process[-1],
+            n_steps,
+        )
+
         # - now exogenous_supplies and exogenous_sales are both n_steps lists of n_agents_per_process[p] vectors (jagged)
 
         # assign prices to the quantities given the profits

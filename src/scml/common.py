@@ -8,12 +8,7 @@ from typing import Union
 
 import numpy as np
 
-__all__ = [
-    "integer_cut",
-    "intin",
-    "realin",
-    "make_array",
-]
+__all__ = ["integer_cut", "intin", "realin", "make_array", "distribute_quantities"]
 
 
 def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
@@ -87,3 +82,62 @@ def make_array(x: Union[np.ndarray, Tuple[int, int], int], n, dtype=int) -> np.n
     if len(x) == n:
         return np.array(x)
     return np.array(list(random.choices(x, k=n)))
+
+
+def distribute_quantities(
+    equal: bool, predictability: float, q: List[int], a: int, n_steps: int
+):
+    """Used internally by generate() methods to distribute exogenous contracts
+
+    Args:
+        equal: whether the quantities are to be distributed equally
+        predictability: how much are quantities for the same agent at different
+                        times are similar
+        q: The quantity per step to be distributed
+        a: The number of agents to distribute over.
+
+    Returns:
+        an n_steps * a list of lists giving the distributed quantities where
+        sum[s, :] ~= q[s]
+
+    """
+    if sum(q) == 0:
+        return [np.asarray([0] * a) for _ in range(n_steps)]
+    if equal:
+        values = np.maximum(1, np.round(q / a).astype(int)).tolist()
+        return [np.asarray([values[p]] * a) for _ in range(n_steps)]
+    if predictability < 0.01:
+        values = []
+        for s in range(n_steps):
+            values.append(integer_cut(q[s], a, 0))
+            assert sum(values[-1]) == q[s]
+        return values
+    values = []
+    qz = int(0.5 + sum(q) / len(q))
+    values.append(integer_cut(qz, a, 0))
+    for s in range(1, n_steps):
+        if qz == 0 or q[s] == 0:
+            values.append([0] * a)
+            continue
+        values.append([int(0.5 + _ * q[s] / qz) for _ in values[0]])
+        n_changes = int(0.5 + (1.0 - predictability) * q[s])
+        if not n_changes:
+            continue
+        added = integer_cut(n_changes, a, 0)
+        subtracted = integer_cut(n_changes, a, 0)
+        for i in range(len(values[-1])):
+            values[-1][i] += added[i] - subtracted[i]
+            if values[-1][i] < 0:
+                errs = values[-1][i]
+                while errs > 0:
+                    values[-1][i] = 0
+                    diffs = integer_cut(errs, a - 1, 0)
+                    for j in range(len(values[-1])):
+                        if j == i:
+                            continue
+                        if values[-1][j] >= diffs[j]:
+                            values[-1][j] -= diffs[j]
+        assert (
+            abs(sum(values[-1]) - q[s]) < 3
+        ), f"Failed to distribute: expected {q[s]} but got {sum(values[-1])}: {values[-1]}"
+    return values
