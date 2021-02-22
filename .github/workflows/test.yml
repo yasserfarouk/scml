@@ -36,7 +36,6 @@ jobs:
         run: |
           python -m pip uninstall negmas
           python -m pip install git+https://github.com/yasserfarouk/negmas.git
-
       - name: "Run pytest for ${{ matrix.python-version }}"
         run: "python -m pytest tests"
 
