@@ -521,7 +521,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         step: int,
     ) -> StepController:
         if is_seller:
-            assert self.sellers[step].controller is None
+            # assert self.sellers[step].controller is None
             self.sellers[step] = ControllerInfo(
                 controller,
                 step,
@@ -532,7 +532,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
                 False,
             )
         else:
-            assert self.buyers[step].controller is None
+            # assert self.buyers[step].controller is None
             self.buyers[step] = ControllerInfo(
                 controller,
                 step,
