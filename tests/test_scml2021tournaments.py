@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from scml.oneshot.builtin import RandomOneShotAgent
+from scml.oneshot.agents import RandomOneShotAgent
 from scml.scml2020.utils import anac2021_oneshot
 
 BaseAgent = RandomOneShotAgent

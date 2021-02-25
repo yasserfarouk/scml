@@ -480,7 +480,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             controller = controller_info.controller
 
         # create a new negotiator, add it to the controller and return it
-        return controller.create_negotiator()
+        return controller.create_negotiator(id=initiator)
 
     def all_negotiations_concluded(
         self, controller_index: int, is_seller: bool
@@ -641,9 +641,9 @@ class IndependentNegotiationsManager(NegotiationManager):
         # negotiate with all suppliers of the input product I need to produce
 
         issues = [
-            Issue(qvalues, name="quantity"),
-            Issue(tvalues, name="time"),
-            Issue(uvalues, name="uvalues"),
+            Issue((int(qvalues[0]), int(qvalues[1])), name="quantity"),
+            Issue((int(tvalues[0]), int(tvalues[1])), name="time"),
+            Issue((int(uvalues[0]), int(uvalues[1])), name="uvalues"),
         ]
 
         for partner in partners:
@@ -654,7 +654,7 @@ class IndependentNegotiationsManager(NegotiationManager):
                 unit_price=uvalues,
                 time=tvalues,
                 partner=partner,
-                negotiator=self.negotiator(sell, issues=issues),
+                negotiator=self.negotiator(sell, issues=issues, partner=partner),
             )
 
     def respond_to_negotiation_request(
@@ -664,7 +664,9 @@ class IndependentNegotiationsManager(NegotiationManager):
         annotation: Dict[str, Any],
         mechanism: AgentMechanismInterface,
     ) -> Optional[Negotiator]:
-        return self.negotiator(annotation["seller"] == self.id, issues=issues)
+        return self.negotiator(
+            annotation["seller"] == self.id, issues=issues, partner=initiator
+        )
 
     @abstractmethod
     def create_ufun(
@@ -672,7 +674,9 @@ class IndependentNegotiationsManager(NegotiationManager):
     ) -> UtilityFunction:
         """Creates a utility function"""
 
-    def negotiator(self, is_seller: bool, issues=None, outcomes=None) -> SAONegotiator:
+    def negotiator(
+        self, is_seller: bool, issues=None, outcomes=None, partner=None
+    ) -> SAONegotiator:
         """Creates a negotiator"""
         if outcomes is None and (
             issues is None or not Issue.enumerate(issues, astype=tuple)
@@ -682,7 +686,7 @@ class IndependentNegotiationsManager(NegotiationManager):
         params["ufun"] = self.create_ufun(
             is_seller=is_seller, outcomes=outcomes, issues=issues
         )
-        return instantiate(self.negotiator_type, **params)
+        return instantiate(self.negotiator_type, id=partner, **params)
 
 
 class MovingRangeNegotiationManager:

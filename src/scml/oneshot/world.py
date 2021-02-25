@@ -8,7 +8,6 @@ import math
 import random
 import sys
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Any
 from typing import Callable
 from typing import Collection
@@ -25,30 +24,23 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
-from negmas import DEFAULT_EDGE_TYPES  # NoContractExecutionMixin,
-from negmas import Adapter
+from negmas import DEFAULT_EDGE_TYPES
 from negmas import Agent
-from negmas import AgentMechanismInterface
-from negmas import AgentWorldInterface
 from negmas import Breach
 from negmas import BreachProcessing
 from negmas import Contract
 from negmas import Issue
-from negmas import MechanismState
-from negmas import Negotiator
 from negmas import Operations
-from negmas import PassThroughSAONegotiator
-from negmas import RenegotiationRequest
-from negmas import SAOController
-from negmas import SAONegotiator
 from negmas import TimeInAgreementMixin
 from negmas import World
 from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
 from negmas.helpers import unique_name
+from negmas.sao import PassThroughSAONegotiator
+from negmas.sao import SAOController
+from negmas.sao import SAONegotiator
 
-from .ufun import OneShotUFun
 from ..common import distribute_quantities
 from ..common import integer_cut
 from ..common import intin
@@ -60,388 +52,10 @@ from ..scml2020.common import SYSTEM_BUYER_ID
 from ..scml2020.common import SYSTEM_SELLER_ID
 from ..scml2020.common import is_system_agent
 
-__all__ = ["SCML2020OneShotWorld", "OneShotAWI"]
+from .common import OneShotProfile, OneShotExogenousContract
+from .sysagents import _SystemAgent, DefaultOneShotAdapter
 
-
-@dataclass
-class OneShotState:
-    """State of a one-shot agent"""
-
-    __slots__ = [
-        "exogenous_input_quantity",
-        "exogenous_input_price",
-        "exogenous_output_quantity",
-        "exogenous_output_price",
-        "storage_cost",
-        "delivery_penalty",
-    ]
-
-    exogenous_input_quantity: int
-    exogenous_input_price: int
-    exogenous_output_quantity: int
-    exogenous_output_price: int
-    storage_cost: float
-    delivery_penalty: float
-
-
-@dataclass
-class OneShotExogenousContract:
-    """Exogenous contract information"""
-
-    __slots__ = [
-        "quantity",
-        "unit_price",
-        "product",
-        "seller",
-        "buyer",
-        "time",
-        "revelation_time",
-    ]
-
-    quantity: int
-    unit_price: int
-    product: int
-    seller: str
-    buyer: str
-    time: int
-    revelation_time: int
-
-
-@dataclass
-class OneShotProfile:
-    """Defines all private information of a factory"""
-
-    __slots__ = [
-        "cost",
-        "n_lines",
-        "input_product",
-        "delivery_penalty_mean",
-        "storage_cost_mean",
-        "delivery_penalty_dev",
-        "storage_cost_dev",
-    ]
-    cost: float
-    """The cost of production"""
-    input_product: int
-    """The index of the input product (x for $L_x$ factories)"""
-    n_lines: int
-    """Number of lines for this factory"""
-    delivery_penalty_mean: float
-    """A positive number specifying the average penalty for selling too much."""
-    storage_cost_mean: float
-    """A positive number specifying the average penalty buying too much."""
-    delivery_penalty_dev: float
-    """A positive number specifying the std. dev.  of penalty for selling too much."""
-    storage_cost_dev: float
-    """A positive number specifying the std. dev. penalty buying too much."""
-
-    @property
-    def level(self):
-        return self.input_product
-
-    @property
-    def output_product(self):
-        return self.input_product + 1
-
-    @property
-    def process(self):
-        return self.input_product
-
-
-class OneShotAWI(AgentWorldInterface):
-    """The agent world interface for the one-shot game"""
-
-    # Accessing sections on the bulletin board directly
-    def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
-        """Returns a dictionary mapping time-steps to financial reports of
-        the given agent"""
-        return self.bb_read("reports_agent", aid)
-
-    def reports_at_step(self, step: int) -> Dict[str, FinancialReport]:
-        """Returns a dictionary mapping agent ID to its financial report for
-        the given time-step"""
-        result = self.bb_read("reports_time", str(step))
-        if result is not None:
-            return result
-        steps = sorted(
-            [
-                int(i)
-                for i in self.bb_query("reports_time", None, query_keys=True).keys()
-            ]
-        )
-        for (s, prev) in zip(steps[1:], steps[:-1]):
-            if s > step:
-                return self.bb_read("reports_time", prev)
-        return self.bb_read("reports_time", str(steps[-1]))
-
-    @property
-    def all_suppliers(self) -> List[List[str]]:
-        """Returns a list of agent IDs for all suppliers for every product"""
-        return self._world.suppliers
-
-    @property
-    def all_consumers(self) -> List[List[str]]:
-        """Returns a list of agent IDs for all consumers for every product"""
-        return self._world.consumers
-
-    @property
-    def catalog_prices(self) -> np.ndarray:
-        """Returns the catalog prices of all products"""
-        return self._world.catalog_prices
-
-    @property
-    def trading_prices(self) -> np.ndarray:
-        """Returns the current trading prices of all products"""
-        return (
-            self._world.trading_prices if self._world.publish_trading_prices else None
-        )
-
-    @property
-    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
-        """
-        The exogenous contracts in the current step for all products
-
-        Returns:
-            A list of tuples giving the total quantity and total price of
-            all revealed exogenous contracts of all products at the current
-            step.
-        """
-        return (
-            self._world.exogenous_contracts_summary
-            if self._world.publish_exogenous_summary
-            else None
-        )
-
-    @property
-    def n_products(self) -> int:
-        """Returns the number of products in the system"""
-        return len(self._world.catalog_prices)
-
-    @property
-    def n_processes(self) -> int:
-        """Returns the number of processes in the system"""
-        return self.n_products - 1
-
-    # information about the agent location in the market
-
-    @property
-    def my_input_product(self) -> int:
-        """the product I need to buy"""
-        return self.profile.input_product if self.profile else -10
-
-    @property
-    def my_output_product(self) -> int:
-        """the product I need to sell"""
-        return self.profile.output_product if self.profile else -10
-
-    @property
-    def my_suppliers(self) -> List[str]:
-        """Returns a list of IDs for all of the agent's suppliers
-        (agents that can supply the product I need).
-        """
-        return self.all_suppliers[self.level]
-
-    @property
-    def my_consumers(self) -> List[str]:
-        """Returns a list of IDs for all the agent's consumers
-        (agents that can consume at least one product it may produce).
-
-        """
-        return self.all_consumers[self.level]
-
-    # private information
-    # ===================
-    @property
-    def n_lines(self) -> int:
-        """The number of lines in the corresponding factory.
-        You can read `state` to get this among other information"""
-        return self.profile.n_lines if self.profile else -10
-
-    @property
-    def profile(self) -> OneShotProfile:
-        """Gets the profile (static private information) associated with the agent"""
-        return self.agent.profile
-
-    def state(self) -> Any:
-        return OneShotState(
-            exogenous_input_quantity=self.current_exogenous_input_quantity,
-            exogenous_input_price=self.current_exogenous_input_price,
-            exogenous_output_quantity=self.current_exogenous_output_quantity,
-            exogenous_output_price=self.current_exogenous_output_price,
-            storage_cost=self.current_storage_cost,
-            delivery_penalty=self.current_delivery_penalty,
-        )
-
-    @property
-    def current_exogenous_input_quantity(self) -> int:
-        """
-        The exogenous contracts for the input (this step)
-        """
-        return self._world.exogenous_qin[self.agent.id]
-
-    @property
-    def current_exogenous_input_price(self) -> int:
-        """
-        The exogenous contracts for the input (this step)
-        """
-        return self._world.exogenous_pin[self.agent.id]
-
-    @property
-    def current_exogenous_output_quantity(self) -> int:
-        """
-        The exogenous contracts for the input (this step)
-        """
-        return self._world.exogenous_qout[self.agent.id]
-
-    @property
-    def current_exogenous_output_price(self) -> int:
-        """
-        The exogenous contracts for the input (this step)
-        """
-        return self._world.exogenous_pout[self.agent.id]
-
-    @property
-    def current_storage_cost(self) -> float:
-        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
-        return self._world.agent_storage_cost[self.agent.id]
-
-    @property
-    def current_delivery_penalty(self) -> float:
-        """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
-        return self._world.agent_delivery_penalty[self.agent.id]
-
-
-class _OneShotAdapter(Adapter):
-    """The base class of all one-shot agents"""
-
-    def on_negotiation_failure(self, partners, annotation, mechanism, state):
-        return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
-
-    def on_negotiation_success(self, contract, mechanism):
-        return self._obj.on_negotiation_success(contract, mechanism)
-
-    def on_contract_executed(self, contract: Contract) -> None:
-        pass
-
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
-        pass
-
-    def make_ufun(self):
-        awi: OneShotAWI = self.awi
-        qin, pin = (
-            awi.current_exogenous_input_quantity,
-            awi.current_exogenous_input_price,
-        )
-        qout, pout = (
-            awi.current_exogenous_output_quantity,
-            awi.current_exogenous_output_price,
-        )
-        return OneShotUFun(
-            owner=self,
-            pin=pin,
-            pout=pout,
-            qin=qin,
-            qout=qout,
-            cost=awi.profile.cost,
-            storage_cost=awi.current_storage_cost,
-            delivery_penalty=awi.current_delivery_penalty,
-        )
-
-    def init(self):
-        self.ufun = self.make_ufun()
-        super().init()
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "type": self.type_name,
-            "level": self.awi.my_input_product if self.awi else None,
-            "levels": [self.awi.my_input_product] if self.awi else None,
-        }
-
-    def _respond_to_negotiation_request(
-        self,
-        initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-        role: Optional[str],
-        req_id: Optional[str],
-    ) -> Optional[Negotiator]:
-        partner = [_ for _ in partners if _ != self.id][0]
-        neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner)
-        return neg
-
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> Optional[RenegotiationRequest]:
-        return None
-
-    def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
-        return None
-
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
-        pass
-
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
-        pass
-
-
-class _SystemAgent(_OneShotAdapter):
-    """Implements an agent for handling system operations"""
-
-    def __init__(self, *args, role, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.id = role
-        self.name = role
-        self.profile = None
-
-    @property
-    def type_name(self):
-        return "System"
-
-    @property
-    def short_type_name(self):
-        return "System"
-
-    def respond_to_negotiation_request(
-        self,
-        initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-    ) -> Optional[Negotiator]:
-        pass
-
-    def step(self):
-        pass
-
-    def init(self):
-        pass
-
-    def on_negotiation_failure(
-        self,
-        partners: List[str],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-        state: MechanismState,
-    ) -> None:
-        pass
-
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
-    ) -> None:
-        pass
-
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """Signs all contracts"""
-        return [self.id] * len(contracts)
+__all__ = ["SCML2020OneShotWorld"]
 
 
 class SCML2020OneShotWorld(TimeInAgreementMixin, World):
@@ -896,6 +510,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.exogenous_contracts_summary = None
 
         self.initial_balances = dict(zip(self.agents.keys(), initial_balance))
+        self._max_n_lines = max(_.n_lines for _ in self.profiles)
 
     @classmethod
     def generate(
@@ -904,7 +519,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         agent_params: List[Dict[str, Any]] = None,
         n_steps: Union[Tuple[int, int], int] = (50, 200),
         n_processes: Union[Tuple[int, int], int] = 2,
-        n_lines: Union[np.ndarray, Tuple[int, int], int] = 100,
+        n_lines: Union[np.ndarray, Tuple[int, int], int] = 10,
         n_agents_per_process: Union[np.ndarray, Tuple[int, int], int] = 3,
         process_inputs: Union[np.ndarray, Tuple[int, int], int] = 1,
         process_outputs: Union[np.ndarray, Tuple[int, int], int] = 1,
@@ -923,8 +538,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         force_signing=False,
         profit_basis=np.mean,
         storage_cost: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
-        delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
-        storage_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.01, 0.02),
+        delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (1.8, 2.2),
+        storage_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (1.2, 1.7),
         delivery_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (
             0.01,
             0.02,
@@ -1089,7 +704,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         for t, p in zip(agent_types, agent_params):
             p["controller_type"] = t
-        agent_types = [_OneShotAdapter] * len(agent_types)
+        agent_types = [DefaultOneShotAdapter] * len(agent_types)
         # generate production costs making sure that every agent can do exactly one process
         n_agents_cumsum = n_agents_per_process.cumsum().tolist()
         first_agent = [0] + n_agents_cumsum[:-1]
@@ -1416,10 +1031,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         )
 
     def add_financial_report(
-        self, agent: _OneShotAdapter, reports_agent, reports_time
+        self, agent: DefaultOneShotAdapter, reports_agent, reports_time
     ) -> None:
         """
-        Records a financial report for the given agent in the agent indexed reports and time indexed reports
+        Records a financial report for the given agent in the agent indexed
+        reports and time indexed reports
 
         Args:
             agent: The agent
@@ -1499,7 +1115,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             # --------------------------
             if self.publish_trading_prices:
                 self.bulletin_board.record(
-                    "trading_prices", value=self.trading_prices, key=self.current_step,
+                    "trading_prices",
+                    value=self.trading_prices,
+                    key=self.current_step,
                 )
             if self.publish_exogenous_summary:
                 q, p = np.zeros(self.n_products), np.zeros(self.n_products)
@@ -1560,7 +1178,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
                 continue
-            profile = agent.profile
+            agent.profile
+            ufun = agent.make_ufun(add_exogenous=False)
             qin, pin, qout, pout = (
                 self._input_quantity[aid],
                 self._input_price[aid],
@@ -1568,18 +1187,24 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 self._output_price[aid],
             )
             self._profits[aid].append(
-                OneShotUFun.eval(
+                ufun.from_aggregates(qin=qin, qout=qout, pin=pin, pout=pout)
+            )
+            self._breach_levels[aid].append(
+                ufun.breach_level(
                     qin,
                     qout,
-                    pin,
-                    pout,
-                    profile.cost,
-                    self.agent_storage_cost[aid][self.current_step],
-                    self.agent_delivery_penalty[aid][self.current_step],
                 )
             )
-            self._breach_levels[aid].append(OneShotUFun.breach_level(qin, qout,))
-            self._breaches_of[aid].append(OneShotUFun.is_breach(qin, qout,))
+            self._breaches_of[aid].append(
+                ufun.is_breach(
+                    qin,
+                    qout,
+                )
+            )
+            current_balance = sum(self._profits[aid]) + self.initial_balances[aid]
+            self.is_bankrupt[aid] = (
+                current_balance < self.bankruptcy_limit or self.is_bankrupt[aid]
+            )
             if self._breaches_of[aid][-1]:
                 self.bulletin_board.record(
                     section="breaches",
@@ -1599,7 +1224,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     continue
                 self.add_financial_report(agent, reports_agent, reports_time)
 
-    def _breach_record(self, perpetrator, level, type_,) -> Dict[str, Any]:
+    def _breach_record(
+        self,
+        perpetrator,
+        level,
+        type_,
+    ) -> Dict[str, Any]:
         return {
             "perpetrator": perpetrator,
             "perpetrator_name": perpetrator,
@@ -1723,7 +1353,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
                 continue
-            scores[aid] = sum(self._profits[aid])
+            if not self.initial_balances[aid]:
+                scores[aid] = self.initial_balances[aid] + sum(self._profits[aid])
+                continue
+            scores[aid] = (
+                self.initial_balances[aid] + sum(self._profits[aid])
+            ) / self.initial_balances[aid]
         return scores
 
     @property
@@ -1809,7 +1444,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         return [_ for _ in self.agents.keys() if is_system_agent(_)]
 
     @property
-    def non_system_agents(self) -> List[_OneShotAdapter]:
+    def non_system_agents(self) -> List[DefaultOneShotAdapter]:
         """Returns all agents except system agents"""
         return [_ for _ in self.agents.values() if not is_system_agent(_.id)]
 
@@ -1891,7 +1526,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             `True` if the partner accepted and the negotiation is ready to start
 
         """
-        is_buy = True
         if controller is not None and negotiators is not None:
             raise ValueError(
                 "You cannot pass both controller and negotiators to request_negotiations"
@@ -1905,6 +1539,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         partners = [_ for _ in self.suppliers[product] if not self.is_bankrupt[_]]
         if not partners:
             return True
+        # controller.make_ufun()
         if negotiators is None:
             negotiators = [
                 controller.create_negotiator(PassThroughSAONegotiator, name=_)
@@ -1962,10 +1597,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         if extra is None:
             extra = dict()
 
-        def values(x: Union[int, Tuple[int, int]]):
-            if not isinstance(x, Iterable):
-                return int(x), int(x)
-            return int(x[0]), int(x[1])
 
         self.logdebug(
             f"{agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
@@ -1979,11 +1610,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             "seller": partner if is_buy else agent_id,
             "caller": agent_id,
         }
-        issues = [
-            Issue(values(quantity), name="quantity", value_type=int),
-            Issue(values(time), name="time", value_type=int),
-            Issue(values(unit_price), name="unit_price", value_type=int),
-        ]
+        issues = self._current_issues[product]
         partners = [agent_id, partner]
         extra["negotiator_id"] = negotiator.id
         req_id = agent.create_negotiation_request(
@@ -2005,31 +1632,61 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         return result
 
     def _make_negotiations(self):
+
+        def values(x: Union[int, Tuple[int, int]]):
+            if not isinstance(x, Iterable):
+                return int(x), int(x)
+            return int(x[0]), int(x[1])
+
         controllers = dict()
+
         for aid, a in self.agents.items():
             if is_system_agent(aid):
                 continue
             controllers[aid] = a.adapted_object
+            a.adapted_object.make_ufun()
+        self._current_issues = [[] for _ in range(self.n_products)]
         for product in range(1, self.n_products):
+            unit_price = (
+                max(
+                    1,
+                    int(
+                        1.0
+                        / self.price_multiplier
+                        * (
+                            self.trading_prices[product - 1]
+                            if self.publish_trading_prices
+                            else self.catalog_prices[product - 1]
+                        )
+                        if product
+                        else 0
+                    ),
+                ),
+                int(
+                    self.price_multiplier
+                    * (
+                        self.trading_prices[product]
+                        if self.publish_trading_prices
+                        else self.catalog_prices[product]
+                    )
+                ),
+            )
+            time = (self.current_step, self.current_step)
+            quantity = (1, self._max_n_lines)
+            self._current_issues[product] = [
+                Issue(values(quantity), name="quantity", value_type=int),
+                Issue(values(time), name="time", value_type=int),
+                Issue(values(unit_price), name="unit_price", value_type=int),
+            ]
             for aid in self.consumers[product]:
                 if is_system_agent(aid):
                     continue
                 success = self._request_negotiations(
                     agent_id=aid,
                     product=product,
-                    quantity=(1, self.agents[aid].profile.n_lines),
-                    unit_price=(
-                        1,
-                        int(
-                            self.price_multiplier
-                            * (
-                                self.trading_prices[product]
-                                if self.publish_trading_prices
-                                else self.catalog_prices[product]
-                            )
-                        ),
-                    ),
-                    time=(self.current_step, self.current_step),
+                    time=time,
+                    quantity=quantity,
+                    unit_price=unit_price,
                     controller=controllers[aid],
                     negotiators=None,
                     extra=None,

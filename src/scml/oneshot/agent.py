@@ -15,9 +15,10 @@ from negmas import ResponseType
 from negmas import SAOController
 from negmas import SAOResponse
 from negmas import SAOState
-from negmas import SAOSyncController
+from negmas import SAOSyncController, SAOSingleAgreementController
+from .ufun import OneShotUFun
 
-__all__ = ["OneShotAgent", "OneShotSyncAgent"]
+__all__ = ["OneShotAgent", "OneShotSyncAgent", "OneShotSingleAgreementAgent"]
 
 
 class OneShotAgent(SAOController, Entity, ABC):
@@ -27,20 +28,45 @@ class OneShotAgent(SAOController, Entity, ABC):
         super().__init__(
             default_negotiator_type=PassThroughSAONegotiator,
             default_negotiator_params=None,
-            auto_kill=True,
+            auto_kill=False,
             name=name,
             ufun=ufun,
         )
-        self.awi = owner.awi if owner else None
+        self._awi = owner._awi if owner else None
+
+    @property
+    def awi(self):
+        return self._awi
+
+    def init(self):
+        pass
+
+    def make_ufun(self, add_exogenous=False):
+        self.ufun = OneShotUFun(
+            owner=self,
+            qin=self.awi.current_exogenous_input_quantity if add_exogenous else 0,
+            pin=self.awi.current_exogenous_input_price if add_exogenous else 0,
+            qout=self.awi.current_exogenous_output_quantity if add_exogenous else 0,
+            pout=self.awi.current_exogenous_output_price if add_exogenous else 0,
+            production_cost=self.awi.profile.cost,
+            storage_cost=self.awi.current_storage_cost,
+            delivery_penalty=self.awi.current_delivery_penalty,
+            input_agent=self.awi.my_input_product == 0,
+            output_agent=self.awi.my_output_product == self.awi.n_products - 1,
+        )
+        return self.ufun
+
+    def step(self):
+        pass
 
     def connect_to_oneshot_adapter(self, owner, ufun):
         """Connects the agent to its adapter (used internally)"""
-        self.awi = owner._awi
+        self._awi = owner._awi
         self.utility_function = ufun
 
     def connect_to_2021_adapter(self, owner, ufun):
         """Connects the agent to its adapter (used internally)"""
-        self.awi = owner.awi
+        self._awi = owner.awi
         self.utility_function = ufun
 
     @abstractmethod
@@ -131,7 +157,89 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
     @abstractmethod
     def first_proposals(self) -> Dict[str, "Outcome"]:
         """Gets a set of proposals to use for initializing the negotiation."""
+        return super().first_proposals()
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         """Signs all contracts"""
         return [self.id] * len(contracts)
+
+
+class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent):
+    """
+    A synchronized controller that tries to get no more than one agreement.
+
+    This controller manages a set of negotiations from which only a single one
+    -- at most -- is likely to result in an agreement. An example of a case in which
+    it is useful is an agent negotiating to buy a car from multiple suppliers.
+    It needs a single car at most but it wants the best one from all of those
+    suppliers. To guarentee a single agreement, pass strict=True
+
+    The general algorithm for this controller is something like this:
+
+        - Receive offers from all partners.
+        - Find the best offer among them by calling the abstract `best_offer`
+          method.
+        - Check if this best offer is acceptable using the abstract `is_acceptable`
+          method.
+
+            - If the best offer is acceptable, accept it and end all other negotiations.
+            - If the best offer is still not acceptable, then all offers are rejected
+              and with the partner who sent it receiving the result of `best_outcome`
+              while the rest of the partners receive the result of `make_outcome`.
+
+        - The default behavior of `best_outcome` is to return the outcome with
+          maximum utility.
+        - The default behavior of `make_outcome` is to return the best offer
+          received in this round if it is valid for the respective negotiation
+          and the result of `best_outcome` otherwise.
+
+    Args:
+        strict: If True the controller is **guaranteed** to get a single
+                agreement but it will have to send no-response repeatedly so
+                there is a higher chance of never getting an agreement when
+                two of those controllers negotiate with each other
+    """
+
+    def __init__(self, *args, strict: bool = False, **kwargs):
+        super().__init__(*args, strict=strict, **kwargs)
+
+    @abstractmethod
+    def is_acceptable(self, offer: "Outcome", source: str, state: SAOState) -> bool:
+        """Should decide if the given offer is acceptable
+
+        Args:
+            offer: The offer being tested
+            source: The ID of the negotiator that received this offer
+            state: The state of the negotiation handled by that negotiator
+
+        Remarks:
+            - If True is returned, this offer will be accepted and all other
+              negotiations will be ended.
+        """
+
+    @abstractmethod
+    def best_offer(self, offers: Dict[str, "Outcome"]) -> Optional[str]:
+        """
+        Return the ID of the negotiator with the best offer
+
+        Args:
+            offers: A mapping from negotiator ID to the offer it received
+
+        Returns:
+            The ID of the negotiator with best offer. Ties should be broken.
+            Return None only if there is no way to calculate the best offer.
+        """
+
+    @abstractmethod
+    def is_better(self, a: "Outcome", b: "Outcome", negotiator: str, state: SAOState):
+        """Compares two outcomes of the same negotiation
+
+        Args:
+            a: "Outcome"
+            b: "Outcome"
+            negotiator: The negotiator for which the comparison is to be made
+            state: Current state of the negotiation
+
+        Returns:
+            True if utility(a) > utility(b)
+        """

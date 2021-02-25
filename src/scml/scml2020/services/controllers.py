@@ -307,7 +307,7 @@ class SyncController(SAOSyncController):
         utils = np.array(
             [
                 self.utility(
-                    o, self.negotiators[nid][0].ami.issues[UNIT_PRICE].max_value
+                    tuple(o), self.negotiators[nid][0].ami.issues[UNIT_PRICE].max_value
                 )
                 for nid, o in offers.items()
             ]
@@ -326,8 +326,11 @@ class SyncController(SAOSyncController):
             return {
                 k: SAOResponse(ResponseType.REJECT_OFFER, best_proposals[k])
                 for k in offers.keys()
+                if k in self.negotiators.keys()
             }
 
+        if best_partner not in self._best_utils.keys():
+            breakpoint()
         relative_time = min(_.relative_time for _ in states.values())
 
         # if this is good enough or the negotiation is about to end accept the best offer

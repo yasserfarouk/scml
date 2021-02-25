@@ -14,9 +14,11 @@ from negmas.helpers import instantiate, get_full_type_name
 
 from ..oneshot.ufun import OneShotUFun
 from ..oneshot.agent import OneShotAgent
-from ..oneshot.world import OneShotState, OneShotProfile
-from scml.scml2020.components.trading import MarketAwareTradePredictionStrategy
-from scml.scml2020.components.production import DemandDrivenProductionStrategy
+from ..oneshot.common import OneShotState, OneShotProfile
+
+from .components.trading import MarketAwareTradePredictionStrategy
+from .components.production import DemandDrivenProductionStrategy
+from .common import TIME
 
 __all__ = [
     "SCML2020Agent",
@@ -399,9 +401,11 @@ class OneShotAdapter(
         )
         ufun = OneShotUFun(
             owner=self._obj,
-            cost=self._oneshot_awi.profile.cost,
+            production_cost=self._oneshot_awi.profile.cost,
             delivery_penalty=self.get_delivery_penalty(),
             storage_cost=self.get_storage_cost(),
+            input_agent=self.awi.my_input_product == 0,
+            output_agent=self.awi.my_output_product == self.awi.n_products - 1,
         )
         self._obj.utility_function = ufun
         super().step()
@@ -417,10 +421,19 @@ class OneShotAdapter(
         }
 
     def respond_to_negotiation_request(
-        self, initiator, issues, annotation, mechanism,
+        self,
+        initiator,
+        issues,
+        annotation,
+        mechanism,
     ):
-        # reject all received negotiation requests
-        return None
+        # reject all negotiations that does not match my agenda in time
+        if (
+            issues[TIME].min_value != self.awi.current_step
+            or issues[TIME].max_value != self.awi.current_step + 1
+        ):
+            return None
+        return self.obj.create_negotiator()
 
     def get_storage_cost(self) -> float:
         # penalty for buying too much

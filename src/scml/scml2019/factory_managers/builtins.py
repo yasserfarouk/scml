@@ -442,8 +442,10 @@ class GreedyFactoryManager(DoNothingFactoryManager):
         elif optimism > 1 - 1e-6:
             self.ufun_factory = OptimisticNegotiatorUtility
         else:
-            self.ufun_factory: NegotiatorUtility = lambda agent, annotation: AveragingNegotiatorUtility(
-                agent=agent, annotation=annotation, optimism=self.optimism
+            self.ufun_factory: NegotiatorUtility = (
+                lambda agent, annotation: AveragingNegotiatorUtility(
+                    agent=agent, annotation=annotation, optimism=self.optimism
+                )
             )
         if max_insurance_premium < 0.0:
             warnings.warn(
@@ -466,9 +468,9 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             scheduler_type, scope=globals()
         )
         self.scheduler: Scheduler = None
-        self.scheduler_params: Dict[
-            str, Any
-        ] = scheduler_params if scheduler_params is not None else {}
+        self.scheduler_params: Dict[str, Any] = (
+            scheduler_params if scheduler_params is not None else {}
+        )
 
     def total_utility(self, contracts: Collection[Contract] = ()) -> float:
         """Calculates the total utility for the agent of a collection of contracts"""

@@ -268,7 +268,10 @@ def main():
     "paths on linux/mac and a ; separated list in windows",
 )
 @click.option(
-    "--output", default="", type=str, help="A file to save the final results to",
+    "--output",
+    default="",
+    type=str,
+    help="A file to save the final results to",
 )
 @click.option(
     "--cw",
@@ -584,7 +587,10 @@ def tournament2019(
     help="Run a parallel/serial tournament on a single machine",
 )
 @click.option(
-    "--output", default="", type=str, help="A file to save the final results to",
+    "--output",
+    default="",
+    type=str,
+    help="A file to save the final results to",
 )
 @click_config_file.configuration_option()
 def tournament2020(
@@ -1408,11 +1414,14 @@ def run2020(
 DEFAULT_STD = (
     "RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent"
 )
-DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.builtin.RandomOneShotAgent;DecentralizingAgent"
-DEFAULT_ONESHOT = "RandomOneShotAgent;SyncRandomOneShotAgent"
+DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.agents.RandomOneShotAgent;DecentralizingAgent"
+# DEFAULT_STD_2021 = (
+#     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
+# )
+DEFAULT_ONESHOT = "RandomOneShotAgent;SyncRandomOneShotAgent;SingleAgreementRandomAgent;SingleAgreementAspirationAgent"
 DEFAULT_ONESHOT_FULL = [
-    "scml.oneshot.builtin.RandomOneShotAgent",
-    "scml.oneshot.builtin.SyncRandomOneShotAgent",
+    "scml.oneshot.agents.RandomOneShotAgent",
+    "scml.oneshot.agents.SingleAgreementAspirationAgent",
 ]
 
 
@@ -1522,14 +1531,14 @@ def run2021(
 
     def _no_default(s):
         return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
-            oneshot and not (s.startswith("scml.oneshot.builtin."))
+            oneshot and not (s.startswith("scml.oneshot.agents."))
         )
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             if oneshot:
-                all_competitors[i] = "scml.oneshot.builtin." + cp
+                all_competitors[i] = "scml.oneshot.agents." + cp
             else:
                 all_competitors[i] = "scml.scml2020.agents." + cp
     all_competitors_params = [dict() for _ in all_competitors]
@@ -1836,7 +1845,10 @@ def run2021(
     help="Run a parallel/serial tournament on a single machine",
 )
 @click.option(
-    "--output", default="", type=str, help="A file to save the final results to",
+    "--output",
+    default="",
+    type=str,
+    help="A file to save the final results to",
 )
 @click_config_file.configuration_option()
 def tournament2020(
@@ -2109,7 +2121,10 @@ def tournament2020(
     help="Run a parallel/serial tournament on a single machine",
 )
 @click.option(
-    "--output", default="", type=str, help="A file to save the final results to",
+    "--output",
+    default="",
+    type=str,
+    help="A file to save the final results to",
 )
 @click_config_file.configuration_option()
 def tournament2021(
@@ -2174,7 +2189,7 @@ def tournament2021(
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             if oneshot:
-                all_competitors[i] = ("scml.oneshot.builtin.") + cp
+                all_competitors[i] = ("scml.oneshot.agents.") + cp
             else:
                 all_competitors[i] = ("scml.scml2020.agents.") + cp
     all_competitors_params = [dict() for _ in range(len(all_competitors))]
@@ -2231,7 +2246,7 @@ def tournament2021(
         for i, cp in enumerate(non_competitors):
             if "." not in cp:
                 if oneshot:
-                    non_competitors[i] = ("scml.oneshot.builtin.") + cp
+                    non_competitors[i] = ("scml.oneshot.agents.") + cp
                 else:
                     non_competitors[i] = ("scml.scml2020.agents.") + cp
 

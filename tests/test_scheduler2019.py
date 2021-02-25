@@ -1,5 +1,4 @@
-import copy
-import itertools
+import copy, itertools
 
 from pytest import fixture
 

@@ -23,7 +23,7 @@ from scml.scml2020.agents import (
 )
 from scml.scml2020.world import SCML2020World
 from scml.scml2020.world import is_system_agent
-from scml.oneshot.builtin import RandomOneShotAgent, SyncRandomOneShotAgent
+from scml.oneshot.agents import RandomOneShotAgent, SyncRandomOneShotAgent
 
 if True:
     from typing import (
@@ -55,14 +55,21 @@ __all__ = [
     "DefaultAgentsOneShot",
 ]
 
+
 ROUND_ROBIN = True
+
+
 DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent]
+
+
 DefaultAgents2021 = [
     DecentralizingAgent,
     MarketAwareDecentralizingAgent,
     MarketAwareIndDecentralizingAgent,
     RandomOneShotAgent,
 ]
+
+
 DefaultAgentsOneShot = [
     RandomOneShotAgent,
     SyncRandomOneShotAgent,
@@ -1482,14 +1489,14 @@ def anac2021_oneshot(
     #     competitor_params = [dict() for _ in range(len(competitors))]
     # for t, p in zip(competitors, competitor_params):
     #     p["controller_type"] = get_full_type_name(t)
-    # competitors = ["scml.oneshot.world._OneShotAdapter"] * len(competitors)
+    # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
         n_competitors_per_world = kwargs.get(
             "n_competitors_per_world", randint(2, min(4, len(competitors)))
         )
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
-        non_competitors = ["scml.oneshot.builtin.RandomOneShotAgent"]
+        non_competitors = ["scml.oneshot.agents.RandomOneShotAgent"]
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True

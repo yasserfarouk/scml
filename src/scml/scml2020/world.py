@@ -517,9 +517,17 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.agent_params = [
             {k: v for k, v in _.items() if k not in ("name",)} for _ in agent_params
         ]
+        agent_params = [
+            {
+                k: v
+                for k, v in _.items()
+                if k not in ("name", "oneshot_type", "oneshot_params", "obj")
+            }
+            for _ in agent_params
+        ]
         self.agent_unique_types = [
             f"{t}{hash(str(p))}" if len(p) > 0 else t
-            for t, p in zip(self.agent_types, self.agent_params)
+            for t, p in zip(self.agent_types, agent_params)
         ]
         self.factories = [
             Factory(
@@ -711,8 +719,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         cost_increases_with_level=True,
         equal_exogenous_supply=False,
         equal_exogenous_sales=False,
-        exogenous_supply_predictability:Union[Tuple[float, float], float] = (0.0, 0.9),
-        exogenous_sales_predictability:Union[Tuple[float, float], float] = (0.0, 0.9),
+        exogenous_supply_predictability: Union[Tuple[float, float], float] = (0.0, 0.9),
+        exogenous_sales_predictability: Union[Tuple[float, float], float] = (0.0, 0.9),
         exogenous_control: Union[Tuple[float, float], float] = (0.2, 0.8),
         cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
         force_signing=False,
@@ -1262,7 +1270,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             # --------------------------
             if self.publish_trading_prices:
                 self.bulletin_board.record(
-                    "trading_prices", value=self.trading_prices, key=self.current_step,
+                    "trading_prices",
+                    value=self.trading_prices,
+                    key=self.current_step,
                 )
             if self.publish_exogenous_summary:
                 q = (
@@ -2115,7 +2125,7 @@ class SCML2021World(SCML2020World):
     def __init__(self, *args, **kwargs):
         kwargs["publish_trading_prices"] = True
         kwargs["publish_exogenous_summary"] = True
-        kwargs["n_concurrent_negs_between_partners"] = 1
+        kwargs["n_concurrent_negs_between_partners"] = 5
         super().__init__(*args, **kwargs)
 
     @classmethod

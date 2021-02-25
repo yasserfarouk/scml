@@ -802,7 +802,10 @@ else:
             self.setWindowTitle(self.title)
             # self.setGeometry(self.left, self.top, self.width, self.height)
             self.setGeometry(geometry)
-            self.opt_set = self.initCommandUI(self.func, run_exit,)
+            self.opt_set = self.initCommandUI(
+                self.func,
+                run_exit,
+            )
             self.setLayout(self.opt_set)
             self.show()
 

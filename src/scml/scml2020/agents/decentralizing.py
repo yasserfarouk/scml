@@ -107,6 +107,7 @@ class IndDecentralizingAgent(
 
 
 class MarketAwareIndDecentralizingAgent(
-    MarketAwareTradePredictionStrategy, IndDecentralizingAgent,
+    MarketAwareTradePredictionStrategy,
+    IndDecentralizingAgent,
 ):
     pass

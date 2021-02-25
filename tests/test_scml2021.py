@@ -1,19 +1,21 @@
 import random
 
 import hypothesis.strategies as st
+from hypothesis import example
 from hypothesis import given
-from hypothesis import settings, example
+from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
 
+from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SCML2021World
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
-from scml.oneshot.builtin import RandomOneShotAgent, SyncRandomOneShotAgent
 
 random.seed(0)
 
@@ -110,7 +112,9 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
 )
 @settings(deadline=300_000, max_examples=20)
 @example(
-    [RandomAgent, SyncRandomOneShotAgent], False, 2,
+    [RandomAgent, SyncRandomOneShotAgent],
+    False,
+    2,
 )
 def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(

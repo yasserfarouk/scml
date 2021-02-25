@@ -32,6 +32,7 @@ SCML2020World
 
       ~SCML2020World.add_financial_report
       ~SCML2020World.breach_record
+      ~SCML2020World.can_negotiate
       ~SCML2020World.compensate
       ~SCML2020World.complete_contract_execution
       ~SCML2020World.contract_record
@@ -41,6 +42,7 @@ SCML2020World
       ~SCML2020World.generate
       ~SCML2020World.get_private_state
       ~SCML2020World.is_valid_contact
+      ~SCML2020World.negs_between
       ~SCML2020World.nullify_contract
       ~SCML2020World.on_contract_concluded
       ~SCML2020World.on_contract_signed
@@ -77,6 +79,7 @@ SCML2020World
 
    .. automethod:: add_financial_report
    .. automethod:: breach_record
+   .. automethod:: can_negotiate
    .. automethod:: compensate
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
@@ -86,6 +89,7 @@ SCML2020World
    .. automethod:: generate
    .. automethod:: get_private_state
    .. automethod:: is_valid_contact
+   .. automethod:: negs_between
    .. automethod:: nullify_contract
    .. automethod:: on_contract_concluded
    .. automethod:: on_contract_signed

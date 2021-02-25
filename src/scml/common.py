@@ -102,10 +102,10 @@ def distribute_quantities(
 
     """
     if sum(q) == 0:
-        return [np.asarray([0] * a) for _ in range(n_steps)]
+        return [np.asarray([0] * a, dtype=int) for _ in range(n_steps)]
     if equal:
         values = np.maximum(1, np.round(q / a).astype(int)).tolist()
-        return [np.asarray([values[p]] * a) for _ in range(n_steps)]
+        return [np.asarray([values[p]] * a, dtype=int) for _ in range(n_steps)]
     if predictability < 0.01:
         values = []
         for s in range(n_steps):
@@ -125,19 +125,26 @@ def distribute_quantities(
             continue
         added = integer_cut(n_changes, a, 0)
         subtracted = integer_cut(n_changes, a, 0)
+        assert isinstance(added[0], int) and isinstance(subtracted[0], int)
         for i in range(len(values[-1])):
             values[-1][i] += added[i] - subtracted[i]
-            if values[-1][i] < 0:
-                errs = values[-1][i]
-                while errs > 0:
-                    values[-1][i] = 0
-                    diffs = integer_cut(errs, a - 1, 0)
-                    for j in range(len(values[-1])):
-                        if j == i:
-                            continue
-                        if values[-1][j] >= diffs[j]:
-                            values[-1][j] -= diffs[j]
+            if values[-1][i] >= 0:
+                continue
+            errs = -values[-1][i]
+            values[-1][i] = 0
+            while errs > 0:
+                diffs = integer_cut(errs, a - 1, 0)
+                diffs = diffs[:i] + [0] + diffs[i:]
+                for j in range(len(values[-1])):
+                    if j == i:
+                        continue
+                    if values[-1][j] >= diffs[j]:
+                        values[-1][j] -= diffs[j]
+                        errs -= diffs[j]
         assert (
             abs(sum(values[-1]) - q[s]) < 3
         ), f"Failed to distribute: expected {q[s]} but got {sum(values[-1])}: {values[-1]}"
+        assert (
+            min(values[-1]) >= 0
+        ), f"Negative  value {min(values[-1])} in quantities!\n{values}"
     return values

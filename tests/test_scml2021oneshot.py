@@ -8,7 +8,8 @@ from negmas.helpers import unique_name
 from pytest import mark
 
 from scml.oneshot import SCML2020OneShotWorld
-from scml.oneshot.builtin import RandomOneShotAgent
+from scml.oneshot.agent import OneShotAgent
+from scml.oneshot.agents import RandomOneShotAgent
 from scml.scml2020 import is_system_agent
 
 random.seed(0)
@@ -129,7 +130,9 @@ def test_something_happens_with_random_agents(n_processes):
 def test_generate():
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
-            agent_types=RandomOneShotAgent, n_steps=10, n_processes=2,
+            agent_types=RandomOneShotAgent,
+            n_steps=10,
+            n_processes=2,
         )
     )
     world.run()
@@ -171,3 +174,17 @@ def test_graphs_lead_to_no_unknown_nodes():
         construct_graphs=True,
     )
     world.graph((0, world.n_steps))
+
+
+def test_ufun_min_max():
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate(agent_types=[RandomOneShotAgent], n_steps=10),
+        construct_graphs=True,
+    )
+    world.step()
+    for aid, agent in world.agents.items():
+        if is_system_agent(aid):
+            continue
+        ufun = agent.make_ufun()
+        mn, mx = ufun.min_utility, ufun.max_utility
+        assert mx > mn or mx == mn == 0

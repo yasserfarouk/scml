@@ -393,8 +393,9 @@ def test_can_run_a_random_tiny_scml_world_with_no_factory_with_delay_no_immediat
 
 
 def test_scml_picklable(tmp_path):
-    import dill
     import pickle
+
+    import dill
 
     file = tmp_path / "world.pckl"
 

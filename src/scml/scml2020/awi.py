@@ -113,8 +113,7 @@ class AWI(AgentWorldInterface):
 
         if negotiators is None:
             negotiators = [
-                controller.create_negotiator(
-                    PassThroughSAONegotiator,
+                PassThroughSAONegotiator(
                     name=_ if copy_partner_id else None,
                     id=_ if copy_partner_id else None,
                 )
@@ -129,12 +128,14 @@ class AWI(AgentWorldInterface):
             else False
             for partner, negotiator in zip(partners, negotiators)
         ]
-        for r, n in zip(results, negotiators):
+        # for r, n in zip(results, negotiators):
+        #     if not r:
+        #         controller.kill_negotiator(n.id, force=True)
+        for p, neg, r in zip(partners, negotiators, results):
             if not r:
-                controller.kill_negotiator(n.id, force=True)
-        for p, r in zip(partners, results):
-            if r:
-                self._world._registered_negs[tuple(sorted([p, self.agent.id]))] += 1
+                continue
+            controller.add_negotiator(neg)
+            self._world._registered_negs[tuple(sorted([p, self.agent.id]))] += 1
         return any(results)
 
     def request_negotiation(

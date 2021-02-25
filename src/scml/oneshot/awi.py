@@ -1,0 +1,244 @@
+"""
+Implements the one shot version of the Agent-World Interface.
+
+"""
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
+from negmas import AgentWorldInterface
+from negmas.outcomes import Issue
+
+from ..scml2020 import FinancialReport
+
+from .common import OneShotProfile
+
+__all__ = ["OneShotAWI"]
+
+
+class OneShotAWI(AgentWorldInterface):
+    """
+    The agent world interface for the one-shot game.
+
+    This class  
+
+    """
+
+    # ================================================================
+    # Static World Information (does not change during the simulation)
+    # ================================================================
+
+    # Market information
+    # ------------------
+
+    @property
+    def all_suppliers(self) -> List[List[str]]:
+        """Returns a list of agent IDs for all suppliers for every product"""
+        return self._world.suppliers
+
+    @property
+    def all_consumers(self) -> List[List[str]]:
+        """Returns a list of agent IDs for all consumers for every product"""
+        return self._world.consumers
+
+    @property
+    def catalog_prices(self) -> np.ndarray:
+        """Returns the catalog prices of all products"""
+        return self._world.catalog_prices
+
+    @property
+    def price_multiplier(self):
+        return self._world.price_multiplier
+
+    @property
+    def n_products(self) -> int:
+        """Returns the number of products in the system"""
+        return len(self._world.catalog_prices)
+
+    @property
+    def n_processes(self) -> int:
+        """Returns the number of processes in the system"""
+        return self.n_products - 1
+
+    # ================================================================
+    # Static Agent Information (does not change during the simulation)
+    # ================================================================
+
+    @property
+    def profile(self) -> OneShotProfile:
+        """Gets the profile (static private information) associated with the agent"""
+        return self.agent.profile
+
+    @property
+    def n_lines(self) -> int:
+        """The number of lines in the corresponding factory.
+        You can read `state` to get this among other information"""
+        return self.profile.n_lines if self.profile else 0
+
+    @property
+    def is_first_level(self):
+        """
+        Whether this agent is in the first production level
+        """
+        return self.my_input_product == 0
+
+    @property
+    def is_last_level(self):
+        """
+        Whether this agent is in the last production level
+        """
+        return self.my_output_product == self.n_products - 1
+
+    @property
+    def is_middle_level(self):
+        """
+        Whether this agent is in neither in the first nor in the last level
+        """
+        return 0 < self.my_input_product < self.n_products - 2
+
+    @property
+    def my_input_product(self) -> int:
+        """the product I need to buy"""
+        return self.profile.input_product if self.profile else -10
+
+    level = my_input_product
+    """The production level of the agent"""
+
+    @property
+    def my_output_product(self) -> int:
+        """the product I need to sell"""
+        return self.profile.output_product if self.profile else -10
+
+    @property
+    def my_suppliers(self) -> List[str]:
+        """Returns a list of IDs for all of the agent's suppliers
+        (agents that can supply the product I need).
+        """
+        return self.all_suppliers[self.level]
+
+    @property
+    def my_consumers(self) -> List[str]:
+        """Returns a list of IDs for all the agent's consumers
+        (agents that can consume at least one product it may produce).
+
+        """
+        return self.all_consumers[self.level]
+
+    # =========================================================
+    # Dynamic Agent Information (changes during the simulation)
+    # =========================================================
+
+    def state(self) -> Any:
+        return OneShotState(
+            exogenous_input_quantity=self.current_exogenous_input_quantity,
+            exogenous_input_price=self.current_exogenous_input_price,
+            exogenous_output_quantity=self.current_exogenous_output_quantity,
+            exogenous_output_price=self.current_exogenous_output_price,
+            storage_cost=self.current_storage_cost,
+            delivery_penalty=self.current_delivery_penalty,
+        )
+
+    @property
+    def current_exogenous_input_quantity(self) -> int:
+        """
+        The exogenous contracts for the input (this step)
+        """
+        return self._world.exogenous_qin[self.agent.id]
+
+    @property
+    def current_exogenous_input_price(self) -> int:
+        """
+        The exogenous contracts for the input (this step)
+        """
+        return self._world.exogenous_pin[self.agent.id]
+
+    @property
+    def current_exogenous_output_quantity(self) -> int:
+        """
+        The exogenous contracts for the input (this step)
+        """
+        return self._world.exogenous_qout[self.agent.id]
+
+    @property
+    def current_exogenous_output_price(self) -> int:
+        """
+        The exogenous contracts for the input (this step)
+        """
+        return self._world.exogenous_pout[self.agent.id]
+
+    @property
+    def current_storage_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return self._world.agent_storage_cost[self.agent.id][self._world.current_step]
+
+    @property
+    def current_delivery_penalty(self) -> float:
+        """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
+        return self._world.agent_delivery_penalty[self.agent.id][
+            self._world.current_step
+        ]
+
+    # =========================================================
+    # Dynamic World Information (changes during the simulation)
+    # =========================================================
+
+    # Public Market Condition Information
+    # -----------------------------------
+
+    @property
+    def trading_prices(self) -> np.ndarray:
+        """Returns the current trading prices of all products"""
+        return (
+            self._world.trading_prices if self._world.publish_trading_prices else None
+        )
+
+    @property
+    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
+        """
+        The exogenous contracts in the current step for all products
+
+        Returns:
+            A list of tuples giving the total quantity and total price of
+            all revealed exogenous contracts of all products at the current
+            step.
+        """
+        return (
+            self._world.exogenous_contracts_summary
+            if self._world.publish_exogenous_summary
+            else None
+        )
+
+    # Other agents' information
+    # -------------------------
+
+    def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
+        """Returns a dictionary mapping time-steps to financial reports of
+        the given agent"""
+        return self.bb_read("reports_agent", aid)
+
+    def reports_at_step(self, step: int) -> Dict[str, FinancialReport]:
+        """Returns a dictionary mapping agent ID to its financial report for
+        the given time-step"""
+        result = self.bb_read("reports_time", str(step))
+        if result is not None:
+            return result
+        steps = sorted(
+            [
+                int(i)
+                for i in self.bb_query("reports_time", None, query_keys=True).keys()
+            ]
+        )
+        for (s, prev) in zip(steps[1:], steps[:-1]):
+            if s > step:
+                return self.bb_read("reports_time", prev)
+        return self.bb_read("reports_time", str(steps[-1]))
+
+    # Negotiation set information
+    # ---------------------------
+
+    @property
+    def current_input_issues(self) -> List[Issue]:
+        return self._world._current_issues[self.my_input_product]
+
+    @property
+    def current_output_issues(self) -> List[Issue]:
+        return self._world._current_issues[self.my_input_product]

@@ -12,6 +12,7 @@ StepNegotiationManager
 
       ~StepNegotiationManager.add_controller
       ~StepNegotiationManager.all_negotiations_concluded
+      ~StepNegotiationManager.create_controller
       ~StepNegotiationManager.init
       ~StepNegotiationManager.respond_to_negotiation_request
 
@@ -19,5 +20,6 @@ StepNegotiationManager
 
    .. automethod:: add_controller
    .. automethod:: all_negotiations_concluded
+   .. automethod:: create_controller
    .. automethod:: init
    .. automethod:: respond_to_negotiation_request
