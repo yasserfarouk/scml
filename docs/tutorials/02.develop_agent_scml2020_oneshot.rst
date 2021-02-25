@@ -227,7 +227,7 @@ contracts:
    all the steps which makes learning more useful in the game.
 
 Building your own agent
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 A one-shot agent needs only to do negotiation. The simplest possible
 version (``MyOneShotRandom`` above) just responded to offers from its
@@ -257,15 +257,12 @@ full SCML game:
    be presented in the following section, there is no need for a trading
    strategy
 
-Base classes for OneShot agents
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 There are three base classes for one-shot agents (``OneShotAgent``,
 ``SyncOneShotAgent``, and ``SingleAgreementOneShotAgent``). We will
 discuss them in more details in what follows:
 
 OneShotAgent
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 This is the base class of all agents for SCML-OneShot. Both
 ``SyncOneShotAgent`` and ``SingleAgreementOneShotAgent`` inherit from
@@ -293,7 +290,7 @@ respond to each of these six callbacks. All of these callbacks except
 ``propose`` are optional.
 
 Greedy OneShotAgent
-'''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^
 
 We have already seen how to develop a do-nothing agent using the
 ``OneShotAgent`` class. Let’s try to develop some more meaningful agent
@@ -493,7 +490,7 @@ Let’s check it line by line:
 That is it.
 
 More General Greedy Agent
-'''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One issue that the ``GreedyOneShotAget`` had was that it assumed that it
 is either in the first level of the production chain or in the last
@@ -619,7 +616,7 @@ needs to define a first proposal for each negotiation. This is why
 ``SyncOneShotAgent`` allows you to do.
 
 SyncOneShotAgent
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 The main goal of this base agent is to allow the developer to think
 about *all negotiations together* but it has some important caveats
@@ -806,7 +803,7 @@ agreement** from the set of negotiation and end all the rest once this
 is achieved. This is what the ``SingleAgreementOneShotAgent`` does.
 
 SingleAgreementOneShotAgent
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This base classs allows you to develop agents that can get **at most**
 one agreement from the set of negotiation at every simulation step.

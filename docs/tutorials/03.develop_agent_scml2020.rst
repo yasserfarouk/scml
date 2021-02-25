@@ -1,5 +1,5 @@
-Developing an agent for SCML2021
---------------------------------
+Developing an agent for SCML2021 (Std/Collusion)
+------------------------------------------------
 
 Let’s see the simplest possible agent (a do-nothing agent)
 
@@ -49,9 +49,6 @@ Let’s test this agent to confirm that it is really doing nothing
 You can see that our agent did not do anything in the world. It did
 receive some negotiation requests which it rejected and it did not
 engage in any negotiations.
-
-Standard/Collusion Agent (Negotiation + Planning)
--------------------------------------------------
 
 The full SCML game (standard and collusion leagues) combines negotiation
 with planning. Here the agent needs to consider long-term trading

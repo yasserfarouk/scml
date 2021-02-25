@@ -19,8 +19,102 @@ class OneShotAWI(AgentWorldInterface):
     """
     The agent world interface for the one-shot game.
 
-    This class  
+    This class contains all the methods needed to access the simulation to
+    extract information which are divided into 4 groups:
 
+    Static World Information:
+    -------------------------
+
+        Information about the world and the agent that does not change over
+        time. These include:
+
+        A. Market Information:
+        ----------------------
+
+        - *n_products*: Number of products in the production chain.
+        - *n_processes*: Number of processes in the production chain.
+        - *all_suppliers*: A list of all suppliers by product.
+        - *all_consumers*: A list of all consumers by product.
+        - *catalog_prices*: A list of the catalog prices (by product).
+        - *price_multiplier*: The multiplier multiplied by the trading/catalog price
+                              when the negotiation agendas are created to decide the
+                              maximum and lower quantities.
+
+        B. Agent Information:
+        ---------------------
+
+        - *profile*: Gives the agent profile including its production cost, number
+                     of production lines, input product index, mean of its delivery
+                     penalties, mean of its storage costs, standard deviation of its
+                     delivery penalties and standard deviation of its storage costs.
+                     See `OneShotProfile` for full description. This information is private
+                     information and no other agent knows it.
+        - *n_lines*: the number of production lines in the factory (private information).
+        - *is_first_level*: Is the agent in the first production level (i.e. it is an
+                            input agent that buys the raw material).
+        - *is_last_level*: Is the agent in the last production level (i.e. it is an
+                            output agent that sells the final product).
+        - *is_middle_level*: Is the agent neither a first level nor a last level agent
+        - *my_input_product*: The input product to the factory controlled by the agent.
+        - *my_output_product*: The output product from the factory controlled by the agent.
+        - *level*: The production level which is numerically the same as the input product.
+        - *my_suppliers*: A list of IDs for all suppliers to the agent (i.e. agents
+                          that can sell the input product of the agent).
+        - *my_consumers*: A list of IDs for all consumers to the agent (i.e. agents
+                          that can buy the output product of the agent).
+
+    Dynamic World Information:
+    -------------------------
+
+        Information about the world and the agent that changes over time.
+
+        A. Market Information:
+        ----------------------
+
+
+        - *trading_prices*: The trading prices of all products. This information 
+                            is only available if `publish_trading_prices` is 
+                            set in the world.
+        - *exogenous_contract_summary*: A list of n_products tuples each giving
+                                        the total quantity and average price of
+                                        exogenous contracts for a product. This 
+                                        information is only available if 
+                                        `publish_exogenous_summary` is set in 
+                                        the world.
+
+        B. Other Agents' Information:
+        -----------------------------
+
+        - *reports_of_agent*: Gives all past financial reports of a given agent.
+                              See `FinancialReport` for details.
+        - *reports_at_step*: Gives all reports of all agents at a given step.
+                              See `FinancialReport` for details.
+
+        C. Current Negotiations Information:
+        ------------------------------------
+
+        - *current_input_issues*: The current issues for all negotiations to buy 
+                                  the input product of the agent. If the agent 
+                                  is at level zero, this will be empty.
+        - *current_output_issues*: The current issues for all negotiations to buy 
+                                  the output product of the agent. If the agent 
+                                  is at level n_products - 1, this will be empty.
+
+        D. Agent Information:
+        ---------------------
+
+        - *current_exogenous_input_quantity*: The total quantity the agent have
+                                              in its input exogenous contract.
+        - *current_exogenous_input_price*: The total price of the agent's
+                                           input exogenous contract.
+        - *current_exogenous_output_quantity*: The total quantity the agent have
+                                              in its output exogenous contract.
+        - *current_exogenous_output_price*: The total price of the agent's
+                                           output exogenous contract.
+        - *current_storage_cost*: The storage cost per unit item in the current
+                                  step.
+        - *current_delivery_penalty*: The delivery penalty per unit item in the current
+                                  step.
     """
 
     # ================================================================
@@ -29,6 +123,16 @@ class OneShotAWI(AgentWorldInterface):
 
     # Market information
     # ------------------
+
+    @property
+    def n_products(self) -> int:
+        """Returns the number of products in the system"""
+        return len(self._world.catalog_prices)
+
+    @property
+    def n_processes(self) -> int:
+        """Returns the number of processes in the system"""
+        return self.n_products - 1
 
     @property
     def all_suppliers(self) -> List[List[str]]:
@@ -47,17 +151,20 @@ class OneShotAWI(AgentWorldInterface):
 
     @property
     def price_multiplier(self):
+        """
+        Controls the minimum and maximum prices in the negotiation agendas
+
+        Remarks:
+            - The base price is either the catalog price if trading price information
+              is not public or the trading price.
+            - The minimum unit price in any negotiation agenda is the base price of
+              the previous product in the chain ***divided* by the multiplier. If that is
+              less than 1, the minimum unit price becomes 1.
+            - The maximum unit price in any negotiation agenda is the base price of
+              the previous product in the chain ***multiplied* by the multiplier. If that is
+              less than 1, the minimum unit price becomes 1.
+        """
         return self._world.price_multiplier
-
-    @property
-    def n_products(self) -> int:
-        """Returns the number of products in the system"""
-        return len(self._world.catalog_prices)
-
-    @property
-    def n_processes(self) -> int:
-        """Returns the number of processes in the system"""
-        return self.n_products - 1
 
     # ================================================================
     # Static Agent Information (does not change during the simulation)

@@ -1,3 +1,18 @@
+"""
+Implements the base classes for all agents that can join a `SCML2020OneShotWorld`.
+
+
+Remarks:
+    - You can access all of the negotiators associated with the agent using
+      `self.negotiators` which is a dictionary mapping the `negotiator_id` to
+      a tuple of two values: The `SAONegotiator` object and a key-value context
+      dictionary. In 2021, the context will always be empty.
+    - The `negotiator_id` associated with a negotiation with some partner will
+      be the same as the agent ID of that partner. This means that all negotiators
+      engaged with some partner over all simulation steps will have the same ID
+      which is useful if you are keeping information about past negotiations and
+      partner behavior.
+"""
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
@@ -22,7 +37,27 @@ __all__ = ["OneShotAgent", "OneShotSyncAgent", "OneShotSingleAgreementAgent"]
 
 
 class OneShotAgent(SAOController, Entity, ABC):
-    """Base class for all agents in the One-Shot game."""
+    """
+
+    Base class for all agents in the One-Shot game.
+
+    Args:
+        owner: The adapter owning the agent. You do not need to directly deal
+               with this.
+        ufun: An optional `OneShotUFun` to set for the agent.
+        name: Agent name.
+
+    Remarks:
+        - You can access all of the negotiators associated with the agent using
+          `self.negotiators` which is a dictionary mapping the `negotiator_id` to
+          a tuple of two values: The `SAONegotiator` object and a key-value context
+          dictionary. In 2021, the context will always be empty.
+        - The `negotiator_id` associated with a negotiation with some partner will
+          be the same as the agent ID of that partner. This means that all negotiators
+          engaged with some partner over all simulation steps will have the same ID
+          which is useful if you are keeping information about past negotiations and
+          partner behavior.
+    """
 
     def __init__(self, owner=None, ufun=None, name=None):
         super().__init__(
@@ -36,12 +71,32 @@ class OneShotAgent(SAOController, Entity, ABC):
 
     @property
     def awi(self):
+        """Returns a `OneShotAWI` object for accessing the simulation."""
         return self._awi
 
     def init(self):
+        """
+        Called once after the AWI is set.
+
+        Remarks:
+            - Use this for any proactive initialization code.
+        """
         pass
 
     def make_ufun(self, add_exogenous=False):
+        """
+        Creates a utility function for the agent.
+
+        Args:
+            add_exogenous: If `True` then the exogenous contracts of the agent
+                           will be automatically added whenever the ufun is
+                           evaluated for any set of contracts, offers or otherwise.
+
+        Remarks:
+            - You can always as assume that self.ufun returns the ufun for your.
+              You will not need to directly use this method in most cases.
+
+        """
         self.ufun = OneShotUFun(
             owner=self,
             qin=self.awi.current_exogenous_input_quantity if add_exogenous else 0,
@@ -57,6 +112,13 @@ class OneShotAgent(SAOController, Entity, ABC):
         return self.ufun
 
     def step(self):
+        """
+        Called every step.
+
+        Remarks:
+            - Use this for any proactive code  that needs to be done every
+              simulation step.
+        """
         pass
 
     def connect_to_oneshot_adapter(self, owner, ufun):
@@ -109,7 +171,13 @@ class OneShotAgent(SAOController, Entity, ABC):
 
     @property
     def internal_state(self) -> Dict[str, Any]:
-        """Returns the internal state of the agent for debugging purposes"""
+        """
+        Returns the internal state of the agent for debugging purposes.
+
+        Remarks:
+            - In your agent, you can add any key-value pair to this dict and
+              then use agent_log_* methods to log this information at any point.
+        """
         return {}
 
     def on_negotiation_failure(
@@ -119,19 +187,49 @@ class OneShotAgent(SAOController, Entity, ABC):
         mechanism: AgentMechanismInterface,
         state: MechanismState,
     ) -> None:
-        """Called whenever a negotiation ends without agreement"""
+        """
+        Called whenever a negotiation ends without agreement.
+
+        Args:
+            partners: List of the partner IDs consisting from self and the opponent.
+            annotation: The annotation of the negotiation including the seller ID,
+                        buyer ID, and the product.
+            mechanism: The `AgentMechanismInterface` instance containing all information
+                       about the negotiation.
+            state: The final state of the negotiation of the type `SAOState`
+                   including the agreement if any.
+        """
 
     def on_negotiation_success(
         self, contract: Contract, mechanism: AgentMechanismInterface
     ) -> None:
-        """Called whenever a negotiation ends with agreement"""
+        """
+        Called whenever a negotiation ends with agreement.
+
+        Args:
+            contract: The `Contract` agreed upon.
+            mechanism: The `AgentMechanismInterface` instance containing all information
+                       about the negotiation that led to the `Contract` if any.
+        """
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """Signs all contracts"""
+        """Signs all contracts (used internally)"""
         return [self.id] * len(contracts)
 
 
 class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
+    """
+    An agent that automatically accumulate offers from opponents and allows
+    you to control all negotiations centrally in the `counter_all` method.
+
+    Args:
+        owner: The adapter owning the agent. You do not need to directly deal
+               with this.
+        ufun: An optional `OneShotUFun` to set for the agent.
+        name: Agent name.
+
+    """
+
     def __init__(self, *args, **kwargs):
         kwargs["global_ufun"] = True
         super().__init__(*args, **kwargs)
@@ -147,6 +245,13 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
             offers: Maps negotiator IDs to offers
             states: Maps negotiator IDs to offers AT the time the offers were made.
 
+        Returns:
+            A dictionary mapping negotiator ID to an `SAOResponse`. The response
+            per agent consist of a tuple. In case of acceptance or ending the
+            negotiation the second item of the tuple should be None. In case of
+            rejection, the second item should be the counter offer.
+
+
         Remarks:
             - The response type CANNOT be WAIT.
             - If the system determines that a loop is formed, the agent may
@@ -156,23 +261,29 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
 
     @abstractmethod
     def first_proposals(self) -> Dict[str, "Outcome"]:
-        """Gets a set of proposals to use for initializing the negotiation."""
+        """
+        Gets a set of proposals to use for initializing the negotiation.
+
+        Returns:
+            A dictionary mapping each negotiator (in self.negotiators dict) to
+            an outcome to be used as the first proposal if the agent is to start
+            a negotiation.
+
+        """
         return super().first_proposals()
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """Signs all contracts"""
+        """Signs all contracts (used internally)"""
         return [self.id] * len(contracts)
 
 
 class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent):
     """
-    A synchronized controller that tries to get no more than one agreement.
+    A synchronized agent that tries to get no more than one agreement.
 
     This controller manages a set of negotiations from which only a single one
-    -- at most -- is likely to result in an agreement. An example of a case in which
-    it is useful is an agent negotiating to buy a car from multiple suppliers.
-    It needs a single car at most but it wants the best one from all of those
-    suppliers. To guarentee a single agreement, pass strict=True
+    -- at most -- is likely to result in an agreement.
+    To guarantee a single agreement, pass `strict=True`
 
     The general algorithm for this controller is something like this:
 

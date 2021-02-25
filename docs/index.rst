@@ -11,8 +11,9 @@ Contents
    tutorials
    faq
 
-   modules/scml2019
    modules/scml2020
+   modules/scmloneshot
+   modules/scml2019
 
    scripts
    reference/index
