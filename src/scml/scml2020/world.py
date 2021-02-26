@@ -429,7 +429,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.compensate_immediately = compensate_immediately
 
         initial_balance = make_array(initial_balance, len(profiles), dtype=int)
-        assert all([_> 1e-5 for _ in initial_balance]), "Some initial  balances are zero or negative {initial_balance}"
+        # assert all([_> 1e-5 for _ in initial_balance]), "Some initial  balances are zero or negative {initial_balance}"
         agent_types = [get_class(_) for _ in agent_types]
         self.bankruptcy_limit = (
             -bankruptcy_limit

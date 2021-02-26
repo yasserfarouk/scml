@@ -133,7 +133,7 @@ def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes
 @given(
     buy_missing=st.booleans(),
     n_processes=st.integers(2, 4),
-    initial_balance=st.sampled_from([0, 50, 10_000, 10_000_000]),
+    initial_balance=st.sampled_from([50, 10_000, 10_000_000]),
 )
 def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balance):
     world = generate_world(
@@ -208,8 +208,8 @@ def test_agents_go_bankrupt(n_processes):
             add_time=True,
             rand_digits=4,
         ),
-        initial_balance=0,
-        bankruptcy_limit=0,
+        initial_balance=1,
+        bankruptcy_limit=1,
         n_steps=10,
         compact=COMPACT,
         no_logs=NOLOGS,
