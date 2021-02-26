@@ -5,46 +5,44 @@ import pytest
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.scml2020.utils import anac2021_oneshot
 
-BaseAgent = RandomOneShotAgent
 
-
-class MyAgent0(BaseAgent):
+class MyAgent0(RandomOneShotAgent):
     pass
 
 
-class MyAgent1(BaseAgent):
+class MyAgent1(RandomOneShotAgent):
     pass
 
 
-class MyAgent2(BaseAgent):
+class MyAgent2(RandomOneShotAgent):
     pass
 
 
-class MyAgent3(BaseAgent):
+class MyAgent3(RandomOneShotAgent):
     pass
 
 
-class MyAgent4(BaseAgent):
+class MyAgent4(RandomOneShotAgent):
     pass
 
 
-class MyAgent5(BaseAgent):
+class MyAgent5(RandomOneShotAgent):
     pass
 
 
-class MyAgent6(BaseAgent):
+class MyAgent6(RandomOneShotAgent):
     pass
 
 
-class MyAgent7(BaseAgent):
+class MyAgent7(RandomOneShotAgent):
     pass
 
 
-class MyAgent8(BaseAgent):
+class MyAgent8(RandomOneShotAgent):
     pass
 
 
-class MyAgent9(BaseAgent):
+class MyAgent9(RandomOneShotAgent):
     pass
 
 

@@ -17,7 +17,7 @@ import click_config_file
 import negmas
 import numpy as np
 import pandas as pd
-import progressbar
+import tqdm
 import yaml
 from negmas import save_stats
 from negmas.helpers import humanize_time
@@ -970,7 +970,7 @@ def run2019(
     failed = False
     strt = perf_counter()
     try:
-        for i in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
+        for i in tqdm.tqdm(range(world.n_steps)):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1237,7 +1237,7 @@ def run2020(
     failed = False
     strt = perf_counter()
     try:
-        for i in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
+        for i in tqdm.tqdm(range(world.n_steps)):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1418,7 +1418,7 @@ DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.agents.RandomOne
 # DEFAULT_STD_2021 = (
 #     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
 # )
-DEFAULT_ONESHOT = "RandomOneShotAgent;SyncRandomOneShotAgent;SingleAgreementRandomAgent;SingleAgreementAspirationAgent"
+DEFAULT_ONESHOT = "scml.scml2020.agents.DecentralizingAgent;RandomOneShotAgent;SyncRandomOneShotAgent;SingleAgreementRandomAgent;SingleAgreementAspirationAgent"
 DEFAULT_ONESHOT_FULL = [
     "scml.oneshot.agents.RandomOneShotAgent",
     "scml.oneshot.agents.SingleAgreementAspirationAgent",
@@ -1560,7 +1560,7 @@ def run2021(
     failed = False
     strt = perf_counter()
     try:
-        for i in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
+        for i in tqdm.tqdm(range(world.n_steps)):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break

@@ -19,19 +19,19 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSingleAgreementAgen
             self.awi.my_input_product != 0
             and self.awi.my_output_product < self.awi.n_products - 1
         )
-        self.__initialized = False
+        super().init()
 
     def counter_all(self, offers, states):
-        if not self.__initialized:
-            self.__initialized = True
-            issues = list(self.negotiators.values())[0][0].ami.issues
-            self._min_utility, self._max_utility = utility_range(
-                self.ufun, issues=issues
-            )
-            self.ufun.reserved_value = self._min_utility
-            AspirationMixin.aspiration_init(
-                self, max_aspiration=self._max_utility, aspiration_type="boulware"
-            )
+        issues = (
+            self.awi.current_input_issues
+            if self.awi.is_last_level
+            else self.awi.current_output_issues
+        )
+        self._min_utility, self._max_utility = utility_range(self.ufun, issues=issues)
+        self.ufun.reserved_value = self._min_utility
+        AspirationMixin.aspiration_init(
+            self, max_aspiration=self._max_utility, aspiration_type="boulware"
+        )
         if self.__endall:
             return dict(
                 zip(
@@ -50,9 +50,11 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSingleAgreementAgen
         return u > self.aspiration(state.relative_time)
 
     def best_offer(self, offers: Dict[str, "Outcome"]) -> Optional[str]:
+        if self.__endall:
+            return None
         ufuns = [(self.ufun(_), i) for i, _ in enumerate(offers.values())]
         keys = list(offers.keys())
         return keys[max(ufuns)[1]]
 
     def is_better(self, a: "Outcome", b: "Outcome", negotiator: str, state: SAOState):
-        return self.ufun(a) > self.ufun(b)
+        return self.ufun(a) > self.ufun(b) if self.ufun else False

@@ -229,7 +229,7 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
 
 class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
     """
-    Predicts an amount based on publicly available market information. Falls 
+    Predicts an amount based on publicly available market information. Falls
     back to fixed prediction if no information is available
 
     Hooks Into:
@@ -279,6 +279,7 @@ class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
         exogenous = self.awi.exogenous_contract_summary
         horizon = self.awi.settings.get("horizon", 1)
         a, b = self.awi.current_step, self.awi.current_step + horizon
+        # breakpoint()
         self.expected_inputs[a:b] = exogenous[self.awi.my_input_product, a:b, 0]
         self.expected_outputs[a:b] = exogenous[self.awi.my_output_product, a:b, 0]
 

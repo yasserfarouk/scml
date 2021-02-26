@@ -18,6 +18,7 @@ from ..oneshot.common import OneShotState, OneShotProfile
 
 from .components.trading import MarketAwareTradePredictionStrategy
 from .components.production import DemandDrivenProductionStrategy
+from .components.signing import SignAll
 from .common import TIME
 
 __all__ = [
@@ -252,15 +253,28 @@ class _SystemAgent(SCML2020Agent):
 class AWIHelper:
     """An AWI to use with the embedded OneShotAgent"""
 
-    def __init__(self, owner: "SCML2020OneShotAdapter"):
+    def __init__(self, owner: "OneShotAdapter"):
         self._owner = owner
         self._world = owner.awi._world
 
-    def __getattr__(self, attr):
-        return getattr(self._owner.awi, attr)
-
     # private information
     # ===================
+
+    @property
+    def is_first_level(self):
+        return self.my_input_product == 0
+
+    @property
+    def is_last_level(self):
+        return self.my_output_product == self.n_products - 1
+
+    @property
+    def is_middle_level(self):
+        return 0 < self.my_input_product < self.n_products - 2
+
+    @property
+    def level(self):
+        return self.my_input_product
 
     @property
     def profile(self) -> OneShotProfile:
@@ -278,6 +292,10 @@ class AWIHelper:
             storage_cost=self._owner.get_storage_cost(),
             delivery_penalty=self._owner.get_delivery_penalty(),
         )
+
+    @property
+    def price_multiplier(self):
+        return self._owner.price_multiplier
 
     @property
     def current_exogenous_input_quantity(self) -> int:
@@ -317,6 +335,32 @@ class AWIHelper:
         """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
         return self._owner.get_delivery_penalty()
 
+    @property
+    def current_input_issues(self) -> List[Issue]:
+        if self.my_input_product == 0:
+            issues = []
+        else:
+            u, t, q = self._owner._make_issues(self.my_input_product)
+            issues = [
+                Issue(values=q, name="quantity"),
+                Issue(values=t, name="time"),
+                Issue(values=u, name="unit_price")
+            ]
+        return issues
+
+    @property
+    def current_output_issues(self) -> List[Issue]:
+        if self.my_output_product == 0:
+            issues = []
+        else:
+            u, t, q = self._owner._make_issues(self.my_output_product)
+            issues = [
+                Issue(values=q, name="quantity"),
+                Issue(values=t, name="time"),
+                Issue(values=u, name="unit_price")
+            ]
+        return issues
+
     # Public Information
     # ==================
     @property
@@ -340,8 +384,15 @@ class AWIHelper:
             x[i, 0 : n_steps - i, :] = y[i, i:n_steps, :]
         return x
 
+    # Everything else
+    # ===============
+    def __getattr__(self, attr):
+        return getattr(self._owner.awi, attr)
+
+
 
 class OneShotAdapter(
+    SignAll,
     DemandDrivenProductionStrategy,
     MarketAwareTradePredictionStrategy,
     SCML2020Agent,
@@ -381,24 +432,79 @@ class OneShotAdapter(
         self._oneshot_awi = AWIHelper(self)
         self._obj._awi = self._oneshot_awi
         super().init()
+        self._obj.init()
+
+    @property
+    def price_multiplier(self):
+        return 1.2
+
+    def _make_issues(self, product):
+        unit_price = (
+            max(
+                1,
+                int(
+                    1.0
+                    / self.price_multiplier
+                    * (
+                        self.awi.trading_prices[product - 1]
+                        if self.awi._world.publish_trading_prices
+                        else self.awi.catalog_prices[product - 1]
+                    )
+                    if product
+                    else 0
+                ),
+            ),
+            int(
+                self.price_multiplier
+                * (
+                    self.awi.trading_prices[product]
+                    if self.awi._world.publish_trading_prices
+                    else self.awi.catalog_prices[product]
+                )
+            ),
+        )
+        t = self.awi.current_step + (self.awi.my_output_product == product)
+        time = (t, t)
+        quantity = (1, self.awi.n_lines)
+        return unit_price, time, quantity
 
     def step(self):
-        self.awi.request_negotiations(
-            is_buy=True,
-            product=self.awi.my_input_product,
-            quantity=(1, self.awi.n_lines),
-            time=(self.awi.current_step, self.awi.current_step),
-            unit_price=(1, self.awi.trading_prices[self.awi.my_input_product]),
-            controller=self._obj,
-        )
-        self.awi.request_negotiations(
-            is_buy=False,
-            product=self.awi.my_output_product,
-            quantity=(1, self.awi.n_lines),
-            time=(self.awi.current_step + 1, self.awi.current_step + 1),
-            unit_price=(1, self.awi.trading_prices[self.awi.my_output_product]),
-            controller=self._obj,
-        )
+        if self.awi.my_input_product == 0:
+            pass
+            # self._obj._awi.current_input_issues = []
+        else:
+            u, t, q = self._make_issues(self.awi.my_input_product)
+            # self._obj._awi.current_input_issues = [
+            #     Issue(values=q, name="quantity"),
+            #     Issue(values=t, name="time"),
+            #     Issue(values=u, name="unit_price")
+            # ]
+            self.awi.request_negotiations(
+                is_buy=True,
+                product=self.awi.my_input_product,
+                quantity=q,
+                time=t,
+                unit_price=u,
+                controller=self._obj,
+            )
+        if self.awi.my_output_product == self.awi.n_products - 1:
+            pass
+            # self._obj._awi.current_output_issues = []
+        else:
+            u, t, q = self._make_issues(self.awi.my_output_product)
+            # self._obj._awi.current_output_issues = [
+            #     Issue(values=q, name="quantity"),
+            #     Issue(values=t, name="time"),
+            #     Issue(values=u, name="unit_price")
+            # ]
+            self.awi.request_negotiations(
+                is_buy=False,
+                product=self.awi.my_output_product,
+                quantity=q,
+                time=t,
+                unit_price=u,
+                controller=self._obj,
+            )
         ufun = OneShotUFun(
             owner=self._obj,
             production_cost=self._oneshot_awi.profile.cost,
@@ -427,13 +533,13 @@ class OneShotAdapter(
         annotation,
         mechanism,
     ):
-        # reject all negotiations that does not match my agenda in time
-        if (
-            issues[TIME].min_value != self.awi.current_step
-            or issues[TIME].max_value != self.awi.current_step + 1
-        ):
-            return None
-        return self.obj.create_negotiator()
+        # reject all negotiations that do not match my agenda in time
+        # if (
+        #     issues[TIME].min_value != self.awi.current_step
+        #     or issues[TIME].max_value != self.awi.current_step + 1
+        # ):
+        #     return None
+        return self._obj.create_negotiator()
 
     def get_storage_cost(self) -> float:
         # penalty for buying too much

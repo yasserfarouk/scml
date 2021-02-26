@@ -41,7 +41,8 @@ class OneShotUFun(UtilityFunction):
 
     def __init__(
         self,
-        owner: "OneShotAgent",  # type: ignore
+        owner: "OneShotAgent" = None,  # type: ignore
+        awi: "OneShotAWI" = None,  # type: ignore
         pin: int = 0,
         qin: int = 0,
         pout: int = 0,
@@ -56,6 +57,9 @@ class OneShotUFun(UtilityFunction):
     ):
         super().__init__(**kwargs)
         self.__owner = owner
+        self._awi = awi
+        if not self._awi:
+            self._awi = owner.awi
         self._pin, self._pout = pin, pout
         self._qin, self._qout = qin, qout
         self._production_cost, self._storage_cost, self._delivery_penalty = (
@@ -64,9 +68,12 @@ class OneShotUFun(UtilityFunction):
             delivery_penalty,
         )
         self._input_agent, self._output_agent = input_agent, output_agent
-        self._force_exogenous = self.__owner.awi.bb_read(
+        self._force_exogenous = self._awi.bb_read(
             "settings", "force_signing"
-        ) or self.__owner.awi.bb_read("settings", "exogenous_force_max")
+        ) or self._awi.bb_read("settings", "exogenous_force_max")
+        self._public_trading_prices = self._awi.bb_read(
+            "settings", "public_trading_prices"
+        )
 
     def xml(self, issues) -> str:
         raise NotImplementedError("Cannot convert the ufun to xml")
@@ -92,7 +99,7 @@ class OneShotUFun(UtilityFunction):
             if c.signed_at < 0:
                 continue
             product = c.annotation["product"]
-            is_output = product == self.__owner.awi.my_output_product
+            is_output = product == self._awi.my_output_product
             outputs.append(is_output)
             offers.append(self.outcome_as_tuple(c.agreement))
         return self.from_offers(offers, outputs)
@@ -121,7 +128,7 @@ class OneShotUFun(UtilityFunction):
                 qin += offer[QUANTITY]
                 pin += offer[UNIT_PRICE] * offer[QUANTITY]
         output_offers = sorted(output_offers, key=lambda x: -x[UNIT_PRICE])
-        producible = min(qin, self.__owner.awi.n_lines)
+        producible = min(qin, self._awi.n_lines)
         for offer in output_offers:
             qout += offer[QUANTITY]
             if qout >= producible:
@@ -161,11 +168,15 @@ class OneShotUFun(UtilityFunction):
         pin += self._pin
         pout += self._pout
         paid = pin
-        lines = self.__owner.awi.n_lines
+        lines = self._awi.n_lines
         produced = min(qin, lines, qout)
         received = pout * produced / qout if qout else 0
-        tpi = self.__owner.awi._world.trading_prices[self.__owner.awi.my_input_product]  # type: ignore
-        tpo = self.__owner.awi._world.trading_prices[self.__owner.awi.my_output_product]  # type: ignore
+        if self._public_trading_prices:
+            tpi = self._awi._world.trading_prices[self._awi.my_input_product]  # type: ignore
+            tpo = self._awi._world.trading_prices[self._awi.my_output_product]  # type: ignore
+        else:
+            tpi = self._awi._world.catalog_prices[self._awi.my_input_product]  # type: ignore
+            tpo = self._awi._world.catalog_prices[self._awi.my_output_product]  # type: ignore
         return (
             received
             - paid
@@ -225,7 +236,7 @@ class OneShotUFun(UtilityFunction):
               optional parameters.
         """
 
-        nlines = self.__owner.awi.n_lines
+        nlines = self._awi.n_lines
         (
             min_in,
             max_in,
@@ -348,13 +359,13 @@ class OneShotUFun(UtilityFunction):
         n_output_negs=None,
     ):
         if input_issues is None:
-            input_issues = self.__owner.awi.current_input_issues
+            input_issues = self._awi.current_input_issues
         if output_issues is None:
-            output_issues = self.__owner.awi.current_output_issues
+            output_issues = self._awi.current_output_issues
         if n_input_negs is None:
-            n_input_negs = len(self.__owner.awi.my_suppliers)
+            n_input_negs = len(self._awi.my_suppliers)
         if n_output_negs is None:
-            n_output_negs = len(self.__owner.awi.my_consumers)
+            n_output_negs = len(self._awi.my_consumers)
         # if I can sign exogenous contracts, then I can get no exogenous quantities
         # otherwise I must get at least the quantity in the exogenous contracts
         if self._force_exogenous:
@@ -471,21 +482,29 @@ class OneShotUFun(UtilityFunction):
             )
         if issues is not None:
             if self._input_agent:
-                input_issues, output_issues = [], self.__owner.awi.current_output_issues
+                input_issues, output_issues = [], self._awi.current_output_issues
             else:
-                output_issues, input_issues = [], self.__owner.awi.current_input_issues
+                output_issues, input_issues = [], self._awi.current_input_issues
         else:
-            input_issues = self.__owner.awi.current_input_issues
-            output_issues = self.__owner.awi.current_output_issues
-        t = self.__owner.awi.current_step
+            input_issues = self._awi.current_input_issues
+            output_issues = self._awi.current_output_issues
+        t = self._awi.current_step
         worst_in_price, best_in_price = (
-            input_issues[UNIT_PRICE].max_value,
-            input_issues[UNIT_PRICE].min_value,
-        ) if input_issues else (0, 0)
+            (
+                input_issues[UNIT_PRICE].max_value,
+                input_issues[UNIT_PRICE].min_value,
+            )
+            if input_issues
+            else (0, 0)
+        )
         worst_out_price, best_out_price = (
-            output_issues[UNIT_PRICE].min_value,
-            output_issues[UNIT_PRICE].max_value,
-        ) if output_issues else (0, 0)
+            (
+                output_issues[UNIT_PRICE].min_value,
+                output_issues[UNIT_PRICE].max_value,
+            )
+            if output_issues
+            else (0, 0)
+        )
         worst_u, (worst_in_quantity, worst_out_quantity) = self.worst(
             input_issues, output_issues, 1, 1
         )

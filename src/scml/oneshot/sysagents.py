@@ -17,6 +17,8 @@ from negmas.sao import PassThroughSAONegotiator
 from negmas import RenegotiationRequest
 
 from .ufun import OneShotUFun
+from .agent import OneShotAgent
+from .helper import AWIHelper
 
 __all__ = ["DefaultOneShotAdapter", "_SystemAgent"]
 
@@ -54,7 +56,10 @@ class DefaultOneShotAdapter(Adapter):
         return self.ufun
 
     def init(self):
-        self._obj.connect_to_oneshot_adapter(self, None)
+        if isinstance(self._obj, OneShotAgent):
+            self._obj.connect_to_oneshot_adapter(self, None)
+        else:
+            self._obj._awi = AWIHelper(self)
         super().init()
 
     def to_dict(self):
@@ -78,6 +83,8 @@ class DefaultOneShotAdapter(Adapter):
     ) -> Optional[Negotiator]:
         partner = [_ for _ in partners if _ != self.id][0]
         # self._obj.make_ufun()
+        if not self._obj:
+            return None
         neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner)
         return neg
 

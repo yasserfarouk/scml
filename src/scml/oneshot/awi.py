@@ -72,14 +72,14 @@ class OneShotAWI(AgentWorldInterface):
         ----------------------
 
 
-        - *trading_prices*: The trading prices of all products. This information 
-                            is only available if `publish_trading_prices` is 
+        - *trading_prices*: The trading prices of all products. This information
+                            is only available if `publish_trading_prices` is
                             set in the world.
         - *exogenous_contract_summary*: A list of n_products tuples each giving
                                         the total quantity and average price of
-                                        exogenous contracts for a product. This 
-                                        information is only available if 
-                                        `publish_exogenous_summary` is set in 
+                                        exogenous contracts for a product. This
+                                        information is only available if
+                                        `publish_exogenous_summary` is set in
                                         the world.
 
         B. Other Agents' Information:
@@ -93,11 +93,11 @@ class OneShotAWI(AgentWorldInterface):
         C. Current Negotiations Information:
         ------------------------------------
 
-        - *current_input_issues*: The current issues for all negotiations to buy 
-                                  the input product of the agent. If the agent 
+        - *current_input_issues*: The current issues for all negotiations to buy
+                                  the input product of the agent. If the agent
                                   is at level zero, this will be empty.
-        - *current_output_issues*: The current issues for all negotiations to buy 
-                                  the output product of the agent. If the agent 
+        - *current_output_issues*: The current issues for all negotiations to buy
+                                  the output product of the agent. If the agent
                                   is at level n_products - 1, this will be empty.
 
         D. Agent Information:

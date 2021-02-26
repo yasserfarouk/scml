@@ -6,8 +6,10 @@ from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
+import pytest
 
-from scml.oneshot import SCML2020OneShotWorld
+import scml
+from scml.oneshot import SCML2020OneShotWorld, builtin_agent_types
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.scml2020 import is_system_agent
@@ -17,8 +19,15 @@ random.seed(0)
 COMPACT = True
 NOLOGS = True
 # agent types to be tested
-types = [RandomOneShotAgent]
+types = builtin_agent_types(False)
 active_types = types
+std_types = scml.scml2020.builtin_agent_types(as_str=False)
+# try:
+#     from scml_agents import get_agents
+#
+#     std_types += list(get_agents(2020, as_class=True, winners_only=True))
+# except ImportError:
+#     pass
 
 
 def generate_world(
@@ -29,7 +38,8 @@ def generate_world(
     n_lines=10,
     **kwargs,
 ):
-
+    kwargs["no_logs"] = True
+    kwargs["compact"] = True
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
             agent_types,
@@ -188,3 +198,48 @@ def test_ufun_min_max():
         ufun = agent.make_ufun()
         mn, mx = ufun.min_utility, ufun.max_utility
         assert mx > mn or mx == mn == 0
+
+
+def test_builtin_agent_types():
+    from negmas.helpers import get_full_type_name
+
+    strs = scml.oneshot.builtin_agent_types(True)
+    types = scml.oneshot.builtin_agent_types(False)
+    assert len(strs) == len(types)
+    assert len(strs) > 0
+    assert all(
+        [
+            get_full_type_name(a).split(".")[-1] == b.split(".")[-1]
+            for a, b in zip(types, strs)
+        ]
+    )
+
+
+@given(
+    atype=st.lists(
+        st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6
+    )
+)
+@settings(deadline=900_000, max_examples=10)
+def test_adapter(atype):
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=20),
+        construct_graphs=False,
+    )
+    world.run()
+
+
+def test_adapter_example():
+    atype = [
+        scml.scml2020.agents.random.RandomAgent,
+        scml.oneshot.agents.nothing.OneshotDoNothingAgent,
+        scml.scml2020.agents.do_nothing.DoNothingAgent,
+        scml.scml2020.agents.indneg.IndependentNegotiationsAgent,
+        scml.scml2020.agents.decentralizing.DecentralizingAgent,
+        scml.scml2020.agents.decentralizing.DecentralizingAgentWithLogging,
+    ]
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
+        construct_graphs=False,
+    )
+    world.run()

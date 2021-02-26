@@ -8,6 +8,7 @@ from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
 
+import scml
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import BuyCheapSellExpensiveAgent
@@ -22,15 +23,8 @@ random.seed(0)
 COMPACT = True
 NOLOGS = True
 # agent types to be tested
-types = [
-    DoNothingAgent,
-    RandomOneShotAgent,
-    RandomAgent,
-    RandomOneShotAgent,
-    SyncRandomOneShotAgent,
-    BuyCheapSellExpensiveAgent,
-    DecentralizingAgent,
-]
+types = scml.scml2020.builtin_agent_types(as_str=False)
+oneshot_types = scml.oneshot.builtin_agent_types(as_str=False)
 active_types = [_ for _ in types if _ != DoNothingAgent]
 
 
@@ -44,7 +38,8 @@ def generate_world(
     buy_missing_products=True,
     **kwargs,
 ):
-
+    kwargs["no_logs"] = True
+    kwargs["compact"] = True
     world = SCML2021World(
         **SCML2021World.generate(
             agent_types,
@@ -299,3 +294,17 @@ def test_graphs_lead_to_no_unknown_nodes():
         construct_graphs=True,
     )
     world.graph((0, world.n_steps))
+
+
+@given(
+    atype=st.lists(
+        st.sampled_from(oneshot_types + types), unique=True, min_size=2, max_size=6
+    )
+)
+@settings(deadline=300_000, max_examples=30)
+def test_adapter(atype):
+    world = SCML2021World(
+        **SCML2021World.generate(agent_types=atype, n_steps=10),
+        construct_graphs=False,
+    )
+    world.run()

@@ -103,6 +103,26 @@ from .helpers import *
 from .simulators import *
 
 
+def builtin_agent_types(as_str=False):
+    """
+    Returns all built-in agents.
+
+    Args:
+        as_str: If true, the full type name will be returned otherwise the
+                type object itself.
+    """
+    from negmas.helpers import get_class
+
+    types = [
+        f"scml.scml2019.agents.{_}"
+        for _ in factory_managers.__all__
+        if not _.startswith("Java")
+    ]
+    if as_str:
+        return types
+    return [get_class(_) for _ in types]
+
+
 __all__ = (
     common.__all__
     + awi.__all__

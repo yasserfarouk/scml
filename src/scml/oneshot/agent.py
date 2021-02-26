@@ -81,7 +81,8 @@ class OneShotAgent(SAOController, Entity, ABC):
         Remarks:
             - Use this for any proactive initialization code.
         """
-        pass
+        if not self.ufun:
+            self.ufun = self.make_ufun()
 
     def make_ufun(self, add_exogenous=False):
         """
@@ -215,6 +216,12 @@ class OneShotAgent(SAOController, Entity, ABC):
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         """Signs all contracts (used internally)"""
         return [self.id] * len(contracts)
+
+    def on_contract_executed(self, contract) -> None:
+        pass
+
+    def on_contract_breached(self, contract, breaches, resolution) -> None:
+        pass
 
 
 class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):

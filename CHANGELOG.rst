@@ -1,6 +1,26 @@
-
 Changelog
 =========
+
+0.3.3 (2021.2.22)
+-----------------
+**This is an important update. All participants in SCML 2021 should upgrade to this version**
+
+ * Allowing std/collusion agents to run in OneShot track
+ * Adding min_utility, max_utility to ufun
+ * Adding exogenous_*_predictability parameters
+ * Using these parameters SCML2020/2021/OneShot worlds can be configured so that the exogenous contracts of the same agents at different time-steps are predictable (or not). If predictability is zero then each agent can have any quantity for its exogenous contracts. If predictability is 1.0 then it will have the same quantity at every time-step and if it is somewhere in between, the quantity at different steps will be similar to each other.
+ * Allowing OneShot agents to run in std track
+ * balance in one-shot plus bug fixes (lots of them)
+ * Adding oneshot module for SCML2020-Oneshot track
+ * Adding disallow_concurrent_negs_with_same_partners If given, avoids concurrent negotiations between the same partners.  Avoiding adding assignment number twice to world names
+ * Adding an upper/lower limit on buying/selling prices
+ * Adding extra scores for collusion league
+ * Do not sign clearly bad contracts (Decnetralizing)
+ * Dropping contracts with time >= current step.  These were already being dropped but may not have had a dropped_at value
+ * Never save videos/logs in tournaments
+ * avoiding test failure if PyQT was not installed
+ * Explicitly dropping invalid contracts
+ * Contracts with 0 price/quantity are nullified
 
 0.3.0 (2020.7.2)
 ----------------

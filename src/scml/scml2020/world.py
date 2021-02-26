@@ -429,6 +429,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.compensate_immediately = compensate_immediately
 
         initial_balance = make_array(initial_balance, len(profiles), dtype=int)
+        assert all([_> 1e-5 for _ in initial_balance]), "Some initial  balances are zero or negative {initial_balance}"
         agent_types = [get_class(_) for _ in agent_types]
         self.bankruptcy_limit = (
             -bankruptcy_limit
@@ -732,6 +733,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         inventory_valuation_catalog: Union[
             np.ndarray, Tuple[float, float], float
         ] = 0.0,
+        random_agent_types: bool = False,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -776,6 +778,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             force_signing: Whether to force contract signatures (exogenous contracts are treated in the same way).
             exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
                                force_signing is False and use_exogenous_contracts is True
+            random_agent_types: If True, the final agent types used by the generato wil always be sampled from the given types.
+                                If False, this random sampling will only happin if len(agent_types) != n_agents.
             **kwargs:
 
         Returns:
@@ -861,9 +865,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             else:
                 assert len(agent_params) == 1
                 agent_params = [copy.copy(agent_params[0]) for _ in range(n_agents)]
-        elif len(agent_types) != n_agents:
+        elif len(agent_types) != n_agents or random_agent_types:
             if agent_params is None:
-                agent_params = [dict()] * len(agent_types)
+                agent_params = [dict() for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
                 agent_params = [
                     copy.copy(agent_params) for _ in range(len(agent_types))
@@ -874,7 +878,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             agent_params = [copy.copy(agent_params[_]) for _ in tp]
         else:
             if agent_params is None:
-                agent_params = [dict()] * len(agent_types)
+                agent_params = [dict() for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
                 agent_params = [
                     copy.copy(agent_params) for _ in range(len(agent_types))
@@ -1962,28 +1966,35 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         if assets_multiplier_catalog is None:
             assets_multiplier_catalog = self.inventory_valuation_catalog
+        if assets_multiplier_catalog is None:
+            assets_multiplier_catalog = 0
         if assets_multiplier_trading is None:
             assets_multiplier_trading = self.inventory_valuation_trading
+        if assets_multiplier_trading is None:
+            assets_multiplier_trading = 0
         scores = dict()
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
                 continue
             factory = self.a2f[aid]
-            scores[aid] = (
-                factory.current_balance
-                + (
-                    assets_multiplier_trading
-                    * np.sum(factory.current_inventory * self.trading_prices)
-                )
-                if assets_multiplier_trading
-                else 0.0
-                + (
-                    assets_multiplier_catalog
-                    * np.sum(factory.current_inventory * self.catalog_prices)
-                )
-                if assets_multiplier_catalog
-                else 0.0 - factory.initial_balance
-            ) / factory.initial_balance
+            try:
+                scores[aid] = (
+                    factory.current_balance
+                    + (
+                        assets_multiplier_trading
+                        * np.sum(factory.current_inventory * self.trading_prices)
+                    )
+                    if assets_multiplier_trading
+                    else 0.0
+                    + (
+                        assets_multiplier_catalog
+                        * np.sum(factory.current_inventory * self.catalog_prices)
+                    )
+                    if assets_multiplier_catalog
+                    else 0.0 - factory.initial_balance
+                ) / factory.initial_balance
+            except:
+                scores[aid] = float("nan")
         return scores
 
     @property
@@ -2123,9 +2134,9 @@ class SCML2020World(TimeInAgreementMixin, World):
 
 class SCML2021World(SCML2020World):
     def __init__(self, *args, **kwargs):
+        kwargs["n_concurrent_negs_between_partners"] = 5
         kwargs["publish_trading_prices"] = True
         kwargs["publish_exogenous_summary"] = True
-        kwargs["n_concurrent_negs_between_partners"] = 5
         super().__init__(*args, **kwargs)
 
     @classmethod
@@ -2136,7 +2147,9 @@ class SCML2021World(SCML2020World):
             0.0,
             0.5,
         ),
+        horizon: Union[Tuple[float, float], float] = (0.2, 0.5),
         **kwargs,
     ) -> Dict[str, Any]:
         kwargs["inventory_valuation_trading"] = inventory_valuation_trading
+        kwargs["horizon"] = horizon
         return super().generate(*args, **kwargs)

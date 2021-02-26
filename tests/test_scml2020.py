@@ -11,15 +11,16 @@ from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SCML2020World
-from scml.scml2020 import is_system_agent
+from scml.scml2020 import is_system_agent, builtin_agent_types
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
+from scml.scml2020.world import SCML2021World
 
 random.seed(0)
 
 COMPACT = True
 NOLOGS = True
 # agent types to be tested
-types = [DoNothingAgent, RandomAgent, BuyCheapSellExpensiveAgent, DecentralizingAgent]
+types = builtin_agent_types(as_str=False)
 active_types = [_ for _ in types if _ != DoNothingAgent]
 
 
@@ -33,7 +34,8 @@ def generate_world(
     buy_missing_products=True,
     **kwargs,
 ):
-
+    kwargs["no_logs"] = True
+    kwargs["compact"] = True
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types,
