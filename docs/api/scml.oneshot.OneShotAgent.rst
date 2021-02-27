@@ -21,6 +21,8 @@ OneShotAgent
       ~OneShotAgent.connect_to_oneshot_adapter
       ~OneShotAgent.init
       ~OneShotAgent.make_ufun
+      ~OneShotAgent.on_contract_breached
+      ~OneShotAgent.on_contract_executed
       ~OneShotAgent.on_negotiation_failure
       ~OneShotAgent.on_negotiation_success
       ~OneShotAgent.propose
@@ -39,6 +41,8 @@ OneShotAgent
    .. automethod:: connect_to_oneshot_adapter
    .. automethod:: init
    .. automethod:: make_ufun
+   .. automethod:: on_contract_breached
+   .. automethod:: on_contract_executed
    .. automethod:: on_negotiation_failure
    .. automethod:: on_negotiation_success
    .. automethod:: propose

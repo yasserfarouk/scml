@@ -352,7 +352,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  9.77it/s]
+    100%|██████████| 10/10 [00:01<00:00,  9.37it/s]
 
 
 
@@ -442,7 +442,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.97it/s]
+    100%|██████████| 10/10 [00:03<00:00,  3.16it/s]
 
 
 
@@ -891,7 +891,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:06<00:00,  1.56it/s]
+    100%|██████████| 10/10 [00:06<00:00,  1.59it/s]
 
 
 
@@ -938,13 +938,12 @@ average prices they get from their negotiations.
         # group results by whether the agent is selling/buying/both
         if len(contracts)<1:
             return ""
+        print(f"{agent_type}:\n===========")
         return contracts.groupby(["selling", "buying"]).describe().round(1)
     
-    print("MyNewAgent:\n===========")
+    
     print(analyze_unit_price(world, "MyNewAgent"))
-    print("\nMyAgent:\n========")
     print(analyze_unit_price(world, "MyAgent"))
-    print("\nDecentralizingAgent:\n====================")
     print(analyze_unit_price(world, "DecentralizingAgent"))
 
 
@@ -955,25 +954,22 @@ average prices they get from their negotiations.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     6.0  0.6  0.3  0.0  0.4  0.6  0.8  1.0
-    True    False    1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
-    
+    False   True     7.0  0.6  0.2  0.4  0.4  0.5  0.8  0.9
     MyAgent:
-    ========
+    ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     8.0  0.5  0.1  0.5  0.5  0.5  0.6  0.6
-    True    False   11.0  0.7  0.2  0.5  0.5  0.5  0.9  1.0
-            True    66.0  0.5  0.1  0.5  0.5  0.6  0.6  0.6
-    
+    False   True    11.0  0.2  0.2  0.0  0.0  0.0  0.5  0.5
+    True    False    5.0  0.6  0.2  0.5  0.5  0.5  0.9  0.9
+            True    11.0  0.5  0.0  0.5  0.5  0.5  0.6  0.6
     DecentralizingAgent:
-    ====================
+    ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     8.0  0.7  0.3  0.5  0.5  0.5  1.0  1.0
-    True    False   10.0  0.5  0.2  0.0  0.5  0.5  0.6  0.6
+    False   True     1.0  0.5  NaN  0.5  0.5  0.5  0.5  0.5
+    True    False   14.0  0.2  0.3  0.0  0.0  0.2  0.5  0.7
             True     2.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
 
 
@@ -1004,18 +1000,15 @@ Let’s try to run our new agent against itself.
         construct_graphs=True
     )
     world.run_with_progress()
-    print("MyNewAgent:\n===========")
     print(analyze_unit_price(world, "MyNewAgent"))
 
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:05<00:00,  1.95it/s]
+    100%|██████████| 10/10 [00:06<00:00,  1.52it/s]
 
 .. parsed-literal::
 
-    MyNewAgent:
-    ===========
     
 
 
@@ -1199,14 +1192,13 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.58it/s]
+    100%|██████████| 10/10 [00:02<00:00,  3.98it/s]
 
 
 .. code:: ipython3
 
     show_agent_scores(world)
     for agent_type in ("MyNewAgent", "AspirationAgent"):
-        print(f"{agent_type}:\n===========")
         print(analyze_unit_price(world, agent_type))
 
 
@@ -1221,10 +1213,8 @@ exploring the design space.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     6.0  0.7  0.2  0.3  0.5  0.7  0.8  0.9
-    True    False    4.0  0.7  0.0  0.6  0.7  0.7  0.7  0.7
-    AspirationAgent:
-    ===========
+    False   True     1.0  0.3  NaN  0.3  0.3  0.3  0.3  0.3
+    True    False    8.0  0.7  0.0  0.6  0.7  0.7  0.7  0.7
     
 
 
@@ -1280,7 +1270,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.94it/s]
+    100%|██████████| 10/10 [00:02<00:00,  3.68it/s]
 
 
 .. code:: ipython3
@@ -1462,7 +1452,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  7.48it/s]
+    100%|██████████| 10/10 [00:01<00:00,  8.79it/s]
 
 
 
@@ -1555,7 +1545,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:00<00:00, 13.82it/s]
+    100%|██████████| 10/10 [00:01<00:00,  5.96it/s]
 
 
 
@@ -1601,6 +1591,52 @@ AspirationAgent      320   -0.06 0.07 -0.24 -0.11 -0.066 0   0
 MyAgent              320   -0.06 0.07 -0.23 -0.11 -0.068 0   0
 MyNewAgent           320   -0.06 0.07 -0.26 -0.11 -0.069 0   0
 ==================== ===== ===== ==== ===== ===== ====== === ====
+
+Running OneShot agents
+~~~~~~~~~~~~~~~~~~~~~~
+
+The SCML-OneShot game is much simpler than the full SCML2020 full game
+used in this tutorial. Nevertheless, we provide an out-of-the-box
+adapter allowing agents developed for the one-shot competition to run in
+the SCML2020World track (with some rough edges). Let’s try to do that
+now:
+
+.. code:: ipython3
+
+    from scml.oneshot.agents import RandomOneShotAgent, GreedySingleAgreementAgent
+    
+    world = SCML2021World(
+        **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent, RandomOneShotAgent],
+                                 horizon=1, 
+                                 n_steps=10
+                                ), 
+        construct_graphs=True,
+    )
+    world.run_with_progress()
+    
+    world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
+    plt.show()
+    show_agent_scores(world)
+
+
+.. parsed-literal::
+
+    100%|██████████| 10/10 [00:03<00:00,  2.85it/s]
+
+
+
+.. image:: 03.develop_agent_scml2020_files/03.develop_agent_scml2020_67_1.png
+
+
+
+.. image:: 03.develop_agent_scml2020_files/03.develop_agent_scml2020_67_2.png
+
+
+This example shows that agents developed for the new OneShot track are
+interface-compatible with the ``SCML2021World`` (and ``SCML2020World``)
+yet they usually reduce the trade in the whole market because they are
+not designed for the full SCML environment and use very restrictive
+assumptions.
 
 With that we end our tutorial. Have fun developing your agent.
 

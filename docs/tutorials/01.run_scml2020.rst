@@ -32,6 +32,7 @@ happening in the world.
 .. code:: ipython3
 
     agent_types = [DecentralizingAgent, BuyCheapSellExpensiveAgent, 
+                   MarketAwareDecentralizingAgent, MarketAwareIndDecentralizingAgent,
                    IndDecentralizingAgent, MovingRangeAgent, SyncRandomOneShotAgent]
 
 Notice that we have a one-shot agent in the mix. Even though one-shot
@@ -167,15 +168,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_04InD@1',
-     'spot_market_loss_04InD@1',
-     'balance_04InD@1',
-     'inventory_04InD@1_input',
-     'inventory_04InD@1_output',
-     'productivity_04InD@1',
-     'assets_04InD@1',
-     'bankrupt_04InD@1',
-     'score_04InD@1']
+    ['spot_market_quantity_04MAI@1',
+     'spot_market_loss_04MAI@1',
+     'balance_04MAI@1',
+     'inventory_04MAI@1_input',
+     'inventory_04MAI@1_output',
+     'productivity_04MAI@1',
+     'assets_04MAI@1',
+     'bankrupt_04MAI@1',
+     'score_04MAI@1']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -221,15 +222,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_04InD@1': (0.0, 1425.9999999999998),
-     'balance_04InD@1': (15727, 15213),
-     'bankrupt_04InD@1': (False, False),
-     'inventory_04InD@1_input': (0, 0),
-     'inventory_04InD@1_output': (0, 62),
-     'productivity_04InD@1': (0.0, 0.0),
-     'score_04InD@1': (1.0, 1.0064058133697298),
-     'spot_market_loss_04InD@1': (0.3, 0.3),
-     'spot_market_quantity_04InD@1': (0, 0)}
+    {'assets_04MAI@1': (0.0, 0.0),
+     'balance_04MAI@1': (20998, 21839),
+     'bankrupt_04MAI@1': (False, False),
+     'inventory_04MAI@1_input': (0, 0),
+     'inventory_04MAI@1_output': (0, 0),
+     'productivity_04MAI@1': (0.0, 0.0),
+     'score_04MAI@1': (1.0, 1.0400514334698543),
+     'spot_market_loss_04MAI@1': (0.3, 4.0635),
+     'spot_market_quantity_04MAI@1': (0, 16)}
 
 
 .. code:: ipython3
@@ -305,7 +306,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [04InD@1] of type ['inddecentralizing'] won at [100.64058133697299]%
+    [04MAI@1] of type ['marketawareinddecentralizing'] won at [104.00514334698543]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -507,51 +508,12 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>1157</th>
-          <td>03BCS@1</td>
-          <td>08Dec@2</td>
-          <td>34</td>
-          <td>59</td>
-          <td>23</td>
-          <td>24</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>419</th>
-          <td>00BCS@0</td>
-          <td>04InD@1</td>
-          <td>7</td>
-          <td>34</td>
-          <td>9</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1263</th>
-          <td>00BCS@0</td>
-          <td>04InD@1</td>
-          <td>31</td>
-          <td>34</td>
-          <td>9</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1101</th>
-          <td>08Dec@2</td>
-          <td>10Dec@3</td>
-          <td>29</td>
-          <td>30</td>
-          <td>37</td>
+          <th>1303</th>
+          <td>01MAI@0</td>
+          <td>05MAD@1</td>
+          <td>32</td>
+          <td>50</td>
+          <td>15</td>
           <td>22</td>
           <td>True</td>
           <td>False</td>
@@ -559,78 +521,117 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>380</th>
-          <td>03BCS@1</td>
-          <td>08Dec@2</td>
-          <td>7</td>
-          <td>30</td>
-          <td>23</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>385</th>
-          <td>03BCS@1</td>
-          <td>06Dec@2</td>
+          <th>812</th>
+          <td>01MAI@0</td>
+          <td>05MAD@1</td>
+          <td>20</td>
+          <td>40</td>
+          <td>15</td>
           <td>10</td>
-          <td>30</td>
-          <td>23</td>
-          <td>2</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>386</th>
-          <td>04InD@1</td>
-          <td>08Dec@2</td>
-          <td>9</td>
+          <th>1220</th>
+          <td>02InD@0</td>
+          <td>05MAD@1</td>
           <td>30</td>
-          <td>23</td>
-          <td>2</td>
+          <td>40</td>
+          <td>15</td>
+          <td>20</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>390</th>
-          <td>03BCS@1</td>
-          <td>08Dec@2</td>
-          <td>8</td>
-          <td>30</td>
-          <td>23</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>568</th>
+          <th>612</th>
           <td>03BCS@1</td>
           <td>06Dec@2</td>
-          <td>17</td>
-          <td>30</td>
-          <td>23</td>
-          <td>7</td>
+          <td>15</td>
+          <td>35</td>
+          <td>20</td>
+          <td>5</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>596</th>
+          <th>768</th>
           <td>03BCS@1</td>
           <td>06Dec@2</td>
           <td>18</td>
-          <td>30</td>
-          <td>23</td>
+          <td>35</td>
+          <td>20</td>
+          <td>9</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>503</th>
+          <td>01MAI@0</td>
+          <td>05MAD@1</td>
           <td>8</td>
+          <td>35</td>
+          <td>15</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1482</th>
+          <td>02InD@0</td>
+          <td>05MAD@1</td>
+          <td>38</td>
+          <td>35</td>
+          <td>15</td>
+          <td>28</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>483</th>
+          <td>03BCS@1</td>
+          <td>07MAD@2</td>
+          <td>10</td>
+          <td>34</td>
+          <td>20</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>487</th>
+          <td>03BCS@1</td>
+          <td>06Dec@2</td>
+          <td>11</td>
+          <td>34</td>
+          <td>20</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>488</th>
+          <td>04MAI@1</td>
+          <td>06Dec@2</td>
+          <td>9</td>
+          <td>34</td>
+          <td>20</td>
+          <td>2</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -685,51 +686,12 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>1157</th>
-          <td>03BCS@1</td>
-          <td>08Dec@2</td>
-          <td>34</td>
-          <td>59</td>
-          <td>23</td>
-          <td>24</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>419</th>
-          <td>00BCS@0</td>
-          <td>04InD@1</td>
-          <td>7</td>
-          <td>34</td>
-          <td>9</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1263</th>
-          <td>00BCS@0</td>
-          <td>04InD@1</td>
-          <td>31</td>
-          <td>34</td>
-          <td>9</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1101</th>
-          <td>08Dec@2</td>
-          <td>10Dec@3</td>
-          <td>29</td>
-          <td>30</td>
-          <td>37</td>
+          <th>1303</th>
+          <td>01MAI@0</td>
+          <td>05MAD@1</td>
+          <td>32</td>
+          <td>50</td>
+          <td>15</td>
           <td>22</td>
           <td>True</td>
           <td>False</td>
@@ -737,78 +699,117 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>380</th>
-          <td>03BCS@1</td>
-          <td>08Dec@2</td>
-          <td>7</td>
-          <td>30</td>
-          <td>23</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>385</th>
-          <td>03BCS@1</td>
-          <td>06Dec@2</td>
+          <th>812</th>
+          <td>01MAI@0</td>
+          <td>05MAD@1</td>
+          <td>20</td>
+          <td>40</td>
+          <td>15</td>
           <td>10</td>
-          <td>30</td>
-          <td>23</td>
-          <td>2</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>386</th>
-          <td>04InD@1</td>
-          <td>08Dec@2</td>
-          <td>9</td>
+          <th>1220</th>
+          <td>02InD@0</td>
+          <td>05MAD@1</td>
           <td>30</td>
-          <td>23</td>
-          <td>2</td>
+          <td>40</td>
+          <td>15</td>
+          <td>20</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>390</th>
-          <td>03BCS@1</td>
-          <td>08Dec@2</td>
-          <td>8</td>
-          <td>30</td>
-          <td>23</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>568</th>
+          <th>612</th>
           <td>03BCS@1</td>
           <td>06Dec@2</td>
-          <td>17</td>
-          <td>30</td>
-          <td>23</td>
-          <td>7</td>
+          <td>15</td>
+          <td>35</td>
+          <td>20</td>
+          <td>5</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>596</th>
+          <th>768</th>
           <td>03BCS@1</td>
           <td>06Dec@2</td>
           <td>18</td>
-          <td>30</td>
-          <td>23</td>
+          <td>35</td>
+          <td>20</td>
+          <td>9</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>503</th>
+          <td>01MAI@0</td>
+          <td>05MAD@1</td>
           <td>8</td>
+          <td>35</td>
+          <td>15</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1482</th>
+          <td>02InD@0</td>
+          <td>05MAD@1</td>
+          <td>38</td>
+          <td>35</td>
+          <td>15</td>
+          <td>28</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>483</th>
+          <td>03BCS@1</td>
+          <td>07MAD@2</td>
+          <td>10</td>
+          <td>34</td>
+          <td>20</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>487</th>
+          <td>03BCS@1</td>
+          <td>06Dec@2</td>
+          <td>11</td>
+          <td>34</td>
+          <td>20</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>488</th>
+          <td>04MAI@1</td>
+          <td>06Dec@2</td>
+          <td>9</td>
+          <td>34</td>
+          <td>20</td>
+          <td>2</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -903,18 +904,18 @@ Did any agents go bankrupt and when?
 
 .. parsed-literal::
 
-    {'00BCS@0': 'No',
-     '01InD@0': 'No',
+    {'00MAD@0': 'No',
+     '01MAI@0': 'No',
      '02InD@0': 'No',
      '03BCS@1': 'No',
-     '04InD@1': 'No',
-     '05MoR@1': 'No',
+     '04MAI@1': 'No',
+     '05MAD@1': 'No',
      '06Dec@2': 'No',
-     '07SRO@2': 'No',
-     '08Dec@2': 'No',
-     '09Dec@3': 'No',
-     '10Dec@3': 'No',
-     '11SRO@3': 'No'}
+     '07MAD@2': 'No',
+     '08SRO@2': 'No',
+     '09MoR@3': 'No',
+     '10MoR@3': 'No',
+     '11MoR@3': 'No'}
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -1019,8 +1020,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['scml.oneshot.agents.random.SyncRandomOneShotAgentscml.scml2020.agent.OneShotAdapter',
-     'scml.scml2020.agents.moving.MovingRangeAgent']
+    ['scml.scml2020.agents.moving.MovingRangeAgent']
 
 
 
@@ -1035,7 +1035,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    240
+    1260
 
 
 
@@ -1088,61 +1088,85 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
-          <td>96.0</td>
-          <td>-0.080328</td>
-          <td>0.117280</td>
-          <td>-0.523165</td>
-          <td>-0.152092</td>
-          <td>0.000000</td>
-          <td>0.00000</td>
+          <td>540.0</td>
+          <td>-0.301910</td>
+          <td>0.283501</td>
+          <td>-3.011747</td>
+          <td>-0.388230</td>
+          <td>-0.248199</td>
+          <td>-0.147739</td>
           <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
           <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>96.0</td>
-          <td>-0.102460</td>
-          <td>0.140819</td>
-          <td>-0.539573</td>
-          <td>-0.175524</td>
-          <td>-0.017785</td>
-          <td>0.00000</td>
+          <td>540.0</td>
+          <td>-0.120716</td>
+          <td>0.133151</td>
+          <td>-0.761538</td>
+          <td>-0.200155</td>
+          <td>-0.071803</td>
+          <td>0.000000</td>
           <td>0.000000</td>
         </tr>
         <tr>
           <th>2</th>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>96.0</td>
-          <td>-0.064278</td>
-          <td>0.057625</td>
-          <td>-0.266763</td>
-          <td>-0.093387</td>
-          <td>-0.043783</td>
-          <td>-0.02399</td>
-          <td>0.058328</td>
+          <td>540.0</td>
+          <td>-0.064487</td>
+          <td>0.070072</td>
+          <td>-0.371441</td>
+          <td>-0.098439</td>
+          <td>-0.047470</td>
+          <td>-0.020206</td>
+          <td>0.291355</td>
         </tr>
         <tr>
           <th>3</th>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>96.0</td>
-          <td>-0.050120</td>
-          <td>0.092050</td>
-          <td>-0.363455</td>
-          <td>-0.088001</td>
-          <td>-0.018681</td>
-          <td>0.00000</td>
-          <td>0.122819</td>
+          <td>540.0</td>
+          <td>-0.033742</td>
+          <td>0.138087</td>
+          <td>-0.526154</td>
+          <td>-0.107615</td>
+          <td>-0.024032</td>
+          <td>0.000000</td>
+          <td>0.709031</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>96.0</td>
-          <td>-0.059983</td>
-          <td>0.089882</td>
-          <td>-0.453015</td>
-          <td>-0.104676</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>540.0</td>
+          <td>-0.061600</td>
+          <td>0.063234</td>
+          <td>-0.360052</td>
+          <td>-0.090711</td>
+          <td>-0.046768</td>
+          <td>-0.021375</td>
+          <td>0.163629</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>540.0</td>
+          <td>-0.028896</td>
+          <td>0.147462</td>
+          <td>-0.497306</td>
+          <td>-0.102465</td>
+          <td>-0.030027</td>
           <td>0.000000</td>
-          <td>0.00000</td>
+          <td>0.753950</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>540.0</td>
+          <td>-0.067202</td>
+          <td>0.090505</td>
+          <td>-0.574775</td>
+          <td>-0.130774</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
           <td>0.000000</td>
         </tr>
       </tbody>
@@ -1193,103 +1217,213 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
-          <td>0.104167</td>
-          <td>6.776468e-01</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>0.431481</td>
+          <td>1.647270e-45</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.197917</td>
-          <td>4.631392e-02</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>0.287037</td>
+          <td>5.286029e-20</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.406250</td>
-          <td>1.803845e-07</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>0.229630</td>
+          <td>6.848823e-13</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.187500</td>
-          <td>6.828185e-02</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.448148</td>
+          <td>3.394780e-49</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.166667</td>
-          <td>1.391424e-01</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.235185</td>
+          <td>1.657052e-13</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>5</th>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
           <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.510417</td>
-          <td>9.449738e-12</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>0.562963</td>
+          <td>3.378604e-79</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>6</th>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.291667</td>
-          <td>5.265596e-04</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>0.257407</td>
+          <td>3.987472e-16</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>7</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.510417</td>
-          <td>9.449738e-12</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>0.220370</td>
+          <td>6.742845e-12</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>8</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.291667</td>
-          <td>5.265596e-04</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.048148</td>
+          <td>5.590260e-01</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
         <tr>
           <th>9</th>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.229630</td>
+          <td>6.848823e-13</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.655556</td>
+          <td>6.067485e-110</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
           <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>0.385417</td>
-          <td>9.535812e-07</td>
-          <td>96</td>
-          <td>96</td>
-          <td>96</td>
+          <td>0.229630</td>
+          <td>6.848823e-13</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.262963</td>
+          <td>8.080430e-17</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>13</th>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.220370</td>
+          <td>6.742845e-12</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>14</th>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.418519</td>
+          <td>9.395711e-43</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>15</th>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.242593</td>
+          <td>2.364880e-14</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>16</th>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.038889</td>
+          <td>8.093133e-01</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>17</th>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.627778</td>
+          <td>4.857088e-100</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>18</th>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>0.251852</td>
+          <td>1.898774e-15</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>19</th>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.672222</td>
+          <td>3.462874e-116</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
+        </tr>
+        <tr>
+          <th>20</th>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.627778</td>
+          <td>4.857088e-100</td>
+          <td>540</td>
+          <td>540</td>
+          <td>540</td>
         </tr>
       </tbody>
     </table>
@@ -1333,28 +1467,38 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
-          <td>0.000000</td>
-        </tr>
-        <tr>
-          <th>1</th>
           <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
           <td>0.000000</td>
         </tr>
         <tr>
+          <th>1</th>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>-0.024032</td>
+        </tr>
+        <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>-0.017785</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>-0.030027</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>-0.018681</td>
+          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
+          <td>-0.046768</td>
         </tr>
         <tr>
           <th>4</th>
           <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>-0.043783</td>
+          <td>-0.047470</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>-0.071803</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>-0.248199</td>
         </tr>
       </tbody>
     </table>
@@ -1418,33 +1562,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>04BCS@2</td>
-          <td>BuyCheapSellExpensiveAgent</td>
-          <td>-0.171909</td>
+          <td>02MoR@1</td>
+          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
+          <td>0.000000</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>05SRO@2</td>
-          <td>OneShotAdapter</td>
-          <td>-0.390271</td>
+          <td>03Dec@1</td>
+          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
+          <td>-0.007620</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>00BCS@0</td>
-          <td>BuyCheapSellExpensiveAgent</td>
-          <td>-0.297816</td>
+          <td>06BCS@3</td>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>-0.257968</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>06MoR@3</td>
-          <td>MovingRangeAgent</td>
-          <td>-0.113611</td>
+          <td>00InD@0</td>
+          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
+          <td>-0.128713</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>06Dec@3</td>
-          <td>DecentralizingAgent</td>
-          <td>-0.031373</td>
+          <td>01BCS@0</td>
+          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
+          <td>-0.036304</td>
         </tr>
       </tbody>
     </table>
@@ -1488,7 +1632,7 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent]
+    tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent, GreedyOneShotAgent, GreedySingleAgreementAgent]
     # may take a long time
     results = anac2021_oneshot(
         competitors=tournament_types,  
@@ -1503,17 +1647,10 @@ Who was the winner?
 .. code:: ipython3
 
     # just make names easier to read 
-    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
-    results.winners
-
-
-
-
-.. parsed-literal::
-
-    ['scml.oneshot.agents.random.SyncRandomOneShotAgent']
-
-
+    def short_type(s):
+        return s.split(":")[0].split(".")[-1]
+        
+    results.scores.agent_type = results.scores.agent_type.apply(short_type)
 
 How many simulations were actually run?
 
@@ -1526,7 +1663,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    24
+    144
 
 
 
@@ -1578,27 +1715,51 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.oneshot.agents.random.RandomOneShotAgent</td>
-          <td>24.0</td>
-          <td>-0.495340</td>
-          <td>0.697904</td>
-          <td>-2.071291</td>
-          <td>-0.852374</td>
-          <td>-0.552953</td>
-          <td>-0.189395</td>
-          <td>1.131542</td>
+          <td>scml.oneshot.agents.greedy.GreedyOneShotAgent:...</td>
+          <td>72.0</td>
+          <td>0.441177</td>
+          <td>0.660088</td>
+          <td>-1.229507</td>
+          <td>0.004978</td>
+          <td>0.737704</td>
+          <td>1.0</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAgent</td>
-          <td>24.0</td>
-          <td>-0.528743</td>
-          <td>0.714132</td>
-          <td>-1.849370</td>
-          <td>-0.996800</td>
-          <td>-0.544973</td>
-          <td>-0.012361</td>
-          <td>1.005180</td>
+          <td>scml.oneshot.agents.greedy.GreedySingleAgreeme...</td>
+          <td>72.0</td>
+          <td>0.415999</td>
+          <td>0.743182</td>
+          <td>-2.093464</td>
+          <td>-0.045901</td>
+          <td>0.750830</td>
+          <td>1.0</td>
+          <td>1.287656</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>scml.oneshot.agents.random.RandomOneShotAgent:...</td>
+          <td>72.0</td>
+          <td>0.427649</td>
+          <td>0.658780</td>
+          <td>-1.019475</td>
+          <td>-0.050959</td>
+          <td>0.786692</td>
+          <td>1.0</td>
+          <td>1.000000</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>72.0</td>
+          <td>0.473808</td>
+          <td>0.625148</td>
+          <td>-1.499706</td>
+          <td>0.000536</td>
+          <td>0.694019</td>
+          <td>1.0</td>
+          <td>1.072840</td>
         </tr>
       </tbody>
     </table>
@@ -1648,13 +1809,63 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAgent</td>
-          <td>scml.oneshot.agents.random.RandomOneShotAgent</td>
-          <td>0.125</td>
-          <td>0.994161</td>
-          <td>24</td>
-          <td>24</td>
-          <td>24</td>
+          <td>scml.oneshot.agents.random.RandomOneShotAgent:...</td>
+          <td>scml.oneshot.agents.greedy.GreedySingleAgreeme...</td>
+          <td>0.055556</td>
+          <td>0.999916</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>scml.oneshot.agents.random.RandomOneShotAgent:...</td>
+          <td>scml.oneshot.agents.greedy.GreedyOneShotAgent:...</td>
+          <td>0.055556</td>
+          <td>0.999916</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>scml.oneshot.agents.random.RandomOneShotAgent:...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.069444</td>
+          <td>0.995617</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>scml.oneshot.agents.greedy.GreedySingleAgreeme...</td>
+          <td>scml.oneshot.agents.greedy.GreedyOneShotAgent:...</td>
+          <td>0.083333</td>
+          <td>0.965898</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>scml.oneshot.agents.greedy.GreedySingleAgreeme...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.069444</td>
+          <td>0.995617</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>scml.oneshot.agents.greedy.GreedyOneShotAgent:...</td>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.069444</td>
+          <td>0.995617</td>
+          <td>72</td>
+          <td>72</td>
+          <td>72</td>
         </tr>
       </tbody>
     </table>
@@ -1698,13 +1909,23 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.oneshot.agents.random.SyncRandomOneShotAgent</td>
-          <td>-0.544973</td>
+          <td>scml.oneshot.agents.random.RandomOneShotAgent:...</td>
+          <td>0.786692</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.oneshot.agents.random.RandomOneShotAgent</td>
-          <td>-0.552953</td>
+          <td>scml.oneshot.agents.greedy.GreedySingleAgreeme...</td>
+          <td>0.750830</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>scml.oneshot.agents.greedy.GreedyOneShotAgent:...</td>
+          <td>0.737704</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>scml.oneshot.agents.random.SyncRandomOneShotAg...</td>
+          <td>0.694019</td>
         </tr>
       </tbody>
     </table>
@@ -1750,33 +1971,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00SyR@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-0.240715</td>
+          <td>08Ran@2</td>
+          <td>RandomOneShotAgent</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>08Ran@2</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.295463</td>
+          <td>09GSA@2</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>00SyR@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-1.169806</td>
+          <td>04Gre@1</td>
+          <td>GreedyOneShotAgent</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>01Ran@0</td>
-          <td>RandomOneShotAgent</td>
-          <td>-0.599932</td>
+          <td>08GSA@2</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>-0.092606</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00SyR@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-0.034231</td>
+          <td>08Ran@2</td>
+          <td>RandomOneShotAgent</td>
+          <td>-0.944358</td>
         </tr>
       </tbody>
     </table>
@@ -1804,7 +2025,6 @@ of each type.
 Now that you can run simulations and complete tournament, let’s see how
 are we going to develop a new agent for the SCML2021 league
 :math:`\rightarrow`
-
 
 
 Download :download:`Notebook<notebooks/01.run_scml2020.ipynb>`.

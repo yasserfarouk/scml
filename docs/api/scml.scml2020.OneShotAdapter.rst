@@ -6,6 +6,12 @@ OneShotAdapter
 .. autoclass:: OneShotAdapter
    :show-inheritance:
 
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~OneShotAdapter.price_multiplier
+
    .. rubric:: Methods Summary
 
    .. autosummary::
@@ -23,6 +29,10 @@ OneShotAdapter
       ~OneShotAdapter.respond_to_negotiation_request
       ~OneShotAdapter.step
       ~OneShotAdapter.to_dict
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: price_multiplier
 
    .. rubric:: Methods Documentation
 
