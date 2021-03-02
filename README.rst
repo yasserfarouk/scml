@@ -74,7 +74,7 @@ Overview
    :alt: Join the chat at https://gitter.im/scml-anac/collusion
    :target: https://gitter.im/scml-anac/collusion?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
-.. |gitter| image:: https://badges.gitter.im/scml-anac/ones-hot.svg
+.. |oneshot| image:: https://badges.gitter.im/scml-anac/ones-hot.svg
    :alt: Join the chat at https://gitter.im/scml-anac/one-shot
    :target: https://gitter.im/scml-anac/one-shot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
