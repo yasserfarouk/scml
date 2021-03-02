@@ -10,12 +10,9 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |CI| |PyPiPublished| |requires|
-        | |codecov|
-        | |codacy|
+      - | |CI| |PyPiPublished| |requires| |codecov| |codacy|
     * - package
-      - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
+      - | |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
     * - discussions
       - | General |gitter| Standard |std| Collusion |collusion| OneShot |oneshot|
 .. |docs| image:: https://readthedocs.org/projects/scml/badge/?style=flat
