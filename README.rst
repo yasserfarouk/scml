@@ -59,7 +59,10 @@ Overview
 .. |PyPiPublished| image:: https://github.com/yasserfarouk/scml/workflows/PyPI/badge.svg
     :target: https://pypi.python.org/pypi/scml
     :alt: Published on Pypi
-
+    
+.. image:: https://badges.gitter.im/scml-anac/community.svg
+   :alt: Join the chat at https://gitter.im/scml-anac/community
+   :target: https://gitter.im/scml-anac/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 .. end-badges
 
@@ -117,6 +120,3 @@ Note, to combine the coverage data from all the tox environments run:
             PYTEST_ADDOPTS=--cov-append tox
 
 
-.. image:: https://badges.gitter.im/scml-anac/community.svg
-   :alt: Join the chat at https://gitter.im/scml-anac/community
-   :target: https://gitter.im/scml-anac/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
