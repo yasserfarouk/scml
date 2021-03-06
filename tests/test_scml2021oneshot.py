@@ -5,6 +5,7 @@ from hypothesis import given
 from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
+from negmas.utilities.ops import normalize
 from pytest import mark
 import pytest
 
@@ -12,7 +13,9 @@ import scml
 from scml.oneshot import SCML2020OneShotWorld, builtin_agent_types
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020 import is_system_agent
+from scml.scml2020.components import production
 
 random.seed(0)
 
@@ -186,18 +189,142 @@ def test_graphs_lead_to_no_unknown_nodes():
     world.graph((0, world.n_steps))
 
 
-def test_ufun_min_max():
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(agent_types=[RandomOneShotAgent], n_steps=10),
-        construct_graphs=True,
+def test_ufun_min_max_in_world():
+    for _ in range(20):
+        world = SCML2020OneShotWorld(
+            **SCML2020OneShotWorld.generate(
+                agent_types=[RandomOneShotAgent], n_steps=10
+            ),
+            construct_graphs=True,
+        )
+        world.step()
+        for aid, agent in world.agents.items():
+            if is_system_agent(aid):
+                continue
+            ufun = agent.make_ufun()
+            mn, mx = ufun.min_utility, ufun.max_utility
+            assert mx >= mn
+
+
+@given(
+    ex_qin=st.integers(0, 10),
+    ex_qout=st.integers(0, 10),
+    ex_pin=st.integers(2, 10),
+    ex_pout=st.integers(2, 10),
+    production_cost=st.integers(1, 5),
+    storage_cost=st.floats(0.5, 1.5),
+    delivery_penalty=st.floats(1.5, 2.5),
+    level=st.integers(0, 2),
+    force_exogenous=st.booleans(),
+    qin=st.integers(0, 10),
+    qout=st.integers(0, 10),
+    pin=st.integers(2, 10),
+    pout=st.integers(2, 10),
+    lines=st.integers(2, 15),
+)
+def test_ufun_unit(
+    ex_qin,
+    ex_qout,
+    ex_pin,
+    ex_pout,
+    production_cost,
+    storage_cost,
+    delivery_penalty,
+    level,
+    force_exogenous,
+    qin,
+    qout,
+    pin,
+    pout,
+    lines,
+):
+    _ufun_unit(
+        ex_qin,
+        ex_qout,
+        ex_pin,
+        ex_pout,
+        production_cost,
+        storage_cost,
+        delivery_penalty,
+        level,
+        force_exogenous,
+        qin,
+        qout,
+        pin,
+        pout,
+        lines,
     )
-    world.step()
-    for aid, agent in world.agents.items():
-        if is_system_agent(aid):
-            continue
-        ufun = agent.make_ufun()
-        mn, mx = ufun.min_utility, ufun.max_utility
-        assert mx > mn or mx == mn == 0
+
+
+def _ufun_unit(
+    ex_qin,
+    ex_qout,
+    ex_pin,
+    ex_pout,
+    production_cost,
+    storage_cost,
+    delivery_penalty,
+    level,
+    force_exogenous,
+    qin,
+    qout,
+    pin,
+    pout,
+    nlines,
+):
+    if level == 0:
+        input_agent, output_agent = True, False
+    elif level == 1:
+        input_agent, output_agent = False, False
+    else:
+        input_agent, output_agent = False, True
+
+    ufun = OneShotUFun(
+        ex_qin=ex_qin,
+        ex_qout=ex_qout,
+        ex_pin=ex_pin,
+        ex_pout=ex_pout,
+        production_cost=production_cost,
+        storage_cost=storage_cost,
+        delivery_penalty=delivery_penalty,
+        input_agent=input_agent,
+        output_agent=output_agent,
+        n_lines=nlines,
+        force_exogenous=force_exogenous,
+        input_product=0 if input_agent else 2,
+        input_qrange=(1, 15),
+        input_prange=(1, 15),
+        output_qrange=(1, 15),
+        output_prange=(1, 15),
+        n_input_negs=5,
+        n_output_negs=5,
+        current_step=0,
+        input_penalty_scale=1,
+        output_penalty_scale=1,
+    )
+    mn, mx = ufun.min_utility, ufun.max_utility
+    assert mx >= mn or mx == mn == 0
+    u = ufun.from_aggregates(qin, qout, pin, pout)
+    assert mn <= u <= mx
+
+
+def test_ufun_example():
+    _ufun_unit(
+        ex_qin=0,
+        ex_qout=0,
+        ex_pin=0,
+        ex_pout=0,
+        production_cost=1,
+        storage_cost=0.5,
+        delivery_penalty=1.5,
+        level=0,
+        force_exogenous=False,
+        qin=1,
+        qout=1,
+        pin=2,
+        pout=4,
+        nlines=10
+    )
 
 
 def test_builtin_agent_types():

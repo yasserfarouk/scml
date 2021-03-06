@@ -233,6 +233,8 @@ class SCML2019World(TimeInAgreementMixin, World):
         """
 
         if compact:
+            kwargs["event_file_name"] = None
+            kwargs["event_types"] = []
             save_mechanism_state_in_contract = False
             log_file_level = logging.ERROR
             log_negotiations = False

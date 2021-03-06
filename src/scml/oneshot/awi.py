@@ -39,6 +39,8 @@ class OneShotAWI(AgentWorldInterface):
         - *price_multiplier*: The multiplier multiplied by the trading/catalog price
                               when the negotiation agendas are created to decide the
                               maximum and lower quantities.
+        - *is_exogenous_forced*: Are exogenous contracts always forced or can the
+                                 agent decide not to sign them.
 
         B. Agent Information:
         ---------------------
@@ -62,6 +64,13 @@ class OneShotAWI(AgentWorldInterface):
                           that can sell the input product of the agent).
         - *my_consumers*: A list of IDs for all consumers to the agent (i.e. agents
                           that can buy the output product of the agent).
+        - *penalties_scale*: The scale at which to calculate storage cost/delivery
+                             penalties. "trading" and "catalog" mean trading and
+                             catalog prices. "unit" means the contract's unit price
+                             while "none" means that storage cost/delivery penalty
+                             are absolute.
+        - *n_input_negotiations*: Number of negotiations with suppliers.
+        - *n_output_negotiations*: Number of negotiations with consumers.
 
     Dynamic World Information:
     -------------------------
@@ -166,6 +175,16 @@ class OneShotAWI(AgentWorldInterface):
         """
         return self._world.price_multiplier
 
+    @property
+    def is_exogenous_forced(self):
+        """
+        Are exogenous contracts forced in the sense that the agent cannot decide
+        not to sign them?
+        """
+        return self.bb_read("settings", "force_signing") or self.bb_read(
+            "settings", "force_exogenous"
+        )
+
     # ================================================================
     # Static Agent Information (does not change during the simulation)
     # ================================================================
@@ -173,13 +192,31 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def profile(self) -> OneShotProfile:
         """Gets the profile (static private information) associated with the agent"""
-        return self.agent.profile
+        return self._world.agent_profiles[self.agent.id]
 
     @property
     def n_lines(self) -> int:
         """The number of lines in the corresponding factory.
         You can read `state` to get this among other information"""
         return self.profile.n_lines if self.profile else 0
+
+    @property
+    def n_input_negotiations(self) -> int:
+        """
+        Number of negotiations with suppliers at every step
+        """
+        if self.is_first_level:
+            return 0
+        return len(self.my_suppliers)
+
+    @property
+    def n_output_negotiations(self) -> int:
+        """
+        Number of negotiations with consumers at every step
+        """
+        if self.is_last_level:
+            return 0
+        return len(self.my_consumers)
 
     @property
     def is_first_level(self):
@@ -230,6 +267,10 @@ class OneShotAWI(AgentWorldInterface):
         """
         return self.all_consumers[self.level]
 
+    @property
+    def penalties_scale(self) -> str:
+        return self._world.penalties_scale
+
     # =========================================================
     # Dynamic Agent Information (changes during the simulation)
     # =========================================================
@@ -271,6 +312,27 @@ class OneShotAWI(AgentWorldInterface):
         The exogenous contracts for the input (this step)
         """
         return self._world.exogenous_pout[self.agent.id]
+
+    def penalty_multiplier(self, is_input: bool, unit_price: float) -> float:
+        """
+        Returns the penalty multiplier for a contract with the give unit price.
+
+        Remarks:
+            - The unit price is only needed if the penalties_scale is unit. For
+              all other options (trading, catalog, none), the penalty scale does
+              not depend on the unit price.
+        """
+        if self.penalties_scale.startswith("n"):
+            return 1
+        if self.penalties_scale.startswith("t"):
+            return self.trading_prices[
+                self.my_input_product if is_input else self.my_output_product
+            ]
+        if self.penalties_scale.startswith("c"):
+            return self.catalog_prices[
+                self.my_input_product if is_input else self.my_output_product
+            ]
+        return unit_price
 
     @property
     def current_storage_cost(self) -> float:
@@ -348,4 +410,4 @@ class OneShotAWI(AgentWorldInterface):
 
     @property
     def current_output_issues(self) -> List[Issue]:
-        return self._world._current_issues[self.my_input_product]
+        return self._world._current_issues[self.my_output_product]

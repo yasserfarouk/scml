@@ -26,11 +26,15 @@ from negmas import Entity
 from negmas import MechanismState
 from negmas import Outcome
 from negmas import PassThroughSAONegotiator
+from negmas.sao import SAONegotiator, SAOAMI
 from negmas import ResponseType
 from negmas import SAOController
 from negmas import SAOResponse
 from negmas import SAOState
 from negmas import SAOSyncController, SAOSingleAgreementController
+from negmas.common import NegotiatorInfo
+
+from scml.scml2020.common import QUANTITY, UNIT_PRICE
 from .ufun import OneShotUFun
 
 __all__ = ["OneShotAgent", "OneShotSyncAgent", "OneShotSingleAgreementAgent"]
@@ -68,6 +72,8 @@ class OneShotAgent(SAOController, Entity, ABC):
             ufun=ufun,
         )
         self._awi = owner._awi if owner else None
+        self._owner = owner
+        self.ufun = owner.ufun if owner else None
 
     @property
     def awi(self):
@@ -81,8 +87,6 @@ class OneShotAgent(SAOController, Entity, ABC):
         Remarks:
             - Use this for any proactive initialization code.
         """
-        if not self.ufun:
-            self.ufun = self.make_ufun()
 
     def make_ufun(self, add_exogenous=False):
         """
@@ -98,19 +102,7 @@ class OneShotAgent(SAOController, Entity, ABC):
               You will not need to directly use this method in most cases.
 
         """
-        self.ufun = OneShotUFun(
-            owner=self,
-            qin=self.awi.current_exogenous_input_quantity if add_exogenous else 0,
-            pin=self.awi.current_exogenous_input_price if add_exogenous else 0,
-            qout=self.awi.current_exogenous_output_quantity if add_exogenous else 0,
-            pout=self.awi.current_exogenous_output_price if add_exogenous else 0,
-            production_cost=self.awi.profile.cost,
-            storage_cost=self.awi.current_storage_cost,
-            delivery_penalty=self.awi.current_delivery_penalty,
-            input_agent=self.awi.my_input_product == 0,
-            output_agent=self.awi.my_output_product == self.awi.n_products - 1,
-        )
-        return self.ufun
+        return self._owner.make_ufun(add_exogenous)
 
     def step(self):
         """
@@ -122,15 +114,17 @@ class OneShotAgent(SAOController, Entity, ABC):
         """
         pass
 
-    def connect_to_oneshot_adapter(self, owner, ufun):
+    def connect_to_oneshot_adapter(self, owner):
         """Connects the agent to its adapter (used internally)"""
+        self._owner = owner
         self._awi = owner._awi
-        self.utility_function = ufun
+        self.utility_function = owner.ufun
 
-    def connect_to_2021_adapter(self, owner, ufun):
+    def connect_to_2021_adapter(self, owner):
         """Connects the agent to its adapter (used internally)"""
-        self._awi = owner.awi
-        self.utility_function = ufun
+        self._owner = owner
+        self._awi = owner._awi
+        self.utility_function = owner.ufun
 
     @abstractmethod
     def propose(self, negotiator_id: str, state: MechanismState) -> "Outcome":
@@ -222,6 +216,22 @@ class OneShotAgent(SAOController, Entity, ABC):
 
     def on_contract_breached(self, contract, breaches, resolution) -> None:
         pass
+
+    def get_negotiator(self, partner_id: str) -> SAONegotiator:
+        """
+        Returns the negotiator corresponding to the given partner ID.
+
+        Remarks:
+            - Note that the negotiator ID and the partner ID are always the same.
+        """
+        return self.negotiators[partner_id][0]
+
+    def get_ami(self, partner_id: str) -> SAOAMI:
+        """
+        Returns the `SAOAMI` (Agent Mechanism Interface) connecting the agent
+        to the negotiation mechanism for the given partner.
+        """
+        return self.negotiators[partner_id][0].ami
 
 
 class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):

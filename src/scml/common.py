@@ -8,7 +8,14 @@ from typing import Union
 
 import numpy as np
 
-__all__ = ["integer_cut", "intin", "realin", "make_array", "distribute_quantities"]
+__all__ = [
+    "integer_cut",
+    "intin",
+    "realin",
+    "strin",
+    "make_array",
+    "distribute_quantities",
+]
 
 
 def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
@@ -50,6 +57,23 @@ def realin(rng: Union[Tuple[float, float], float]) -> float:
     if abs(rng[1] - rng[0]) < 1e-8:
         return rng[0]
     return rng[0] + random.random() * (rng[1] - rng[0])
+
+
+def strin(lst: Union[List[str], str]) -> str:
+    """
+    Selects a random string from a list (or just returns the string if no list
+    is given)
+
+    Args:
+        lst: list of value
+
+    Returns:
+
+        the real within the given range
+    """
+    if isinstance(lst, str):
+        return lst
+    return random.choice(lst)
 
 
 def intin(rng: Union[Tuple[int, int], int]) -> int:

@@ -46,13 +46,14 @@ from ..common import integer_cut
 from ..common import intin
 from ..common import make_array
 from ..common import realin
+from ..common import strin
 from ..scml2020 import FinancialReport
 from ..scml2020.common import INFINITE_COST
 from ..scml2020.common import SYSTEM_BUYER_ID
 from ..scml2020.common import SYSTEM_SELLER_ID
 from ..scml2020.common import is_system_agent
 
-from .common import OneShotProfile, OneShotExogenousContract
+from .common import OneShotProfile, OneShotExogenousContract, QUANTITY, UNIT_PRICE
 from .sysagents import _SystemAgent, DefaultOneShotAdapter
 from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
@@ -104,6 +105,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # breach processing parameters
         financial_report_period=5,
         bankruptcy_limit=0.0,
+        penalties_scale="unit",
         # external contracts parameters
         exogenous_contracts: Collection[OneShotExogenousContract] = tuple(),
         exogenous_dynamic: bool = False,
@@ -152,6 +154,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.agent_delivery_penalty: Dict[str, List[float]] = dict()
         kwargs["log_to_file"] = not no_logs
         if compact:
+            kwargs["event_file_name"] = None
+            kwargs["event_types"] = []
             kwargs["log_screen_level"] = logging.CRITICAL
             kwargs["log_file_level"] = logging.ERROR
             kwargs["log_negotiations"] = False
@@ -228,6 +232,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         agent_params = (
             [copy.deepcopy(_) for _ in agent_params] if agent_params else agent_params
         )
+        self.penalties_scale = penalties_scale
         self.info.update(
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -235,6 +240,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             agent_types_final=[get_full_type_name(_) for _ in agent_types],
             agent_params_final=[copy.deepcopy(_) for _ in agent_params],
             initial_balance_final=initial_balance,
+            penalties_scale_final=penalties_scale,
             bankruptcy_limit=bankruptcy_limit,
             financial_report_period=financial_report_period,
             exogenous_force_max=exogenous_force_max,
@@ -380,7 +386,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             a.id = a.name
             if a.adapted_object:
                 if isinstance(a.adapted_object, OneShotAgent):
-                    a.adapted_object.connect_to_oneshot_adapter(a, None)
+                    a.adapted_object.connect_to_oneshot_adapter(a)
                 else:
                     a.adapted_object._owner = a
             self.join(a, i)
@@ -519,6 +525,22 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.initial_balances = dict(zip(self.agents.keys(), initial_balance))
         self._max_n_lines = max(_.n_lines for _ in self.profiles)
         self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
+        self._current_issues: List[List[Issue]] = []
+
+        def values(x: Union[int, Tuple[int, int]]):
+            if not isinstance(x, Iterable):
+                return int(x), int(x)
+            return int(x[0]), int(x[1])
+
+        for product in range(self.n_products):
+            unit_price, time, quantity = self._make_issues(product)
+            self._current_issues.append(
+                [
+                    Issue(values(quantity), name="quantity", value_type=int),
+                    Issue(values(time), name="time", value_type=int),
+                    Issue(values(unit_price), name="unit_price", value_type=int),
+                ]
+            )
 
     @classmethod
     def generate(
@@ -555,6 +577,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         exogenous_price_dev: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         price_multiplier: Union[np.ndarray, Tuple[float, float], float] = (1.5, 2.0),
         random_agent_types: bool = False,
+        penalties_scale: Union[str, List[str]] = "unit",
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -607,6 +630,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             price_multiplier: A value to multiply with trading/catalog price to get the upper limit on prices for all negotiations
             random_agent_types: If True, the final agent types used by the generato wil always be sampled from the given types.
                                 If False, this random sampling will only happin if len(agent_types) != n_agents.
+            penalties_scale: What are `storage_cost` and `delivery_penalty` relative to.
+                            There are four options: `trading`, `catalog` mean trading
+                            and catalog prices of the product. `unit` means the unit
+                            price in the contract and `non` means the `storage-cost`
+                            and `delivery_penalty` are absolute values (in money unit).
+                            If not given will be read through the AWI
             **kwargs:
 
         Returns:
@@ -644,6 +673,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             cash_availability=cash_availability,
             price_multiplier=price_multiplier,
             exogenous_price_dev=exogenous_price_dev,
+            penalties_scale=penalties_scale,
             profit_basis="min"
             if profit_basis == np.min
             else "mean"
@@ -655,6 +685,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             else "unknown",
         )
         exogenous_price_dev = realin(exogenous_price_dev)
+        penalties_scale = strin(penalties_scale)
         price_multiplier = realin(price_multiplier)
         n_processes = intin(n_processes)
         n_steps = intin(n_steps)
@@ -1043,6 +1074,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             price_multiplier=price_multiplier,
             inventory_valuation_trading=0,
             inventory_valuation_catalog=0,
+            penalties_scale=penalties_scale,
             **kwargs,
         )
 
@@ -1195,23 +1227,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             if is_system_agent(aid):
                 continue
             # agent.profile
-            if isinstance(agent, OneShotAgent):
-                ufun = agent.make_ufun(add_exogenous=False)
-            else:
-                ufun = OneShotUFun(
-                    owner=None,
-                    awi=agent.awi,
-                    qin=0,
-                    pin=0,
-                    qout=0,
-                    pout=0,
-                    production_cost=agent.awi.profile.cost,
-                    storage_cost=agent.awi.current_storage_cost,
-                    delivery_penalty=agent.awi.current_delivery_penalty,
-                    input_agent=agent.awi.my_input_product == 0,
-                    output_agent=agent.awi.my_output_product
-                    == agent.awi.n_products - 1,
-                )
+            # todo: I am accessing the ufun of the agent directly to avoid running
+            # unnecessary optimizations to find best and worst utility. This is 
+            # dangerous because the agent can change its own ufun. May be I should 
+            # directly create the ufun here using a global ufun method defined in 
+            # the ufun.py module that takes a world and an agent (or just an AWI)
+            ufun = agent.make_ufun(add_exogenous=False) if not agent.ufun else agent.ufun
             qin, pin, qout, pout = (
                 self._input_quantity[aid],
                 self._input_price[aid],
@@ -1700,11 +1721,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         controllers = dict()
 
         for aid, a in self.agents.items():
-            if is_system_agent(aid) or not isinstance(a, OneShotAgent):
+            if is_system_agent(aid) or isinstance(a, OneShotSCML2020Adapter):
                 continue
             controllers[aid] = a.adapted_object
             a.adapted_object.make_ufun()
-        self._current_issues = [[] for _ in range(self.n_products)]
+
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues[product] = [
@@ -1713,9 +1734,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 Issue(values(unit_price), name="unit_price", value_type=int),
             ]
             for aid in self.consumers[product]:
-                if is_system_agent(aid) or not isinstance(
-                    self.agents[aid], OneShotAgent
-                ):
+                if is_system_agent(aid) or isinstance(self.agents[aid], OneShotSCML2020Adapter):
                     continue
                 self._request_negotiations(
                     agent_id=aid,

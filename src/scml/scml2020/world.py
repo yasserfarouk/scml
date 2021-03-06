@@ -241,6 +241,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.n_concurrent_negs_between_partners = n_concurrent_negs_between_partners
         kwargs["log_to_file"] = not no_logs
         if compact:
+            kwargs["event_file_name"] = None
+            kwargs["event_types"] = []
             kwargs["log_screen_level"] = logging.CRITICAL
             kwargs["log_file_level"] = logging.ERROR
             kwargs["log_negotiations"] = False
@@ -1992,7 +1994,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                     )
                     if assets_multiplier_catalog
                     else 0.0 - factory.initial_balance
-                ) / factory.initial_balance
+                ) / (1 if not factory.initial_balance else factory.initial_balance)
             except:
                 scores[aid] = float("nan")
         return scores

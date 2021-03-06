@@ -4,6 +4,7 @@ import hypothesis.strategies as st
 from hypothesis import example
 from hypothesis import given
 from hypothesis import settings
+from hypothesis import reproduce_failure
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
@@ -302,6 +303,7 @@ def test_graphs_lead_to_no_unknown_nodes():
     )
 )
 @settings(deadline=300_000, max_examples=30)
+@reproduce_failure('6.3.3', b'AAEAAQQA')
 def test_adapter(atype):
     world = SCML2021World(
         **SCML2021World.generate(agent_types=atype, n_steps=10),

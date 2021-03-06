@@ -29,27 +29,12 @@ class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):
     ) -> None:
         return self._obj.on_contract_breached(contract, breaches, resolution)
 
-    def make_ufun(self, add_exogenous=False):
-        self.ufun = OneShotUFun(
-            owner=self,
-            qin=self.awi.current_exogenous_input_quantity if add_exogenous else 0,
-            pin=self.awi.current_exogenous_input_price if add_exogenous else 0,
-            qout=self.awi.current_exogenous_output_quantity if add_exogenous else 0,
-            pout=self.awi.current_exogenous_output_price if add_exogenous else 0,
-            production_cost=self.awi.profile.cost,
-            storage_cost=self.awi.current_storage_cost,
-            delivery_penalty=self.awi.current_delivery_penalty,
-            input_agent=self.awi.my_input_product == 0,
-            output_agent=self.awi.my_output_product == self.awi.n_products - 1,
-        )
-        return self.ufun
-
     def init(self):
         self._obj._awi = AWIHelper(owner=self)
         super().init()
 
     def to_dict(self):
-        return self._obj.to_dict(self)
+        return self._obj.to_dict()
 
     def _respond_to_negotiation_request(
         self,

@@ -22,6 +22,13 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSingleAgreementAgen
         super().init()
 
     def counter_all(self, offers, states):
+        if self.__endall:
+            return dict(
+                zip(
+                    offers.keys(),
+                    itertools.repeat(SAOResponse(ResponseType.END_NEGOTIATION, None)),
+                )
+            )
         issues = (
             self.awi.current_input_issues
             if self.awi.is_last_level
@@ -32,13 +39,6 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSingleAgreementAgen
         AspirationMixin.aspiration_init(
             self, max_aspiration=self._max_utility, aspiration_type="boulware"
         )
-        if self.__endall:
-            return dict(
-                zip(
-                    offers.keys(),
-                    itertools.repeat(SAOResponse(ResponseType.END_NEGOTIATION, None)),
-                )
-            )
         return super().counter_all(offers, states)
 
     def is_acceptable(self, offer: "Outcome", source: str, state: SAOState) -> bool:

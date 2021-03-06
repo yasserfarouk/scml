@@ -80,6 +80,7 @@ setup(
         "joblib",
         "jupyter",
         "gif",
+        "mip",
     ],
     extras_require={"gui": ["pyqt5"],},
     setup_requires=["pytest-runner"],

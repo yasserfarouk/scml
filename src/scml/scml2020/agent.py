@@ -19,7 +19,7 @@ from ..oneshot.common import OneShotState, OneShotProfile
 from .components.trading import MarketAwareTradePredictionStrategy
 from .components.production import DemandDrivenProductionStrategy
 from .components.signing import SignAll
-from .common import TIME
+from .common import TIME, QUANTITY, UNIT_PRICE
 
 __all__ = [
     "SCML2020Agent",
@@ -259,6 +259,54 @@ class AWIHelper:
 
     # private information
     # ===================
+    def penalty_multiplier(self, is_input: bool, unit_price: float) -> float:
+        """
+        Returns the penalty multiplier for a contract with the give unit price.
+
+        Remarks:
+            - The unit price is only needed if the penalties_scale is unit. For
+              all other options (trading, catalog, none), the penalty scale does
+              not depend on the unit price.
+        """
+        if self.penalties_scale.startswith("n"):
+            return 1
+        if self.penalties_scale.startswith("t"):
+            return self.trading_prices[
+                self.my_input_product if is_input else self.my_output_product
+            ]
+        if self.penalties_scale.startswith("c"):
+            return self.catalog_prices[
+                self.my_input_product if is_input else self.my_output_product
+            ]
+        return unit_price
+
+    @property
+    def is_exogenous_forced(self):
+        """
+        Are exogenous contracts forced in the sense that the agent cannot decide
+        not to sign them?
+        """
+        return self.bb_read("settings", "force_signing") or self.bb_read(
+            "settings", "force_exogenous"
+        )
+
+    @property
+    def n_input_negotiations(self) -> int:
+        """
+        Number of negotiations with suppliers at every step
+        """
+        if self.is_first_level:
+            return 0
+        return len(self.my_suppliers)
+
+    @property
+    def n_output_negotiations(self) -> int:
+        """
+        Number of negotiations with consumers at every step
+        """
+        if self.is_last_level:
+            return 0
+        return len(self.my_consumers)
 
     @property
     def is_first_level(self):
@@ -344,7 +392,7 @@ class AWIHelper:
             issues = [
                 Issue(values=q, name="quantity"),
                 Issue(values=t, name="time"),
-                Issue(values=u, name="unit_price")
+                Issue(values=u, name="unit_price"),
             ]
         return issues
 
@@ -357,9 +405,13 @@ class AWIHelper:
             issues = [
                 Issue(values=q, name="quantity"),
                 Issue(values=t, name="time"),
-                Issue(values=u, name="unit_price")
+                Issue(values=u, name="unit_price"),
             ]
         return issues
+
+    @property
+    def penalties_scale(self) -> str:
+        return "unit"
 
     # Public Information
     # ==================
@@ -388,7 +440,6 @@ class AWIHelper:
     # ===============
     def __getattr__(self, attr):
         return getattr(self._owner.awi, attr)
-
 
 
 class OneShotAdapter(
@@ -426,7 +477,7 @@ class OneShotAdapter(
             )
             obj = instantiate(oneshot_type, **oneshot_params)
         super().__init__(obj=obj, name=name, type_postfix=type_postfix, ufun=ufun)
-        obj.connect_to_2021_adapter(self, None)
+        obj.connect_to_2021_adapter(self)
 
     def init(self):
         self._oneshot_awi = AWIHelper(self)
@@ -471,14 +522,8 @@ class OneShotAdapter(
     def step(self):
         if self.awi.my_input_product == 0:
             pass
-            # self._obj._awi.current_input_issues = []
         else:
             u, t, q = self._make_issues(self.awi.my_input_product)
-            # self._obj._awi.current_input_issues = [
-            #     Issue(values=q, name="quantity"),
-            #     Issue(values=t, name="time"),
-            #     Issue(values=u, name="unit_price")
-            # ]
             self.awi.request_negotiations(
                 is_buy=True,
                 product=self.awi.my_input_product,
@@ -489,14 +534,8 @@ class OneShotAdapter(
             )
         if self.awi.my_output_product == self.awi.n_products - 1:
             pass
-            # self._obj._awi.current_output_issues = []
         else:
             u, t, q = self._make_issues(self.awi.my_output_product)
-            # self._obj._awi.current_output_issues = [
-            #     Issue(values=q, name="quantity"),
-            #     Issue(values=t, name="time"),
-            #     Issue(values=u, name="unit_price")
-            # ]
             self.awi.request_negotiations(
                 is_buy=False,
                 product=self.awi.my_output_product,
@@ -505,16 +544,54 @@ class OneShotAdapter(
                 unit_price=u,
                 controller=self._obj,
             )
-        ufun = OneShotUFun(
-            owner=self._obj,
-            production_cost=self._oneshot_awi.profile.cost,
-            delivery_penalty=self.get_delivery_penalty(),
-            storage_cost=self.get_storage_cost(),
-            input_agent=self.awi.my_input_product == 0,
-            output_agent=self.awi.my_output_product == self.awi.n_products - 1,
-        )
-        self._obj.utility_function = ufun
+        self.utility_function = self.make_ufun()
         super().step()
+
+    def make_ufun(self, add_exogenous=False):
+        iq = (
+            self._obj.awi.current_input_issues[QUANTITY]
+            if self._obj.awi.current_input_issues
+            else None
+        )
+        ip = (
+            self._obj.awi.current_input_issues[UNIT_PRICE]
+            if self._obj.awi.current_input_issues
+            else None
+        )
+        oq = (
+            self._obj.awi.current_output_issues[QUANTITY]
+            if self._obj.awi.current_output_issues
+            else None
+        )
+        op = (
+            self._obj.awi.current_output_issues[UNIT_PRICE]
+            if self._obj.awi.current_output_issues
+            else None
+        )
+        self.ufun = OneShotUFun(
+            ex_qin=self._obj.awi.current_exogenous_input_quantity if add_exogenous else 0,
+            ex_pin=self._obj.awi.current_exogenous_input_price if add_exogenous else 0,
+            ex_qout=self._obj.awi.current_exogenous_output_quantity if add_exogenous else 0,
+            ex_pout=self._obj.awi.current_exogenous_output_price if add_exogenous else 0,
+            production_cost=self._obj.awi.profile.cost,
+            storage_cost=self._obj.awi.current_storage_cost,
+            delivery_penalty=self._obj.awi.current_delivery_penalty,
+            input_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
+            output_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
+            input_agent=self._obj.awi.my_input_product == 0,
+            output_agent=self._obj.awi.my_output_product == self._obj.awi.n_products - 1,
+            input_product=self._obj.awi.my_input_product,
+            n_input_negs=self._obj.awi.n_input_negotiations,
+            n_output_negs=self._obj.awi.n_output_negotiations,
+            current_step=self._obj.awi.current_step,
+            input_qrange=(iq.min_value, iq.max_value) if iq else (0, 0),
+            input_prange=(ip.min_value, ip.max_value) if ip else (0, 0),
+            output_qrange=(oq.min_value, oq.max_value) if oq else (0, 0),
+            output_prange=(op.min_value, op.max_value) if op else (0, 0),
+            force_exogenous=self._obj.awi.is_exogenous_forced,
+            n_lines=self._obj.awi.n_lines,
+        )
+        return self.ufun
 
     def to_dict(self):
         return {

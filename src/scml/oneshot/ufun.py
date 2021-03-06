@@ -1,3 +1,4 @@
+from collections import namedtuple
 import warnings
 from typing import Iterable, Tuple, Union, List, Collection, Optional
 
@@ -5,9 +6,30 @@ from negmas import Contract
 from negmas.utilities import UtilityFunction, UtilityValue
 from negmas.outcomes import Outcome, Issue
 
+
+# import quadprog
+# import cvxpy as cp
+import mip as mp
+
 from .common import QUANTITY, UNIT_PRICE, TIME
 
-__all__ = ["OneShotUFun"]
+__all__ = ["OneShotUFun", "UFunLimit"]
+
+UFunLimit = namedtuple(
+    "UFunLimit",
+    [
+        "utility",
+        "input_quantity",
+        "input_price",
+        "output_quantity",
+        "output_price",
+        "exogenous_input_quantity",
+        "exogenous_input_price",
+        "exogenous_output_quantity",
+        "exogenous_output_price",
+        "producible",
+    ],
+)
 
 
 class OneShotUFun(UtilityFunction):
@@ -15,21 +37,38 @@ class OneShotUFun(UtilityFunction):
     Calculates the utility function of a list of contracts or offers.
 
     Args:
-        owner: The `OneShotAgent` agent owning this utility function.
-        pin: total price of exogenous inputs for this agent
-        qin: total quantity of exogenous inputs for this agent
-        pout: total price of exogenous outputs for this agent
-        qout: total quantity of exogenous outputs for this agent.
+        force_exogenous: Is the agent forced to accept exogenous contracts
+                         given through `ex_*` arguments?
+        ex_pin: total price of exogenous inputs for this agent
+        ex_qin: total quantity of exogenous inputs for this agent
+        ex_pout: total price of exogenous outputs for this agent
+        ex_qout: total quantity of exogenous outputs for this agent.
         cost: production cost of the agent.
         storage_cost: storage cost per unit of input/output.
         delivery_penalty: penalty for failure to deliver one unit of output.
         input_agent: Is the agent an input agent which means that its input
                      product is the raw material
         output_agent: Is the agent an input agent which means that its input
-                     product is the raw material
-        normalize: If given the values returned will range between zero and one
-                   Note that the minimum utility is not no-profit but maximum
-                   loss
+                      product is the raw material
+        n_lines: Number of production lines. If None, will be read through the AWI.
+        input_product: Index of the input product. If None, will be read through
+                       the AWI
+        input_qrange: A 2-int tuple giving the range of input quantities negotiated.
+                      If not given will be read through the AWI
+        input_prange: A 2-int tuple giving the range of input unit prices negotiated.
+                      If not given will be read through the AWI
+        output_qrange: A 2-int tuple giving the range of output quantities negotiated.
+                      If not given will be read through the AWI
+        output_prange: A 2-int tuple giving the range of output unit prices negotiated.
+                      If not given will be read through the AWI
+        n_input_negs: How many input negotiations are allowed. If not given, it
+                      will be the number of suppliers as given by the AWI
+        n_output_negs: How many output negotiations are allowed. If not given, it
+                      will be the number of consumers as given by the AWI
+        current_step: Current simulation step. Needed only for `ufun_range`
+                      when returning best outcomes
+        normalized: If given the values returned by `from_*`, `utility_range`
+                    and `__call__` will all be normalized between zero and one.
 
     Remarks:
         - The utility function assumes that the agent will have to pay for
@@ -37,43 +76,64 @@ class OneShotUFun(UtilityFunction):
           products it could generate and sell.
         - The utility function respects production capacity (n. lines). The
           agent cannot produce more than the number of lines it has.
+        - storage cost is paid for items bought but not produced only. Items
+          consumed in production (i.e. sold) are not counted.
     """
 
     def __init__(
         self,
-        owner: "OneShotAgent" = None,  # type: ignore
-        awi: "OneShotAWI" = None,  # type: ignore
-        pin: int = 0,
-        qin: int = 0,
-        pout: int = 0,
-        qout: int = 0,
-        production_cost: float = 0.0,
-        storage_cost: float = 0.0,
-        delivery_penalty: float = 0.0,
-        input_agent: bool = False,
-        output_agent: bool = False,
-        normalize: bool = False,
+        ex_pin: int,
+        ex_qin: int,
+        ex_pout: int,
+        ex_qout: int,
+        input_product: int,
+        input_agent: bool,
+        output_agent: bool,
+        production_cost: float,
+        storage_cost: float,
+        delivery_penalty: float,
+        input_penalty_scale: Optional[float],
+        output_penalty_scale: Optional[float],
+        n_input_negs: int,
+        n_output_negs: int,
+        current_step: int,
+        input_qrange: Tuple[int, int] = (0, 0),
+        input_prange: Tuple[int, int] = (0, 0),
+        output_qrange: Tuple[int, int] = (0, 0),
+        output_prange: Tuple[int, int] = (0, 0),
+        force_exogenous: bool = True,
+        n_lines: int = 10,
+        normalized: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.__owner = owner
-        self._awi = awi
-        if not self._awi:
-            self._awi = owner.awi
-        self._pin, self._pout = pin, pout
-        self._qin, self._qout = qin, qout
-        self._production_cost, self._storage_cost, self._delivery_penalty = (
+        self.normalized = normalized
+        self.input_penalty_scale = input_penalty_scale
+        self.output_penalty_scale = output_penalty_scale
+        self.current_step = current_step
+        self.ex_pin, self.ex_pout = ex_pin, ex_pout
+        self.ex_qin, self.ex_qout = ex_qin, ex_qout
+        self.n_input_negs = n_input_negs
+        self.n_output_negs = n_output_negs
+        self.input_qrange, self.input_prange = input_qrange, input_prange
+        self.output_qrange, self.output_prange = output_qrange, output_prange
+        self.production_cost, self.storage_cost, self.delivery_penalty = (
             production_cost,
             storage_cost,
             delivery_penalty,
         )
-        self._input_agent, self._output_agent = input_agent, output_agent
-        self._force_exogenous = self._awi.bb_read(
-            "settings", "force_signing"
-        ) or self._awi.bb_read("settings", "exogenous_force_max")
-        self._public_trading_prices = self._awi.bb_read(
-            "settings", "public_trading_prices"
-        )
+        self.input_agent, self.output_agent = input_agent, output_agent
+        self.force_exogenous = force_exogenous
+        if not force_exogenous:
+            self.ex_pin = self.ex_qin = self.ex_pout = self.ex_qout = 0
+        self.n_lines = n_lines
+        if input_product is None and input_agent:
+            input_product = 0
+        self.input_product = input_product
+        if self.input_product is not None:
+            self.output_product = self.input_product + 1
+        self.best = self.find_limit(True, None, None)
+        self.worst = self.find_limit(False, None, None)
 
     def xml(self, issues) -> str:
         raise NotImplementedError("Cannot convert the ufun to xml")
@@ -86,20 +146,25 @@ class OneShotUFun(UtilityFunction):
             - This method calculates the utility value of a single offer assuming all other negotiations end in failure.
             - It can only be called for agents that exist in the first or last layer of the production graph.
         """
-        if not self._input_agent and not self._output_agent:
+        if not self.input_agent and not self.output_agent:
             return float("-inf")
-        return self.from_offers([offer], [self._input_agent])
+        return self.from_offers([offer], [self.input_agent])
 
     def from_contracts(self, contracts: Iterable[Contract]) -> float:
         """
         Calculates the utility function given a list of contracts
         """
         offers, outputs = [], []
+        output_product = (
+            self.output_product
+            if self.output_product is not None
+            else self._awi.my_output_product
+        )
         for c in contracts:
             if c.signed_at < 0:
                 continue
             product = c.annotation["product"]
-            is_output = product == self._awi.my_output_product
+            is_output = product == output_product
             outputs.append(is_output)
             offers.append(self.outcome_as_tuple(c.agreement))
         return self.from_offers(offers, outputs)
@@ -127,8 +192,9 @@ class OneShotUFun(UtilityFunction):
             else:
                 qin += offer[QUANTITY]
                 pin += offer[UNIT_PRICE] * offer[QUANTITY]
+        n_lines = self.n_lines if self.n_lines is not None else self._awi.n_lines
         output_offers = sorted(output_offers, key=lambda x: -x[UNIT_PRICE])
-        producible = min(qin, self._awi.n_lines)
+        producible = min(qin, n_lines)
         for offer in output_offers:
             qout += offer[QUANTITY]
             if qout >= producible:
@@ -163,259 +229,47 @@ class OneShotUFun(UtilityFunction):
               agent cannot produce more than the number of lines it has.
 
         """
-        qin += self._qin
-        qout += self._qout
-        pin += self._pin
-        pout += self._pout
         paid = pin
-        lines = self._awi.n_lines
+        lines = self.n_lines
         produced = min(qin, lines, qout)
         received = pout * produced / qout if qout else 0
-        if self._public_trading_prices:
-            tpi = self._awi._world.trading_prices[self._awi.my_input_product]  # type: ignore
-            tpo = self._awi._world.trading_prices[self._awi.my_output_product]  # type: ignore
-        else:
-            tpi = self._awi._world.catalog_prices[self._awi.my_input_product]  # type: ignore
-            tpo = self._awi._world.catalog_prices[self._awi.my_output_product]  # type: ignore
-        return (
+        u = (
             received
             - paid
-            - self._production_cost * produced
-            - self._storage_cost * tpi * max(0, qin - qout)
-            - self._delivery_penalty * tpo * max(0, qout - qin)
+            - self.production_cost * produced
+            - self.storage_cost * max(0, qin - qout)
+            - self.delivery_penalty * max(0, qout - qin)
         )
+        if not self.normalized:
+            return u
+        rng = self.max_utility - self.min_utility
+        if rng < 1e-12:
+            return 1.0
+        return (u - self.min_utility) / rng
 
     def breach_level(self, qin: int = 0, qout: int = 0):
         """Calculates the breach level that would result from a given quantities"""
-        qin += self._qin
-        qout += self._qout
+        qin += self.ex_qin
+        qout += self.ex_qout
         if max(qin, qout) < 1:
             return 0
         return abs(qin - qout) / max(qin, qout)
 
     def is_breach(self, qin: int = 0, qout: int = 0):
         """Whether the given quantities would lead to a breach."""
-        qin += self._qin
-        qout += self._qout
+        qin += self.ex_qin
+        qout += self.ex_qout
         return qin != qout
-
-    def best(
-        self,
-        input_issues=None,
-        output_issues=None,
-        n_input_negs=None,
-        n_output_negs=None,
-    ) -> Tuple[float, Tuple[int, int]]:
-        """
-        Returns the highest possible utility with the corresponding total
-        input, output quantities
-
-        Args:
-            input_issues: The input issues in the same order defined in
-                          `scml.scml2020.common` (quantity, time, unit price).
-                          If None, then the `AWI` will be used to find them.
-            output_issues: The output issues in the same order defined in
-                          `scml.scml2020.common` (quantity, time, unit price).
-                          If None, then the `AWI` will be used to find them.
-            n_input_negs: Number of input negotiations. If not given it defaults
-                          to the number of suppliers
-            n_output_negs: Number of output negotiations. If not given it defaults
-                          to the number of consumers
-
-        Returns:
-            A tuple with highest utility value and corresponding input/output
-            quantities.
-
-        Remarks:
-            - Best input / output prices are always the minimum / maximum in
-              the negotiation outcome space.
-            - Most of the time you do not need to pass any arguments. Nevertheless,
-              if you want the system to find the best utility and outcome for a
-              single negotiation or a set of negotiations (i.e. some but not
-              all currently running negotiations), you can pass them using the
-              optional parameters.
-        """
-
-        nlines = self._awi.n_lines
-        (
-            min_in,
-            max_in,
-            min_price_in,
-            max_price_in,
-            min_out,
-            max_out,
-            min_price_out,
-            max_price_out,
-        ) = self._ranges(input_issues, output_issues, n_input_negs, n_output_negs)
-        if nlines <= 0 or max_in <= 0 or max_out <= 0:
-            return 0.0, (0, 0)
-        unit_price_in = max_price_in / max_in
-        unit_price_out = max_price_out / max_out
-        producible = min(max_out, nlines, max_in)
-        max_price_out = max_price_out * producible // max_out
-        max_out = producible
-        best_margin = unit_price_out - unit_price_in - self._production_cost
-        if best_margin > 0:
-            qin = qout = producible
-            qin, qout = max(qin, min_in), max(qout, min_out)
-            return (
-                self.from_aggregates(
-                    qin=qin - self._qin,
-                    qout=qout - self._qout,
-                    pin=min_price_in - self._pin,
-                    pout=max_price_out - self._pout,
-                ),
-                (qin, qout),
-            )
-        u1 = self.from_aggregates(
-            qin=min_in - self._qin,
-            qout=min_out - self._qout,
-            pin=min_price_in - self._pin,
-            pout=max_price_out - self._pout,
-        )
-        q = max(min_in, min_out)
-        u2 = self.from_aggregates(
-            qin=q - self._qin,
-            qout=q - self._qout,
-            pin=min_price_in - self._pin,
-            pout=max_price_out - self._pout,
-        )
-        if u1 > u2:
-            return u1, (min_in, min_out)
-        return u2, (q, q)
 
     @property
     def max_utility(self):
         """The maximum possible utility value"""
-        return self.best()[0]
-
-    def worst(
-        self,
-        input_issues=None,
-        output_issues=None,
-        n_input_negs=None,
-        n_output_negs=None,
-    ) -> Tuple[float, Tuple[int, int]]:
-        """
-        Returns the lowest possible utility with the corresponding total
-        input, output quantities
-
-        Args:
-            input_issues: The input issues in the same order defined in
-                          `scml.scml2020.common` (quantity, time, unit price).
-                          If None, then the `AWI` will be used to find them.
-            output_issues: The output issues in the same order defined in
-                          `scml.scml2020.common` (quantity, time, unit price).
-                          If None, then the `AWI` will be used to find them.
-            n_input_negs: Number of input negotiations. If not given it defaults
-                          to the number of suppliers
-            n_output_negs: Number of output negotiations. If not given it defaults
-                          to the number of consumers
-
-        Returns:
-            A tuple with highest utility value and corresponding input/output
-            quantities.
-
-        Remarks:
-            - Worst input / output prices are always the maximum / minimum in
-              the negotiation outcome space.
-            - Most of the time you do not need to pass any arguments. Nevertheless,
-              if you want the system to find the worst utility and outcome for a
-              single negotiation or a set of negotiations (i.e. some but not
-              all currently running negotiations), you can pass them using the
-              optional parameters.
-        """
-        (
-            _,
-            max_in,
-            _,
-            max_price_in,
-            min_out,
-            _,
-            min_price_out,
-            _,
-        ) = self._ranges(input_issues, output_issues, n_input_negs, n_output_negs)
-
-        return (
-            self.from_aggregates(
-                qin=max_in - self._qin,
-                qout=min_out - self._qout,
-                pin=max_price_in - self._pin,
-                pout=min_price_out - self._pout,
-            ),
-            (max_in, min_out),
-        )
+        return self.best.utility
 
     @property
     def min_utility(self):
         """The minimum possible utility value"""
-        return self.worst()[0]
-
-    def _ranges(
-        self,
-        input_issues=None,
-        output_issues=None,
-        n_input_negs=None,
-        n_output_negs=None,
-    ):
-        if input_issues is None:
-            input_issues = self._awi.current_input_issues
-        if output_issues is None:
-            output_issues = self._awi.current_output_issues
-        if n_input_negs is None:
-            n_input_negs = len(self._awi.my_suppliers)
-        if n_output_negs is None:
-            n_output_negs = len(self._awi.my_consumers)
-        # if I can sign exogenous contracts, then I can get no exogenous quantities
-        # otherwise I must get at least the quantity in the exogenous contracts
-        if self._force_exogenous:
-            min_ex_in = self._qin
-            min_ex_out = self._qout
-            min_ex_price_in = self._pin
-            min_ex_price_out = self._pout
-        else:
-            min_ex_in = min_ex_out = 0
-            min_ex_price_in = min_ex_price_out = 0
-        # maximum exogenous quantity is simply the exogenous quantity given
-        max_ex_in = self._qin
-        self._qout
-        max_ex_price_in = self._pin
-        max_ex_price_out = self._pout
-
-        # if there are no negotiations for inputs/outputs, the corresponding
-        # maximum quantity/price will be zero
-        max_neg_in = max_neg_out = 0
-        max_neg_price_in = max_neg_price_out = 0
-        # I can always refuse to sign/accept everything which means the minimum
-        # negotiated quantities and prices is always zero
-        min_neg_in = min_neg_out = 0
-        min_neg_price_in = min_neg_price_out = 0
-
-        # If I can negotiate quantities, then the maximum possible value is the
-        # maximum quantity per negotiation multiplied by the number of negotiations
-        if input_issues:
-            max_neg_in = int(input_issues[QUANTITY].max_value) * n_input_negs
-            max_neg_price_in = input_issues[UNIT_PRICE].max_value * max_neg_in
-        if output_issues:
-            max_neg_out += int(output_issues[QUANTITY].max_value) * n_output_negs
-            max_neg_price_out = output_issues[UNIT_PRICE].max_value * max_neg_out
-        # totals are just exogenous + negotiated
-        min_in = min_ex_in + min_neg_in
-        max_in = max_ex_in + max_neg_in
-        min_price_in = min_ex_price_in + min_neg_price_in
-        min_price_out = min_ex_price_out + min_neg_price_out
-        max_price_in = max_ex_price_in + max_neg_price_in
-        max_price_out = max_ex_price_out + max_neg_price_out
-        return (
-            min_in,
-            max_in,
-            min_price_in,
-            max_price_in,
-            min_neg_out,
-            max_neg_out,
-            min_price_out,
-            max_price_out,
-        )
+        return self.worst.utility
 
     def utility_range(
         self,
@@ -424,6 +278,7 @@ class OneShotUFun(UtilityFunction):
         infeasible_cutoff: Optional[float] = None,
         return_outcomes=False,
         max_n_outcomes=1000,
+        ami=None,
     ) -> Union[
         Tuple[UtilityValue, UtilityValue],
         Tuple[UtilityValue, UtilityValue, Outcome, Outcome],
@@ -472,52 +327,172 @@ class OneShotUFun(UtilityFunction):
             return super().utility_range(
                 issues, outcomes, infeasible_cutoff, return_outcomes, max_n_outcomes
             )
+        product = (
+            self.output_product
+            if self.input_agent
+            else self.input_product
+            if self.output_agent
+            else None
+        )
+        if product is None and ami:
+            product = ami.annotation["product"]
+        if product is None and self.ami:
+            product = self.ami.annotation.get("product", None)
+        if product is None:
+            raise ValueError("Cannot find the utility range of a midlevel agent")
+        t = self.current_step
+        is_input = int(product == self.input_product)
+        best = self.find_limit(
+            True,
+            n_input_negs=is_input,
+            n_output_negs=1 - is_input,
+        )
+        worst = self.find_limit(
+            False,
+            n_input_negs=is_input,
+            n_output_negs=1 - is_input,
+        )
         if not return_outcomes:
-            return self.min_utility, self.max_utility
-        if self._input_agent and self._output_agent:
-            raise ValueError(
-                "Cannot find utility_range for middle agents "
-                "because we do not whether or not this is a "
-                "selling or buying negotiation"
-            )
-        if issues is not None:
-            if self._input_agent:
-                input_issues, output_issues = [], self._awi.current_output_issues
-            else:
-                output_issues, input_issues = [], self._awi.current_input_issues
+            return worst.utility, best.utility
+        if self.input_agent:
+            worst_outcome = (worst.output_quantity, t, worst.output_price)
+            best_outcome = (best.output_quantity, t, best.output_price)
         else:
-            input_issues = self._awi.current_input_issues
-            output_issues = self._awi.current_output_issues
-        t = self._awi.current_step
-        worst_in_price, best_in_price = (
-            (
-                input_issues[UNIT_PRICE].max_value,
-                input_issues[UNIT_PRICE].min_value,
+            worst_outcome = (worst.input_quantity, t, worst.input_price)
+            best_outcome = (best.input_quantity, t, best.input_price)
+        return (worst.utility, best.utility, worst_outcome, best_outcome)
+
+    def _is_midlevel(self):
+        return not self.input_agent and not self.output_agent
+
+    def find_limit(
+        self,
+        best: bool,
+        n_input_negs=None,
+        n_output_negs=None,
+        secured_input_quantity=0,
+        secured_input_unit_price=0.0,
+        secured_output_quantity=0,
+        secured_output_unit_price=0.0,
+    ) -> UFunLimit:
+        """
+        Finds either the maximum or the minimum of the ufun.
+
+        Args:
+             best: Best(max) or worst (min) ufun value?
+             n_input_negs: How many input negs are we to consider? None means all
+             n_output_negs: How many output negs are we to consider? None means all
+             secured_input_quantity: A quantity that MUST be bought
+             secured_input_unit_price: The unit price of the quantity that MUST
+                                       be bought.
+             secured_output_quantity: A quantity that MUST be sold.
+             secured_output_unit_price: The unit price of the quantity that MUST
+                                       be sold.
+        Remarks:
+            - You can use the `secured_*` arguments and control over the number
+              of negotiations to consider to find the utility limits **given**
+              some already concluded and signed contracts
+        """
+
+        def make_program(
+            best: bool, allow_oversales, n_input_negs=None, n_output_negs=None
+        ):
+            if n_input_negs is None:
+                n_input_negs = self.n_input_negs
+            if n_output_negs is None:
+                n_output_negs = self.n_output_negs
+            uin = self.input_prange[1 - int(best)]
+            uout = self.output_prange[int(best)]
+            ex_uin = self.ex_pin / self.ex_qin if self.ex_qin else 0
+            ex_uout = self.ex_pout / self.ex_qout if self.ex_qout else 0
+
+            m = mp.Model(sense=mp.MAXIMIZE if best else mp.MINIMIZE)
+            m.verbose = False
+            qin = m.add_var(var_type=mp.INTEGER, name="qin")
+            qout = m.add_var(var_type=mp.INTEGER, name="qout")
+            produced = m.add_var(var_type=mp.INTEGER, name="produced")
+            if self.force_exogenous:
+                ex_qin = self.ex_qin
+                ex_qout = self.ex_qout
+            else:
+                ex_qin = m.add_var(var_type=mp.INTEGER, name="ex_qin")
+                ex_qout = m.add_var(var_type=mp.INTEGER, name="ex_qout")
+
+            m += qin >= 0
+            m += qin <= self.input_qrange[1] * self.n_input_negs
+            m += qout >= 0
+            m += qout <= self.output_qrange[1] * self.n_output_negs
+            m += produced >= 0
+            m += produced <= self.n_lines
+            m += produced <= qin
+            m += produced <= qout
+
+            if not self.force_exogenous:
+                m += ex_qin >= 0
+                m += ex_qin <= self.ex_qin
+                m += ex_qout >= 0
+                m += ex_qout <= self.ex_qout
+
+            if best:
+                m += qin <= self.n_lines
+                m += qout <= self.n_lines
+            if allow_oversales:
+                m += qout >= qin
+            else:
+                m += qin >= qout
+            op = mp.maximize if best else mp.minimize
+            scale = (
+                self.output_penalty_scale
+                if allow_oversales
+                else self.input_penalty_scale
             )
-            if input_issues
-            else (0, 0)
-        )
-        worst_out_price, best_out_price = (
-            (
-                output_issues[UNIT_PRICE].min_value,
-                output_issues[UNIT_PRICE].max_value,
-            )
-            if output_issues
-            else (0, 0)
-        )
-        worst_u, (worst_in_quantity, worst_out_quantity) = self.worst(
-            input_issues, output_issues, 1, 1
-        )
-        best_u, (best_in_quantity, best_out_quantity) = self.worst(
-            input_issues, output_issues, 1, 1
-        )
-        return (
-            worst_u,
-            best_u,
-            (worst_out_quantity, t, worst_out_price)
-            if self._input_agent
-            else (worst_in_quantity, t, worst_in_price),
-            (best_out_quantity, t, best_out_price)
-            if self._input_agent
-            else (best_in_quantity, t, best_in_price),
-        )
+            if scale is None:
+                scale = uout if allow_oversales else uin
+            if allow_oversales:
+                exp = (
+                    qout * uout
+                    + ex_qout * ex_uout
+                    + secured_output_quantity * secured_output_unit_price
+                    - secured_output_quantity * secured_output_unit_price
+                    - ex_qin * ex_uin
+                    - qin * uin
+                    - self.production_cost * produced
+                    - self.delivery_penalty * (qout - qin) * scale
+                )
+            else:
+                exp = (
+                    qout * uout
+                    - qin * uin
+                    - self.production_cost * produced
+                    - self.storage_cost * (qin - qout) * scale
+                )
+            m.objective = op(exp)
+            status = m.optimize()
+            if (
+                status != mp.OptimizationStatus.OPTIMAL
+                and status != mp.OptimizationStatus.FEASIBLE
+            ):
+                warnings.warn("Infeasible solution to ufun max/min")
+            else:
+                qin, qout, produced = qin.x, qout.x, produced.x
+                if not self.force_exogenous:
+                    ex_qin, ex_qout = ex_qin.x, ex_qout.x
+                return m.objective_value, [
+                    qin,
+                    uin,
+                    qout,
+                    uout,
+                    ex_qin,
+                    ex_uin,
+                    ex_qout,
+                    ex_uout,
+                    produced,
+                ]
+
+        u1, vals1 = make_program(best, False, n_input_negs, n_output_negs)
+        u2, vals2 = make_program(best, True, n_input_negs, n_output_negs)
+        if (not best and u1 < u2) or (best and u1 > u2):
+            utility, vals = u1, vals1
+        else:
+            utility, vals = u2, vals2
+        return UFunLimit(*tuple([utility] + vals))

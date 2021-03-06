@@ -53,6 +53,8 @@ class GreedyOneShotAgent(OneShotAgent):
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return None
+        if not self.get_ami(negotiator_id):
+            return None
         quantity_issue = self.negotiators[negotiator_id][0].ami.issues[QUANTITY]
         unit_price_issue = self.negotiators[negotiator_id][0].ami.issues[UNIT_PRICE]
         offer = [-1] * 3
@@ -70,9 +72,12 @@ class GreedyOneShotAgent(OneShotAgent):
         if self.awi.is_middle_level:
             summary = self.awi.exogenous_contract_summary
             secured = self._sales if self._is_selling(negotiator_id) else self._supplies
-            return min(summary[0][0], summary[-1][0]) - secured
+            demand = min(summary[0][0], summary[-1][0])
+            return demand - secured
+
         if self.awi.is_first_level:
             return self.awi.current_exogenous_input_quantity - self._sales
+
         return self.awi.current_exogenous_output_quantity - self._supplies
 
     def _is_selling(self, negotiator_id):
