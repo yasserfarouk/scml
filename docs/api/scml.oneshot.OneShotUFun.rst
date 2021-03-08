@@ -18,15 +18,14 @@ OneShotUFun
    .. autosummary::
 
       ~OneShotUFun.__call__
-      ~OneShotUFun.best
       ~OneShotUFun.breach_level
+      ~OneShotUFun.find_limit
       ~OneShotUFun.from_aggregates
       ~OneShotUFun.from_contracts
       ~OneShotUFun.from_offers
       ~OneShotUFun.is_breach
       ~OneShotUFun.outcome_as_tuple
       ~OneShotUFun.utility_range
-      ~OneShotUFun.worst
       ~OneShotUFun.xml
 
    .. rubric:: Attributes Documentation
@@ -37,13 +36,12 @@ OneShotUFun
    .. rubric:: Methods Documentation
 
    .. automethod:: __call__
-   .. automethod:: best
    .. automethod:: breach_level
+   .. automethod:: find_limit
    .. automethod:: from_aggregates
    .. automethod:: from_contracts
    .. automethod:: from_offers
    .. automethod:: is_breach
    .. automethod:: outcome_as_tuple
    .. automethod:: utility_range
-   .. automethod:: worst
    .. automethod:: xml

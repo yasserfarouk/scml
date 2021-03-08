@@ -209,8 +209,8 @@ def test_agents_go_bankrupt(n_processes):
             add_time=True,
             rand_digits=4,
         ),
-        initial_balance=1,
-        bankruptcy_limit=1,
+        initial_balance=0,
+        bankruptcy_limit=0,
         n_steps=10,
         compact=COMPACT,
         no_logs=NOLOGS,
@@ -303,10 +303,26 @@ def test_graphs_lead_to_no_unknown_nodes():
     )
 )
 @settings(deadline=300_000, max_examples=30)
-@reproduce_failure('6.3.3', b'AAEAAQQA')
 def test_adapter(atype):
     world = SCML2021World(
         **SCML2021World.generate(agent_types=atype, n_steps=10),
         construct_graphs=False,
+        no_logs=True,
+        compact=True,
+    )
+    world.run()
+
+def test_adapter_example():
+    world = SCML2021World(
+        **SCML2021World.generate(
+            agent_types=[
+                "scml.oneshot.agents.SingleAgreementAspirationAgent", 
+                "scml.scml2020.DecentralizingAgent"
+                ], 
+            n_steps=10
+        ),
+        construct_graphs=False,
+        no_logs=True,
+        compact=True,
     )
     world.run()

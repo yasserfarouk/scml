@@ -455,6 +455,11 @@ class AWI(AgentWorldInterface):
         return self.n_products - 1
 
     @property
+    def n_competitors(self) -> int:
+        """Returns the number of factories/agents in the same production level"""
+        return len(self._world.consumers[self.my_output_product])
+
+    @property
     def my_input_product(self) -> int:
         """Returns a list of products that are inputs to at least one process the agent can run"""
         products = self._world.agent_inputs.get(self.agent.id, np.empty(0, dtype=int))

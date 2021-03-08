@@ -20,6 +20,8 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSingleAgreementAgen
             and self.awi.my_output_product < self.awi.n_products - 1
         )
         super().init()
+        if not self.ufun:
+            self.make_ufun()
 
     def counter_all(self, offers, states):
         if self.__endall:

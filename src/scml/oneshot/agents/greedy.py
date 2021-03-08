@@ -19,17 +19,16 @@ __all__ = ["GreedyOneShotAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"
 
 
 class GreedyOneShotAgent(OneShotAgent):
-    """A greedy agent based on `OneShotAgent`"""
+    """A greedy agent based on OneShotAgent"""
 
     def init(self):
         self._sales = self._supplies = 0
-        super().init()
 
     def step(self):
         self._sales = self._supplies = 0
 
     def on_negotiation_success(self, contract, mechanism):
-        if contract.annotation["seller"] == self.id:
+        if contract.annotation["product"] == self.awi.my_input_product:
             self._sales += contract.agreement["quantity"]
         else:
             self._supplies += contract.agreement["quantity"]
@@ -41,63 +40,52 @@ class GreedyOneShotAgent(OneShotAgent):
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return ResponseType.END_NEGOTIATION
-        if state.step == self.negotiators[negotiator_id][0].ami.n_steps - 1:
-            return (
-                ResponseType.ACCEPT_OFFER
-                if offer[QUANTITY] <= my_needs
-                else ResponseType.REJECT_OFFER
-            )
-        return ResponseType.REJECT_OFFER
+        return (
+            ResponseType.ACCEPT_OFFER
+            if offer[QUANTITY] <= my_needs
+            else ResponseType.REJECT_OFFER
+        )
 
     def best_offer(self, negotiator_id):
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return None
-        if not self.get_ami(negotiator_id):
+        ami = self.get_ami(negotiator_id)
+        if not ami:
             return None
-        quantity_issue = self.negotiators[negotiator_id][0].ami.issues[QUANTITY]
-        unit_price_issue = self.negotiators[negotiator_id][0].ami.issues[UNIT_PRICE]
+        quantity_issue = ami.issues[QUANTITY]
+        unit_price_issue = ami.issues[UNIT_PRICE]
         offer = [-1] * 3
         offer[QUANTITY] = max(
             min(my_needs, quantity_issue.max_value), quantity_issue.min_value
         )
         offer[TIME] = self.awi.current_step
-        if self._is_selling(negotiator_id):
+        if self._is_selling(ami):
             offer[UNIT_PRICE] = unit_price_issue.max_value
         else:
             offer[UNIT_PRICE] = unit_price_issue.min_value
         return tuple(offer)
 
     def _needed(self, negotiator_id):
-        if self.awi.is_middle_level:
-            summary = self.awi.exogenous_contract_summary
-            secured = self._sales if self._is_selling(negotiator_id) else self._supplies
-            demand = min(summary[0][0], summary[-1][0])
-            return demand - secured
+        summary = self.awi.exogenous_contract_summary
+        secured = (
+            self._sales
+            if self._is_selling(self.get_ami(negotiator_id))
+            else self._supplies
+        )
+        demand = min(summary[0][0], summary[-1][0]) / self.awi.n_competitors
+        return demand - secured
 
-        if self.awi.is_first_level:
-            return self.awi.current_exogenous_input_quantity - self._sales
-
-        return self.awi.current_exogenous_output_quantity - self._supplies
-
-    def _is_selling(self, negotiator_id):
-        return self.negotiators[negotiator_id][0].ami.annotation["seller"] == self.id
+    def _is_selling(self, ami):
+        return ami.annotation["product"] == self.awi.my_output_product
 
 
 class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
-    """Greedy agent based on `OneShotSyncAgent`"""
+    """A greedy agent based on OneShotSyncAgent"""
 
-    def _needs(self):
-        """
-        Returns both input and output needs
-        """
-        if self.awi.is_middle_level:
-            summary = self.awi.exogenous_contract_summary
-            n = min(summary[0][0], summary[-1][0])
-            return n - self._supplies, n - self._sales
-        if self.awi.is_first_level:
-            return 0, self.awi.current_exogenous_input_quantity - self._sales
-        return self.awi.current_exogenous_output_quantity - self._supplies, 0
+    def __init__(self, *args, threshold=0.3, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._threshold = threshold
 
     def first_proposals(self):
         """Decide a first proposal on every negotiation.
@@ -145,22 +133,29 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
         calc_responses(my_output_needs, output_offers, True)
         return responses
 
+    def _needs(self):
+        """
+        Returns both input and output needs
+        """
+        if self.awi.is_middle_level:
+            summary = self.awi.exogenous_contract_summary
+            n = min(summary[0][0], summary[-1][0])
+            return n - self._supplies, n - self._sales
+        if self.awi.is_first_level:
+            return 0, self.awi.current_exogenous_input_quantity - self._sales
+        return self.awi.current_exogenous_output_quantity - self._supplies, 0
+
 
 class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
     """ A greedy agent based on `OneShotSingleAgreementAgent`"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._endall = False
-
-    def init(self):
-        self._endall = self.awi.is_middle_level
-        super().init()
 
     def is_acceptable(self, offer, source, state) -> bool:
-        if self._endall:
-            return False
-        return self.ufun(offer) > 0.7 * self.ufun.max_utility
+        mx, mn = self.ufun.max_utility, self.ufun.min_utility
+        u = (self.ufun(offer) - mn) / (mx - mn)
+        return u >= (1 - state.relative_time)
 
     def best_offer(self, offers):
         ufuns = [(self.ufun(_), i) for i, _ in enumerate(offers.values())]

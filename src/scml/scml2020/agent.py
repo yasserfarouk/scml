@@ -428,13 +428,15 @@ class AWIHelper:
         if not self._world.publish_exogenous_summary:
             return None
         n_steps = self._owner.awi.n_steps
-        n_products = self.n_prodcuts
+        n_products = self._owner.awi.n_products
         y = self._world.exogenous_contracts_summary
         # we shift each product down by its number
         x = np.zeros_like(self._world.exogenous_contracts_summary)
         for i in range(0, n_products):
             x[i, 0 : n_steps - i, :] = y[i, i:n_steps, :]
-        return x
+        summary = [(int(x[i, self.current_step, 0]), int(x[i, self.current_step, 1]))
+        for i in range(n_products)]
+        return summary
 
     # Everything else
     # ===============
@@ -482,6 +484,7 @@ class OneShotAdapter(
     def init(self):
         self._oneshot_awi = AWIHelper(self)
         self._obj._awi = self._oneshot_awi
+        self._obj.ufun = self.make_ufun()
         super().init()
         self._obj.init()
 

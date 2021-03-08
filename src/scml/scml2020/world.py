@@ -629,6 +629,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         for c in exogenous_contracts:
             seller_id = agents[c.seller].id if c.seller >= 0 else SYSTEM_SELLER_ID
             buyer_id = agents[c.buyer].id if c.buyer >= 0 else SYSTEM_BUYER_ID
+            if not c.quantity:
+                continue
             contract = Contract(
                 agreement={
                     "time": c.time,
@@ -702,6 +704,28 @@ class SCML2020World(TimeInAgreementMixin, World):
         self._registered_negs: Dict[Tuple[str], int] = Counter()
         if self.publish_trading_prices:
             self.bulletin_board.record("trading_prices", self._trading_price[:, 1])
+
+        self.exogenous_contracts_summary = None
+        if self.publish_exogenous_summary:
+            q = np.zeros((self.n_products, self.n_steps, 2))
+            for s in range(self.n_steps):
+                for contract in self.exogenous_contracts[s]:
+                    product = contract.annotation["product"]
+                    quantity, unit_price, t = (
+                        contract.agreement["quantity"],
+                        contract.agreement["unit_price"],
+                        contract.agreement["time"],
+                    )
+                    q[product, t, 0] += quantity
+                    if quantity:
+                        q[product, t, 1] += quantity * unit_price
+            self.exogenous_contracts_summary = q
+            for s in range(self.n_steps):
+                self.bulletin_board.record(
+                    "exogenous_contracts_summary",
+                    value=self.exogenous_contracts_summary,
+                    key=s,
+                )
 
     @classmethod
     def generate(
@@ -1280,28 +1304,6 @@ class SCML2020World(TimeInAgreementMixin, World):
                     value=self.trading_prices,
                     key=self.current_step,
                 )
-            if self.publish_exogenous_summary:
-                q = (
-                    np.zeros((self.n_products, self.n_steps, 2))
-                    if s == 0
-                    else (self.exogenous_contracts_summary)
-                )
-                for contract in self.exogenous_contracts[s]:
-                    product = contract.annotation["product"]
-                    quantity, unit_price, t = (
-                        contract.agreement["quantity"],
-                        contract.agreement["unit_price"],
-                        contract.agreement["time"],
-                    )
-                    q[product, t, 0] += quantity
-                    q[product, t, 1] += quantity * unit_price
-                self.exogenous_contracts_summary = q
-                self.bulletin_board.record(
-                    "exogenous_contracts_summary",
-                    value=self.exogenous_contracts_summary,
-                    key=self.current_step,
-                )
-
             return
 
         # update trading price information

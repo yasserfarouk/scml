@@ -33,6 +33,7 @@ class OneShotAWI(AgentWorldInterface):
 
         - *n_products*: Number of products in the production chain.
         - *n_processes*: Number of processes in the production chain.
+        - *n_competitors*: Number of factories on the same production level.
         - *all_suppliers*: A list of all suppliers by product.
         - *all_consumers*: A list of all consumers by product.
         - *catalog_prices*: A list of the catalog prices (by product).
@@ -137,6 +138,11 @@ class OneShotAWI(AgentWorldInterface):
     def n_products(self) -> int:
         """Returns the number of products in the system"""
         return len(self._world.catalog_prices)
+
+    @property
+    def n_competitors(self) -> int:
+        """Returns the number of factories/agents in the same production level"""
+        return len(self._world.consumers[self.my_output_product])
 
     @property
     def n_processes(self) -> int:

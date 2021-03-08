@@ -26,6 +26,7 @@ OneShotAdapter
       ~OneShotAdapter.get_storage_cost_dev
       ~OneShotAdapter.get_storage_cost_mean
       ~OneShotAdapter.init
+      ~OneShotAdapter.make_ufun
       ~OneShotAdapter.respond_to_negotiation_request
       ~OneShotAdapter.step
       ~OneShotAdapter.to_dict
@@ -46,6 +47,7 @@ OneShotAdapter
    .. automethod:: get_storage_cost_dev
    .. automethod:: get_storage_cost_mean
    .. automethod:: init
+   .. automethod:: make_ufun
    .. automethod:: respond_to_negotiation_request
    .. automethod:: step
    .. automethod:: to_dict

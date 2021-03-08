@@ -138,12 +138,12 @@ def distribute_quantities(
         return values
     values = []
     qz = int(0.5 + sum(q) / len(q))
-    values.append(integer_cut(qz, a, 0))
-    for s in range(1, n_steps):
+    base_cut = integer_cut(qz, a, 0)
+    for s in range(0, n_steps):
         if qz == 0 or q[s] == 0:
             values.append([0] * a)
             continue
-        values.append([int(0.5 + _ * q[s] / qz) for _ in values[0]])
+        values.append([int(0.5 + _ * q[s] / qz) for _ in base_cut])
         n_changes = int(0.5 + (1.0 - predictability) * q[s])
         if not n_changes:
             continue

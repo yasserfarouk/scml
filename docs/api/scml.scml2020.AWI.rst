@@ -21,6 +21,7 @@ AWI
       ~AWI.my_output_product
       ~AWI.my_output_products
       ~AWI.my_suppliers
+      ~AWI.n_competitors
       ~AWI.n_lines
       ~AWI.n_processes
       ~AWI.n_products
@@ -57,6 +58,7 @@ AWI
    .. autoattribute:: my_output_product
    .. autoattribute:: my_output_products
    .. autoattribute:: my_suppliers
+   .. autoattribute:: n_competitors
    .. autoattribute:: n_lines
    .. autoattribute:: n_processes
    .. autoattribute:: n_products
