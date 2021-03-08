@@ -10,12 +10,11 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |CI| |PyPiPublished| |requires|
-        | |codecov|
-        | |codacy|
+      - | |CI| |PyPiPublished| |requires| |codecov| |codacy|
     * - package
-      - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
+      - | |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
+    * - discussions
+      - | General |gitter| Standard |std| Collusion |collusion| OneShot |oneshot|
 .. |docs| image:: https://readthedocs.org/projects/scml/badge/?style=flat
     :target: http://www.yasserm.com/scml/scml2020docs
     :alt: Documentation Status
@@ -59,6 +58,22 @@ Overview
 .. |PyPiPublished| image:: https://github.com/yasserfarouk/scml/workflows/PyPI/badge.svg
     :target: https://pypi.python.org/pypi/scml
     :alt: Published on Pypi
+    
+.. |gitter| image:: https://badges.gitter.im/scml-anac/community.svg
+   :alt: Join the chat at https://gitter.im/scml-anac/community
+   :target: https://gitter.im/scml-anac/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+.. |std| image:: https://badges.gitter.im/scml-anac/standard.svg
+   :alt: Join the chat at https://gitter.im/scml-anac/standard
+   :target: https://gitter.im/scml-anac/standard?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+.. |collusion| image:: https://badges.gitter.im/scml-anac/collusion.svg
+   :alt: Join the chat at https://gitter.im/scml-anac/collusion
+   :target: https://gitter.im/scml-anac/collusion?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+.. |oneshot| image:: https://badges.gitter.im/scml-anac/ones-hot.svg
+   :alt: Join the chat at https://gitter.im/scml-anac/one-shot
+   :target: https://gitter.im/scml-anac/one-shot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
 .. end-badges
@@ -115,3 +130,5 @@ Note, to combine the coverage data from all the tox environments run:
       - ::
 
             PYTEST_ADDOPTS=--cov-append tox
+
+
