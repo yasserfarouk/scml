@@ -293,6 +293,7 @@ def test_graphs_lead_to_no_unknown_nodes():
             agent_types=[DecentralizingAgent, BuyCheapSellExpensiveAgent], n_steps=10
         ),
         construct_graphs=True,
+        no_logs=True,
     )
     world.graph((0, world.n_steps))
 

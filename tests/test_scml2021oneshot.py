@@ -146,6 +146,8 @@ def test_generate():
             agent_types=RandomOneShotAgent,
             n_steps=10,
             n_processes=2,
+            compact=True,
+            no_logs=True,
         )
     )
     world.run()
@@ -195,7 +197,9 @@ def test_ufun_min_max_in_world():
             **SCML2020OneShotWorld.generate(
                 agent_types=[RandomOneShotAgent], n_steps=10
             ),
-            construct_graphs=True,
+            construct_graphs=False,
+            compact=True,
+            no_logs=True,
         )
         world.step()
         for aid, agent in world.agents.items():
@@ -352,6 +356,8 @@ def test_adapter(atype):
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=20),
         construct_graphs=False,
+        compact=True,
+        no_logs=True,
     )
     world.run()
 
@@ -368,5 +374,7 @@ def test_adapter_example():
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
         construct_graphs=False,
+        compact=True,
+        no_logs=True,
     )
     world.run()
