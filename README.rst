@@ -8,7 +8,7 @@ Overview
     :stub-columns: 1
 
     * - docs
-      - |docs|
+      - |docs| |binder|
     * - tests
       - | |CI| |PyPiPublished| |requires| |codecov| |codacy|
     * - package
@@ -75,6 +75,9 @@ Overview
    :alt: Join the chat at https://gitter.im/scml-anac/one-shot
    :target: https://gitter.im/scml-anac/one-shot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+   :alt: run in binder
+   :target: https://mybinder.org/v2/gh/yasserfarouk/scml/HEAD
 
 .. end-badges
 
