@@ -352,7 +352,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  7.35it/s]
+    100%|██████████| 10/10 [00:03<00:00,  2.87it/s]
 
 
 
@@ -442,7 +442,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:04<00:00,  2.35it/s]
+    100%|██████████| 10/10 [00:07<00:00,  1.32it/s]
 
 
 
@@ -891,7 +891,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:04<00:00,  2.30it/s]
+    100%|██████████| 10/10 [00:20<00:00,  2.01s/it]
 
 
 
@@ -954,21 +954,24 @@ average prices they get from their negotiations.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    True    False    7.0  0.9  0.4  0.1  1.0  1.0  1.0  1.0
+    False   True     5.0  0.3  0.4  0.0  0.0  0.0  0.2  1.0
+    True    False   12.0  0.7  0.0  0.6  0.7  0.7  0.7  0.8
     MyAgent:
     ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    11.0  0.4  0.2  0.0  0.2  0.5  0.5  0.6
+    False   True    19.0  0.5  0.3  0.0  0.5  0.7  0.7  0.8
+    True    False    8.0  0.8  0.3  0.2  0.5  1.0  1.0  1.0
+            True    11.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
     DecentralizingAgent:
     ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     7.0  0.9  0.4  0.1  1.0  1.0  1.0  1.0
-    True    False   11.0  0.4  0.2  0.0  0.2  0.5  0.5  0.6
-            True     8.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    False   True     6.0  0.8  0.3  0.5  0.6  1.0  1.0  1.0
+    True    False   10.0  0.2  0.3  0.0  0.0  0.0  0.5  0.5
+            True     7.0  0.4  0.5  0.0  0.0  0.0  1.0  1.0
 
 
 We can see that the new strategy gets lower average prices when buying
@@ -1003,7 +1006,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:10<00:00,  1.03s/it]
+    100%|██████████| 10/10 [00:23<00:00,  2.36s/it]
 
 .. parsed-literal::
 
@@ -1190,7 +1193,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.98it/s]
+    100%|██████████| 10/10 [00:04<00:00,  2.03it/s]
 
 
 .. code:: ipython3
@@ -1211,8 +1214,7 @@ exploring the design space.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     2.0  0.6  0.2  0.4  0.5  0.6  0.7  0.8
-    True    False    4.0  0.7  0.0  0.7  0.7  0.7  0.7  0.7
+    False   True     2.0  0.7  0.4  0.4  0.5  0.7  0.8  1.0
     
 
 
@@ -1268,7 +1270,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.98it/s]
+    100%|██████████| 10/10 [00:05<00:00,  1.97it/s]
 
 
 .. code:: ipython3
@@ -1450,7 +1452,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.84it/s]
+    100%|██████████| 10/10 [00:03<00:00,  3.29it/s]
 
 
 
@@ -1543,7 +1545,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  6.76it/s]
+    100%|██████████| 10/10 [00:02<00:00,  3.90it/s]
 
 
 
@@ -1601,10 +1603,10 @@ now:
 
 .. code:: ipython3
 
-    from scml.oneshot.agents import RandomOneShotAgent, GreedySingleAgreementAgent
+    from scml.oneshot.agents import GreedySingleAgreementAgent
     
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent, RandomOneShotAgent],
+        **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent],
                                  horizon=1, 
                                  n_steps=10
                                 ), 
@@ -1619,193 +1621,15 @@ now:
 
 .. parsed-literal::
 
-     20%|██        | 2/10 [00:01<00:04,  1.65it/s]
+    100%|██████████| 10/10 [01:16<00:00,  7.69s/it]
 
 
-::
+
+.. image:: 03.develop_agent_scml2020_files/03.develop_agent_scml2020_67_1.png
 
 
-    ---------------------------------------------------------------------------
 
-    TypeError                                 Traceback (most recent call last)
-
-    <ipython-input-38-8f91eea1493a> in <module>
-          8     construct_graphs=True,
-          9 )
-    ---> 10 world.run_with_progress()
-         11 
-         12 world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
-
-
-    ~/code/projects/negmas/negmas/situated.py in run_with_progress(self, callback)
-       3466             if self.time >= self.time_limit:
-       3467                 break
-    -> 3468             if not self.step():
-       3469                 break
-       3470 
-
-
-    ~/code/projects/negmas/negmas/situated.py in step(self)
-       3359 
-       3360         for operation in self.operations:
-    -> 3361             operation_map[operation]()
-       3362             if self.time >= self.time_limit:
-       3363                 return False
-
-
-    ~/code/projects/negmas/negmas/situated.py in _run_negotiations(n_steps)
-       3126                 n_broken_,
-       3127                 n_success_,
-    -> 3128             ) = self._step_negotiations(
-       3129                 [_[0] for _ in mechanisms], n_steps, False, [_[1] for _ in mechanisms]
-       3130             )
-
-
-    ~/code/projects/negmas/negmas/situated.py in _step_negotiations(self, mechanisms, n_steps, force_immediate_signing, partners)
-       2979                     break
-       2980                 mechanism = mechanisms[i]
-    -> 2981                 contract, r = self._step_a_mechanism(mechanism, force_immediate_signing)
-       2982                 contracts[i] = contract
-       2983                 running[i] = r
-
-
-    ~/code/projects/negmas/negmas/situated.py in _step_a_mechanism(self, mechanism, force_immediate_signing)
-       2915             result = mechanism.abort()
-       2916             if not self.ignore_negotiation_exceptions:
-    -> 2917                 raise e
-       2918             exc_type, exc_value, exc_traceback = sys.exc_info()
-       2919             self.logerror(
-
-
-    ~/code/projects/negmas/negmas/situated.py in _step_a_mechanism(self, mechanism, force_immediate_signing)
-       2911         contract = None
-       2912         try:
-    -> 2913             result = mechanism.step()
-       2914         except Exception as e:
-       2915             result = mechanism.abort()
-
-
-    ~/code/projects/negmas/negmas/mechanisms.py in step(self)
-        842         self._waiting = False
-        843         step_start = time.perf_counter()
-    --> 844         result = self.round()
-        845         step_time = time.perf_counter() - step_start
-        846         self._stats["round_times"].append(step_time)
-
-
-    ~/code/projects/negmas/negmas/sao/mechanism.py in round(self)
-        682             neg = self.negotiators[neg_indx]
-        683             strt = time.perf_counter()
-    --> 684             resp = _safe_counter(neg, state=self.state, offer=self._current_offer)
-        685             if resp is None:
-        686                 return MechanismRoundResult(
-
-
-    ~/code/projects/negmas/negmas/sao/mechanism.py in _safe_counter(negotiator, *args, **kwargs)
-        526                         return SAOResponse(ResponseType.END_NEGOTIATION, None)
-        527                     else:
-    --> 528                         raise ex
-        529                 finally:
-        530                     times[negotiator.id] += time.perf_counter() - __strt
-
-
-    ~/code/projects/negmas/negmas/sao/mechanism.py in _safe_counter(negotiator, *args, **kwargs)
-        512                         response = TimeoutCaller.run(fun, timeout=timeout)
-        513                     else:
-    --> 514                         response = TimeoutCaller.run(fun, timeout=timeout)
-        515                 except TimeoutError:
-        516                     response = None
-
-
-    ~/code/projects/negmas/negmas/helpers.py in run(cls, to_run, timeout)
-       1307         future = pool.submit(to_run)
-       1308         try:
-    -> 1309             result = future.result(timeout)
-       1310             return result
-       1311         except TimeoutError as s:
-
-
-    /Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/concurrent/futures/_base.py in result(self, timeout)
-        437                 raise CancelledError()
-        438             elif self._state == FINISHED:
-    --> 439                 return self.__get_result()
-        440             else:
-        441                 raise TimeoutError()
-
-
-    /Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/concurrent/futures/_base.py in __get_result(self)
-        386     def __get_result(self):
-        387         if self._exception:
-    --> 388             raise self._exception
-        389         else:
-        390             return self._result
-
-
-    /Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/concurrent/futures/thread.py in run(self)
-         55 
-         56         try:
-    ---> 57             result = self.fn(*self.args, **self.kwargs)
-         58         except BaseException as exc:
-         59             self.future.set_exception(exc)
-
-
-    ~/code/projects/negmas/negmas/sao/negotiators.py in counter(self, state, offer)
-        198         if offer is None:
-        199             return SAOResponse(ResponseType.REJECT_OFFER, self.propose_(state=state))
-    --> 200         response = self.respond_(state=state, offer=offer)
-        201         if response != ResponseType.REJECT_OFFER:
-        202             return SAOResponse(response, None)
-
-
-    ~/code/projects/negmas/negmas/sao/negotiators.py in respond_(self, state, offer)
-        178         if self._ufun_modified:
-        179             self.on_ufun_changed()
-    --> 180         return self.respond(state=state, offer=offer)
-        181 
-        182     def counter(
-
-
-    ~/code/projects/negmas/negmas/sao/negotiators.py in respond(self, state, offer)
-       1041         """Calls parent controller"""
-       1042         if self._Negotiator__parent:
-    -> 1043             return self._Negotiator__parent.respond(self.id, state, offer)
-       1044         return ResponseType.REJECT_OFFER
-       1045 
-
-
-    ~/code/projects/negmas/negmas/sao/controllers.py in respond(self, negotiator_id, state, offer)
-        225             or self.n_waits[negotiator_id] >= n_negotiators
-        226         ):
-    --> 227             responses = self.counter_all(offers=self.offers, states=self.offer_states)
-        228             for nid in responses.keys():
-        229                 # register the responses for next time for all other negotiators
-
-
-    ~/code/projects/negmas/negmas/sao/controllers.py in counter_all(self, offers, states)
-        451 
-        452         # find the partner who sent the best offer (partner is represented by the ID of the negotiator engaged with it)
-    --> 453         partner = self.best_offer(offers)
-        454         if partner is None:
-        455             # if there is no best-partner, make an offer for each partner (non-strict) or for any random partner
-
-
-    ~/code/projects/scml/src/scml/oneshot/agents/greedy.py in best_offer(self, offers)
-        159 
-        160     def best_offer(self, offers):
-    --> 161         ufuns = [(self.ufun(_), i) for i, _ in enumerate(offers.values())]
-        162         keys = list(offers.keys())
-        163         return keys[max(ufuns)[1]]
-
-
-    ~/code/projects/scml/src/scml/oneshot/agents/greedy.py in <listcomp>(.0)
-        159 
-        160     def best_offer(self, offers):
-    --> 161         ufuns = [(self.ufun(_), i) for i, _ in enumerate(offers.values())]
-        162         keys = list(offers.keys())
-        163         return keys[max(ufuns)[1]]
-
-
-    TypeError: 'NoneType' object is not callable
+.. image:: 03.develop_agent_scml2020_files/03.develop_agent_scml2020_67_2.png
 
 
 This example shows that agents developed for the new OneShot track are

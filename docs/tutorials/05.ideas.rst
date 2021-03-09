@@ -1,5 +1,5 @@
-Ideas for developing your agent
--------------------------------
+Ideas for developing your agent (Standard)
+------------------------------------------
 
 This section of the tutorials will discuss some possible ideas for
 developing your agent. It is completely optional to read this but it may
@@ -278,6 +278,33 @@ trading prices at the end of simulation offsets your production costs.
 Try creating a production strategy that takes this effect into account
 switching between supply based and demand based production using a
 estimate of the final trading prices of its input and output products.
+
+Ideas for developing you agent (OneShot)
+----------------------------------------
+
+The one shot game is simpler than the standard game but it is still a
+challenging problem. Here are some ideas that you can use for your
+agent:
+
+IDEA 10: Learn the acceptance strategy of your partners
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You negotiate with the same partners (suppliers, and consumers)
+repeatedly. Moreover, each supplier/consumer is driven partially by a
+stable set of variables (e.g. exogenous contract’s mean quantity,
+production cost, storage cost, and delivery cost). This means that you
+can learn what kinds of agreements will each one of them be able to
+accept over time and adjust your negotiation behavior specifically to
+each of them.
+
+IDEA 11: Predict future market conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The trading prices are public information this year. This means you
+should be able to extrapolate future market conditions and use this to
+adapt your behavior. Even though your profits in every step are
+independent from the future, your concession strategy may depend on your
+expectation about the future of the market.
 
 Final Remarks
 -------------

@@ -5,6 +5,9 @@ In this tutorial we will describe how to utilize the logging facilities
 provided in the NegMAS library for developing SCML agents and analyzing
 their behavior.
 
+Most of the data in this tutorial apply equally to ``SCML2020``,
+``SCML2021`` and ``SCML-OneShot`` simulations.
+
 Types of Logs
 ~~~~~~~~~~~~~
 
@@ -84,9 +87,10 @@ Let’s check our logs
 
     [01;34m/Users/yasser/negmas/logs/test_world[00m
     ├── [01;34m_agent_logs[00m
+    ├── events.json
     └── log.txt
     
-    1 directory, 1 file
+    1 directory, 2 files
 
 
 As you can see, there is a folder called \**_agent_logs*\* that will
@@ -105,25 +109,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: test_world: World Created[0m
+    2021-03-08 16:06:19,300 - INFO - 0/10 [0.00%]: test_world: World Created
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: 00DoN@0 joined[0m
+    2021-03-08 16:06:19,302 - INFO - 0/10 [0.00%]: 00DoN@0 joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: 01DoN@0 joined[0m
+    2021-03-08 16:06:19,303 - INFO - 0/10 [0.00%]: 01DoN@0 joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: 02DoN@0 joined[0m
+    2021-03-08 16:06:19,303 - INFO - 0/10 [0.00%]: 02DoN@0 joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: 03DoN@1 joined[0m
+    2021-03-08 16:06:19,304 - INFO - 0/10 [0.00%]: 03DoN@1 joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: 04DoN@1 joined[0m
+    2021-03-08 16:06:19,304 - INFO - 0/10 [0.00%]: 04DoN@1 joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: 05DoN@1 joined[0m
+    2021-03-08 16:06:19,305 - INFO - 0/10 [0.00%]: 05DoN@1 joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: SELLER joined[0m
+    2021-03-08 16:06:19,305 - INFO - 0/10 [0.00%]: SELLER joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: BUYER joined[0m
+    2021-03-08 16:06:19,305 - INFO - 0/10 [0.00%]: BUYER joined
     
-    [32m2021-02-22 17:54:38 - INFO - 0/10 [0.00%]: This is a test message[0m
+    2021-03-08 16:06:19,313 - INFO - 0/10 [0.00%]: This is a test message
     
 
 
@@ -163,15 +167,16 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 .. parsed-literal::
 
     [01;34m/Users/yasser/negmas/logs/test_world[00m
-    └── [01;34m_agent_logs[00m
-        ├── 00DWL@0.txt
-        ├── 01DWL@0.txt
-        ├── 02DWL@0.txt
-        ├── 03DWL@1.txt
-        ├── 04DWL@1.txt
-        └── 05DWL@1.txt
+    ├── [01;34m_agent_logs[00m
+    │   ├── 00DWL@0.txt
+    │   ├── 01DWL@0.txt
+    │   ├── 02DWL@0.txt
+    │   ├── 03DWL@1.txt
+    │   ├── 04DWL@1.txt
+    │   └── 05DWL@1.txt
+    └── events.json
     
-    1 directory, 6 files
+    1 directory, 7 files
 
 
 .. code:: ipython3
@@ -183,25 +188,25 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    [0m2021-02-22 17:54:39 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (20.0, 40), t: (1, 6)[0m
+    2021-03-08 16:06:20,937 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (18.0, 36), t: (1, 6)
     
-    [32m2021-02-22 17:54:39 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID 28d2fa8d-20f9-4e7b-800d-7649f78c6f61)[0m
+    2021-03-08 16:06:20,968 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID 61df1858-727f-460c-81c4-e64a91a95deb)
     
-    [32m2021-02-22 17:54:39 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted[0m
+    2021-03-08 16:06:20,971 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
     
-    [0m2021-02-22 17:54:39 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (20.0, 40), t: (1, 6)[0m
+    2021-03-08 16:06:20,974 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (18.0, 36), t: (1, 6)
     
-    [32m2021-02-22 17:54:39 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 34240920-53ef-4376-9916-e00d638de109)[0m
+    2021-03-08 16:06:20,975 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 07d3f5bb-5892-46ff-8208-13c2bd288ae3)
     
-    [32m2021-02-22 17:54:39 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted[0m
+    2021-03-08 16:06:20,981 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
     
-    [0m2021-02-22 17:54:39 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (20.0, 40), t: (1, 6)[0m
+    2021-03-08 16:06:20,981 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (18.0, 36), t: (1, 6)
     
-    [32m2021-02-22 17:54:39 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 6653f99d-91ef-4137-a813-8637208d3d60)[0m
+    2021-03-08 16:06:20,982 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 8cb9d99d-3a2e-46bb-923e-dc59d52925d3)
     
-    [32m2021-02-22 17:54:39 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted[0m
+    2021-03-08 16:06:20,992 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
     
-    [0m2021-02-22 17:54:39 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 20), u: (20.0, 40), t: (2, 7)[0m
+    2021-03-08 16:06:20,995 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 19), u: (18.0, 36), t: (2, 7)
     
 
 
@@ -243,6 +248,8 @@ This is a full list of these parameters:
    logs). Default is True
 -  **log_file_name**: Name of the system log file. By default it is
    “log.txt”
+-  **event_file_name**: Name of the a file to store events (structured
+   logs) to. By default it is “events.json”
 -  **log_file_level**: The minimum log-level to save to file (WARNING,
    ERROR, INFO, DEBUG, CRITICAL, …). Default is DEGUG to save everything
 -  **log_ufuns**: Log utility functions. If True, all utility functions
@@ -274,7 +281,7 @@ Let’s try changing some of these:
 
     SCML2020World(
         **SCML2020World.generate(
-            agent_types=[DecentralizingAgent], 
+            agent_types=[DecentralizingAgentWithLogging], 
             n_steps=10, 
             n_processes=2,   
             name="test_world",
@@ -291,16 +298,24 @@ Let’s try changing some of these:
 
     [01;34m/Users/yasser/negmas/logs/test_world[00m
     ├── [01;34m_agent_logs[00m
+    │   ├── 00DWL@0.txt
+    │   ├── 01DWL@0.txt
+    │   ├── 02DWL@0.txt
+    │   ├── 03DWL@1.txt
+    │   ├── 04DWL@1.txt
+    │   └── 05DWL@1.txt
     ├── agents.json
     ├── breaches.csv
     ├── contracts.csv
+    ├── events.json
     ├── info.json
     ├── negotiations.csv
     ├── params.json
     ├── stats.csv
-    └── stats.csv.csv
+    ├── stats.csv.csv
+    └── stats.json
     
-    1 directory, 8 files
+    1 directory, 16 files
 
 
 Now we can see that many more files are created in the log folder. These
@@ -333,13 +348,14 @@ method without needing to enable periodic saving using
     ├── agents.json
     ├── breaches.csv
     ├── contracts.csv
+    ├── events.json
     ├── info.json
     ├── negotiations.csv
     ├── params.json
     ├── stats.csv
     └── stats.json
     
-    1 directory, 8 files
+    1 directory, 9 files
 
 
 Getting infromation about a simulation
@@ -363,15 +379,16 @@ Let’s examine each of the files ``save_stats`` saves in your
 
    -  **negotiations.csv** Stores information about all the negotiations
       conducted during the simulation.
-   -  **all_contracts.csv** Stores every contract concluded during the
+   -  **contracts.csv** Stores every contract concluded during the
       simulation.
-   -  **cancelled_contracts.csv** Cancelled contracts (not signed by at
-      least one party). This is a subset of the records in
-      *all_contracts.csv*.
-   -  **signed_contracts.csv** Signed contracts. This is a subset of the
-      records in *all_contracts.csv*.
    -  **breaches.csv** Stores information about every breach that
       occurred during the simulation.
+
+-  **Detailed Events**
+
+   -  **events.json** A list of events in JSON format. Notice that you
+      need to prepend it with open bracket and replace the last comma
+      with closed pracket to get a well formatted JSON list
 
 World Information
 ~~~~~~~~~~~~~~~~~
