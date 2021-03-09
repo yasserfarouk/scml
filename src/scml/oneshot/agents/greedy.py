@@ -104,8 +104,12 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
             for k, v in self.first_proposals().items()
         }
         my_input_needs, my_output_needs = self._needs()
-        input_offers = {k: v for k, v in offers.items() if self._is_selling(k)}
-        output_offers = {k: v for k, v in offers.items() if not self._is_selling(k)}
+        input_offers = {
+            k: v for k, v in offers.items() if self._is_selling(self.get_ami(k))
+        }
+        output_offers = {
+            k: v for k, v in offers.items() if not self._is_selling(self.get_ami(k))
+        }
 
         def calc_responses(my_needs, offers, is_selling):
             nonlocal responses
