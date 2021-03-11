@@ -21,6 +21,7 @@ from typing import List
 from typing import Optional
 
 from negmas import AgentMechanismInterface
+from negmas.situated import RunningNegotiationInfo
 from negmas import Contract
 from negmas import Entity
 from negmas import MechanismState
@@ -79,6 +80,23 @@ class OneShotAgent(SAOController, Entity, ABC):
     def awi(self):
         """Returns a `OneShotAWI` object for accessing the simulation."""
         return self._awi
+
+    @property
+    def running_negotiations(self) -> List[RunningNegotiationInfo]:
+        """The negotiations currently requested by the agent.
+
+        Returns:
+
+            A list of negotiation information objects (`RunningNegotiationInfo`)
+        """
+        return self._owner.running_negotiations
+
+    @property
+    def unsigned_contracts(self) -> List[Contract]:
+        """
+        All contracts that are not yet signed.
+        """
+        return self._owner.unsigned_contracts
 
     def init(self):
         """
