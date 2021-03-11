@@ -250,16 +250,15 @@ class OneShotUFun(UtilityFunction):
     def breach_level(self, qin: int = 0, qout: int = 0):
         """Calculates the breach level that would result from a given quantities"""
         qin += self.ex_qin
+        qin = min(qin, self.n_lines)
         qout += self.ex_qout
-        if max(qin, qout) < 1:
-            return 0
-        return abs(qin - qout) / max(qin, qout)
+        return 0 if qin >= qout else (qout - qin) / qout
 
     def is_breach(self, qin: int = 0, qout: int = 0):
         """Whether the given quantities would lead to a breach."""
         qin += self.ex_qin
         qout += self.ex_qout
-        return qin != qout
+        return qout > min(qin, self.n_lines)
 
     @property
     def max_utility(self):
