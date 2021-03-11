@@ -13,7 +13,7 @@ Overview
       - | |CI| |PyPiPublished| |requires| |codecov| |codacy|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
-    * - discussions
+    * - Gitter
       - | General |gitter| Standard |std| Collusion |collusion| OneShot |oneshot|
 .. |docs| image:: https://readthedocs.org/projects/scml/badge/?style=flat
     :target: http://www.yasserm.com/scml/scml2020docs
