@@ -72,7 +72,7 @@ class GreedyOneShotAgent(OneShotAgent):
             return 0
         summary = self.awi.exogenous_contract_summary
         secured = self._sales if self._is_selling(ami) else self._supplies
-        demand = min(summary[0][0], summary[-1][0]) / self.awi.n_competitors
+        demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)
         return demand - secured
 
     def _is_selling(self, ami):
