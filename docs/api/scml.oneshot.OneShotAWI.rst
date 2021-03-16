@@ -46,6 +46,7 @@ OneShotAWI
 
    .. autosummary::
 
+      ~OneShotAWI.is_system
       ~OneShotAWI.penalty_multiplier
       ~OneShotAWI.reports_at_step
       ~OneShotAWI.reports_of_agent
@@ -87,6 +88,7 @@ OneShotAWI
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: is_system
    .. automethod:: penalty_multiplier
    .. automethod:: reports_at_step
    .. automethod:: reports_of_agent

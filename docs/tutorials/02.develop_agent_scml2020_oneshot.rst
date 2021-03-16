@@ -268,6 +268,25 @@ full SCML game:
    be presented in the following section, there is no need for a trading
    strategy
 
+Your AWI
+^^^^^^^^
+
+As described in the `previous
+tutorial <http://www.yasserm.com/scml/scml2020docs/tutorials/01.run_scml2020.html>`__,
+your agent can sense and act in the simulation by accessing methods and
+properties of its AWI which is accessible at any time as:
+
+.. code:: python
+
+   self.awi
+
+You can see all of these methods and properties specific for the
+**OneShotAWI** and its descendents
+`here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotAWI.html>`__.
+A full list of methods and properties inherited from NegMAS
+**AgentWorldInterface** can be found
+`here <http://www.yasserm.com/negmas/api/negmas.situated.AgentWorldInterface.html>`__.
+
 There are three base classes for one-shot agents (``OneShotAgent``,
 ``SyncOneShotAgent``, and ``SingleAgreementOneShotAgent``). We will
 discuss them in more details in what follows:
@@ -655,11 +674,9 @@ negotiations in which the agent finds itself the first propsoer, it
 needs to define a first proposal for each negotiation. This is why
 ``SyncOneShotAgent`` allows you to do.
 
-.. container:: alert alert-block alert-success
-
-   You can now start developing your own agent for SCML-OneShot (A
-   startup skeleton project is available here). The rest of this
-   tutorial will introduce two other optional alternatives
+You can now start developing your own agent for SCML-OneShot (A startup
+skeleton project is available here). The rest of this tutorial will
+introduce two other optional alternatives
 
 SyncOneShotAgent
 ~~~~~~~~~~~~~~~~

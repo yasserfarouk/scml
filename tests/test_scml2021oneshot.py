@@ -139,6 +139,29 @@ def test_something_happens_with_random_agents(n_processes):
     world.run()
     assert len(world.signed_contracts) + len(world.cancelled_contracts) != 0
 
+def test_basic_awi_info_suppliers_consumers():
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate(
+            agent_types=RandomOneShotAgent,
+            n_steps=10,
+            n_processes=2,
+            compact=True,
+            no_logs=True,
+        )
+    )
+    for aid in world.agents:
+        if is_system_agent(aid):
+            continue
+        a = world.agents[aid]
+        assert a.id in a.awi.all_suppliers[a.awi.my_output_product]
+        assert a.id in a.awi.all_consumers[a.awi.my_input_product]
+        assert a.awi.my_consumers == world.agent_consumers[aid]
+        assert a.awi.my_suppliers == world.agent_suppliers[aid]
+        l = a.awi.my_input_product
+        assert all(_.endswith(str(l - 1)) or a.awi.is_system(_) for _ in a.awi.my_suppliers)
+        assert all(_.endswith(str(l + 1)) or a.awi.is_system(_) for _ in a.awi.my_consumers)
+
+
 
 def test_generate():
     world = SCML2020OneShotWorld(

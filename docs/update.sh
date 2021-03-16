@@ -37,7 +37,11 @@ echo "------------------------------------------------"
 make clean
 rm -r api
 mkdir ./tutorials
-cp ../notebooks/tutorials/*.png ./tutorials
-cp ../notebooks/tutorials/*.gif ./tutorials
-cp ../notebooks/tutorials/*.png ./tutorials/02.develop_agent_scml2020_files/
-cp ../notebooks/tutorials/*.gif ./tutorials/01.run_scml2020_files/
+for ext in png jpg gif; do
+	echo ../notebooks/tutorials/*.$ext ./tutorials/
+	cp ../notebooks/tutorials/*.$ext ./tutorials/
+	for fils in ./tutorials/*_files ; do
+		echo ../notebooks/tutorials/*.$ext ./tutorials/$fils/
+		cp ../notebooks/tutorials/*.$ext ./tutorials/$fils/
+	done
+done

@@ -2,20 +2,12 @@
 ./update.sh
 make html
 
-cp ../notebooks/tutorials/run.gif _build/html/tutorials/run.gif
-cp ../notebooks/tutorials/run.gif _build/html/_images/run.gif
+for ext in png jpg gif pdf; do
+	echo ../notebooks/tutorials/*.$ext ./tutorials/
+	cp ../notebooks/tutorials/*.$ext ./tutorials/
+	for fils in tutorials _images ; do
+		echo ../notebooks/tutorials/*.$ext _build/html/$fils/
+		cp ../notebooks/tutorials/*.$ext _build/html/$fils/
+	done
+done
 
-cp ../notebooks/tutorials/anatomy.pdf _build/html/tutorials/anatomy.pdf
-cp ../notebooks/tutorials/anatomy.pdf _build/html/_images/anatomy.pdf
-
-cp ../notebooks/tutorials/anatomy.png _build/html/tutorials/anatomy.png
-cp ../notebooks/tutorials/anatomy.png _build/html/_images/anatomy.png
-
-cp ../notebooks/tutorials/negotiate.png _build/html/tutorials/negotiate.png
-cp ../notebooks/tutorials/negotiate.png _build/html/_images/negotiate.png
-
-cp ../notebooks/tutorials/trading.png _build/html/tutorials/trading.png
-cp ../notebooks/tutorials/trading.png _build/html/_images/trading.png
-
-
-# open _build/html/index.html

@@ -12,6 +12,8 @@ OneShotAgent
 
       ~OneShotAgent.awi
       ~OneShotAgent.internal_state
+      ~OneShotAgent.running_negotiations
+      ~OneShotAgent.unsigned_contracts
 
    .. rubric:: Methods Summary
 
@@ -36,6 +38,8 @@ OneShotAgent
 
    .. autoattribute:: awi
    .. autoattribute:: internal_state
+   .. autoattribute:: running_negotiations
+   .. autoattribute:: unsigned_contracts
 
    .. rubric:: Methods Documentation
 

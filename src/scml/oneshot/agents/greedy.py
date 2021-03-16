@@ -67,16 +67,17 @@ class GreedyOneShotAgent(OneShotAgent):
         return tuple(offer)
 
     def _needed(self, negotiator_id):
+        ami = self.get_ami(negotiator_id)
+        if not ami:
+            return 0
         summary = self.awi.exogenous_contract_summary
-        secured = (
-            self._sales
-            if self._is_selling(self.get_ami(negotiator_id))
-            else self._supplies
-        )
+        secured = self._sales if self._is_selling(ami) else self._supplies
         demand = min(summary[0][0], summary[-1][0]) / self.awi.n_competitors
         return demand - secured
 
     def _is_selling(self, ami):
+        if not ami:
+            return None
         return ami.annotation["product"] == self.awi.my_output_product
 
 

@@ -126,6 +126,7 @@ def test_can_run_with_a_multiple_agent_types(agent_types, buy_missing, n_process
     n_processes=st.integers(2, 4),
     initial_balance=st.sampled_from([0, 50, 10_000, 10_000_000]),
 )
+@settings(deadline=1500)
 def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balance):
     world = generate_world(
         [DoNothingAgent],

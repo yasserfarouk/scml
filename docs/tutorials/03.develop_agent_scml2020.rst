@@ -62,6 +62,25 @@ overview `here <http://www.yasserm.com/scml/overview.pdf>`__ and the
 full game description
 `here <http://www.yasserm.com/scml/scml2021.pdf>`__.
 
+Your AWI
+^^^^^^^^
+
+As described in the `previous
+tutorial <http://www.yasserm.com/scml/scml2020docs/tutorials/01.run_scml2020.html>`__,
+your agent can sense and act in the simulation by accessing methods and
+properties of its AWI which is accessible at any time as:
+
+.. code:: python
+
+   self.awi
+
+You can see all of these methods and properties specific for the
+**OneShotAWI** and its descendents
+`here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.AWI.html>`__.
+A full list of methods and properties inherited from NegMAS
+**AgentWorldInterface** can be found
+`here <http://www.yasserm.com/negmas/api/negmas.situated.AgentWorldInterface.html>`__.
+
 Agent Anatomy
 ~~~~~~~~~~~~~
 

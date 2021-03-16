@@ -1,3 +1,294 @@
+What is SCM and SCML?
+---------------------
+
+The Supply Chain Management (SCM) world simulates a supply chain
+consisting of multiple factories that buy and sell products from one
+another. The factories are represented by autonomous agents that act as
+factory managers. Agents are given some target quantity to either buy or
+sell and they negotiate with other agents to secure the needed supplies
+or sales. Their goal is to turn a profit, and the agent with the highest
+profit (averaged over multiple simulations) wins.
+
+The Supply Chain Management League
+(`SCML <https://scml.cs.brown.edu>`__) is a part of the International
+Automated Negotiating Agents Competition
+(`ANAC <http://web.tuat.ac.jp/~katfuji/ANAC2021/>`__) since 2019. SCML
+runs in the SCM world.
+
+The league is built using `NegMAS <http://www.yasserm.com/negmas>`__
+which provides tools for building multiagent systems in which
+negotiations are embedded within world simulations.
+
+There are two different yet related games in SCML each represented by a
+`NegMAS <http://www.yasserm.com/negmas>`__
+`World <http://www.yasserm.com/negmas/api/negmas.situated.World.html>`__
+class:
+
+-  `SCML2021World <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.SCML2021World.html>`__
+   A world representing the *complete* SCML game described
+   `here <http://www.yasserm.com/scml/scml2021.pdf>`__ in which the
+   agent is responsible of defining its own utility function, with who
+   to negotiate, negotiation agendas to propose, production schedule,
+   etc. This form of the SCM world is more representative of real-world
+   trading with a combination of long-term planning, negotiation, and
+   production scheduling.
+
+-  `SCML2020OneShotWorld <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html>`__
+   A simpler form of the SCM world in which agents do not need to
+   consider long-term planning or production scheduling described
+   `here <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__. This form
+   was introduced in *2021*.
+
+You can use the SCM world simulation in your own development and
+research as you see fit but it is primarily intended for the SCM league
+(SCML) of the ANAC competition. SCML has three tracks:
+
+1. **Standard track** based on the **SCML2021World** full game
+   simulation. In the standard track, a single instance of each agent
+   type exists in the world. This precludes any possibility of
+   *collusion* between agent instances of the same type and focuses on
+   business operation of a single factory.
+2. **Collusion track** based on the **SCML2021World** full game
+   simulation. In the collusion track, *multiple* instances of each
+   agent type exist in the world. This opens the possibility for these
+   agents instances to **collude** in order to corner the market and get
+   higher profits that what each of them can get on its own. In this
+   track, collusion is not considered a form of *cheating* but is
+   encouraged.
+3. **OneShot track** based on the simpler **SCML2020OneShotWorld** game
+   simulation. In the OneShot track, a single instance of each agent
+   type exists in the world precluding any possibility of collusion. The
+   focus here is on negotiation with less focus on long-term planning as
+   discussed earlier. This track was introduced for the first time in
+   *2021*.
+
+The SCML competition has two versions:
+
+-  **Online Competition** Participants to this competition can submit
+   their agents as long as the competition is running (March 15th 2021
+   to July 1st 2021). The system runs tournaments between the latest
+   version of all submitted agents for each track periodically and
+   maintains a leader-board showing the top agents updated at least
+   weekly. Participants in this competition will get the chance to
+   observe how their agents behave against agents submitted by other
+   competitors and receive feedback about any exceptions or error caused
+   by their agents.
+
+-  **Official Competition** The final version of each agent submitted to
+   the online competition (and registered before July 1st, 2021) is
+   entered into the official SCM league which will run as part of the
+   ANAC 2021 competition in conjunction with `IJCAI
+   2021 <https://ijcai-21.org/>`__. The winners will be announced during
+   the as part of the official program of IJCAI 2021.
+
+A (not very) brief introduction to NegMAS
+-----------------------------------------
+
+The SCM world is built using
+`NegMAS <http://www.yasserm.com/negmas/>`__. This section provides a
+very short introduction of it to help you understand the terms used in
+this document. Please refer to `NegMAS
+documetnation <http://www.yasserm.com/negmas/>`__ for full description
+and details as well as tutorials and other goodies.
+
+This image shows the main components of a simulation in a NegMAS world:
+|NegMAS world|
+
+The simulation is run using a **World** object which defines what
+happens in every simulation **step**, provides a **BulletinBoard**
+object containing all public information about the game, calls various
+callbacks defined in the **Agent** object representing each agent in the
+environment, takes care of running negotiations and keeps track of
+agreement signing and the resulting **Contract**\ s. The **World**
+object also controls logging, event management, serialization,
+visualization, etc. Refer to the
+`World <http://www.yasserm.com/negmas/api/negmas.situated.World.html>`__
+documentation for more details (you need to do that only if you are
+implementing new world simulations).
+
+The designer of the game implements a **World** class by overriding few
+abstract methods in the base **World** class. This is how the
+**SCML2019World**, **SCML2020World**, **SCML2021World** and
+**SCML2020OneShotWorld** were created. As a participant in SCML, you
+*never* need to interact directly with the **World** object.
+
+The logic of an agent is NegMAS is implemented in an **Agent** object.
+The designer of the simulation, should provide a base class for its
+specific world inherited from NegMAS’s **Agent** class. For SCML, this
+base class is called **OneShotAgent** for the OneShot game (to go with
+the SCML2020OneShotWorld), and **SCML2020Agent** for the full game (to
+go with the SCML2020World and SCML20201World). Refer to the
+`Agent <http://www.yasserm.com/negmas/api/negmas.situated.Agent.html>`__
+documentation for more details about general NegMAS agents. Full
+information about the **OneShotAgent** and **SCML2020Agent** classes can
+be found
+`here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.SCML2020Agent.html>`__
+and
+`here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotAgent.html>`__
+respectively.
+
+As a participant in SCML, you only need to develop an Agent class
+inherited from the appropriate base class depending on the track.
+
+So now we have the **World** and the **Agent** objects, and we already
+said that the agent does not directly interact with the world. How does
+these two agents interact then?
+
+-  When the **World** wants to interact with the **Agent**, it calls
+   some method in it. For example, to instruct the agent to *initialize*
+   itself, the world calls the **init()** method defined by the
+   **Agent**. To inform the agent that a negotiation it is involved in
+   is concluded with success, the **World** calls the method
+   **on_negotiation_success()** defined by the agent.
+-  When the **Agent** wants to interact with the **World**, it accesses
+   an interface object called an **AgentWorldInterface** or **AWI** for
+   short which provides all the services available to the **Agent**. For
+   example, to request a negotiation with another agent, the **Agent**
+   object needs to call **request_negotiation()** defined in the
+   **AWI**.
+
+The world designer usually defines an AWI for its world that inherits
+NegMAS’s **AgentWorldInterface** class and provides any special services
+for agents interacting in this world. You can find all the services
+available to your agent through the AgentWorldInterface
+`here <http://www.yasserm.com/negmas/api/negmas.situated.AgentWorldInterface.html>`__.
+These methods and properties are still available for your agent in SCML.
+Nevertheless, in many cases, more convenient ways to access some of the
+information (e.g. the bulletin board) is provided in the specific AWIs
+implemented in the SCML package to be described now.
+
+For SCML, there are – as you may already expect – two AWIs. The first is
+called **OneShotAWI** and is defined in *scml.scml2020* to go with
+*SCML2021World* and *SCML2020Agent* and the second is defined in
+*scml.oneshot* to go with *SCML2020OneShotWorld* and *OneShotAgent*. An
+earlier version is also defined in *scml.scml2019* which is a
+*discontinued* form of the game used in ANAC 2019 competition. You can
+find all the services provided by these AWIs
+`here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotAWI.html>`__
+for the OneShot game (OneShot track) and
+`here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.AWI.html>`__
+for the full game (Standard and Collusion tracks).
+
+Now that we know how worlds and agents work and interact, we can look at
+how negotiation is managed in NegMAS.
+
+A negotiation is controlled by a **Mechanism** object which implements
+the negotiation protocol (e.g. the alternating offers protocol). NegMAS
+provides several mediated and unmediated negotiation protocols (as well
+as auction mechanisms). The specific **Mechanism** that is used in SCML
+is the **SAOMechanism** which implements the bargaining protocol.
+
+Negotiation strategies are implemented in a **Negotiator** object which
+usually inherits some base negotiator-class corresponding to the
+mechanism(s) it supports. The specific base class of all negotiators in
+SCML is **SAONegotiator**.
+
+The interaction between **Mechanism** and **Negotiator** objects mirrors
+the interaction between **World** and **Agent** objects. **Mechanism**
+objects call methods in **Negotiator** objects directly but
+**Negotiator** objects can only access services provided by the
+**Mechanism** object through a **AgentMechanismInterface** (AMI). Note
+that it is an AMI not a NMI (for historical reasons). You can find more
+details about the general NegMAS AMI
+`here <http://www.yasserm.com/negmas/api/negmas.common.AgentMechanismInterface.html>`__.
+
+Each specific **Mechanism** defines a corresponding specific
+**AgentMechanismInterface** class (in the same way that **World**
+classes define their own AWI). The **SAOMechanism** used in SCML defines
+**SAOAMI** for this purpose (Details are
+`here <http://www.yasserm.com/negmas/api/negmas.sao.SAOAMI.html?highlight=saoami#negmas.sao.SAOAMI>`__).
+
+To negotiate effectively, negotiators employ a **UtilityFunction** to
+represent their preferences over different possible **Outcome**\ s of
+the negotiation (where an outcome is a full assignment of values to all
+negotiated **Issue**\ s). NegMAS provides an extensive set of utility
+function, and issue types. Please refer to NegMAS
+`overview <http://www.yasserm.com/negmas/overview.html>`__ and
+`tutorials <http://www.yasserm.com/negmas/tutorials.html>`__ for more
+details. NegMAS also provides some basic **SAONegotiator**\ s for the
+**SAOMechanism** (Check the class diagram
+`here <http://www.yasserm.com/negmas/modules/sao.html>`__). Moreover,
+you can access almost all `Genius <http://ii.tudelft.nl/genius/>`__
+using NegMAS’s
+`GeniusNegotiator <http://www.yasserm.com/negmas/api/negmas.genius.GeniusNegotiator.html>`__
+including all finalists and winners of all past ANAC competitions.
+
+Now we understand how agents interact with worlds through AWIs and
+negotiators interact with mechanisms through AMIs. We know that the
+general simulation is controlled by the world while each negotiation is
+controlled by a mechanism within that world. **We need now to connect
+these two triplets of objects**
+
+As the figure above shows: **Negotiator** objects can be created and
+controlled by **Agent** objects for the purpose of negotiating with
+other **Agent** objects. The standard flow of operations is something
+like this:
+
+1. **Agent** A uses its AWI to *request_negotiation()* with Agent B
+   passing a **Negotiator** to be used in this negotiation. Usually
+   Agent A will also create a **UtilityFunction** and attach it to the
+   **Negotiator** it just created (by setting its *ufun* attribute).
+2. The **World** calls Agent B’s *respond_to_negotiation_request()*
+   asking it to provide its own **Negotiator** to negotiate with Agent
+   A’s Negotiator. It can also just reject the negotiation request by
+   returning no negotiators.
+3. The **World** will then create a **Mechanism** and ask both
+   **Negotiator**\ s to *join* it. If all goes well, the negotiation
+   starts (at a time defined by the simulation rules) and runs until
+   either an agreement or disagreement is reached.
+4. The **World** class will then inform **Agent**\ s A and B about the
+   results of the negotiation using their *on_negotiation_success* and
+   *on_negotiation_failure* callbacks.
+5. Successful negotiations lead to **Agreement**\ s but are still not
+   binding in general until signed by all agents involved (A and B in
+   this case). **Agent**\ ’s ’\ *sign_all_contracts* is used for this.
+6. Signed agreements become *Contract*\ s and are executed (as specified
+   in the simulation rules) by the **World**.
+
+The full SCML game uses this complete flow. The OneShot game simplifies
+things by automatically requesting all negotiations, accepting all
+requests and signing all contracts.
+
+When negotiations are independent, these are all the objects needed.
+Nevertheless, in many cases, including the SCM case, negotiations are
+inter-dependent. This means that what is *good* in one negotiation
+depends on other concurrently running negotiations (or on expectations
+of future negotiations). NegMAS provides two ways to support this case
+shown in the following figure:
+
+.. figure:: controllers.jpg
+   :alt: controllers
+
+   controllers
+
+1. Let **Negotiator**\ s use **UtilityFunction**\ s that depend on some
+   common state. That is what is happening in the left two negotiations.
+   Because you define your own utility functions in the full SCML game
+   (standard and collusion tracks), this is one possible way to
+   orchestrate the behavior of your negotiators.
+2. Have multiple **Negotiator**\ s be controlled by a single
+   **Controller** object with its own utility function that depends on
+   what is happening on all the negotiations controlled. This is what is
+   happening in the two negotiations on the right. This is also possible
+   in the full SCML game (standard and collusion tracks) and is the only
+   method available in the OneShot game (OneShot track).
+
+The **Negotiator**\ s connected to a controller lost their autonomy and
+just pass control to their *owning* **Controller**.
+
+This concludes our introduction to NegMAS and different objects you need
+to know about to develop your agent.
+
+In summary, you will need to develop an **SCML2020Agent** or
+**OneShotAgent** depending on the track. This agent uses an **AWI** or
+**OneShotAWI** to access sense and act in the world. All negotiations
+are controlled by **SAONegotiator**\ s that may optionally be grouped
+and controlled centrally by **Controller** objects. The preferences of
+these negotiators and controllers are defined using **UtilityFunction**
+objects.
+
+.. |NegMAS world| image:: world.png
+
 Run a session of the SCML world (2021)
 --------------------------------------
 
@@ -57,7 +348,7 @@ Let’s draw a graph to see what is in this world
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_7_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_8_0.png
 
 
 *If you want to just test your installation (and do not care whether you
@@ -69,63 +360,6 @@ Now you can run this world simulation by just calling ``run``.
 .. code:: ipython3
 
     world.run_with_progress() # may take few minutes
-
-
-.. parsed-literal::
-
-    
-      0%|          | 0/50 [00:00<?, ?it/s][A
-      2%|▏         | 1/50 [00:01<01:29,  1.83s/it][A
-      4%|▍         | 2/50 [00:06<02:40,  3.34s/it][A
-      6%|▌         | 3/50 [00:07<02:01,  2.59s/it][A
-      8%|▊         | 4/50 [00:09<01:35,  2.08s/it][A
-     10%|█         | 5/50 [00:10<01:21,  1.80s/it][A
-     12%|█▏        | 6/50 [00:12<01:22,  1.88s/it][A
-     14%|█▍        | 7/50 [00:14<01:25,  1.99s/it][A
-     16%|█▌        | 8/50 [00:16<01:25,  2.03s/it][A
-     18%|█▊        | 9/50 [00:19<01:31,  2.22s/it][A
-     20%|██        | 10/50 [00:21<01:23,  2.09s/it][A
-     22%|██▏       | 11/50 [00:22<01:09,  1.77s/it][A
-     24%|██▍       | 12/50 [00:24<01:11,  1.88s/it][A
-     26%|██▌       | 13/50 [00:27<01:20,  2.17s/it][A
-     28%|██▊       | 14/50 [00:28<01:09,  1.94s/it][A
-     30%|███       | 15/50 [00:30<01:01,  1.77s/it][A
-     32%|███▏      | 16/50 [00:32<01:02,  1.85s/it][A
-     34%|███▍      | 17/50 [00:34<01:07,  2.05s/it][A
-     36%|███▌      | 18/50 [00:36<00:59,  1.84s/it][A
-     38%|███▊      | 19/50 [00:36<00:47,  1.54s/it][A
-     40%|████      | 20/50 [00:41<01:12,  2.42s/it][A
-     42%|████▏     | 21/50 [00:44<01:14,  2.57s/it][A
-     44%|████▍     | 22/50 [00:46<01:08,  2.44s/it][A
-     46%|████▌     | 23/50 [00:47<00:58,  2.15s/it][A
-     48%|████▊     | 24/50 [00:49<00:52,  2.02s/it][A
-     50%|█████     | 25/50 [00:51<00:47,  1.89s/it][A
-     52%|█████▏    | 26/50 [00:52<00:44,  1.85s/it][A
-     54%|█████▍    | 27/50 [00:54<00:41,  1.81s/it][A
-     56%|█████▌    | 28/50 [00:56<00:40,  1.84s/it][A
-     58%|█████▊    | 29/50 [00:58<00:39,  1.87s/it][A
-     60%|██████    | 30/50 [01:00<00:35,  1.80s/it][A
-     62%|██████▏   | 31/50 [01:01<00:30,  1.60s/it][A
-     64%|██████▍   | 32/50 [01:03<00:33,  1.87s/it][A
-     66%|██████▌   | 33/50 [01:06<00:34,  2.02s/it][A
-     68%|██████▊   | 34/50 [01:07<00:28,  1.76s/it][A
-     70%|███████   | 35/50 [01:08<00:22,  1.52s/it][A
-     72%|███████▏  | 36/50 [01:10<00:23,  1.66s/it][A
-     74%|███████▍  | 37/50 [01:12<00:23,  1.80s/it][A
-     76%|███████▌  | 38/50 [01:13<00:18,  1.58s/it][A
-     78%|███████▊  | 39/50 [01:14<00:14,  1.28s/it][A
-     80%|████████  | 40/50 [01:16<00:15,  1.50s/it][A
-     82%|████████▏ | 41/50 [01:16<00:11,  1.29s/it][A
-     84%|████████▍ | 42/50 [01:17<00:08,  1.07s/it][A
-     86%|████████▌ | 43/50 [01:18<00:06,  1.06it/s][A
-     88%|████████▊ | 44/50 [01:18<00:05,  1.16it/s][A
-     90%|█████████ | 45/50 [01:19<00:03,  1.38it/s][A
-     92%|█████████▏| 46/50 [01:19<00:02,  1.80it/s][A
-     94%|█████████▍| 47/50 [01:19<00:01,  2.30it/s][A
-     96%|█████████▌| 48/50 [01:19<00:00,  2.90it/s][A
-     98%|█████████▊| 49/50 [01:19<00:00,  3.13it/s][A
-    100%|██████████| 50/50 [01:19<00:00,  1.60s/it][A
-
 
 Let’s see what happened in this run. Firstly, how many negotiations were
 conducted over time
@@ -139,7 +373,7 @@ conducted over time
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_11_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_12_0.png
 
 
 It is clear that many negotiations happened at the beginning of the
@@ -211,7 +445,7 @@ data as a pandas dataframe.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_15_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_16_0.png
 
 
 There are statistics specific for each agent that all have
@@ -279,13 +513,13 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_03InD@1': (0.0, 8624.0),
-     'balance_03InD@1': (26369, 26218),
+    {'assets_03InD@1': (0.0, 9725.593014537219),
+     'balance_03InD@1': (26369, 25356),
      'bankrupt_03InD@1': (False, False),
-     'inventory_03InD@1_input': (0, 0),
-     'inventory_03InD@1_output': (0, 308),
-     'productivity_03InD@1': (0.0, 0.0),
-     'score_03InD@1': (1.0, 1.1202958984970157),
+     'inventory_03InD@1_input': (0, 117),
+     'inventory_03InD@1_output': (0, 326),
+     'productivity_03InD@1': (0.0, 1.0),
+     'score_03InD@1': (1.0, 1.1037035516313298),
      'spot_market_loss_03InD@1': (0.3, 0.3),
      'spot_market_quantity_03InD@1': (0, 0)}
 
@@ -302,7 +536,7 @@ Let’s see how did our agent do
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_20_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_21_0.png
 
 
 We can for example check the activity level of this world (defined as
@@ -317,7 +551,7 @@ the total amount of money transferred due to trade)
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_22_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_23_0.png
 
 
 We can see a picture of contracting in this world as follows:
@@ -335,7 +569,7 @@ We can see a picture of contracting in this world as follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_24_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_25_0.png
 
 
 We can also check the breaches that happened
@@ -349,7 +583,7 @@ We can also check the breaches that happened
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_26_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_27_0.png
 
 
 Notice that there can be multiple winners
@@ -363,7 +597,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [03InD@1] of type ['inddecentralizing'] won at [112.02958984970157]%
+    [03InD@1] of type ['inddecentralizing'] won at [110.37035516313298]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -392,7 +626,7 @@ Let’s check how did the first winner’s inventory changes over time:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_30_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_31_0.png
 
 
 We can actually check what happens to ALL competitors:
@@ -412,7 +646,7 @@ We can actually check what happens to ALL competitors:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_32_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_33_0.png
 
 
 .. code:: ipython3
@@ -430,7 +664,7 @@ We can actually check what happens to ALL competitors:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_33_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_34_0.png
 
 
 or just look at the end of the game
@@ -453,7 +687,7 @@ or just look at the end of the game
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_35_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
 
 
 .. code:: ipython3
@@ -474,7 +708,7 @@ or just look at the end of the game
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_37_0.png
 
 
 You can inspect what happened in the simulation by plotting different
@@ -494,7 +728,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_38_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_39_0.png
 
 
 .. code:: ipython3
@@ -510,7 +744,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_39_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_40_0.png
 
 
 You can dig futher to understand what happened during this siumulation.
@@ -565,24 +799,11 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>775</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>26</td>
-          <td>63</td>
-          <td>37</td>
-          <td>16</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>808</th>
+          <th>807</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
           <td>27</td>
-          <td>63</td>
+          <td>62</td>
           <td>37</td>
           <td>17</td>
           <td>True</td>
@@ -591,104 +812,117 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>709</th>
+          <th>871</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
-          <td>22</td>
-          <td>54</td>
+          <td>28</td>
+          <td>61</td>
           <td>37</td>
-          <td>14</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>457</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>16</td>
-          <td>48</td>
-          <td>37</td>
-          <td>6</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>552</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
           <td>19</td>
-          <td>48</td>
-          <td>37</td>
-          <td>9</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>504</th>
+          <th>776</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>25</td>
+          <td>60</td>
+          <td>37</td>
+          <td>16</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>888</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>30</td>
+          <td>58</td>
+          <td>37</td>
+          <td>20</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>957</th>
+          <td>08MAD@2</td>
+          <td>09MAD@3</td>
+          <td>32</td>
+          <td>53</td>
+          <td>37</td>
+          <td>22</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1106</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>37</td>
+          <td>50</td>
+          <td>37</td>
+          <td>27</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>349</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>8</td>
+          <td>49</td>
+          <td>37</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>394</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>13</td>
+          <td>49</td>
+          <td>37</td>
+          <td>4</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>529</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
           <td>17</td>
           <td>46</td>
           <td>37</td>
-          <td>7</td>
+          <td>8</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>642</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>18</td>
-          <td>45</td>
-          <td>37</td>
-          <td>12</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>648</th>
+          <th>591</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
           <td>20</td>
-          <td>43</td>
+          <td>44</td>
           <td>37</td>
-          <td>12</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1041</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>32</td>
-          <td>43</td>
-          <td>37</td>
-          <td>25</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>753</th>
-          <td>00SRO@0</td>
-          <td>03InD@1</td>
-          <td>15</td>
-          <td>34</td>
-          <td>1</td>
-          <td>15</td>
+          <td>10</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -743,24 +977,11 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>775</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>26</td>
-          <td>63</td>
-          <td>37</td>
-          <td>16</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>808</th>
+          <th>807</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
           <td>27</td>
-          <td>63</td>
+          <td>62</td>
           <td>37</td>
           <td>17</td>
           <td>True</td>
@@ -769,104 +990,117 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>709</th>
+          <th>871</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
-          <td>22</td>
-          <td>54</td>
+          <td>28</td>
+          <td>61</td>
           <td>37</td>
-          <td>14</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>457</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>16</td>
-          <td>48</td>
-          <td>37</td>
-          <td>6</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>552</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
           <td>19</td>
-          <td>48</td>
-          <td>37</td>
-          <td>9</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>504</th>
+          <th>776</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>25</td>
+          <td>60</td>
+          <td>37</td>
+          <td>16</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>888</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>30</td>
+          <td>58</td>
+          <td>37</td>
+          <td>20</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>957</th>
+          <td>08MAD@2</td>
+          <td>09MAD@3</td>
+          <td>32</td>
+          <td>53</td>
+          <td>37</td>
+          <td>22</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1106</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>37</td>
+          <td>50</td>
+          <td>37</td>
+          <td>27</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>349</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>8</td>
+          <td>49</td>
+          <td>37</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>394</th>
+          <td>06BCS@2</td>
+          <td>09MAD@3</td>
+          <td>13</td>
+          <td>49</td>
+          <td>37</td>
+          <td>4</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>529</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
           <td>17</td>
           <td>46</td>
           <td>37</td>
-          <td>7</td>
+          <td>8</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>642</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>18</td>
-          <td>45</td>
-          <td>37</td>
-          <td>12</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>648</th>
+          <th>591</th>
           <td>06BCS@2</td>
           <td>09MAD@3</td>
           <td>20</td>
-          <td>43</td>
+          <td>44</td>
           <td>37</td>
-          <td>12</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1041</th>
-          <td>06BCS@2</td>
-          <td>09MAD@3</td>
-          <td>32</td>
-          <td>43</td>
-          <td>37</td>
-          <td>25</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>753</th>
-          <td>00SRO@0</td>
-          <td>03InD@1</td>
-          <td>15</td>
-          <td>34</td>
-          <td>1</td>
-          <td>15</td>
+          <td>10</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -915,106 +1149,6 @@ Let’s check some of the contracts that were fully executed
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <th>1251</th>
-          <td>00SRO@0</td>
-          <td>03InD@1</td>
-          <td>32</td>
-          <td>29</td>
-          <td>1</td>
-          <td>32</td>
-          <td>00SRO@0:product(1.0)</td>
-        </tr>
-        <tr>
-          <th>1162</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>44</td>
-          <td>7</td>
-          <td>10</td>
-          <td>29</td>
-          <td>00SRO@0:money(5.442857142857143)</td>
-        </tr>
-        <tr>
-          <th>840</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>33</td>
-          <td>6</td>
-          <td>10</td>
-          <td>18</td>
-          <td>00SRO@0:money(6.183333333333334)</td>
-        </tr>
-        <tr>
-          <th>1051</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>40</td>
-          <td>6</td>
-          <td>10</td>
-          <td>25</td>
-          <td>00SRO@0:money(6.183333333333334)</td>
-        </tr>
-        <tr>
-          <th>1086</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>41</td>
-          <td>6</td>
-          <td>10</td>
-          <td>26</td>
-          <td>00SRO@0:money(6.183333333333334)</td>
-        </tr>
-        <tr>
-          <th>902</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>35</td>
-          <td>5</td>
-          <td>10</td>
-          <td>20</td>
-          <td>00SRO@0:money(7.22)</td>
-        </tr>
-        <tr>
-          <th>920</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>36</td>
-          <td>5</td>
-          <td>10</td>
-          <td>21</td>
-          <td>00SRO@0:money(7.22)</td>
-        </tr>
-        <tr>
-          <th>1001</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>38</td>
-          <td>5</td>
-          <td>10</td>
-          <td>23</td>
-          <td>00SRO@0:money(7.22)</td>
-        </tr>
-        <tr>
-          <th>1136</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>43</td>
-          <td>5</td>
-          <td>10</td>
-          <td>28</td>
-          <td>00SRO@0:money(7.22)</td>
-        </tr>
-        <tr>
-          <th>1140</th>
-          <td>SELLER</td>
-          <td>00SRO@0</td>
-          <td>43</td>
-          <td>5</td>
-          <td>10</td>
-          <td>28</td>
-          <td>00SRO@0:money(7.22)</td>
-        </tr>
       </tbody>
     </table>
     </div>
@@ -1034,7 +1168,7 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_47_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_48_0.png
 
 
 .. code:: ipython3
@@ -1047,7 +1181,7 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_48_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_49_0.png
 
 
 Did any agents go bankrupt and when?
@@ -1061,7 +1195,7 @@ Did any agents go bankrupt and when?
 
 .. parsed-literal::
 
-    {'00SRO@0': 'at: 32',
+    {'00SRO@0': 'No',
      '01BCS@0': 'No',
      '02BCS@0': 'No',
      '03InD@1': 'No',
@@ -1086,7 +1220,7 @@ follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_52_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_53_0.png
 
 
 You can see what happened in this world in a series of graphs using the
@@ -1099,7 +1233,7 @@ You can see what happened in this world in a series of graphs using the
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_54_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_55_0.png
 
 
 You can also run a simple animation to see what happens at every step
@@ -1153,6 +1287,16 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 .. code:: ipython3
 
     from scml.scml2020.utils import anac2021_std
+    pd.options.display.float_format = '{:,.2f}'.format
+    def shorten_names(results):
+        # just make agent types more readable
+        results.score_stats.agent_type = results.score_stats.agent_type.str.split(".").str[-1]
+        results.kstest.a = results.kstest.a.str.split(".").str[-1]
+        results.kstest.b = results.kstest.b.str.split(".").str[-1]
+        results.total_scores.agent_type = results.total_scores.agent_type.str.split(".").str[-1]
+        results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
+        results.winners = [_.split(".")[-1] for _ in results.winners]
+        return results
 
 .. code:: ipython3
 
@@ -1168,6 +1312,11 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
         print_exceptions=True,
     ) 
 
+
+.. code:: ipython3
+
+    results = shorten_names(results)
+
 Who was the winner?
 
 .. code:: ipython3
@@ -1179,7 +1328,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['scml.scml2020.agents.moving.MovingRangeAgent']
+    ['MarketAwareDecentralizingAgent']
 
 
 
@@ -1194,7 +1343,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    700
+    15
 
 
 
@@ -1246,87 +1395,39 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>400.0</td>
-          <td>-0.413999</td>
-          <td>0.393881</td>
-          <td>-2.669553</td>
-          <td>-0.527775</td>
-          <td>-0.311333</td>
-          <td>-0.164599</td>
-          <td>0.000000</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>15.00</td>
+          <td>-0.20</td>
+          <td>0.10</td>
+          <td>-0.36</td>
+          <td>-0.28</td>
+          <td>-0.20</td>
+          <td>-0.12</td>
+          <td>0.00</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>400.0</td>
-          <td>-0.114607</td>
-          <td>0.131341</td>
-          <td>-0.666667</td>
-          <td>-0.180398</td>
-          <td>-0.068977</td>
-          <td>0.000000</td>
-          <td>0.000000</td>
+          <td>DecentralizingAgent</td>
+          <td>15.00</td>
+          <td>-0.09</td>
+          <td>0.04</td>
+          <td>-0.17</td>
+          <td>-0.12</td>
+          <td>-0.10</td>
+          <td>-0.06</td>
+          <td>-0.03</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>400.0</td>
-          <td>-0.040716</td>
-          <td>0.064781</td>
-          <td>-0.285714</td>
-          <td>-0.071092</td>
-          <td>-0.033428</td>
-          <td>-0.007086</td>
-          <td>0.372736</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>400.0</td>
-          <td>0.025210</td>
-          <td>0.177105</td>
-          <td>-0.368892</td>
-          <td>-0.062467</td>
-          <td>-0.005855</td>
-          <td>0.044101</td>
-          <td>0.849403</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>400.0</td>
-          <td>-0.043857</td>
-          <td>0.066611</td>
-          <td>-0.279230</td>
-          <td>-0.080221</td>
-          <td>-0.035687</td>
-          <td>-0.004482</td>
-          <td>0.215054</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>400.0</td>
-          <td>0.018028</td>
-          <td>0.170745</td>
-          <td>-0.405949</td>
-          <td>-0.064139</td>
-          <td>-0.008703</td>
-          <td>0.019781</td>
-          <td>0.768544</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>400.0</td>
-          <td>-0.048727</td>
-          <td>0.080303</td>
-          <td>-0.468153</td>
-          <td>-0.090913</td>
-          <td>0.000000</td>
-          <td>0.000000</td>
-          <td>0.000000</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>15.00</td>
+          <td>-0.08</td>
+          <td>0.06</td>
+          <td>-0.18</td>
+          <td>-0.13</td>
+          <td>-0.06</td>
+          <td>-0.03</td>
+          <td>0.02</td>
         </tr>
       </tbody>
     </table>
@@ -1376,213 +1477,33 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.3600</td>
-          <td>2.013280e-23</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>0.60</td>
+          <td>0.01</td>
+          <td>15</td>
+          <td>15</td>
+          <td>15</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.2675</td>
-          <td>5.418551e-13</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>DecentralizingAgent</td>
+          <td>0.60</td>
+          <td>0.01</td>
+          <td>15</td>
+          <td>15</td>
+          <td>15</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.2775</td>
-          <td>5.805666e-14</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>0.3600</td>
-          <td>2.013280e-23</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>0.7275</td>
-          <td>8.986867e-103</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.0375</td>
-          <td>9.416342e-01</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>0.4225</td>
-          <td>2.179890e-32</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>7</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.4075</td>
-          <td>4.333455e-30</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>8</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>0.3775</td>
-          <td>8.999308e-26</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>9</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>0.6825</td>
-          <td>4.444318e-89</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>10</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.3250</td>
-          <td>4.353260e-19</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>11</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.0550</td>
-          <td>5.812139e-01</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>12</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>0.2850</td>
-          <td>1.027245e-14</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>13</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>0.7650</td>
-          <td>2.568764e-115</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>14</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.2475</td>
-          <td>3.647962e-11</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>15</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>0.2550</td>
-          <td>7.832453e-12</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>16</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>0.7350</td>
-          <td>3.401289e-105</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>17</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.2550</td>
-          <td>7.832453e-12</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>18</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>0.4900</td>
-          <td>6.269930e-44</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>19</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.3250</td>
-          <td>4.353260e-19</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
-        </tr>
-        <tr>
-          <th>20</th>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>0.7325</td>
-          <td>2.206070e-104</td>
-          <td>400</td>
-          <td>400</td>
-          <td>400</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>DecentralizingAgent</td>
+          <td>0.27</td>
+          <td>0.68</td>
+          <td>15</td>
+          <td>15</td>
+          <td>15</td>
         </tr>
       </tbody>
     </table>
@@ -1626,38 +1547,18 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.000000</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.06</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>-0.005855</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.10</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>-0.008703</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>-0.033428</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>-0.035687</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>-0.068977</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>scml.scml2020.agent.OneShotAdapter:scml.onesho...</td>
-          <td>-0.311333</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-0.20</td>
         </tr>
       </tbody>
     </table>
@@ -1680,7 +1581,7 @@ activity level for different simulations.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_73_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_75_0.png
 
 
 We can even get the scores of every agent belonging to every agent type
@@ -1721,33 +1622,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00InD@0</td>
-          <td>scml.scml2020.agents.decentralizing.IndDecentr...</td>
-          <td>-0.161984</td>
+          <td>00SRO@0</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-0.11</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>02MoR@1</td>
-          <td>scml.scml2020.agents.moving.MovingRangeAgent</td>
-          <td>0.000000</td>
+          <td>01MAD@0</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.13</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>06Dec@3</td>
-          <td>scml.scml2020.agents.decentralizing.Decentrali...</td>
-          <td>-0.018590</td>
+          <td>04Dec@2</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.03</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>08MAD@4</td>
-          <td>scml.scml2020.agents.decentralizing.MarketAwar...</td>
-          <td>-0.126128</td>
+          <td>00MAD@0</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.13</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>04BCS@2</td>
-          <td>scml.scml2020.agents.bcse.BuyCheapSellExpensiv...</td>
-          <td>-0.114869</td>
+          <td>04Dec@2</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.10</td>
         </tr>
       </tbody>
     </table>
@@ -1761,15 +1662,15 @@ of each type.
 .. code:: ipython3
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
-    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
+    results.scores = results.scores.sort_values("level")
     sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
-                 x="level", y="score", hue="agent_type")
+                 x="level", y="score", hue="agent_type", ci=None)
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_77_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_79_0.png
 
 
 Running a One-Shot tournament
@@ -1800,17 +1701,12 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
         n_steps = 10, # number of days (simulation steps) per simulation
         print_exceptions=True,
     ) 
+    results = shorten_names(results)
 
 Who was the winner?
 
 .. code:: ipython3
 
-    # just make names easier to read 
-    def short_type(s):
-        return s.split(".")[-1]
-    
-    results.scores.agent_type = results.scores.agent_type.apply(short_type)
-    results.winners = [short_type(_) for _ in results.winners]
     results.winners
 
 
@@ -1833,7 +1729,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    20
+    60
 
 
 
@@ -1846,7 +1742,6 @@ We can also see the scores that every agent type got
 
 .. code:: ipython3
 
-    results.score_stats.agent_type = results.score_stats.agent_type.apply(short_type)
     results.score_stats
 
 
@@ -1887,50 +1782,50 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>GreedyOneShotAgent</td>
-          <td>20.0</td>
-          <td>0.854532</td>
-          <td>0.148490</td>
-          <td>0.530940</td>
-          <td>0.760066</td>
-          <td>0.883301</td>
-          <td>1.000000</td>
-          <td>1.009753</td>
+          <td>45.00</td>
+          <td>0.86</td>
+          <td>0.14</td>
+          <td>0.50</td>
+          <td>0.75</td>
+          <td>0.87</td>
+          <td>1.00</td>
+          <td>1.05</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedySingleAgreementAgent</td>
-          <td>20.0</td>
-          <td>0.878258</td>
-          <td>0.148772</td>
-          <td>0.466740</td>
-          <td>0.880887</td>
-          <td>0.946805</td>
-          <td>0.964623</td>
-          <td>0.985809</td>
+          <td>45.00</td>
+          <td>0.93</td>
+          <td>0.09</td>
+          <td>0.64</td>
+          <td>0.94</td>
+          <td>0.97</td>
+          <td>0.98</td>
+          <td>0.99</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomOneShotAgent</td>
-          <td>20.0</td>
-          <td>0.321704</td>
-          <td>0.538083</td>
-          <td>-1.025803</td>
-          <td>0.050378</td>
-          <td>0.431449</td>
-          <td>0.801791</td>
-          <td>1.045045</td>
+          <td>45.00</td>
+          <td>0.37</td>
+          <td>0.31</td>
+          <td>-0.61</td>
+          <td>0.21</td>
+          <td>0.37</td>
+          <td>0.56</td>
+          <td>1.04</td>
         </tr>
         <tr>
           <th>3</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>20.0</td>
-          <td>0.257910</td>
-          <td>0.453951</td>
-          <td>-0.352656</td>
-          <td>-0.163394</td>
-          <td>0.105920</td>
-          <td>0.761365</td>
-          <td>0.878674</td>
+          <td>45.00</td>
+          <td>0.39</td>
+          <td>0.39</td>
+          <td>-0.70</td>
+          <td>0.19</td>
+          <td>0.39</td>
+          <td>0.66</td>
+          <td>1.02</td>
         </tr>
       </tbody>
     </table>
@@ -1943,25 +1838,105 @@ You can also do statistical significance testing using ttest or kstest
 
 .. code:: ipython3
 
-    results.kstest.a = results.kstats.a.apply(short_type)
-    results.kstats.b = results.kstats.b.apply(short_type)
     results.kstest
 
 
-::
 
 
-    ---------------------------------------------------------------------------
+.. raw:: html
 
-    AttributeError                            Traceback (most recent call last)
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>a</th>
+          <th>b</th>
+          <th>t</th>
+          <th>p</th>
+          <th>n_a</th>
+          <th>n_b</th>
+          <th>n_effective</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>RandomOneShotAgent</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.82</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>RandomOneShotAgent</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.89</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>RandomOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.16</td>
+          <td>0.65</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>GreedyOneShotAgent</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.42</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>GreedyOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.71</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>GreedySingleAgreementAgent</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.78</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
-    <ipython-input-73-03bc690cc91b> in <module>
-    ----> 1 results.kstats.a = results.kstats.a.apply(short_type)
-          2 results.kstats.b = results.kstats.b.apply(short_type)
-          3 results.kstest
-
-
-    AttributeError: 'TournamentResults' object has no attribute 'kstats'
 
 
 see the total score
@@ -2000,23 +1975,23 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>scml.oneshot.sysagents.DefaultOneShotAdapter:s...</td>
-          <td>0.946805</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.97</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>scml.oneshot.sysagents.DefaultOneShotAdapter:s...</td>
-          <td>0.883301</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.87</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>scml.oneshot.sysagents.DefaultOneShotAdapter:s...</td>
-          <td>0.431449</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.39</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>scml.oneshot.sysagents.DefaultOneShotAdapter:s...</td>
-          <td>0.105920</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.37</td>
         </tr>
       </tbody>
     </table>
@@ -2062,33 +2037,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00SyR@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>0.822056</td>
+          <td>04Ran@1</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.20</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>08GSA@2</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.973167</td>
+          <td>05Gre@1</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.77</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>12Ran@3</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.458700</td>
+          <td>08GSA@2</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.94</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>13Gre@3</td>
-          <td>GreedyOneShotAgent</td>
-          <td>0.783701</td>
+          <td>04Ran@1</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.72</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00GSA@0</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.723577</td>
+          <td>05SyR@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.48</td>
         </tr>
       </tbody>
     </table>
@@ -2102,7 +2077,7 @@ of each type.
 .. code:: ipython3
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
-    results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
+    results.scores = results.scores.sort_values("level")
     sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
                  x="level", y="score", hue="agent_type")
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
@@ -2110,12 +2085,13 @@ of each type.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_94_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_96_0.png
 
 
 Now that you can run simulations and complete tournament, let’s see how
 are we going to develop a new agent for the SCML2021 league
 :math:`\rightarrow`
+
 
 
 Download :download:`Notebook<notebooks/01.run_scml2020.ipynb>`.
