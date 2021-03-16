@@ -8,9 +8,9 @@ import numpy as np
 from negmas import AgentWorldInterface
 from negmas.outcomes import Issue
 
-from ..scml2020 import FinancialReport
+from ..scml2020 import FinancialReport, is_system_agent
 
-from .common import OneShotProfile
+from .common import OneShotProfile, OneShotState
 
 __all__ = ["OneShotAWI"]
 
@@ -23,108 +23,103 @@ class OneShotAWI(AgentWorldInterface):
     extract information which are divided into 4 groups:
 
     Static World Information:
-    -------------------------
-
         Information about the world and the agent that does not change over
         time. These include:
 
         A. Market Information:
-        ----------------------
-
-        - *n_products*: Number of products in the production chain.
-        - *n_processes*: Number of processes in the production chain.
-        - *n_competitors*: Number of factories on the same production level.
-        - *all_suppliers*: A list of all suppliers by product.
-        - *all_consumers*: A list of all consumers by product.
-        - *catalog_prices*: A list of the catalog prices (by product).
-        - *price_multiplier*: The multiplier multiplied by the trading/catalog price
-                              when the negotiation agendas are created to decide the
-                              maximum and lower quantities.
-        - *is_exogenous_forced*: Are exogenous contracts always forced or can the
-                                 agent decide not to sign them.
+          - *n_products*: Number of products in the production chain.
+          - *n_processes*: Number of processes in the production chain.
+          - *n_competitors*: Number of other factories on the same production level.
+          - *all_suppliers*: A list of all suppliers by product.
+          - *all_consumers*: A list of all consumers by product.
+          - *is_system*: Is the given system ID corresponding to a system agent?
+          - *catalog_prices*: A list of the catalog prices (by product).
+          - *price_multiplier*: The multiplier multiplied by the trading/catalog price
+            when the negotiation agendas are created to decide the maximum and lower quantities.
+          - *is_exogenous_forced*: Are exogenous contracts always forced or can the
+            agent decide not to sign them.
+          - *current_step*: Current simulation step (inherited from `negmas.situated.AgentWorldInterface` ).
+          - *n_steps*: Number of simulation steps (inherited from `negmas.situated.AgentWorldInterface` ).
+          - *relative_time*: fraction of the simulation completed (inherited from `negmas.situated.AgentWorldInterface`).
+          - *state*: The full state of the agent ( `OneShotState` ).
+          - *settings* The system settings (inherited from `negmas.situated.AgentWorldInterface` ).
 
         B. Agent Information:
-        ---------------------
-
-        - *profile*: Gives the agent profile including its production cost, number
-                     of production lines, input product index, mean of its delivery
-                     penalties, mean of its storage costs, standard deviation of its
-                     delivery penalties and standard deviation of its storage costs.
-                     See `OneShotProfile` for full description. This information is private
-                     information and no other agent knows it.
-        - *n_lines*: the number of production lines in the factory (private information).
-        - *is_first_level*: Is the agent in the first production level (i.e. it is an
-                            input agent that buys the raw material).
-        - *is_last_level*: Is the agent in the last production level (i.e. it is an
-                            output agent that sells the final product).
-        - *is_middle_level*: Is the agent neither a first level nor a last level agent
-        - *my_input_product*: The input product to the factory controlled by the agent.
-        - *my_output_product*: The output product from the factory controlled by the agent.
-        - *level*: The production level which is numerically the same as the input product.
-        - *my_suppliers*: A list of IDs for all suppliers to the agent (i.e. agents
-                          that can sell the input product of the agent).
-        - *my_consumers*: A list of IDs for all consumers to the agent (i.e. agents
-                          that can buy the output product of the agent).
-        - *penalties_scale*: The scale at which to calculate storage cost/delivery
-                             penalties. "trading" and "catalog" mean trading and
-                             catalog prices. "unit" means the contract's unit price
-                             while "none" means that storage cost/delivery penalty
-                             are absolute.
-        - *n_input_negotiations*: Number of negotiations with suppliers.
-        - *n_output_negotiations*: Number of negotiations with consumers.
+          - *profile*: Gives the agent profile including its production cost, number
+            of production lines, input product index, mean of its delivery
+            penalties, mean of its storage costs, standard deviation of its
+            delivery penalties and standard deviation of its storage costs.
+            See `OneShotProfile` for full description. This information is private
+            information and no other agent knows it.
+          - *n_lines*: the number of production lines in the factory (private information).
+          - *is_first_level*: Is the agent in the first production level (i.e. it is an
+            input agent that buys the raw material).
+          - *is_last_level*: Is the agent in the last production level (i.e. it is an
+            output agent that sells the final product).
+          - *is_middle_level*: Is the agent neither a first level nor a last level agent
+          - *my_input_product*: The input product to the factory controlled by the agent.
+          - *my_output_product*: The output product from the factory controlled by the agent.
+          - *level*: The production level which is numerically the same as the input product.
+          - *my_suppliers*: A list of IDs for all suppliers to the agent (i.e. agents
+            that can sell the input product of the agent).
+          - *my_consumers*: A list of IDs for all consumers to the agent (i.e. agents
+            that can buy the output product of the agent).
+          - *penalties_scale*: The scale at which to calculate storage cost/delivery
+            penalties. "trading" and "catalog" mean trading and
+            catalog prices. "unit" means the contract's unit price
+            while "none" means that storage cost/delivery penalty
+            are absolute.
+          - *n_input_negotiations*: Number of negotiations with suppliers.
+          - *n_output_negotiations*: Number of negotiations with consumers.
 
     Dynamic World Information:
-    -------------------------
-
         Information about the world and the agent that changes over time.
 
         A. Market Information:
-        ----------------------
-
-
-        - *trading_prices*: The trading prices of all products. This information
-                            is only available if `publish_trading_prices` is
-                            set in the world.
-        - *exogenous_contract_summary*: A list of n_products tuples each giving
-                                        the total quantity and average price of
-                                        exogenous contracts for a product. This
-                                        information is only available if
-                                        `publish_exogenous_summary` is set in
-                                        the world.
+          - *trading_prices*: The trading prices of all products. This information
+            is only available if `publish_trading_prices` is
+            set in the world.
+          - *exogenous_contract_summary*: A list of n_products tuples each giving
+            the total quantity and average price of
+            exogenous contracts for a product. This
+            information is only available if
+            `publish_exogenous_summary` is set in
+            the world.
 
         B. Other Agents' Information:
-        -----------------------------
-
-        - *reports_of_agent*: Gives all past financial reports of a given agent.
-                              See `FinancialReport` for details.
-        - *reports_at_step*: Gives all reports of all agents at a given step.
-                              See `FinancialReport` for details.
+          - *reports_of_agent*: Gives all past financial reports of a given agent.
+            See `FinancialReport` for details.
+          - *reports_at_step*: Gives all reports of all agents at a given step.
+            See `FinancialReport` for details.
 
         C. Current Negotiations Information:
-        ------------------------------------
-
-        - *current_input_issues*: The current issues for all negotiations to buy
-                                  the input product of the agent. If the agent
-                                  is at level zero, this will be empty.
-        - *current_output_issues*: The current issues for all negotiations to buy
-                                  the output product of the agent. If the agent
-                                  is at level n_products - 1, this will be empty.
+          - *current_input_issues*: The current issues for all negotiations to buy
+            the input product of the agent. If the agent
+            is at level zero, this will be empty.
+          - *current_output_issues*: The current issues for all negotiations to buy
+            the output product of the agent. If the agent
+            is at level n_products - 1, this will be empty.
 
         D. Agent Information:
-        ---------------------
+          - *current_exogenous_input_quantity*: The total quantity the agent have
+            in its input exogenous contract.
+          - *current_exogenous_input_price*: The total price of the agent's
+            input exogenous contract.
+          - *current_exogenous_output_quantity*: The total quantity the agent have
+            in its output exogenous contract.
+          - *current_exogenous_output_price*: The total price of the agent's
+            output exogenous contract.
+          - *current_storage_cost*: The storage cost per unit item in the current
+            step.
+          - *current_delivery_penalty*: The delivery penalty per unit item in the current
+            step.
 
-        - *current_exogenous_input_quantity*: The total quantity the agent have
-                                              in its input exogenous contract.
-        - *current_exogenous_input_price*: The total price of the agent's
-                                           input exogenous contract.
-        - *current_exogenous_output_quantity*: The total quantity the agent have
-                                              in its output exogenous contract.
-        - *current_exogenous_output_price*: The total price of the agent's
-                                           output exogenous contract.
-        - *current_storage_cost*: The storage cost per unit item in the current
-                                  step.
-        - *current_delivery_penalty*: The delivery penalty per unit item in the current
-                                  step.
+    Services (All inherited from `negmas.situated.AgentWorldInterface`):
+      - *logdebug/loginfo/logwarning/logerror*: Logs to the world log at the given log level.
+      - *logdebug_agent/loginf_agnet/...*: Logs to the agent specific log at the given log level.
+      - *bb_query*: Queries the bulletin-board.
+      - *bb_read*: Read a section of the bulletin-board.
+
     """
 
     # ================================================================
@@ -142,7 +137,7 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def n_competitors(self) -> int:
         """Returns the number of factories/agents in the same production level"""
-        return len(self._world.consumers[self.my_output_product])
+        return len(self._world.consumers[self.my_output_product]) - 1
 
     @property
     def n_processes(self) -> int:
@@ -158,6 +153,15 @@ class OneShotAWI(AgentWorldInterface):
     def all_consumers(self) -> List[List[str]]:
         """Returns a list of agent IDs for all consumers for every product"""
         return self._world.consumers
+
+    def is_system(self, aid: str) -> bool:
+        """
+        Checks whether an agent is a system agent or not
+
+        Args:
+            aid: Agent ID
+        """
+        return is_system_agent(aid)
 
     @property
     def catalog_prices(self) -> np.ndarray:
@@ -271,7 +275,7 @@ class OneShotAWI(AgentWorldInterface):
         (agents that can consume at least one product it may produce).
 
         """
-        return self.all_consumers[self.level]
+        return self.all_consumers[self.level + 1]
 
     @property
     def penalties_scale(self) -> str:
