@@ -229,6 +229,8 @@ def test_ufun_min_max_in_world():
             if is_system_agent(aid):
                 continue
             ufun = agent.make_ufun()
+            ufun.find_limit(True)
+            ufun.find_limit(False)
             mn, mx = ufun.min_utility, ufun.max_utility
             assert mx >= mn
 
@@ -329,6 +331,8 @@ def _ufun_unit(
         input_penalty_scale=1,
         output_penalty_scale=1,
     )
+    ufun.best = ufun.find_limit(True)
+    ufun.worst = ufun.find_limit(False)
     mn, mx = ufun.min_utility, ufun.max_utility
     assert mx >= mn or mx == mn == 0
     u = ufun.from_aggregates(qin, qout, pin, pout)
