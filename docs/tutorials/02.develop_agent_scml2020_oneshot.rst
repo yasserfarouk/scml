@@ -14,7 +14,8 @@ description for the details-savy person is available
 that you read (or skim) these documents before continuing.
 
 Let’s see the simplest possible agent (a do-nothing agent) but first, we
-will define a function to try our agents:
+will define few helper functions to use thoughout this tutorial for
+testing different agents.
 
 .. code:: ipython3
 
@@ -25,9 +26,14 @@ will define a function to try our agents:
     from scml.scml2020 import is_system_agent
     
     def try_agent(agent_type, n_processes=2):
+        """Runs an agent in a world simulation against a randomly behaving agent"""
         return try_agents([RandomOneShotAgent, agent_type], n_processes)
     
     def try_agents(agent_types, n_processes=2, n_trials=1, draw=True):
+        """
+        Runs a simulation with the given agent_types, and n_processes n_trial times.
+        Optionally also draws a graph showing what happened
+        """
         type_scores = defaultdict(float)
         counts = defaultdict(int)
         agent_scores = dict()
@@ -64,16 +70,23 @@ will define a function to try our agents:
         return world, agent_scores, type_scores
     
     def analyze_contracts(world):
+        """
+        Analyzes the contracts signed in the given world
+        """
         import pandas as pd
         data = pd.DataFrame.from_records(world.saved_contracts)
         return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].mean().transpose()
     
     
     def print_agent_scores(agent_scores):
+        """
+        Prints scores of individiual agent instances
+        """
         for aid, (type_, score, bankrupt) in agent_scores.items():
             print(f"Agent {aid} of type {type_} has a final score of {score} {bankrupt}")
             
     def print_type_scores(type_scores):
+        """Prints scores of agent types"""
         print(sorted(tuple(type_scores.items()), key=lambda x: -x[1]))
 
 Now we are ready to develop a do-nothing agent:
@@ -115,12 +128,12 @@ Let’s check the scores of different agents to confirm:
 
 .. parsed-literal::
 
-    Agent 00Ran@0 of type RandomOneShotAgent has a final score of 0.8712623099937896 
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.7859179150626892 
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.5367991250346996 
-    Agent 03MDN@1 of type MyOneShotDoNothing has a final score of 0.9284925068480194 
-    Agent 04Ran@1 of type RandomOneShotAgent has a final score of 0.5647184936971161 
-    Agent 05Ran@1 of type RandomOneShotAgent has a final score of 0.6361881881455568 
+    Agent 00Ran@0 of type RandomOneShotAgent has a final score of 0.8014850539963543 
+    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.9528444539911151 
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.7513165943416109 
+    Agent 03MDN@1 of type MyOneShotDoNothing has a final score of 0.9659503651055901 
+    Agent 04Ran@1 of type RandomOneShotAgent has a final score of 0.7572209148905074 
+    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.9808338914501877 
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -135,7 +148,7 @@ delivery penalty.
 
 .. parsed-literal::
 
-    [('MyOneShotDoNothing', 0.7326458159413596), ('RandomOneShotAgent', 0.7145217267247879)]
+    [('MyOneShotDoNothing', 0.8993669502991296), ('RandomOneShotAgent', 0.8371834742926589)]
 
 
 Notice how the do-nothing agent is even worse than acting randomly. This
@@ -171,19 +184,17 @@ market.
       <thead>
         <tr>
           <th>seller_name</th>
-          <th colspan="2" halign="left">00Ran@0</th>
-          <th colspan="2" halign="left">01Ran@0</th>
+          <th>00Ran@0</th>
+          <th>01Ran@0</th>
           <th>03MDN@1</th>
           <th>04Ran@1</th>
-          <th>05Ran@1</th>
+          <th>05MDN@1</th>
           <th colspan="3" halign="left">SELLER</th>
         </tr>
         <tr>
           <th>buyer_name</th>
           <th>04Ran@1</th>
-          <th>05Ran@1</th>
           <th>04Ran@1</th>
-          <th>05Ran@1</th>
           <th>BUYER</th>
           <th>BUYER</th>
           <th>BUYER</th>
@@ -195,29 +206,25 @@ market.
       <tbody>
         <tr>
           <th>quantity</th>
-          <td>6.222222</td>
-          <td>5.0</td>
-          <td>6.555556</td>
-          <td>4.833333</td>
-          <td>10.625</td>
-          <td>13.625</td>
           <td>6.75</td>
-          <td>10.375</td>
-          <td>9.0</td>
+          <td>6.500</td>
+          <td>9.5</td>
+          <td>15.625</td>
+          <td>4.875</td>
           <td>10.625</td>
+          <td>9.25</td>
+          <td>10.125</td>
         </tr>
         <tr>
           <th>unit_price</th>
-          <td>25.222222</td>
-          <td>17.5</td>
-          <td>18.555556</td>
-          <td>21.000000</td>
-          <td>20.375</td>
-          <td>21.750</td>
-          <td>23.50</td>
-          <td>9.750</td>
-          <td>10.5</td>
+          <td>17.50</td>
+          <td>25.375</td>
+          <td>29.5</td>
+          <td>32.250</td>
+          <td>28.375</td>
           <td>10.125</td>
+          <td>10.25</td>
+          <td>9.875</td>
         </tr>
       </tbody>
     </table>
@@ -398,7 +405,7 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 0.9721971302299277), ('RandomOneShotAgent', 0.841121622141797)]
+    [('GreedyOneShotAgent', 1.0249018103345993), ('RandomOneShotAgent', 0.7250861525322114)]
 
 
 This simple agent is definitely better than the random agent. Let’s
@@ -458,27 +465,12 @@ Responding to opponent offers is also simple:
        if my_needs <= 0:
            return ResponseType.END_NEGOTIATION
 
--  It then gets access to the ``SAOAMI`` (Stacked Alternating Offers
-   Agent Mechanism Interface) object connecting the agent to this
-   specific negotiation. Here we use the fact that the partner ID and
-   the negotiator ID are always the same.
+-  If the offered quantity is less than its needs, accept the offer.
+   Otherwise reject the offer.
 
 .. code:: python
 
-       ami = self.get_ami(negotiator_id)
-
--  If this is the last step, and the quantity offered is less than the
-   agent’s needs it accepts it, otherwise, it rejects the offer.
-
-.. code:: python
-
-       if state.step == ami.n_steps - 1:
-           return (
-               ResponseType.ACCEPT_OFFER
-               if offer[QUANTITY] <= my_needs
-               else ResponseType.REJECT_OFFER
-           )
-       return ResponseType.REJECT_OFFER
+       return ResponseType.ACCEPT_OFFER if offer[QUANTITY] <= my_needs else ResponseType.REJECT_OFFER
 
 Most of the code is in the ``best_offer`` method which calculates the
 best offer for a negotiation *given the agreements reached so far*.
@@ -494,6 +486,8 @@ Let’s check it line by line:
        if my_needs <= 0:
            return None
        ami = self.get_ami(negotiator_id)
+       if not ami:
+           return None
 
 -  It then finds out the ``Issue`` objects corresponding to the quantity
    and unit-price for this negotiation and initializes an offer (we have
@@ -529,13 +523,11 @@ Let’s check it line by line:
 
 .. code:: python
 
-       if self.is_selling():
+       if self._is_selling(ami):
            offer[UNIT_PRICE] = unit_price_issue.max_value
        else:
            offer[UNIT_PRICE] = unit_price_issue.min_value
        return tuple(offer)
-
-That is it.
 
 More General Greedy Agent
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -570,7 +562,7 @@ modifications:
                 if self._is_selling(self.get_ami(negotiator_id)) 
                 else self._supplies
             )
-            demand = min(summary[0][0], summary[-1][0]) / self.awi.n_competitors     
+            demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)     
             return  demand - secured
 
 Firstly, we now keep track of our sales and supplies separately:
@@ -592,28 +584,20 @@ Firstly, we now keep track of our sales and supplies separately:
 To find out whether a contract is for sales or supplies, we simply check
 that the ``seller`` in the contract annotation is us.
 
-We need now two more changes:
-
--  Modify the way we know whether a contract is for sales or supplies.
-   This is done by comparing the ``seller`` attribute of the annotation
-   associated with the negotiator to our ID.
-
-.. code:: python
-
-   def _is_selling(self, negotiator_id):
-       return self.negotiators[negotiator_id][0].ami.annotation["seller"] == self.id
-
--  The final modification, is to separate the calculation of our needs
-   for supplies and sales:
+We need now one more chanage which is to separate the calculation of our
+needs for supplies and sales:
 
 .. code:: python
 
    def _needed(self, negotiator_id):
        summary = self.awi.exogenous_contract_summary
-       q = min(summary[0][0], summary[-1][0])
-       secured = self._sales if self._is_selling(negotiator_id) else self._supplies
-       n_competitors = len(self.awi.all_consumers[self.awi.my_input_product]
-       return int(q / n_competitors - secured)
+       secured = ( 
+           self._sales 
+           if self._is_selling(self.get_ami(negotiator_id)) 
+           else self._supplies
+       )
+       demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)     
+       return  demand - secured
 
 here we start by reading the summary information of exogenous contracts
 into ``summary``. This is a list of two valued tuples giving the
@@ -623,7 +607,8 @@ exogenous contracts for all products. We also find the amount we secured
 number of competitors (i.e. agents in the same production level as us).
 We assume that we need to buy (and sell) the same quantity as the
 minimum of the raw material and final product exogenous contracts
-divided equally between us and our competitors.
+divided equally between us and our competitors (we add one to
+``n_competitors`` to count ourselves).
 
 Now, let’s see how does this agent behave compared with the previous
 agent in a deep world simulation
@@ -654,7 +639,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 0.8409797601448952), ('DeepGreedyAgent', 0.7958920122224411)]
+    [('GreedyOneShotAgent', 0.9945258634068721), ('DeepGreedyAgent', 0.7749425221455211)]
 
 
 Even though our new ``DeepGreedyAgent`` was able to get contracts which
@@ -796,6 +781,19 @@ greedy agent using this approach.
 .. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_27_0.png
 
 
+This agent shows a case of parameterizing your agent so that it can be
+tested with different hyper-parameters. You do that by passing whatever
+parameters you like as keyword arguments to the constctor:
+
+.. code:: python
+
+   def __init__(self, *args, threshold=0.3, **kwargs):
+       super().__init__(*args, **kwargs)
+       self._threshold = threshold
+
+The one paramter we have is a threshold of utility relative to the
+maximum possile utility that we are willing to accept.
+
 We need to implement two methods: ``first_proposals`` (to generate a
 good first proposal for each negotiation) and ``counter_all`` (for
 countering a set of offers). We inherit from ``GreedyOneShotAgent`` in
@@ -815,14 +813,35 @@ generator expression:
 Almost all the code now resides in the ``counter_all`` method. We will
 go over it here:
 
+::
+
+       secured, outputs, chosen = 0, [], dict()
+       for i, k in enumerate(offers.keys()):
+           offer, is_output = sorted_offers[i]
+           secured += offer[QUANTITY]
+           if secured >= my_needs:
+               break
+           chosen[k] = offer
+           outputs.append(is_output)
+           
+       u = self.ufun.from_offers(list(chosen.values()), outputs)
+       rng = self.ufun.max_utility - self.ufun.min_utility
+       threshold = self._threshold * rng + self.ufun.min_utility
+       if u >= threshold:
+           for k, v in chosen.items():
+               responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
+       return responses
+
 -  We start by initializing our response by the best offer for each
    negotiation using ``first_proposals`` and calculating our needs using
    ``_needed``
 
 .. code:: python
 
-   responses = self.first_proposals()
-   outputs = list()
+   responses = {
+       k: SAOResponse(ResponseType.REJECT_OFFER, _) 
+       for k, v in self.first_proposals().items()
+   }
    my_needs = self._needed(None)
 
 -  We then sort the offers so that earlier offers have *better* prices
@@ -831,9 +850,10 @@ go over it here:
 
 .. code:: python
 
+   is_selling = ( self._is_selling(self.get_ami(_)) for _ in offers.keys() )
    sorted_offers = sorted(
-       zip(offers.values(), (self._is_selling(_) for _ in offers.keys())), 
-       key=lambda o, nid: - o[UNIT_PRICE] if self._selling(o) else o[UNIT_PRICE]
+       zip(offers.values(), is_selling), 
+       key=lambda x: (- x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE]
    )
 
 -  We *greedily* find a set of offers that satisfy all our needs (or as
@@ -841,13 +861,14 @@ go over it here:
 
 .. code:: python
 
-   secured, chosen = 0, dict()
+   secured, outputs, chosen = 0, [], dict()
    for i, k in enumerate(offers.keys()):
        offer, is_output = sorted_offers[i]
        secured += offer[QUANTITY]
        if secured >= my_needs:
            break
-       chosen[k], outputs[k] = offer, is_output
+       chosen[k] = offer
+       outputs.append(is_output)
 
 -  Finally, we calculate the utility of accepting these *and only these*
    offers and accept the chosen offers if they provide 70% of the
@@ -870,7 +891,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 1.0512363920967527), ('RandomOneShotAgent', 0.8292152152905562)]
+    [('GreedySyncAgent', 0.9214866327302569), ('RandomOneShotAgent', 0.7446458864342236)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -925,12 +946,17 @@ The general algorithm for this controller is something like this:
 To use this agent, you need to implement three methods:
 
 -  ``is_acceptable`` decides whether an offer is now acceptable. For
-   this simple agent, we accept an offer if it provides us with at least
-   70% of the maximum possible utility.
+   this simple agent, we accept an offer if it provides us with a
+   decreasing fraction of the maximum utility attainable. Notice that,
+   because we set ``mn`` to ``min_utility``, the agent may actually
+   accept offers with negative utility!! This can easily be fixed by
+   setting ``mn`` to zero but will lead to much less trade.
 
 .. code:: python
 
-   return self.ufun(offer) > 0.7 * self.ufun.max_utility
+   mx, mn = self.ufun.max_utility , self.ufun.min_utility
+   u = (self.ufun(offer) - mn) / (mx - mn) 
+   return  u >= (1-state.relative_time)
 
 -  ``best_offer`` finds the best offer among a set of offers. Here we
    simply compare their utility
@@ -983,7 +1009,7 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('GreedySingleAgreementAgent', 0.9271810643670331), ('RandomOneShotAgent', 0.7817845346479539)]
+    [('GreedySingleAgreementAgent', 0.8879900535151694), ('RandomOneShotAgent', 0.6090936549538097)]
 
 
 Comparing all agents
@@ -1006,7 +1032,7 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 0.9225122922462091), ('GreedyOneShotAgent', 0.8928263129600016), ('GreedySingleAgreementAgent', 0.7937408045096188)]
+    [('GreedySyncAgent', 0.9354431974234341), ('GreedyOneShotAgent', 0.8671064380330857), ('GreedySingleAgreementAgent', 0.8155477102731777)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1066,7 +1092,7 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 0.9808033598796627), ('BuyCheapSellExpensiveAgent', 0.9111234157456277), ('DeepGreedyAgent', 0.88560739915884), ('SingleAgreementAspirationAgent', 0.8776736078728054), ('DecentralizingAgent', 0.5724252682254921)]
+    [('GreedySyncAgent', 1.0125177664341805), ('DeepGreedyAgent', 0.9102627793958686), ('BuyCheapSellExpensiveAgent', 0.9031557588371072), ('SingleAgreementAspirationAgent', 0.8479606301213628), ('DecentralizingAgent', 0.5214708856042949)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to
