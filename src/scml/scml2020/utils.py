@@ -1304,7 +1304,7 @@ def anac2021_collusion(
     verbose: bool = False,
     configs_only=False,
     compact=False,
-    n_competitors_per_world=None,
+    n_competitors_per_world=1,
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -1343,7 +1343,8 @@ def anac2021_collusion(
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
         exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
-                                 between 2 and min(2, n), where n is the number of competitors
+                                 between 2 and min(2, n), where n is the number of competitors. This value will 
+                                 always be set to 1 in SCML2021
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -1359,10 +1360,7 @@ def anac2021_collusion(
         processing
 
     """
-    if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+    n_competitors_per_world = 1
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents
