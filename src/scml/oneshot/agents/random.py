@@ -19,7 +19,10 @@ PROB_END = 0.005
 
 class RandomOneShotAgent(OneShotAgent):
     def _random_offer(self, negotiator_id: str):
-        return self.negotiators[negotiator_id][0].ami.random_outcomes(1)[0]
+        ami = self.get_ami(negotiator_id)
+        if not ami:
+            return None
+        return ami.random_outcomes(1)[0]
 
     def propose(self, negotiator_id: str, state: MechanismState) -> "Outcome":
         return self._random_offer(negotiator_id)
@@ -34,7 +37,10 @@ class RandomOneShotAgent(OneShotAgent):
 
 class SyncRandomOneShotAgent(OneShotSyncAgent):
     def _random_offer(self, negotiator_id: str):
-        return self.get_ami(negotiator_id).random_outcomes(1)[0]
+        ami = self.get_ami(negotiator_id)
+        if not ami:
+            return None
+        return ami.random_outcomes(1)[0]
 
     def counter_all(
         self, offers: Dict[str, "Outcome"], states: Dict[str, SAOState]
