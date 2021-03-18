@@ -83,6 +83,8 @@ class NegotiationManager:
         negotiate_on_signing=True,
         logdebug=False,
         use_trading_prices=True,
+        min_price_margin=0.5,
+        max_price_margin=0.5,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -90,6 +92,16 @@ class NegotiationManager:
         self._negotiate_on_signing = negotiate_on_signing
         self._log = logdebug
         self._use_trading = use_trading_prices
+        self._min_margin = 1 - min_price_margin
+        self._max_margin = 1 + max_price_margin
+
+    @property
+    def use_trading(self):
+        return self._use_trading
+
+    @use_trading.setter
+    def use_trading(self, v):
+        self._use_trading = v
 
     def init(self):
         # set horizon to exogenous horizon
@@ -229,10 +241,10 @@ class NegotiationManager:
         )
         if is_seller:
             cprice = prices[self.awi.my_output_product]
-            return cprice, 2 * int(cprice + 0.5)
+            return int(cprice * self._min_margin), int(self._max_margin * cprice + 0.5)
 
         cprice = prices[self.awi.my_input_product]
-        return 1, int(cprice)
+        return int(cprice * self._min_margin), int(self._max_margin * cprice + 0.5)
 
     def _trange(self, step, is_seller):
         if is_seller:
@@ -729,6 +741,8 @@ class MovingRangeNegotiationManager:
         utility_threshold=0.9,
         time_threshold=0.9,
         time_horizon=0.1,
+        min_price_margin=0.5,
+        max_price_margin=0.5,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -737,6 +751,8 @@ class MovingRangeNegotiationManager:
         self._time_threshold = time_threshold
         self._price_weight = price_weight
         self._utility_threshold = utility_threshold
+        self._min_margin = 1 - min_price_margin
+        self._max_margin = 1 + max_price_margin
         self.controllers: Dict[bool, SyncController] = {
             False: SyncController(
                 is_seller=False,
@@ -766,6 +782,11 @@ class MovingRangeNegotiationManager:
         )
         if self._current_start >= self._current_end:
             return
+        prices = (
+            self.awi.catalog_prices
+            if not self.awi.settings.get("public_trading_prices", False)
+            else self.awi.trading_prices
+        )
         for seller, needed, secured, product in [
             (False, self.inputs_needed, self.inputs_secured, self.awi.my_input_product),
             (
@@ -782,21 +803,25 @@ class MovingRangeNegotiationManager:
             if needs < 1:
                 continue
             if seller:
-                min_price = (
-                    self.awi.catalog_prices[self.awi.my_input_product]
-                    + self.awi.profile.costs[0, self.awi.my_input_product]
-                )
-                price_range = (min_price, 2 * min_price)
+                price = prices[self.awi.my_input_product]
             else:
-                price_range = (
-                    0,
-                    min(
-                        self.awi.catalog_prices[self.awi.my_input_product],
-                        self.awi.catalog_prices[self.awi.my_output_product]
-                        - self.awi.profile.costs[0, product],
-                    ),
-                )
+                price = prices[self.awi.my_output_product]
+            price_range = (self._min_margin * price, self._max_margin * price)
             if price_range[0] >= price_range[1]:
+                continue
+            if (
+                seller
+                and price_range[-1]
+                < prices[self.awi.my_input_product]
+                + self.awi.profile.costs[self.awi.my_input_product].min()
+            ):
+                continue
+            if (
+                not seller
+                and price_range[0]
+                > prices[self.awi.my_output_product]
+                - self.awi.profile.costs[self.awi.my_input_product].min()
+            ):
                 continue
             self.awi.request_negotiations(
                 not seller,

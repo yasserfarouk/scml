@@ -122,8 +122,12 @@ class KeepOnlyGoodPrices:
           action (i.e. not starting with `on_`) are overridden this way.
     """
 
-    def __init__(self, *args, buying_margin=0.33, selling_margin=0.33, **kwargs):
+    def __init__(self, *args, buying_margin=0.5, selling_margin=0.5, **kwargs):
         super().__init__(*args, **kwargs)
+        if buying_margin is None:
+            buying_margin = 0.5
+        if selling_margin is None:
+            selling_margin = 0.5
         self._buying_factor, self._selling_factor = (
             1.0 + buying_margin,
             1.0 - selling_margin,
@@ -132,19 +136,25 @@ class KeepOnlyGoodPrices:
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         # calls the super class to allow it to do any book-keeping.
         signatures = super().sign_all_contracts(contracts)
+        # calculate current trading prices (approximate them with catalog price
+        # if not available)
+        tp = self.awi.trading_prices
+        if tp is None:
+            in_price = self.awi.catalog_prices[self.awi.my_input_product]
+            out_price = self.awi.catalog_prices[self.awi.my_output_product]
+        else:
+            in_price = self.awi.trading_prices[self.awi.my_input_product]
+            out_price = self.awi.trading_prices[self.awi.my_output_product]
+
         for i, c in enumerate(contracts):
             if signatures[i] is None:
                 continue
             if (
                 c.annotation["buyer"] == self.id
-                and c.agreement["unit_price"]
-                > self._buying_factor
-                * self.awi.catalog_prices[self.awi.my_input_product]
+                and c.agreement["unit_price"] > self._buying_factor * in_price
             ) or (
                 c.annotation["seller"] == self.id
-                and c.agreement["unit_price"]
-                < self._selling_factor
-                * self.awi.catalog_prices[self.awi.my_input_product]
+                and c.agreement["unit_price"] < self._selling_factor * out_price
             ):
                 signatures[i] = None
         return signatures

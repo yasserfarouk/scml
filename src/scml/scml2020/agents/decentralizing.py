@@ -12,16 +12,19 @@ from scml.scml2020.components import StepNegotiationManager
 from scml.scml2020.components import SupplyDrivenProductionStrategy
 
 from ..components.signing import KeepOnlyGoodPrices
-from ..components.trading import PredictionBasedTradingStrategy
+from ..components.trading import (
+    MarketAwarePredictionBasedTradingStrategy,
+    PredictionBasedTradingStrategy,
+)
 from ..components.prediction import MarketAwareTradePredictionStrategy
 from ..world import SCML2020Agent
 
 __all__ = [
     "DecentralizingAgent",
-    "MarketAwareDecentralizingAgent",
     "IndDecentralizingAgent",
-    "MarketAwareIndDecentralizingAgent",
     "DecentralizingAgentWithLogging",
+    "MarketAwareDecentralizingAgent",
+    "MarketAwareIndDecentralizingAgent",
 ]
 
 
@@ -52,7 +55,6 @@ class _NegotiationCallbacks:
 
 
 class DecentralizingAgent(
-    KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     StepNegotiationManager,
     PredictionBasedTradingStrategy,
@@ -71,29 +73,37 @@ class MarketAwareDecentralizingAgent(
     SupplyDrivenProductionStrategy,
     SCML2020Agent,
 ):
-    pass
+    def __init__(
+        self,
+        *args,
+        buying_margin=None,
+        selling_margin=None,
+        min_price_margin=0.5,
+        max_price_margin=0.5,
+        **kwargs
+    ):
+        super().__init__(
+            *args,
+            buying_margin=buying_margin,
+            selling_margin=selling_margin,
+            min_price_margin=min_price_margin,
+            max_price_margin=max_price_margin,
+            **kwargs
+        )
 
 
 class DecentralizingAgentWithLogging(
-    KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     StepNegotiationManager,
     PredictionBasedTradingStrategy,
     SupplyDrivenProductionStrategy,
     SCML2020Agent,
 ):
-    def __init__(self, *args, buying_margin=0.33, selling_margin=0.33, **kwargs):
-        super().__init__(
-            *args,
-            buying_margin=buying_margin,
-            selling_margin=selling_margin,
-            logdebug=True,
-            **kwargs
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, logdebug=True, **kwargs)
 
 
 class IndDecentralizingAgent(
-    KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     IndependentNegotiationsManager,
     PredictionBasedTradingStrategy,
@@ -107,7 +117,24 @@ class IndDecentralizingAgent(
 
 
 class MarketAwareIndDecentralizingAgent(
+    KeepOnlyGoodPrices,
     MarketAwareTradePredictionStrategy,
     IndDecentralizingAgent,
 ):
-    pass
+    def __init__(
+        self,
+        *args,
+        buying_margin=None,
+        selling_margin=None,
+        min_price_margin=0.5,
+        max_price_margin=0.5,
+        **kwargs
+    ):
+        super().__init__(
+            *args,
+            buying_margin=buying_margin,
+            selling_margin=selling_margin,
+            min_price_margin=min_price_margin,
+            max_price_margin=max_price_margin,
+            **kwargs
+        )

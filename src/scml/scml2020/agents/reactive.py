@@ -14,11 +14,10 @@ from ..components.signing import KeepOnlyGoodPrices
 from ..components.trading import ReactiveTradingStrategy
 from ..world import SCML2020Agent
 
-__all__ = ["ReactiveAgent"]
+__all__ = ["ReactiveAgent", "MarketAwareReactiveAgent"]
 
 
 class ReactiveAgent(
-    KeepOnlyGoodPrices,
     StepNegotiationManager,
     ReactiveTradingStrategy,
     TradeDrivenProductionStrategy,
@@ -48,3 +47,23 @@ class ReactiveAgent(
             needed, secured = self.inputs_needed, self.inputs_secured
 
         return needed[steps[0] : steps[1]] - secured[steps[0] : steps[1]]
+
+class MarketAwareReactiveAgent(KeepOnlyGoodPrices, ReactiveAgent):
+    def __init__(
+        self,
+        *args,
+        buying_margin=None,
+        selling_margin=None,
+        min_price_margin=0.5,
+        max_price_margin=0.5,
+        **kwargs
+    ):
+        super().__init__(
+            *args,
+            buying_margin=buying_margin,
+            selling_margin=selling_margin,
+            min_price_margin=min_price_margin,
+            max_price_margin=max_price_margin,
+            **kwargs
+        )
+

@@ -14,7 +14,6 @@ __all__ = ["MovingRangeAgent", "MarketAwareMovingRangeAgent"]
 
 
 class MovingRangeAgent(
-    KeepOnlyGoodPrices,
     MovingRangeNegotiationManager,
     PredictionBasedTradingStrategy,
     SupplyDrivenProductionStrategy,
@@ -24,4 +23,17 @@ class MovingRangeAgent(
 
 
 class MarketAwareMovingRangeAgent(MarketAwareTradePredictionStrategy, MovingRangeAgent):
-    pass
+    def __init__(
+        self,
+        *args,
+        min_price_margin=0.5,
+        max_price_margin=0.5,
+        **kwargs
+    ):
+        super().__init__(
+            *args,
+            min_price_margin=min_price_margin,
+            max_price_margin=max_price_margin,
+            **kwargs
+        )
+
