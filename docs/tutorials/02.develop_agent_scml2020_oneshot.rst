@@ -290,13 +290,67 @@ properties of its AWI which is accessible at any time as:
 You can see all of these methods and properties specific for the
 **OneShotAWI** and its descendents
 `here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotAWI.html>`__.
-A full list of methods and properties inherited from NegMAS
-**AgentWorldInterface** can be found
-`here <http://www.yasserm.com/negmas/api/negmas.situated.AgentWorldInterface.html>`__.
+
+Your ufun
+^^^^^^^^^
+
+The Oneshot game has the advantage that it is possible at the end of
+each simulation step (day) to calculate **exactly** the profit you will
+be getting for the set of contracts you have (either through negotiation
+or as exogenous contracts). We provide a utility function class
+(`OneShotUtilityFunction <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotUFun.html>`__
+which can be used normally as any NegMAS
+`UtilityFunction <http://www.yasserm.com/negmas/api/negmas.utilities.UtilityFunction.html>`__.
+This ufun is available to your all the time (a new one is created for
+each simulation step) and is accessible as:
+
+.. code:: python
+
+   self.ufun
+
+The most important services this ufun class provides for you are the
+following:
+
+-  ``from_offers``: This method receives a list of outcomes and a list
+   of booleans indicating whether each of them is for buying or for
+   selling. It returns to you the profit you will get if all of these
+   outcomes *and nothing else* became contracts. An outcome is just a
+   tuple (quantity, delivery time, unit price). You can use this
+   callback during negotiation to judge hypothetical agreements with
+   your partners.
+-  ``from_contracts``: This method is the same as ``from_offers`` but it
+   receives a list of ``Contract`` objects. It is useful after all
+   negotiations are finished to calculate the profit you will be getting
+   for this step.
+-  ``from_aggregates``: Same as ``from_offers`` but receives total
+   quantities and prices for input and output instead of a list of
+   outcomes.
+-  ``is_breach``: will tell you whether or not getting the given total
+   input and output quantities will make you cause a breach. Notice that
+   breaches are expected in the OneShot track as any mismatch in the
+   quantities of inputs and outputs will constitute a breach.
+-  ``breach_level``: returns a value between zero and one specifying the
+   level of breach that will be recorded for a given total input and
+   output quantities.
+-  ``find_limit``: finds either the maximum or the minimum possible
+   profit (minimum profit is maximm loss) attainable in the current
+   simulation step (day). This is useful when you want to normalize
+   utility values between zero and one. Two of the agents we will
+   develop during this tutorial will use this feature.
+-  ``max_utility``, ``min_utility``: give the maximum and minimum
+   utilities/profits attainable. Note that you must prepare them by
+   calling ``find_limit``. We will go into how to do that later.
+-  ``best``, ``worst``: give more information about the cases of maximum
+   and minimum profit (i.e. the total input and output quantity needed,
+   the prodcible quantity, best possible prices for buying and selling,
+   etc). Again, these are not available except after calling
+   ``find_limit``.
+
+Now we can start working on our agent.
 
 There are three base classes for one-shot agents (``OneShotAgent``,
 ``SyncOneShotAgent``, and ``SingleAgreementOneShotAgent``). We will
-discuss them in more details in what follows:
+discuss them in more details in what follows.
 
 OneShotAgent
 ~~~~~~~~~~~~
@@ -737,6 +791,11 @@ greedy agent using this approach.
             super().__init__(*args, **kwargs)
             self._threshold = threshold
         
+        def init(self):
+            super().init()
+            self.ufun.find_limit(True)
+            self.ufun.find_limit(False)
+            
         def first_proposals(self):
             """Decide a first proposal on every negotiation. 
             Returning None for a negotiation means ending it."""
@@ -794,6 +853,39 @@ parameters you like as keyword arguments to the constctor:
 The one paramter we have is a threshold of utility relative to the
 maximum possile utility that we are willing to accept.
 
+This agent also shows a case in which we use the built-in utility
+function implemented by the system (see `Section 2.3 of the game
+description <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__). This
+ufun is accessible as ``ufun``. By default the ufun will return the
+profit in dollars for a given set of negotiation outcomes, offers,
+agreements, or contracts. Note that the ufun assumes that what it is
+given *is the complete set of agreements and no others will be added to
+them later*. This value may be positive or negative (loss). In some
+cases you need to get the utility value normalized to a range between
+zero and one. This agent will do that. To do this normalization, we need
+to know the value of maximum and minimum utilities. You can of course
+solve the corresponding optimziation problem but we did that for you.
+All you need is call ``find_limit`` and pass it a boolean (``True`` for
+calculating the highest possible utility and ``False`` for calculating
+the lowest possible utility). To avoid doing this calculation
+repeatedly, you should store the results in ``ufun.best`` or
+``ufun.worst`` for highest and lowest utility. After that, you can
+access the maximum possible utility as ``max_utility`` and minimum
+possible utility as ``min_utility``. We do that in the ``init()``
+method:
+
+.. code:: python
+
+    def init(self):
+       super().init()
+       self.ufun.find_limit(True)
+       self.ufun.find_limit(False)
+
+After this call, we can access ``maximum_utility``, ``minimum_utility``,
+``best``, ``worst`` members of the ufun. As explained earlier, ``best``
+and ``worst`` give extra information about the conditions for achieving
+maximum and minimum utility.
+
 We need to implement two methods: ``first_proposals`` (to generate a
 good first proposal for each negotiation) and ``counter_all`` (for
 countering a set of offers). We inherit from ``GreedyOneShotAgent`` in
@@ -812,25 +904,6 @@ generator expression:
 
 Almost all the code now resides in the ``counter_all`` method. We will
 go over it here:
-
-::
-
-       secured, outputs, chosen = 0, [], dict()
-       for i, k in enumerate(offers.keys()):
-           offer, is_output = sorted_offers[i]
-           secured += offer[QUANTITY]
-           if secured >= my_needs:
-               break
-           chosen[k] = offer
-           outputs.append(is_output)
-           
-       u = self.ufun.from_offers(list(chosen.values()), outputs)
-       rng = self.ufun.max_utility - self.ufun.min_utility
-       threshold = self._threshold * rng + self.ufun.min_utility
-       if u >= threshold:
-           for k, v in chosen.items():
-               responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
-       return responses
 
 -  We start by initializing our response by the best offer for each
    negotiation using ``first_proposals`` and calculating our needs using
@@ -877,10 +950,13 @@ go over it here:
 
 .. code:: python
 
-   u = self.ufun.from_offers(offers, outputs)
-   if u > 0.7 * self.ufun.max_utility:
+   u = self.ufun.from_offers(list(chosen.values()), outputs)
+   rng = self.ufun.max_utility - self.ufun.min_utility
+   threshold = self._threshold * rng + self.ufun.min_utility
+   if u >= threshold:
        for k, v in chosen.items():
            responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
+   return responses
 
 Let’s see how did it do:
 
@@ -979,7 +1055,12 @@ Here is the full agent
 .. code:: ipython3
 
     class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
-        """A greedy agent based on OneShotSingleAgreementAgent"""   
+        """A greedy agent based on OneShotSingleAgreementAgent"""
+        
+        def init(self):
+            super().init()
+            self.ufun.find_limit(True) # finds highest utility
+            self.ufun.find_limit(False) # finds lowest utility
         
         def is_acceptable(self, offer, source, state) -> bool:        
             mx, mn = self.ufun.max_utility , self.ufun.min_utility
@@ -1109,7 +1190,6 @@ take into account are the following:
    next step.
 
 With that we end our tutorial. Have fun developing your agent.
-
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.

@@ -12,8 +12,10 @@ GreedySyncAgent
 
       ~GreedySyncAgent.counter_all
       ~GreedySyncAgent.first_proposals
+      ~GreedySyncAgent.init
 
    .. rubric:: Methods Documentation
 
    .. automethod:: counter_all
    .. automethod:: first_proposals
+   .. automethod:: init

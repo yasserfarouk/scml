@@ -5,8 +5,9 @@ Let’s see the simplest possible agent (a do-nothing agent)
 
 .. code:: ipython3
 
-    from scml.scml2020 import SCML2020Agent, SCML2021World, RandomAgent, DecentralizingAgent
-    ComparisonAgent = DecentralizingAgent
+    from scml.scml2020 import SCML2020Agent, SCML2021World
+    from scml.scml2020.agents import RandomAgent, MarketAwareDecentralizingAgent, DecentralizingAgent
+    ComparisonAgent = MarketAwareDecentralizingAgent
 
 Let’s start by looking at the standard/collusion tracks. These two
 tracks have only a minor change in the way agent score is evaluated
@@ -77,9 +78,6 @@ properties of its AWI which is accessible at any time as:
 You can see all of these methods and properties specific for the
 **OneShotAWI** and its descendents
 `here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.AWI.html>`__.
-A full list of methods and properties inherited from NegMAS
-**AgentWorldInterface** can be found
-`here <http://www.yasserm.com/negmas/api/negmas.situated.AgentWorldInterface.html>`__.
 
 Agent Anatomy
 ~~~~~~~~~~~~~
@@ -355,7 +353,8 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
     from scml.scml2020.components.production import DemandDrivenProductionStrategy
     from scml.scml2020.components.trading import PredictionBasedTradingStrategy
-    class MyAgent(PredictionBasedTradingStrategy, DemandDrivenProductionStrategy, SCML2020Agent):
+    from scml.scml2020.components.prediction import MarketAwareTradePredictionStrategy
+    class MyAgent(MarketAwareTradePredictionStrategy, PredictionBasedTradingStrategy, DemandDrivenProductionStrategy, SCML2020Agent):
         """My agent"""
 
 .. code:: ipython3
@@ -371,7 +370,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.87it/s]
+    100%|██████████| 10/10 [00:04<00:00,  2.33it/s]
 
 
 
@@ -461,7 +460,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:07<00:00,  1.32it/s]
+    100%|██████████| 10/10 [00:14<00:00,  1.43s/it]
 
 
 
@@ -910,7 +909,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:20<00:00,  2.01s/it]
+    100%|██████████| 10/10 [00:19<00:00,  1.97s/it]
 
 
 
@@ -973,24 +972,17 @@ average prices they get from their negotiations.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     5.0  0.3  0.4  0.0  0.0  0.0  0.2  1.0
-    True    False   12.0  0.7  0.0  0.6  0.7  0.7  0.7  0.8
+    False   True     2.0  0.6  0.3  0.4  0.5  0.6  0.7  0.8
+    True    False    3.0  0.7  0.0  0.6  0.7  0.7  0.7  0.7
     MyAgent:
     ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    19.0  0.5  0.3  0.0  0.5  0.7  0.7  0.8
-    True    False    8.0  0.8  0.3  0.2  0.5  1.0  1.0  1.0
-            True    11.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
-    DecentralizingAgent:
-    ===========
-                   price                                   
-                   count mean  std  min  25%  50%  75%  max
-    selling buying                                         
-    False   True     6.0  0.8  0.3  0.5  0.6  1.0  1.0  1.0
-    True    False   10.0  0.2  0.3  0.0  0.0  0.0  0.5  0.5
-            True     7.0  0.4  0.5  0.0  0.0  0.0  1.0  1.0
+    False   True    19.0  0.5  0.1  0.5  0.5  0.5  0.6  0.7
+    True    False   10.0  0.5  0.1  0.4  0.5  0.5  0.5  0.8
+            True    55.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    
 
 
 We can see that the new strategy gets lower average prices when buying
@@ -1025,7 +1017,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:23<00:00,  2.36s/it]
+    100%|██████████| 10/10 [00:22<00:00,  2.29s/it]
 
 .. parsed-literal::
 
@@ -1212,7 +1204,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:04<00:00,  2.03it/s]
+    100%|██████████| 10/10 [00:14<00:00,  1.48s/it]
 
 
 .. code:: ipython3
@@ -1233,7 +1225,7 @@ exploring the design space.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     2.0  0.7  0.4  0.4  0.5  0.7  0.8  1.0
+    True    False   12.0  0.7  0.0  0.6  0.7  0.7  0.7  0.8
     
 
 
@@ -1259,8 +1251,8 @@ is an example:
 
 .. code:: ipython3
 
-    from scml.scml2020.components import TradePredictionStrategy
-    class MyPredictor(TradePredictionStrategy):
+    from scml.scml2020.components import MarketAwareTradePredictionStrategy
+    class MyPredictor(MarketAwareTradePredictionStrategy):
         def trade_prediction_init(self):
             inp = self.awi.my_input_product
             self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
@@ -1289,7 +1281,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:05<00:00,  1.97it/s]
+    100%|██████████| 10/10 [00:08<00:00,  1.23it/s]
 
 
 .. code:: ipython3
@@ -1396,6 +1388,20 @@ The main idea behind this agent is very simple:
     
         def step(self):
             super().step()
+            # update prices based on market information if available
+            tp = self.awi.trading_prices
+            if tp is None:
+                self.prices = [
+                    self.awi.catalog_prices[self.awi.my_input_product],
+                    self.awi.catalog_prices[self.awi.my_output_product],
+                ]
+            else:
+                self.prices = [
+                    self.awi.trading_prices[self.awi.my_input_product],
+                    self.awi.trading_prices[self.awi.my_output_product],
+                ]
+            
+            # produce everything I can
             commands = NO_COMMAND * np.ones(self.awi.n_lines, dtype=int)
             inputs = min(self.awi.state.inventory[self.awi.my_input_product], len(commands))
             commands[:inputs] = self.awi.my_input_product
@@ -1409,6 +1415,7 @@ The main idea behind this agent is very simple:
             mechanism: "AgentMechanismInterface",
         ) -> Optional["Negotiator"]:
             is_seller = annotation["seller"] == self.id
+            # do not engage in negotiations that obviouly have bad prices for me
             if is_seller and issues[UNIT_PRICE].max_value < self.prices[is_seller]:
                 return None
             if not is_seller and issues[UNIT_PRICE].min_value > self.prices[is_seller]:
@@ -1471,7 +1478,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  3.29it/s]
+    100%|██████████| 10/10 [00:09<00:00,  1.09it/s]
 
 
 
@@ -1564,7 +1571,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:02<00:00,  3.90it/s]
+    100%|██████████| 10/10 [00:09<00:00,  1.09it/s]
 
 
 
@@ -1640,7 +1647,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:16<00:00,  7.69s/it]
+    100%|██████████| 10/10 [06:33<00:00, 39.33s/it]
 
 
 
@@ -1658,7 +1665,6 @@ not designed for the full SCML environment and use very restrictive
 assumptions.
 
 With that we end our tutorial. Have fun developing your agent.
-
 
 
 Download :download:`Notebook<notebooks/03.develop_agent_scml2020.ipynb>`.

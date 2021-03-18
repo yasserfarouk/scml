@@ -6,6 +6,12 @@ NegotiationManager
 .. autoclass:: NegotiationManager
    :show-inheritance:
 
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~NegotiationManager.use_trading
+
    .. rubric:: Methods Summary
 
    .. autosummary::
@@ -18,6 +24,10 @@ NegotiationManager
       ~NegotiationManager.step
       ~NegotiationManager.target_quantities
       ~NegotiationManager.target_quantity
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: use_trading
 
    .. rubric:: Methods Documentation
 
