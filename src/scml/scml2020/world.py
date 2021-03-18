@@ -53,8 +53,10 @@ from .common import (
     ExogenousContract,
     FinancialReport,
     ContractInfo,
+    Failure,
 )
 from .factory import Factory
+from .awi import AWI
 from .agent import OneShotAdapter, SCML2020Agent, _SystemAgent
 from ..oneshot.agent import OneShotAgent
 from ..common import integer_cut
@@ -66,6 +68,8 @@ from ..common import distribute_quantities
 __all__ = [
     "SCML2020World",
     "SCML2021World",
+    "Failure",
+    "AWI",
 ]
 
 CompensationRecord = namedtuple(
