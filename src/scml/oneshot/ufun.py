@@ -30,6 +30,7 @@ UFunLimit = namedtuple(
         "producible",
     ],
 )
+"""Information about one utility limit (either highest or lowest). See `OnShotUFun.find_limit` for details."""
 
 
 class OneShotUFun(UtilityFunction):
@@ -387,16 +388,25 @@ class OneShotUFun(UtilityFunction):
              n_input_negs: How many input negs are we to consider? None means all
              n_output_negs: How many output negs are we to consider? None means all
              secured_input_quantity: A quantity that MUST be bought
-             secured_input_unit_price: The unit price of the quantity that MUST
-                                       be bought.
+             secured_input_unit_price: The (average) unit price of the quantity
+                                       that MUST be bought.
              secured_output_quantity: A quantity that MUST be sold.
-             secured_output_unit_price: The unit price of the quantity that MUST
-                                       be sold.
+             secured_output_unit_price: The (average) unit price of the quantity
+                                        that MUST be sold.
         Remarks:
             - You can use the `secured_*` arguments and control over the number
               of negotiations to consider to find the utility limits **given**
               some already concluded and signed contracts
         """
+        default_params = (
+            n_input_negs is None
+            and n_output_negs is None
+            and secured_input_quantity == 0
+            and secured_input_unit_price < 1e-5
+            and secured_output_quantity == 0
+            and secured_output_unit_price < 1e-5
+        )
+        set_best, set_worst = best and default_params, not best and default_params
 
         def make_program(
             best: bool, allow_oversales, n_input_negs=None, n_output_negs=None
@@ -503,4 +513,9 @@ class OneShotUFun(UtilityFunction):
             utility, vals = u1, vals1
         else:
             utility, vals = u2, vals2
-        return UFunLimit(*tuple([utility] + vals))
+        result = UFunLimit(*tuple([utility] + vals))
+        if set_best:
+            self.best = result
+        elif set_worst:
+            self.worst = result
+        return result
