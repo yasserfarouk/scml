@@ -88,6 +88,11 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
         super().__init__(*args, **kwargs)
         self._threshold = threshold
 
+    def init(self):
+        super().init()
+        self.ufun.best = self.ufun.find_limit(True)
+        self.ufun.worst = self.ufun.find_limit(False)
+
     def first_proposals(self):
         """Decide a first proposal on every negotiation.
         Returning None for a negotiation means ending it."""
@@ -130,7 +135,7 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
                 outputs.append(is_selling)
 
             u = self.ufun.from_offers(list(chosen.values()), outputs)
-            if u > 0.7 * self.ufun.max_utility:
+            if u > self._threshold * self.ufun.max_utility:
                 for k in chosen.keys():
                     responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
 
@@ -156,6 +161,11 @@ class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def init(self):
+        super().init()
+        self.ufun.best = self.ufun.find_limit(True)
+        self.ufun.worst = self.ufun.find_limit(False)
 
     def is_acceptable(self, offer, source, state) -> bool:
         mx, mn = self.ufun.max_utility, self.ufun.min_utility
