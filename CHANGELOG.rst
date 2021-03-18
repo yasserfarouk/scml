@@ -1,6 +1,24 @@
 Changelog
 =========
 
+0.4.0 (2021.3.18)
+-----------------
+**This is an important update. All participants in SCML 2021 should upgrade
+to this version**
+
+* compatibility with negmas 0.8.0
+* [oneshot] bugfix in random negotiator with ami is None
+* [scml2020] all market aware agents work now and are parametrized
+* [onshot] calculating ufun limits only for normalized ufuns.  Agents now MUST
+* call find_limit() explicitly on the ufun to calculate limits except for ufuns
+* created passing normalized=True in which find_limit() is called to calculate
+* best and worst in construction.
+* [oneshot][bugfix] my_consumers was wrong issue fix #13
+* [docs] documentation update
+* [oneshot] adding running_negotiations and unsigned_contracts
+* [oneshot] changing breach conditions
+* [docs] Update README.rst
+
 0.3.4 (2021.3.8)
 -----------------
 
