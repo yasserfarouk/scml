@@ -132,8 +132,12 @@ class OneShotUFun(UtilityFunction):
         self.input_product = input_product
         if self.input_product is not None:
             self.output_product = self.input_product + 1
-        self.best = self.find_limit(True, None, None)
-        self.worst = self.find_limit(False, None, None)
+        if self.normalized:
+            self.best = self.find_limit(True, None, None)
+            self.worst = self.find_limit(False, None, None)
+        else:
+            self.best = UFunLimit(*tuple([None] * 10))
+            self.worst = UFunLimit(*tuple([None] * 10))
 
     def xml(self, issues) -> str:
         raise NotImplementedError("Cannot convert the ufun to xml")
@@ -155,11 +159,7 @@ class OneShotUFun(UtilityFunction):
         Calculates the utility function given a list of contracts
         """
         offers, outputs = [], []
-        output_product = (
-            self.output_product
-            if self.output_product is not None
-            else self._awi.my_output_product
-        )
+        output_product = self.output_product
         for c in contracts:
             if c.signed_at < 0:
                 continue
@@ -192,7 +192,7 @@ class OneShotUFun(UtilityFunction):
             else:
                 qin += offer[QUANTITY]
                 pin += offer[UNIT_PRICE] * offer[QUANTITY]
-        n_lines = self.n_lines if self.n_lines is not None else self._awi.n_lines
+        n_lines = self.n_lines
         output_offers = sorted(output_offers, key=lambda x: -x[UNIT_PRICE])
         producible = min(qin, n_lines)
         for offer in output_offers:
@@ -359,7 +359,12 @@ class OneShotUFun(UtilityFunction):
         else:
             worst_outcome = (worst.input_quantity, t, worst.input_price)
             best_outcome = (best.input_quantity, t, best.input_price)
-        return (worst.utility, best.utility, worst_outcome, best_outcome)
+        return (  # typing: ignore
+            worst.utility,
+            best.utility,
+            worst_outcome,
+            best_outcome,
+        )  # typing: ignore
 
     def _is_midlevel(self):
         return not self.input_agent and not self.output_agent
@@ -417,24 +422,24 @@ class OneShotUFun(UtilityFunction):
                 ex_qin = m.add_var(var_type=mp.INTEGER, name="ex_qin")
                 ex_qout = m.add_var(var_type=mp.INTEGER, name="ex_qout")
 
-            m += qin >= 0
-            m += qin <= self.input_qrange[1] * self.n_input_negs
-            m += qout >= 0
-            m += qout <= self.output_qrange[1] * self.n_output_negs
-            m += produced >= 0
-            m += produced <= self.n_lines
+            m += qin >= 0  # typing: ignore
+            m += qin <= self.input_qrange[1] * self.n_input_negs  # typing: ignore
+            m += qout >= 0  # typing: ignore
+            m += qout <= self.output_qrange[1] * self.n_output_negs  # typing: ignore
+            m += produced >= 0  # typing: ignore
+            m += produced <= self.n_lines  # typing: ignore
             m += produced <= qin
             m += produced <= qout
 
             if not self.force_exogenous:
-                m += ex_qin >= 0
-                m += ex_qin <= self.ex_qin
-                m += ex_qout >= 0
-                m += ex_qout <= self.ex_qout
+                m += ex_qin >= 0  # typing: ignore
+                m += ex_qin <= self.ex_qin  # typing: ignore
+                m += ex_qout >= 0  # typing: ignore
+                m += ex_qout <= self.ex_qout  # typing: ignore
 
             if best:
-                m += qin <= self.n_lines
-                m += qout <= self.n_lines
+                m += qin <= self.n_lines  # typing: ignore
+                m += qout <= self.n_lines  # typing: ignore
             if allow_oversales:
                 m += qout >= qin
             else:
@@ -449,21 +454,21 @@ class OneShotUFun(UtilityFunction):
                 scale = uout if allow_oversales else uin
             if allow_oversales:
                 exp = (
-                    qout * uout
-                    + ex_qout * ex_uout
+                    qout * uout  # typing: ignore
+                    + ex_qout * ex_uout  # typing: ignore
                     + secured_output_quantity * secured_output_unit_price
                     - secured_output_quantity * secured_output_unit_price
-                    - ex_qin * ex_uin
-                    - qin * uin
-                    - self.production_cost * produced
-                    - self.delivery_penalty * (qout - qin) * scale
+                    - ex_qin * ex_uin  # typing: ignore
+                    - qin * uin  # typing: ignore
+                    - self.production_cost * produced  # typing: ignore
+                    - self.delivery_penalty * (qout - qin) * scale  # typing: ignore
                 )
             else:
                 exp = (
-                    qout * uout
-                    - qin * uin
-                    - self.production_cost * produced
-                    - self.storage_cost * (qin - qout) * scale
+                    qout * uout  # typing: ignore
+                    - qin * uin  # typing: ignore
+                    - self.production_cost * produced  # typing: ignore
+                    - self.storage_cost * (qin - qout) * scale  # typing: ignore
                 )
             m.objective = op(exp)
             status = m.optimize()
@@ -475,7 +480,7 @@ class OneShotUFun(UtilityFunction):
             else:
                 qin, qout, produced = qin.x, qout.x, produced.x
                 if not self.force_exogenous:
-                    ex_qin, ex_qout = ex_qin.x, ex_qout.x
+                    ex_qin, ex_qout = ex_qin.x, ex_qout.x  # typing: ignore
                 return m.objective_value, [
                     qin,
                     uin,
@@ -488,8 +493,12 @@ class OneShotUFun(UtilityFunction):
                     produced,
                 ]
 
-        u1, vals1 = make_program(best, False, n_input_negs, n_output_negs)
-        u2, vals2 = make_program(best, True, n_input_negs, n_output_negs)
+        u1, vals1 = make_program(
+            best, False, n_input_negs, n_output_negs
+        )  # typing: ignore
+        u2, vals2 = make_program(
+            best, True, n_input_negs, n_output_negs
+        )  # typing: ignore
         if (not best and u1 < u2) or (best and u1 > u2):
             utility, vals = u1, vals1
         else:
