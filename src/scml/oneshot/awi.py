@@ -113,6 +113,7 @@ class OneShotAWI(AgentWorldInterface):
             step.
           - *current_delivery_penalty*: The delivery penalty per unit item in the current
             step.
+          - *current_balance*: The current balance of the agent
 
     Services (All inherited from `negmas.situated.AgentWorldInterface`):
       - *logdebug/loginfo/logwarning/logerror*: Logs to the world log at the given log level.
@@ -293,7 +294,12 @@ class OneShotAWI(AgentWorldInterface):
             exogenous_output_price=self.current_exogenous_output_price,
             storage_cost=self.current_storage_cost,
             delivery_penalty=self.current_delivery_penalty,
+            current_balance=current_balance,
         )
+
+    @property
+    def current_balance(self):
+        return self._world.current_balance(self.agent.id)
 
     @property
     def current_exogenous_input_quantity(self) -> int:

@@ -50,7 +50,6 @@ class AWI(AgentWorldInterface):
           - *current_step*: Current simulation step (inherited from `negmas.situated.AgentWorldInterface` ).
           - *n_steps*: Number of simulation steps (inherited from `negmas.situated.AgentWorldInterface` ).
           - *relative_time*: fraction of the simulation completed (inherited from `negmas.situated.AgentWorldInterface`).
-          - *state*: The full state of the agent ( `OneShotState` ).
           - *settings*: The system settings (inherited from `negmas.situated.AgentWorldInterface` ).
 
         B. Agent Information:
@@ -85,6 +84,8 @@ class AWI(AgentWorldInterface):
             are absolute.
           - *n_input_negotiations*: Number of negotiations with suppliers.
           - *n_output_negotiations*: Number of negotiations with consumers.
+          - *state*: The full state of the agent ( `FactoryState` ).
+          - *current_balance*: The current balance of the agent
 
     Dynamic World Information:
         Information about the world and the agent that changes over time.
@@ -513,6 +514,10 @@ class AWI(AgentWorldInterface):
     def state(self) -> FactoryState:
         """Receives the factory state"""
         return self._world.a2f[self.agent.id].state
+    
+    def current_balance(self):
+        """Current balance of the agent"""
+        return self.state.balance
 
     def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
         """Returns a dictionary mapping time-steps to financial reports of the given agent"""

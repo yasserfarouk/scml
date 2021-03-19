@@ -279,7 +279,7 @@ class AWIHelper:
                 self.my_input_product if is_input else self.my_output_product
             ]
         return unit_price
-
+    
     @property
     def is_exogenous_forced(self):
         """
@@ -339,6 +339,7 @@ class AWIHelper:
             exogenous_output_price=po,
             storage_cost=self._owner.get_storage_cost(),
             delivery_penalty=self._owner.get_delivery_penalty(),
+            current_balance=self._owner.get_current_balance(),
         )
 
     @property
@@ -593,6 +594,7 @@ class OneShotAdapter(
             output_prange=(op.min_value, op.max_value) if op else (0, 0),
             force_exogenous=self._obj.awi.is_exogenous_forced,
             n_lines=self._obj.awi.n_lines,
+            current_balance=self.awi.current_balance
         )
         return self.ufun
 
@@ -650,6 +652,9 @@ class OneShotAdapter(
 
     def get_delivery_penalty(self):
         return self.awi.trading_prices[self.awi.my_output_product]
+
+    def get_current_balance(self):
+        return self.awi.current_balance
 
     # todo: correct this
     def get_exogenous_output(self) -> Tuple[int, int]:

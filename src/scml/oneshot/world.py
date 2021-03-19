@@ -1078,6 +1078,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             **kwargs,
         )
 
+    def current_balance(self, agent_id: str):
+        return sum(self._profits[agent_id]) + self.initial_balances[agent_id]
+
     def add_financial_report(
         self, agent: DefaultOneShotAdapter, reports_agent, reports_time
     ) -> None:
@@ -1228,11 +1231,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 continue
             # agent.profile
             # todo: I am accessing the ufun of the agent directly to avoid running
-            # unnecessary optimizations to find best and worst utility. This is 
-            # dangerous because the agent can change its own ufun. May be I should 
-            # directly create the ufun here using a global ufun method defined in 
+            # unnecessary optimizations to find best and worst utility. This is
+            # dangerous because the agent can change its own ufun. May be I should
+            # directly create the ufun here using a global ufun method defined in
             # the ufun.py module that takes a world and an agent (or just an AWI)
-            ufun = agent.make_ufun(add_exogenous=False) if not agent.ufun else agent.ufun
+            ufun = (
+                agent.make_ufun(add_exogenous=False) if not agent.ufun else agent.ufun
+            )
             qin, pin, qout, pout = (
                 self._input_quantity[aid],
                 self._input_price[aid],
@@ -1254,7 +1259,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     qout,
                 )
             )
-            current_balance = sum(self._profits[aid]) + self.initial_balances[aid]
+            current_balance = self.current_balance(aid)
             self.is_bankrupt[aid] = (
                 current_balance < self.bankruptcy_limit or self.is_bankrupt[aid]
             )
@@ -1734,7 +1739,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 Issue(values(unit_price), name="unit_price", value_type=int),
             ]
             for aid in self.consumers[product]:
-                if is_system_agent(aid) or isinstance(self.agents[aid], OneShotSCML2020Adapter):
+                if is_system_agent(aid) or isinstance(
+                    self.agents[aid], OneShotSCML2020Adapter
+                ):
                     continue
                 self._request_negotiations(
                     agent_id=aid,

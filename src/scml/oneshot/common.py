@@ -27,6 +27,7 @@ class OneShotState:
         "exogenous_output_price",
         "storage_cost",
         "delivery_penalty",
+        "current_balance",
     ]
 
     exogenous_input_quantity: int
@@ -35,6 +36,7 @@ class OneShotState:
     exogenous_output_price: int
     storage_cost: float
     delivery_penalty: float
+    current_balance: int
 
 
 @dataclass

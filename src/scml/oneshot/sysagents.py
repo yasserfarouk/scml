@@ -84,6 +84,7 @@ class DefaultOneShotAdapter(Adapter):
             output_prange=(op.min_value, op.max_value) if op else (0, 0),
             force_exogenous=self.awi.is_exogenous_forced,
             n_lines=self.awi.n_lines,
+            current_balance=self.awi.current_balance,
         )
         return self.ufun
 
