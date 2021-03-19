@@ -139,6 +139,7 @@ def test_something_happens_with_random_agents(n_processes):
     world.run()
     assert len(world.signed_contracts) + len(world.cancelled_contracts) != 0
 
+
 def test_basic_awi_info_suppliers_consumers():
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
@@ -158,9 +159,12 @@ def test_basic_awi_info_suppliers_consumers():
         assert a.awi.my_consumers == world.agent_consumers[aid]
         assert a.awi.my_suppliers == world.agent_suppliers[aid]
         l = a.awi.my_input_product
-        assert all(_.endswith(str(l - 1)) or a.awi.is_system(_) for _ in a.awi.my_suppliers)
-        assert all(_.endswith(str(l + 1)) or a.awi.is_system(_) for _ in a.awi.my_consumers)
-
+        assert all(
+            _.endswith(str(l - 1)) or a.awi.is_system(_) for _ in a.awi.my_suppliers
+        )
+        assert all(
+            _.endswith(str(l + 1)) or a.awi.is_system(_) for _ in a.awi.my_consumers
+        )
 
 
 def test_generate():
@@ -249,8 +253,9 @@ def test_ufun_min_max_in_world():
     qout=st.integers(0, 10),
     pin=st.integers(2, 10),
     pout=st.integers(2, 10),
-    lines=st.integers(2, 15),
+    lines=st.integers(1, 15),
 )
+@settings(deadline=None)
 def test_ufun_unit(
     ex_qin,
     ex_qout,
@@ -329,14 +334,50 @@ def _ufun_unit(
         n_output_negs=5,
         current_step=0,
         input_penalty_scale=1,
-        output_penalty_scale=1,
+        output_penalty_scale=3,
     )
+    # if force_exogenous:
+    # for v in (True, False):
+    # breakpoint()
+    # a = ufun.find_limit_greedy(v)
+    # try:
+    #     b = ufun.find_limit_optimal(v, check=True)
+    # except:
+    #     pass
+    # else:
+    #     # assert a == b, f"Failed for {v} Greedy gave {a}\nOptimal gave {b}"
+    #     assert (v and b >= a) or (
+    #         not v and b <= a
+    #     ), f"Failed for {v} Greedy gave {a}\nOptimal gave {b}"
     ufun.best = ufun.find_limit(True)
     ufun.worst = ufun.find_limit(False)
     mn, mx = ufun.min_utility, ufun.max_utility
     assert mx >= mn or mx == mn == 0
-    u = ufun.from_aggregates(qin, qout, pin, pout)
-    assert mn <= u <= mx
+    u = ufun.from_offers(
+        [(qin, 0, pin / qin if qin else 0), (qout, 0, pout / qout if qout else 0)],
+        [False, True],
+    )
+    # u = ufun.from_aggregates(qin, qout, pin, pout)
+    # assert mn <= u <= mx, f"{mn}, {u}, {mx}\nworst: {ufun.worst}\nbest: {ufun.best}"
+
+
+def test_ufun_unit_example():
+    _ufun_unit(
+        ex_qin=0,
+        ex_qout=1,
+        ex_pin=2,
+        ex_pout=2,
+        production_cost=1,
+        storage_cost=0.5,
+        delivery_penalty=1.5,
+        level=0,
+        force_exogenous=True,
+        qin=0,
+        qout=0,
+        pin=2,
+        pout=2,
+        nlines=10,
+    )
 
 
 def test_ufun_example():
@@ -354,7 +395,7 @@ def test_ufun_example():
         qout=1,
         pin=2,
         pout=4,
-        nlines=10
+        nlines=10,
     )
 
 
