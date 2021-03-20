@@ -514,7 +514,13 @@ def _ufun_unit(
     #     ), f"Failed for {v} Greedy gave {a}\nOptimal gave {b}"
     ufun.best = ufun.find_limit(True)
     ufun.worst = ufun.find_limit(False)
+    
     mn, mx = ufun.min_utility, ufun.max_utility
+    if mx is None: 
+        mx = float("inf")
+    if mn is None:
+        mn = float("-inf")
+        
     assert mx >= mn or mx == mn == 0
     u = ufun.from_offers(
         [(qin, 0, pin / qin if qin else 0), (qout, 0, pout / qout if qout else 0)],
