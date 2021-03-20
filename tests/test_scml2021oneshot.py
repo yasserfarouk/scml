@@ -5,9 +5,7 @@ from hypothesis import given
 from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
-from negmas.utilities.ops import normalize
 from pytest import mark
-import pytest
 
 import scml
 from scml.oneshot import SCML2020OneShotWorld, builtin_agent_types
@@ -240,23 +238,28 @@ def test_ufun_min_max_in_world():
 
 
 @given(
-    ex_qin=st.integers(0, 10),
-    ex_qout=st.integers(0, 10),
+    ex_qin=st.integers(0, 3),
+    ex_qout=st.integers(0, 3),
     ex_pin=st.integers(2, 10),
     ex_pout=st.integers(2, 10),
-    production_cost=st.integers(1, 5),
+    production_cost=st.integers(0, 2),
     storage_cost=st.floats(0.5, 1.5),
     delivery_penalty=st.floats(1.5, 2.5),
     level=st.integers(0, 2),
     force_exogenous=st.booleans(),
-    qin=st.integers(0, 10),
-    qout=st.integers(0, 10),
+    qin=st.integers(0, 3),
+    qout=st.integers(0, 3),
     pin=st.integers(2, 10),
     pout=st.integers(2, 10),
-    lines=st.integers(1, 15),
+    lines=st.integers(1, 3),
+    balance=st.integers(0, 100),
+    input_penalty_scale=st.floats(0.1, 2),
+    output_penalty_scale=st.floats(0.1, 4),
+    inegs=st.integers(1, 3),
+    onegs=st.integers(1, 3),
 )
 @settings(deadline=None)
-def test_ufun_unit(
+def test_ufun_limits(
     ex_qin,
     ex_qout,
     ex_pin,
@@ -271,8 +274,13 @@ def test_ufun_unit(
     pin,
     pout,
     lines,
+    balance,
+    input_penalty_scale,
+    output_penalty_scale,
+    inegs,
+    onegs,
 ):
-    _ufun_unit(
+    _ufun_unit2(
         ex_qin,
         ex_qout,
         ex_pin,
@@ -287,10 +295,15 @@ def test_ufun_unit(
         pin,
         pout,
         lines,
+        balance,
+        input_penalty_scale,
+        output_penalty_scale,
+        inegs,
+        onegs,
     )
 
 
-def _ufun_unit(
+def _ufun_unit2(
     ex_qin,
     ex_qout,
     ex_pin,
@@ -304,7 +317,12 @@ def _ufun_unit(
     qout,
     pin,
     pout,
-    nlines,
+    lines,
+    balance,
+    input_penalty_scale,
+    output_penalty_scale,
+    inegs,
+    onegs,
 ):
     if level == 0:
         input_agent, output_agent = True, False
@@ -323,7 +341,151 @@ def _ufun_unit(
         delivery_penalty=delivery_penalty,
         input_agent=input_agent,
         output_agent=output_agent,
-        n_lines=nlines,
+        n_lines=lines,
+        force_exogenous=force_exogenous,
+        input_product=0 if input_agent else 2,
+        input_qrange=(1, 15),
+        input_prange=(1, 15),
+        output_qrange=(1, 15),
+        output_prange=(1, 15),
+        n_input_negs=inegs,
+        n_output_negs=onegs,
+        current_step=0,
+        input_penalty_scale=input_penalty_scale,
+        output_penalty_scale=output_penalty_scale,
+        current_balance=balance,
+    )
+    # breakpoint()
+    worst_gt, best_gt = ufun.find_limits_brute_force()
+    mn, mx = worst_gt.utility, best_gt.utility
+    assert mx >= mn, f"Worst: {worst_gt}\nBest : {best_gt}"
+    # best_optimal = ufun.find_limit_optimal(True)
+    # worst_optimal = ufun.find_limit_optimal(False)
+    # assert best_gt == best_optimal
+    # assert worst_gt == worst_optimal
+    # if force_exogenous:
+    #     best_greedy = ufun.find_limit_greedy(True)
+    #     worst_greedy = ufun.find_limit_greedy(False)
+    #     assert best_gt == best_greedy
+    #     assert worst_gt == worst_greedy
+    #     best = ufun.find_limit(True)
+    #     worst = ufun.find_limit(False)
+    #     assert best_gt == best
+    #     assert worst_gt == worst
+
+def test_ufun_limits_example():
+    _ufun_unit2(
+        ex_qin=0,
+        ex_qout=2,
+        ex_pin=2,
+        ex_pout=2,
+        production_cost=0,
+        storage_cost=0.5,
+        delivery_penalty=1.5,
+        level=0,
+        force_exogenous=True,
+        qin=0,
+        qout=0,
+        pin=2,
+        pout=2,
+        lines=1,
+        balance=0,
+        input_penalty_scale=0.1,
+        output_penalty_scale=0.1,
+        inegs=1,
+        onegs=1,
+    )
+
+
+@given(
+    ex_qin=st.integers(0, 10),
+    ex_qout=st.integers(0, 10),
+    ex_pin=st.integers(2, 10),
+    ex_pout=st.integers(2, 10),
+    production_cost=st.integers(1, 5),
+    storage_cost=st.floats(0.5, 1.5),
+    delivery_penalty=st.floats(1.5, 2.5),
+    level=st.integers(0, 2),
+    force_exogenous=st.booleans(),
+    qin=st.integers(0, 10),
+    qout=st.integers(0, 10),
+    pin=st.integers(2, 10),
+    pout=st.integers(2, 10),
+    lines=st.integers(1, 15),
+    balance=st.integers(0, 1000),
+)
+@settings(deadline=None)
+def test_ufun_unit(
+    ex_qin,
+    ex_qout,
+    ex_pin,
+    ex_pout,
+    production_cost,
+    storage_cost,
+    delivery_penalty,
+    level,
+    force_exogenous,
+    qin,
+    qout,
+    pin,
+    pout,
+    lines,
+    balance,
+):
+    _ufun_unit(
+        ex_qin,
+        ex_qout,
+        ex_pin,
+        ex_pout,
+        production_cost,
+        storage_cost,
+        delivery_penalty,
+        level,
+        force_exogenous,
+        qin,
+        qout,
+        pin,
+        pout,
+        lines,
+        balance,
+    )
+
+
+def _ufun_unit(
+    ex_qin,
+    ex_qout,
+    ex_pin,
+    ex_pout,
+    production_cost,
+    storage_cost,
+    delivery_penalty,
+    level,
+    force_exogenous,
+    qin,
+    qout,
+    pin,
+    pout,
+    lines,
+    balance,
+):
+    if level == 0:
+        input_agent, output_agent = True, False
+    elif level == 1:
+        input_agent, output_agent = False, False
+    else:
+        input_agent, output_agent = False, True
+
+    ufun = OneShotUFun(
+        ex_qin=ex_qin,
+        ex_qout=ex_qout,
+        ex_pin=ex_pin,
+        ex_pout=ex_pout,
+        production_cost=production_cost,
+        storage_cost=storage_cost,
+        delivery_penalty=delivery_penalty,
+        input_agent=input_agent,
+        output_agent=output_agent,
+        n_lines=lines,
         force_exogenous=force_exogenous,
         input_product=0 if input_agent else 2,
         input_qrange=(1, 15),
@@ -335,6 +497,7 @@ def _ufun_unit(
         current_step=0,
         input_penalty_scale=1,
         output_penalty_scale=3,
+        current_balance=balance,
     )
     # if force_exogenous:
     # for v in (True, False):
@@ -376,7 +539,8 @@ def test_ufun_unit_example():
         qout=0,
         pin=2,
         pout=2,
-        nlines=10,
+        lines=10,
+        balance=float("inf"),
     )
 
 
@@ -395,7 +559,8 @@ def test_ufun_example():
         qout=1,
         pin=2,
         pout=4,
-        nlines=10,
+        lines=10,
+        balance=float("inf"),
     )
 
 
@@ -421,24 +586,6 @@ def test_builtin_agent_types():
 )
 @settings(deadline=900_000, max_examples=10)
 def test_adapter(atype):
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=20),
-        construct_graphs=False,
-        compact=True,
-        no_logs=True,
-    )
-    world.run()
-
-
-def test_adapter_example():
-    atype = [
-        scml.scml2020.agents.random.RandomAgent,
-        scml.oneshot.agents.nothing.OneshotDoNothingAgent,
-        scml.scml2020.agents.do_nothing.DoNothingAgent,
-        scml.scml2020.agents.indneg.IndependentNegotiationsAgent,
-        scml.scml2020.agents.decentralizing.DecentralizingAgent,
-        scml.scml2020.agents.decentralizing.DecentralizingAgentWithLogging,
-    ]
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
         construct_graphs=False,

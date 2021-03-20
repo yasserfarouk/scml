@@ -312,18 +312,3 @@ def test_adapter(atype):
         compact=True,
     )
     world.run()
-
-def test_adapter_example():
-    world = SCML2021World(
-        **SCML2021World.generate(
-            agent_types=[
-                "scml.oneshot.agents.SingleAgreementAspirationAgent", 
-                "scml.scml2020.DecentralizingAgent"
-                ], 
-            n_steps=10
-        ),
-        construct_graphs=False,
-        no_logs=True,
-        compact=True,
-    )
-    world.run()

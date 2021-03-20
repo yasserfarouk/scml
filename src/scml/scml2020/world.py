@@ -1267,6 +1267,9 @@ class SCML2020World(TimeInAgreementMixin, World):
     def negs_between(self, a1, a2):
         return self._registered_negs[tuple(sorted([a1, a2]))]
 
+    def current_balance(self, agent_id: str):
+        return self.a2f[agent_id].state.balance
+
     def can_negotiate(self, a1, a2):
         return self.negs_between(a1, a2) < self.n_concurrent_negs_between_partners
 

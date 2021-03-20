@@ -515,6 +515,7 @@ class AWI(AgentWorldInterface):
         """Receives the factory state"""
         return self._world.a2f[self.agent.id].state
     
+    @property
     def current_balance(self):
         """Current balance of the agent"""
         return self.state.balance

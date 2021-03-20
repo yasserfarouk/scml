@@ -12,6 +12,8 @@ from negmas.outcomes import Outcome, Issue
 # import cvxpy as cp
 import mip as mp
 
+from scml.scml2020.common import is_system_agent
+
 from .common import QUANTITY, UNIT_PRICE, TIME
 
 __all__ = ["OneShotUFun", "UFunLimit"]
@@ -158,14 +160,32 @@ class OneShotUFun(UtilityFunction):
             return float("-inf")
         return self.from_offers([offer], [self.input_agent])
 
-    def from_contracts(self, contracts: Iterable[Contract]) -> float:
+    def from_contracts(
+        self, contracts: Iterable[Contract], ignore_exogenous=False
+    ) -> float:
         """
         Calculates the utility function given a list of contracts
+
+        Args:
+            contracts: A list/tuple of contracts
+            ignore_exogenous: If given, any contracts with a system agent will
+                              be ignored.
+
+        Remarks:
+            - This method ignores any unsigned contracts passed to it.
+            - We do not consider time at all so it is implicitly assumed that
+              all contracts have the same delivery time value.
+            - The reason for having the `ignore_exogenous` parameter is to avoid
+              double counting exogenous contracts if their information is passed
+              during construction of the ufun and they also exist in the list of
+              `contracts` passed here.
         """
         offers, outputs = [], []
         output_product = self.output_product
         for c in contracts:
             if c.signed_at < 0:
+                continue
+            if ignore_exogenous and any(is_system_agent(_) for _ in c.partners):
                 continue
             product = c.annotation["product"]
             is_output = product == output_product
@@ -183,59 +203,108 @@ class OneShotUFun(UtilityFunction):
             return tuple(outcome)
         return tuple(offer)
 
-    def from_offers(self, offers: Iterable[Tuple], outputs: Iterable[bool]) -> float:
+    def from_offers(
+        self, offers: Iterable[Tuple], outputs: Iterable[bool], return_producible=False
+    ) -> Union[float, Tuple[float, int]]:
         """
         Calculates the utility value given a list of offers and whether each
         offer is for output or not (= input).
+
+        Args:
+            offers: An iterable (e.g. list) of tuples each with three values:
+                    (quantity, time, unit price) IN THAT ORDER. Time is ignored
+                    and can be set to any value.
+            outputs: An iterable of the same length as offers of booleans
+                     specifying for each offer whether it is an offer for buying
+                     the agent's output product.
+            return_producible: If true, the producible quantity will be returned
+        Remarks:
+            - This method takes into account the exogenous contract information
+              passed when constructing the ufun.
         """
 
         def order(x):
+            """A helper function to order contracts in the following fashion:
+            1. input contracts are ordered from cheapest to most expensive. The
+               exception to this is that exogenous buy contracts will appear
+               before anything else if force-exogenous is set.
+            2. output contracts are ordered from highest price to cheapest. The
+               exception to this is that exogenous sell contracts will appear
+               before anything else if force-exogenous is set.
+            3. The relative order of input and output contracts is indeterminate.
+            """
             offer, is_output, is_exogenous = x
             if is_exogenous and self.force_exogenous:
                 return float("-inf")
             return -offer[UNIT_PRICE] if is_output else offer[UNIT_PRICE]
 
+        # copy inputs because we are going to modify them.
         offers, outputs = deepcopy(list(offers)), deepcopy(list(outputs))
+        # indicate that all inputs are not exogenous and that we are adding two
+        # exogenous contracts after them.
         exogenous = [False] * len(offers) + [True, True]
+        # add exogenous contracts as offers one for input and another for output
         offers += [
             (self.ex_qin, 0, self.ex_pin / self.ex_qin if self.ex_qin else 0),
             (self.ex_qout, 0, self.ex_pout / self.ex_qout if self.ex_qout else 0),
         ]
         outputs += [False, True]
-        qin, qout, pin, pout = 0, 0, 0, 0
+        # initialize some variables
+        qin, qout, pin= 0, 0, 0
+        qin_bar, going_bankrupt = 0, False
+        pout_bar = 0
+        # we are going to collect output contracts in output_offers
         output_offers = []
+        # sort contracts in the optimal order of execution: from cheapest when
+        # buying and from the most expensive when selling. See `order` above.
         sorted_offers = list(sorted(zip(offers, outputs, exogenous), key=order))
-        qin_bar, done = 0, False
+
+        # we calculate the total quantity we are are required to pay for `qin` and
+        # the associated amount of money we are going to pay `pin`. Moreover,
+        # we calculate the total quantity we can actually buy given our limited
+        # money balance (`qin_bar`).
         for offer, is_output, is_exogenous in sorted_offers:
             offer = self.outcome_as_tuple(offer)
             if is_output:
                 output_offers.append((offer, is_exogenous))
             else:
                 topay = offer[UNIT_PRICE] * offer[QUANTITY]
-                if not done and pin + topay > self.current_balance:
-                    qin_bar, done = qin, True
-                    continue
                 qin += offer[QUANTITY]
                 pin += topay
-        if not done:
+                if not going_bankrupt and (pin + topay) > self.current_balance:
+                    qin_bar, going_bankrupt = qin, True
+        if not going_bankrupt:
             qin_bar = qin
-        n_lines = self.n_lines
-        # output_offers = sorted(output_offers, key=lambda x: -x[UNIT_PRICE])
         # breakpoint()
+        # calculate the maximum amount we can produce given our limited production
+        # capacity and the input we CAN BUY
+        n_lines = self.n_lines
         producible = min(qin_bar, n_lines)
-        pout_bar, done = 0, False
+        # if we do not have enough money to pay for production in full, we limit
+        # the producible quantity to what we can actually produce
+        if (
+            self.production_cost
+            and producible * self.production_cost > self.current_balance
+        ):
+            producible = int(self.current_balance // self.production_cost)
+
+        # find the total sale quantity (qout) and money (pout). Moreover find
+        # the actual amount of money we will receive
         for offer, is_exogenous in output_offers:
             qout += offer[QUANTITY]
-            pout += offer[QUANTITY] * offer[UNIT_PRICE]
             if qout >= producible:
-                pout -= (qout - producible) * offer[UNIT_PRICE]
-                pout_bar, done= pout, True
-                # qout = producible
-                # break
-        if not done:
-            pout_bar = pout
-        producible = min(producible, qout)
-        return self.from_aggregates(qin, qout, pin, pout_bar)
+                pout_bar += (producible - qout) * offer[UNIT_PRICE]
+            else:
+                pout_bar += offer[QUANTITY] * offer[UNIT_PRICE]
+
+        # call a helper method giving it the total quantity and money in and out.
+        u = self.from_aggregates(qin, qout, pin, pout_bar)
+        if return_producible:
+            # the real producible quantity is the minimum of what we can produce
+            # given supplies and production capacity and what we can sell.
+            producible = min(producible, qout)
+            return u, producible
+        return u
 
     def from_aggregates(
         self,
@@ -254,22 +323,37 @@ class OneShotUFun(UtilityFunction):
             pout: Output total price (i.e. unit price * qin).
 
         Remarks:
-            - The utility function assumes that the agent will have to pay for
-              all its input products but will receive money only for the output
-              products it could generate and sell.
-            - The utility function respects production capacity (n. lines). The
+            - Most likely, you do not need to directly call this method. Consider
+              `from_offers` and `from_contracts` that take current balance and
+              exogenous contract information (passed during ufun construction)
+              into account.
+            - The method respects production capacity (n. lines). The
               agent cannot produce more than the number of lines it has.
-            - The utility function assumes that the agent CAN pay for all input
+            - This method does not take exogenous contracts or current balance
+              into account.
+            - The method assumes that the agent CAN pay for all input
               and production.
-            - This method assumes that the unit price is the same for all pout.
 
         """
-        # breakpoint()
+        # production capacity
         lines = self.n_lines
+
+        # we cannot produce more than our capacity or inputs and we should not
+        # produce more than our required outputs
         produced = min(qin, lines, qout)
-        received = (pout * produced) / qout if qout else 0
+
+        # self explanatory. right?  few notes:
+        # 1. You pay storage costs for anything that you buy and do not produce
+        #    and sell. Because we know that you sell no more than what you produce
+        #    we can multiply the storage cost with the difference between input
+        #    quantity and the amount produced
+        # 2. You pay delivery penalty for anything that you should have sold but
+        #    did not. The only reason you cannot sell something is if you cannot
+        #    produce it. That is why the delivery penalty is multiplied by the
+        #    difference between what you should have sold and the produced amount.
+
         u = (
-            received
+            pout
             - pin
             - self.production_cost * produced
             - self.storage_cost * max(0, qin - produced)
@@ -277,6 +361,7 @@ class OneShotUFun(UtilityFunction):
         )
         if not self.normalized:
             return u
+        # normalize values between zero and one if needed.
         rng = self.max_utility - self.min_utility
         if rng < 1e-12:
             return 1.0
@@ -472,6 +557,113 @@ class OneShotUFun(UtilityFunction):
             self.worst = result
         return result
 
+    def find_limits_brute_force(
+        self,
+        n_input_negs=None,
+        n_output_negs=None,
+        secured_input_quantity=0,
+        secured_input_unit_price=0.0,
+        secured_output_quantity=0,
+        secured_output_unit_price=0.0,
+    ) -> Tuple[UFunLimit, UFunLimit]:
+        """
+        Finds either the maximum and the minimum of the ufun.
+
+        Args:
+             best: Best(max) or worst (min) ufun value?
+             n_input_negs: How many input negs are we to consider? None means all
+             n_output_negs: How many output negs are we to consider? None means all
+             secured_input_quantity: A quantity that MUST be bought
+             secured_input_unit_price: The (average) unit price of the quantity
+                                       that MUST be bought.
+             secured_output_quantity: A quantity that MUST be sold.
+             secured_output_unit_price: The (average) unit price of the quantity
+                                        that MUST be sold.
+        Remarks:
+            - You can use the `secured_*` arguments and control over the number
+              of negotiations to consider to find the utility limits **given**
+              some already concluded and signed contracts
+
+        Returns:
+            worst and best outcome information in the form of `UFunLimit` tuple.
+
+        """
+        if n_input_negs is None:
+            n_input_negs = self.n_input_negs
+        if n_output_negs is None:
+            n_output_negs = self.n_output_negs
+        imax = n_input_negs * self.input_qrange[1] + 1
+        omax = n_output_negs * self.output_qrange[1] + 1
+
+        # we know that the prices of inputs for the best and worst solutions.
+        best_ip = self.input_prange[0]
+        best_op = self.output_prange[1]
+        worst_ip = self.input_prange[1]
+        worst_op = self.output_prange[0]
+        best_limit_io, best_limit_u = None, float("-inf")
+        worst_limit_io, worst_limit_u = None, float("inf")
+        best_limit_p, worst_limit_p = 0, 0
+        for i in range(imax):
+            for o in range(omax):
+                u, p = self.from_offers(
+                    [(i, 0, best_ip), (o, 0, best_op)],
+                    [False, True],
+                    return_producible=True,
+                )
+                if u >= best_limit_u:
+                    best_limit_io, best_limit_u, best_limit_p = (
+                        (i, best_ip, o, best_op),
+                        u,
+                        p,
+                    )
+                u, p = self.from_offers(
+                    [(i, 0, worst_ip), (o, 0, worst_op)],
+                    [False, True],
+                    return_producible=True,
+                )
+                if u <= worst_limit_u:
+                    worst_limit_io, worst_limit_u, worst_limit_p = (
+                        (i, worst_ip, o, worst_op),
+                        u,
+                        p,
+                    )
+        # this method cannot find the exogenous quantities at the limit found
+        # if force_exogenous was false and will return None for them.
+        return (
+            UFunLimit(
+                utility=worst_limit_u,
+                input_quantity=worst_limit_io[0],
+                input_price=worst_limit_io[1],
+                output_quantity=worst_limit_io[2],
+                output_price=worst_limit_io[3],
+                exogenous_input_price=self.ex_pin / self.ex_qin if self.ex_qin else 0,
+                exogenous_output_price=self.ex_pout / self.ex_qout
+                if self.ex_qout
+                else 0,
+                exogenous_input_quantity=self.ex_qin if self.force_exogenous else None,
+                exogenous_output_quantity=self.ex_qout
+                if self.force_exogenous
+                else None,
+                producible=worst_limit_p,
+            ),
+            UFunLimit(
+                utility=best_limit_u,
+                input_quantity=best_limit_io[0],
+                input_price=best_limit_io[1],
+                output_quantity=best_limit_io[2],
+                output_price=best_limit_io[3],
+                exogenous_input_price=self.ex_pin / self.ex_qin if self.ex_qin else 0,
+                exogenous_output_price=self.ex_pout / self.ex_qout
+                if self.ex_qout
+                else 0,
+                exogenous_input_quantity=self.ex_qin if self.force_exogenous else None,
+                exogenous_output_quantity=self.ex_qout
+                if self.force_exogenous
+                else None,
+                producible=best_limit_p,
+            ),
+        )
+
     def find_limit_optimal(
         self,
         best: bool,
@@ -557,9 +749,12 @@ class OneShotUFun(UtilityFunction):
                 m += qout_total <= qin_total
                 m += produced >= qout_total
 
-            real_ex_qout =  m.add_var(var_type=mp.INTEGER, name="real_ex_qout")
-            m += real_ex_qout <= produced
-            m += real_ex_qout <= self.ex_qout
+            if best:
+                real_ex_qout = m.add_var(var_type=mp.INTEGER, name="real_ex_qout")
+                m += real_ex_qout <= produced
+                m += real_ex_qout <= self.ex_qout
+            else:
+                real_ex_qout = 0
 
             op = mp.maximize if best else mp.minimize
             scale = (
@@ -572,7 +767,7 @@ class OneShotUFun(UtilityFunction):
             if allow_oversales:
                 exp = (
                     qout * uout  # typing: ignore
-                    + ex_qout_signed * real_ex_qout * ex_uout  # typing: ignore
+                    + real_ex_qout * ex_uout  # typing: ignore
                     + secured_output_quantity * secured_output_unit_price
                     - qin * uin  # typing: ignore
                     - ex_qin_signed * self.ex_qin * ex_uin  # typing: ignore
@@ -585,7 +780,7 @@ class OneShotUFun(UtilityFunction):
             else:
                 exp = (
                     qout * uout  # typing: ignore
-                    + ex_qout_signed * real_ex_qout * ex_uout  # typing: ignore
+                    + real_ex_qout * ex_uout  # typing: ignore
                     + secured_output_quantity * secured_output_unit_price
                     - qin * uin  # typing: ignore
                     - ex_qin_signed * self.ex_qin * ex_uin  # typing: ignore

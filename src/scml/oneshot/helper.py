@@ -141,6 +141,10 @@ class AWIHelper:
         )
 
     @property
+    def current_balance(self) -> float:
+        return self._world.current_balance(self.agent.id)
+
+    @property
     def exogenous_contract_summary(self):
         if not self._world.publish_exogenous_summary:
             return None
