@@ -8,5 +8,4 @@ pysnooper
 coverage
 pytest-coverage
 pytest-repeat
-pytest-sugar
 -r docs/requirements.txt
