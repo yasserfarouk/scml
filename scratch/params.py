@@ -19,10 +19,10 @@ app = typer.Typer()
 BASE_PATH = Path(".")
 
 PARAMS = dict(
-    profit_means=((0.1, 0.1), (0.1, 0.2), (0.1, 0.4)),
-    max_productivity=(1.0, 0.8, 0.5),
     storage_cost=(0.0, 0.01, 0.1, 1),
     delivery_penalty=(0.0, 0.01, 0.1, 1),
+    max_productivity=(1.0, 0.8, 0.5),
+    profit_means=((0.1, 0.1), (0.1, 0.2), (0.1, 0.4)),
 )
 
 
@@ -78,6 +78,8 @@ class Recorder(SCML2020OneShotWorld):
                 a.ufun.worst = a.ufun.find_limit(False)
 
             mx, mn = a.ufun.max_utility, a.ufun.min_utility
+            max_producible = a.ufun.best.producible
+            min_producible = a.ufun.worst.producible
             state = a.awi.state()
             profile = a.awi.profile
             d = {f"p_{k}": v for k, v in self.__params.items()}
@@ -103,9 +105,11 @@ class Recorder(SCML2020OneShotWorld):
                     input=a.awi.my_input_product,
                     output=a.awi.my_output_product,
                     level=a.awi.level,
+                    max_producible=max_producible,
+                    min_producible=min_producible,
                     max_util=mx,
                     min_util=mn,
-                    limit_ethod=self.__util_eval_method,
+                    limit_method=self.__util_eval_method,
                 )
             )
             # print(d)
@@ -139,7 +143,8 @@ def run(
     param_names = tuple(PARAMS.keys())
     param_values = list(itertools.product(*tuple(PARAMS.values())))
     print(
-        f"Will run {len(methods) * len(param_values) * steps * worlds} simulation steps.", flush=True
+        f"Will run {len(methods) * len(param_values) * steps * worlds} simulation steps.",
+        flush=True,
     )
     futures = []
     if serial:
@@ -161,22 +166,64 @@ def run(
 
 @app.command()
 def plot(method: str = "bruteforce"):
-    df = pd.read_csv(BASE_PATH / f"limits_{method}.csv")
-    for i in range(2):
+    methods = method.split(";")
+    dfs = []
+    dir_name = BASE_PATH
+    for method in methods:
+        dfs.append(pd.read_csv(BASE_PATH / f"limits_{method}.csv"))
+    df = pd.concat(dfs, ignore_index=True)
+    if len(df) < 1:
+        print("No data")
+        return
+    print(f"Found {len(df)} data records")
+    mxstats = (
+        df.groupby(["p_storage_cost", "p_delivery_penalty", "level"])[["max_util"]]
+        .describe()
+        .reset_index()
+    )
+    mxstats.to_csv(dir_name / f"max_stats_{method.replace(';', '_')}.csv", index=False)
+    mnstats = (
+        df.groupby(["p_storage_cost", "p_delivery_penalty", "level"])[["min_util"]]
+        .describe()
+        .reset_index()
+    )
+    mnstats.to_csv(dir_name / f"min_stats_{method.replace(';', '_')}.csv", index=False)
+    print(mnstats)
+    print(mxstats)
+    for k in PARAMS.keys():
+        if len(PARAMS[k]) < 2:
+            continue
+        df[f"p_{k}"] = df[f"p_{k}"].apply(lambda x: str(x))
+        print(f"Plotting {k}")
         fig, axs = plt.subplots(2, 2)
-        sns.violinplot(
-            data=df.loc[df.level == i, :], x="storage", y="max_util", ax=axs[0, 0]
+        sns.barplot(
+            data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_util", ax=axs[0, 0]
         )
-        sns.violinplot(
-            data=df.loc[df.level == i, :], x="storage", y="min_util", ax=axs[0, 1]
+        sns.barplot(
+            data=df.loc[df.level == 1, :], x=f"p_{k}", y="min_util", ax=axs[0, 1]
         )
-        sns.violinplot(
-            data=df.loc[df.level == i, :], x="delivery", y="max_util", ax=axs[1, 0]
+        sns.barplot(
+            data=df.loc[df.level == 2, :], x=f"p_{k}", y="max_util", ax=axs[1, 0]
         )
-        sns.violinplot(
-            data=df.loc[df.level == i, :], x="delivery", y="min_util", ax=axs[1, 1]
+        sns.barplot(
+            data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_util", ax=axs[1, 1]
         )
-        plt.suptitle(f"Level {i}")
+        plt.suptitle(f"{k}")
+        fig.show()
+        fig, axs = plt.subplots(2, 2)
+        sns.barplot(
+            data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_producible", ax=axs[0, 0]
+        )
+        sns.barplot(
+            data=df.loc[df.level == 1, :], x=f"p_{k}", y="min_producible", ax=axs[0, 1]
+        )
+        sns.barplot(
+            data=df.loc[df.level == 2, :], x=f"p_{k}", y="max_producible", ax=axs[1, 0]
+        )
+        sns.barplot(
+            data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_producible", ax=axs[1, 1]
+        )
+        plt.suptitle(f"{k}")
         fig.show()
 
 
