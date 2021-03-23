@@ -92,7 +92,7 @@ for s, d in itertools.product(storage_cost, delivery_penalty):
 df = pd.DataFrame.from_records(data)
 df.to_csv("limits.csv", index=False)
 mxstats = df.groupby(["storage", "delivery", "level"])[["max_util"]].describe()
-mxstats.to_csv("max_stats.csr")
+mxstats.to_csv("max_stats.csv")
 mnstats = df.groupby(["storage", "delivery", "level"])[["min_util"]].describe()
 mnstats.to_csv("min_stats.csv")
 print(mxstats)

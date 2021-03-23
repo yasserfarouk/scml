@@ -568,8 +568,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         force_signing=False,
         profit_basis=np.mean,
         storage_cost: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
-        delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (1.8, 2.2),
-        storage_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (1.2, 1.7),
+        delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.5, 0.7),
+        storage_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.01, 0.02),
         delivery_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (
             0.01,
             0.02,

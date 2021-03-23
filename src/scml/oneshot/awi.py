@@ -294,7 +294,7 @@ class OneShotAWI(AgentWorldInterface):
             exogenous_output_price=self.current_exogenous_output_price,
             storage_cost=self.current_storage_cost,
             delivery_penalty=self.current_delivery_penalty,
-            current_balance=current_balance,
+            current_balance=self.current_balance,
         )
 
     @property
