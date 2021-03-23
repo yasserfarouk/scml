@@ -134,22 +134,25 @@ def run(
     method: str = "bruteforce",
     serial: bool = False,
 ):
+    methods = method.split(";")
     print(f"Starting run with {steps} steps and {worlds} worlds: Method={method}")
     param_names = tuple(PARAMS.keys())
     param_values = list(itertools.product(*tuple(PARAMS.values())))
     print(
-        f"Will run {len(param_values) * steps * worlds} simulation steps.", flush=True
+        f"Will run {len(methods) * len(param_values) * steps * worlds} simulation steps.", flush=True
     )
     futures = []
     if serial:
-        for v in tqdm.tqdm(param_values):
-            run_once(dict(zip(param_names, v)), steps, method)
+        for method in methods:
+            for v in tqdm.tqdm(param_values):
+                run_once(dict(zip(param_names, v)), steps, method)
     else:
         with ProcessPoolExecutor() as pool:
-            for v in param_values:
-                futures.append(
-                    pool.submit(run_once, dict(zip(param_names, v)), steps, method)
-                )
+            for method in methods:
+                for v in param_values:
+                    futures.append(
+                        pool.submit(run_once, dict(zip(param_names, v)), steps, method)
+                    )
         print("RUNNING ...", flush=True)
         for f in tqdm.tqdm(as_completed(futures), total=len(param_values)):
             pass
