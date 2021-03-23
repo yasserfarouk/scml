@@ -565,9 +565,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         exogenous_sales_predictability: Union[Tuple[float, float], float] = (0.0, 0.9),
         exogenous_control: Union[Tuple[float, float], float] = -1,
         cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
-        force_signing=False,
+        force_signing=True,
         profit_basis=np.mean,
-        storage_cost: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
+        storage_cost: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.5, 0.7),
         storage_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.01, 0.02),
         delivery_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (

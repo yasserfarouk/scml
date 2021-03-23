@@ -250,7 +250,7 @@ class OneShotUFun(UtilityFunction):
         ]
         outputs += [False, True]
         # initialize some variables
-        qin, qout, pin= 0, 0, 0
+        qin, qout, pin = 0, 0, 0
         qin_bar, going_bankrupt = 0, False
         pout_bar = 0
         # we are going to collect output contracts in output_offers
@@ -1004,36 +1004,44 @@ class OneShotUFun(UtilityFunction):
             return 0.0, (0, 0, 0, self.ex_qin, self.ex_qout)
         unit_price_in = max_price_in / max_in
         unit_price_out = max_price_out / max_out
-        producible = min(max_out, nlines, max_in)
+        # we avoid bankruptcy by never producing more than what we can buy
+        production_cost = min_price_in + self.production_cost
+        can_be_bought = self.current_balance // production_cost if production_cost else float("inf")
+        producible = min(
+            max_out,
+            nlines,
+            max_in,
+            can_be_bought,
+        )
         max_price_out = max_price_out * producible // max_out
         max_out = producible
         best_margin = unit_price_out - unit_price_in - self.production_cost
         if best_margin > 0:
-            qin = qout = producible
-            qin, qout = max(qin, min_in), max(qout, min_out)
+            qin, qout = max(producible, min_in), max(producible, min_out)
             return (
                 self.from_aggregates(
                     qin=qin,
                     qout=qout,
-                    pin=min_price_in,
-                    pout=max_price_out,
+                    pin=min_price_in * qin,
+                    pout=max_price_out * producible,
                 ),
                 (qin, qout, min(qin, qout, self.n_lines), self.ex_qin, self.ex_qout),
             )
-        producible = min(min_in, min_out, self.n_lines)
+        producible = min(min_in, min_out, self.n_lines, can_be_bought)
+        qin, qout = max(producible, min_in), max(producible, min_out)
         u1 = self.from_aggregates(
             qin=min_in,
             qout=min_out,
-            pin=min_price_in,
-            pout=max_price_out,
+            pin=min_price_in * qin,
+            pout=max_price_out * producible,
         )
         q = max(min_in, min_out)
         q = min(q, self.n_lines)
         u2 = self.from_aggregates(
             qin=q,
             qout=q,
-            pin=min_price_in,
-            pout=max_price_out,
+            pin=min_price_in * qin,
+            pout=max_price_out * producible,
         )
         if u1 > u2:
             return u1, (min_in, min_out, producible, self.ex_qin, self.ex_qout)
