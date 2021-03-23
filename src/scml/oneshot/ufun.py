@@ -267,12 +267,20 @@ class OneShotUFun(UtilityFunction):
             offer = self.outcome_as_tuple(offer)
             if is_output:
                 output_offers.append((offer, is_exogenous))
-            else:
-                topay = offer[UNIT_PRICE] * offer[QUANTITY]
-                qin += offer[QUANTITY]
-                pin += topay
-                if not going_bankrupt and (pin + topay) > self.current_balance:
-                    qin_bar, going_bankrupt = qin, True
+                continue
+            topay = offer[UNIT_PRICE] * offer[QUANTITY]
+            pin += topay
+            if (
+                not going_bankrupt
+                and (pin + topay + offer[QUANTITY] * self.production_cost)
+                > self.current_balance
+            ):
+                unit_total_cost = offer[UNIT_PRICE] + self.production_cost
+                can_buy = self.current_balance // unit_total_cost
+                assert can_buy < offer[QUANTITY]
+                qin_bar = qin + can_buy
+                going_bankrupt = True
+            qin += offer[QUANTITY]
         if not going_bankrupt:
             qin_bar = qin
         # breakpoint()
@@ -725,6 +733,9 @@ class OneShotUFun(UtilityFunction):
             m += qout <= self.output_qrange[1] * self.n_output_negs  # typing: ignore
             m += produced >= 0  # typing: ignore
             m += produced <= self.n_lines  # typing: ignore
+            total_cost = uin + self.production_cost
+            if total_cost:
+                m += produced <= self.current_balance // total_cost
 
             if not self.force_exogenous:
                 m += ex_qin_signed >= 0  # typing: ignore
@@ -736,26 +747,42 @@ class OneShotUFun(UtilityFunction):
             qin_total = qin + ex_qin_signed * self.ex_qin
 
             m += produced <= qin_total
-            m += produced <= qout_total
 
             if best:
-                m += qin_total <= self.n_lines  # typing: ignore
-                m += qout_total <= self.n_lines  # typing: ignore
+                m += qout_total <= produced
+                if not self.force_exogenous or (self.ex_qout < self.n_lines):
+                    m += qout_total <= self.n_lines
+                if not self.force_exogenous or (self.ex_qin < self.n_lines):
+                    m += qin_total <= self.n_lines
 
-            if allow_oversales:
-                m += qout_total >= qin_total
-                m += produced >= qin_total
+            if best:
+                real_qout = m.add_var(var_type=mp.INTEGER, name="real_qout")
+                m += real_qout <= qout_total
+                m += real_qout >= 0
+                if allow_oversales:
+                    m += real_qout <= qout_total
+                else:
+                    m += real_qout == qout_total
             else:
-                m += qout_total <= qin_total
-                m += produced >= qout_total
+                real_qout = 0
 
             if best:
                 real_ex_qout = m.add_var(var_type=mp.INTEGER, name="real_ex_qout")
                 m += real_ex_qout <= produced
                 m += real_ex_qout <= self.ex_qout
+                m += real_ex_qout >= 0
             else:
                 real_ex_qout = 0
 
+            if allow_oversales:
+                m += qout_total >= qin_total
+                if best:
+                    m += produced == qin_total
+            else:
+                m += real_qout <= qin_total
+                # if best and (not self.force_exogenous or (self.ex_qout < self.n_lines)):
+                #     m += produced == qout_total
+            m += real_qout <= produced
             op = mp.maximize if best else mp.minimize
             scale = (
                 self.output_penalty_scale
@@ -766,7 +793,7 @@ class OneShotUFun(UtilityFunction):
                 scale = uout if allow_oversales else uin
             if allow_oversales:
                 exp = (
-                    qout * uout  # typing: ignore
+                    real_qout * uout  # typing: ignore
                     + real_ex_qout * ex_uout  # typing: ignore
                     + secured_output_quantity * secured_output_unit_price
                     - qin * uin  # typing: ignore
@@ -779,7 +806,7 @@ class OneShotUFun(UtilityFunction):
                 )
             else:
                 exp = (
-                    qout * uout  # typing: ignore
+                    real_qout * uout  # typing: ignore
                     + real_ex_qout * ex_uout  # typing: ignore
                     + secured_output_quantity * secured_output_unit_price
                     - qin * uin  # typing: ignore
@@ -1006,7 +1033,9 @@ class OneShotUFun(UtilityFunction):
         unit_price_out = max_price_out / max_out
         # we avoid bankruptcy by never producing more than what we can buy
         production_cost = min_price_in + self.production_cost
-        can_be_bought = self.current_balance // production_cost if production_cost else float("inf")
+        can_be_bought = (
+            self.current_balance // production_cost if production_cost else float("inf")
+        )
         producible = min(
             max_out,
             nlines,

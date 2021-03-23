@@ -247,10 +247,6 @@ def test_ufun_min_max_in_world():
     delivery_penalty=st.floats(1.5, 2.5),
     level=st.integers(0, 2),
     force_exogenous=st.booleans(),
-    qin=st.integers(0, 3),
-    qout=st.integers(0, 3),
-    pin=st.integers(2, 10),
-    pout=st.integers(2, 10),
     lines=st.integers(1, 3),
     balance=st.integers(0, 100),
     input_penalty_scale=st.floats(0.1, 2),
@@ -269,10 +265,6 @@ def test_ufun_limits(
     delivery_penalty,
     level,
     force_exogenous,
-    qin,
-    qout,
-    pin,
-    pout,
     lines,
     balance,
     input_penalty_scale,
@@ -290,10 +282,6 @@ def test_ufun_limits(
         delivery_penalty,
         level,
         force_exogenous,
-        qin,
-        qout,
-        pin,
-        pout,
         lines,
         balance,
         input_penalty_scale,
@@ -313,10 +301,6 @@ def _ufun_unit2(
     delivery_penalty,
     level,
     force_exogenous,
-    qin,
-    qout,
-    pin,
-    pout,
     lines,
     balance,
     input_penalty_scale,
@@ -359,11 +343,11 @@ def _ufun_unit2(
     worst_gt, best_gt = ufun.find_limits_brute_force()
     mn, mx = worst_gt.utility, best_gt.utility
     assert mx >= mn, f"Worst: {worst_gt}\nBest : {best_gt}"
-    # best_optimal = ufun.find_limit_optimal(True)
-    # worst_optimal = ufun.find_limit_optimal(False)
-    # assert best_gt == best_optimal
-    # assert worst_gt == worst_optimal
-    # if force_exogenous:
+    if force_exogenous:
+        best_optimal = ufun.find_limit_optimal(True)
+        worst_optimal = ufun.find_limit_optimal(False)
+        assert best_gt == best_optimal
+        assert worst_gt == worst_optimal
     #     best_greedy = ufun.find_limit_greedy(True)
     #     worst_greedy = ufun.find_limit_greedy(False)
     #     assert best_gt == best_greedy
@@ -373,10 +357,11 @@ def _ufun_unit2(
     #     assert best_gt == best
     #     assert worst_gt == worst
 
+
 def test_ufun_limits_example():
     _ufun_unit2(
         ex_qin=0,
-        ex_qout=2,
+        ex_qout=0,
         ex_pin=2,
         ex_pout=2,
         production_cost=0,
@@ -384,10 +369,6 @@ def test_ufun_limits_example():
         delivery_penalty=1.5,
         level=0,
         force_exogenous=True,
-        qin=0,
-        qout=0,
-        pin=2,
-        pout=2,
         lines=1,
         balance=0,
         input_penalty_scale=0.1,
@@ -514,13 +495,13 @@ def _ufun_unit(
     #     ), f"Failed for {v} Greedy gave {a}\nOptimal gave {b}"
     ufun.best = ufun.find_limit(True)
     ufun.worst = ufun.find_limit(False)
-    
+
     mn, mx = ufun.min_utility, ufun.max_utility
-    if mx is None: 
+    if mx is None:
         mx = float("inf")
     if mn is None:
         mn = float("-inf")
-        
+
     assert mx >= mn or mx == mn == 0
     u = ufun.from_offers(
         [(qin, 0, pin / qin if qin else 0), (qout, 0, pout / qout if qout else 0)],
