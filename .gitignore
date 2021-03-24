@@ -100,3 +100,6 @@ tags
 .venv
 venv
 my_results
+limits_brute.csv
+max_stats_brute.csv
+min_stats_brute.csv

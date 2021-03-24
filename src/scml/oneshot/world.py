@@ -526,6 +526,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self._max_n_lines = max(_.n_lines for _ in self.profiles)
         self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
         self._current_issues: List[List[Issue]] = []
+        self.__contracts: Dict[str, List[Contract]] = defaultdict(list)
 
         def values(x: Union[int, Tuple[int, int]]):
             if not isinstance(x, Iterable):
@@ -693,11 +694,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         exogenous_sales_predictability = realin(exogenous_sales_predictability)
         exogenous_supply_predictability = realin(exogenous_supply_predictability)
         np.errstate(divide="ignore")
-        n_startup = n_processes
-        if n_steps <= n_startup:
-            raise ValueError(
-                f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}"
-            )
+        # n_startup = n_processes
+        # if n_steps <= n_startup:
+        #     raise ValueError(
+        #         f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}"
+        #     )
 
         process_inputs = make_array(process_inputs, n_processes, dtype=int)
         process_outputs = make_array(process_outputs, n_processes, dtype=int)
@@ -770,15 +771,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         # generate external contract amounts (controlled by productivity):
 
-        # - generate total amount of input to the market (it will end up being an n_products list of n_steps vectors)
+        # - generate total amount of input to the market
+        #   (it will end up being an n_products list of n_steps vectors)
         quantities = [
             np.round(n_lines * n_agents_per_process[0] * max_productivity[0, :]).astype(
                 int
             )
         ]
-        # - make sure there is a cool-down period at the end in which no more input is added that cannot be converted
-        #   into final products in time
-        quantities[0][-n_startup:] = 0
         # - for each level, find the amount of the output product that can be produced given the input amount and
         #   productivity
         for p in range(n_processes):
@@ -794,13 +793,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     * process_outputs[p],
                 )
             )
-            # * shift quantities one step to account for the one step needed to move the produce to the next level. This
-            #   step results from having production happen after contract execution.
-            quantities[-1][1:] = quantities[-1][:-1]
-            quantities[-1][0] = 0
-            assert quantities[-1][-1] == 0 or p >= n_startup - 1
-            assert quantities[-1][0] == 0
-            # assert np.sum(quantities[-1] == 0) >= n_startup
 
         # - divide the quantity at every level between factories
         exogenous_supplies = distribute_quantities(
@@ -825,81 +817,93 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # assign prices to the quantities given the profits
         catalog_prices = np.zeros(n_products, dtype=int)
         catalog_prices[0] = 10
-        supply_prices = np.zeros((n_agents_per_process[0], n_steps), dtype=int)
-        supply_prices[:, :] = catalog_prices[0]
+        supply_prices = catalog_prices[0] * np.ones(
+            (n_agents_per_process[0], n_steps), dtype=int
+        )
+        # We will calculate these later
         sale_prices = np.zeros((n_agents_per_process[-1], n_steps), dtype=int)
 
+        # calculate manufacturing cost per process per step (this is per line)
+        # we will multiply this by the number of active lines later
         manufacturing_costs = np.zeros((n_processes, n_steps), dtype=int)
         for p in range(n_processes):
             manufacturing_costs[p, :] = profit_basis(
                 costs[first_agent[p] : last_agent[p], :, p]
             )
-            manufacturing_costs[p, :p] = 0
-            manufacturing_costs[p, p - n_startup :] = 0
 
+        # calculate an "average" profit per process per step
         profits = np.zeros((n_processes, n_steps))
         for p in range(n_processes):
             profits[p, :] = np.random.randn() * profit_stddevs[p] + profit_means[p]
 
+        # total input costs come from buying exogenous supplies (quantity * unit price)
         input_costs = np.zeros((n_processes, n_steps), dtype=int)
         for step in range(n_steps):
             input_costs[0, step] = np.sum(
                 exogenous_supplies[step] * supply_prices[:, step][:]
             )
 
+        # total input quantities per process are simply inputs of the corresponding
+        # product type in quantities.
         input_quantity = np.zeros((n_processes, n_steps), dtype=int)
         input_quantity[0, :] = quantities[0]
 
+        # the number of active lines come from dividing input by n. inputs consumed
+        # by each line
         active_lines = np.hstack(
             [(n_lines * n_agents_per_process).reshape((n_processes, 1))] * n_steps
         )
         assert active_lines.shape == (n_processes, n_steps)
         active_lines[0, :] = input_quantity[0, :] // process_inputs[0]
 
+        # output_quantity = np.zeros((n_processes, n_steps), dtype=int)
         output_quantity = np.zeros((n_processes, n_steps), dtype=int)
         output_quantity[0, :] = active_lines[0, :] * process_outputs[0]
 
-        manufacturing_costs[0, :-n_startup] *= active_lines[0, :-n_startup]
+        # find the total manufacturing_costs per process
+        manufacturing_costs[0, :] *= active_lines[0, :]
 
+        # cost = cost of input + cost of manufacturing
         total_costs = input_costs + manufacturing_costs
 
+        # should sell at the cost plus profit
         output_total_prices = np.ceil(total_costs * (1 + profits)).astype(int)
 
         for p in range(1, n_processes):
-            input_costs[p, p:] = output_total_prices[p - 1, p - 1 : -1]
-            input_quantity[p, p:] = output_quantity[p - 1, p - 1 : -1]
+            input_costs[p, :] = output_total_prices[p - 1, :]
+            input_quantity[p, :] = output_quantity[p - 1, :]
             active_lines[p, :] = input_quantity[p, :] // process_inputs[p]
             output_quantity[p, :] = active_lines[p, :] * process_outputs[p]
-            manufacturing_costs[p, p : p - n_startup] *= active_lines[
-                p, p : p - n_startup
-            ]
+            manufacturing_costs[p, :] *= active_lines[p - 1, :]
             total_costs[p, :] = input_costs[p, :] + manufacturing_costs[p, :]
             output_total_prices[p, :] = np.ceil(
                 total_costs[p, :] * (1 + profits[p, :])
             ).astype(int)
-        sale_prices[:, n_startup:] = np.ceil(
-            output_total_prices[-1, n_startup - 1 : -1]
-            / output_quantity[-1, n_startup - 1 : -1]
+
+        sale_prices[:, :] = np.ceil(
+            output_total_prices[-1, :] / output_quantity[-1, :]
         ).astype(int)
+
         product_prices = np.zeros((n_products, n_steps))
-        product_prices[0, :-n_startup] = catalog_prices[0]
-        product_prices[1:, 1:] = np.ceil(
+        product_prices[0, :] = catalog_prices[0]
+        product_prices[1:, :] = np.ceil(
             np.divide(
                 output_total_prices.astype(float),
                 output_quantity.astype(float),
                 out=np.zeros_like(output_total_prices, dtype=float),
                 where=output_quantity != 0,
             )
-        ).astype(int)[:, :-1]
+        ).astype(int)
         catalog_prices = np.ceil(
             [
-                profit_basis(product_prices[p, p : p + n_steps - n_startup])
+                profit_basis(product_prices[p, p : p + n_steps])
                 for p in range(n_products)
             ]
         ).astype(int)
         profile_info: List[
             Tuple[OneShotProfile, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
         ] = []
+
         nxt = 0
         for l in range(n_processes):
             for a in range(n_agents_per_process[l]):
@@ -907,6 +911,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 esupplies = np.zeros((n_steps, n_products), dtype=int)
                 esale_prices = np.zeros((n_steps, n_products), dtype=int)
                 esupply_prices = np.zeros((n_steps, n_products), dtype=int)
+                # TODO make sale_prices vary around a mean
                 if l == 0:
                     esupplies[:, 0] = [exogenous_supplies[s][a] for s in range(n_steps)]
                     esupply_prices[:, 0] = supply_prices[a, :]
@@ -947,6 +952,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             for b, a in zip(balance, n_agents_per_process):
                 initial_balance += [int(math.ceil(b * cash_availability))] * a
         b = np.sum(initial_balance)
+
         info.update(
             dict(
                 product_prices=product_prices,
@@ -1129,13 +1135,14 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
     def simulation_step(self, stage):
         s = self.current_step
-        self.exogenous_qout = defaultdict(int)
-        self.exogenous_qin = defaultdict(int)
-        self.exogenous_pout = defaultdict(int)
-        self.exogenous_pin = defaultdict(int)
 
         if stage == 0:
 
+            self.exogenous_qout = defaultdict(int)
+            self.exogenous_qin = defaultdict(int)
+            self.exogenous_pout = defaultdict(int)
+            self.exogenous_pin = defaultdict(int)
+            self.__contracts = defaultdict(list)
             # Register exogenous contracts as concluded
             # -----------------------------------------
             for contract in self.exogenous_contracts[s]:
@@ -1147,9 +1154,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 self.exogenous_pout[seller] += quantity * unit_price
                 self.exogenous_qin[buyer] += quantity
                 self.exogenous_pin[buyer] += quantity * unit_price
-                self.on_contract_concluded(
-                    contract, to_be_signed_at=contract.to_be_signed_at
-                )
+                self.on_contract_concluded(contract, to_be_signed_at=self.current_step)
                 if self.exogenous_force_max:
                     contract.signatures = dict(
                         zip(contract.partners, contract.partners)
@@ -1186,6 +1191,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     value=self.exogenous_contracts_summary,
                     key=self.current_step,
                 )
+
+            # make agent ufuns
+            # ================
+            for aid, a in self.agents.items():
+                if is_system_agent(aid):
+                    continue
+                a.make_ufun(add_exogenous=True)
 
             # zero quantities and prices
             # ==========================
@@ -1235,18 +1247,18 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             # dangerous because the agent can change its own ufun. May be I should
             # directly create the ufun here using a global ufun method defined in
             # the ufun.py module that takes a world and an agent (or just an AWI)
-            ufun = (
-                agent.make_ufun(add_exogenous=False) if not agent.ufun else agent.ufun
-            )
             qin, pin, qout, pout = (
                 self._input_quantity[aid],
                 self._input_price[aid],
                 self._output_quantity[aid],
                 self._output_price[aid],
             )
-            self._profits[aid].append(
-                ufun.from_aggregates(qin=qin, qout=qout, pin=pin, pout=pout)
-            )
+            ufun = agent.ufun
+            ucon = ufun.from_contracts(self.__contracts[aid])
+            # ufun = agent.make_ufun(add_exogenous=True)
+            # uagg = ufun.from_aggregates(qin=qin, qout=qout, pin=pin, pout=pout)
+            # assert abs(ucon - uagg) < 1e-1, f"Ufun from contracts {ucon} != ufun from aggregates {uagg}"
+            self._profits[aid].append(ucon)
             self._breach_levels[aid].append(
                 ufun.breach_level(
                     qin,
@@ -1297,23 +1309,27 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         }
 
     def on_contract_signed(self, contract: Contract) -> bool:
+        # if any(is_system_agent(_) for _ in contract.partners):
+        #     print(f"Contract with system partner: {str(contract)}")
         product = contract.annotation["product"]
         bought = contract.agreement["quantity"]
-        buy_cost = bought * contract.agreement["unit_price"]
+        total_price = bought * contract.agreement["unit_price"]
         oldq = self._sold_quantity[product, self.current_step + 1]
         oldp = self._real_price[product, self.current_step + 1]
         totalp = 0.0
         if oldq > 0:
             totalp = oldp * oldq
         self._sold_quantity[product, self.current_step + 1] += bought
-        self._real_price[product, self.current_step + 1] = (totalp + buy_cost) / (
+        self._real_price[product, self.current_step + 1] = (totalp + total_price) / (
             oldq + bought
         )
         self._input_quantity[contract.annotation["buyer"]] += bought
-        self._input_price[contract.annotation["buyer"]] += buy_cost
+        self._input_price[contract.annotation["buyer"]] += total_price
         self._output_quantity[contract.annotation["seller"]] += bought
-        self._output_price[contract.annotation["seller"]] += buy_cost
+        self._output_price[contract.annotation["seller"]] += total_price
         contract.executed_at = self.current_step
+        self.__contracts[contract.annotation["buyer"]].append(contract)
+        self.__contracts[contract.annotation["seller"]].append(contract)
         return super().on_contract_signed(contract)
 
     def contract_size(self, contract: Contract) -> float:
@@ -1729,7 +1745,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             if is_system_agent(aid) or isinstance(a, OneShotSCML2020Adapter):
                 continue
             controllers[aid] = a.adapted_object
-            a.adapted_object.make_ufun()
+            a.adapted_object.make_ufun(add_exogenous=True)
 
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)

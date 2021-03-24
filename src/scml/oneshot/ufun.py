@@ -161,7 +161,7 @@ class OneShotUFun(UtilityFunction):
         return self.from_offers([offer], [self.input_agent])
 
     def from_contracts(
-        self, contracts: Iterable[Contract], ignore_exogenous=False
+        self, contracts: Iterable[Contract], ignore_exogenous=True
     ) -> float:
         """
         Calculates the utility function given a list of contracts
@@ -270,14 +270,16 @@ class OneShotUFun(UtilityFunction):
                 continue
             topay = offer[UNIT_PRICE] * offer[QUANTITY]
             pin += topay
-            if (
-                not going_bankrupt
-                and (pin + topay + offer[QUANTITY] * self.production_cost)
+            if not going_bankrupt and (
+                pin + topay + offer[QUANTITY] * self.production_cost
                 > self.current_balance
             ):
                 unit_total_cost = offer[UNIT_PRICE] + self.production_cost
-                can_buy = self.current_balance // unit_total_cost
-                assert can_buy < offer[QUANTITY]
+                can_buy = (self.current_balance - pin) // unit_total_cost
+                if can_buy >= offer[QUANTITY]:
+                    assert (
+                        can_buy < offer[QUANTITY]
+                    ), f"can-buy {can_buy} of {offer[QUANTITY]} yet fails!!"
                 qin_bar = qin + can_buy
                 going_bankrupt = True
             qin += offer[QUANTITY]
@@ -559,6 +561,17 @@ class OneShotUFun(UtilityFunction):
             )
         if result is None:
             warnings.warn("Greedy ufun limit calculation failed")
+        result: UFunLimit
+        actual_util = self.from_offers(
+            [
+                (result.output_quantity, 0, result.output_price),
+                (result.input_quantity, 0, result.input_price),
+            ],
+            [True, False],
+        )
+        assert (
+            abs(result.utility - actual_util) < 1e-2
+        ), f"UFunLimit with utility {result.utility} != actual utility {actual_util} of the outcome in it!!"
         if set_best:
             self.best = result
         elif set_worst:

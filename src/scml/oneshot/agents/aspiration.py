@@ -21,7 +21,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSingleAgreementAgen
         )
         super().init()
         if not self.ufun:
-            self.make_ufun()
+            self.make_ufun(add_exogenous=True)
 
     def counter_all(self, offers, states):
         if self.__endall:

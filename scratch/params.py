@@ -83,6 +83,7 @@ class Recorder(SCML2020OneShotWorld):
             state = a.awi.state()
             profile = a.awi.profile
             d = {f"p_{k}": v for k, v in self.__params.items()}
+            d.update({f"f_{k}": v for k, v in vars(a.ufun).items()})
             d.update(
                 dict(
                     step=self.current_step,
@@ -137,11 +138,21 @@ def run(
     worlds: int = 10,
     method: str = "bruteforce",
     serial: bool = False,
+    vars: str = "",
+    fast: bool = False,
 ):
+    if len(vars) < 1:
+        params = {k: v for k, v in PARAMS.items()}
+    else:
+        keys = set(vars.split(";"))
+        params = {k: v for k, v in PARAMS.items() if k in keys}
+    if fast:
+        params = {k: v if len(v) < 2 else (v[0], v[-1]) for k, v in params.items()}
+
     methods = method.split(";")
     print(f"Starting run with {steps} steps and {worlds} worlds: Method={method}")
-    param_names = tuple(PARAMS.keys())
-    param_values = list(itertools.product(*tuple(PARAMS.values())))
+    param_names = tuple(params.keys())
+    param_values = list(itertools.product(*tuple(params.values())))
     print(
         f"Will run {len(methods) * len(param_values) * steps * worlds} simulation steps.",
         flush=True,

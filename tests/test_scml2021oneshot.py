@@ -230,7 +230,7 @@ def test_ufun_min_max_in_world():
         for aid, agent in world.agents.items():
             if is_system_agent(aid):
                 continue
-            ufun = agent.make_ufun()
+            ufun = agent.make_ufun(add_exogenous=True)
             ufun.find_limit(True)
             ufun.find_limit(False)
             mn, mx = ufun.min_utility, ufun.max_utility

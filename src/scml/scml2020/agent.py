@@ -12,9 +12,11 @@ import numpy as np
 from negmas.situated import Adapter
 from negmas.helpers import instantiate, get_full_type_name
 
+
 from ..oneshot.ufun import OneShotUFun
 from ..oneshot.agent import OneShotAgent
 from ..oneshot.common import OneShotState, OneShotProfile
+from ..oneshot.mixins import OneShotUFunCreatorMixin
 
 from .components.trading import MarketAwareTradePredictionStrategy
 from .components.production import DemandDrivenProductionStrategy
@@ -451,6 +453,7 @@ class OneShotAdapter(
     MarketAwareTradePredictionStrategy,
     SCML2020Agent,
     Adapter,
+    OneShotUFunCreatorMixin
 ):
     """
     An adapter allowing agents developed for SCML-OneShot to run in
@@ -485,7 +488,7 @@ class OneShotAdapter(
     def init(self):
         self._oneshot_awi = AWIHelper(self)
         self._obj._awi = self._oneshot_awi
-        self._obj.ufun = self.make_ufun()
+        self._obj.ufun = self.make_ufun(add_exogenous=True)
         super().init()
         self._obj.init()
 
@@ -548,56 +551,59 @@ class OneShotAdapter(
                 unit_price=u,
                 controller=self._obj,
             )
-        self.utility_function = self.make_ufun()
+        self.utility_function = self.make_ufun(add_exogenous=True)
         super().step()
 
-    def make_ufun(self, add_exogenous=False):
-        iq = (
-            self._obj.awi.current_input_issues[QUANTITY]
-            if self._obj.awi.current_input_issues
-            else None
-        )
-        ip = (
-            self._obj.awi.current_input_issues[UNIT_PRICE]
-            if self._obj.awi.current_input_issues
-            else None
-        )
-        oq = (
-            self._obj.awi.current_output_issues[QUANTITY]
-            if self._obj.awi.current_output_issues
-            else None
-        )
-        op = (
-            self._obj.awi.current_output_issues[UNIT_PRICE]
-            if self._obj.awi.current_output_issues
-            else None
-        )
-        self.ufun = OneShotUFun(
-            ex_qin=self._obj.awi.current_exogenous_input_quantity if add_exogenous else 0,
-            ex_pin=self._obj.awi.current_exogenous_input_price if add_exogenous else 0,
-            ex_qout=self._obj.awi.current_exogenous_output_quantity if add_exogenous else 0,
-            ex_pout=self._obj.awi.current_exogenous_output_price if add_exogenous else 0,
-            production_cost=self._obj.awi.profile.cost,
-            storage_cost=self._obj.awi.current_storage_cost,
-            delivery_penalty=self._obj.awi.current_delivery_penalty,
-            input_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
-            output_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
-            input_agent=self._obj.awi.my_input_product == 0,
-            output_agent=self._obj.awi.my_output_product == self._obj.awi.n_products - 1,
-            input_product=self._obj.awi.my_input_product,
-            n_input_negs=self._obj.awi.n_input_negotiations,
-            n_output_negs=self._obj.awi.n_output_negotiations,
-            current_step=self._obj.awi.current_step,
-            input_qrange=(iq.min_value, iq.max_value) if iq else (0, 0),
-            input_prange=(ip.min_value, ip.max_value) if ip else (0, 0),
-            output_qrange=(oq.min_value, oq.max_value) if oq else (0, 0),
-            output_prange=(op.min_value, op.max_value) if op else (0, 0),
-            force_exogenous=self._obj.awi.is_exogenous_forced,
-            n_lines=self._obj.awi.n_lines,
-            current_balance=self.awi.current_balance
-        )
-        return self.ufun
+    def make_ufun(self, add_exogenous: bool):
+        return super().make_ufun(add_exogenous, in_adapter=True)
 
+    # def make_ufun(self, add_exogenous=False):
+    #     iq = (
+    #         self._obj.awi.current_input_issues[QUANTITY]
+    #         if self._obj.awi.current_input_issues
+    #         else None
+    #     )
+    #     ip = (
+    #         self._obj.awi.current_input_issues[UNIT_PRICE]
+    #         if self._obj.awi.current_input_issues
+    #         else None
+    #     )
+    #     oq = (
+    #         self._obj.awi.current_output_issues[QUANTITY]
+    #         if self._obj.awi.current_output_issues
+    #         else None
+    #     )
+    #     op = (
+    #         self._obj.awi.current_output_issues[UNIT_PRICE]
+    #         if self._obj.awi.current_output_issues
+    #         else None
+    #     )
+    #     self.ufun = OneShotUFun(
+    #         ex_qi=self._obj.awi.current_exogenous_input_quantity if add_exogenous else 0,
+    #         ex_pin=self._obj.awi.current_exogenous_input_price if add_exogenous else 0,
+    #         ex_qout=self._obj.awi.current_exogenous_output_quantity if add_exogenous else 0,
+    #         ex_pout=self._obj.awi.current_exogenous_output_price if add_exogenous else 0,
+    #         production_cost=self._obj.awi.profile.cost,
+    #         storage_cost=self._obj.awi.current_storage_cost,
+    #         delivery_penalty=self._obj.awi.current_delivery_penalty,
+    #         input_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
+    #         output_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
+    #         input_agent=self._obj.awi.my_input_product == 0,
+    #         output_agent=self._obj.awi.my_output_product == self._obj.awi.n_products - 1,
+    #         input_product=self._obj.awi.my_input_product,
+    #         n_input_negs=self._obj.awi.n_input_negotiations,
+    #         n_output_negs=self._obj.awi.n_output_negotiations,
+    #         current_step=self._obj.awi.current_step,
+    #         input_qrange=(iq.min_value, iq.max_value) if iq else (0, 0),
+    #         input_prange=(ip.min_value, ip.max_value) if ip else (0, 0),
+    #         output_qrange=(oq.min_value, oq.max_value) if oq else (0, 0),
+    #         output_prange=(op.min_value, op.max_value) if op else (0, 0),
+    #         force_exogenous=self._obj.awi.is_exogenous_forced,
+    #         n_lines=self._obj.awi.n_lines,
+    #         current_balance=self.awi.current_balance
+    #     )
+    #     return self.ufun
+    #
     def to_dict(self):
         return {
             "id": self.id,

@@ -20,12 +20,16 @@ from .common import QUANTITY, UNIT_PRICE
 from .ufun import OneShotUFun
 from .agent import OneShotAgent
 from .helper import AWIHelper
+from .mixins import OneShotUFunCreatorMixin
 
 __all__ = ["DefaultOneShotAdapter", "_SystemAgent"]
 
 
-class DefaultOneShotAdapter(Adapter):
+class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
     """The base class of all one-shot agents"""
+
+    def make_ufun(self, add_exogenous: bool):
+        return super().make_ufun(add_exogenous, in_adapter=False)
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
@@ -41,57 +45,10 @@ class DefaultOneShotAdapter(Adapter):
     ) -> None:
         pass
 
-    def make_ufun(self, add_exogenous=False):
-        iq = (
-            self.awi.current_input_issues[QUANTITY]
-            if self.awi.current_input_issues
-            else None
-        )
-        ip = (
-            self.awi.current_input_issues[UNIT_PRICE]
-            if self.awi.current_input_issues
-            else None
-        )
-        oq = (
-            self.awi.current_output_issues[QUANTITY]
-            if self.awi.current_output_issues
-            else None
-        )
-        op = (
-            self.awi.current_output_issues[UNIT_PRICE]
-            if self.awi.current_output_issues
-            else None
-        )
-        self.ufun = OneShotUFun(
-            ex_qin=self.awi.current_exogenous_input_quantity if add_exogenous else 0,
-            ex_pin=self.awi.current_exogenous_input_price if add_exogenous else 0,
-            ex_qout=self.awi.current_exogenous_output_quantity if add_exogenous else 0,
-            ex_pout=self.awi.current_exogenous_output_price if add_exogenous else 0,
-            production_cost=self.awi.profile.cost,
-            storage_cost=self.awi.current_storage_cost,
-            delivery_penalty=self.awi.current_delivery_penalty,
-            input_penalty_scale=self.awi.penalty_multiplier(True, None),
-            output_penalty_scale=self.awi.penalty_multiplier(True, None),
-            input_agent=self.awi.my_input_product == 0,
-            output_agent=self.awi.my_output_product == self.awi.n_products - 1,
-            input_product=self.awi.my_input_product,
-            n_input_negs=self.awi.n_input_negotiations,
-            n_output_negs=self.awi.n_output_negotiations,
-            current_step=self.awi.current_step,
-            input_qrange=(iq.min_value, iq.max_value) if iq else (0, 0),
-            input_prange=(ip.min_value, ip.max_value) if ip else (0, 0),
-            output_qrange=(oq.min_value, oq.max_value) if oq else (0, 0),
-            output_prange=(op.min_value, op.max_value) if op else (0, 0),
-            force_exogenous=self.awi.is_exogenous_forced,
-            n_lines=self.awi.n_lines,
-            current_balance=self.awi.current_balance,
-        )
-        return self.ufun
-
     def init_(self):
         if isinstance(self._obj, OneShotAgent):
             if not self.ufun:
-                self.make_ufun()
+                self.make_ufun(add_exogenous=True)
         super().init_()
 
     def init(self):
@@ -121,7 +78,6 @@ class DefaultOneShotAdapter(Adapter):
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
         partner = [_ for _ in partners if _ != self.id][0]
-        # self._obj.make_ufun()
         if not self._obj:
             return None
         neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner)
