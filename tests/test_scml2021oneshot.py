@@ -344,8 +344,8 @@ def _ufun_unit2(
     mn, mx = worst_gt.utility, best_gt.utility
     assert mx >= mn, f"Worst: {worst_gt}\nBest : {best_gt}"
     if force_exogenous:
-        best_optimal = ufun.find_limit_optimal(True)
-        worst_optimal = ufun.find_limit_optimal(False)
+        best_optimal = ufun.find_limit_optimal(True, check=True)
+        worst_optimal = ufun.find_limit_optimal(False, check=True)
         assert best_gt == best_optimal
         assert worst_gt == worst_optimal
     #     best_greedy = ufun.find_limit_greedy(True)

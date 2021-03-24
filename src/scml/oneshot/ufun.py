@@ -269,11 +269,11 @@ class OneShotUFun(UtilityFunction):
                 output_offers.append((offer, is_exogenous))
                 continue
             topay = offer[UNIT_PRICE] * offer[QUANTITY]
-            pin += topay
             if not going_bankrupt and (
                 pin + topay + offer[QUANTITY] * self.production_cost
                 > self.current_balance
             ):
+                assert self.current_balance >= pin
                 unit_total_cost = offer[UNIT_PRICE] + self.production_cost
                 can_buy = (self.current_balance - pin) // unit_total_cost
                 if can_buy >= offer[QUANTITY]:
@@ -282,6 +282,7 @@ class OneShotUFun(UtilityFunction):
                     ), f"can-buy {can_buy} of {offer[QUANTITY]} yet fails!!"
                 qin_bar = qin + can_buy
                 going_bankrupt = True
+            pin += topay
             qin += offer[QUANTITY]
         if not going_bankrupt:
             qin_bar = qin
@@ -719,20 +720,63 @@ class OneShotUFun(UtilityFunction):
         def make_program(
             best: bool, allow_oversales, n_input_negs=None, n_output_negs=None
         ):
+            """Creates and solves a LIP that finds one limit of the ufun
+
+            Args:
+                best: best or worst?
+                allow_oversales: If given, the output quantity will be allowed
+                                 to be larger than the input quantity which means
+                                 that the agent may pay delivery penalty but will
+                                 never pay storage cost and vice versa.
+                n_input_negs: Number of input negotiations
+                n_output_negs: Number of output negotiations
+
+            """
+            # PREPARING HELPER VALUES
+            # =======================
+            # if n. negs is not given use the number passed to the constructor
             if n_input_negs is None:
                 n_input_negs = self.n_input_negs
             if n_output_negs is None:
                 n_output_negs = self.n_output_negs
+
+            # The most appropriate unit price for the given limit is easy to
+            # find. Buy cheap, sell expensive if best and vice versa. No need
+            # to search over unit prices.
             uin = self.input_prange[1 - int(best)]
             uout = self.output_prange[int(best)]
+            # for exogenous contracts, the unit price is already given
             ex_uin = self.ex_pin / self.ex_qin if self.ex_qin else 0
             ex_uout = self.ex_pout / self.ex_qout if self.ex_qout else 0
 
+            # the scale with which to multiply storage_cost and delivery_penalty
+            scale = (
+                self.output_penalty_scale
+                if allow_oversales
+                else self.input_penalty_scale
+            )
+            # if no scale is given then the unit price will be used. Note that
+            # we only pay delivery_penalty if we allow oversales and in this case
+            # the scale should be the unit price of the output
+            if scale is None:
+                scale = uout if allow_oversales else uin
+
+            # create the model
             m = mp.Model(sense=mp.MAXIMIZE if best else mp.MINIMIZE)
             m.verbose = False
+
+            # OPTIMIZATION VARIABLES
+            # ======================
+
+            # Variable qin: The NEGOTIATED quantity of input
             qin = m.add_var(var_type=mp.INTEGER, name="qin")
+            # Variable out: The NEGOTIATED quantity of output
             qout = m.add_var(var_type=mp.INTEGER, name="qout")
+            # Variable: produced: the quantity that will be produced
             produced = m.add_var(var_type=mp.INTEGER, name="produced")
+            # Variable: ex_q*_signed: A boolean indicating whether the exogenous
+            # contract is to be signed in the limit to be found. Note that this
+            # is set to 1 when exogenous contracts are forced.
             if self.force_exogenous:
                 ex_qin_signed = 1
                 ex_qout_signed = 1
@@ -740,96 +784,138 @@ class OneShotUFun(UtilityFunction):
                 ex_qin_signed = m.add_var(var_type=mp.BINARY, name="ex_qin_signed")
                 ex_qout_signed = m.add_var(var_type=mp.BINARY, name="ex_qout_signed")
 
+            # HELPER VARIABLES
+            # ================
+
+            # [value] total cost of producing one unit.
+            total_cost = uin + self.production_cost
+
+            # [variable] the total quantity in all sales that the agent SHOULD produce
+            # to avoid paying delivery penalty.
+            qout_total = qout + ex_qout_signed * self.ex_qout
+
+            # [variable] the total quantity in all supplies that the agent SHOULD pay for
+            # to avoid paying storage_cost.
+            qin_total = qin + ex_qin_signed * self.ex_qin
+
+            # Variable: real_qout: The actual negotiated quantity sold
+            # Variable: real_ex_qout: The actual exogenous quantity sold
+            # we know that to get the worst possible result, we should not really
+            # sell anything to make sure we get no money from our consumers while
+            # paying as much as possible
+            if best:
+                real_qout = m.add_var(var_type=mp.INTEGER, name="real_qout")
+                real_ex_qout = m.add_var(var_type=mp.INTEGER, name="real_ex_qout")
+            else:
+                real_qout = 0
+                real_ex_qout = 0
+
+            # Constraints
+            # ===========
+
+            # input negotiated quantity cannot negative or more than what can be negotiated
             m += qin >= 0  # typing: ignore
             m += qin <= self.input_qrange[1] * self.n_input_negs  # typing: ignore
+
+            # output negotiated quantity cannot negative or more than what can be negotiated
             m += qout >= 0  # typing: ignore
             m += qout <= self.output_qrange[1] * self.n_output_negs  # typing: ignore
+
+            # production must be positive and below capacity and inputs
             m += produced >= 0  # typing: ignore
             m += produced <= self.n_lines  # typing: ignore
-            total_cost = uin + self.production_cost
+            m += produced <= qin_total
+
+            # we cannot sell what we cannot produce
+            m += real_qout <= produced
+
+            # if it costs anything to produce, then we cannot produce more than
+            # what we can pay for. Note that total_cost here takes account of
+            # both buying inputs and production
             if total_cost:
                 m += produced <= self.current_balance // total_cost
 
-            if not self.force_exogenous:
-                m += ex_qin_signed >= 0  # typing: ignore
-                m += ex_qin_signed <= 1  # typing: ignore
-                m += ex_qout_signed >= 0  # typing: ignore
-                m += ex_qout_signed <= 1  # typing: ignore
+            # we know that the actual negotiated-amount we will sell is nonnegative and
+            # higher than the amount negotiated
+            m += real_qout <= qout
+            if not isinstance(real_qout, int):
+                m += real_qout >= 0
+            # the exogenous contracts we honor cannot exceed the total. We need
+            # these constraints ONLY if we are optimizing over real_ex_qout
+            if not isinstance(real_ex_qout, int) or not isinstance(ex_qout_signed, int):
+                m += real_ex_qout <= ex_qout_signed * self.ex_qout
+            if not isinstance(real_ex_qout, int):
+                m += real_ex_qout >= 0
 
-            qout_total = qout + ex_qout_signed * self.ex_qout
-            qin_total = qin + ex_qin_signed * self.ex_qin
+            # # if exogenous contracts are not force, we have a choice of signing
+            # # them.
+            # # TODO: we already define these variables as booleans
+            # if not self.force_exogenous:
+            #     m += ex_qin_signed >= 0  # typing: ignore
+            #     m += ex_qin_signed <= 1  # typing: ignore
+            #     m += ex_qout_signed >= 0  # typing: ignore
+            #     m += ex_qout_signed <= 1  # typing: ignore
 
-            m += produced <= qin_total
+            # implement allow_oversales: When given total input cannot be greater
+            # than total output and vice versa
+            if allow_oversales:
+                m += qout_total >= qin_total
+            else:
+                m += qout_total <= qin_total
+                # if best and (not self.force_exogenous or (self.ex_qout < self.n_lines)):
+                #     m += produced == qout_total
 
+            # these constraints are unnecessary. They are here to speed up computation
+            # when we know that we are finding the best possible utility value
             if best:
-                m += qout_total <= produced
+                # m += real_ex_qout <= produced
+                if allow_oversales:
+                    # Should produce everything I buy to avoid paying storage_cost
+                    m += produced == qin_total
+                else:
+                    # Should produce everything I buy to avoid paying delivery_penalty
+                    m += real_qout == qout_total
+                # should never sign sell contracts that I cannot honor (if possible)
+                # m += qout_total <= produced
+                # should never commit to sales above my production capacity
                 if not self.force_exogenous or (self.ex_qout < self.n_lines):
                     m += qout_total <= self.n_lines
                 if not self.force_exogenous or (self.ex_qin < self.n_lines):
                     m += qin_total <= self.n_lines
 
-            if best:
-                real_qout = m.add_var(var_type=mp.INTEGER, name="real_qout")
-                m += real_qout <= qout_total
-                m += real_qout >= 0
-                if allow_oversales:
-                    m += real_qout <= qout_total
-                else:
-                    m += real_qout == qout_total
-            else:
-                real_qout = 0
-
-            if best:
-                real_ex_qout = m.add_var(var_type=mp.INTEGER, name="real_ex_qout")
-                m += real_ex_qout <= produced
-                m += real_ex_qout <= self.ex_qout
-                m += real_ex_qout >= 0
-            else:
-                real_ex_qout = 0
-
-            if allow_oversales:
-                m += qout_total >= qin_total
-                if best:
-                    m += produced == qin_total
-            else:
-                m += real_qout <= qin_total
-                # if best and (not self.force_exogenous or (self.ex_qout < self.n_lines)):
-                #     m += produced == qout_total
-            m += real_qout <= produced
+            # RUN the optimization
             op = mp.maximize if best else mp.minimize
-            scale = (
-                self.output_penalty_scale
-                if allow_oversales
-                else self.input_penalty_scale
+
+            exp = (
+                # income from selling negotiated products
+                real_qout * uout
+                # income from selling exogenous contracts that can be honored
+                + real_ex_qout * ex_uout
+                # income from secured outputs. TODO remove this may be
+                + secured_output_quantity * secured_output_unit_price
+                # pay for all inputs I commit to through negotiation
+                - qin * uin  # typing: ignore
+                # pay for all exogenous contracts I sign
+                - ex_qin_signed * self.ex_qin * ex_uin  # typing: ignore
+                # pay for secured quantities. TODO remove this may be
+                - secured_input_quantity * secured_input_unit_price
+                # pay for production
+                - self.production_cost * produced  # typing: ignore
             )
-            if scale is None:
-                scale = uout if allow_oversales else uin
             if allow_oversales:
+                # we may pay delivery penalty but never storage cost
+                # pay for delivery penalty if I could not honor all sale contracts
                 exp = (
-                    real_qout * uout  # typing: ignore
-                    + real_ex_qout * ex_uout  # typing: ignore
-                    + secured_output_quantity * secured_output_unit_price
-                    - qin * uin  # typing: ignore
-                    - ex_qin_signed * self.ex_qin * ex_uin  # typing: ignore
-                    - secured_input_quantity * secured_input_unit_price
-                    - self.production_cost * produced  # typing: ignore
-                    - self.delivery_penalty
-                    * (qout_total - qin_total)
-                    * scale  # typing: ignore
-                )
+                    exp - self.delivery_penalty * (qout_total - produced) * scale
+                )  # typing: ignore
             else:
+                # we may pay storage cost but never delivery penalty
+                # pay for storage cost if I could not sell the produce of all inputs I received
                 exp = (
-                    real_qout * uout  # typing: ignore
-                    + real_ex_qout * ex_uout  # typing: ignore
-                    + secured_output_quantity * secured_output_unit_price
-                    - qin * uin  # typing: ignore
-                    - ex_qin_signed * self.ex_qin * ex_uin  # typing: ignore
-                    - secured_input_quantity * secured_input_unit_price
-                    - self.production_cost * produced  # typing: ignore
-                    - self.storage_cost
-                    * (qin_total - qout_total)
-                    * scale  # typing: ignore
-                )
+                    exp
+                    - self.storage_cost * (qin_total - real_qout - real_ex_qout) * scale
+                )  # typing: ignore
+
             m.objective = op(exp)
             status = m.optimize()
             # breakpoint()
@@ -871,7 +957,7 @@ class OneShotUFun(UtilityFunction):
             utility, vals = u1, vals1
         else:
             utility, vals = u2, vals2
-        if check and best:
+        if check:
             # breakpoint()
             (qin, uin, qout, uout, ex_qin, ex_uin, ex_qout, ex_uout, produced) = vals
             actual = self.from_offers(

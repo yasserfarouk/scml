@@ -103,3 +103,8 @@ my_results
 limits_brute.csv
 max_stats_brute.csv
 min_stats_brute.csv
+scratch/data.zip
+scratch/max_stats_g.csv
+scratch/min_stats_a.csv
+scratch/min_stats_b.csv
+scratch/min_stats_g.csv
