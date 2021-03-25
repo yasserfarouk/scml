@@ -225,17 +225,13 @@ class OneShotUFun(UtilityFunction):
 
         def order(x):
             """A helper function to order contracts in the following fashion:
-            1. input contracts are ordered from cheapest to most expensive. The
-               exception to this is that exogenous buy contracts will appear
-               before anything else if force-exogenous is set.
-            2. output contracts are ordered from highest price to cheapest. The
-               exception to this is that exogenous sell contracts will appear
-               before anything else if force-exogenous is set.
+            1. input contracts are ordered from cheapest to most expensive.
+            2. output contracts are ordered from highest price to cheapest.
             3. The relative order of input and output contracts is indeterminate.
             """
             offer, is_output, is_exogenous = x
-            if is_exogenous and self.force_exogenous:
-                return float("-inf")
+            # if is_exogenous and self.force_exogenous:
+            #     return float("-inf")
             return -offer[UNIT_PRICE] if is_output else offer[UNIT_PRICE]
 
         # copy inputs because we are going to modify them.
@@ -275,7 +271,7 @@ class OneShotUFun(UtilityFunction):
             ):
                 assert self.current_balance >= pin
                 unit_total_cost = offer[UNIT_PRICE] + self.production_cost
-                can_buy = (self.current_balance - pin) // unit_total_cost
+                can_buy = int((self.current_balance - pin) // unit_total_cost)
                 if can_buy >= offer[QUANTITY]:
                     assert (
                         can_buy < offer[QUANTITY]
@@ -284,9 +280,10 @@ class OneShotUFun(UtilityFunction):
                 going_bankrupt = True
             pin += topay
             qin += offer[QUANTITY]
+
         if not going_bankrupt:
             qin_bar = qin
-        # breakpoint()
+
         # calculate the maximum amount we can produce given our limited production
         # capacity and the input we CAN BUY
         n_lines = self.n_lines
@@ -301,26 +298,34 @@ class OneShotUFun(UtilityFunction):
 
         # find the total sale quantity (qout) and money (pout). Moreover find
         # the actual amount of money we will receive
+        done_selling = False
         for offer, is_exogenous in output_offers:
+            if not done_selling:
+                if qout + offer[QUANTITY] >= producible:
+                    assert producible >= qout, f"producible {producible}, qout {qout}"
+                    can_sell = producible - qout
+                    done_selling = True
+                else:
+                    can_sell = offer[QUANTITY]
+                pout_bar += can_sell * offer[UNIT_PRICE]
             qout += offer[QUANTITY]
-            if qout >= producible:
-                pout_bar += (producible - qout) * offer[UNIT_PRICE]
-            else:
-                pout_bar += offer[QUANTITY] * offer[UNIT_PRICE]
+
+        # should never produce more than we signed to sell
+        producible = min(producible, qout)
 
         # call a helper method giving it the total quantity and money in and out.
-        u = self.from_aggregates(qin, qout, pin, pout_bar)
+        u = self.from_aggregates(qin, qout, producible, pin, pout_bar)
         if return_producible:
             # the real producible quantity is the minimum of what we can produce
             # given supplies and production capacity and what we can sell.
-            producible = min(producible, qout)
             return u, producible
         return u
 
     def from_aggregates(
         self,
         qin: int = 0,
-        qout: int = 0,
+        qout_signed: int = 0,
+        qout_sold: int = 0,
         pin: int = 0,
         pout: int = 0,
     ) -> float:
@@ -329,7 +334,10 @@ class OneShotUFun(UtilityFunction):
 
         Args:
             qin: Input quantity (total including all exogenous contracts).
-            qout: Output quantity (total including all exogenous contracts).
+            qout_signed: Output quantity (total including all exogenous contracts)
+                         that the agent agreed to sell.
+            qout_sold: Output quantity (total including all exogenous contracts)
+                       that the agent will actually sell.
             pin: Input total price (i.e. unit price * qin).
             pout: Output total price (i.e. unit price * qin).
 
@@ -346,12 +354,23 @@ class OneShotUFun(UtilityFunction):
               and production.
 
         """
+        assert qout_sold <= qout_signed, f"sold: {qout_sold}, signed: {qout_signed}"
+
+        # the scale with which to multiply storage_cost and delivery_penalty
+        # if no scale is given then the unit price will be used.
+        output_scale = self.output_penalty_scale
+        if output_scale is None:
+            output_scale = uout
+        input_scale = self.input_penalty_scale
+        if input_scale is None:
+            input_scale = uin
+
         # production capacity
         lines = self.n_lines
 
         # we cannot produce more than our capacity or inputs and we should not
         # produce more than our required outputs
-        produced = min(qin, lines, qout)
+        produced = min(qin, lines, qout_sold)
 
         # self explanatory. right?  few notes:
         # 1. You pay storage costs for anything that you buy and do not produce
@@ -367,8 +386,8 @@ class OneShotUFun(UtilityFunction):
             pout
             - pin
             - self.production_cost * produced
-            - self.storage_cost * max(0, qin - produced)
-            - self.delivery_penalty * max(0, qout - produced)
+            - self.storage_cost * max(0, qin - produced) * input_scale
+            - self.delivery_penalty * max(0, qout_signed - produced) * output_scale
         )
         if not self.normalized:
             return u
@@ -627,6 +646,8 @@ class OneShotUFun(UtilityFunction):
         best_limit_p, worst_limit_p = 0, 0
         for i in range(imax):
             for o in range(omax):
+                # if o in (0, 1) and i==0:
+                #     breakpoint()
                 u, p = self.from_offers(
                     [(i, 0, best_ip), (o, 0, best_op)],
                     [False, True],
@@ -717,17 +738,11 @@ class OneShotUFun(UtilityFunction):
               some already concluded and signed contracts
         """
 
-        def make_program(
-            best: bool, allow_oversales, n_input_negs=None, n_output_negs=None
-        ):
+        def make_program(best: bool, n_input_negs=None, n_output_negs=None):
             """Creates and solves a LIP that finds one limit of the ufun
 
             Args:
                 best: best or worst?
-                allow_oversales: If given, the output quantity will be allowed
-                                 to be larger than the input quantity which means
-                                 that the agent may pay delivery penalty but will
-                                 never pay storage cost and vice versa.
                 n_input_negs: Number of input negotiations
                 n_output_negs: Number of output negotiations
 
@@ -750,16 +765,13 @@ class OneShotUFun(UtilityFunction):
             ex_uout = self.ex_pout / self.ex_qout if self.ex_qout else 0
 
             # the scale with which to multiply storage_cost and delivery_penalty
-            scale = (
-                self.output_penalty_scale
-                if allow_oversales
-                else self.input_penalty_scale
-            )
-            # if no scale is given then the unit price will be used. Note that
-            # we only pay delivery_penalty if we allow oversales and in this case
-            # the scale should be the unit price of the output
-            if scale is None:
-                scale = uout if allow_oversales else uin
+            # if no scale is given then the unit price will be used.
+            output_scale = self.output_penalty_scale
+            if output_scale is None:
+                output_scale = uout
+            input_scale = self.input_penalty_scale
+            if input_scale is None:
+                input_scale = uin
 
             # create the model
             m = mp.Model(sense=mp.MAXIMIZE if best else mp.MINIMIZE)
@@ -787,8 +799,11 @@ class OneShotUFun(UtilityFunction):
             # HELPER VARIABLES
             # ================
 
-            # [value] total cost of producing one unit.
-            total_cost = uin + self.production_cost
+            # [value] total cost of producing one unit of negotiated input.
+            total_unit_cost_neg = uin + self.production_cost
+            # [value] total cost of producing one unit of exogenous input.
+            total_unit_cost_ex = (int(self.ex_pin // self.ex_qin) if self.ex_qin else 0) + self.production_cost
+            total_unit_cost = total_unit_cost_ex + total_unit_cost_neg
 
             # [variable] the total quantity in all sales that the agent SHOULD produce
             # to avoid paying delivery penalty.
@@ -825,15 +840,22 @@ class OneShotUFun(UtilityFunction):
             m += produced >= 0  # typing: ignore
             m += produced <= self.n_lines  # typing: ignore
             m += produced <= qin_total
+            # moreover, we sell everything we produce. We will never produce
+            # more than what we know will be able to sell.
+            m += produced == real_qout + real_ex_qout
 
-            # we cannot sell what we cannot produce
-            m += real_qout <= produced
+            # # we cannot sell what we cannot produce
+            # m += real_qout <= produced
 
-            # if it costs anything to produce, then we cannot produce more than
-            # what we can pay for. Note that total_cost here takes account of
-            # both buying inputs and production
-            if total_cost:
-                m += produced <= self.current_balance // total_cost
+            # if negotiated quantities are cheaper than the exogenous contract,
+            # we produce them first and vice versa. In all cases, we cannot produce
+            # above our current balance
+            if total_unit_cost_neg and total_unit_cost_neg < total_unit_cost_ex:
+                m += self.current_balance >= produced * total_unit_cost_neg
+                m += self.current_balance >= qin * total_unit_cost_neg + (produced - qin) * total_unit_cost_ex
+            if total_unit_cost_ex and total_unit_cost_neg >= total_unit_cost_ex:
+                m += self.current_balance >= produced * total_unit_cost_ex
+                m += self.current_balance >= ex_qin_signed * self.ex_qin * total_unit_cost_ex + (produced - ex_qin_signed * self.ex_qin ) * total_unit_cost_neg
 
             # we know that the actual negotiated-amount we will sell is nonnegative and
             # higher than the amount negotiated
@@ -847,41 +869,24 @@ class OneShotUFun(UtilityFunction):
             if not isinstance(real_ex_qout, int):
                 m += real_ex_qout >= 0
 
-            # # if exogenous contracts are not force, we have a choice of signing
-            # # them.
-            # # TODO: we already define these variables as booleans
-            # if not self.force_exogenous:
-            #     m += ex_qin_signed >= 0  # typing: ignore
-            #     m += ex_qin_signed <= 1  # typing: ignore
-            #     m += ex_qout_signed >= 0  # typing: ignore
-            #     m += ex_qout_signed <= 1  # typing: ignore
-
-            # implement allow_oversales: When given total input cannot be greater
-            # than total output and vice versa
-            if allow_oversales:
-                m += qout_total >= qin_total
-            else:
-                m += qout_total <= qin_total
-                # if best and (not self.force_exogenous or (self.ex_qout < self.n_lines)):
-                #     m += produced == qout_total
-
             # these constraints are unnecessary. They are here to speed up computation
             # when we know that we are finding the best possible utility value
             if best:
-                # m += real_ex_qout <= produced
-                if allow_oversales:
-                    # Should produce everything I buy to avoid paying storage_cost
-                    m += produced == qin_total
-                else:
-                    # Should produce everything I buy to avoid paying delivery_penalty
-                    m += real_qout == qout_total
-                # should never sign sell contracts that I cannot honor (if possible)
-                # m += qout_total <= produced
                 # should never commit to sales above my production capacity
                 if not self.force_exogenous or (self.ex_qout < self.n_lines):
                     m += qout_total <= self.n_lines
+                # should never commit to supplies above my production capacity
                 if not self.force_exogenous or (self.ex_qin < self.n_lines):
                     m += qin_total <= self.n_lines
+                # we should not commit to sales above what we actually produce
+                m += produced == qout_total
+            else:
+                # we sell what we produce. We never produce more than what we will
+                # agree to sell. Note that we can commit to more than what we can
+                # produce (we are searching for the worst possible outcome) but
+                # we still CANNOT produce more than what we commit to. This is
+                # hard-coded in our production. See from_offers
+                m += produced <= qout_total
 
             # RUN the optimization
             op = mp.maximize if best else mp.minimize
@@ -901,30 +906,22 @@ class OneShotUFun(UtilityFunction):
                 - secured_input_quantity * secured_input_unit_price
                 # pay for production
                 - self.production_cost * produced  # typing: ignore
-            )
-            if allow_oversales:
-                # we may pay delivery penalty but never storage cost
                 # pay for delivery penalty if I could not honor all sale contracts
-                exp = (
-                    exp - self.delivery_penalty * (qout_total - produced) * scale
-                )  # typing: ignore
-            else:
-                # we may pay storage cost but never delivery penalty
+                - self.delivery_penalty * (qout_total - produced) * output_scale
                 # pay for storage cost if I could not sell the produce of all inputs I received
-                exp = (
-                    exp
-                    - self.storage_cost * (qin_total - real_qout - real_ex_qout) * scale
-                )  # typing: ignore
+                - self.storage_cost * (qin_total - produced) * input_scale
+            )
 
             m.objective = op(exp)
             status = m.optimize()
-            # breakpoint()
+
             if (
                 status != mp.OptimizationStatus.OPTIMAL
                 and status != mp.OptimizationStatus.FEASIBLE
             ):
                 warnings.warn("Infeasible solution to ufun max/min")
                 return None, [None] * 9
+
             qin, qout, produced = qin.x, qout.x, produced.x
             if not self.force_exogenous:
                 ex_qin, ex_qout = (
@@ -945,36 +942,25 @@ class OneShotUFun(UtilityFunction):
                 int(produced),
             ]
 
-        u1, vals1 = make_program(
-            best, False, n_input_negs, n_output_negs
-        )  # typing: ignore
-        u2, vals2 = make_program(
-            best, True, n_input_negs, n_output_negs
-        )  # typing: ignore
-        if u1 is None and u2 is None:
-            raise ValueError("Cannot find the limit outcome")
-        if u2 is None or (not best and u1 < u2) or (best and u1 > u2):
-            utility, vals = u1, vals1
-        else:
-            utility, vals = u2, vals2
+        u, vals = make_program(best, n_input_negs, n_output_negs)  # typing: ignore
         if check:
-            # breakpoint()
             (qin, uin, qout, uout, ex_qin, ex_uin, ex_qout, ex_uout, produced) = vals
-            actual = self.from_offers(
+            actual, produced = self.from_offers(
                 [
                     (qin, 0, uin),
-                    (ex_qin, 0, ex_qin),
+                    # (ex_qin, 0, ex_qin),
                     (secured_input_quantity, 0, secured_input_unit_price),
                     (qout, 0, uout),
-                    (ex_qout, 0, ex_qout),
+                    # (ex_qout, 0, ex_qout),
                     (secured_output_quantity, 0, secured_output_unit_price),
                 ],
-                [False] * 3 + [True] * 3,
+                [False] * 2 + [True] * 2,
+                return_producible=True,
             )
             assert (
-                utility == actual
-            ), f"Optimal value {utility} != {actual}\n{utility}-{vals}"
-        return UFunLimit(*tuple([utility] + vals))
+                abs(u - actual) < 1e-1
+            ), f"Optimal value {u} != {actual} (produced {produced})\n{u}-{vals}"
+        return UFunLimit(*tuple([u] + vals))
 
     def find_limit_greedy(
         self,
@@ -1149,7 +1135,8 @@ class OneShotUFun(UtilityFunction):
             return (
                 self.from_aggregates(
                     qin=qin,
-                    qout=qout,
+                    qout_signed=qout,
+                    qout_sold=qout,
                     pin=min_price_in * qin,
                     pout=max_price_out * producible,
                 ),
@@ -1159,7 +1146,8 @@ class OneShotUFun(UtilityFunction):
         qin, qout = max(producible, min_in), max(producible, min_out)
         u1 = self.from_aggregates(
             qin=min_in,
-            qout=min_out,
+            qout_signed=min_out,
+            qout_sold=min_out,
             pin=min_price_in * qin,
             pout=max_price_out * producible,
         )
@@ -1167,7 +1155,8 @@ class OneShotUFun(UtilityFunction):
         q = min(q, self.n_lines)
         u2 = self.from_aggregates(
             qin=q,
-            qout=q,
+            qout_signed=q,
+            qout_sold=q,
             pin=min_price_in * qin,
             pout=max_price_out * producible,
         )
@@ -1207,7 +1196,7 @@ class OneShotUFun(UtilityFunction):
               all currently running negotiations), you can pass them using the
               optional parameters.
         """
-        (_, max_in, _, max_price_in, min_out, _, min_price_out, _,) = self._ranges(
+        (_, max_in, _, max_price_in, min_out, max_out, min_price_out, _,) = self._ranges(
             self.input_qrange,
             self.input_prange,
             self.output_qrange,
@@ -1215,10 +1204,10 @@ class OneShotUFun(UtilityFunction):
             n_input_negs,
             n_output_negs,
         )
-        # min_in += secured_input_quantity
+        min_in += secured_input_quantity
         max_in += secured_input_quantity
         min_out += secured_output_quantity
-        # max_out += secured_output_quantity
+        max_out += secured_output_quantity
 
         # min_price_in += secured_input_quantity * secured_input_unit_price
         max_price_in += secured_input_quantity * secured_input_unit_price
@@ -1228,7 +1217,8 @@ class OneShotUFun(UtilityFunction):
         return (
             self.from_aggregates(
                 qin=max_in,
-                qout=min_out,
+                qout_sold=min_out,
+                qout_signed=max_out,
                 pin=max_price_in,
                 pout=min_price_out,
             ),
