@@ -19,10 +19,10 @@ app = typer.Typer()
 BASE_PATH = Path(".")
 
 PARAMS = dict(
-    storage_cost=(0.0, 0.01, 0.1, 1),
-    delivery_penalty=(0.0, 0.01, 0.1, 1),
-    max_productivity=(1.0, 0.8, 0.5),
-    profit_means=((0.1, 0.1), (0.1, 0.2), (0.1, 0.4)),
+    storage_cost=(0.0, 0.01, 0.5, 0.1, 0.2, 0.5, 1),
+    delivery_penalty=(0.0, 0.01, 0.5, 0.1, 0.2, 0.5, 1),
+    max_productivity=(1.0, 0.9, 0.8, 0.6, 0.5),
+    profit_means=((0.0, 0.1), (0.1, 0.1), (0.1, 0.2), (0.0, 0.2)),
 )
 
 
