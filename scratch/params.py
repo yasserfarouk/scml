@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from multiprocessing import cpu_count
 from pathlib import Path
 import tqdm
 from concurrent.futures import as_completed, ProcessPoolExecutor
@@ -139,9 +140,19 @@ def run(
     worlds: int = 10,
     method: str = "bruteforce",
     serial: bool = False,
+    parallelism: float = 1.0,
     vars: str = "",
     fast: bool = False,
 ):
+    if parallelism > 1.5:
+        workers = int(parallelism)
+    elif 0 < parallelism < 1:
+        workers = int(parallelism * cpu_count())
+    else:
+        workers = int(0.5 * cpu_count())
+    if workers < 1:
+        workers = 2
+
     if len(vars) < 1:
         params = {k: v for k, v in PARAMS.items()}
     else:
@@ -164,7 +175,7 @@ def run(
             for v in tqdm.tqdm(param_values):
                 run_once(dict(zip(param_names, v)), steps, method)
     else:
-        with ProcessPoolExecutor() as pool:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
             for method in methods:
                 for v in param_values:
                     futures.append(
