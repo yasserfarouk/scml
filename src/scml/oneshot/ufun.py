@@ -269,7 +269,6 @@ class OneShotUFun(UtilityFunction):
                 pin + topay + offer[QUANTITY] * self.production_cost
                 > self.current_balance
             ):
-                assert self.current_balance >= pin
                 unit_total_cost = offer[UNIT_PRICE] + self.production_cost
                 can_buy = int((self.current_balance - pin) // unit_total_cost)
                 qin_bar = qin + can_buy
