@@ -19,8 +19,8 @@ app = typer.Typer()
 BASE_PATH = Path(".")
 
 PARAMS = dict(
-    storage_cost=(0.0, 0.01, 0.5, 0.1, 0.2, 0.5, 1),
-    delivery_penalty=(0.0, 0.01, 0.5, 0.1, 0.2, 0.5, 1),
+    storage_cost=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
+    delivery_penalty=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
     max_productivity=(1.0, 0.9, 0.8, 0.6, 0.5),
     profit_means=((0.0, 0.1), (0.1, 0.1), (0.1, 0.2), (0.0, 0.2)),
 )
@@ -66,7 +66,8 @@ class Recorder(SCML2020OneShotWorld):
             if a.ufun is None:
                 continue
             if self.__util_eval_method.startswith("b"):
-                a.ufun.worst, a.ufun.best = a.ufun.find_limits_brute_force()
+                a.ufun.worst= a.ufun.find_limit_brute_force(False)
+                a.ufun.best = a.ufun.find_limit_brute_force(True)
             elif self.__util_eval_method.startswith("o"):
                 a.ufun.best = a.ufun.find_limit_optimal(True)
                 a.ufun.worst = a.ufun.find_limit_optimal(False)
