@@ -578,7 +578,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         exogenous_price_dev: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         price_multiplier: Union[np.ndarray, Tuple[float, float], float] = (1.5, 2.0),
         random_agent_types: bool = False,
-        penalties_scale: Union[str, List[str]] = "unit",
+        penalties_scale: Union[str, List[str]] = "trading",
         **kwargs,
     ) -> Dict[str, Any]:
         """

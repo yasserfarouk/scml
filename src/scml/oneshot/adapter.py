@@ -16,10 +16,7 @@ from .helper import AWIHelper
 from .mixins import OneShotUFunCreatorMixin
 
 
-class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter, OneShotUFunCreatorMixin):
-
-    def make_ufun(self, add_exogenous: bool):
-        return super().make_ufun(add_exogenous, in_adapter=False)
+class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
