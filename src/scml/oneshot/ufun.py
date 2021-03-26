@@ -246,8 +246,8 @@ class OneShotUFun(UtilityFunction):
         ]
         outputs += [False, True]
         # initialize some variables
-        qin, qout, pin = 0, 0, 0
-        qin_bar, going_bankrupt = 0, False
+        qin, qout, pin, pout = 0, 0, 0, 0
+        qin_bar, going_bankrupt = 0, self.current_balance < 0
         pout_bar = 0
         # we are going to collect output contracts in output_offers
         output_offers = []
@@ -264,16 +264,16 @@ class OneShotUFun(UtilityFunction):
             if is_output:
                 output_offers.append((offer, is_exogenous))
                 continue
-            topay = offer[UNIT_PRICE] * offer[QUANTITY]
+            topay_this_time = offer[UNIT_PRICE] * offer[QUANTITY]
             if not going_bankrupt and (
-                pin + topay + offer[QUANTITY] * self.production_cost
+                pin + topay_this_time + offer[QUANTITY] * self.production_cost
                 > self.current_balance
             ):
                 unit_total_cost = offer[UNIT_PRICE] + self.production_cost
                 can_buy = int((self.current_balance - pin) // unit_total_cost)
                 qin_bar = qin + can_buy
                 going_bankrupt = True
-            pin += topay
+            pin += topay_this_time
             qin += offer[QUANTITY]
 
         if not going_bankrupt:
@@ -298,7 +298,7 @@ class OneShotUFun(UtilityFunction):
 
         # find the total sale quantity (qout) and money (pout). Moreover find
         # the actual amount of money we will receive
-        done_selling, pout = False, 0
+        done_selling = False
         for offer, is_exogenous in output_offers:
             if not done_selling:
                 if qout + offer[QUANTITY] >= producible:
