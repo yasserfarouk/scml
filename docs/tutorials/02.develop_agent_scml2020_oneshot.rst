@@ -17,6 +17,11 @@ description for the details-savy person is available
 that you read (or skim) the first document before continuing. Here we
 only provide a birds-eye view of the system.
 
+.. figure:: situation_oneshot_wide.jpg
+   :alt: oneshot
+
+   oneshot
+
 The game runs in a world in which *factories* can run *manufacturing
 processes* to convert *products* into other *products*. There are
 exactly 3 products and 2 processes as shown in the figure. Each agent
@@ -141,7 +146,7 @@ Now we are ready to develop a do-nothing agent:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_3_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_5_0.png
 
 
 In all of the graph representing world simulations, we use short names
@@ -481,7 +486,7 @@ using the same base class.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_12_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_14_0.png
 
 
 Let’s see how well did this agent behave:
@@ -714,7 +719,7 @@ agent in a deep world simulation
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_18_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_20_0.png
 
 
 Examining the graph above, you can see that ``DeepGreedy`` agents could
@@ -789,7 +794,7 @@ do-nothing agent in this form:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_24_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_26_0.png
 
 
 As you can see, in this case, we need to override ``counter_all`` to
@@ -878,7 +883,7 @@ greedy agent using this approach.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_27_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_29_0.png
 
 
 This agent shows a case of parameterizing your agent so that it can be
@@ -1121,7 +1126,7 @@ Here is the full agent
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_32_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_34_0.png
 
 
 .. code:: ipython3
@@ -1204,7 +1209,7 @@ track (with some rough edges). Let’s try to do that here:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_39_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_41_0.png
 
 
 .. code:: ipython3

@@ -37,7 +37,7 @@ echo "------------------------------------------------"
 make clean
 rm -r api
 mkdir ./tutorials
-for ext in png jpg gif; do
+for ext in png jpg gif pdf; do
 	echo ../notebooks/tutorials/*.$ext ./tutorials/
 	cp ../notebooks/tutorials/*.$ext ./tutorials/
 	for fils in ./tutorials/*_files ; do
