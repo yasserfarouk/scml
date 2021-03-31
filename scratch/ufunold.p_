@@ -48,8 +48,8 @@ class OneShotUFun(UtilityFunction):
         ex_pout: total price of exogenous outputs for this agent
         ex_qout: total quantity of exogenous outputs for this agent.
         cost: production cost of the agent.
-        storage_cost: storage cost per unit of input/output.
-        delivery_penalty: penalty for failure to deliver one unit of output.
+        disposal_cost: disposal cost per unit of input/output.
+        shortfall_penalty: penalty for failure to deliver one unit of output.
         input_agent: Is the agent an input agent which means that its input
                      product is the raw material
         output_agent: Is the agent an input agent which means that its input
@@ -80,7 +80,7 @@ class OneShotUFun(UtilityFunction):
           products it could generate and sell.
         - The utility function respects production capacity (n. lines). The
           agent cannot produce more than the number of lines it has.
-        - storage cost is paid for items bought but not produced only. Items
+        - disposal cost is paid for items bought but not produced only. Items
           consumed in production (i.e. sold) are not counted.
     """
 
@@ -94,8 +94,8 @@ class OneShotUFun(UtilityFunction):
         input_agent: bool,
         output_agent: bool,
         production_cost: float,
-        storage_cost: float,
-        delivery_penalty: float,
+        disposal_cost: float,
+        shortfall_penalty: float,
         input_penalty_scale: Optional[float],
         output_penalty_scale: Optional[float],
         n_input_negs: int,
@@ -123,10 +123,10 @@ class OneShotUFun(UtilityFunction):
         self.n_output_negs = n_output_negs
         self.input_qrange, self.input_prange = input_qrange, input_prange
         self.output_qrange, self.output_prange = output_qrange, output_prange
-        self.production_cost, self.storage_cost, self.delivery_penalty = (
+        self.production_cost, self.disposal_cost, self.shortfall_penalty = (
             production_cost,
-            storage_cost,
-            delivery_penalty,
+            disposal_cost,
+            shortfall_penalty,
         )
         self.input_agent, self.output_agent = input_agent, output_agent
         self.force_exogenous = force_exogenous
@@ -356,7 +356,7 @@ class OneShotUFun(UtilityFunction):
         """
         assert qout_sold <= qout_signed, f"sold: {qout_sold}, signed: {qout_signed}"
 
-        # the scale with which to multiply storage_cost and delivery_penalty
+        # the scale with which to multiply disposal_cost and shortfall_penalty
         # if no scale is given then the unit price will be used.
         output_scale = self.output_penalty_scale
         if output_scale is None:
@@ -373,21 +373,21 @@ class OneShotUFun(UtilityFunction):
         produced = min(qin, lines, qout_sold)
 
         # self explanatory. right?  few notes:
-        # 1. You pay storage costs for anything that you buy and do not produce
+        # 1. You pay disposal costs for anything that you buy and do not produce
         #    and sell. Because we know that you sell no more than what you produce
-        #    we can multiply the storage cost with the difference between input
+        #    we can multiply the disposal cost with the difference between input
         #    quantity and the amount produced
-        # 2. You pay delivery penalty for anything that you should have sold but
+        # 2. You pay shortfall penalty for anything that you should have sold but
         #    did not. The only reason you cannot sell something is if you cannot
-        #    produce it. That is why the delivery penalty is multiplied by the
+        #    produce it. That is why the shortfall penalty is multiplied by the
         #    difference between what you should have sold and the produced amount.
 
         u = (
             pout
             - pin
             - self.production_cost * produced
-            - self.storage_cost * max(0, qin - produced) * input_scale
-            - self.delivery_penalty * max(0, qout_signed - produced) * output_scale
+            - self.disposal_cost * max(0, qin - produced) * input_scale
+            - self.shortfall_penalty * max(0, qout_signed - produced) * output_scale
         )
         if not self.normalized:
             return u
@@ -764,7 +764,7 @@ class OneShotUFun(UtilityFunction):
             ex_uin = self.ex_pin / self.ex_qin if self.ex_qin else 0
             ex_uout = self.ex_pout / self.ex_qout if self.ex_qout else 0
 
-            # the scale with which to multiply storage_cost and delivery_penalty
+            # the scale with which to multiply disposal_cost and shortfall_penalty
             # if no scale is given then the unit price will be used.
             output_scale = self.output_penalty_scale
             if output_scale is None:
@@ -810,11 +810,11 @@ class OneShotUFun(UtilityFunction):
             total_unit_cost = total_unit_cost_ex + total_unit_cost_neg
 
             # [variable] the total quantity in all sales that the agent SHOULD produce
-            # to avoid paying delivery penalty.
+            # to avoid paying shortfall penalty.
             qout_total = qout + ex_qout_signed * self.ex_qout
 
             # [variable] the total quantity in all supplies that the agent SHOULD pay for
-            # to avoid paying storage_cost.
+            # to avoid paying disposal_cost.
             qin_total = qin + ex_qin_signed * self.ex_qin
 
             # Variable: real_qout: The actual negotiated quantity sold
@@ -900,7 +900,7 @@ class OneShotUFun(UtilityFunction):
                 # hard-coded in our production. See from_offers
                 m += produced <= qout_total
                 # # if production will make us make money, do not do it 
-                # if self.production_cost + self.delivery_penalty * output_scale < uout:
+                # if self.production_cost + self.shortfall_penalty * output_scale < uout:
                 #     m += produced == 0
 
             # RUN the optimization
@@ -921,10 +921,10 @@ class OneShotUFun(UtilityFunction):
                 - secured_input_quantity * secured_input_unit_price
                 # pay for production
                 - self.production_cost * produced  # typing: ignore
-                # pay for delivery penalty if I could not honor all sale contracts
-                - self.delivery_penalty * (qout_total - produced) * output_scale
-                # pay for storage cost if I could not sell the produce of all inputs I received
-                - self.storage_cost * (qin_total - produced) * input_scale
+                # pay for shortfall penalty if I could not honor all sale contracts
+                - self.shortfall_penalty * (qout_total - produced) * output_scale
+                # pay for disposal cost if I could not sell the produce of all inputs I received
+                - self.disposal_cost * (qin_total - produced) * input_scale
             )
 
             m.objective = op(exp)

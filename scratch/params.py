@@ -14,14 +14,14 @@ import matplotlib.pyplot as plt
 from negmas.helpers import add_records
 
 app = typer.Typer()
-# storage_cost = [0.1, 0.2, 0.5, 1.0, 2.0]
-# delivery_penalty = [0.1, 0.2, 0.4, 1.0, 2.0]
+# disposal_cost = [0.1, 0.2, 0.5, 1.0, 2.0]
+# shortfall_penalty = [0.1, 0.2, 0.4, 1.0, 2.0]
 
 BASE_PATH = Path(".")
 
 PARAMS = dict(
-    storage_cost=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
-    delivery_penalty=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
+    disposal_cost=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
+    shortfall_penalty=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
     max_productivity=(1.0, 0.9, 0.8, 0.6, 0.5),
     profit_means=((0.0, 0.1), (0.1, 0.1), (0.1, 0.2), (0.0, 0.2)),
 )
@@ -33,13 +33,13 @@ def save_data(data, dir_name, post):
     add_records(file_name, data)
     df = pd.read_csv(file_name, index_col=None)
     mxstats = (
-        df.groupby(["p_storage_cost", "p_delivery_penalty", "level"])[["max_util"]]
+        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["max_util"]]
         .describe()
         .reset_index()
     )
     mxstats.to_csv(dir_name / f"max_stats_{post}.csv", index=False)
     mnstats = (
-        df.groupby(["p_storage_cost", "p_delivery_penalty", "level"])[["min_util"]]
+        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["min_util"]]
         .describe()
         .reset_index()
     )
@@ -93,16 +93,16 @@ class Recorder(SCML2020OneShotWorld):
                     exogenous_input_price=state.exogenous_input_price,
                     exogenous_output_quantity=state.exogenous_output_quantity,
                     exogenous_output_price=state.exogenous_output_price,
-                    storage_cost=state.storage_cost,
-                    delivery_penalty=state.delivery_penalty,
+                    disposal_cost=state.disposal_cost,
+                    shortfall_penalty=state.shortfall_penalty,
                     production_cost=profile.cost,
                     current_balance=state.current_balance,
                     input_product=profile.input_product,
                     n_lines=profile.n_lines,
-                    delivery_penalty_mean=profile.delivery_penalty_mean,
-                    storage_cost_mean=profile.storage_cost_mean,
-                    delivery_penalty_dev=profile.delivery_penalty_dev,
-                    storage_cost_dev=profile.storage_cost_dev,
+                    shortfall_penalty_mean=profile.shortfall_penalty_mean,
+                    disposal_cost_mean=profile.disposal_cost_mean,
+                    shortfall_penalty_dev=profile.shortfall_penalty_dev,
+                    disposal_cost_dev=profile.disposal_cost_dev,
                     world=self.id,
                     agent=aid,
                     input=a.awi.my_input_product,
@@ -200,13 +200,13 @@ def plot(method: str = "bruteforce"):
         return
     print(f"Found {len(df)} data records")
     mxstats = (
-        df.groupby(["p_storage_cost", "p_delivery_penalty", "level"])[["max_util"]]
+        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["max_util"]]
         .describe()
         .reset_index()
     )
     mxstats.to_csv(dir_name / f"max_stats_{method.replace(';', '_')}.csv", index=False)
     mnstats = (
-        df.groupby(["p_storage_cost", "p_delivery_penalty", "level"])[["min_util"]]
+        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["min_util"]]
         .describe()
         .reset_index()
     )

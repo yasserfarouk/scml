@@ -339,8 +339,8 @@ class AWIHelper:
             exogenous_input_price=p,
             exogenous_output_quantity=qo,
             exogenous_output_price=po,
-            storage_cost=self._owner.get_storage_cost(),
-            delivery_penalty=self._owner.get_delivery_penalty(),
+            disposal_cost=self._owner.get_disposal_cost(),
+            shortfall_penalty=self._owner.get_shortfall_penalty(),
             current_balance=self._owner.get_current_balance(),
         )
 
@@ -377,14 +377,14 @@ class AWIHelper:
         return self._owner.get_exogenous_output()[1]
 
     @property
-    def current_storage_cost(self) -> float:
+    def current_disposal_cost(self) -> float:
         """Cost of storing one unit (penalizes buying too much/ selling too little)"""
-        return self._owner.get_storage_cost()
+        return self._owner.get_disposal_cost()
 
     @property
-    def current_delivery_penalty(self) -> float:
+    def current_shortfall_penalty(self) -> float:
         """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
-        return self._owner.get_delivery_penalty()
+        return self._owner.get_shortfall_penalty()
 
     @property
     def current_input_issues(self) -> List[Issue]:
@@ -584,8 +584,8 @@ class OneShotAdapter(
     #         ex_qout=self._obj.awi.current_exogenous_output_quantity if add_exogenous else 0,
     #         ex_pout=self._obj.awi.current_exogenous_output_price if add_exogenous else 0,
     #         production_cost=self._obj.awi.profile.cost,
-    #         storage_cost=self._obj.awi.current_storage_cost,
-    #         delivery_penalty=self._obj.awi.current_delivery_penalty,
+    #         disposal_cost=self._obj.awi.current_disposal_cost,
+    #         shortfall_penalty=self._obj.awi.current_shortfall_penalty,
     #         input_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
     #         output_penalty_scale=self._obj.awi.penalty_multiplier(True, None),
     #         input_agent=self._obj.awi.my_input_product == 0,
@@ -629,20 +629,20 @@ class OneShotAdapter(
         #     return None
         return self._obj.create_negotiator()
 
-    def get_storage_cost(self) -> float:
+    def get_disposal_cost(self) -> float:
         # penalty for buying too much
         return 0.0
 
-    def get_delivery_penalty_mean(self):
-        return self.get_delivery_penalty()
+    def get_shortfall_penalty_mean(self):
+        return self.get_shortfall_penalty()
 
-    def get_storage_cost_mean(self):
-        return self.get_storage_cost()
+    def get_disposal_cost_mean(self):
+        return self.get_disposal_cost()
 
-    def get_delivery_penalty_dev(self):
+    def get_shortfall_penalty_dev(self):
         return 0.0
 
-    def get_storage_cost_dev(self):
+    def get_disposal_cost_dev(self):
         return 0.0
 
     def get_profile(self):
@@ -650,13 +650,13 @@ class OneShotAdapter(
             cost=float(self.awi.profile.costs[:, self.awi.my_input_product].mean()),
             n_lines=self.awi.profile.n_lines,
             input_product=self.awi.my_input_product,
-            delivery_penalty_mean=self.get_delivery_penalty_mean(),
-            storage_cost_mean=self.get_storage_cost_mean(),
-            delivery_penalty_dev=self.get_delivery_penalty_dev(),
-            storage_cost_dev=self.get_storage_cost_dev(),
+            shortfall_penalty_mean=self.get_shortfall_penalty_mean(),
+            disposal_cost_mean=self.get_disposal_cost_mean(),
+            shortfall_penalty_dev=self.get_shortfall_penalty_dev(),
+            disposal_cost_dev=self.get_disposal_cost_dev(),
         )
 
-    def get_delivery_penalty(self):
+    def get_shortfall_penalty(self):
         return self.awi.trading_prices[self.awi.my_output_product]
 
     def get_current_balance(self):

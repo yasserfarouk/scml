@@ -128,18 +128,18 @@ Let’s check the scores of different agents to confirm:
 
 .. parsed-literal::
 
-    Agent 00Ran@0 of type RandomOneShotAgent has a final score of 0.8014850539963543 
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.9528444539911151 
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.7513165943416109 
-    Agent 03MDN@1 of type MyOneShotDoNothing has a final score of 0.9659503651055901 
-    Agent 04Ran@1 of type RandomOneShotAgent has a final score of 0.7572209148905074 
-    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.9808338914501877 
+    Agent 00Ran@0 of type RandomOneShotAgent has a final score of 0.8416805366280785 
+    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.7620332621083792 
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.4006053724079518 
+    Agent 03MDN@1 of type MyOneShotDoNothing has a final score of 0.7543966224720364 
+    Agent 04Ran@1 of type RandomOneShotAgent has a final score of 0.7434688416630213 
+    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.7194748217817234 
 
 
 Notice that our do-nothing agent always loses money. That is because it
 cannot get any contracts from negotiation to satisfy its needs from the
-exogenous contracts but it still has to pay for storage cost and
-delivery penalty.
+exogenous contracts but it still has to pay for disposal cost and
+shortfall penalty.
 
 .. code:: ipython3
 
@@ -148,7 +148,7 @@ delivery penalty.
 
 .. parsed-literal::
 
-    [('MyOneShotDoNothing', 0.8993669502991296), ('RandomOneShotAgent', 0.8371834742926589)]
+    [('RandomOneShotAgent', 0.7823942134664931), ('MyOneShotDoNothing', 0.6248256055539039)]
 
 
 Notice how the do-nothing agent is even worse than acting randomly. This
@@ -206,25 +206,25 @@ market.
       <tbody>
         <tr>
           <th>quantity</th>
-          <td>6.75</td>
-          <td>6.500</td>
-          <td>9.5</td>
-          <td>15.625</td>
-          <td>4.875</td>
-          <td>10.625</td>
-          <td>9.25</td>
-          <td>10.125</td>
+          <td>6.9</td>
+          <td>3.5</td>
+          <td>5.7</td>
+          <td>13.1</td>
+          <td>7.4</td>
+          <td>9.8</td>
+          <td>9.0</td>
+          <td>8.5</td>
         </tr>
         <tr>
           <th>unit_price</th>
-          <td>17.50</td>
-          <td>25.375</td>
-          <td>29.5</td>
-          <td>32.250</td>
-          <td>28.375</td>
-          <td>10.125</td>
-          <td>10.25</td>
-          <td>9.875</td>
+          <td>17.7</td>
+          <td>24.0</td>
+          <td>27.4</td>
+          <td>29.4</td>
+          <td>27.4</td>
+          <td>10.1</td>
+          <td>9.9</td>
+          <td>11.1</td>
         </tr>
       </tbody>
     </table>
@@ -459,7 +459,7 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 1.0249018103345993), ('RandomOneShotAgent', 0.7250861525322114)]
+    [('GreedyOneShotAgent', 0.8897492308240772), ('RandomOneShotAgent', 0.819596831902848)]
 
 
 This simple agent is definitely better than the random agent. Let’s
@@ -693,7 +693,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 0.9945258634068721), ('DeepGreedyAgent', 0.7749425221455211)]
+    [('GreedyOneShotAgent', 0.7637690637770452), ('DeepGreedyAgent', 0.7229505469204262)]
 
 
 Even though our new ``DeepGreedyAgent`` was able to get contracts which
@@ -717,7 +717,7 @@ You can now start developing your own agent for SCML-OneShot (A startup
 skeleton project is available here). The rest of this tutorial will
 introduce two other optional alternatives
 
-SyncOneShotAgent
+OneShotSyncAgent
 ~~~~~~~~~~~~~~~~
 
 The main goal of this base agent is to allow the developer to think
@@ -967,7 +967,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 0.9214866327302569), ('RandomOneShotAgent', 0.7446458864342236)]
+    [('GreedySyncAgent', 0.9852701464598985), ('RandomOneShotAgent', 0.6102910363641216)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1090,7 +1090,7 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('GreedySingleAgreementAgent', 0.8879900535151694), ('RandomOneShotAgent', 0.6090936549538097)]
+    [('RandomOneShotAgent', 0.7017026300645176), ('GreedySingleAgreementAgent', 0.6528520083452068)]
 
 
 Comparing all agents
@@ -1113,7 +1113,7 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 0.9354431974234341), ('GreedyOneShotAgent', 0.8671064380330857), ('GreedySingleAgreementAgent', 0.8155477102731777)]
+    [('GreedyOneShotAgent', 0.801002396978831), ('GreedySyncAgent', 0.7538398054634171), ('GreedySingleAgreementAgent', 0.5200378476376494)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1173,7 +1173,7 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 1.0125177664341805), ('DeepGreedyAgent', 0.9102627793958686), ('BuyCheapSellExpensiveAgent', 0.9031557588371072), ('SingleAgreementAspirationAgent', 0.8479606301213628), ('DecentralizingAgent', 0.5214708856042949)]
+    [('GreedySyncAgent', 1.018335443084986), ('SingleAgreementAspirationAgent', 0.7614494246908874), ('DecentralizingAgent', 0.6015120861290689), ('BuyCheapSellExpensiveAgent', 0.5302932279961229), ('DeepGreedyAgent', 0.3800616570232499)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to
@@ -1190,6 +1190,7 @@ take into account are the following:
    next step.
 
 With that we end our tutorial. Have fun developing your agent.
+
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.

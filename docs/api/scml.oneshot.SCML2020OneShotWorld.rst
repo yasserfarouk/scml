@@ -31,6 +31,7 @@ SCML2020OneShotWorld
       ~SCML2020OneShotWorld.complete_contract_execution
       ~SCML2020OneShotWorld.contract_record
       ~SCML2020OneShotWorld.contract_size
+      ~SCML2020OneShotWorld.current_balance
       ~SCML2020OneShotWorld.draw
       ~SCML2020OneShotWorld.execute_action
       ~SCML2020OneShotWorld.generate
@@ -68,6 +69,7 @@ SCML2020OneShotWorld
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
+   .. automethod:: current_balance
    .. automethod:: draw
    .. automethod:: execute_action
    .. automethod:: generate

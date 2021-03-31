@@ -47,8 +47,8 @@ class OneShotAWI(AgentWorldInterface):
         B. Agent Information:
           - *profile*: Gives the agent profile including its production cost, number
             of production lines, input product index, mean of its delivery
-            penalties, mean of its storage costs, standard deviation of its
-            delivery penalties and standard deviation of its storage costs.
+            penalties, mean of its disposal costs, standard deviation of its
+            shortfall penalties and standard deviation of its disposal costs.
             See `OneShotProfile` for full description. This information is private
             information and no other agent knows it.
           - *n_lines*: the number of production lines in the factory (private information).
@@ -64,10 +64,10 @@ class OneShotAWI(AgentWorldInterface):
             that can sell the input product of the agent).
           - *my_consumers*: A list of IDs for all consumers to the agent (i.e. agents
             that can buy the output product of the agent).
-          - *penalties_scale*: The scale at which to calculate storage cost/delivery
+          - *penalties_scale*: The scale at which to calculate disposal cost/delivery
             penalties. "trading" and "catalog" mean trading and
             catalog prices. "unit" means the contract's unit price
-            while "none" means that storage cost/delivery penalty
+            while "none" means that disposal cost/shortfall penalty
             are absolute.
           - *n_input_negotiations*: Number of negotiations with suppliers.
           - *n_output_negotiations*: Number of negotiations with consumers.
@@ -109,9 +109,9 @@ class OneShotAWI(AgentWorldInterface):
             in its output exogenous contract.
           - *current_exogenous_output_price*: The total price of the agent's
             output exogenous contract.
-          - *current_storage_cost*: The storage cost per unit item in the current
+          - *current_disposal_cost*: The disposal cost per unit item in the current
             step.
-          - *current_delivery_penalty*: The delivery penalty per unit item in the current
+          - *current_shortfall_penalty*: The shortfall penalty per unit item in the current
             step.
           - *current_balance*: The current balance of the agent
 
@@ -292,8 +292,8 @@ class OneShotAWI(AgentWorldInterface):
             exogenous_input_price=self.current_exogenous_input_price,
             exogenous_output_quantity=self.current_exogenous_output_quantity,
             exogenous_output_price=self.current_exogenous_output_price,
-            storage_cost=self.current_storage_cost,
-            delivery_penalty=self.current_delivery_penalty,
+            disposal_cost=self.current_disposal_cost,
+            shortfall_penalty=self.current_shortfall_penalty,
             current_balance=self.current_balance,
         )
 
@@ -351,14 +351,14 @@ class OneShotAWI(AgentWorldInterface):
         return unit_price
 
     @property
-    def current_storage_cost(self) -> float:
+    def current_disposal_cost(self) -> float:
         """Cost of storing one unit (penalizes buying too much/ selling too little)"""
-        return self._world.agent_storage_cost[self.agent.id][self._world.current_step]
+        return self._world.agent_disposal_cost[self.agent.id][self._world.current_step]
 
     @property
-    def current_delivery_penalty(self) -> float:
+    def current_shortfall_penalty(self) -> float:
         """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
-        return self._world.agent_delivery_penalty[self.agent.id][
+        return self._world.agent_shortfall_penalty[self.agent.id][
             self._world.current_step
         ]
 

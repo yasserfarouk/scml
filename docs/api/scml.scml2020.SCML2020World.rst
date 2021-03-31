@@ -37,6 +37,7 @@ SCML2020World
       ~SCML2020World.complete_contract_execution
       ~SCML2020World.contract_record
       ~SCML2020World.contract_size
+      ~SCML2020World.current_balance
       ~SCML2020World.draw
       ~SCML2020World.execute_action
       ~SCML2020World.generate
@@ -84,6 +85,7 @@ SCML2020World
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
+   .. automethod:: current_balance
    .. automethod:: draw
    .. automethod:: execute_action
    .. automethod:: generate

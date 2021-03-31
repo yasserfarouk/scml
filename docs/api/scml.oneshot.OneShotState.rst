@@ -10,18 +10,20 @@ OneShotState
 
    .. autosummary::
 
-      ~OneShotState.delivery_penalty
+      ~OneShotState.current_balance
+      ~OneShotState.disposal_cost
       ~OneShotState.exogenous_input_price
       ~OneShotState.exogenous_input_quantity
       ~OneShotState.exogenous_output_price
       ~OneShotState.exogenous_output_quantity
-      ~OneShotState.storage_cost
+      ~OneShotState.shortfall_penalty
 
    .. rubric:: Attributes Documentation
 
-   .. autoattribute:: delivery_penalty
+   .. autoattribute:: current_balance
+   .. autoattribute:: disposal_cost
    .. autoattribute:: exogenous_input_price
    .. autoattribute:: exogenous_input_quantity
    .. autoattribute:: exogenous_output_price
    .. autoattribute:: exogenous_output_quantity
-   .. autoattribute:: storage_cost
+   .. autoattribute:: shortfall_penalty

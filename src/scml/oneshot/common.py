@@ -25,8 +25,8 @@ class OneShotState:
         "exogenous_input_price",
         "exogenous_output_quantity",
         "exogenous_output_price",
-        "storage_cost",
-        "delivery_penalty",
+        "disposal_cost",
+        "shortfall_penalty",
         "current_balance",
     ]
 
@@ -34,8 +34,8 @@ class OneShotState:
     exogenous_input_price: int
     exogenous_output_quantity: int
     exogenous_output_price: int
-    storage_cost: float
-    delivery_penalty: float
+    disposal_cost: float
+    shortfall_penalty: float
     current_balance: int
 
 
@@ -70,10 +70,10 @@ class OneShotProfile:
         "cost",
         "n_lines",
         "input_product",
-        "delivery_penalty_mean",
-        "storage_cost_mean",
-        "delivery_penalty_dev",
-        "storage_cost_dev",
+        "shortfall_penalty_mean",
+        "disposal_cost_mean",
+        "shortfall_penalty_dev",
+        "disposal_cost_dev",
     ]
     cost: float
     """The cost of production"""
@@ -81,13 +81,13 @@ class OneShotProfile:
     """The index of the input product (x for $L_x$ factories)"""
     n_lines: int
     """Number of lines for this factory"""
-    delivery_penalty_mean: float
+    shortfall_penalty_mean: float
     """A positive number specifying the average penalty for selling too much."""
-    storage_cost_mean: float
+    disposal_cost_mean: float
     """A positive number specifying the average penalty buying too much."""
-    delivery_penalty_dev: float
+    shortfall_penalty_dev: float
     """A positive number specifying the std. dev.  of penalty for selling too much."""
-    storage_cost_dev: float
+    disposal_cost_dev: float
     """A positive number specifying the std. dev. penalty buying too much."""
 
     @property

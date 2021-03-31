@@ -1433,7 +1433,7 @@ def anac2021_oneshot(
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
-    The function used to run ANAC 2020 SCML tournament (standard track).
+    The function used to run ANAC 2021 SCML tournament (oneshot track).
 
     Args:
 
@@ -1498,6 +1498,7 @@ def anac2021_oneshot(
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
+    kwargs["n_processes"] = 2
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,

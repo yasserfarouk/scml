@@ -150,8 +150,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.publish_exogenous_summary = publish_exogenous_summary
         self.price_multiplier = price_multiplier
         self.publish_trading_prices = publish_trading_prices
-        self.agent_storage_cost: Dict[str, List[float]] = dict()
-        self.agent_delivery_penalty: Dict[str, List[float]] = dict()
+        self.agent_disposal_cost: Dict[str, List[float]] = dict()
+        self.agent_shortfall_penalty: Dict[str, List[float]] = dict()
         kwargs["log_to_file"] = not no_logs
         if compact:
             kwargs["event_file_name"] = None
@@ -215,9 +215,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.bulletin_board.record(
             "settings", exogenous_force_max, "exogenous_force_max"
         )
-        # self.bulletin_board.record("settings", storage_cost, "ufun_storage_cost")
+        # self.bulletin_board.record("settings", disposal_cost, "ufun_disposal_cost")
         # self.bulletin_board.record(
-        #     "settings", delivery_penalty, "ufun_delivery_penalty"
+        #     "settings", shortfall_penalty, "ufun_shortfall_penalty"
         # )
         self.bulletin_board.record("settings", True, "has_exogenous_contracts")
         self.bulletin_board.record("settings", bankruptcy_limit, "bankruptcy_limit")
@@ -255,8 +255,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             signing_delay=signing_delay,
             agent_name_reveals_position=agent_name_reveals_position,
             agent_name_reveals_type=agent_name_reveals_type,
-            # storage_cost=storage_cost,
-            # delivery_penalty=delivery_penalty,
+            # disposal_cost=disposal_cost,
+            # shortfall_penalty=shortfall_penalty,
             exogenous_dynamic=exogenous_dynamic,
             publish_exogenous_summary=publish_exogenous_summary,
             publish_trading_prices=publish_trading_prices,
@@ -359,10 +359,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 cost=INFINITE_COST,
                 input_product=-1,
                 n_lines=0,
-                storage_cost_mean=0.0,
-                delivery_penalty_mean=0.0,
-                storage_cost_dev=0.0,
-                delivery_penalty_dev=0.0,
+                disposal_cost_mean=0.0,
+                shortfall_penalty_mean=0.0,
+                disposal_cost_dev=0.0,
+                shortfall_penalty_dev=0.0,
             )
         )
         profiles.append(
@@ -370,10 +370,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 cost=INFINITE_COST,
                 input_product=n_processes,
                 n_lines=0,
-                storage_cost_mean=0.0,
-                delivery_penalty_mean=0.0,
-                storage_cost_dev=0.0,
-                delivery_penalty_dev=0.0,
+                disposal_cost_mean=0.0,
+                shortfall_penalty_mean=0.0,
+                disposal_cost_dev=0.0,
+                shortfall_penalty_dev=0.0,
             )
         )
         initial_balance = initial_balance.tolist() + [
@@ -439,13 +439,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             if is_system_agent(aid):
                 continue
             profile: OneShotProfile = agent.profile
-            self.agent_storage_cost[aid] = (
-                np.random.randn(self.n_steps) * profile.storage_cost_dev
-                + profile.storage_cost_mean
+            self.agent_disposal_cost[aid] = np.abs(
+                np.random.randn(self.n_steps) * profile.disposal_cost_dev
+                + profile.disposal_cost_mean
             )
-            self.agent_delivery_penalty[aid] = (
-                np.random.randn(self.n_steps) * profile.delivery_penalty_dev
-                + profile.delivery_penalty_mean
+            self.agent_shortfall_penalty[aid] = np.abs(
+                np.random.randn(self.n_steps) * profile.shortfall_penalty_dev
+                + profile.shortfall_penalty_mean
             )
 
         for p in range(n_products):
@@ -557,23 +557,23 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
         profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
-        max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
+        max_productivity: Union[np.ndarray, Tuple[float, float], float] = (0.8, 1.0),
         initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
         cost_increases_with_level=True,
         equal_exogenous_supply=False,
         equal_exogenous_sales=False,
-        exogenous_supply_predictability: Union[Tuple[float, float], float] = (0.0, 0.9),
-        exogenous_sales_predictability: Union[Tuple[float, float], float] = (0.0, 0.9),
+        exogenous_supply_predictability: Union[Tuple[float, float], float] = (0.6, 0.9),
+        exogenous_sales_predictability: Union[Tuple[float, float], float] = (0.6, 0.9),
         exogenous_control: Union[Tuple[float, float], float] = -1,
         cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
         force_signing=True,
         profit_basis=np.mean,
-        storage_cost: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
-        delivery_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.5, 0.7),
-        storage_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.01, 0.02),
-        delivery_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (
-            0.01,
-            0.02,
+        disposal_cost: Union[np.ndarray, Tuple[float, float], float] = (0.5, 1.0),
+        shortfall_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.5, 1.0),
+        disposal_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.1),
+        shortfall_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (
+            0.0,
+            0.1,
         ),
         exogenous_price_dev: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
         price_multiplier: Union[np.ndarray, Tuple[float, float], float] = (1.5, 2.0),
@@ -623,19 +623,19 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                                to `None` .
             exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
                                force_signing is False and use_exogenous_contracts is True
-            storage_cost: A range to sample mean-storage costs for all factories from
-            delivery_penalty: A range to sample mean-delivery penalty for all factories from
-            storage_cost_dev: A range to sample std. dev of storage costs for all factories from
-            delivery_penalty_dev: A range to sample std. dev of delivery penalty for all factories from
+            disposal_cost: A range to sample mean-disposal costs for all factories from
+            shortfall_penalty: A range to sample mean-shortfall penalty for all factories from
+            disposal_cost_dev: A range to sample std. dev of disposal costs for all factories from
+            shortfall_penalty_dev: A range to sample std. dev of shortfall penalty for all factories from
             exogenous_price_dev: The standard deviation of exogenous contract prices relative to the mean price
             price_multiplier: A value to multiply with trading/catalog price to get the upper limit on prices for all negotiations
             random_agent_types: If True, the final agent types used by the generato wil always be sampled from the given types.
                                 If False, this random sampling will only happin if len(agent_types) != n_agents.
-            penalties_scale: What are `storage_cost` and `delivery_penalty` relative to.
+            penalties_scale: What are `disposal_cost` and `shortfall_penalty` relative to.
                             There are four options: `trading`, `catalog` mean trading
                             and catalog prices of the product. `unit` means the unit
                             price in the contract and `non` means the `storage-cost`
-                            and `delivery_penalty` are absolute values (in money unit).
+                            and `shortfall_penalty` are absolute values (in money unit).
                             If not given will be read through the AWI
             **kwargs:
 
@@ -918,16 +918,18 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 if l == n_processes - 1:
                     esales[:, -1] = [exogenous_sales[s][a] for s in range(n_steps)]
                     esale_prices[:, -1] = sale_prices[a, :]
+                dp = realin(shortfall_penalty)
+                sc = realin(disposal_cost)
                 profile_info.append(
                     (
                         OneShotProfile(
                             cost=[_ for _ in costs[nxt][0] if _ != INFINITE_COST][0],
                             input_product=l,
                             n_lines=n_lines,
-                            storage_cost_mean=realin(storage_cost),
-                            delivery_penalty_mean=realin(delivery_penalty),
-                            storage_cost_dev=realin(storage_cost_dev),
-                            delivery_penalty_dev=realin(delivery_penalty_dev),
+                            disposal_cost_mean=sc,
+                            shortfall_penalty_mean=dp,
+                            disposal_cost_dev=realin(disposal_cost_dev) * sc,
+                            shortfall_penalty_dev=realin(shortfall_penalty_dev) * dp,
                         ),
                         esales,
                         esale_prices,

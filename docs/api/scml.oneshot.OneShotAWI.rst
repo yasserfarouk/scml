@@ -13,14 +13,15 @@ OneShotAWI
       ~OneShotAWI.all_consumers
       ~OneShotAWI.all_suppliers
       ~OneShotAWI.catalog_prices
-      ~OneShotAWI.current_delivery_penalty
+      ~OneShotAWI.current_balance
+      ~OneShotAWI.current_disposal_cost
       ~OneShotAWI.current_exogenous_input_price
       ~OneShotAWI.current_exogenous_input_quantity
       ~OneShotAWI.current_exogenous_output_price
       ~OneShotAWI.current_exogenous_output_quantity
       ~OneShotAWI.current_input_issues
       ~OneShotAWI.current_output_issues
-      ~OneShotAWI.current_storage_cost
+      ~OneShotAWI.current_shortfall_penalty
       ~OneShotAWI.exogenous_contract_summary
       ~OneShotAWI.is_exogenous_forced
       ~OneShotAWI.is_first_level
@@ -57,14 +58,15 @@ OneShotAWI
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
    .. autoattribute:: catalog_prices
-   .. autoattribute:: current_delivery_penalty
+   .. autoattribute:: current_balance
+   .. autoattribute:: current_disposal_cost
    .. autoattribute:: current_exogenous_input_price
    .. autoattribute:: current_exogenous_input_quantity
    .. autoattribute:: current_exogenous_output_price
    .. autoattribute:: current_exogenous_output_quantity
    .. autoattribute:: current_input_issues
    .. autoattribute:: current_output_issues
-   .. autoattribute:: current_storage_cost
+   .. autoattribute:: current_shortfall_penalty
    .. autoattribute:: exogenous_contract_summary
    .. autoattribute:: is_exogenous_forced
    .. autoattribute:: is_first_level

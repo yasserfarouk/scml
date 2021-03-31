@@ -232,7 +232,7 @@ tutorial: supply based or demand based production strategies.
 IDEA 9: Base production decisions on trading prices (as well as contracts).
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given that storage cost is zero and storage capacity is infinite, it
+Given that disposal cost is zero and storage capacity is infinite, it
 seems that the only optimization you can do is to avoid over production.
 Production has cost so over production may not be a good idea. On the
 other hand, the inventory is valued in SCML 2020 at half the trading

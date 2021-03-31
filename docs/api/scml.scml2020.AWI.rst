@@ -13,6 +13,7 @@ AWI
       ~AWI.all_consumers
       ~AWI.all_suppliers
       ~AWI.catalog_prices
+      ~AWI.current_balance
       ~AWI.exogenous_contract_summary
       ~AWI.inputs
       ~AWI.my_consumers
@@ -50,6 +51,7 @@ AWI
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
    .. autoattribute:: catalog_prices
+   .. autoattribute:: current_balance
    .. autoattribute:: exogenous_contract_summary
    .. autoattribute:: inputs
    .. autoattribute:: my_consumers

@@ -1540,7 +1540,7 @@ You can also do statistical significance testing using ttest or kstest
 
 .. code:: ipython3
 
-    results.kstest
+    results.kstestso7
 
 
 

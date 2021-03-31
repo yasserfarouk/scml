@@ -55,8 +55,8 @@ class AWI(AgentWorldInterface):
         B. Agent Information:
           - *profile*: Gives the agent profile including its production cost, number
             of production lines, input product index, mean of its delivery
-            penalties, mean of its storage costs, standard deviation of its
-            delivery penalties and standard deviation of its storage costs.
+            penalties, mean of its disposal costs, standard deviation of its
+            shortfall penalties and standard deviation of its disposal costs.
             See `OneShotProfile` for full description. This information is private
             information and no other agent knows it.
           - *n_lines*: the number of production lines in the factory (private information).
@@ -77,10 +77,10 @@ class AWI(AgentWorldInterface):
             that can sell the input product of the agent).
           - *my_consumers*: A list of IDs for all consumers to the agent (i.e. agents
             that can buy the output product of the agent).
-          - *penalties_scale*: The scale at which to calculate storage cost/delivery
+          - *penalties_scale*: The scale at which to calculate disposal cost/delivery
             penalties. "trading" and "catalog" mean trading and
             catalog prices. "unit" means the contract's unit price
-            while "none" means that storage cost/delivery penalty
+            while "none" means that disposal cost/shortfall penalty
             are absolute.
           - *n_input_negotiations*: Number of negotiations with suppliers.
           - *n_output_negotiations*: Number of negotiations with consumers.
@@ -124,9 +124,9 @@ class AWI(AgentWorldInterface):
             in its output exogenous contract.
           - *current_exogenous_output_price*: The total price of the agent's
             output exogenous contract.
-          - *current_storage_cost*: The storage cost per unit item in the current
+          - *current_disposal_cost*: The disposal cost per unit item in the current
             step.
-          - *current_delivery_penalty*: The delivery penalty per unit item in the current
+          - *current_shortfall_penalty*: The shortfall penalty per unit item in the current
             step.
 
     Actions:

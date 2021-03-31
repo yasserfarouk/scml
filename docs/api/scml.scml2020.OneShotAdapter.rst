@@ -16,15 +16,16 @@ OneShotAdapter
 
    .. autosummary::
 
-      ~OneShotAdapter.get_delivery_penalty
-      ~OneShotAdapter.get_delivery_penalty_dev
-      ~OneShotAdapter.get_delivery_penalty_mean
+      ~OneShotAdapter.get_current_balance
+      ~OneShotAdapter.get_disposal_cost
+      ~OneShotAdapter.get_disposal_cost_dev
+      ~OneShotAdapter.get_disposal_cost_mean
       ~OneShotAdapter.get_exogenous_input
       ~OneShotAdapter.get_exogenous_output
       ~OneShotAdapter.get_profile
-      ~OneShotAdapter.get_storage_cost
-      ~OneShotAdapter.get_storage_cost_dev
-      ~OneShotAdapter.get_storage_cost_mean
+      ~OneShotAdapter.get_shortfall_penalty
+      ~OneShotAdapter.get_shortfall_penalty_dev
+      ~OneShotAdapter.get_shortfall_penalty_mean
       ~OneShotAdapter.init
       ~OneShotAdapter.make_ufun
       ~OneShotAdapter.respond_to_negotiation_request
@@ -37,15 +38,16 @@ OneShotAdapter
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: get_delivery_penalty
-   .. automethod:: get_delivery_penalty_dev
-   .. automethod:: get_delivery_penalty_mean
+   .. automethod:: get_current_balance
+   .. automethod:: get_disposal_cost
+   .. automethod:: get_disposal_cost_dev
+   .. automethod:: get_disposal_cost_mean
    .. automethod:: get_exogenous_input
    .. automethod:: get_exogenous_output
    .. automethod:: get_profile
-   .. automethod:: get_storage_cost
-   .. automethod:: get_storage_cost_dev
-   .. automethod:: get_storage_cost_mean
+   .. automethod:: get_shortfall_penalty
+   .. automethod:: get_shortfall_penalty_dev
+   .. automethod:: get_shortfall_penalty_mean
    .. automethod:: init
    .. automethod:: make_ufun
    .. automethod:: respond_to_negotiation_request
