@@ -289,6 +289,148 @@ objects.
 
 .. |NegMAS world| image:: world.png
 
+A brief introduction to SCM
+---------------------------
+
+Here we only provide a 10,000-feet birds-eye view of the two games used
+in SCML 2021’s three tracks. Each section provides pointers to more
+information.
+
+The Oneshot game (OneShot)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An overview of the SCML-OneShot game is available
+`here <http://www.yasserm.com/scml/overview_oneshot.pdf>`__ and a full
+description for the details-savy person is available
+`here <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__.
+
+.. figure:: situation_oneshot_wide.jpg
+   :alt: oneshot
+
+   oneshot
+
+The game runs in a world in which factories can run manufacturing
+processes to convert products into other products. There are exactly 3
+products and 2 processes as shown in the figure. Each agent controls
+exactly one factory.
+
+The agents that receive the raw material and generate the intermediate
+product are called 𝐿0 agents (level zero) and the agents. receiving the
+intermediate product and generate the final product are called 𝐿1
+factories (level 1). The product type consumed by the factory controlled
+by an agent is called its input product and the product it produces is
+called its output product.
+
+Every day (simulation step), each 𝐿0 factory receives one exogenous
+contract specifying a quantity and a unit price (supplies) for this day
+and each 𝐿1 factory receives one exogenous contract specifying a
+quantity and a unit price of the final product (sales) for the same day.
+Production and transporation are assumed to take no time.
+
+𝐿0 and 𝐿1 agents need to negotiate together to secure intermediate
+product contracts in order to use their supplies (for 𝐿0 agents) or
+satisfy their sale obligations (for 𝐿1 agents). All products that remain
+unsold at the end of the day perish (i.e. has no value). Moreover,
+agents pay a disposal cost for any input products they buy and never
+sell and pay a shortfall penalty for any sales they cannot satisfy.
+
+Your goal as an agent designer is to maximize your overall profit over
+the simulation time.
+
+The Full game (Standard/Collusion Tracks)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An overview of the SCML-Standard/Collusion game is available
+`here <http://www.yasserm.com/scml/overview.pdf>`__ and a full
+description for the details-savy person is available
+`here <http://www.yasserm.com/scml/scml2021.pdf>`__.
+
+.. figure:: situation.jpg
+   :alt: oneshot
+
+   oneshot
+
+The game runs in a world similar to the one-shot game world but with few
+differences (that make a lot of difference):
+
+-  The production graph is **depth is not limited to 2** processes. This
+   means that some agents (in the middle) will have NO exogenous
+   contracts and their goal will still be to match inputs and outputs
+   but without being forced to either a specific supply or sales
+   contract.
+-  Each agent (in the first and last production layers) can have
+   **multiple exogenous agreements**.
+-  **Agreements are not binding until signed into contracts**. Each
+   agent will have a chance to either sign or not sign (cancel) any
+   agreement at the end of the simulated day (including exogenous
+   agreements). This has two major implications:
+
+   1. The good news is that the **agent can choose** some input
+      contracts and some output contracts to maximize its profit after
+      all agreements are conducting ensuring that there are no other
+      agreements (on that day) that may affect expected utility.
+   2. The bad news is that other agents have the same capability which
+      means that an **agent cannot trust that an agreeement** it got and
+      even signed will end up becoming binding as a contract.
+
+-  **Production takes one step** which means that you can sell today
+   products that you bought yesterday or earlier but not today.
+-  **Products do not perish** and are **valued at some fraction** of
+   their trading prices at the end of the simulation. This means that it
+   makes sense in some cases for agents to pile stock (storage size is
+   infinite and there is no storage or disposal cost). For example, if
+   for some reason an agent believes that its input product will become
+   more expesive over time, it makes sense for it to buy and accomulate
+   input products early and then sell them when the price of the output
+   product is at its max.
+-  **Delivery time becomes an important negotiation issue**. In the
+   OneShot case seen earlier, buying, producing, selling and perishing
+   happen in the same day (simulation step) which means that delivery
+   time is obviously the same day. In this full game case, delivery time
+   will usually be sometime in the future and it can theoretically be
+   any day in the future up to the last simulated day.
+-  Agents **decide their negotiation agendas and partners**. This means
+   that the system does not limit the price ranges for negotiation
+   neither does it limit the quantity range or the delivery time range.
+   This means that agents have to decide good ranges for themselves and
+   have to be careful that the negotiation agenda offered by other
+   agents may be so biased against them. In the OneShot game, none of
+   this is possible because the system decides the negotiation agenda
+   and they are always around the trding prices and with maximum
+   quantities not exceeded the production capacity of agents.
+-  There is **no disposal cost** (products are never disposed of) or
+   storage cost. Moreover, there is **no pre-defined shortfall
+   penalty**. Instead the system simulates a **spot market** and forces
+   agents with shortfalls to buy the remaining items they could not
+   produce from that spot market. This mechanism is similar to
+   predefined shortfall penalties with one major difference. **The more
+   an agent buys from the spot market, the more it needs to pay (per
+   unit)** in the future to buy from it again. This introduces a timing
+   effect on failure to honor sell contracts through production. In the
+   OneShot game, failing to honor a sell contract in the first step of
+   the simulation and in the last step do not have much difference
+   (assuming trading prices stayed the same). In this full game, failure
+   to honor sell contracts early in the simulation will lead to higher
+   spot market prices for that agent which will hurt it later in the
+   game if it ever needed to buy from the spot market again.
+-  Finally, the fact that agents can have contracts with delivery dates
+   in the future, **complicates bankruptcy processing**. When an agent
+   goes bankrupt (i.e. its balance becomes negative), it is liquidated
+   by selling everything in its inventory in the spot market and using
+   the proceeds to pay **compensation** for agents with future contracts
+   with it. None of this is needed in the OneShot game because agents do
+   not have future contracts and going bankrupt does not prevent
+   partners with contracts at the same step from getting the products
+   they agreed upon at the agreed upon price.
+-  The only **difference between the standard and collusion tracks** in
+   SCML 2021 is that in the former, there is a single instantiation of
+   each competitor’s agent class (type) in the world while there are
+   multiple instances of it in the later. This means that agents of the
+   same class (that can find themselves easily by sharing class level
+   attributes for example) can try to **collude together to corner the
+   market** and increase their aggregated profits above what each of
+   them could have achieved on its own in the *collusion* track.
+
 Run a session of the SCML world (2021)
 --------------------------------------
 
@@ -348,7 +490,7 @@ Let’s draw a graph to see what is in this world
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_8_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_9_0.png
 
 
 *If you want to just test your installation (and do not care whether you
@@ -373,7 +515,7 @@ conducted over time
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_12_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_13_0.png
 
 
 It is clear that many negotiations happened at the beginning of the
@@ -445,7 +587,7 @@ data as a pandas dataframe.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_16_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_17_0.png
 
 
 There are statistics specific for each agent that all have
@@ -536,7 +678,7 @@ Let’s see how did our agent do
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_21_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_22_0.png
 
 
 We can for example check the activity level of this world (defined as
@@ -551,7 +693,7 @@ the total amount of money transferred due to trade)
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_23_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_24_0.png
 
 
 We can see a picture of contracting in this world as follows:
@@ -569,7 +711,7 @@ We can see a picture of contracting in this world as follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_25_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_26_0.png
 
 
 We can also check the breaches that happened
@@ -583,7 +725,7 @@ We can also check the breaches that happened
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_27_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_28_0.png
 
 
 Notice that there can be multiple winners
@@ -626,7 +768,7 @@ Let’s check how did the first winner’s inventory changes over time:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_31_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_32_0.png
 
 
 We can actually check what happens to ALL competitors:
@@ -646,7 +788,7 @@ We can actually check what happens to ALL competitors:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_33_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_34_0.png
 
 
 .. code:: ipython3
@@ -664,7 +806,7 @@ We can actually check what happens to ALL competitors:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_34_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_35_0.png
 
 
 or just look at the end of the game
@@ -687,7 +829,7 @@ or just look at the end of the game
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_37_0.png
 
 
 .. code:: ipython3
@@ -708,7 +850,7 @@ or just look at the end of the game
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_37_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_38_0.png
 
 
 You can inspect what happened in the simulation by plotting different
@@ -728,7 +870,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_39_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_40_0.png
 
 
 .. code:: ipython3
@@ -744,7 +886,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_40_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_41_0.png
 
 
 You can dig futher to understand what happened during this siumulation.
@@ -1268,7 +1410,7 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_48_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_49_0.png
 
 
 .. code:: ipython3
@@ -1281,7 +1423,7 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_49_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_50_0.png
 
 
 Did any agents go bankrupt and when?
@@ -1320,7 +1462,7 @@ follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_53_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_54_0.png
 
 
 You can see what happened in this world in a series of graphs using the
@@ -1333,7 +1475,7 @@ You can see what happened in this world in a series of graphs using the
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_55_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_56_0.png
 
 
 You can also run a simple animation to see what happens at every step
@@ -1681,7 +1823,7 @@ activity level for different simulations.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_75_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_76_0.png
 
 
 We can even get the scores of every agent belonging to every agent type
@@ -1770,7 +1912,7 @@ of each type.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_79_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_80_0.png
 
 
 Running a One-Shot tournament
@@ -2185,7 +2327,7 @@ of each type.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_96_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_97_0.png
 
 
 Now that you can run simulations and complete tournament, let’s see how

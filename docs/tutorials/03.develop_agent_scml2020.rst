@@ -1,6 +1,11 @@
 Developing an agent for SCML2021 (Std/Collusion)
 ------------------------------------------------
 
+**SCML-Standard/Collusoin brief introduction** Please refer to the first
+tutorial for a brief introduction about the world simulated in this game
+as well as pointers to more information. We will assume knowledge of at
+least this brief introduction in the remainder of this tutorial
+
 Let’s see the simplest possible agent (a do-nothing agent)
 
 .. code:: ipython3
