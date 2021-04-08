@@ -134,23 +134,29 @@ def get_data(base_folder):
     paths = get_torunaments(base_folder)
     tournaments, worlds, agents, stats = [], [], [], []
     for i, t in enumerate(paths):
+        print(f"Processing {t.name} [{i} of {len(tournaments)}]", flush=True)
         indx = i + 1
         base_indx = (i + 1) * 1_000_000
         tournaments.append(dict(indx=indx, path=t, name=t.name))
         w, a = parse_tournament(t, indx, base_indx)
         for j, world in enumerate(w):
+            print(f"\tWorld {world['name']} [{j} of {len(w)}]", flush=True)
             wagents = a.loc[a.world == world["name"]]
             stats.append(
                 parse_world(
-                    world["path"], world["name"], wagents, base_indx + j + 1, base_indx + j + 1
+                    world["path"],
+                    world["name"],
+                    wagents,
+                    base_indx + j + 1,
+                    base_indx + j + 1,
                 )
             )
         worlds.append(pd.DataFrame.from_records(w))
         agents.append(a)
 
-    tournaments = pd.DataFrame.from_records(tournaments).set_index("indx")
-    worlds = pd.concat(worlds, ignore_index=True).set_index("indx")
-    agents = pd.concat(agents, ignore_index=True).set_index("indx")
+    tournaments = pd.DataFrame.from_records(tournaments)
+    worlds = pd.concat(worlds, ignore_index=True)
+    agents = pd.concat(agents, ignore_index=True)
     return tournaments, worlds, agents, stats
 
 
@@ -158,7 +164,14 @@ def main(base_folder):
     tournaments, worlds, agents, stats = get_data(base_folder)
     dst_folder = base_folder / unique_name(base_folder.name, rand_digits=3)
     dst_folder.mkdir(parents=True, exist_ok=True)
-    for df, name in zip((tournaments, worlds, agents, stats), ("tournaments", "worlds", "agents", "stats")):
+    for df, name in zip(
+        (tournaments, worlds, agents, stats),
+        ("tournaments", "worlds", "agents", "stats"),
+    ):
         df.to_csv(dst_folder / name, index=False)
 
 
+if __name__ == "__main__":
+    import sys
+
+    main(Path(sys.argv[1]))
