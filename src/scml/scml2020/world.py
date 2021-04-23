@@ -584,9 +584,16 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.agent_processes[SYSTEM_SELLER_ID] = []
         self.agent_inputs[SYSTEM_SELLER_ID] = []
         self.agent_outputs[SYSTEM_SELLER_ID] = [0]
+        self.agent_profiles: Dict[str, Any] = dict()
+        self.initial_balances: Dict[str, Any] = dict()
+        for agent_id, profile in zip(self.agents.keys(), profiles):
+            self.agent_profiles[agent_id] = profile
+        for agent_id, ib in zip(self.agents.keys(), initial_balance):
+            self.initial_balances[agent_id] = ib
 
         for p in range(n_processes):
             for agent_id, profile in zip(self.agents.keys(), profiles):
+                self.agent_profiles[agent_id] = profile
                 if is_system_agent(agent_id):
                     continue
                 if np.all(profile.costs[:, p] == INFINITE_COST):
@@ -730,6 +737,24 @@ class SCML2020World(TimeInAgreementMixin, World):
                     value=self.exogenous_contracts_summary,
                     key=s,
                 )
+
+        self.info.update(
+            dict(
+                agent_profiles={
+                    k: dict(
+                        costs=v.costs.tolist(),
+                        n_lines=v.n_lines,
+                        input_product=int(v.input_products[0] if v.input_products else -1),
+                        output_product=int(v.output_products[0] if v.output_products else -1),
+                    )
+                    for k, v in self.agent_profiles.items()
+                }
+            )
+        )
+        self.info.update(dict(agent_inputs=self.agent_inputs))
+        self.info.update(dict(agent_outputs=self.agent_outputs))
+        self.info.update(dict(agent_processes=self.agent_processes))
+        self.info.update(dict(agent_initial_balances=self.initial_balances))
 
     @classmethod
     def generate(

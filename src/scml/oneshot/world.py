@@ -21,6 +21,7 @@ from typing import Type
 from typing import Union
 
 import networkx as nx
+from networkx.convert import to_dict_of_dicts
 import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
@@ -233,6 +234,20 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             [copy.deepcopy(_) for _ in agent_params] if agent_params else agent_params
         )
         self.penalties_scale = penalties_scale
+        TimeInAgreementMixin.init(self, time_field="time")
+        self.bulletin_board.add_section("reports_agent")
+        self.bulletin_board.add_section("reports_time")
+        if self.publish_exogenous_summary:
+            self.bulletin_board.add_section("exogenous_contracts_summary")
+        if self.publish_trading_prices:
+            self.bulletin_board.add_section("trading_prices")
+
+        initial_balance = make_array(initial_balance, len(profiles), dtype=int)
+        self.bankruptcy_limit = (
+            -bankruptcy_limit
+            if isinstance(bankruptcy_limit, int)
+            else -int(0.5 + bankruptcy_limit * initial_balance.mean())
+        )
         self.info.update(
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -261,20 +276,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             publish_exogenous_summary=publish_exogenous_summary,
             publish_trading_prices=publish_trading_prices,
             selected_price_multiplier=price_multiplier,
-        )
-        TimeInAgreementMixin.init(self, time_field="time")
-        self.bulletin_board.add_section("reports_agent")
-        self.bulletin_board.add_section("reports_time")
-        if self.publish_exogenous_summary:
-            self.bulletin_board.add_section("exogenous_contracts_summary")
-        if self.publish_trading_prices:
-            self.bulletin_board.add_section("trading_prices")
-
-        initial_balance = make_array(initial_balance, len(profiles), dtype=int)
-        self.bankruptcy_limit = (
-            -bankruptcy_limit
-            if isinstance(bankruptcy_limit, int)
-            else -int(0.5 + bankruptcy_limit * initial_balance.mean())
         )
 
         if not isinstance(agent_types, Iterable):
@@ -542,6 +543,33 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     Issue(values(unit_price), name="unit_price", value_type=int),
                 ]
             )
+
+        def to_lists(d):
+            return {
+                k: v.tolist() if isinstance(v, np.ndarray) else list(v)
+                for k, v in d.items()
+            }
+
+        self.info.update(
+            dict(
+                agent_profiles={
+                    k: dict(
+                        cost=v.cost,
+                        n_lines=v.n_lines,
+                        input_product=v.input_product,
+                        shortfall_penalty_mean=v.shortfall_penalty_mean,
+                        shortfall_penalty_dev=v.shortfall_penalty_dev,
+                        disposal_cost_mean=v.disposal_cost_mean,
+                        disposal_cost_dev=v.disposal_cost_dev,
+                    )
+                    for k, v in self.agent_profiles.items()
+                }
+            )
+        )
+        self.info.update(dict(agent_inputs=to_lists(self.agent_inputs)))
+        self.info.update(dict(agent_outputs=to_lists(self.agent_outputs)))
+        self.info.update(dict(agent_processes=to_lists(self.agent_processes)))
+        self.info.update(dict(agent_initial_balances=self.initial_balances))
 
     @classmethod
     def generate(
@@ -1392,6 +1420,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             if is_system_agent(aid):
                 continue
             self._stats[f"score_{aid}"].append(scores[aid])
+            self._stats[f"balance_{aid}"].append(self.current_balance(aid))
+            self._stats[f"bankrupt_{aid}"].append(self.is_bankrupt.get(aid, False))
 
     def pre_step_stats(self):
         pass
@@ -1672,7 +1702,25 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         is_buy = True
         if extra is None:
             extra = dict()
-
+        if is_buy:
+            buyer, seller = agent, self.agents[partner]
+        else:
+            seller, buyer = agent, self.agents[partner]
+        if product != self.agent_profiles[buyer.id].input_product:
+            self.logerror(
+                f"Buyer {buyer.id} wants to buy {product} but its input is different"
+            )
+        if product != self.agent_profiles[seller.id].output_product:
+            self.logerror(
+                f"Seller {seller.id} wants to sell {product} but its output is different"
+            )
+        if (
+            self.agent_profiles[buyer.id].input_product
+            == self.agent_profiles[seller.id].input_product
+        ):
+            self.logerror(
+                f"Seller {seller.id} and buyer {buyer.id} are in the same level ({self.agent_profiles[buyer.id].input_product})"
+            )
         self.logdebug(
             f"{agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
             f" q: {quantity}, u: {unit_price}, t: {time}"
