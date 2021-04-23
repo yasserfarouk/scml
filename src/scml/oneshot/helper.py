@@ -37,6 +37,11 @@ class AWIHelper:
         extra: Dict[str, Any] = None,
         copy_partner_id=True,
     ) -> bool:
+        if not is_buy:
+            self._world.logwarning(
+                f"{self.agent.name} requested selling on {product}. This is not allowed in oneshot"
+            )
+            return False
         buyable, sellable = self.my_input_products, self.my_output_products
         if (product not in buyable and is_buy) or (
             product not in sellable and not is_buy
