@@ -1,6 +1,20 @@
 Changelog
 =========
 
+0.4.1 (2021.5.2)
+-----------------
+**This is an important update. All participants in SCML 2021 should upgrade
+to this version**
+
+*  [visualizer] adding run information for the visualizer
+*  [bugfix] Std agents running in OneShot were able to request selling from the wrong agents.
+*  [docs] doc update (storage cost -> disposal, deilvery penalty -> shortfall)
+*  [core] supporting 3.9
+*  [oneshot] better optimized ufun calculation
+*  [oneshot] improved ufun calculation. Still not exact.
+*  [2021] Adding current_balance to all AWIs and using it in oneshot ufun
+*  [2020] Exporting AWI, Failure from scml2020.world for backward comp.
+
 0.4.0 (2021.3.18)
 -----------------
 **This is an important update. All participants in SCML 2021 should upgrade
