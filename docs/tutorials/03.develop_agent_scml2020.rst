@@ -375,7 +375,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:04<00:00,  2.33it/s]
+    100%|██████████| 10/10 [00:03<00:00,  3.01it/s]
 
 
 
@@ -465,7 +465,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:14<00:00,  1.43s/it]
+    100%|██████████| 10/10 [00:18<00:00,  1.84s/it]
 
 
 
@@ -914,7 +914,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:19<00:00,  1.97s/it]
+    100%|██████████| 10/10 [05:03<00:00, 30.37s/it]
 
 
 
@@ -977,16 +977,16 @@ average prices they get from their negotiations.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     2.0  0.6  0.3  0.4  0.5  0.6  0.7  0.8
-    True    False    3.0  0.7  0.0  0.6  0.7  0.7  0.7  0.7
+    False   True    10.0  0.9  0.1  0.8  0.9  1.0  1.0  1.0
+    True    False   35.0  0.1  0.3  0.0  0.0  0.0  0.0  0.8
     MyAgent:
     ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    19.0  0.5  0.1  0.5  0.5  0.5  0.6  0.7
-    True    False   10.0  0.5  0.1  0.4  0.5  0.5  0.5  0.8
-            True    55.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    False   True    40.0  0.2  0.3  0.0  0.0  0.0  0.5  0.8
+    True    False   13.0  0.8  0.2  0.4  0.8  0.9  1.0  1.0
+            True    33.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
     
 
 
@@ -1022,7 +1022,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:22<00:00,  2.29s/it]
+    100%|██████████| 10/10 [00:19<00:00,  1.99s/it]
 
 .. parsed-literal::
 
@@ -1209,7 +1209,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:14<00:00,  1.48s/it]
+    100%|██████████| 10/10 [02:35<00:00, 15.51s/it]
 
 
 .. code:: ipython3
@@ -1230,7 +1230,8 @@ exploring the design space.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    True    False   12.0  0.7  0.0  0.6  0.7  0.7  0.7  0.8
+    False   True     5.0  0.8  0.1  0.7  0.7  0.9  0.9  1.0
+    True    False   35.0  0.1  0.3  0.0  0.0  0.0  0.0  0.8
     
 
 
@@ -1286,7 +1287,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:08<00:00,  1.23it/s]
+    100%|██████████| 10/10 [00:08<00:00,  1.17it/s]
 
 
 .. code:: ipython3
@@ -1483,7 +1484,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:09<00:00,  1.09it/s]
+    100%|██████████| 10/10 [00:13<00:00,  1.31s/it]
 
 
 
@@ -1576,7 +1577,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:09<00:00,  1.09it/s]
+    100%|██████████| 10/10 [00:05<00:00,  1.81it/s]
 
 
 
@@ -1626,6 +1627,10 @@ MyNewAgent           320   -0.06 0.07 -0.26 -0.11 -0.069 0   0
 Running OneShot agents (advanced)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. container::
+
+   This section is not necessary for SCML 2021 competition.
+
 The SCML-OneShot game is much simpler than the full SCML2020 full game
 used in this tutorial. Nevertheless, we provide an out-of-the-box
 adapter allowing agents developed for the one-shot competition to run in
@@ -1652,7 +1657,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [06:33<00:00, 39.33s/it]
+    100%|██████████| 10/10 [00:17<00:00,  1.78s/it]
 
 
 

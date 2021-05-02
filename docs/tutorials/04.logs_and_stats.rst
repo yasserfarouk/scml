@@ -428,23 +428,23 @@ Here are some of the most important parameters stored in this file:
 +--------------------+-------------------------------------------------+
 | neg_n_steps        | Maximum number of rounds per negotiation        |
 +--------------------+-------------------------------------------------+
-| neg_quota_simulati | Maximum number of negotiations that an agent    |
-| on                 | can initiate during the whole simulation        |
+| ne                 | Maximum number of negotiations that an agent    |
+| g_quota_simulation | can initiate during the whole simulation        |
 +--------------------+-------------------------------------------------+
 | neg_quota_step     | Maximum number of of negotiations that an agent |
 |                    | can initiate during a *single* day (simulation  |
 |                    | step)                                           |
 +--------------------+-------------------------------------------------+
-| neg_step_time_limi | The total real-time allowed for receiving a     |
-| t                  | response from a negotiator                      |
+| n                  | The total real-time allowed for receiving a     |
+| eg_step_time_limit | response from a negotiator                      |
 +--------------------+-------------------------------------------------+
 | neg_time_limit     | The total real-time allowed for a negotiation   |
 +--------------------+-------------------------------------------------+
 | negotiation_speed  | The number of negotiation rounds in a single    |
 |                    | simulation step                                 |
 +--------------------+-------------------------------------------------+
-| financial_reports_ | The period between successive financial reports |
-| period             | in steps                                        |
+| financ             | The period between successive financial reports |
+| ial_reports_period | in steps                                        |
 +--------------------+-------------------------------------------------+
 | agent_unique_types | A unique identifier of the agent type for every |
 |                    | agent in the simulation                         |
@@ -455,28 +455,28 @@ Here are some of the most important parameters stored in this file:
 | n_agent_exceptions | Number of agent exceptions. These are the       |
 |                    | results of bugs in the agents most likely.      |
 +--------------------+-------------------------------------------------+
-| n_negotiation_exce | Number of exceptions that happened during       |
-| ptions             | negotiation. These are usually bugs in the      |
+| n_nego             | Number of exceptions that happened during       |
+| tiation_exceptions | negotiation. These are usually bugs in the      |
 |                    | negotiators/utility functions                   |
 +--------------------+-------------------------------------------------+
-| n_contract_excepti | Number of exceptions that happened during       |
-| ons                | contract executions. Any number above zero here |
+| n_c                | Number of exceptions that happened during       |
+| ontract_exceptions | contract executions. Any number above zero here |
 |                    | is a bug                                        |
 +--------------------+-------------------------------------------------+
-| n_simulation_excep | Number of exceptions everywhere else in the     |
-| tions              | simulation. These are also bugs in the platform |
+| n_sim              | Number of exceptions everywhere else in the     |
+| ulation_exceptions | simulation. These are also bugs in the platform |
 +--------------------+-------------------------------------------------+
-| ignore_agent_excep |                                                 |
-| tion               |                                                 |
+| igno               |                                                 |
+| re_agent_exception |                                                 |
 +--------------------+-------------------------------------------------+
 | ignore_contract_ex |                                                 |
 | ecution_exceptions |                                                 |
 +--------------------+-------------------------------------------------+
-| ignore_negotiation |                                                 |
-| _exceptions        |                                                 |
+| ignore_nego        |                                                 |
+| tiation_exceptions |                                                 |
 +--------------------+-------------------------------------------------+
-| ignore_simulation_ |                                                 |
-| exceptions         |                                                 |
+| ignore_sim         |                                                 |
+| ulation_exceptions |                                                 |
 +--------------------+-------------------------------------------------+
 | n_processes        | Number of processes in the world                |
 +--------------------+-------------------------------------------------+
@@ -485,24 +485,24 @@ Here are some of the most important parameters stored in this file:
 | spot_discount      | Spot market parameter (See                      |
 |                    | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
-| spot_market_global | Spot market parameter (See                      |
-| _loss              | http://www.yasserm.com/scml/scml2020.pdf)       |
+| spot_              | Spot market parameter (See                      |
+| market_global_loss | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
 | spot_multiplier    | Spot market parameter (See                      |
 |                    | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
-| trading_price_disc | Trading price estimation parameter (See         |
-| ount               | http://www.yasserm.com/scml/scml2020.pdf)       |
+| trad               | Trading price estimation parameter (See         |
+| ing_price_discount | http://www.yasserm.com/scml/scml2020.pdf)       |
 +--------------------+-------------------------------------------------+
 | consumers          | All consumers of every product                  |
 +--------------------+-------------------------------------------------+
 | suppliers          | All suppliers of every product                  |
 +--------------------+-------------------------------------------------+
-| publish_trading_pr | Whether to make trading prices public           |
-| ices               | information in the bulletin board               |
+| publ               | Whether to make trading prices public           |
+| ish_trading_prices | information in the bulletin board               |
 +--------------------+-------------------------------------------------+
-| publish_exogenous_ | Whether to make the summary for exogeonus       |
-| contract_summary   | contracts public information in the bulletin    |
+| publish_exogenou   | Whether to make the summary for exogeonus       |
+| s_contract_summary | contracts public information in the bulletin    |
 |                    | board                                           |
 +--------------------+-------------------------------------------------+
 

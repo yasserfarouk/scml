@@ -24,7 +24,7 @@ this brief introduction in the remainder of this tutorial.
         """Runs an agent in a world simulation against a randomly behaving agent"""
         return try_agents([RandomOneShotAgent, agent_type], n_processes)
     
-    def try_agents(agent_types, n_processes=2, n_trials=1, draw=True):
+    def try_agents(agent_types, n_processes=2, n_trials=1, draw=True, agent_params=None):
         """
         Runs a simulation with the given agent_types, and n_processes n_trial times.
         Optionally also draws a graph showing what happened
@@ -35,7 +35,7 @@ this brief introduction in the remainder of this tutorial.
         for _ in range(n_trials):
             p = n_processes if isinstance(n_processes, int) else random.randint(*n_processes)
             world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(agent_types, n_steps=10, n_processes=p), 
+            **SCML2020OneShotWorld.generate(agent_types, agent_params=agent_params, n_steps=10, n_processes=p), 
             construct_graphs=True,
             )
             world.run()
@@ -123,12 +123,12 @@ Let’s check the scores of different agents to confirm:
 
 .. parsed-literal::
 
-    Agent 00Ran@0 of type RandomOneShotAgent has a final score of 0.8416805366280785 
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.7620332621083792 
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.4006053724079518 
-    Agent 03MDN@1 of type MyOneShotDoNothing has a final score of 0.7543966224720364 
-    Agent 04Ran@1 of type RandomOneShotAgent has a final score of 0.7434688416630213 
-    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.7194748217817234 
+    Agent 00Ran@0 of type RandomOneShotAgent has a final score of 1.0079317429836847 
+    Agent 01MDN@0 of type MyOneShotDoNothing has a final score of 0.5856197729814842 
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.48093791546372755 
+    Agent 03Ran@1 of type RandomOneShotAgent has a final score of 0.8624088801846588 
+    Agent 04Ran@1 of type RandomOneShotAgent has a final score of 0.8328274979567087 
+    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.6800519966946793 
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -143,7 +143,7 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.7823942134664931), ('MyOneShotDoNothing', 0.6248256055539039)]
+    [('RandomOneShotAgent', 0.9010560403750173), ('MyOneShotDoNothing', 0.5822032283799636)]
 
 
 Notice how the do-nothing agent is even worse than acting randomly. This
@@ -179,47 +179,46 @@ market.
       <thead>
         <tr>
           <th>seller_name</th>
-          <th>00Ran@0</th>
-          <th>01Ran@0</th>
-          <th>03MDN@1</th>
+          <th colspan="2" halign="left">00Ran@0</th>
+          <th>03Ran@1</th>
           <th>04Ran@1</th>
           <th>05MDN@1</th>
           <th colspan="3" halign="left">SELLER</th>
         </tr>
         <tr>
           <th>buyer_name</th>
-          <th>04Ran@1</th>
+          <th>03Ran@1</th>
           <th>04Ran@1</th>
           <th>BUYER</th>
           <th>BUYER</th>
           <th>BUYER</th>
           <th>00Ran@0</th>
-          <th>01Ran@0</th>
+          <th>01MDN@0</th>
           <th>02MDN@0</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <th>quantity</th>
-          <td>6.9</td>
-          <td>3.5</td>
-          <td>5.7</td>
-          <td>13.1</td>
-          <td>7.4</td>
-          <td>9.8</td>
-          <td>9.0</td>
-          <td>8.5</td>
+          <td>5.625</td>
+          <td>6.111111</td>
+          <td>10.1</td>
+          <td>5.2</td>
+          <td>9.7</td>
+          <td>7.0</td>
+          <td>7.8</td>
+          <td>10.9</td>
         </tr>
         <tr>
           <th>unit_price</th>
-          <td>17.7</td>
-          <td>24.0</td>
-          <td>27.4</td>
-          <td>29.4</td>
-          <td>27.4</td>
-          <td>10.1</td>
-          <td>9.9</td>
-          <td>11.1</td>
+          <td>19.250</td>
+          <td>21.333333</td>
+          <td>28.9</td>
+          <td>31.2</td>
+          <td>29.8</td>
+          <td>10.3</td>
+          <td>9.6</td>
+          <td>10.5</td>
         </tr>
       </tbody>
     </table>
@@ -383,15 +382,15 @@ using the same base class.
 
     class GreedyOneShotAgent(OneShotAgent):
         """A greedy agent based on OneShotAgent"""
-        
+    
         def init(self):
             self.secured = 0
-                    
+    
         def step(self):
             self.secured = 0
-            
+    
         def on_negotiation_success(self, contract, mechanism):
-            self.secured += contract.agreement["quantity"]    
+            self.secured += contract.agreement["quantity"]
     
         def propose(self, negotiator_id: str, state) -> "Outcome":
             return self.best_offer(negotiator_id)
@@ -405,7 +404,7 @@ using the same base class.
                 if offer[QUANTITY] <= my_needs
                 else ResponseType.REJECT_OFFER
             )
-        
+    
         def best_offer(self, negotiator_id):
             my_needs = self._needed(negotiator_id)
             if my_needs <= 0:
@@ -424,14 +423,14 @@ using the same base class.
             if self._is_selling(ami):
                 offer[UNIT_PRICE] = unit_price_issue.max_value
             else:
-                offer[UNIT_PRICE] = unit_price_issue.min_value        
+                offer[UNIT_PRICE] = unit_price_issue.min_value
             return tuple(offer)
     
         def _needed(self, negotiator_id=None):
             return self.awi.current_exogenous_input_quantity + \
                    self.awi.current_exogenous_output_quantity - \
                    self.secured
-        
+    
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
         
@@ -451,10 +450,10 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 0.8897492308240772), ('RandomOneShotAgent', 0.819596831902848)]
+    [('GreedyOneShotAgent', 0.8614658011135294), ('RandomOneShotAgent', 0.7170864832205055)]
 
 
-This simple agent is definitely better than the random agent. Let’s
+This simple agent is slightly better than the random agent. Let’s
 understand how it works:
 
 The main idea of this agent is pretty simple. It tries to *secure* as
@@ -575,8 +574,479 @@ Let’s check it line by line:
            offer[UNIT_PRICE] = unit_price_issue.min_value
        return tuple(offer)
 
+A better greedy agent
+~~~~~~~~~~~~~~~~~~~~~
+
+One problem with our ``GreedyOneShotAgent`` is that it does not take
+price into account in two ways:
+
+-  When asked to ``propose``, it *always* proposes an offer with the
+   best price for itself. It **never concedes** on prices. In many cases
+   this will lead to disagreement.
+-  When asked to ``respond`` to an offer, *it does not even check the
+   price*. This may lead to bad agreements (i.e. very high buying
+   prices/very low selling prices).
+
+We will try to remedie both of these issues in the following agent:
+
+.. code:: ipython3
+
+    class BetterGreedyAgent(GreedyOneShotAgent):
+        """A greedy agent based on OneShotAgent with more sane strategy"""
+        
+        def __init__(self, *args, concession_exponent=0.2, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._e = concession_exponent
+    
+        def propose(self, negotiator_id: str, state) -> "Outcome":
+            offer = super().propose(negotiator_id, state)
+            if not offer:
+                return None
+            offer = list(offer)
+            offer[UNIT_PRICE] = self._find_good_price(
+                self.get_ami(negotiator_id), state
+            )        
+            return tuple(offer)
+    
+        def respond(self, negotiator_id, state, offer):
+            response = super().respond(negotiator_id, state, offer)
+            if response != ResponseType.ACCEPT_OFFER:
+                return response
+            ami = self.get_ami(negotiator_id)
+            return (
+                response if
+                self._is_good_price(ami, state, offer[UNIT_PRICE])
+                else ResponseType.REJECT_OFFER
+            )
+            
+        def _is_good_price(self, ami, state, price):
+            """Checks if a given price is good enough at this stage"""
+            mn, mx = self._price_range(ami)
+            th = self._th(state.step, ami.n_steps)        
+            # a good price is one better than the threshold
+            if self._is_selling(ami):
+                return (price - mn) >= th * (mx - mn)
+            else:
+                return (mx - price) >= th * (mx - mn)
+        
+        def _find_good_price(self, ami, state):
+            """Finds a good-enough price conceding linearly over time"""        
+            mn, mx = self._price_range(ami)
+            th = self._th(state.step, ami.n_steps)
+            # offer a price that is around th of your best possible price
+            if self._is_selling(ami):
+                return mn + th * (mx - mn)
+            else:
+                return mx - th * (mx - mn)
+        
+        def _price_range(self, ami):
+            """Finds the minimum and maximum prices"""
+            mn = ami.issues[UNIT_PRICE].min_value
+            mx = ami.issues[UNIT_PRICE].max_value           
+            return mn, mx
+        
+        def _th(self, step, n_steps):
+            """calculates a descending threshold (0 <= th <= 1)"""
+            return ((n_steps - step - 1) / (n_steps - 1)) ** self._e    
+            
+    world, ascores, tscores = try_agent(BetterGreedyAgent)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_17_0.png
+
+
+Let’s see how well did this agent behave:
+
+.. code:: ipython3
+
+    print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('BetterGreedyAgent', 1.2292203272783455), ('RandomOneShotAgent', -0.47076647551927664)]
+
+
+It seems that ``BetterGreedyAgent`` is getting higher scores than
+``GreedyOneShotAgent`` as expected. Let’s dive into the agent and
+analyze how it works:
+
+The main idea in ``BetterGreedyAgent`` is to treat the *price* issue
+separately to avoid the two issues presented earlier:
+
+-  **Never conceding during proposal** This is solved in the ``propose``
+   method by just overriding the price with a ``good-enough`` price:
+
+   .. code:: python
+
+        offer[UNIT_PRICE] = self._find_good_price(
+                self.get_ami(negotiator_id), state
+            )        
+
+   As an aside, notice that we needed to convert the offer to a list in
+   order to overwrite the price then back into a tuple to send it to the
+   partner.
+
+-  **Never checking prices of offers** This is solved in the ``respond``
+   method by checking whether or not the price offered is a
+   ``good-enough`` price:
+
+   .. code:: python
+
+        return (
+                response if
+                self._is_good_price(ami, state, offer[UNIT_PRICE])
+                else ResponseType.REJECT_OFFER
+            )
+
+What we mean by a ``good-enough`` price is defined in ``_is_good_price``
+and ``_find_good_price`` methods. Both start by getting the limits of
+the unit-price in the negotiation agenda and a threshold value ``th``:
+
+.. code:: python
+
+   mn, mx = self._price_range(ami, state)
+   th = self._th(mn, mx, state.step, ami.n_steps)
+
+The price range is clear enough. For the threshold ``th`` is a value
+that starts at :math:`1.0` and goes down toward :math:`0.0` over the
+negotiation time under the control of an agent specific parameter ``_e``
+called the concession exponent. Let’s see how does this look for
+different concession exponents:
+
+.. code:: ipython3
+
+    x = np.arange(20)
+    fig = plt.figure()
+    for e in [0.1, 0.2, 1.0, 5, 10]:
+        a = BetterGreedyAgent(concession_exponent=e)
+        y = [a._th(i, 20) for i in x]
+        plt.plot(x, y, label=f"Concession Exponent: {e}")
+        plt.xlabel("Step (Of 20)"); plt.ylabel("Threshold $th$")
+        plt.legend()
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_21_0.png
+
+
+You can see that the smaller the exponent the more *hard-headed* will
+the agent be. Setting the concession exponent to :math:`0` will recover
+the behavior of the ``GreedyOneShotAgent`` in offering but will make it
+insisting on an unrealistic best price when responding to partner offers
+(can you see why?) which is definitely a bad idea. Setting it to
+:math:`\inf` will recover the behavior of ``GreedyOneShotAgent`` in
+responding to offers but will make its offers least favorable for itself
+in terms of price (can you see why?)
+
+Given this threshold function, we can now define ``is_good_price`` and
+``_find_good_price``:
+
+-  ``_is_good_price`` simply compares the price given to it to the
+   current threshold defined by multiplying ``th`` by the price
+   range\ ``mx - mn``
+
+   -  When selling this is achieved by comparing the difference between
+      the price and minimum price to the curren threshold:
+
+   .. code:: python
+
+      return (price - mn) >= th * (mx - mn)
+
+   You can check that this will give the maximum unit price in the first
+   step and gradually goes down to the minimum unit price in the last
+   step (``n_steps - 1``)
+
+   -  When buying we go the other way around (starting at minimum price
+      and going up over time to the maximum price):
+
+   .. code:: python
+
+      return (mx - price) >= th * (mx - mn)
+
+-  ``_find_good_price`` works in the same fashion but rather than
+   checking the goodness of a price, it simply uses the threshold to
+   generate a ``good-enough`` price:
+   ``python     if self._is_selling(ami):         return mn + th * (mx - mn)     else:         return mx - th * (mx - mn)``
+
+Thinking about other negotiations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+So far, our agent behaved **indepdendently** in each negotiation without
+considering what is happening in the others (except when one of them
+completes changing the amount ``secured``). A simple way to consider
+other negotiations is to use the prices offered in them to limit our
+concessions. The following agent implements this idea
+
+.. code:: ipython3
+
+    class AdaptiveGreedyAgent(BetterGreedyAgent):
+        """Considers best price offers received when making its decisions"""
+    
+        def init(self):
+            super().init()
+            self._best_selling, self._best_buying = 0.0, float("inf")
+        
+        def step(self):
+            super().step()
+            self._best_selling, self._best_buying = 0.0, float("inf")
+                         
+        def respond(self, negotiator_id, state, offer):
+            """Save the best price received"""
+            response = super().respond(negotiator_id, state, offer)
+            ami = self.get_ami(negotiator_id)
+            if self._is_selling(ami):
+                self._best_selling = max(offer[UNIT_PRICE], self._best_selling)
+            else:
+                self._best_buying = min(offer[UNIT_PRICE], self._best_buying)
+            return response
+        
+        def _price_range(self, ami):
+            """Limits the price by the best price received"""
+            mn, mx = super()._price_range(ami)
+            if self._is_selling(ami):
+                mn = max(mn, self._best_selling)
+            else:
+                mx = min(mx, self._best_buying)
+            return mn, mx
+    
+    world, ascores, tscores = try_agent(AdaptiveGreedyAgent)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_23_0.png
+
+
+Let’s see how well did this agent behave:
+
+.. code:: ipython3
+
+    print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('AdaptiveGreedyAgent', 1.2006214283616197), ('RandomOneShotAgent', 0.06261871855752332)]
+
+
+Not as good as the previous agent at least in this simulation (we will
+make a more rigorous comparison later). One possiblity here is that the
+agent became too hard-headed again because now whenever it sees a good
+price on one negotiation, it insists on it for all the rest. This may
+not be a good idea sometimes as it may lead to more disagreements. In
+general *the agent must balance getting good prices with matching its
+input and output quantities*.
+
+Learning over time
+~~~~~~~~~~~~~~~~~~
+
+Up until now, our simple agents did not change their behavior over
+simulation time. Whatever they do in one day depends only on information
+about what is happening on that day. This may not be optimal. For one,
+the agent may be able to learn about different partners over the
+simulation time. The following agent tries to do that in a *simplistic*
+manner by changing the limits of the price it is willing to accept based
+on accomulated statistics per agent
+
+.. code:: ipython3
+
+    class LearningGreedyAgent(AdaptiveGreedyAgent):
+        def __init__(
+            self,
+            *args,
+            acc_price_slack=float("inf"),
+            step_price_slack=0.0,
+            opp_price_slack=0.0,
+            opp_acc_price_slack=0.2,
+            range_slack = 0.03,
+            **kwargs
+        ):
+            super().__init__(*args, **kwargs)
+            self._acc_price_slack = acc_price_slack
+            self._step_price_slack = step_price_slack
+            self._opp_price_slack = opp_price_slack
+            self._opp_acc_price_slack = opp_acc_price_slack
+            self._range_slack = range_slack
+    
+        def init(self):
+            """Initialize the quantities and best prices received so far"""
+            super().init()
+            self._best_acc_selling, self._best_acc_buying = 0.0, float("inf")
+            self._best_opp_selling = defaultdict(float)
+            self._best_opp_buying = defaultdict(lambda: float("inf"))
+            self._best_opp_acc_selling = defaultdict(float)
+            self._best_opp_acc_buying = defaultdict(lambda: float("inf"))        
+    
+        def step(self):
+            """Initialize the quantities and best prices received for next step"""
+            super().step()
+            self._best_opp_selling = defaultdict(float)
+            self._best_opp_buying = defaultdict(lambda: float("inf"))
+    
+        def on_negotiation_success(self, contract, mechanism):
+            """Record sales/supplies secured"""
+            super().on_negotiation_success(contract, mechanism)
+    
+            # update my current best price to use for limiting concession in other
+            # negotiations
+            up = contract.agreement["unit_price"]
+            if self._is_selling(mechanism):
+                partner = contract.annotation["buyer"]
+                self._best_acc_selling = max(up, self._best_acc_selling)
+                self._best_opp_acc_selling[partner] = max(up, self._best_opp_acc_selling[partner])
+            else:
+                partner = contract.annotation["seller"]
+                self._best_acc_buying = min(up, self._best_acc_buying)
+                self._best_opp_acc_buying[partner] = min(up, self._best_opp_acc_buying[partner])
+    
+        def respond(self, negotiator_id, state, offer):
+            # find the quantity I still need and end negotiation if I need nothing more
+            response = super().respond(negotiator_id, state, offer)
+            # update my current best price to use for limiting concession in other
+            # negotiations
+            ami = self.get_ami(negotiator_id)
+            up = offer[UNIT_PRICE]
+            if self._is_selling(ami):
+                partner = ami.annotation["buyer"]
+                self._best_opp_selling[partner] = max(up, self._best_selling)
+            else:
+                partner = ami.annotation["seller"]
+                self._best_opp_buying[partner] = min(up, self._best_buying)
+            return response
+        
+        def _price_range(self, ami):
+            """Limits the price by the best price received"""
+            mn = ami.issues[UNIT_PRICE].min_value
+            mx = ami.issues[UNIT_PRICE].max_value
+            if self._is_selling(ami):
+                partner = ami.annotation["buyer"]
+                mn = min(mx * (1 - self._range_slack), max(
+                    [mn]
+                    + [
+                        p * (1 - slack)
+                        for p, slack in (
+                            (self._best_selling, self._step_price_slack),
+                            (self._best_acc_selling, self._acc_price_slack),
+                            (self._best_opp_selling[partner], self._opp_price_slack),
+                            (
+                                self._best_opp_acc_selling[partner],
+                                self._opp_acc_price_slack,
+                            ),
+                        )
+                    ]
+                ))
+            else:
+                partner = ami.annotation["seller"]
+                mx = max(mn * (1 + self._range_slack),  min(
+                    [mx]
+                    + [
+                        p * (1 + slack)
+                        for p, slack in (
+                            (self._best_buying, self._step_price_slack),
+                            (self._best_acc_buying, self._acc_price_slack),
+                            (self._best_opp_buying[partner], self._opp_price_slack),
+                            (
+                                self._best_opp_acc_buying[partner],
+                                self._opp_acc_price_slack,
+                            ),
+                        )
+                    ]
+                ))
+            return mn, mx
+    
+    world, ascores, tscores = try_agent(LearningGreedyAgent)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_28_0.png
+
+
+.. code:: ipython3
+
+    print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('LearningGreedyAgent', 1.4040493819013087), ('RandomOneShotAgent', 0.7958093059983768)]
+
+
+The main idea of this agent is to limit the minimum price (for selling)
+and/or maximum price (for buying) based on events not only in this day
+but up until now. To do that, the agent accomulates best prices received
+in the same way ``AdaptiveGreedyAgent`` did in ``init()`` and
+``step()``.
+
+There are four simple differences between this agent and the previous
+one:
+
+1. It allows a controlled ``slack`` in price constraining. For example,
+   if an agent of this type received a selling price of :math:`10`, it
+   will limit the minimum price considered *good-enough* in other
+   negotiations to :math:`10 \times (1 - s)` where :math:`s` is the
+   slack term (e.g. setting :math:`s=0.1`, leads to accepting offers at
+   a price of :math:`9` as good enough). This may give the agent more
+   flexibility and most importantly, this parameter **can be learned
+   offline using any appropriate ML method**
+2. A best price **per partner** is kept in a ``defaultdict()`` that is
+   initialized in ``init`` and updated in the same way the *partner
+   independent* best prices are updated
+3. An ``accumulated`` statistic is kept (one for wll agents and one per
+   agent) that is only initialized in ``init()`` and keeps being
+   adjusted in ``on_negotiation_success`` without being reset in
+   ``step()``
+4. It keeps a ``range_slack`` to avoid setting too high minimum (or too
+   low maximum) price. In effect, if the ``range_slack`` is :math:`x`
+   then prices within the best :math:`100x\%` of the best price are
+   *always considered good enough*
+
+The main logic is in ``_price_range()``. As usual, it starts by getting
+the price range from the ``AMI``:
+
+.. code:: python
+
+   mn = ami.issues[UNIT_PRICE].min_value
+   mx = ami.issues[UNIT_PRICE].max_value
+
+If the agent is a seller, it finds the partner ID:
+
+.. code:: python
+
+   partner = ami.annotation["buyer"]
+
+Now that the partner is known, we can read the best offers received so
+far (in this day and over all days) for this partner. We can also
+retrieve the corresponding two partner-independent best prices with the
+corresponding slacks:
+
+.. code:: python
+
+   (
+       (self._best_selling, self._step_price_slack),
+       (self._best_acc_selling, self._acc_price_slack),
+       (self._best_opp_selling[partner], self._opp_price_slack),
+       (
+           self._best_opp_acc_selling[partner],
+           self._opp_acc_price_slack,
+       ),
+   )
+
+For each price :math:`p` and slack value :math:`slack`, we find the
+corrsponding price limit as:
+
+.. code:: python
+
+   p * (1 - slack)
+
+We then set the *good-enough* price limit to be the **maximum** of these
+four prices and the minimum price of the current negotiation (adjusted
+by the ``range_slack`` value). Finally we make sure that this is not too
+high by taking the **minimum** of this value and the maximum price of
+the current negotiation.
+
 More General Greedy Agent (advanced)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. container::
 
@@ -666,18 +1136,19 @@ divided equally between us and our competitors (we add one to
 Now, let’s see how does this agent behave compared with the previous
 agent in a deep world simulation
 
+
 .. code:: ipython3
 
-    world, ascores, tscores = try_agents([GreedyOneShotAgent, DeepGreedyAgent], n_processes=3)
+    world, ascores, tscores = try_agents([BetterGreedyAgent, DeepGreedyAgent], n_processes=3)
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_18_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_35_0.png
 
 
 Examining the graph above, you can see that ``DeepGreedy`` agents could
 get contracts when they were in the middle of the production chain. The
-``GreedyOneShot`` agent on the other hand failed to do so.
+``GreedyOneShot`` agent on the other hand cannot do so.
 
 Agents in the package ``scml.oneshot.agents`` were designed to work in
 deep production graphs not only in the first and last layer whenever
@@ -692,7 +1163,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 0.7637690637770452), ('DeepGreedyAgent', 0.7229505469204262)]
+    [('BetterGreedyAgent', 0.8520866342970472), ('DeepGreedyAgent', 0.3637648953603516)]
 
 
 Even though our new ``DeepGreedyAgent`` was able to get contracts which
@@ -719,9 +1190,24 @@ introduce two other optional alternatives
 OneShotSyncAgent
 ~~~~~~~~~~~~~~~~
 
-The main goal of this base agent is to allow the developer to think
-about *all negotiations together* but it has some important caveats
-which we will discuss later. Here is an example of writing the
+One problem that plagued all of our agents so far is that they have to
+make decisions (``respond``, ``propose``) about negotiations **on the
+spot**. This makes it difficult to consider **all other negotiations**
+while making decisions.
+
+Because the utility function is defined for **a complete set of
+negotiation agreements** and not for any single negotiation by itself,
+it makes sense to try to make decisions **centrally** by collecting
+offers from partners then responding to all of them at once. It is
+possible to do that by utilizing the response type ``ResponseType.WAIT``
+supported by NegMAS but this entails a lot of house-keeping.
+
+To simplify this task, we provide another base class for agents that
+does all of this house keeping for you exposing a simple interface that
+**syncrhonizes** all negotiations (as much as allowed by the underlying
+platform). The main goal of this base agent is to allow the developer to
+think about *all negotiations together* but it has some important
+caveats which we will discuss later. Here is an example of writing the
 do-nothing agent in this form:
 
 .. code:: ipython3
@@ -747,7 +1233,7 @@ do-nothing agent in this form:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_24_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_41_0.png
 
 
 As you can see, in this case, we need to override ``counter_all`` to
@@ -783,10 +1269,10 @@ greedy agent using this approach.
 
 .. code:: ipython3
 
-    class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
+    class GreedySyncAgent(OneShotSyncAgent, BetterGreedyAgent):
         """A greedy agent based on OneShotSyncAgent"""
         
-        def __init__(self, *args, threshold=0.3, **kwargs):
+        def __init__(self, *args, threshold=0.5, **kwargs):
             super().__init__(*args, **kwargs)
             self._threshold = threshold
         
@@ -798,7 +1284,7 @@ greedy agent using this approach.
         def first_proposals(self):
             """Decide a first proposal on every negotiation. 
             Returning None for a negotiation means ending it."""
-            return dict(zip(
+            return  dict(zip(
                     self.negotiators.keys(), 
                     (self.best_offer(_) for _ in self.negotiators.keys())
             ))
@@ -806,7 +1292,7 @@ greedy agent using this approach.
         def counter_all(self, offers, states):
             """Respond to a set of offers given the negotiation state of each."""
             responses = {
-                k: SAOResponse(ResponseType.REJECT_OFFER, _) 
+                k: SAOResponse(ResponseType.REJECT_OFFER, v) 
                 for k, v in self.first_proposals().items()
             }
             my_needs = self._needed()
@@ -829,14 +1315,14 @@ greedy agent using this approach.
             threshold = self._threshold * rng + self.ufun.min_utility
             if u >= threshold:
                 for k, v in chosen.items():
-                    responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
+                    responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)                
             return responses
         
     world, ascores, tscores = try_agent(GreedySyncAgent)
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_27_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_44_0.png
 
 
 This agent shows a case of parameterizing your agent so that it can be
@@ -966,7 +1452,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 0.9852701464598985), ('RandomOneShotAgent', 0.6102910363641216)]
+    [('GreedySyncAgent', 0.9013442415312164), ('RandomOneShotAgent', 0.6496846910005512)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1079,7 +1565,7 @@ Here is the full agent
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_32_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_49_0.png
 
 
 .. code:: ipython3
@@ -1089,7 +1575,7 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.7017026300645176), ('GreedySingleAgreementAgent', 0.6528520083452068)]
+    [('RandomOneShotAgent', 0.869469629333418), ('GreedySingleAgreementAgent', 0.2876309454313417)]
 
 
 Comparing all agents
@@ -1112,7 +1598,7 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('GreedyOneShotAgent', 0.801002396978831), ('GreedySyncAgent', 0.7538398054634171), ('GreedySingleAgreementAgent', 0.5200378476376494)]
+    [('GreedySyncAgent', 0.9544933872871035), ('GreedyOneShotAgent', 0.8577331084713194), ('GreedySingleAgreementAgent', 0.6238889124800848)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1144,6 +1630,10 @@ in this tutorial:
 Running SCML2020 agents (advanced)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. container::
+
+   This section is not necessary for SCML-OneShot 2021 competition.
+
 The SCML-OneShot game is much simpler than the full SCML2020 game used
 in the ANAC 2020 SCML league or the ANAC 2021 SCML standard and
 collusion tracks. Nevertheless, we provide an out-of-the-box adapter
@@ -1155,15 +1645,11 @@ track (with some rough edges). Let’s try to do that here:
     from scml.scml2020.agents import BuyCheapSellExpensiveAgent, DecentralizingAgent
     from scml.oneshot.agents import SingleAgreementAspirationAgent
     _, _, tscores = try_agents(
-    [DeepGreedyAgent, GreedySyncAgent, SingleAgreementAspirationAgent, BuyCheapSellExpensiveAgent, DecentralizingAgent],
+    [DeepGreedyAgent, BetterGreedyAgent, LearningGreedyAgent, AdaptiveGreedyAgent, GreedySyncAgent, SingleAgreementAspirationAgent, BuyCheapSellExpensiveAgent, DecentralizingAgent],
     n_processes = 4,
     n_trials = 10,
+    draw = False,
     )
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_39_0.png
-
 
 .. code:: ipython3
 
@@ -1172,7 +1658,7 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('GreedySyncAgent', 1.018335443084986), ('SingleAgreementAspirationAgent', 0.7614494246908874), ('DecentralizingAgent', 0.6015120861290689), ('BuyCheapSellExpensiveAgent', 0.5302932279961229), ('DeepGreedyAgent', 0.3800616570232499)]
+    [('LearningGreedyAgent', 0.9419733640092363), ('AdaptiveGreedyAgent', 0.8917391255536419), ('GreedySyncAgent', 0.860911841510035), ('BetterGreedyAgent', 0.8470075297765208), ('SingleAgreementAspirationAgent', 0.736091755913266), ('DeepGreedyAgent', 0.5479954383578245), ('DecentralizingAgent', 0.5128701548996241), ('BuyCheapSellExpensiveAgent', 0.48424398371160926)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to
