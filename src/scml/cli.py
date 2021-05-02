@@ -74,6 +74,19 @@ def default_log_path():
     return Path.home() / "negmas" / "logs"
 
 
+DB_FOLDER = default_log_path().parent / "runsdb"
+DB_NAME = "rundb.csv"
+
+
+def save_run_info(name: str, log_path: Path, type_: str="world", path: Path = DB_FOLDER):
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        with open(path / DB_NAME, "a") as f:
+            f.write(f"{name},{type_},{str(log_path)}\n")
+    except Exception as e:
+        print(f"Failed to save run info: {str(e)}")
+
+
 def default_tournament_path():
     """The default path to store tournament run info"""
     return default_log_path() / "tournaments"
@@ -745,6 +758,7 @@ def tournament2020(
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
     print(f"Finished in {end_time}")
+    save_run_info(name, results.path, "tournament")
 
 
 def display_results(results, metric, file_name=None):
@@ -1116,6 +1130,8 @@ def run2019(
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
+    # else:
+    #     save_run_info(world.name, log_path=log_dir)
 
 
 @main.command(help="Run an SCML2020 world simulation")
@@ -1409,6 +1425,8 @@ def run2020(
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
+    else:
+        save_run_info(world.name, log_dir, "world")
 
 
 DEFAULT_STD = (
@@ -1727,6 +1745,8 @@ def run2021(
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
+    else:
+        save_run_info(world.name, log_dir, "world")
 
 
 @main.command(help="Runs an SCML2020 tournament")
@@ -2299,6 +2319,7 @@ def tournament2021(
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
     print(f"Finished in {end_time}")
+    save_run_info(name, results.path, "tournament")
 
 
 @main.command(help="Prints SCML version and NegMAS version")
