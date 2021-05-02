@@ -1702,25 +1702,25 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         is_buy = True
         if extra is None:
             extra = dict()
-        if is_buy:
-            buyer, seller = agent, self.agents[partner]
-        else:
-            seller, buyer = agent, self.agents[partner]
-        if product != self.agent_profiles[buyer.id].input_product:
-            self.logerror(
-                f"Buyer {buyer.id} wants to buy {product} but its input is different"
-            )
-        if product != self.agent_profiles[seller.id].output_product:
-            self.logerror(
-                f"Seller {seller.id} wants to sell {product} but its output is different"
-            )
-        if (
-            self.agent_profiles[buyer.id].input_product
-            == self.agent_profiles[seller.id].input_product
-        ):
-            self.logerror(
-                f"Seller {seller.id} and buyer {buyer.id} are in the same level ({self.agent_profiles[buyer.id].input_product})"
-            )
+        # if is_buy:
+        #     buyer, seller = agent, self.agents[partner]
+        # else:
+        #     seller, buyer = agent, self.agents[partner]
+        # if product != self.agent_profiles[buyer.id].input_product:
+        #     self.logerror(
+        #         f"Buyer {buyer.id} wants to buy {product} but its input is different"
+        #     )
+        # if product != self.agent_profiles[seller.id].output_product:
+        #     self.logerror(
+        #         f"Seller {seller.id} wants to sell {product} but its output is different"
+        #     )
+        # if (
+        #     self.agent_profiles[buyer.id].input_product
+        #     == self.agent_profiles[seller.id].input_product
+        # ):
+        #     self.logerror(
+        #         f"Seller {seller.id} and buyer {buyer.id} are in the same level ({self.agent_profiles[buyer.id].input_product})"
+        #     )
         self.logdebug(
             f"{agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
             f" q: {quantity}, u: {unit_price}, t: {time}"
