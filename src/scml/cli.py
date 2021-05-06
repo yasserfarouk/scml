@@ -1436,9 +1436,10 @@ DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.agents.RandomOne
 # DEFAULT_STD_2021 = (
 #     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
 # )
-DEFAULT_ONESHOT = "scml.scml2020.agents.DecentralizingAgent;RandomOneShotAgent;SyncRandomOneShotAgent;SingleAgreementRandomAgent;SingleAgreementAspirationAgent"
+DEFAULT_ONESHOT = "scml.scml2020.agents.DecentralizingAgent;GreedyOneShotAgent;GreedySyncAgent;SingleAgreementAspirationAgent"
 DEFAULT_ONESHOT_FULL = [
     "scml.oneshot.agents.RandomOneShotAgent",
+    "scml.oneshot.agents.GreedyOneShotAgent",
     "scml.oneshot.agents.SingleAgreementAspirationAgent",
 ]
 
