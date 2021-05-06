@@ -6,6 +6,7 @@ from random import random
 from random import shuffle
 
 import numpy as np
+from scipy.stats import tmean
 from negmas import Agent
 from negmas.helpers import get_full_type_name
 from negmas.helpers import unique_name
@@ -1066,6 +1067,60 @@ def anac2020_collusion(
     )
 
 
+def truncated_mean(
+    scores: np.ndarray,
+    limits: Optional[Tuple[float, float]] = None,
+    top_fraction=0.05,
+    bottom_fraction=0.0,
+    base="iqr",
+):
+    """
+    Calculates the truncated mean
+
+    Args:
+        scores: A list of scores for which to calculate the truncated mean
+        limits: The limits to use for trimming the scores. If not given, they will
+                be calculated based on `top_fraction`, `bottom_fraction` and `base.`
+                You can pass the special value "mean" as a string to disable limits and
+                calcualte the mean. You can pass the special value "median" to calculate
+                the median (which is the same as passing top_fraction==bottom_fraction=0.5
+                and base == "scores").
+        top_fraction: Relative fraction of the data to remove at the top (see `base` ).
+                      Only used if `limits` is None
+        bottom_fraction: Relative fraction of the data to remove from the bottom (see `base` )
+                         Only used if `limits` is None
+        base: The base for calculating the limits used to apply the `top_fraction` and `bottom_fraction`.
+              Possible values are:
+
+              - iqr: the fraction is interpreted as the fraction of scores above/below the 1st/3rd qauntile
+              - scores: the fraction is interpreted as fraction of highest and lowest scores
+    """
+    scores = np.asarray(scores)
+    if isinstance(limits, str) and limits.lower() == "mean":
+        return tmean(scores, None)
+    if isinstance(limits, str) and limits.lower() == "median":
+        return np.median(scores)
+    if limits is not None:
+        return np.mean(scores)
+
+    if base == "iqr":
+        limits = (np.quantile(scores, 0.25), np.quantile(scores, 0.75))
+        high = np.sort(scores[scores > limits[1]])
+        low = np.sort(scores[scores < limits[0]])[::-1]
+        limits = (
+            low[int(len(low) * bottom_fraction)],
+            high[int(len(high) * top_fraction)],
+        )
+    elif base == "scores":
+        limits = (
+            np.quantile(scores, bottom_fraction),
+            np.quantile(scores, 1 - top_fraction),
+        )
+    else:
+        raise ValueError(f"Unknown base for truncated_mean ({base})")
+    return tmean(scores, limits)
+
+
 def anac2021_tournament(
     competitors: Sequence[Union[str, Type[SCML2020Agent]]],
     agent_names_reveal_type=False,
@@ -1266,7 +1321,7 @@ def anac2021_std(
         score_calculator=balance_calculator2021,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
-        metric="median",
+        metric=truncated_mean,
         n_competitors_per_world=n_competitors_per_world,
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
@@ -1343,7 +1398,7 @@ def anac2021_collusion(
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
         exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
-                                 between 2 and min(2, n), where n is the number of competitors. This value will 
+                                 between 2 and min(2, n), where n is the number of competitors. This value will
                                  always be set to 1 in SCML2021
         verbose: Verbosity
         configs_only: If true, a config file for each
@@ -1392,7 +1447,7 @@ def anac2021_collusion(
         score_calculator=balance_calculator2021,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
-        metric="median",
+        metric=truncated_mean,
         n_competitors_per_world=n_competitors_per_world,
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
@@ -1525,7 +1580,7 @@ def anac2021_oneshot(
         score_calculator=balance_calculator2021oneshot,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
-        metric="median",
+        metric=truncated_mean,
         n_competitors_per_world=n_competitors_per_world,
         dynamic_non_competitors=dynamic_non_competitors,
         dynamic_non_competitor_params=dynamic_non_competitor_params,
