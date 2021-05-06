@@ -1108,8 +1108,8 @@ def truncated_mean(
         high = np.sort(scores[scores > limits[1]])
         low = np.sort(scores[scores < limits[0]])[::-1]
         limits = (
-            low[int(len(low) * bottom_fraction)],
-            high[int(len(high) * top_fraction)],
+            low[int(len(low) * bottom_fraction)] if len(low) > 0 else float("-inf"),
+            high[int(len(high) * top_fraction)] if len(high) > 0 else float("inf"),
         )
     elif base == "scores":
         limits = (
