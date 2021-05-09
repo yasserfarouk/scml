@@ -305,6 +305,7 @@ def test_graphs_lead_to_no_unknown_nodes():
     )
 )
 @settings(deadline=300_000, max_examples=30)
+# @reproduce_failure('6.12.0', b'AAEEAQ4A')
 def test_adapter(atype):
     world = SCML2021World(
         **SCML2021World.generate(agent_types=atype, n_steps=10),

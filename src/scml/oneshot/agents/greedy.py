@@ -32,6 +32,8 @@ class GreedyOneShotAgent(OneShotAgent):
                          prices I got so far from a given opponent in this step
         opp_acc_price_slack: The allowed slack in price limits compared with best
                          prices I got so far from a given opponent so far
+        range_slack: Always consider prices above (1-`range_slack`) of the best
+                     possible prices *good enough*.
     Remarks:
         - A `concession_exponent` greater than one makes the agent concede
           super linearly and vice versa
