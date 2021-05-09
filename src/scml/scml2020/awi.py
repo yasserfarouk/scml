@@ -86,6 +86,7 @@ class AWI(AgentWorldInterface):
           - *n_output_negotiations*: Number of negotiations with consumers.
           - *state*: The full state of the agent ( `FactoryState` ).
           - *current_balance*: The current balance of the agent
+          - *current_inventory*: The current inventory of the agent (quantity per product)
 
     Dynamic World Information:
         Information about the world and the agent that changes over time.
@@ -519,6 +520,11 @@ class AWI(AgentWorldInterface):
     def current_balance(self):
         """Current balance of the agent"""
         return self.state.balance
+
+    @property
+    def current_inventory(self):
+        """Current inventory of the agent"""
+        return self.state.inventory
 
     def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
         """Returns a dictionary mapping time-steps to financial reports of the given agent"""
