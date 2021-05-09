@@ -258,13 +258,15 @@ class Factory:
         possible = min(repeats, len(steps))
         if possible < repeats:
             return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
-        if method.startswith("l"):
-            steps, lines = steps[-possible + 1 :], lines[-possible + 1 :]
-        elif method == "all":
-            pass
-        else:
-            steps, lines = steps[:possible], lines[:possible]
-
+        try:
+            if method.startswith("l"):
+                steps, lines = steps[-possible + 1 :], lines[-possible + 1 :]
+            elif method == "all":
+                pass
+            else:
+                steps, lines = steps[:possible], lines[:possible]
+        except:
+            return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         return steps, lines
 
     def cancel_production(self, step: int, line: int) -> bool:
