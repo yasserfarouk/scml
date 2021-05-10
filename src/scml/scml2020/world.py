@@ -744,8 +744,12 @@ class SCML2020World(TimeInAgreementMixin, World):
                     k: dict(
                         costs=v.costs.tolist(),
                         n_lines=v.n_lines,
-                        input_product=int(v.input_products[0] if v.input_products else -1),
-                        output_product=int(v.output_products[0] if v.output_products else -1),
+                        input_product=int(
+                            v.input_products[0] if v.input_products else -1
+                        ),
+                        output_product=int(
+                            v.output_products[0] if v.output_products else -1
+                        ),
                     )
                     for k, v in self.agent_profiles.items()
                 }
@@ -1593,15 +1597,17 @@ class SCML2020World(TimeInAgreementMixin, World):
         ), f"at {self.current_step} Seller has {seller_factory._inventory[product]} but will execute {q} ({'breached' if has_breaches else 'no breaches'})"
         assert (
             buyer_factory._balance - self.bankruptcy_limit >= u * q
-        ), f"at {self.current_step}Buyer has {buyer_factory._balance} (bankrupt at {self.bankruptcy_limit}) but we need q={q} * u={u}  ({'breached' if has_breaches else 'no breaches'})"
+        ), f"at {self.current_step} Buyer has {buyer_factory._balance} (bankrupt at {self.bankruptcy_limit}) but we need q={q} * u={u}  ({'breached' if has_breaches else 'no breaches'})"
         bought, buy_cost = buyer_factory.buy(product, q, u, False, 0.0)
         sold, sell_cost = seller_factory.buy(product, -q, u, False, 0.0)
+        # if bought != sold:
+        #     breakpoint()
         assert (
             bought == sold
-        ), f"Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})"
+        ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})"
         assert (
             buy_cost + sell_cost == 0
-        ), f"Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})"
+        ), f"Step: {self.current_step} Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})"
         if bought == 0:
             return
         oldq = self._sold_quantity[product, self.current_step + 1]

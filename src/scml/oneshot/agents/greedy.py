@@ -196,9 +196,9 @@ class GreedyOneShotAgent(OneShotAgent):
         th = self._th(state.step, ami.n_steps)
         # offer a price that is around th of your best possible price
         if self._is_selling(ami):
-            return mn + th * (mx - mn)
+            return int(mn + th * (mx - mn))
         else:
-            return mx - th * (mx - mn)
+            return int(mx - th * (mx - mn))
 
     def _price_range(self, ami):
         """Limits the price by the best price received"""
@@ -244,7 +244,7 @@ class GreedyOneShotAgent(OneShotAgent):
                     ]
                 ),
             )
-        return mn, mx
+        return int(mn), int(mx)
 
     def _th(self, step, n_steps):
         """calculates a descending threshold (0 <= th <= 1)"""

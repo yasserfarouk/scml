@@ -409,7 +409,7 @@ class Factory:
         if available + quantity >= 0:
             self._inventory[product] += quantity
             self.inventory_changes[product] += quantity
-            return quantity if quantity > 0 else -quantity
+            return int(quantity if quantity > 0 else -quantity)
         # we have an inventory breach here. We know that quantity < 0
         assert quantity < 0
         quantity = -quantity
@@ -422,7 +422,7 @@ class Factory:
             self.pay(to_pay, no_bankruptcy, no_borrowing)
             self._inventory[product] = 0
             self.inventory_changes[product] -= available
-            return available
+            return int(available)
         # we have an inventory breach and should try to buy missing quantity from the spot market
         effective_unit = self.spot_price(product, spot_price)
         effective_total = (quantity - available) * effective_unit
@@ -437,7 +437,7 @@ class Factory:
         self._inventory[product] += paid_for
         self.inventory_changes[product] += paid_for
         self.store(product, -quantity, False, 0.0, True, True)
-        return paid_for
+        return int(paid_for)
 
     def buy(
         self,
