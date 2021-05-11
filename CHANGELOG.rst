@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4.2 (2021.5.10)
+-----------------
+* [bugfix] Avoiding an error if an agent gave a fractional unit-price
+* [bugfix] avoiding a test failure in CI that cannt be reproduced (I hate doing that :-( )
+* [bugfix] added current_inventory to 2020's awi fixes $31
+* [cli] Changing default agents for oneshot in cli
+* [tournament] adding truncated-mean as an evaluation criterion and making it the default for scml2021
+
 0.4.1 (2021.5.2)
 -----------------
 **This is an important update. All participants in SCML 2021 should upgrade
