@@ -106,7 +106,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # breach processing parameters
         financial_report_period=5,
         bankruptcy_limit=0.0,
-        penalties_scale="unit",
+        penalize_bankrupt_for_future_contracts=True,
+        penalties_scale="trading",
         # external contracts parameters
         exogenous_contracts: Collection[OneShotExogenousContract] = tuple(),
         exogenous_dynamic: bool = False,
@@ -151,6 +152,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.publish_exogenous_summary = publish_exogenous_summary
         self.price_multiplier = price_multiplier
         self.publish_trading_prices = publish_trading_prices
+        self.penalize_bankrupt_for_future_contracts = penalize_bankrupt_for_future_contracts
         self.agent_disposal_cost: Dict[str, List[float]] = dict()
         self.agent_shortfall_penalty: Dict[str, List[float]] = dict()
         kwargs["log_to_file"] = not no_logs
@@ -214,6 +216,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             "settings", financial_report_period, "financial_report_period"
         )
         self.bulletin_board.record(
+            "settings", penalize_bankrupt_for_future_contracts, "penalize_bankrupt_for_future_contracts"
+        )
+        self.bulletin_board.record(
             "settings", exogenous_force_max, "exogenous_force_max"
         )
         # self.bulletin_board.record("settings", disposal_cost, "ufun_disposal_cost")
@@ -256,6 +261,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             agent_params_final=[copy.deepcopy(_) for _ in agent_params],
             initial_balance_final=initial_balance,
             penalties_scale_final=penalties_scale,
+            penalize_bankrupt_for_future_contracts=penalize_bankrupt_for_future_contracts,
             bankruptcy_limit=bankruptcy_limit,
             financial_report_period=financial_report_period,
             exogenous_force_max=exogenous_force_max,
@@ -1270,6 +1276,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # ---------------------
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
+                continue
+            if not self.penalize_bankrupt_for_future_contracts and self.is_bankrupt[aid]:
                 continue
             # agent.profile
             # todo: I am accessing the ufun of the agent directly to avoid running
