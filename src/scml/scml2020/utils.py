@@ -4,41 +4,41 @@ from os import PathLike
 from random import randint
 from random import random
 from random import shuffle
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
-from scipy.stats import tmean
 from negmas import Agent
 from negmas.helpers import get_full_type_name
 from negmas.helpers import unique_name
 from negmas.tournaments import TournamentResults
 from negmas.tournaments import WorldRunResults
 from negmas.tournaments import tournament
+from scipy.stats import tmean
 
+from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.oneshot.world import SCML2020OneShotWorld
 from scml.scml2020.agents import BuyCheapSellExpensiveAgent
-from scml.scml2020.agents import (
-    DecentralizingAgent,
-    MarketAwareDecentralizingAgent,
-    MarketAwareIndDecentralizingAgent,
-    MarketAwareMovingRangeAgent,
-)
+from scml.scml2020.agents import DecentralizingAgent
+from scml.scml2020.agents import MarketAwareDecentralizingAgent
+from scml.scml2020.agents import MarketAwareIndDecentralizingAgent
+from scml.scml2020.agents import MarketAwareMovingRangeAgent
 from scml.scml2020.world import SCML2020World
 from scml.scml2020.world import is_system_agent
-from scml.oneshot.agents import RandomOneShotAgent, SyncRandomOneShotAgent
 
 if True:
-    from typing import (
-        Tuple,
-        Union,
-        Type,
-        Iterable,
-        Sequence,
-        Optional,
-        Callable,
-        Any,
-        Dict,
-        List,
-    )
+    from typing import Any
+    from typing import Callable
+    from typing import Dict
+    from typing import Iterable
+    from typing import List
+    from typing import Optional
+    from typing import Sequence
+    from typing import Tuple
+    from typing import Type
+    from typing import Union
+
     from .world import SCML2020Agent
 
 __all__ = [
@@ -1070,10 +1070,11 @@ def anac2020_collusion(
 def truncated_mean(
     scores: np.ndarray,
     limits: Optional[Tuple[float, float]] = None,
-    top_fraction=0.05,
-    bottom_fraction=0.0,
-    base="iqr",
-):
+    top_limit=2.0,
+    bottom_limit=float("inf"),
+    base="tukey",
+    return_limits=False,
+) -> Union[float, Tuple[float, Optional[Tuple[float, float]]]]:
     """
     Calculates the truncated mean
 
@@ -1085,40 +1086,89 @@ def truncated_mean(
                 calcualte the mean. You can pass the special value "median" to calculate
                 the median (which is the same as passing top_fraction==bottom_fraction=0.5
                 and base == "scores").
-        top_fraction: Relative fraction of the data to remove at the top (see `base` ).
-                      Only used if `limits` is None
-        bottom_fraction: Relative fraction of the data to remove from the bottom (see `base` )
-                         Only used if `limits` is None
-        base: The base for calculating the limits used to apply the `top_fraction` and `bottom_fraction`.
+        top_limit: top limit on scores to use for truncated mean calculation. See `base`
+        bottom_limit: bottom limit on scores to use for truncated mean calculation. See `base`
+        base: The base for calculating the limits used to apply the `top_limit` and `bottom_limit`.
               Possible values are:
-
-              - iqr: the fraction is interpreted as the fraction of scores above/below the 1st/3rd qauntile
+              - zscore: the number of sigmas to remove above/below. A good default choice is 3. Pass inf to disable a side.
+              - tukey: the fraction of IQR to remove above/below. A good default choice is 1.5 or 3 (we use 2). Pass inf to disable a side.
+              - iqr : same as tukey
+              - iqr_fraction: the fraction is interpreted as the fraction of scores above/below the 1st/3rd qauntile
               - scores: the fraction is interpreted as fraction of highest and lowest scores
+              - fraction: the fraction is interpreted as literal fraction of the values (i.e. given 10 values and 0.1, removes 1 value)
+              - mean: simply returns the mean (limits ignored)
+              - median: simply returns the median (limits ignored)
+        return_limits: If true, the method will also return the limiting scores used in its mean calculation.
     """
-    scores = np.asarray(scores)
-    if isinstance(limits, str) and limits.lower() == "mean":
-        return tmean(scores, None)
-    if isinstance(limits, str) and limits.lower() == "median":
-        return np.median(scores)
-    if limits is not None:
-        return np.mean(scores)
 
-    if base == "iqr":
+    scores = np.asarray(scores)
+    scores = scores[~np.isnan(scores)]
+
+    if isinstance(limits, str) and limits.lower() == "mean":
+        return tmean(scores, None) if not return_limits else (tmean(scores, None), None)
+    if isinstance(limits, str) and limits.lower() == "median":
+        return np.median(scores) if not return_limits else (np.median(scores), None)
+    if limits is not None:
+        return np.mean(scores) if not return_limits else (np.mean(scores), None)
+
+    if base == "zscore":
+        m, s = np.nanmean(scores), np.nanstd(scores)
+        limits = (m - s * bottom_limit, m + s * top_limit)
+    elif base in ("tukey", "iqr"):
+        q1, q3 = np.quantile(scores, 0.25), np.quantile(scores, 0.75)
+        iqr = q3 - q1
+        limits = (
+            q1 - (bottom_limit * iqr if not np.isinf(bottom_limit) else bottom_limit),
+            q3 + (top_limit * iqr if not np.isinf(top_limit) else top_limit),
+        )
+    elif base == "iqr_fraction":
+        bottom_limit = min(1, max(0, bottom_limit))
+        top_limit = min(1, max(0, top_limit))
         limits = (np.quantile(scores, 0.25), np.quantile(scores, 0.75))
         high = np.sort(scores[scores > limits[1]])
-        low = np.sort(scores[scores < limits[0]])[::-1]
+        low = np.sort(scores[scores < limits[0]])
         limits = (
-            low[int(len(low) * bottom_fraction)] if len(low) > 0 else float("-inf"),
-            high[int(len(high) * top_fraction)] if len(high) > 0 else float("inf"),
+            low[int((len(low) - 1) * bottom_limit)] if len(low) > 0 else None,
+            high[int((len(high) - 1) * (1 - top_limit))] if len(high) > 0 else None,
         )
+    elif base == "fraction":
+        bottom_limit = min(1, max(0, bottom_limit))
+        top_limit = min(1, max(0, top_limit))
+        scores = np.sort(scores)
+        top_indx = int((len(scores) - 1) * (1 - top_limit))
+        bottom_indx = int((len(scores) - 1) * bottom_limit)
+        if top_indx < bottom_indx:
+            return float("nan") if not return_limits else (float("nan"), limits)
+        m = np.mean(scores[bottom_indx : top_indx + 1])
+        return m if not return_limits else (m, (scores[bottom_indx], scores[top_indx]))
     elif base == "scores":
+        bottom_limit = min(1, max(0, bottom_limit))
+        top_limit = min(1, max(0, top_limit))
         limits = (
-            np.quantile(scores, bottom_fraction),
-            np.quantile(scores, 1 - top_fraction),
+            np.quantile(scores, bottom_limit),
+            np.quantile(scores, 1 - top_limit),
         )
+        if limits[0] > limits[1]:
+            return float("nan") if not return_limits else (float("nan"), limits)
+    elif base == "mean":
+        return np.mean(scores) if not return_limits else (np.mean(scores), None)
+    elif base == "median":
+        return np.median(scores) if not return_limits else (np.median(scores), None)
     else:
         raise ValueError(f"Unknown base for truncated_mean ({base})")
-    return tmean(scores, limits)
+    if len(scores) == 0 or limits[1] < limits[0]:
+        return float("nan") if not return_limits else (float("nan"), limits)
+    try:
+        # this is an inclusive trimmed mean
+        # tm = tmean(scores, limits)
+        scores = scores[scores >= limits[0]]
+        scores = scores[scores <= limits[1]]
+        if len(scores) == 0:
+            return float("nan") if not return_limits else (float("nan"), limits)
+        tm = np.mean(scores)
+        return tm if not return_limits else (tm, limits)
+    except ValueError:
+        return float("nan") if not return_limits else (float("nan"), limits)
 
 
 def anac2021_tournament(
