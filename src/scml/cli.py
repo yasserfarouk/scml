@@ -2130,7 +2130,7 @@ def tournament2020(
 )
 @click.option(
     "--cw",
-    default=3,
+    default=2,
     type=int,
     help="Number of competitors to run at every world simulation. It must "
     "either be left at default or be a number > 1 and < the number "
