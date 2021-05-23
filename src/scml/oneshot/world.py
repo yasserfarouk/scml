@@ -778,13 +778,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             agent_types = list(agent_types)
             agent_params = list(agent_params)
             assert len(agent_types) == len(agent_params)
-
+        agent_params = [_ if not _ is None else dict() for _ in agent_params]
         for t, p in zip(agent_types, agent_params):
             p["controller_type"] = t
         agent_types = [
             DefaultOneShotAdapter
-            if issubclass(get_class(at), OneShotAgent)
-            else OneShotSCML2020Adapter
+            if at and issubclass(get_class(at), OneShotAgent)
+            else OneShotSCML2020Adapter if at else None
             for at in agent_types
         ]
         # generate production costs making sure that every agent can do exactly one process

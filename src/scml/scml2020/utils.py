@@ -10,6 +10,7 @@ from typing import Tuple
 import numpy as np
 from negmas import Agent
 from negmas.helpers import get_full_type_name
+from negmas.serialization import serialize, deserialize
 from negmas.helpers import unique_name
 from negmas.tournaments import TournamentResults
 from negmas.tournaments import WorldRunResults
@@ -24,7 +25,7 @@ from scml.scml2020.agents import DecentralizingAgent
 from scml.scml2020.agents import MarketAwareDecentralizingAgent
 from scml.scml2020.agents import MarketAwareIndDecentralizingAgent
 from scml.scml2020.agents import MarketAwareMovingRangeAgent
-from scml.scml2020.world import SCML2020World
+from scml.scml2020.world import SCML2020World, SCML2021World
 from scml.scml2020.world import is_system_agent
 
 if True:
@@ -65,15 +66,15 @@ DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent]
 
 DefaultAgents2021 = [
     DecentralizingAgent,
-    MarketAwareDecentralizingAgent,
-    MarketAwareIndDecentralizingAgent,
-    RandomOneShotAgent,
+    # MarketAwareDecentralizingAgent,
+    # MarketAwareIndDecentralizingAgent,
+    # RandomOneShotAgent,
 ]
 
 
 DefaultAgentsOneShot = [
     RandomOneShotAgent,
-    SyncRandomOneShotAgent,
+    # SyncRandomOneShotAgent,
 ]
 
 
@@ -343,6 +344,25 @@ def anac2020_config_generator(
             no_logs=no_logs,
         )
     world_params.update(kwargs)
+    # breakpoint()
+    # _agent_types = copy.deepcopy(world_params.pop("agent_types"))
+    # _agent_params = copy.deepcopy(world_params.pop("agent_params"))
+    if oneshot_world:
+        generated_world_params = SCML2020OneShotWorld.generate( **world_params)
+    else:
+        generated_world_params = SCML2021World.generate( **world_params)
+    # world_params["agent_types"] = _agent_types
+    # world_params["agent_params"] = _agent_params
+    for k in ("agent_types", "agent_params"):
+        if k in generated_world_params.keys():
+            del generated_world_params[k]
+    if oneshot_world:
+        for _p in generated_world_params["profiles"]:
+            _p.cost = int(_p.cost)
+    else:
+        for _p in generated_world_params["profiles"]:
+            _p.costs = _p.costs.tolist()
+    world_params["__exact_params"] = serialize(generated_world_params, deep=True, ignore_lambda=True)
     config = {
         "world_params": world_params,
         "compact": compact,
@@ -481,11 +501,17 @@ def anac2020_world_generator(**kwargs):
     assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
         kwargs["world_params"]["agent_types"]
     )
-    cnfg = SCML2020World.generate(**kwargs["world_params"])
+    cnfg = kwargs["world_params"].pop("__exact_params")
+    cnfg = deserialize(cnfg)
+    cnfg2 = SCML2021World.generate(**kwargs["world_params"])
+    for k in ("agent_types", "agent_params"):
+        cnfg[k] = cnfg2[k]
+    for _p in cnfg["profiles"]:
+        _p.costs = np.asarray(_p.costs)
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
     cnfg["info"]["is_default"] = kwargs["is_default"]
-    world = SCML2020World(**cnfg)
+    world = SCML2021World(**cnfg)
     return world
 
 
@@ -493,8 +519,15 @@ def anac2020oneshot_world_generator(**kwargs):
     assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
         kwargs["world_params"]["agent_types"]
     )
+    # cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
+    # for k in ("n_agents_per_process","n_processes"):
+    #     del kwargs["world_params"][k]
     # breakpoint()
-    cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
+    cnfg = kwargs["world_params"].pop("__exact_params")
+    cnfg = deserialize(cnfg)
+    cnfg2 = SCML2020OneShotWorld.generate(**kwargs["world_params"])
+    for k in ("agent_types", "agent_params"):
+        cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
     cnfg["info"]["is_default"] = kwargs["is_default"]
@@ -1535,6 +1568,36 @@ def anac2021_oneshot(
     configs_only=False,
     compact=False,
     n_competitors_per_world=None,
+    n_steps: Union[Tuple[int, int], int] = (50, 200),
+    n_processes: Union[Tuple[int, int], int] = 2,
+    n_lines: Union[np.ndarray, Tuple[int, int], int] = 10,
+    process_inputs: Union[np.ndarray, Tuple[int, int], int] = 1,
+    process_outputs: Union[np.ndarray, Tuple[int, int], int] = 1,
+    production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
+    profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
+    profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
+    max_productivity: Union[np.ndarray, Tuple[float, float], float] = (0.8, 1.0),
+    initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
+    cost_increases_with_level=True,
+    equal_exogenous_supply=False,
+    equal_exogenous_sales=False,
+    exogenous_supply_predictability: Union[Tuple[float, float], float] = (0.6, 0.9),
+    exogenous_sales_predictability: Union[Tuple[float, float], float] = (0.6, 0.9),
+    exogenous_control: Union[Tuple[float, float], float] = -1,
+    cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
+    force_signing=True,
+    profit_basis=np.mean,
+    disposal_cost: Union[np.ndarray, Tuple[float, float], float] = (0.5, 1.0),
+    shortfall_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.5, 1.0),
+    disposal_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.1),
+    shortfall_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (
+        0.0,
+        0.1,
+    ),
+    exogenous_price_dev: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
+    price_multiplier: Union[np.ndarray, Tuple[float, float], float] = (1.5, 2.0),
+    random_agent_types: bool = False,
+    penalties_scale: Union[str, List[str]] = "trading",
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -1603,7 +1666,6 @@ def anac2021_oneshot(
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
-    kwargs["n_processes"] = 2
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -1639,5 +1701,32 @@ def anac2021_oneshot(
         forced_logs_fraction=0.0,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
+        n_steps=n_steps,
+        n_processes=n_processes,
+        n_lines=n_lines,
+        process_inputs=process_inputs,
+        process_outputs=process_outputs,
+        production_costs=production_costs,
+        profit_means=profit_means,
+        profit_stddevs=profit_stddevs,
+        max_productivity=max_productivity,
+        initial_balance=initial_balance,
+        cost_increases_with_level=cost_increases_with_level,
+        equal_exogenous_supply=equal_exogenous_supply,
+        equal_exogenous_sales=equal_exogenous_sales,
+        exogenous_supply_predictability=exogenous_supply_predictability,
+        exogenous_sales_predictability=exogenous_sales_predictability,
+        exogenous_control=exogenous_control,
+        cash_availability=cash_availability,
+        force_signing=force_signing,
+        profit_basis=profit_basis,
+        disposal_cost=disposal_cost,
+        shortfall_penalty=shortfall_penalty,
+        disposal_cost_dev=disposal_cost_dev,
+        shortfall_penalty_dev=shortfall_penalty_dev,
+        exogenous_price_dev=exogenous_price_dev,
+        price_multiplier=price_multiplier,
+        random_agent_types=random_agent_types,
+        penalties_scale=penalties_scale,
         **kwargs,
     )

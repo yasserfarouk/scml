@@ -78,7 +78,9 @@ DB_FOLDER = default_log_path().parent / "runsdb"
 DB_NAME = "rundb.csv"
 
 
-def save_run_info(name: str, log_path: Path, type_: str="world", path: Path = DB_FOLDER):
+def save_run_info(
+    name: str, log_path: Path, type_: str = "world", path: Path = DB_FOLDER
+):
     try:
         path.mkdir(parents=True, exist_ok=True)
         with open(path / DB_NAME, "a") as f:
@@ -1433,14 +1435,18 @@ DEFAULT_STD = (
     "RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent"
 )
 DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.agents.RandomOneShotAgent;DecentralizingAgent"
+DEFAULT_2021_NONCOMPETITORS = [
+    "scml.scml2020.agents.DecentralizingAgent",
+    "scml.scml2020.agents.BuyCheapSellExpensiveAgent",
+]
 # DEFAULT_STD_2021 = (
 #     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
 # )
-DEFAULT_ONESHOT = "scml.scml2020.agents.DecentralizingAgent;GreedyOneShotAgent;GreedySyncAgent;SingleAgreementAspirationAgent"
-DEFAULT_ONESHOT_FULL = [
+DEFAULT_ONESHOT = "scml.scml2020.agents.DecentralizingAgent;GreedySyncAgent;SingleAgreementAspirationAgent"
+DEFAULT_ONESHOT_NONCOMPETITORS = [
     "scml.oneshot.agents.RandomOneShotAgent",
     "scml.oneshot.agents.GreedyOneShotAgent",
-    "scml.oneshot.agents.SingleAgreementAspirationAgent",
+    # "scml.oneshot.agents.SingleAgreementAspirationAgent",
 ]
 
 
@@ -2273,9 +2279,9 @@ def tournament2021(
 
     if non_competitors is None:
         non_competitors = (
-            DEFAULT_ONESHOT_FULL
+            DEFAULT_ONESHOT_NONCOMPETITORS
             if ttype == "oneshot"
-            else scml.scml2020.utils.DefaultAgents2021
+            else DEFAULT_2021_NONCOMPETITORS
         )
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")

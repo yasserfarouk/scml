@@ -1228,7 +1228,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                             )
                         )
         for i, (t, p) in enumerate(zip(agent_types, agent_params)):
-            if issubclass(get_class(t), OneShotAgent):
+            if t is not None and issubclass(get_class(t), OneShotAgent):
                 agent_types[i] = get_full_type_name(OneShotAdapter)
                 agent_params[i] = dict(oneshot_type=t, oneshot_params=p, obj=None)
 
