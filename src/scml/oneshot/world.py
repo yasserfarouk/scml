@@ -1656,7 +1656,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # controller.make_ufun()
         if negotiators is None:
             negotiators = [
-                controller.create_negotiator(PassThroughSAONegotiator, name=_)
+                controller.create_negotiator(PassThroughSAONegotiator, name=_, id=_)
                 for _ in partners
             ]
         results = [
