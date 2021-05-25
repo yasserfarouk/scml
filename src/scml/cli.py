@@ -1504,6 +1504,11 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
     "paths on linux/mac and a ; separated list in windows",
 )
 @click.option(
+    "--name",
+    default="",
+    help="World name. Used as the folder name in which it will be saved"
+)
+@click.option(
     "--world-config",
     type=click.Path(dir_okay=False, file_okay=True),
     default=None,
@@ -1524,6 +1529,7 @@ def run2021(
     world_config,
     show_contracts,
     oneshot,
+    name,
 ):
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
@@ -1547,7 +1553,7 @@ def run2021(
 
     world_name = unique_name(
         base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
-    )
+    ) if not name else name
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
     os.makedirs(log_dir, exist_ok=True)
