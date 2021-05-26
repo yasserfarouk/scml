@@ -31,6 +31,20 @@ std_types = scml.scml2020.builtin_agent_types(as_str=False)
 #     pass
 
 
+class MyOneShotAgent(RandomOneShotAgent):
+
+    def respond(self, negotiator_id, state, offer):
+        if not (negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers):
+            breakpoint()
+        assert negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers, (self.id, self.name, negotiator_id)
+        return super().respond(negotiator_id, state, offer)
+
+    def propose(self, negotiator_id, state):
+        if not (negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers):
+            breakpoint()
+        assert negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers, (self.id, self.name, negotiator_id)
+        return super().propose(negotiator_id, state)
+
 def generate_world(
     agent_types,
     n_processes=3,
@@ -72,6 +86,22 @@ def generate_world(
         )
     return world
 
+
+def test_negotiator_ids_are_partner_ids():
+    n_processes = 5
+    world = generate_world(
+        [MyOneShotAgent],
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/{MyOneShotAgent.__name__}" f"Fine{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+        compact=True,
+        no_logs=True,
+    )
+    world.run()
+    # save_stats(world, world.log_folder)
 
 @mark.parametrize("agent_type", types)
 @given(n_processes=st.integers(2, 4))

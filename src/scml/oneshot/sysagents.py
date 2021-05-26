@@ -80,7 +80,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         partner = [_ for _ in partners if _ != self.id][0]
         if not self._obj:
             return None
-        neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner)
+        neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner, id=partner)
         return neg
 
     def set_renegotiation_agenda(
