@@ -1434,15 +1434,15 @@ def run2020(
 DEFAULT_STD = (
     "RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent"
 )
-DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;scml.oneshot.agents.RandomOneShotAgent;DecentralizingAgent"
+DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;RandomAgent;DecentralizingAgent"
 DEFAULT_2021_NONCOMPETITORS = [
-    "scml.scml2020.agents.DecentralizingAgent",
+    # "scml.scml2020.agents.DecentralizingAgent",
     "scml.scml2020.agents.BuyCheapSellExpensiveAgent",
 ]
 # DEFAULT_STD_2021 = (
 #     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
 # )
-DEFAULT_ONESHOT = "scml.scml2020.agents.DecentralizingAgent;GreedySyncAgent;SingleAgreementAspirationAgent"
+DEFAULT_ONESHOT = "GreedySyncAgent;SingleAgreementAspirationAgent"
 DEFAULT_ONESHOT_NONCOMPETITORS = [
     "scml.oneshot.agents.RandomOneShotAgent",
     "scml.oneshot.agents.GreedyOneShotAgent",
