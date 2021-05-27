@@ -147,7 +147,7 @@ class GreedyOneShotAgent(OneShotAgent):
         return response
 
     def best_offer(self, negotiator_id):
-        my_needs = self._needed(negotiator_id)
+        my_needs = int(self._needed(negotiator_id))
         if my_needs <= 0:
             return None
         ami = self.get_ami(negotiator_id)
