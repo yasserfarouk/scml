@@ -124,6 +124,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
         negotiation_speed=0,
+        avoid_ultimatum=False,
         # public information
         publish_exogenous_summary=True,
         publish_trading_prices=True,
@@ -180,7 +181,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     "negmas.sao.SAOMechanism",
                     dict(
                         end_on_no_response=True,
-                        avoid_ultimatum=True,
+                        avoid_ultimatum=avoid_ultimatum,
                         dynamic_entry=False,
                         max_wait=len(agent_types),
                     ),
@@ -585,7 +586,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         n_steps: Union[Tuple[int, int], int] = (50, 200),
         n_processes: Union[Tuple[int, int], int] = 2,
         n_lines: Union[np.ndarray, Tuple[int, int], int] = 10,
-        n_agents_per_process: Union[np.ndarray, Tuple[int, int], int] = 3,
+        n_agents_per_process: Union[np.ndarray, Tuple[int, int], int] = (4, 8),
         process_inputs: Union[np.ndarray, Tuple[int, int], int] = 1,
         process_outputs: Union[np.ndarray, Tuple[int, int], int] = 1,
         production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
