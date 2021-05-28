@@ -125,8 +125,12 @@ def distribute_quantities(
         sum[s, :] ~= q[s]
 
     """
+    # if we do not distribute anything just return all zeros
     if sum(q) == 0:
         return [np.asarray([0] * a, dtype=int) for _ in range(n_steps)]
+    # if all quantities are to be distributed equally, just do that directly 
+    # ensuring each agent gets at least one item.
+    # what happens if q does not divide a? q/a is rounded.
     if equal:
         values = np.maximum(1, np.round(q / a).astype(int)).tolist()
         return [np.asarray([values[p]] * a, dtype=int) for _ in range(n_steps)]
@@ -144,7 +148,7 @@ def distribute_quantities(
             values.append([0] * a)
             continue
         values.append([int(0.5 + _ * q[s] / qz) for _ in base_cut])
-        n_changes = int(0.5 + (1.0 - predictability) * q[s])
+        n_changes = max(0, min(q[s], int(0.5 + (1.0 - predictability) * q[s])))
         if not n_changes:
             continue
         added = integer_cut(n_changes, a, 0)
@@ -166,7 +170,7 @@ def distribute_quantities(
                         values[-1][j] -= diffs[j]
                         errs -= diffs[j]
         assert (
-            abs(sum(values[-1]) - q[s]) < 3
+            abs(sum(values[-1]) - q[s]) < 2 * a
         ), f"Failed to distribute: expected {q[s]} but got {sum(values[-1])}: {values[-1]}"
         assert (
             min(values[-1]) >= 0

@@ -837,6 +837,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             n_agents_per_process[0],
             n_steps,
         )
+        quantities[0] = [sum(_) for _ in exogenous_supplies]
         exogenous_sales = distribute_quantities(
             equal_exogenous_sales,
             exogenous_sales_predictability,
@@ -844,6 +845,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             n_agents_per_process[-1],
             n_steps,
         )
+        quantities[-1] = [sum(_) for _ in exogenous_sales]
 
         # - now exogenous_supplies and exogenous_sales are both n_steps lists
 
