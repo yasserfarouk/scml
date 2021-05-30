@@ -32,16 +32,16 @@ class _NegotiationCallbacks:
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
         if sell:
-            return production_cost + self.input_cost[step]
-        return self.output_price[step] - production_cost
+            return min(production_cost + self.input_cost[step:].min(), self.output_price[step])
+        return max(self.output_price[step:].max() - production_cost, self.input_cost[step])
 
     def target_quantity(self, step: int, sell: bool) -> int:
         if sell:
-            needed, secured = self.outputs_needed, self.outputs_secured
+            needed, secured = self.outputs_needed[step:].sum(), self.outputs_secured[step:].sum()
         else:
-            needed, secured = self.inputs_needed, self.inputs_secured
+            needed, secured = self.inputs_needed[:step].sum(), self.inputs_secured[:step].sum()
 
-        return needed[step] - secured[step]
+        return min(self.awi.n_lines, needed - secured)
 
     def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:
         """Implemented for speed but not really required"""
@@ -66,10 +66,10 @@ class DecentralizingAgent(
 
 class MarketAwareDecentralizingAgent(
     MarketAwareTradePredictionStrategy,
-    KeepOnlyGoodPrices,
     _NegotiationCallbacks,
     StepNegotiationManager,
     PredictionBasedTradingStrategy,
+    KeepOnlyGoodPrices,
     SupplyDrivenProductionStrategy,
     SCML2020Agent,
 ):

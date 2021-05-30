@@ -7,11 +7,9 @@ from negmas import Contract
 from scml.scml2020.common import ANY_LINE
 from scml.scml2020.common import is_system_agent
 from scml.scml2020.components import SignAllPossible
-from scml.scml2020.components.prediction import (
-    MeanERPStrategy,
-    MarketAwareTradePredictionStrategy,
-    FixedTradePredictionStrategy,
-)
+from scml.scml2020.components.prediction import FixedTradePredictionStrategy
+from scml.scml2020.components.prediction import MarketAwareTradePredictionStrategy
+from scml.scml2020.components.prediction import MeanERPStrategy
 
 __all__ = [
     "TradingStrategy",
@@ -26,13 +24,17 @@ class TradingStrategy:
 
     Provides:
         - `inputs_needed` (np.ndarray):  How many items of the input product do
-          I need to buy at every time step (n_steps vector)
+          I need to buy at every time step (n_steps vector).
+          This should be read **but not updated** by the `NegotiationManager`.
         - `outputs_needed` (np.ndarray):  How many items of the output product
-          do I need to sell at every time step (n_steps vector)
+          do I need to sell at every time step (n_steps vector).
+          This should be read **but not updated** by the `NegotiationManager`.
         - `inputs_secured` (np.ndarray):  How many items of the input product I
-          already contracted to buy (n_steps vector)
+          already contracted to buy (n_steps vector) [out of `input_needed`].
+          This can be read **but not updated** by the `NegotiationManager`.
         - `outputs_secured` (np.ndarray):  How many units of the output product
-          I already contracted to sell (n_steps vector)
+          I already contracted to sell (n_steps vector) [out of `outputs_secured`]
+          This can be read **but not updated** by the `NegotiationManager`.
 
     Hooks Into:
         - `init`
@@ -171,26 +173,31 @@ class ReactiveTradingStrategy(SignAllPossible, TradingStrategy):
         super().on_contracts_finalized(signed, cancelled, rejectors)
         this_step = self.awi.current_step
         inp, outp = self.awi.my_input_product, self.awi.my_output_product
+
         for contract in signed:
             t, q = contract.agreement["time"], contract.agreement["quantity"]
+            # If I started this negotiation, I must have had a reason to do so.
+            # This implies that I need not plan anything about it
             if contract.annotation["caller"] == self.id:
                 continue
-            if contract.annotation["product"] != outp:
-                continue
+            # If I am buying something, I do not need to plan anything regarding
+            # it. I only react to selling contracts
             is_seller = contract.annotation["seller"] == self.id
-            # find the earliest time I can do anything about this contract
+            # If this contract is too late or too early, I can do nothing.
             if t > self.awi.n_steps - 1 or t < this_step:
                 continue
             if is_seller:
-                # if I am a seller, I will schedule production then buy my needs to produce
+                # if I am a seller, try to find a way to schedule production
+                # to have the required items
                 steps, _ = self.awi.available_for_production(
                     repeats=q, step=(this_step + 1, t - 1)
                 )
+                # If I cannot produce the required items, ignore the contract
                 if len(steps) < 1:
                     continue
+                # registers needs for inputs
                 self.inputs_needed[min(steps)] += q
                 continue
-
             # I am a buyer. I need not produce anything but I need to negotiate to sell the production of what I bought
             if inp != contract.annotation["product"]:
                 continue
@@ -207,6 +214,12 @@ class PredictionBasedTradingStrategy(
         - `on_contracts_finalized`
         - `sign_all_contracts`
         - `on_agent_bankrupt`
+
+    Requires:
+        - `expected_inputs` (np.ndarray):  How many items of the input product do
+          I expect to have every day. Should be adjusted by the `TradePredictionStrategy` .
+        - `expected_outputs` (np.ndarray):  How many items of the output product do
+          I expect to have every day. Should be adjusted by the `TradePredictionStrategy` .
 
     Remarks:
         - `Attributes` section describes the attributes that can be used to construct the component (passed to its
@@ -241,51 +254,51 @@ class PredictionBasedTradingStrategy(
         cancelled: List[Contract],
         rejectors: List[List[str]],
     ) -> None:
-        # self.awi.logdebug_agent(
-        #     f"Enter Contracts Finalized:\n"
-        #     f"Signed {pformat([self._format(_) for _ in signed])}\n"
-        #     f"Cancelled {pformat([self._format(_) for _ in cancelled])}\n"
-        #     f"{pformat(self.internal_state)}"
-        # )
         super().on_contracts_finalized(signed, cancelled, rejectors)
+        # keeps track of the procution slots consumed by signed contracts processed
         consumed = 0
         for contract in signed:
+            # If I intiated the negotiation for this contract, ignore it.
             if contract.annotation["caller"] == self.id:
                 continue
             is_seller = contract.annotation["seller"] == self.id
-            q, u, t = (
+            q, t = (
                 contract.agreement["quantity"],
-                contract.agreement["unit_price"],
                 contract.agreement["time"],
             )
             if is_seller:
                 # if I am a seller, I will buy my needs to produce
                 output_product = contract.annotation["product"]
                 input_product = output_product - 1
+                # register that I secued the given outputs.
                 self.outputs_secured[t] += q
+                # If I need to produce, do production
                 if input_product >= 0 and t > 0:
                     # find the maximum possible production I can do and saturate to it
-                    steps, lines = self.awi.available_for_production(
+                    steps, _ = self.awi.available_for_production(
                         repeats=q, step=(self.awi.current_step, t - 1)
                     )
+                    # register the number of production slots consumed for this contract
                     q = min(len(steps) - consumed, q)
                     consumed += q
-                    if contract.annotation["caller"] != self.id:
-                        # this is a sell contract that I did not expect yet. Update needs accordingly
-                        self.inputs_needed[t - 1] += max(1, q)
+                    # this is a sell contract that I did not expect yet. Update needs accordingly
+                    # I must buy all my needs one day earlier at most
+                    self.inputs_needed[t - 1] += max(1, q)
                 continue
 
             # I am a buyer. I need not produce anything but I need to negotiate to sell the production of what I bought
             input_product = contract.annotation["product"]
             output_product = input_product + 1
+            # register that I secured the given outputs
             self.inputs_secured[t] += q
             if output_product < self.awi.n_products and t < self.awi.n_steps - 1:
                 # this is a buy contract that I did not expect yet. Update needs accordingly
+                # I must sell these inputs after production one day later at least
                 self.outputs_needed[t + 1] += max(1, q)
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        # sort contracts by time and then put system contracts first within each time-step
         signatures = [None] * len(contracts)
+        # sort contracts by time and then put system contracts first within each time-step
         contracts = sorted(
             zip(contracts, range(len(contracts))),
             key=lambda x: (
@@ -300,8 +313,6 @@ class PredictionBasedTradingStrategy(
         )
         sold, bought = 0, 0
         s = self.awi.current_step
-        catalog_buy = self.awi.catalog_prices[self.awi.my_input_product]
-        catalog_sell = self.awi.catalog_prices[self.awi.my_output_product]
         for contract, indx in contracts:
             is_seller = contract.annotation["seller"] == self.id
             q, u, t = (
@@ -309,15 +320,19 @@ class PredictionBasedTradingStrategy(
                 contract.agreement["unit_price"],
                 contract.agreement["time"],
             )
-            # check that the contract is executable in principle
+            # check that the contract is executable in principle. The second
+            # condition checkes that the contract is negotiated and not exogenous
             if t < s and len(contract.issues) == 3:
                 continue
-            if (is_seller and u < 0.75 * catalog_sell) or (
-                not is_seller and u > 1.25 * catalog_buy
-            ):
-                continue
+            # catalog_buy = self.input_cost[t]
+            # catalog_sell = self.output_price[t]
+            # # check that the gontract has a good price
+            # if (is_seller and u < 0.5 * catalog_sell) or (
+            #     not is_seller and u > 1.5 * catalog_buy
+            # ):
+            #     continue
             if is_seller:
-                trange = (s, t)
+                trange = (s, t - 1)
                 secured, needed = (self.outputs_secured, self.outputs_needed)
                 taken = sold
             else:
@@ -326,7 +341,7 @@ class PredictionBasedTradingStrategy(
                 taken = bought
 
             # check that I can produce the required quantities even in principle
-            steps, lines = self.awi.available_for_production(
+            steps, _ = self.awi.available_for_production(
                 q, trange, ANY_LINE, override=False, method="all"
             )
             if len(steps) - taken < q:
@@ -364,16 +379,64 @@ class PredictionBasedTradingStrategy(
                 continue
             t = contract.agreement["time"]
             missing = q - new_quantity
+            s = self.awi.current_step
             if t < self.awi.current_step:
                 continue
+            # distribute the missing quantity over time
             if contract.annotation["seller"] == self.id:
-                self.outputs_secured[t] -= missing
-                # if t > 0:
-                #     self.inputs_needed[t - 1] -= missing
+                # self.outputs_secured[t] -= missing
+                if t > s:
+                    for tau in range(t - 1, s - 1, -1):
+                        if self.inputs_needed[tau] <= 0:
+                            continue
+                        if self.inputs_needed[tau] >= missing:
+                            self.inputs_needed[tau] -= missing
+                            missing = 0
+                            break
+                        self.inputs_needed[tau] = 0
+                        missing -= self.inputs_needed[tau]
+                        if missing <=0:
+                            break
+                if missing > 0:
+                    if t < self.awi.n_steps - 1:
+                        for tau in range(t + 1, self.awi.n_steps):
+                            if self.outputs_secured[tau] <= 0:
+                                continue
+                            if self.outputs_secured[tau] >= missing:
+                                self.outputs_secured[tau] -= missing
+                                missing = 0
+                                break
+                            self.outputs_secured[tau] = 0
+                            missing -= self.outputs_secured[tau]
+                            if missing <=0:
+                                break
+
             else:
-                self.inputs_secured[t] += missing
-                # if t < self.awi.n_steps - 1:
-                #     self.outputs_needed[t + 1] -= missing
+                if t < self.awi.n_steps - 1:
+                    for tau in range(t + 1, self.awi.n_steps):
+                        if self.outputs_needed[tau] <= 0:
+                            continue
+                        if self.outputs_needed[tau] >= missing:
+                            self.outputs_needed[tau] -= missing
+                            missing = 0
+                            break
+                        self.outputs_needed[tau] = 0
+                        missing -= self.outputs_needed[tau]
+                        if missing <=0:
+                            break
+                if missing > 0:
+                    if t > s:
+                        for tau in range(t - 1, s-1, -1):
+                            if self.inputs_secured[tau] <= 0:
+                                continue
+                            if self.inputs_secured[tau] >= missing:
+                                self.inputs_secured[tau] -= missing
+                                missing = 0
+                                break
+                            self.inputs_secured[tau] = 0
+                            missing -= self.inputs_secured[tau]
+                            if missing <=0:
+                                break
 
 
 class MarketAwarePredictionBasedTradingStrategy(

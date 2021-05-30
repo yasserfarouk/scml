@@ -77,17 +77,19 @@ class SignAllPossible:
                 else 1,
             ),
         )
+        consumed = 0
         for contract, i in contracts:
             step = contract.agreement["time"]
             q = contract.agreement["quantity"]
             if step > self.awi.n_steps - 1 or step < self.awi.current_step:
                 continue
             if contract.annotation["seller"] == self.id:
-                steps, lines = self.awi.available_for_production(
+                steps, _ = self.awi.available_for_production(
                     q, (self.awi.current_step, step), -1, override=False, method="all"
                 )
-                if len(steps) < q:
+                if len(steps) - consumed < q:
                     continue
+                consumed += q
             results[i] = self.id
         return results
 

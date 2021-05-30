@@ -22,9 +22,9 @@ class TradePredictionStrategy:
     """A prediction strategy for expected inputs and outputs at every step
 
     Args:
-        predicted_inputs: None for default, a number of an n_steps numbers giving predicted inputs
-        predicted_outputs: None for default, a number of an n_steps numbers giving predicted outputs
-        add_trade: If true, actual contracts will be just added to the expectations
+        - `predicted_inputs`: None for default, a number of an n_steps numbers giving predicted inputs
+        - `predicted_outputs`: None for default, a number of an n_steps numbers giving predicted outputs
+        - `add_trade`: If true, actual contracts will be just added to the expectations
 
     Provides:
         - `expected_inputs` : n_steps vector giving the predicted inputs at every time-step
@@ -180,7 +180,7 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
         def adjust(x, demand):
             """Adjust the predicted demand/supply filling it with a default value or repeating as needed"""
             if x is None:
-                x = max(1, self.awi.n_lines // 2)
+                x = max(1, int(self.awi.n_lines * 0.75))
             elif isinstance(x, Iterable):
                 return np.array(x)
             predicted = int(x) * np.ones(self.awi.n_steps, dtype=int)

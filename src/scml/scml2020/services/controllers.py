@@ -361,17 +361,17 @@ class SyncController(SAOSyncController):
         )
         return responses
 
-    def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
-        """Update the secured quantities whenever a negotiation ends"""
-        if state.agreement is None:
-            return
-
-        q, t = state.agreement[QUANTITY], state.agreement[TIME]
-        if self._is_seller:
-            self.__parent.outputs_secured[t] += q
-        else:
-            self.__parent.inputs_secured[t] += q
-
+#     def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
+#         """Update the secured quantities whenever a negotiation ends"""
+#         if state.agreement is None:
+#             return
+# 
+#         q, t = state.agreement[QUANTITY], state.agreement[TIME]
+#         if self._is_seller:
+#             self.__parent.outputs_secured[t] += q
+#         else:
+#             self.__parent.inputs_secured[t] += q
+# 
     def best_proposal(self, nid: str) -> Tuple[Optional[Outcome], float]:
         """
         Finds the best proposal for the given negotiation
