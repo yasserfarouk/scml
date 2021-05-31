@@ -127,12 +127,18 @@ Let’s check the scores of different agents to confirm:
 
 .. parsed-literal::
 
-    Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.6048887151389197 
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of -0.027765281367267632 (bankrupt)
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.7287481375439572 
-    Agent 03MDN@1 of type MyOneShotDoNothing has a final score of 0.7249283348010176 
-    Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.8340320116418394 
-    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.733122415494343 
+    Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.35647813158195824 
+    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.873950453145313 
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.386739613841279 
+    Agent 03MDN@0 of type MyOneShotDoNothing has a final score of -0.002241404121060149 (bankrupt)
+    Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.40034006445015474 
+    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.6523536743024072 
+    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.7106147566440265 
+    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.5789155559308604 
+    Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.7503762231136909 
+    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.6943639584094153 
+    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.5726718797039995 
+    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.8812135236394523 
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -147,8 +153,8 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('MyOneShotDoNothing', 0.7251439229240153),
-     ('RandomOneShotAgent', -0.027765281367267632)]
+    [('RandomOneShotAgent', 0.718621687912178),
+     ('MyOneShotDoNothing', 0.4240077171947383)]
 
 
 Notice how the do-nothing agent is even worse than acting randomly. This
@@ -184,39 +190,78 @@ market.
       <thead>
         <tr>
           <th>seller_name</th>
-          <th>03MDN@1</th>
+          <th colspan="5" halign="left">01Ran@0</th>
           <th>04MDN@1</th>
           <th>05MDN@1</th>
-          <th colspan="3" halign="left">SELLER</th>
+          <th>06Ran@1</th>
+          <th>07Ran@1</th>
+          <th>08MDN@1</th>
+          <th>09Ran@1</th>
+          <th>10Ran@1</th>
+          <th>11Ran@1</th>
+          <th colspan="4" halign="left">SELLER</th>
         </tr>
         <tr>
           <th>buyer_name</th>
+          <th>06Ran@1</th>
+          <th>07Ran@1</th>
+          <th>09Ran@1</th>
+          <th>10Ran@1</th>
+          <th>11Ran@1</th>
+          <th>BUYER</th>
+          <th>BUYER</th>
+          <th>BUYER</th>
+          <th>BUYER</th>
+          <th>BUYER</th>
           <th>BUYER</th>
           <th>BUYER</th>
           <th>BUYER</th>
           <th>00MDN@0</th>
           <th>01Ran@0</th>
           <th>02MDN@0</th>
+          <th>03MDN@0</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <th>quantity</th>
+          <td>6.428571</td>
+          <td>5.4</td>
+          <td>4.666667</td>
+          <td>4.6</td>
+          <td>6.3</td>
+          <td>7.2</td>
+          <td>3.3</td>
+          <td>6.3</td>
+          <td>4.0</td>
+          <td>2.444444</td>
+          <td>4.5</td>
+          <td>4.0</td>
+          <td>4.5</td>
           <td>8.3</td>
-          <td>8.3</td>
-          <td>8.8</td>
-          <td>6.6</td>
-          <td>15.4</td>
-          <td>4.1</td>
+          <td>8.1</td>
+          <td>7.7</td>
+          <td>12.7</td>
         </tr>
         <tr>
           <th>unit_price</th>
-          <td>26.7</td>
-          <td>25.7</td>
-          <td>27.6</td>
-          <td>9.8</td>
-          <td>9.4</td>
-          <td>9.9</td>
+          <td>15.857143</td>
+          <td>15.5</td>
+          <td>18.000000</td>
+          <td>22.7</td>
+          <td>15.2</td>
+          <td>29.7</td>
+          <td>32.8</td>
+          <td>31.4</td>
+          <td>28.4</td>
+          <td>32.666667</td>
+          <td>29.7</td>
+          <td>31.8</td>
+          <td>29.7</td>
+          <td>9.3</td>
+          <td>10.0</td>
+          <td>9.6</td>
+          <td>10.5</td>
         </tr>
       </tbody>
     </table>
@@ -448,7 +493,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 0.98066422866206), ('RandomOneShotAgent', 0.7352954150434752)]
+    [('SimpleAgent', 1.0206482848389007),
+     ('RandomOneShotAgent', 0.6865702973603323)]
 
 
 This simple agent is slightly better than the random agent. Let’s
@@ -663,8 +709,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.0505386969140431),
-     ('RandomOneShotAgent', 0.45311804414888684)]
+    [('BetterAgent', 1.1795812008648343),
+     ('RandomOneShotAgent', -0.15855149398299428)]
 
 
 It seems that ``BetterAgent`` is getting higher scores than
@@ -826,8 +872,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('AdaptiveAgent', 1.1457188471438968),
-     ('RandomOneShotAgent', 0.4501508106526367)]
+    [('AdaptiveAgent', 1.2804261245276773),
+     ('RandomOneShotAgent', -0.7246189028553071)]
 
 
 Not as good as the previous agent at least in this simulation (we will
@@ -969,8 +1015,8 @@ on accomulated statistics per agent
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.0111254266629115),
-     ('RandomOneShotAgent', -0.9724150461440018)]
+    [('LearningAgent', 1.2453748311862851),
+     ('RandomOneShotAgent', 0.3773782100497865)]
 
 
 The main idea of this agent is to limit the minimum price (for selling)
@@ -1161,7 +1207,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('BetterAgent', 0.7637616273470311), ('DeepSimpleAgent', 0.05693140960774423)]
+    [('BetterAgent', 0.7750156672988081), ('DeepSimpleAgent', -0.6115543011892781)]
 
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
@@ -1450,7 +1496,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('SyncAgent', 1.1234826137297889), ('RandomOneShotAgent', 0.5925587233119184)]
+    [('SyncAgent', 1.062017191327324), ('RandomOneShotAgent', -0.6522164103164491)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1573,8 +1619,213 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.9330652401847377),
-     ('SimpleSingleAgreementAgent', 0.5228937183152845)]
+    [('RandomOneShotAgent', 0.8540709306574972),
+     ('SimpleSingleAgreementAgent', 0.5906199113285724)]
+
+
+Using Independent Negotiators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The SCML game is at its core a concurrent negotiation problem. That is
+why the default ``OneShotAgent`` receives all calls from the simulator
+and responds to them centerally. Nevertheless, you man want to structure
+your agent in a different way. Let’s assume that you found a way to
+create *independent utility functions* to be used with each of your
+partners. Assuming that your ufuns can summarize what is expected to
+happen in all other negotiations, you can use the
+``OneShotIndNegotiatorsAgent`` to build an agent that delegates all of
+its control to independent negotiators that use these per-partner
+utility functions.
+
+In this case, you only need to implement ``generate_ufuns()`` which is
+responsible of creating these **independent per-partner utility
+functions** every day. You need also to specify the negotiator to be
+used with each partner. By default the agent will create an
+``AspirationNegotiator`` for each of your partners. You can override
+this default behavior by passing custom
+``default_negotiator_type``/``default_negotiator_params`` to the agent
+constructor. If you need even more control, you can override
+``generate_negotiator()`` to create a custom negotiator object per
+partner every day.
+
+This is an example agent that uses this approach:
+
+.. code:: ipython3
+
+    from scml.oneshot import OneShotIndNegotiatorsAgent
+    
+    class AssumeOthersFailIndNeg(OneShotIndNegotiatorsAgent):
+        def generate_ufuns(self):
+            return defaultdict(lambda: self.ufun)
+    world, ascors, tscores = try_agent(AssumeOthersFailIndNeg)
+    print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_51_0.png
+
+
+.. parsed-literal::
+
+    [('AssumeOthersFailIndNeg', 0.8009861211814175),
+     ('RandomOneShotAgent', 0.6276427287059406)]
+
+
+This agent simply uses its **centeral** ufun for each negotiator. This
+is not a very good strategy because each negotiator is now assuming that
+*all other negotiations will fail*. Can you see why?
+
+Let’s make a slightly more meaningful agent. This time, the utility
+function used per partner will try to find a favorable price but will
+not care about quantity. This is obviously not a good strategy either
+because the agent may over-contract.
+
+.. code:: ipython3
+
+    from negmas.utilities import LinearUtilityAggregationFunction
+    class GreedyIndNeg(OneShotIndNegotiatorsAgent):
+        def generate_ufuns(self):
+            d = dict()
+            # generate ufuns that prefer higher prices when selling
+            for partner_id in self.awi.my_consumers:
+                if self.awi.is_system(partner_id):
+                    continue
+                d[partner_id] = LinearUtilityAggregationFunction(
+                    dict(
+                        quantity=lambda x: 0.1 * x,
+                        time=lambda x: 0.0,
+                        unit_price=lambda x: x,
+                    ),
+                    weights=dict(
+                        quantity=0.1,
+                        time=0.0,
+                        unit_price=0.9,
+                    ),
+                    outcome_type=tuple,
+                    reserved_value=0.0,
+                )
+            # generate ufuns that prefer lower prices when selling
+            for partner_id in self.awi.my_suppliers:
+                issues = self.awi.current_input_issues
+                if self.awi.is_system(partner_id):
+                    continue
+                d[partner_id] = LinearUtilityAggregationFunction(
+                    dict(
+                        quantity=lambda x: x,
+                        time=lambda x: 0.0,
+                        unit_price=lambda x: issues[UNIT_PRICE].max_value - x,
+                    ),
+                    weights=dict(
+                        quantity=0.1,
+                        time=0.0,
+                        unit_price=0.9,
+                    ),
+                    outcome_type=tuple,
+                    reserved_value=0.0,
+                )
+            return d
+    
+    world, ascors, tscores = try_agent(GreedyIndNeg)
+    
+    print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_53_0.png
+
+
+.. parsed-literal::
+
+    [('RandomOneShotAgent', -1.3590270171555183),
+     ('GreedyIndNeg', -1.973189833628935)]
+
+
+Using A Negotiator from the Genius Platform
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One advantage of this type of agents is that it allows you to use almost
+any `Genius <http://ii.tudelft.nl/genius/>`__ including most winners of
+past ANAC competitions as your negotiator once you could come up with a
+good utility function per partner (not an easy task at all).
+
+To be able to use these genius negotiators, you need to have some extra
+constraints on your utility function:
+
+-  All ufuns are of the type ``LinearUtilityAggregationFunction``.
+-  All ufuns are normalized with a maximum value of 1.0. You can use
+   ``normalize_ufuns=True`` to gruarantee that.
+-  All ufuns have a finite reserved value and at least one outcome is
+   above it. You can guarantee that by using ``set_reservation=True``.
+-  All ufuns are created with ``outcome_type=tuple``. See
+   ``test_ind_negotiators_genius()`` at
+   ``tests/test_scml2021oneshot.py`` for an example.
+-  All weights of the ``LinearUtilityAggregationFunction`` must be
+   between zero and one and the weights must sum to one.
+
+If all of these conditions are satisfied, you can use a Genius based
+negotiator by following these steps:
+
+1. Install the negmas-genius bridge by running on the terminal (this
+   will download the bridge):
+
+   .. code:: bash
+
+      negmas genius-setup
+
+2. Start the negmas-genius bridbe by running on the terminal:
+
+   .. code:: bash
+
+      negmas genius
+
+3. In some cases, the aforementioned command may not work correctly
+   (specially on windows), you can replace it with:
+
+   .. code:: bash
+
+      cd ~/negmas/files
+      java -jar geniusbridge.jar
+
+4. Run a world or a tournament as usual.
+
+You need to have ``java`` installed (15.0 or later). *Please note that
+we do not officially support any Genius agents for SCML. Moreover, due
+to the way the bridge is implemented, these agents will tend to be much
+slower than negotiators developed directly in python and may suffer from
+more timeouts as a result. It may be a good idea to reimplement whatever
+strategy you prefer in python to guarantee stable performance*.
+
+The only change you need to do in your code is to choose an appropriate
+``GeniusNegotiator``. Note that not all agents in the genius platform
+will work correctly. Here is an example
+
+.. code:: ipython3
+
+    # import a specific agent from the Genius platform
+    from negmas.genius import NiceTitForTat
+    # used to check whether or not the negmas-genius bridge
+    # is running
+    from negmas.genius import genius_bridge_is_running
+    
+    class GeniusIndNeg(GreedyIndNeg):
+        def __init__(self, *args, **kwargs):
+            kwargs["default_negotiator_type"] = NiceTitForTat
+            kwargs["normalize_ufuns"] = True
+            super().__init__(*args, **kwargs)
+    
+    if genius_bridge_is_running():
+        world, ascors, tscores = try_agent(GeniusIndNeg)
+        print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_55_0.png
+
+
+.. parsed-literal::
+
+    [('GeniusIndNeg', 0.35522857940253827),
+     ('RandomOneShotAgent', -2.9432565391736665)]
 
 
 Comparing all agents
@@ -1591,8 +1842,10 @@ tutorial (we will ignore the do-nothing agents)
             SimpleAgent, DeepSimpleAgent,
             BetterAgent, LearningAgent,
             AdaptiveAgent, SyncAgent, 
-            SimpleSingleAgreementAgent
-        ],
+            SimpleSingleAgreementAgent, 
+            GreedyIndNeg,
+        ] + 
+        [GeniusIndNeg] if genius_bridge_is_running() else [],
         n_trials=20,
         n_processes=2,
         draw=False
@@ -1602,13 +1855,15 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.0272421992735041),
-     ('BetterAgent', 0.9802572076837824),
-     ('AdaptiveAgent', 0.9700057857551361),
-     ('SimpleAgent', 0.9589620766691266),
-     ('SyncAgent', 0.9093273386749899),
-     ('SimpleSingleAgreementAgent', 0.5162662829818943),
-     ('DeepSimpleAgent', 0.11634553541621899)]
+    [('BetterAgent', 1.101742494974822),
+     ('LearningAgent', 1.026470489122975),
+     ('AdaptiveAgent', 0.9640433798181489),
+     ('SimpleAgent', 0.8481382630851352),
+     ('SyncAgent', 0.841131709779224),
+     ('GreedyIndNeg', 0.6929265944788605),
+     ('GeniusIndNeg', 0.6444161412377085),
+     ('SimpleSingleAgreementAgent', 0.5183995418169199),
+     ('DeepSimpleAgent', -1.773244863042692)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1677,15 +1932,15 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.0697611701774818),
-     ('BetterAgent', 0.9552519334747455),
-     ('AdaptiveAgent', 0.8722649496985891),
-     ('SimpleAgent', 0.8231241596744338),
-     ('SyncAgent', 0.8078385989946262),
-     ('DecentralizingAgent', 0.7618697911362406),
-     ('SingleAgreementAspirationAgent', 0.6567253442041894),
-     ('BuyCheapSellExpensiveAgent', 0.5357156090820457),
-     ('DeepSimpleAgent', 0.4591307222561673)]
+    [('BetterAgent', 0.9840257305515868),
+     ('SimpleAgent', 0.9279609742732853),
+     ('LearningAgent', 0.9113145851073863),
+     ('AdaptiveAgent', 0.904829988593659),
+     ('SyncAgent', 0.8803712574808906),
+     ('SingleAgreementAspirationAgent', 0.8108829485251743),
+     ('BuyCheapSellExpensiveAgent', 0.4112348603385131),
+     ('DecentralizingAgent', 0.20193277226255915),
+     ('DeepSimpleAgent', 0.18708050496024892)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to

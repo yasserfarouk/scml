@@ -49,6 +49,7 @@ __all__ = [
     "OneShotSyncAgent",
     "OneShotSingleAgreementAgent",
     "OneShotIndNegotiatorsAgent",
+    "EndingNegotiator",
 ]
 
 
