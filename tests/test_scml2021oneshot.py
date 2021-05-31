@@ -1,16 +1,28 @@
 import random
+from collections import defaultdict
 
 import hypothesis.strategies as st
+import pytest
 from hypothesis import given
 from hypothesis import settings
+from negmas import genius_bridge_is_running
 from negmas import save_stats
+from negmas.genius import YXAgent, Atlas3, NiceTitForTat
+from negmas.genius import GeniusNegotiator
+from negmas.genius.ginfo import ALL_PASSING_NEGOTIATORS
 from negmas.helpers import unique_name
+from negmas.utilities import LinearUtilityAggregationFunction
+from negmas.utilities import LinearUtilityFunction
 from pytest import mark
 
 import scml
-from scml.oneshot import SCML2020OneShotWorld, builtin_agent_types
-from scml.oneshot.agent import OneShotAgent
+from scml.oneshot import SCML2020OneShotWorld
+from scml.oneshot import builtin_agent_types
+from scml.oneshot.agent import OneShotIndNegotiatorsAgent
 from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.common import QUANTITY
+from scml.oneshot.common import TIME
+from scml.oneshot.common import UNIT_PRICE
 from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020 import is_system_agent
 from scml.scml2020.components import production
@@ -32,18 +44,30 @@ std_types = scml.scml2020.builtin_agent_types(as_str=False)
 
 
 class MyOneShotAgent(RandomOneShotAgent):
-
     def respond(self, negotiator_id, state, offer):
-        if not (negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers):
+        if not (
+            negotiator_id in self.awi.my_consumers
+            or negotiator_id in self.awi.my_suppliers
+        ):
             breakpoint()
-        assert negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers, (self.id, self.name, negotiator_id)
+        assert (
+            negotiator_id in self.awi.my_consumers
+            or negotiator_id in self.awi.my_suppliers
+        ), (self.id, self.name, negotiator_id)
         return super().respond(negotiator_id, state, offer)
 
     def propose(self, negotiator_id, state):
-        if not (negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers):
+        if not (
+            negotiator_id in self.awi.my_consumers
+            or negotiator_id in self.awi.my_suppliers
+        ):
             breakpoint()
-        assert negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers, (self.id, self.name, negotiator_id)
+        assert (
+            negotiator_id in self.awi.my_consumers
+            or negotiator_id in self.awi.my_suppliers
+        ), (self.id, self.name, negotiator_id)
         return super().propose(negotiator_id, state)
+
 
 def generate_world(
     agent_types,
@@ -102,6 +126,7 @@ def test_negotiator_ids_are_partner_ids():
     )
     world.run()
     # save_stats(world, world.log_folder)
+
 
 @mark.parametrize("agent_type", types)
 @given(n_processes=st.integers(2, 4))
@@ -613,6 +638,96 @@ def test_adapter(atype):
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
         construct_graphs=False,
+        compact=True,
+        no_logs=True,
+    )
+    world.run()
+
+
+class MyIndNeg(OneShotIndNegotiatorsAgent):
+    def generate_ufuns(self):
+        return defaultdict(lambda: self.ufun)
+
+
+class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
+    def __init__(self, *args, **kwargs):
+        kwargs["default_negotiator_type"] = NiceTitForTat
+        kwargs["normalize_ufuns"] = True
+        kwargs["set_reservation"] = True
+        super().__init__(*args, **kwargs)
+
+    def generate_ufuns(self):
+        d = dict()
+        # generate ufuns that prever higher prices when selling
+        for partner_id in self.awi.my_consumers:
+            if self.awi.is_system(partner_id):
+                continue
+            d[partner_id] = LinearUtilityAggregationFunction(
+                dict(
+                    quantity=lambda x: 0.1 * x,
+                    time=lambda x: 0.0,
+                    unit_price=lambda x: x,
+                ),
+                weights=dict(
+                    quantity=0.1,
+                    time=0.0,
+                    unit_price=0.9,
+                ),
+                outcome_type=tuple,
+                reserved_value=0.0,
+            )
+        # generate ufuns that prever lower prices when selling
+        for partner_id in self.awi.my_suppliers:
+            issues = self.awi.current_input_issues
+            if self.awi.is_system(partner_id):
+                continue
+            d[partner_id] = LinearUtilityAggregationFunction(
+                dict(
+                    quantity=lambda x: x,
+                    time=lambda x: 0.0,
+                    unit_price=lambda x: issues[UNIT_PRICE].max_value - x,
+                ),
+                weights=dict(
+                    quantity=0.1,
+                    time=0.0,
+                    unit_price=0.9,
+                ),
+                outcome_type=tuple,
+                reserved_value=0.0,
+            )
+        return d
+
+
+def test_ind_negotiators():
+    n_processes = 5
+    world = generate_world(
+        [MyIndNeg],
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/{MyIndNeg.__name__}" f"Fine{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+        compact=True,
+        no_logs=True,
+    )
+    world.run()
+
+
+@pytest.mark.skipif(
+    condition=not genius_bridge_is_running(),
+    reason="No Genius Bridge, skipping genius-agent tests",
+)
+def test_ind_negotiators_genius():
+    n_processes = 5
+    world = generate_world(
+        [MyGeniusIndNeg],
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/{MyIndNeg.__name__}" f"Fine{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
         compact=True,
         no_logs=True,
     )

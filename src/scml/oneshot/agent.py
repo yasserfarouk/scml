@@ -21,24 +21,33 @@ from typing import List
 from typing import Optional
 
 from negmas import AgentMechanismInterface
-from negmas.situated import RunningNegotiationInfo
 from negmas import Contract
 from negmas import Entity
 from negmas import MechanismState
 from negmas import Outcome
 from negmas import PassThroughSAONegotiator
-from negmas.sao import SAONegotiator, SAOAMI
 from negmas import ResponseType
 from negmas import SAOController
 from negmas import SAOResponse
+from negmas import SAOSingleAgreementController
 from negmas import SAOState
-from negmas import SAOSyncController, SAOSingleAgreementController
+from negmas import SAOSyncController
 from negmas.common import NegotiatorInfo
+from negmas.helpers import get_class
+from negmas.helpers import get_full_type_name
+from negmas.outcomes import Issue
+from negmas.sao import SAOAMI
+from negmas.sao import SAONegotiator
+from negmas.situated import RunningNegotiationInfo
+from negmas.utilities import UtilityFunction, LinearUtilityAggregationFunction, LinearUtilityFunction
+from negmas.utilities import normalize
 
-from scml.scml2020.common import QUANTITY, UNIT_PRICE
-from .ufun import OneShotUFun
-
-__all__ = ["OneShotAgent", "OneShotSyncAgent", "OneShotSingleAgreementAgent"]
+__all__ = [
+    "OneShotAgent",
+    "OneShotSyncAgent",
+    "OneShotSingleAgreementAgent",
+    "OneShotIndNegotiatorsAgent",
+]
 
 
 class OneShotAgent(SAOController, Entity, ABC):
@@ -389,3 +398,182 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         Returns:
             True if utility(a) > utility(b)
         """
+
+class EndingNegotiator(SAONegotiator):
+    def propose(self, state):
+        return None
+    def respond(self, state, offer):
+        return ResponseType.END_NEGOTIATION
+
+class OneShotIndNegotiatorsAgent(OneShotAgent):
+    """
+    A one-shot agent that deligates all of its decisions to a set of independent
+    negotiators (one per partner per day).
+
+    Args:
+        default_negotiator_type: An `SAONegotiator` descendent to be used for
+                                 creating all negotiators. It can be passed either
+                                 as a class object or a string with the full class
+                                 name (e.g. "negmas.sao.AspirationNegotiator").
+        default_negotiator_type: A dict specifying the paratmers used to create
+                                 negotiators.
+        normalize_ufuns: If true, all utility functions will be normalized to have
+                         a maximum of 1.0 (the minimum value may be negative).
+        set_reservation: If given, the reserved value of all ufuns will be
+                         guaranteed to be between the minimum and maximum of
+                         the ufun. This is needed to avoid failures of some
+                         GeniusNegotiators.
+
+    Remarks:
+
+        - To use this class, you need to override `generate_ufuns`. If you
+          want to change the negotiator type used depending on the partner, you
+          can also override `generate_negotiator`.
+        - If you are using a `GeniusNegotiator` you must guarantee the following:
+            - All ufuns are of the type `LinearUtilityAggregationFunction`.
+            - All ufuns are normalized with a maximum value of 1.0. You can
+              use `normalize_ufuns=True` to gruarantee that.
+            - All ufuns have a finite reserved value and at least one outcome is
+             above it. You can guarantee that by using `set_reservation=True`.
+            - All ufuns are created with `outcome_type=tuple`. See `test_ind_negotiators_genius()`
+              at `tests/test_scml2021oneshot.py` for an example.
+            - All weights of the `LinearUtilityAggregationFunction` must be between
+              zero and one and the weights must sum to one.
+
+
+
+    """
+    def __init__(
+        self,
+        *args,
+        default_negotiator_type="negmas.sao.AspirationNegotiator",
+        default_negotiator_params=None,
+        normalize_ufuns=False,
+        set_reservation=False,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._default_negotiator_type = get_class(default_negotiator_type)
+        self._default_negotiator_params = (
+            dict() if not default_negotiator_params else default_negotiator_params
+        )
+        self._ufuns = dict()
+        self._normalize = normalize_ufuns
+        self._set_reservation = set_reservation
+
+    @abstractmethod
+    def generate_ufuns(self) -> Dict[str, UtilityFunction]:
+        """
+        Returns a utility function for each partner. All ufuns **MUST** be of
+        type `LinearUtilityAggregationFunction` if a genius negotiator is used.
+        """
+
+    def generate_negotiator(self, partner_id: str) -> SAONegotiator:
+        """
+        Returns a negotiator to be used with some partner.
+
+        Remarks:
+            The default implementation will use the `default_negotiator_type`
+            and `default_negotiator_params`.
+        """
+        return self._default_negotiator_type(**self._default_negotiator_params)
+
+    def _urange(self, u: UtilityFunction, issues):
+        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(u, LinearUtilityFunction):
+            return u.utility_range(issues=issues)
+        mn = mx = 0.0
+        for (_, w), issue in zip(u.weights.items(), issues):
+            values = list(issue.values)
+            mnv, mxv = min(values), max(values)
+            if w > 0:
+                mn += mnv * w
+                mx += mxv * w
+            else:
+                mn += mxv * w
+                mx += mnv * w
+        return mn, mx
+
+    def _unorm(self, u: UtilityFunction, mn, mx):
+        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(u, LinearUtilityFunction):
+            return normalize(u, outcomes=Issue.enumerate(issues, max_n_outcomes=1000))
+        # _, mx = self._urange(u, issues)
+        if mx < 0:
+            return None
+        u.weights = {k:_ / mx for k, _ in u.weights.items()}
+        return u
+
+    def _get_ufuns(self):
+        """
+        Internam method that makes sure the reservation value is set to a
+        meaningful value and that the ufun is normalized if needed
+        """
+        ufuns = self.generate_ufuns()
+        if not self._normalize and not self._set_reservation:
+            return ufuns
+        for partner_id, u in ufuns.items():
+            if self.awi.is_system(partner_id):
+                continue
+            issues = (
+                self.awi.current_input_issues
+                if partner_id in self.awi.my_suppliers
+                else self.awi.current_output_issues
+            )
+            mn, mx = self._urange(u, issues)
+            if self._normalize:
+                u = self._unorm(u, mn, mx)
+                if u is None:
+                    continue
+            if not self._set_reservation:
+                continue
+            if u.reserved_value is None or u.reserved_value == float("-inf") or u.reserved_value == float("nan"):
+                u.reserved_value = mn - 1e-5
+            u.reserved_value = u.reserved_value / mx
+            if u.reserved_value > mx:
+                ufuns[partner_id] = None
+        return ufuns
+
+    def init(self):
+        super().init()
+        self._ufuns = self._get_ufuns()
+
+    def step(self):
+        super().step()
+        self._ufuns = self._get_ufuns()
+
+    def make_negotiator(
+        self,
+        negotiator_type=None,
+        name: str = None,
+        **kwargs,
+    ):
+        """
+        Creates a negotiator but does not add it to the controller. Call
+        `add_negotiator` to add it.
+
+        Args:
+            negotiator_type: Type of the negotiator to be created.
+            name: negotiator name
+            **kwargs: any key-value pairs to be passed to the negotiator constructor
+
+        Returns:
+            The negotiator to be controlled. None for failure
+
+        Remarks:
+            If you would like not to negotiate, just return `EndingNegotiator()`
+            instead of None. The value None should only be returned if an exception
+            is to be thrown.
+
+        """
+        ufun = self._ufuns[name]
+        if ufun is None:
+            return EndingNegotiator()
+        negotiator = self.generate_negotiator(name)
+        negotiator.id = name
+        negotiator.name = name
+        negotiator.ufun = ufun
+        return negotiator
+
+    def propose(self, negotiator_id, state):
+        raise ValueError(
+            "propose should never be called directly on OneShotIndNegotiatorsAgent"
+        )
