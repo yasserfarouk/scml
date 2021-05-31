@@ -39,7 +39,9 @@ from negmas.outcomes import Issue
 from negmas.sao import SAOAMI
 from negmas.sao import SAONegotiator
 from negmas.situated import RunningNegotiationInfo
-from negmas.utilities import UtilityFunction, LinearUtilityAggregationFunction, LinearUtilityFunction
+from negmas.utilities import LinearUtilityAggregationFunction
+from negmas.utilities import LinearUtilityFunction
+from negmas.utilities import UtilityFunction
 from negmas.utilities import normalize
 
 __all__ = [
@@ -399,11 +401,14 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
             True if utility(a) > utility(b)
         """
 
+
 class EndingNegotiator(SAONegotiator):
     def propose(self, state):
         return None
+
     def respond(self, state, offer):
         return ResponseType.END_NEGOTIATION
+
 
 class OneShotIndNegotiatorsAgent(OneShotAgent):
     """
@@ -443,6 +448,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
 
 
     """
+
     def __init__(
         self,
         *args,
@@ -479,7 +485,9 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         return self._default_negotiator_type(**self._default_negotiator_params)
 
     def _urange(self, u: UtilityFunction, issues):
-        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(u, LinearUtilityFunction):
+        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(
+            u, LinearUtilityFunction
+        ):
             return u.utility_range(issues=issues)
         mn = mx = 0.0
         for (_, w), issue in zip(u.weights.items(), issues):
@@ -494,12 +502,14 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         return mn, mx
 
     def _unorm(self, u: UtilityFunction, mn, mx):
-        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(u, LinearUtilityFunction):
+        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(
+            u, LinearUtilityFunction
+        ):
             return normalize(u, outcomes=Issue.enumerate(issues, max_n_outcomes=1000))
         # _, mx = self._urange(u, issues)
         if mx < 0:
             return None
-        u.weights = {k:_ / mx for k, _ in u.weights.items()}
+        u.weights = {k: _ / mx for k, _ in u.weights.items()}
         return u
 
     def _get_ufuns(self):
@@ -525,7 +535,11 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
                     continue
             if not self._set_reservation:
                 continue
-            if u.reserved_value is None or u.reserved_value == float("-inf") or u.reserved_value == float("nan"):
+            if (
+                u.reserved_value is None
+                or u.reserved_value == float("-inf")
+                or u.reserved_value == float("nan")
+            ):
                 u.reserved_value = mn - 1e-5
             u.reserved_value = u.reserved_value / mx
             if u.reserved_value > mx:
