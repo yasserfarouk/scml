@@ -1,6 +1,23 @@
 Changelog
 =========
 
+0.4.3 (2021.6.1)
+-----------------
+
+* [oneshot] Adding OneshotIndNegotiatorsAgent to use independent negotiators in oneshot
+* [std/coll] updating builtin compoenents to be more rational
+* [bugfix] failure in distributing products when the number of agents per process becomes large.
+* [cli] changes on default competitors in the CLI
+* [oneshot] adding the option to disable avoid-ultimatum (and disabling it for now)
+* [oneshot] making sure needs are integers in greedy
+* [bugfix] negotiator id is not the same as partner id sometimes
+* [cli] adding --name to run2021 command to control world name
+* [bugfix] negotiator_id and partner_id were not equal
+* [eval] ensuring that ageents are run in exactly the same conditions
+* [eval] adding zscore, iqr, fraction (old iqr -> iqr_fraction) to truncated  mean
+* [cli] changing default n. competitors to 2
+* [oneshot] adding an option not to count/not count future contracts on bankrruptcy
+
 0.4.2 (2021.5.10)
 -----------------
 * [bugfix] Avoiding an error if an agent gave a fractional unit-price
