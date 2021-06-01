@@ -1587,9 +1587,9 @@ def anac2021_oneshot(
     cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
     force_signing=True,
     profit_basis=np.mean,
-    disposal_cost: Union[np.ndarray, Tuple[float, float], float] = (0.5, 1.0),
-    shortfall_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.5, 1.0),
-    disposal_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.1),
+    disposal_cost: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.2),
+    shortfall_penalty: Union[np.ndarray, Tuple[float, float], float] = (0.2, 1.0),
+    disposal_cost_dev: Union[np.ndarray, Tuple[float, float], float] = (0.0, 0.02),
     shortfall_penalty_dev: Union[np.ndarray, Tuple[float, float], float] = (
         0.0,
         0.1,
