@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.4.4 (2021.6.1)
+-----------------
+
+* [oneshot] Matching default parameters of world generation to game description.
+
 0.4.3 (2021.6.1)
 -----------------
 
