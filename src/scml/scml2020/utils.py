@@ -211,13 +211,13 @@ def anac2020_config_generator(
     *,
     n_steps: Union[int, Tuple[int, int]] = (50, 200),
     n_processes: Tuple[int, int] = (
-        3,
-        5,
+        2,
+        4,
     ),  # minimum is strictly guarantee but maximum is only guaranteed if select_n_levels_first
     min_factories_per_level: int = 2,  # strictly guaranteed
     max_factories_per_level: int = 6,  # not strictly guaranteed except if select_n_levels_first is False
     n_lines: int = 10,
-    select_n_levels_first=False,
+    select_n_levels_first=True,
     oneshot_world: bool = False,
     **kwargs,
 ) -> List[Dict[str, Any]]:
