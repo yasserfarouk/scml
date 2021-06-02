@@ -969,7 +969,7 @@ def anac2020_std(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.0,
+        forced_logs_fraction=0.1,
         **kwargs,
     )
 
@@ -1095,7 +1095,7 @@ def anac2020_collusion(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.0,
+        forced_logs_fraction=0.1,
         **kwargs,
     )
 
@@ -1410,7 +1410,7 @@ def anac2021_std(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.0,
+        forced_logs_fraction=0.1,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         **kwargs,
@@ -1536,7 +1536,7 @@ def anac2021_collusion(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.0,
+        forced_logs_fraction=0.1,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         **kwargs,
@@ -1698,7 +1698,7 @@ def anac2021_oneshot(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.0,
+        forced_logs_fraction=0.1,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         n_steps=n_steps,
