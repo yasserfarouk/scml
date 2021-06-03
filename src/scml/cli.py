@@ -262,7 +262,7 @@ def main():
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(
@@ -568,7 +568,7 @@ def tournament2019(
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(
@@ -854,7 +854,7 @@ def _path(path) -> Path:
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(
@@ -1159,7 +1159,7 @@ def run2019(
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(
@@ -1473,7 +1473,7 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(
@@ -1844,7 +1844,7 @@ def run2021(
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(
@@ -2120,7 +2120,7 @@ def tournament2020(
 )
 @click.option(
     "--log-negs/--no-neg-logs",
-    default=False,
+    default=True,
     help="Log all negotiations. Only effective if --debug is given",
 )
 @click.option(

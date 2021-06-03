@@ -167,7 +167,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             # kwargs["save_mechanism_state_in_contract"] = False
             kwargs["save_cancelled_contracts"] = False
             kwargs["save_resolved_breaches"] = False
-            kwargs["save_negotiations"] = False
+            kwargs["save_negotiations"] = True
+        else:
+            kwargs["log_negotiations"] = True
+            kwargs["save_negotiations"] = True
         self.compact = compact
         if negotiation_speed == 0:
             negotiation_speed = neg_n_steps + 1

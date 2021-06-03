@@ -58,6 +58,9 @@ __all__ = [
 ]
 
 
+FORCED_LOGS_FRACTION = 1.0
+
+
 ROUND_ROBIN = True
 
 
@@ -207,7 +210,7 @@ def anac2020_config_generator(
     agent_names_reveal_type: bool = False,
     non_competitors: Optional[Tuple[Union[str, SCML2020Agent]]] = None,
     non_competitor_params: Optional[Tuple[Dict[str, Any]]] = None,
-    compact: bool = True,
+    compact: bool = False,
     *,
     n_steps: Union[int, Tuple[int, int]] = (50, 200),
     n_processes: Tuple[int, int] = (
@@ -221,7 +224,6 @@ def anac2020_config_generator(
     oneshot_world: bool = False,
     **kwargs,
 ) -> List[Dict[str, Any]]:
-
     if non_competitors is None:
         non_competitors = DefaultAgents
         non_competitor_params = [dict() for _ in non_competitors]
@@ -344,7 +346,6 @@ def anac2020_config_generator(
             no_logs=no_logs,
         )
     world_params.update(kwargs)
-    # breakpoint()
     # _agent_types = copy.deepcopy(world_params.pop("agent_types"))
     # _agent_params = copy.deepcopy(world_params.pop("agent_params"))
     if oneshot_world:
@@ -522,7 +523,6 @@ def anac2020oneshot_world_generator(**kwargs):
     # cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
     # for k in ("n_agents_per_process","n_processes"):
     #     del kwargs["world_params"][k]
-    # breakpoint()
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
     cnfg2 = SCML2020OneShotWorld.generate(**kwargs["world_params"])
@@ -875,6 +875,7 @@ def anac2020_std(
     configs_only=False,
     compact=False,
     n_competitors_per_world=None,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -916,6 +917,7 @@ def anac2020_std(
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
         kwargs: Arguments to pass to the `world_generator` function
 
     Returns:
@@ -969,7 +971,7 @@ def anac2020_std(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.1,
+        forced_logs_fraction=forced_logs_fraction,
         **kwargs,
     )
 
@@ -1000,6 +1002,7 @@ def anac2020_collusion(
     configs_only=False,
     compact=False,
     n_competitors_per_world=None,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -1042,6 +1045,7 @@ def anac2020_collusion(
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
         kwargs: Arguments to pass to the `world_generator` function
 
     Returns:
@@ -1095,7 +1099,7 @@ def anac2020_collusion(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.1,
+        forced_logs_fraction=forced_logs_fraction,
         **kwargs,
     )
 
@@ -1316,6 +1320,7 @@ def anac2021_std(
     configs_only=False,
     compact=False,
     n_competitors_per_world=None,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -1357,6 +1362,7 @@ def anac2021_std(
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
         kwargs: Arguments to pass to the `world_generator` function
 
     Returns:
@@ -1410,7 +1416,7 @@ def anac2021_std(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.1,
+        forced_logs_fraction=forced_logs_fraction,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         **kwargs,
@@ -1443,6 +1449,7 @@ def anac2021_collusion(
     configs_only=False,
     compact=False,
     n_competitors_per_world=1,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -1486,6 +1493,7 @@ def anac2021_collusion(
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
         kwargs: Arguments to pass to the `world_generator` function
 
     Returns:
@@ -1536,7 +1544,7 @@ def anac2021_collusion(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.1,
+        forced_logs_fraction=forced_logs_fraction,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         **kwargs,
@@ -1598,6 +1606,7 @@ def anac2021_oneshot(
     price_multiplier: Union[np.ndarray, Tuple[float, float], float] = (1.5, 2.0),
     random_agent_types: bool = False,
     penalties_scale: Union[str, List[str]] = "trading",
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> Union[TournamentResults, PathLike]:
     """
@@ -1639,6 +1648,7 @@ def anac2021_oneshot(
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
         kwargs: Arguments to pass to the `world_generator` function
 
     Returns:
@@ -1698,7 +1708,7 @@ def anac2021_oneshot(
         dynamic_non_competitor_params=dynamic_non_competitor_params,
         exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
         save_video_fraction=0.0,
-        forced_logs_fraction=0.1,
+        forced_logs_fraction=forced_logs_fraction,
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         n_steps=n_steps,
