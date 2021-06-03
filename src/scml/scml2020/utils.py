@@ -414,11 +414,12 @@ def anac2020_assigner(
         # removing the competitors from the dynamic competitors
         if exclude_competitors_from_reassignment:
             # TODO May be use a better way to hash the a parameters than just conversion to str
-            compset = set(zip(competitors, (str(_) for _ in params)))
+            # Note that None and and empty dict() will both become ""
+            compset = set(zip(competitors, (str(_) if _ else "" for _ in params)))
             dynset = list(
                 zip(
                     dynamic_non_competitors,
-                    (str(_) for _ in dynamic_non_competitor_params),
+                    (str(_) if _ else "" for _ in dynamic_non_competitor_params),
                 )
             )
             dynamic_non_competitor_indices = [
