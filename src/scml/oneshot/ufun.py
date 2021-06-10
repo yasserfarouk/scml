@@ -7,11 +7,6 @@ from negmas import Contract
 from negmas.utilities import UtilityFunction, UtilityValue
 from negmas.outcomes import Outcome, Issue
 
-
-# import quadprog
-# import cvxpy as cp
-import mip as mp
-
 from scml.scml2020.common import is_system_agent
 
 from .common import QUANTITY, UNIT_PRICE, TIME

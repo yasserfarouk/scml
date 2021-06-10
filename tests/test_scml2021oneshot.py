@@ -628,6 +628,24 @@ def test_builtin_agent_types():
     )
 
 
+def test_builtin_aspiration():
+    from negmas.helpers import get_full_type_name
+    from scml.oneshot import SingleAgreementAspirationAgent
+
+    n_processes = 2
+    world = generate_world(
+        [SingleAgreementAspirationAgent],
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/{SingleAgreementAspirationAgent.__name__}Fine{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+        compact=True,
+        no_logs=True,
+    )
+    world.run()
+
 @given(
     atype=st.lists(
         st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6

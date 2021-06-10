@@ -1446,7 +1446,7 @@ DEFAULT_ONESHOT = "GreedySyncAgent;SingleAgreementAspirationAgent"
 DEFAULT_ONESHOT_NONCOMPETITORS = [
     "scml.oneshot.agents.RandomOneShotAgent",
     "scml.oneshot.agents.GreedyOneShotAgent",
-    # "scml.oneshot.agents.SingleAgreementAspirationAgent",
+    "scml.oneshot.agents.SingleAgreementAspirationAgent",
 ]
 
 
@@ -1506,7 +1506,7 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
 @click.option(
     "--name",
     default="",
-    help="World name. Used as the folder name in which it will be saved"
+    help="World name. Used as the folder name in which it will be saved",
 )
 @click.option(
     "--world-config",
@@ -1532,7 +1532,11 @@ def run2021(
     name,
 ):
     if not competitors:
-        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
+        competitors = (
+            (DEFAULT_ONESHOT + ";" + ";".join(DEFAULT_ONESHOT_NONCOMPETITORS))
+            if oneshot
+            else (DEFAULT_STD_2021 + ";" + ";".join(DEFAULT_2021_NONCOMPETITORS))
+        )
     world_type = SCML2020OneShotWorld if oneshot else SCML2021World
     if time <= 0:
         time = None
@@ -1551,9 +1555,13 @@ def run2021(
 
     log_dir = _path(log)
 
-    world_name = unique_name(
-        base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
-    ) if not name else name
+    world_name = (
+        unique_name(
+            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
+        )
+        if not name
+        else name
+    )
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
     os.makedirs(log_dir, exist_ok=True)

@@ -580,6 +580,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.info.update(dict(agent_outputs=to_lists(self.agent_outputs)))
         self.info.update(dict(agent_processes=to_lists(self.agent_processes)))
         self.info.update(dict(agent_initial_balances=self.initial_balances))
+        self._update_exogenous(0)
 
     @classmethod
     def generate(
@@ -1175,39 +1176,41 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
     def start_contract_execution(self, contract: Contract) -> Optional[Set[Breach]]:
         return set()
 
+    def _update_exogenous(self, s):
+        self.exogenous_qout = defaultdict(int)
+        self.exogenous_qin = defaultdict(int)
+        self.exogenous_pout = defaultdict(int)
+        self.exogenous_pin = defaultdict(int)
+        self.__contracts = defaultdict(list)
+        # Register exogenous contracts as concluded
+        # -----------------------------------------
+        for contract in self.exogenous_contracts[s]:
+            seller = contract.annotation["seller"]
+            buyer = contract.annotation["buyer"]
+            quantity = contract.agreement["quantity"]
+            unit_price = contract.agreement["unit_price"]
+            self.exogenous_qout[seller] += quantity
+            self.exogenous_pout[seller] += quantity * unit_price
+            self.exogenous_qin[buyer] += quantity
+            self.exogenous_pin[buyer] += quantity * unit_price
+            self.on_contract_concluded(contract, to_be_signed_at=self.current_step)
+            if self.exogenous_force_max:
+                contract.signatures = dict(
+                    zip(contract.partners, contract.partners)
+                )
+            else:
+                if SYSTEM_SELLER_ID in contract.partners:
+                    contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
+                else:
+                    contract.signatures[SYSTEM_BUYER_ID] = SYSTEM_BUYER_ID
+        if self.exogenous_dynamic:
+            raise NotImplementedError("Exogenous-dynamic is not yet implemented")
+
     def simulation_step(self, stage):
         s = self.current_step
 
         if stage == 0:
-
-            self.exogenous_qout = defaultdict(int)
-            self.exogenous_qin = defaultdict(int)
-            self.exogenous_pout = defaultdict(int)
-            self.exogenous_pin = defaultdict(int)
-            self.__contracts = defaultdict(list)
-            # Register exogenous contracts as concluded
-            # -----------------------------------------
-            for contract in self.exogenous_contracts[s]:
-                seller = contract.annotation["seller"]
-                buyer = contract.annotation["buyer"]
-                quantity = contract.agreement["quantity"]
-                unit_price = contract.agreement["unit_price"]
-                self.exogenous_qout[seller] += quantity
-                self.exogenous_pout[seller] += quantity * unit_price
-                self.exogenous_qin[buyer] += quantity
-                self.exogenous_pin[buyer] += quantity * unit_price
-                self.on_contract_concluded(contract, to_be_signed_at=self.current_step)
-                if self.exogenous_force_max:
-                    contract.signatures = dict(
-                        zip(contract.partners, contract.partners)
-                    )
-                else:
-                    if SYSTEM_SELLER_ID in contract.partners:
-                        contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
-                    else:
-                        contract.signatures[SYSTEM_BUYER_ID] = SYSTEM_BUYER_ID
-            if self.exogenous_dynamic:
-                raise NotImplementedError("Exogenous-dynamic is not yet implemented")
+            self._update_exogenous(s)
 
             # publish public information
             # --------------------------
@@ -1299,9 +1302,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             )
             ufun = agent.ufun
             ucon = ufun.from_contracts(self.__contracts[aid])
-            # ufun = agent.make_ufun(add_exogenous=True)
-            # uagg = ufun.from_aggregates(qin=qin, qout=qout, pin=pin, pout=pout)
-            # assert abs(ucon - uagg) < 1e-1, f"Ufun from contracts {ucon} != ufun from aggregates {uagg}"
             self._profits[aid].append(ucon)
             self._breach_levels[aid].append(
                 ufun.breach_level(
@@ -1659,7 +1659,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         partners = [_ for _ in self.suppliers[product] if not self.is_bankrupt[_]]
         if not partners:
             return True
-        # controller.make_ufun()
         if negotiators is None:
             negotiators = [
                 controller.create_negotiator(PassThroughSAONegotiator, name=_, id=_)
