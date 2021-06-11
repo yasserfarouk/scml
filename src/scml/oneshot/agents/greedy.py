@@ -1,3 +1,5 @@
+import itertools
+import random
 from collections import defaultdict
 from typing import Optional
 
@@ -43,15 +45,26 @@ class GreedyOneShotAgent(OneShotAgent):
     def __init__(
         self,
         *args,
-        concession_exponent=0.2,
+        concession_exponent=None,
         acc_price_slack=float("inf"),
-        step_price_slack=0.1,
-        opp_price_slack=0.2,
-        opp_acc_price_slack=0.2,
-        range_slack=0.05,
+        step_price_slack=None,
+        opp_price_slack=None,
+        opp_acc_price_slack=None,
+        range_slack=None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
+        if concession_exponent is None:
+            concession_exponent = 0.2 + random.random() * 0.8
+        if step_price_slack is None:
+            step_price_slack = random.random() * 0.1 + 0.05
+        if opp_price_slack is None:
+            opp_price_slack = random.random() * 0.1 + 0.05
+        if opp_acc_price_slack is None:
+            opp_acc_price_slack = random.random() * 0.1 + 0.05
+        if range_slack is None:
+            range_slack = random.random() * 0.2 + 0.05
+
         self._e = concession_exponent
         self._acc_price_slack = acc_price_slack
         self._step_price_slack = step_price_slack
@@ -139,11 +152,11 @@ class GreedyOneShotAgent(OneShotAgent):
         if self._is_selling(ami):
             self._best_selling = max(up, self._best_selling)
             partner = ami.annotation["buyer"]
-            self._best_opp_selling[partner] = max(up, self._best_selling)
+            self._best_opp_selling[partner] = self._best_selling
         else:
             self._best_buying = min(up, self._best_buying)
             partner = ami.annotation["seller"]
-            self._best_opp_buying[partner] = min(up, self._best_buying)
+            self._best_opp_buying[partner] = self._best_buying
         return response
 
     def best_offer(self, negotiator_id):
@@ -156,8 +169,9 @@ class GreedyOneShotAgent(OneShotAgent):
         quantity_issue = ami.issues[QUANTITY]
         unit_price_issue = ami.issues[UNIT_PRICE]
         offer = [-1] * 3
-        offer[QUANTITY] = max(
-            min(my_needs, quantity_issue.max_value), quantity_issue.min_value
+        mx = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
+        offer[QUANTITY] = random.randint(
+            max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps)), mx
         )
         offer[TIME] = self.awi.current_step
         if self._is_selling(ami):
@@ -231,7 +245,7 @@ class GreedyOneShotAgent(OneShotAgent):
                 min(
                     [mx]
                     + [
-                        p * (1 - slack)
+                        p * (1 + slack)
                         for p, slack in (
                             (self._best_buying, self._step_price_slack),
                             (self._best_acc_buying, self._acc_price_slack),
@@ -254,14 +268,19 @@ class GreedyOneShotAgent(OneShotAgent):
 class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
     """A greedy agent based on OneShotSyncAgent"""
 
-    def __init__(self, *args, threshold=0.3, **kwargs):
+    def __init__(self, *args, threshold=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if threshold is None:
+            threshold = random.random() * 0.2 + 0.2
         self._threshold = threshold
+
+    def _init(self):
+        self.ufun.best = self.ufun.find_limit(True)
+        self.ufun.worst = self.ufun.find_limit(False)
 
     def init(self):
         super().init()
-        self.ufun.best = self.ufun.find_limit(True)
-        self.ufun.worst = self.ufun.find_limit(False)
+        self._init()
 
     def first_proposals(self):
         """Decide a first proposal on every negotiation.
@@ -275,22 +294,31 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
 
     def counter_all(self, offers, states):
         """Respond to a set of offers given the negotiation state of each."""
+
+        if self.ufun.max_utility is None:
+            self._init()
+        if self.ufun.max_utility < 0:
+            return dict(zip(offers.keys(), itertools.repeat(None)))
+
+        good_prices = {
+            k: self._find_good_price(self.get_ami(k), s) for k, s in states.items()
+        }
+
         responses = {
-            k: SAOResponse(ResponseType.REJECT_OFFER, None)
-            for k, v in self.first_proposals().items()
+            k: SAOResponse(ResponseType.REJECT_OFFER, None) for k in offers.keys()
         }
         my_input_needs, my_output_needs = self._needs()
         input_offers = {
-            k: v for k, v in offers.items() if self._is_selling(self.get_ami(k))
+            k: v for k, v in offers.items() if not self._is_selling(self.get_ami(k))
         }
         output_offers = {
-            k: v for k, v in offers.items() if not self._is_selling(self.get_ami(k))
+            k: v for k, v in offers.items() if self._is_selling(self.get_ami(k))
         }
 
         def calc_responses(my_needs, offers, is_selling):
             nonlocal responses
             if len(offers) == 0:
-                return
+                return 0
             sorted_offers = sorted(
                 offers.values(),
                 key=lambda x: -x[UNIT_PRICE] if is_selling else x[UNIT_PRICE],
@@ -304,13 +332,28 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
                 chosen[k] = offer
                 outputs.append(is_selling)
 
-            u = self.ufun.from_offers(list(chosen.values()), outputs)
-            if u > self._threshold * self.ufun.max_utility:
+            if (
+                self.ufun.from_offers(list(chosen.values()), outputs)
+                >= self._th(self.awi.current_step, self.awi.n_steps)
+                * self.ufun.max_utility
+            ):
                 for k in chosen.keys():
                     responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
+            return secured
 
-        calc_responses(my_input_needs, input_offers, False),
-        calc_responses(my_output_needs, output_offers, True)
+        secured = calc_responses(my_input_needs, input_offers, False)
+        secured += calc_responses(my_output_needs, output_offers, True)
+        for k, v in responses.items():
+            if v.response != ResponseType.REJECT_OFFER:
+                continue
+            responses[k] = SAOResponse(
+                ResponseType.REJECT_OFFER,
+                (
+                    max(1, my_input_needs + my_output_needs - secured),
+                    self.awi.current_step,
+                    good_prices[k],
+                ),
+            )
         return responses
 
     def _needs(self):
