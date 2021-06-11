@@ -527,7 +527,7 @@ def anac2020oneshot_world_generator(**kwargs):
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
     cnfg2 = SCML2020OneShotWorld.generate(**kwargs["world_params"])
-    for k in ("agent_types", "agent_params"):
+    for k in ("agent_types", "agent_params", "name"):
         cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
