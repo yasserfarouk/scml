@@ -1,4 +1,5 @@
 import itertools
+import random
 from typing import Dict
 from typing import Optional
 
@@ -20,7 +21,14 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
     it is considering.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initialized_for = -1
+        self.__endall = False
+
     def _init_internal_state(self):
+        self.__endall = not self.awi.is_first_level and not self.awi.is_last_level
+        self._initialized_for = self.awi.current_step
         if self.__endall:
             return
         # we assume that we are either in the first or the latest layer
@@ -30,7 +38,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
         AspirationMixin.aspiration_init(
             self,
             max_aspiration=1.0,
-            aspiration_type="boulware",
+            aspiration_type=float(random.randint(1, 4)) if random.random() < 0.7 else random.random(),
             above_reserved_value=False,
         )
         # if self.awi.current_exogenous_input_quantity or self.awi.current_exogenous_output_quantity:
@@ -73,15 +81,13 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
         )
         self._last_index = 0
 
-    def init(self):
-        # just end all negotiations if you are not in the first or last layer
-        self.__endall = not self.awi.is_first_level and not self.awi.is_last_level
-        self._init_internal_state()
-
     def step(self):
-        self._init_internal_state()
+        self._initialized_for = -1
 
     def counter_all(self, offers, states):
+        if self._initialized_for != self.awi.current_step:
+            self._init_internal_state()
+
         if self.__endall:
             return dict(
                 zip(
@@ -126,12 +132,31 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             break
         else:
             outcome, self._last_index = self._outcomes[i][1], i
-        return dict(
+        return self.choose_agents(offers, outcome)
+
+    def choose_agents(self, offers, outcome):
+        """Selects an appropriate way to distribute this outcome to agents with
+        given IDs."""
+        if len(offers) == 0:
+            return dict()
+        # fidn the partner which gave me the offer most similar to my best
+        dists = sorted(
+            (
+                (sum((a - b) * (a - b) for a, b in zip(outcome, v)), k)
+                for k, v in offers.items()
+            ),
+            key=lambda x: x[0],
+        )
+        # offer everyone nothing excdpt the one agent that gave me the offer most
+        # similar to my preferred outcome
+        result = dict(
             zip(
                 offers.keys(),
-                itertools.repeat(SAOResponse(ResponseType.REJECT_OFFER, outcome)),
+                itertools.repeat(SAOResponse(ResponseType.REJECT_OFFER, None)),
             )
         )
+        result[dists[0][1]] = SAOResponse(ResponseType.REJECT_OFFER, outcome)
+        return result
 
     def first_proposals(self) -> Dict[str, "Outcome"]:
         """
@@ -143,6 +168,9 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             a negotiation.
 
         """
+        if self._initialized_for != self.awi.current_step:
+            self._init_internal_state()
+
         if self.__endall:
             return dict(
                 zip(
@@ -150,6 +178,8 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
                     itertools.repeat(None),
                 )
             )
+        # that is a risk. The agent will send its best offer to everyone risking
+        # two of them accepting it which is suboptimal.
         return dict(
             zip(
                 self.negotiators.keys(),
