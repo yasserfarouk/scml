@@ -35,6 +35,9 @@ class SCML2020Agent(Agent):
     def init(self):
         pass
 
+    def before_step(self):
+        pass
+
     def step(self):
         pass
 

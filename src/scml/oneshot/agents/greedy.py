@@ -274,13 +274,12 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
             threshold = random.random() * 0.2 + 0.2
         self._threshold = threshold
 
-    def _init(self):
-        self.ufun.best = self.ufun.find_limit(True)
-        self.ufun.worst = self.ufun.find_limit(False)
-
     def init(self):
         super().init()
-        self._init()
+
+    def before_step(self):
+        self.ufun.best = self.ufun.find_limit(True)
+        self.ufun.worst = self.ufun.find_limit(False)
 
     def first_proposals(self):
         """Decide a first proposal on every negotiation.
@@ -295,8 +294,6 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
     def counter_all(self, offers, states):
         """Respond to a set of offers given the negotiation state of each."""
 
-        if self.ufun.max_utility is None:
-            self._init()
         if self.ufun.max_utility < 0:
             return dict(zip(offers.keys(), itertools.repeat(None)))
 

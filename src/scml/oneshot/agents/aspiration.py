@@ -21,14 +21,8 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
     it is considering.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._initialized_for = -1
-        self.__endall = False
-
-    def _init_internal_state(self):
+    def before_step(self):
         self.__endall = not self.awi.is_first_level and not self.awi.is_last_level
-        self._initialized_for = self.awi.current_step
         if self.__endall:
             return
         # we assume that we are either in the first or the latest layer
@@ -81,12 +75,8 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
         )
         self._last_index = 0
 
-    def step(self):
-        self._initialized_for = -1
 
     def counter_all(self, offers, states):
-        if self._initialized_for != self.awi.current_step:
-            self._init_internal_state()
 
         if self.__endall:
             return dict(
@@ -168,9 +158,6 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             a negotiation.
 
         """
-        if self._initialized_for != self.awi.current_step:
-            self._init_internal_state()
-
         if self.__endall:
             return dict(
                 zip(

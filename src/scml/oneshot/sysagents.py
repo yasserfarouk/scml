@@ -126,6 +126,9 @@ class _SystemAgent(DefaultOneShotAdapter):
     ) -> Optional[Negotiator]:
         pass
 
+    def before_step(self):
+        pass
+
     def step(self):
         pass
 

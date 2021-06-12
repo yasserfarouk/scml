@@ -131,6 +131,7 @@ def test_negotiator_ids_are_partner_ids():
 @given(n_processes=st.integers(2, 6))
 @settings(deadline=300_000, max_examples=20)
 def test_quantity_distribution(n_processes):
+    from pprint import pformat
     for _ in range(20):
         world = generate_world(
             [MyOneShotAgent],
@@ -144,7 +145,7 @@ def test_quantity_distribution(n_processes):
                     if is_system_agent(p):
                         continue
                     lines = world.agent_profiles[p].n_lines
-                    assert lines >= c.agreement["quantity"] >= 0, f"Contract: {str(c)} has negative or more quantity than n. lines {lines}"
+                    assert lines >= c.agreement["quantity"] >= 0, f"Contract: {str(c)} has negative or more quantity than n. lines {lines}\n{pformat(world.info)}"
 
 @mark.parametrize("agent_type", types)
 @given(n_processes=st.integers(2, 4))

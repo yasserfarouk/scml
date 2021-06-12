@@ -108,3 +108,6 @@ scratch/max_stats_g.csv
 scratch/min_stats_a.csv
 scratch/min_stats_b.csv
 scratch/min_stats_g.csv
+/build
+./build
+build/*

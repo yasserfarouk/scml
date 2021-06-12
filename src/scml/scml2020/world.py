@@ -1343,6 +1343,11 @@ class SCML2020World(TimeInAgreementMixin, World):
                     value=self.trading_prices,
                     key=self.current_step,
                 )
+            # initialize all agents for this step
+            # ===================================
+            for aid, a in self.agents.items():
+                if hasattr(a, "before_step"):
+                    a.before_step()
             return
 
         # update trading price information

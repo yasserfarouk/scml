@@ -34,7 +34,7 @@ class TradePredictionStrategy:
 
     Hooks Into:
         - `init`
-        - `step`
+        - `before_step`
 
     Abstract:
         - `trade_prediction_init`: Called during init() to initialize the trade prediction.
@@ -104,9 +104,9 @@ class TradePredictionStrategy:
         self.trade_prediction_init()
         super().init()
 
-    def step(self):
+    def before_step(self):
         self.trade_prediction_step()
-        super().step()
+        super().before_step()
 
 
 class ExecutionRatePredictionStrategy:

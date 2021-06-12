@@ -1006,6 +1006,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 active_lines=active_lines,
                 input_quantities=input_quantity,
                 output_quantities=output_quantity,
+                exogenous_supplies=exogenous_supplies,
+                exogenous_sales=exogenous_sales,
                 expected_productivity=float(np.sum(active_lines))
                 / np.sum(n_lines * n_steps * n_agents_per_process),
                 expected_n_products=np.sum(active_lines, axis=-1),
@@ -1258,6 +1260,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             # request all negotiations
             # ========================
             self._make_negotiations()
+
+            # initialize all agents for this step
+            # ===================================
+            for aid, a in self.agents.items():
+                if hasattr(a, "before_step"):
+                    a.before_step()
             return
 
         # update trading price information
