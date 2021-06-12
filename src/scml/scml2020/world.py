@@ -1345,7 +1345,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 )
             # initialize all agents for this step
             # ===================================
-            for aid, a in self.agents.items():
+            for _, a in self.agents.items():
                 if hasattr(a, "before_step"):
                     a.before_step()
             return
@@ -1608,8 +1608,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         ), f"at {self.current_step} Buyer has {buyer_factory._balance} (bankrupt at {self.bankruptcy_limit}) but we need q={q} * u={u}  ({'breached' if has_breaches else 'no breaches'})"
         bought, buy_cost = buyer_factory.buy(product, q, u, False, 0.0)
         sold, sell_cost = seller_factory.buy(product, -q, u, False, 0.0)
-        # if bought != sold:
-        #     breakpoint()
         assert (
             bought == sold
         ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})"

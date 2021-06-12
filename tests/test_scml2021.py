@@ -3,8 +3,8 @@ import random
 import hypothesis.strategies as st
 from hypothesis import example
 from hypothesis import given
-from hypothesis import settings
 from hypothesis import reproduce_failure
+from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
@@ -303,6 +303,12 @@ def test_graphs_lead_to_no_unknown_nodes():
     atype=st.lists(
         st.sampled_from(oneshot_types + types), unique=True, min_size=2, max_size=6
     )
+)
+@example(
+    atype=[
+        scml.oneshot.agents.greedy.GreedySyncAgent,
+        scml.scml2020.agents.random.RandomAgent,
+    ],
 )
 @settings(deadline=300_000, max_examples=30)
 def test_adapter(atype):

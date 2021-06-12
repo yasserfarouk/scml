@@ -17,6 +17,7 @@ from .mixins import OneShotUFunCreatorMixin
 
 
 class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):
+    """Base class for adapters allowing SCML std agents to run as Oneshot agents in SCML2020Oneshot worlds"""
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
@@ -35,6 +36,10 @@ class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):
     def init(self):
         self._obj._awi = AWIHelper(owner=self)
         super().init()
+
+    def before_step(self):
+        if hasatter(self._obj, "before_step"):
+            self._obj.before_step()
 
     def to_dict(self):
         return self._obj.to_dict()

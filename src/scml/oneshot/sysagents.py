@@ -26,7 +26,15 @@ __all__ = ["DefaultOneShotAdapter", "_SystemAgent"]
 
 
 class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
-    """The base class of all one-shot agents"""
+    """
+    The base class of all agents running in OneShot based on OneShotAgent.
+
+    Remarks:
+
+        - It inherits from `Adapter` allowing it to just pass any calls not
+          defined explicity in it to the internal `_obj` object representing
+          the SCML2020OneShotAgent.
+    """
 
     def make_ufun(self, add_exogenous: bool):
         return super().make_ufun(add_exogenous, in_adapter=False)
@@ -57,6 +65,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         else:
             self._obj._awi = AWIHelper(self)
         super().init()
+
+    def before_step(self):
+        if hasattr(self._obj, "before_step"):
+            self._obj.before_step()
 
     def to_dict(self):
         return {
