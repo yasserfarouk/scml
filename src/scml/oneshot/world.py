@@ -618,6 +618,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         price_multiplier: Union[np.ndarray, Tuple[float, float], float] = (1.5, 2.0),
         random_agent_types: bool = False,
         penalties_scale: Union[str, List[str]] = "trading",
+        cap_exogenous_quantities: bool = True,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -657,6 +658,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             force_signing: Whether to force contract signatures (exogenous contracts are treated in the same way).
             exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
                                force_signing is False and use_exogenous_contracts is True
+            cap_exogenous_quantities: If True, all exogenous quantities in all contracts are capped to be no more than the number of lines
             cash_availability: The fraction of the total money needs of the agent to work at maximum capacity that
                                is available as `initial_balance` . This is only effective if `initial_balance` is set
                                to `None` .
@@ -840,6 +842,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             quantities[0],
             n_agents_per_process[0],
             n_steps,
+            n_lines if cap_exogenous_quantities else None,
         )
         quantities[0] = [sum(_) for _ in exogenous_supplies]
         exogenous_sales = distribute_quantities(
@@ -848,6 +851,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             quantities[-1],
             n_agents_per_process[-1],
             n_steps,
+            n_lines if cap_exogenous_quantities else None,
         )
         quantities[-1] = [sum(_) for _ in exogenous_sales]
 

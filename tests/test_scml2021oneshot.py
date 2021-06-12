@@ -128,6 +128,24 @@ def test_negotiator_ids_are_partner_ids():
     # save_stats(world, world.log_folder)
 
 
+@given(n_processes=st.integers(2, 6))
+@settings(deadline=300_000, max_examples=20)
+def test_quantity_distribution(n_processes):
+    for _ in range(20):
+        world = generate_world(
+            [MyOneShotAgent],
+            n_processes=n_processes,
+            compact=True,
+            no_logs=True,
+        )
+        for contracts in world.exogenous_contracts.values():
+            for c in contracts:
+                for p in c.partners:
+                    if is_system_agent(p):
+                        continue
+                    lines = world.agent_profiles[p].n_lines
+                    assert lines >= c.agreement["quantity"] >= 0, f"Contract: {str(c)} has negative or more quantity than n. lines {lines}"
+
 @mark.parametrize("agent_type", types)
 @given(n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)

@@ -1,8 +1,9 @@
 """Common functions used in all modules"""
-from dataclasses import dataclass
 import random
+from dataclasses import dataclass
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -18,7 +19,12 @@ __all__ = [
 ]
 
 
-def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
+def integer_cut(
+    n: int,
+    l: int,
+    l_m: Union[int, List[int]],
+    l_x: Optional[Union[int, List[int]]] = None,
+) -> List[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
     Args:
@@ -29,6 +35,10 @@ def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
     Returns:
 
     """
+    if l_x is None:
+        l_x = [float("inf")] * l
+    if not isinstance(l_x, Iterable):
+        l_x = [l_x] * l
     if not isinstance(l_m, Iterable):
         l_m = [l_m] * l
     sizes = np.asarray(l_m)
@@ -36,8 +46,16 @@ def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
         raise ValueError(
             f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
         )
+    if n > sum(l_x):
+        raise ValueError(
+            f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {sum(l_x)}"
+        )
+    valid = [i for i,s in enumerate(sizes) if l_x[i] > s]
     while sizes.sum() < n:
-        sizes[random.randint(0, l - 1)] += 1
+        j = random.choice(valid)
+        sizes[j] += 1
+        if sizes[j] >= l_x[j]:
+            valid.remove(j)
     return sizes.tolist()
 
 
@@ -109,7 +127,12 @@ def make_array(x: Union[np.ndarray, Tuple[int, int], int], n, dtype=int) -> np.n
 
 
 def distribute_quantities(
-    equal: bool, predictability: float, q: List[int], a: int, n_steps: int
+    equal: bool,
+    predictability: float,
+    q: List[int],
+    a: int,
+    n_steps: int,
+    limit: Optional[List[int]] = None,
 ):
     """Used internally by generate() methods to distribute exogenous contracts
 
@@ -119,60 +142,115 @@ def distribute_quantities(
                         times are similar
         q: The quantity per step to be distributed
         a: The number of agents to distribute over.
+        limit: The maximum quantity per step for each agent (len(limit) == a)
 
     Returns:
         an n_steps * a list of lists giving the distributed quantities where
-        sum[s, :] ~= q[s]
+        sum[s, :] ~= q[s]. The error can be up to 2*a per step
 
     """
+    if limit is not None and not isinstance(limit, Iterable):
+        limit = [limit] * a
     # if we do not distribute anything just return all zeros
     if sum(q) == 0:
         return [np.asarray([0] * a, dtype=int) for _ in range(n_steps)]
-    # if all quantities are to be distributed equally, just do that directly 
+    # if all quantities are to be distributed equally, just do that directly
     # ensuring each agent gets at least one item.
     # what happens if q does not divide a? q/a is rounded.
     if equal:
         values = np.maximum(1, np.round(q / a).astype(int)).tolist()
-        return [np.asarray([values[p]] * a, dtype=int) for _ in range(n_steps)]
+        if limit is not None:
+            values = [a if a < b else b for a, b in zip(values, limit)]
+        return [np.asarray([values[_]] * a, dtype=int) for _ in range(n_steps)]
     if predictability < 0.01:
         values = []
         for s in range(n_steps):
-            values.append(integer_cut(q[s], a, 0))
+            values.append(integer_cut(q[s], a, 0, limit))
             assert sum(values[-1]) == q[s]
         return values
     values = []
+    assert all(_ >= 0 for _ in q), f"We have some negative quantities! {q}"
     qz = int(0.5 + sum(q) / len(q))
-    base_cut = integer_cut(qz, a, 0)
-    for s in range(0, n_steps):
-        if qz == 0 or q[s] == 0:
-            values.append([0] * a)
-            continue
-        values.append([int(0.5 + _ * q[s] / qz) for _ in base_cut])
-        n_changes = max(0, min(q[s], int(0.5 + (1.0 - predictability) * q[s])))
-        if not n_changes:
-            continue
-        added = integer_cut(n_changes, a, 0)
-        subtracted = integer_cut(n_changes, a, 0)
-        assert isinstance(added[0], int) and isinstance(subtracted[0], int)
-        for i in range(len(values[-1])):
-            values[-1][i] += added[i] - subtracted[i]
-            if values[-1][i] >= 0:
+    base_cut = integer_cut(qz, a, 0, limit)
+    limit_sum = sum(limit) if limit is not None else float("inf")
+    if limit is not None:
+        assert all([a<=b for a, b in zip(base_cut, limit)]), f"base_cut above limit:\nbase_cut: {base_cut}\nLimit: {limit}"
+    assert min(base_cut) >= 0, f"base cut has negative value {base_cut}"
+
+    def adjust_values(v, limit):
+        for i in range(len(v)):
+            if v[i] >= 0:
                 continue
-            errs = -values[-1][i]
-            values[-1][i] = 0
+            # we have too few at index i
+            errs = -v[i]
+            v[i] = 0
             while errs > 0:
                 diffs = integer_cut(errs, a - 1, 0)
                 diffs = diffs[:i] + [0] + diffs[i:]
-                for j in range(len(values[-1])):
+                for j in range(len(v)):
                     if j == i:
                         continue
-                    if values[-1][j] >= diffs[j]:
-                        values[-1][j] -= diffs[j]
+                    if v[j] >= diffs[j]:
+                        v[j] -= diffs[j]
                         errs -= diffs[j]
+            continue
+        if limit is None:
+            return v
+        for i in range(len(v)):
+            if v[i] <= limit[i]:
+                continue
+            # we have too many at index i
+            errs = v[i] - limit[i]
+            v[i] = limit[i]
+            available = [x - y for x, y in zip(limit, v)]
+            available = available[:i] + available[i + 1 :]
+            if sum(available) < errs:
+                errs = sum(available)
+            while errs > 0:
+                diffs = integer_cut(errs, a - 1, 0, available)
+                diffs = diffs[:i] + [0] + diffs[i:]
+                for j in range(len(v)):
+                    if j == i:
+                        continue
+                    if limit[j] - v[j] >=  diffs[j]:
+                        v[j] += diffs[j]
+                        errs -= diffs[j]
+        return v
+
+    for s in range(0, n_steps):
         assert (
-            abs(sum(values[-1]) - q[s]) < 2 * a
-        ), f"Failed to distribute: expected {q[s]} but got {sum(values[-1])}: {values[-1]}"
+            limit is None or sum(limit) >= q[s]
+        ), f"Sum of limits is {limit_sum} but we need to distribute {q[s]} at step {s}"
+        if qz == 0 or q[s] == 0:
+            values.append([0] * a)
+            continue
+
+        v = [int(0.5 + _ * q[s] / qz) for _ in base_cut]
+        n_changes = max(0, min(q[s], int(0.5 + (1.0 - predictability) * q[s])))
+        if limit is not None:
+            n_changes = min(n_changes, sum(l - x for l, x in zip(limit, v)))
+        if n_changes <= 0:
+            values.append(adjust_values(v, limit))
+            continue
+        subtracted = integer_cut(n_changes, a, 0)
+        upper = (
+            [l + s - c for l, c, s in zip(limit, v, subtracted)]
+            if limit is not None
+            else None
+        )
+        added = integer_cut(n_changes, a, 0, upper)
+        # assert isinstance(added[0], int) and isinstance(subtracted[0], int)
+        for i in range(len(v)):
+            v[i] += added[i] - subtracted[i]
+        values.append(adjust_values(v, limit))
+
+    for s, v in enumerate(values):
+        if limit is not None:
+            assert all(
+                a >= b for a, b in zip(limit, v)
+            ), f"Some values are above limit\n Limit: {limit}\nValues: {v}"
         assert (
-            min(values[-1]) >= 0
-        ), f"Negative  value {min(values[-1])} in quantities!\n{values}"
+            abs(sum(v) - q[s]) < 2 * a
+        ), f"Failed to distribute: expected {q[s]} but got {sum(v)}: {values[-1]}"
+        assert min(v) >= 0, f"Negative  value {min(v)} in quantities!\n{v}"
     return values
