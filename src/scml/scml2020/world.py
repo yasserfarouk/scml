@@ -953,9 +953,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         n_agents_cumsum = n_agents_per_process.cumsum().tolist()
         first_agent = [0] + n_agents_cumsum[:-1]
         last_agent = n_agents_cumsum[:-1] + [n_agents]
-        costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
-        for p, (f, l) in enumerate(zip(first_agent, last_agent)):
-            costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
 
         process_of_agent = np.empty(n_agents, dtype=int)
         for i, (f, l) in enumerate(zip(first_agent, last_agent)):
@@ -964,6 +961,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                 production_costs[f:l] = np.round(
                     production_costs[f:l] * (i + 1)  # math.sqrt(i + 1)
                 ).astype(int)
+
+        costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
+        for p, (f, l) in enumerate(zip(first_agent, last_agent)):
+            costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
 
         # generate external contract amounts (controlled by productivity):
 

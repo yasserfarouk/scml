@@ -319,3 +319,32 @@ def test_adapter(atype):
         compact=True,
     )
     world.run()
+
+def test_production_cost_increase():
+    from scml.scml2020 import SCML2021World
+    from scml.scml2020.agents import DecentralizingAgent
+
+    NPROCESSES = 5
+    costs = [[] for _ in range(NPROCESSES)]
+    for _ in range(100):
+        world = SCML2021World(
+            **SCML2021World.generate(
+                DecentralizingAgent,
+                n_agents_per_process=10,
+                n_processes=NPROCESSES,
+            ),
+            compact=True,
+            no_logs=True,
+        )
+        for aid in world.agent_profiles.keys():
+            if is_system_agent(aid):
+                continue
+            profile = world.agent_profiles[aid]
+            costs[profile.input_products[0]].append(profile.costs[:, profile.input_products[0]].mean())
+    mean_costs = [sum(_) / len(_) for _ in costs]
+    assert all(
+        [
+            b > (0.5 * (i + 2) / (i + 1)) * a
+            for i, (a, b) in enumerate(zip(mean_costs[:-1], mean_costs[1:]))
+        ]
+    ), f"non-ascending costs {mean_costs}"

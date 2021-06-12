@@ -7,8 +7,10 @@ from hypothesis import given
 from hypothesis import settings
 from negmas import genius_bridge_is_running
 from negmas import save_stats
-from negmas.genius import YXAgent, Atlas3, NiceTitForTat
+from negmas.genius import Atlas3
 from negmas.genius import GeniusNegotiator
+from negmas.genius import NiceTitForTat
+from negmas.genius import YXAgent
 from negmas.genius.ginfo import ALL_PASSING_NEGOTIATORS
 from negmas.helpers import unique_name
 from negmas.utilities import LinearUtilityAggregationFunction
@@ -132,6 +134,7 @@ def test_negotiator_ids_are_partner_ids():
 @settings(deadline=300_000, max_examples=20)
 def test_quantity_distribution(n_processes):
     from pprint import pformat
+
     for _ in range(20):
         world = generate_world(
             [MyOneShotAgent],
@@ -145,7 +148,10 @@ def test_quantity_distribution(n_processes):
                     if is_system_agent(p):
                         continue
                     lines = world.agent_profiles[p].n_lines
-                    assert lines >= c.agreement["quantity"] >= 0, f"Contract: {str(c)} has negative or more quantity than n. lines {lines}\n{pformat(world.info)}"
+                    assert (
+                        lines >= c.agreement["quantity"] >= 0
+                    ), f"Contract: {str(c)} has negative or more quantity than n. lines {lines}\n{pformat(world.info)}"
+
 
 @mark.parametrize("agent_type", types)
 @given(n_processes=st.integers(2, 4))
@@ -649,6 +655,7 @@ def test_builtin_agent_types():
 
 def test_builtin_aspiration():
     from negmas.helpers import get_full_type_name
+
     from scml.oneshot import SingleAgreementAspirationAgent
 
     n_processes = 2
@@ -664,6 +671,7 @@ def test_builtin_aspiration():
         no_logs=True,
     )
     world.run()
+
 
 @given(
     atype=st.lists(
@@ -769,3 +777,33 @@ def test_ind_negotiators_genius():
         no_logs=True,
     )
     world.run()
+
+
+def test_production_cost_increase():
+    from scml.oneshot.agents import GreedyOneShotAgent
+    from scml.oneshot.world import SCML2020OneShotWorld
+
+    NPROCESSES = 5
+    costs = [[] for _ in range(NPROCESSES)]
+    for _ in range(100):
+        world = SCML2020OneShotWorld(
+            **SCML2020OneShotWorld.generate(
+                GreedyOneShotAgent,
+                n_agents_per_process=10,
+                n_processes=NPROCESSES,
+            ),
+            compact=True,
+            no_logs=True,
+        )
+        for aid in world.agent_profiles.keys():
+            if is_system_agent(aid):
+                continue
+            profile = world.agent_profiles[aid]
+            costs[profile.input_product].append(profile.cost)
+    mean_costs = [sum(_) / len(_) for _ in costs]
+    assert all(
+        [
+            b > (0.5 * (i + 2) / (i + 1)) * a
+            for i, (a, b) in enumerate(zip(mean_costs[:-1], mean_costs[1:]))
+        ]
+    ), f"non-ascending costs {mean_costs}"
