@@ -225,6 +225,8 @@ class _SystemAgent(SCML2020Agent):
     def step(self):
         pass
 
+    def before_step(self):
+        pass
     def init(self):
         pass
 
@@ -284,7 +286,7 @@ class AWIHelper:
                 self.my_input_product if is_input else self.my_output_product
             ]
         return unit_price
-    
+
     @property
     def is_exogenous_forced(self):
         """
@@ -529,7 +531,7 @@ class OneShotAdapter(
         quantity = (1, self.awi.n_lines)
         return unit_price, time, quantity
 
-    def step(self):
+    def before_step(self):
         if self.awi.my_input_product == 0:
             pass
         else:
@@ -555,7 +557,14 @@ class OneShotAdapter(
                 controller=self._obj,
             )
         self.utility_function = self.make_ufun(add_exogenous=True)
+        super().before_step()
+        if hasattr(self._obj, "before_step"):
+            self._obj.before_step()
+
+    def step(self):
         super().step()
+        if hasattr(self._obj, "before_step"):
+            self._obj.before_step()
 
     def make_ufun(self, add_exogenous: bool):
         return super().make_ufun(add_exogenous, in_adapter=True)
