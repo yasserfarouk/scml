@@ -16,6 +16,7 @@ OneShotAdapter
 
    .. autosummary::
 
+      ~OneShotAdapter.before_step
       ~OneShotAdapter.get_current_balance
       ~OneShotAdapter.get_disposal_cost
       ~OneShotAdapter.get_disposal_cost_dev
@@ -38,6 +39,7 @@ OneShotAdapter
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: before_step
    .. automethod:: get_current_balance
    .. automethod:: get_disposal_cost
    .. automethod:: get_disposal_cost_dev

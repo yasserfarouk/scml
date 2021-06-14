@@ -10,16 +10,14 @@ SingleAgreementAspirationAgent
 
    .. autosummary::
 
-      ~SingleAgreementAspirationAgent.best_offer
+      ~SingleAgreementAspirationAgent.before_step
+      ~SingleAgreementAspirationAgent.choose_agents
       ~SingleAgreementAspirationAgent.counter_all
-      ~SingleAgreementAspirationAgent.init
-      ~SingleAgreementAspirationAgent.is_acceptable
-      ~SingleAgreementAspirationAgent.is_better
+      ~SingleAgreementAspirationAgent.first_proposals
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: best_offer
+   .. automethod:: before_step
+   .. automethod:: choose_agents
    .. automethod:: counter_all
-   .. automethod:: init
-   .. automethod:: is_acceptable
-   .. automethod:: is_better
+   .. automethod:: first_proposals

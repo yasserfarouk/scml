@@ -16,6 +16,7 @@ SCML2020Agent
 
    .. autosummary::
 
+      ~SCML2020Agent.before_step
       ~SCML2020Agent.confirm_production
       ~SCML2020Agent.init
       ~SCML2020Agent.on_agent_bankrupt
@@ -39,6 +40,7 @@ SCML2020Agent
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: before_step
    .. automethod:: confirm_production
    .. automethod:: init
    .. automethod:: on_agent_bankrupt

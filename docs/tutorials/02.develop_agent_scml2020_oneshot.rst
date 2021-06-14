@@ -36,7 +36,8 @@ this brief introduction in the remainder of this tutorial.
         for _ in range(n_trials):
             p = n_processes if isinstance(n_processes, int) else random.randint(*n_processes)
             world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(agent_types, agent_params=agent_params, n_steps=10, n_processes=p),
+            **SCML2020OneShotWorld.generate(agent_types, agent_params=agent_params, n_steps=10, 
+                                            n_processes=p, random_agent_types=True),
             construct_graphs=True,
             )
             world.run()
@@ -74,7 +75,7 @@ this brief introduction in the remainder of this tutorial.
         """
         import pandas as pd
         data = pd.DataFrame.from_records(world.saved_contracts)
-        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].mean().transpose()
+        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].mean()
     
     
     def print_agent_scores(agent_scores):
@@ -127,18 +128,18 @@ Let’s check the scores of different agents to confirm:
 
 .. parsed-literal::
 
-    Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.35647813158195824 
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.873950453145313 
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.386739613841279 
-    Agent 03MDN@0 of type MyOneShotDoNothing has a final score of -0.002241404121060149 (bankrupt)
-    Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.40034006445015474 
-    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.6523536743024072 
-    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.7106147566440265 
-    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.5789155559308604 
-    Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.7503762231136909 
-    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.6943639584094153 
-    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.5726718797039995 
-    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.8812135236394523 
+    Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.6944068952119954 
+    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 1.1091968037702151 
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.7450624606556975 
+    Agent 03MDN@0 of type MyOneShotDoNothing has a final score of 0.6773363560839638 
+    Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.889931458499155 
+    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.9485817404064244 
+    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.8786735485451 
+    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.8751916425602381 
+    Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.7353892618009944 
+    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.9469486266281616 
+    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.8795194773733399 
+    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.9136405327126119 
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -153,8 +154,8 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.718621687912178),
-     ('MyOneShotDoNothing', 0.4240077171947383)]
+    [('RandomOneShotAgent', 0.933861771931611),
+     ('MyOneShotDoNothing', 0.7817846954430384)]
 
 
 Notice how the do-nothing agent is even worse than acting randomly. This
@@ -182,86 +183,120 @@ market.
             vertical-align: top;
         }
     
-        .dataframe thead tr th {
-            text-align: left;
+        .dataframe thead th {
+            text-align: right;
         }
     </style>
     <table border="1" class="dataframe">
       <thead>
-        <tr>
-          <th>seller_name</th>
-          <th colspan="5" halign="left">01Ran@0</th>
-          <th>04MDN@1</th>
-          <th>05MDN@1</th>
-          <th>06Ran@1</th>
-          <th>07Ran@1</th>
-          <th>08MDN@1</th>
-          <th>09Ran@1</th>
-          <th>10Ran@1</th>
-          <th>11Ran@1</th>
-          <th colspan="4" halign="left">SELLER</th>
+        <tr style="text-align: right;">
+          <th></th>
+          <th></th>
+          <th>quantity</th>
+          <th>unit_price</th>
         </tr>
         <tr>
+          <th>seller_name</th>
           <th>buyer_name</th>
-          <th>06Ran@1</th>
-          <th>07Ran@1</th>
-          <th>09Ran@1</th>
-          <th>10Ran@1</th>
-          <th>11Ran@1</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>BUYER</th>
-          <th>00MDN@0</th>
-          <th>01Ran@0</th>
-          <th>02MDN@0</th>
-          <th>03MDN@0</th>
+          <th></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th>quantity</th>
-          <td>6.428571</td>
-          <td>5.4</td>
-          <td>4.666667</td>
-          <td>4.6</td>
-          <td>6.3</td>
-          <td>7.2</td>
-          <td>3.3</td>
-          <td>6.3</td>
-          <td>4.0</td>
-          <td>2.444444</td>
-          <td>4.5</td>
-          <td>4.0</td>
-          <td>4.5</td>
-          <td>8.3</td>
-          <td>8.1</td>
-          <td>7.7</td>
-          <td>12.7</td>
+          <th rowspan="5" valign="top">01Ran@0</th>
+          <th>06Ran@1</th>
+          <td>5.444444</td>
+          <td>15.555556</td>
         </tr>
         <tr>
-          <th>unit_price</th>
-          <td>15.857143</td>
-          <td>15.5</td>
-          <td>18.000000</td>
-          <td>22.7</td>
-          <td>15.2</td>
-          <td>29.7</td>
-          <td>32.8</td>
-          <td>31.4</td>
-          <td>28.4</td>
-          <td>32.666667</td>
-          <td>29.7</td>
-          <td>31.8</td>
-          <td>29.7</td>
-          <td>9.3</td>
-          <td>10.0</td>
-          <td>9.6</td>
-          <td>10.5</td>
+          <th>07Ran@1</th>
+          <td>3.888889</td>
+          <td>23.555556</td>
+        </tr>
+        <tr>
+          <th>09Ran@1</th>
+          <td>5.600000</td>
+          <td>20.300000</td>
+        </tr>
+        <tr>
+          <th>10Ran@1</th>
+          <td>5.800000</td>
+          <td>12.900000</td>
+        </tr>
+        <tr>
+          <th>11Ran@1</th>
+          <td>4.333333</td>
+          <td>20.555556</td>
+        </tr>
+        <tr>
+          <th>04MDN@1</th>
+          <th>BUYER</th>
+          <td>5.000000</td>
+          <td>37.500000</td>
+        </tr>
+        <tr>
+          <th>05MDN@1</th>
+          <th>BUYER</th>
+          <td>2.500000</td>
+          <td>41.600000</td>
+        </tr>
+        <tr>
+          <th>06Ran@1</th>
+          <th>BUYER</th>
+          <td>2.375000</td>
+          <td>38.000000</td>
+        </tr>
+        <tr>
+          <th>07Ran@1</th>
+          <th>BUYER</th>
+          <td>5.400000</td>
+          <td>38.200000</td>
+        </tr>
+        <tr>
+          <th>08MDN@1</th>
+          <th>BUYER</th>
+          <td>5.000000</td>
+          <td>39.800000</td>
+        </tr>
+        <tr>
+          <th>09Ran@1</th>
+          <th>BUYER</th>
+          <td>9.500000</td>
+          <td>37.300000</td>
+        </tr>
+        <tr>
+          <th>10Ran@1</th>
+          <th>BUYER</th>
+          <td>2.555556</td>
+          <td>41.555556</td>
+        </tr>
+        <tr>
+          <th>11Ran@1</th>
+          <th>BUYER</th>
+          <td>3.800000</td>
+          <td>37.600000</td>
+        </tr>
+        <tr>
+          <th rowspan="4" valign="top">SELLER</th>
+          <th>00MDN@0</th>
+          <td>9.600000</td>
+          <td>9.300000</td>
+        </tr>
+        <tr>
+          <th>01Ran@0</th>
+          <td>9.800000</td>
+          <td>10.000000</td>
+        </tr>
+        <tr>
+          <th>02MDN@0</th>
+          <td>8.300000</td>
+          <td>9.600000</td>
+        </tr>
+        <tr>
+          <th>03MDN@0</th>
+          <td>9.300000</td>
+          <td>10.500000</td>
         </tr>
       </tbody>
     </table>
@@ -380,6 +415,52 @@ following:
    etc). Again, these are not available except after calling
    ``find_limit``.
 
+Your callbacks
+^^^^^^^^^^^^^^
+
+Your agent needs to implement methods that are called by the system at
+various time during the negotiation. You can find a full list in the
+`game description <>`__.
+
+The most important ones are:
+
+-  ``init()`` called once at the beginning of the simulation
+   (i.e. before the first day starts). At this point, your AWI is set
+   but you should not assume anything else.
+-  ``before_step()`` called at the **beginning** of *every day*. At this
+   point, your ``ufun`` is set and market information is available.
+-  ``step()`` called at the **end** of *every day*. You can use this to
+   analyze what happened during the day and modify your strategy in the
+   future.
+-  ``on_negotiation_success()``/``on_negotiation_failure()`` called
+   after each negotiation is concluded to let you know what happened in
+   it.
+-  Depending on your base-class, you will also need to implement methods
+   that allow you to control negotiations. These will be explained in
+   details in the following sections but here is a summary:
+
+   -  **OneShotAgent** If your agent is based on ``OneShotAgent``, you
+      will get a ``propose()`` call when you need to offer something to
+      one of our partners during negotiation and ``respond()`` when
+      asked to respond to one of its offers.
+   -  **OneShotSyncAgent** If your agent is based on
+      ``OneShotSyncAgent`` you will get a call to ``first_proposals()``
+      once every day to set your first proposal in all negotiations and
+      a ``counter_all()`` call to counter offers from your partners. The
+      system will try to always give you one offer from each partner in
+      the ``counter_all()`` call but that is not guaranteed and
+      sometimes it may be called with a subset of the offers.
+   -  **OneShotSingleAgreementAgent** If your agent is based on
+      ``OneShotSingleAgreementAgent`` you will have to implement
+      ``is_acceptable()`` to decide if a given offer is acceptable to
+      you, ``best_offer()`` to find the *best* offer in a given
+      negotiation for your agent and ``is_better()`` to compare two
+      offers. Once you implement these, the agent will implement all
+      callback for you trying to get **a single** agreement that
+      maximizes your utility. Note that, again, it is not guaranteed
+      that you will get a single agreement at the end but the system
+      will try its best to achieve that.
+
 Now we can start working on our agent.
 
 There are three base classes for one-shot agents (``OneShotAgent``,
@@ -426,10 +507,7 @@ using the same base class.
     class SimpleAgent(OneShotAgent):
         """A greedy agent based on OneShotAgent"""
     
-        def init(self):
-            self.secured = 0
-    
-        def step(self):
+        def before_step(self):
             self.secured = 0
     
         def on_negotiation_success(self, contract, mechanism):
@@ -493,8 +571,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.0206482848389007),
-     ('RandomOneShotAgent', 0.6865702973603323)]
+    [('SimpleAgent', 1.0308766983693725),
+     ('RandomOneShotAgent', 0.7927155490572136)]
 
 
 This simple agent is slightly better than the random agent. Let’s
@@ -509,10 +587,7 @@ in its ``init``, ``step`` and ``on_negotiation_success`` callbacks.
 
 .. code:: python
 
-   def init(self):
-       self.secured = 0
-
-   def step(self):
+   def before_step(self):
        self.secured = 0
 
    def on_negotiation_success(self, contract, mechanism):
@@ -709,8 +784,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.1795812008648343),
-     ('RandomOneShotAgent', -0.15855149398299428)]
+    [('BetterAgent', 1.2761764123441648),
+     ('RandomOneShotAgent', 0.6284724432137471)]
 
 
 It seems that ``BetterAgent`` is getting higher scores than
@@ -829,12 +904,8 @@ concessions. The following agent implements this idea
     class AdaptiveAgent(BetterAgent):
         """Considers best price offers received when making its decisions"""
     
-        def init(self):
-            super().init()
-            self._best_selling, self._best_buying = 0.0, float("inf")
-        
-        def step(self):
-            super().step()
+        def before_step(self):
+            super().before_step()
             self._best_selling, self._best_buying = 0.0, float("inf")
                          
         def respond(self, negotiator_id, state, offer):
@@ -872,8 +943,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('AdaptiveAgent', 1.2804261245276773),
-     ('RandomOneShotAgent', -0.7246189028553071)]
+    [('AdaptiveAgent', 1.2283830915551999),
+     ('RandomOneShotAgent', 0.7972927313602288)]
 
 
 Not as good as the previous agent at least in this simulation (we will
@@ -1015,8 +1086,8 @@ on accomulated statistics per agent
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.2453748311862851),
-     ('RandomOneShotAgent', 0.3773782100497865)]
+    [('LearningAgent', 1.427505886007057),
+     ('RandomOneShotAgent', 0.3398072268880339)]
 
 
 The main idea of this agent is to limit the minimum price (for selling)
@@ -1111,10 +1182,7 @@ To make an agent that works anywhere, we need just minor modifications:
         """A greedy agent based on OneShotSyncAgent that does something 
         when in the middle of the production chain"""
         
-        def init(self):
-            self._sales = self._supplies = 0
-                    
-        def step(self):
+        def before_step(self):
             self._sales = self._supplies = 0
             
         def on_negotiation_success(self, contract, mechanism):
@@ -1137,10 +1205,7 @@ Firstly, we now keep track of our sales and supplies separately:
 
 .. code:: python
 
-   def init(self):
-           self._sales = self._supplies = 0
-                   
-   def step(self):
+   def before_step(self):
        self._sales = self._supplies = 0
 
    def on_negotiation_success(self, contract, mechanism):
@@ -1207,7 +1272,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('BetterAgent', 0.7750156672988081), ('DeepSimpleAgent', -0.6115543011892781)]
+    [('BetterAgent', 0.87050371128801), ('DeepSimpleAgent', 0.048137641879403344)]
 
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
@@ -1320,8 +1385,8 @@ greedy agent using this approach.
             super().__init__(*args, **kwargs)
             self._threshold = threshold
         
-        def init(self):
-            super().init()
+        def before_step(self):
+            super().before_step()
             self.ufun.find_limit(True)
             self.ufun.find_limit(False)
             
@@ -1400,12 +1465,12 @@ the lowest possible utility). To avoid doing this calculation
 repeatedly, you should store the results in ``ufun.best`` or
 ``ufun.worst`` for highest and lowest utility. After that, you can
 access the maximum possible utility as ``max_utility`` and minimum
-possible utility as ``min_utility``. We do that in the ``init()``
-method:
+possible utility as ``min_utility``. We do that in the ``before_step()``
+method (called at the beginning of every day):
 
 .. code:: python
 
-    def init(self):
+    def before_step(self):
        super().init()
        self.ufun.find_limit(True)
        self.ufun.find_limit(False)
@@ -1496,7 +1561,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('SyncAgent', 1.062017191327324), ('RandomOneShotAgent', -0.6522164103164491)]
+    [('SyncAgent', 1.227755945465853), ('RandomOneShotAgent', 0.6201527597868522)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1586,8 +1651,7 @@ Here is the full agent
     class SimpleSingleAgreementAgent(OneShotSingleAgreementAgent):
         """A greedy agent based on OneShotSingleAgreementAgent"""
         
-        def init(self):
-            super().init()
+        def before_step(self):
             self.ufun.find_limit(True) # finds highest utility
             self.ufun.find_limit(False) # finds lowest utility
         
@@ -1619,8 +1683,8 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.8540709306574972),
-     ('SimpleSingleAgreementAgent', 0.5906199113285724)]
+    [('RandomOneShotAgent', 0.7725987240289136),
+     ('SimpleSingleAgreementAgent', 0.7260478711700908)]
 
 
 Using Independent Negotiators
@@ -1667,8 +1731,8 @@ This is an example agent that uses this approach:
 
 .. parsed-literal::
 
-    [('AssumeOthersFailIndNeg', 0.8009861211814175),
-     ('RandomOneShotAgent', 0.6276427287059406)]
+    [('AssumeOthersFailIndNeg', 0.6289458478430019),
+     ('RandomOneShotAgent', -0.2353792294057782)]
 
 
 This agent simply uses its **centeral** ufun for each negotiator. This
@@ -1736,8 +1800,8 @@ because the agent may over-contract.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', -1.3590270171555183),
-     ('GreedyIndNeg', -1.973189833628935)]
+    [('GreedyIndNeg', 0.26037883791377564),
+     ('RandomOneShotAgent', -0.43923773514376424)]
 
 
 Using A Negotiator from the Genius Platform
@@ -1824,8 +1888,8 @@ will work correctly. Here is an example
 
 .. parsed-literal::
 
-    [('GeniusIndNeg', 0.35522857940253827),
-     ('RandomOneShotAgent', -2.9432565391736665)]
+    [('GeniusIndNeg', 1.3080147154491244),
+     ('RandomOneShotAgent', -1.245572223240841)]
 
 
 Comparing all agents
@@ -1855,15 +1919,15 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.101742494974822),
-     ('LearningAgent', 1.026470489122975),
-     ('AdaptiveAgent', 0.9640433798181489),
-     ('SimpleAgent', 0.8481382630851352),
-     ('SyncAgent', 0.841131709779224),
-     ('GreedyIndNeg', 0.6929265944788605),
-     ('GeniusIndNeg', 0.6444161412377085),
-     ('SimpleSingleAgreementAgent', 0.5183995418169199),
-     ('DeepSimpleAgent', -1.773244863042692)]
+    [('BetterAgent', 1.1303452406365202),
+     ('AdaptiveAgent', 1.1278314745695721),
+     ('LearningAgent', 1.065261019845276),
+     ('SyncAgent', 1.0206501914927832),
+     ('GreedyIndNeg', 0.9977847890605633),
+     ('GeniusIndNeg', 0.9554417399867485),
+     ('SimpleAgent', 0.8957310032715197),
+     ('SimpleSingleAgreementAgent', 0.746431076432043),
+     ('DeepSimpleAgent', -0.6209489320843363)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1879,7 +1943,7 @@ it will run correctly*
 
 You can find all the agents available in the ``scml`` package for the
 one-shot game under ``scml.oneshot.agents`` including the ones developed
-in this tutorial:
+in this tutorial (with some modifications):
 
 .. code:: ipython3
 
@@ -1932,15 +1996,15 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('BetterAgent', 0.9840257305515868),
-     ('SimpleAgent', 0.9279609742732853),
-     ('LearningAgent', 0.9113145851073863),
-     ('AdaptiveAgent', 0.904829988593659),
-     ('SyncAgent', 0.8803712574808906),
-     ('SingleAgreementAspirationAgent', 0.8108829485251743),
-     ('BuyCheapSellExpensiveAgent', 0.4112348603385131),
-     ('DecentralizingAgent', 0.20193277226255915),
-     ('DeepSimpleAgent', 0.18708050496024892)]
+    [('LearningAgent', 0.97215424824692),
+     ('SingleAgreementAspirationAgent', 0.9198272603438871),
+     ('BetterAgent', 0.9125352540929835),
+     ('SimpleAgent', 0.9121195859476694),
+     ('AdaptiveAgent', 0.9095059936465888),
+     ('SyncAgent', 0.8876533614385824),
+     ('DeepSimpleAgent', 0.691818236763754),
+     ('DecentralizingAgent', 0.5869468760300468),
+     ('BuyCheapSellExpensiveAgent', 0.3293259902238389)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to

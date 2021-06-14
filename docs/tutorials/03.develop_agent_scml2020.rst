@@ -162,13 +162,17 @@ example
     
         Provides:
             - `inputs_needed` (np.ndarray):  How many items of the input product do
-              I need to buy at every time step (n_steps vector)
+              I need to buy at every time step (n_steps vector).
+              This should be read **but not updated** by the `NegotiationManager`.
             - `outputs_needed` (np.ndarray):  How many items of the output product
-              do I need to sell at every time step (n_steps vector)
+              do I need to sell at every time step (n_steps vector).
+              This should be read **but not updated** by the `NegotiationManager`.
             - `inputs_secured` (np.ndarray):  How many items of the input product I
-              already contracted to buy (n_steps vector)
+              already contracted to buy (n_steps vector) [out of `input_needed`].
+              This can be read **but not updated** by the `NegotiationManager`.
             - `outputs_secured` (np.ndarray):  How many units of the output product
-              I already contracted to sell (n_steps vector)
+              I already contracted to sell (n_steps vector) [out of `outputs_secured`]
+              This can be read **but not updated** by the `NegotiationManager`.
     
         Hooks Into:
             - `init`
@@ -375,7 +379,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  3.01it/s]
+    100%|██████████| 10/10 [00:01<00:00,  6.39it/s]
 
 
 
@@ -465,7 +469,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:18<00:00,  1.84s/it]
+    100%|██████████| 10/10 [00:15<00:00,  1.50s/it]
 
 
 
@@ -914,7 +918,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [05:03<00:00, 30.37s/it]
+    100%|██████████| 10/10 [01:56<00:00, 11.67s/it]
 
 
 
@@ -977,16 +981,15 @@ average prices they get from their negotiations.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    10.0  0.9  0.1  0.8  0.9  1.0  1.0  1.0
-    True    False   35.0  0.1  0.3  0.0  0.0  0.0  0.0  0.8
+    False   True     5.0  0.8  0.3  0.2  0.9  1.0  1.0  1.0
     MyAgent:
     ===========
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True    40.0  0.2  0.3  0.0  0.0  0.0  0.5  0.8
-    True    False   13.0  0.8  0.2  0.4  0.8  0.9  1.0  1.0
-            True    33.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    False   True     4.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    True    False    4.0  0.8  0.4  0.2  0.8  1.0  1.0  1.0
+            True    44.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
     
 
 
@@ -1022,7 +1025,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:19<00:00,  1.99s/it]
+    100%|██████████| 10/10 [01:06<00:00,  6.64s/it]
 
 .. parsed-literal::
 
@@ -1209,7 +1212,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [02:35<00:00, 15.51s/it]
+    100%|██████████| 10/10 [01:10<00:00,  7.01s/it]
 
 
 .. code:: ipython3
@@ -1230,8 +1233,8 @@ exploring the design space.
                    price                                   
                    count mean  std  min  25%  50%  75%  max
     selling buying                                         
-    False   True     5.0  0.8  0.1  0.7  0.7  0.9  0.9  1.0
-    True    False   35.0  0.1  0.3  0.0  0.0  0.0  0.0  0.8
+    False   True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
+    True    False    5.0  0.5  0.4  0.0  0.0  0.7  0.7  0.8
     
 
 
@@ -1287,7 +1290,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:08<00:00,  1.17it/s]
+    100%|██████████| 10/10 [00:34<00:00,  3.43s/it]
 
 
 .. code:: ipython3
@@ -1484,7 +1487,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:13<00:00,  1.31s/it]
+    100%|██████████| 10/10 [00:21<00:00,  2.13s/it]
 
 
 
@@ -1577,7 +1580,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:05<00:00,  1.81it/s]
+    100%|██████████| 10/10 [00:24<00:00,  2.42s/it]
 
 
 
@@ -1657,7 +1660,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:17<00:00,  1.78s/it]
+    100%|██████████| 10/10 [00:13<00:00,  1.32s/it]
 
 
 
