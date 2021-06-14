@@ -1609,12 +1609,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         ), f"at {self.current_step} Buyer has {buyer_factory._balance} (bankrupt at {self.bankruptcy_limit}) but we need q={q} * u={u}  ({'breached' if has_breaches else 'no breaches'})"
         bought, buy_cost = buyer_factory.buy(product, q, u, False, 0.0)
         sold, sell_cost = seller_factory.buy(product, -q, u, False, 0.0)
-        assert (
-            bought == sold
-        ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})"
-        assert (
-            buy_cost + sell_cost == 0
-        ), f"Step: {self.current_step} Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})"
         if bought == 0:
             return
         oldq = self._sold_quantity[product, self.current_step + 1]
@@ -1626,6 +1620,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         self._real_price[product, self.current_step + 1] = (totalp + buy_cost) / (
             oldq + bought
         )
+        assert (
+            bought == sold
+            ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
+        assert (
+            buy_cost + sell_cost == 0
+        ), f"Step: {self.current_step} Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
 
     def __register_contract(self, agent_id: str, level: float) -> None:
         """Registers execution of the contract in the agent's stats"""
