@@ -320,6 +320,7 @@ def test_adapter(atype):
     )
     world.run()
 
+
 def test_production_cost_increase():
     from scml.scml2020 import SCML2021World
     from scml.scml2020.agents import DecentralizingAgent
@@ -340,7 +341,9 @@ def test_production_cost_increase():
             if is_system_agent(aid):
                 continue
             profile = world.agent_profiles[aid]
-            costs[profile.input_products[0]].append(profile.costs[:, profile.input_products[0]].mean())
+            costs[profile.input_products[0]].append(
+                profile.costs[:, profile.input_products[0]].mean()
+            )
     mean_costs = [sum(_) / len(_) for _ in costs]
     assert all(
         [
