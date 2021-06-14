@@ -1,13 +1,34 @@
 Changelog
 =========
 
-0.4.4 (2021.6.1)
+0.4.5 (2021.6.14)
 -----------------
+
+* [oneshot] refactoring using before_step in greedy
+* [minor] formating update
+* [bugfix] production costs were not increasing.  closes #38
+* [API] Adding before_step() to all agents.
+  - If a method called `before_step()` is defined for an agent, it will be
+    called once every simulated day before any other calls to the agent but
+    after all exogenous contracts and ufun parameters are fixed.
+    Note that `step()` is called at the *end* not the beginning of the day.
+* [oneshot] limiting exogenous quantities to n lines. This closes #37
+* [oneshot] Aspiration negotiator gets more agreements
+* [oneshot] allowing agents to skip their turn. Agents can skip their turn now by returning REJECT_OFFER, None
+* [oneshot] GreedyOneShotAgent is more rational now
+* [bugfix] avoiding an inconsistency in path names for logs
+* [oneshot] improved builtin agents (aspiration)
+* [tournament] avoiding a possible edge case that would have led to competitor agents appearing as non-competitors
+* [tournament] Saving negotiatinos by default in the CLI and utils
+* [std/coll] defaulting to narrower worlds
+
+0.4.4 (2021.6.1)
+----------------
 
 * [oneshot] Matching default parameters of world generation to game description.
 
 0.4.3 (2021.6.1)
------------------
+----------------
 
 * [oneshot] Adding OneshotIndNegotiatorsAgent to use independent negotiators in oneshot
 * [std/coll] updating builtin compoenents to be more rational
