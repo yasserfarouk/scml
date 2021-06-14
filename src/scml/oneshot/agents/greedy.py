@@ -74,15 +74,11 @@ class GreedyOneShotAgent(OneShotAgent):
 
     def init(self):
         """Initialize the quantities and best prices received so far"""
-        self._best_selling, self._best_buying = 0.0, float("inf")
         self._best_acc_selling, self._best_acc_buying = 0.0, float("inf")
-        self._best_opp_selling = defaultdict(float)
-        self._best_opp_buying = defaultdict(lambda: float("inf"))
         self._best_opp_acc_selling = defaultdict(float)
         self._best_opp_acc_buying = defaultdict(lambda: float("inf"))
-        self._sales = self._supplies = 0
 
-    def step(self):
+    def before_step(self):
         """Initialize the quantities and best prices received for next step"""
         self._best_selling, self._best_buying = 0.0, float("inf")
         self._best_opp_selling = defaultdict(float)
@@ -274,10 +270,8 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
             threshold = random.random() * 0.2 + 0.2
         self._threshold = threshold
 
-    def init(self):
-        super().init()
-
     def before_step(self):
+        super().before_step()
         self.ufun.best = self.ufun.find_limit(True)
         self.ufun.worst = self.ufun.find_limit(False)
 
@@ -372,8 +366,7 @@ class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def init(self):
-        super().init()
+    def before_step(self):
         self.ufun.best = self.ufun.find_limit(True)
         self.ufun.worst = self.ufun.find_limit(False)
 
