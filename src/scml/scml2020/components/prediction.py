@@ -24,17 +24,17 @@ class TradePredictionStrategy:
     Args:
         - `predicted_inputs`: None for default, a number of an n_steps numbers giving predicted inputs
         - `predicted_outputs`: None for default, a number of an n_steps numbers giving predicted outputs
-        - `add_trade`: If true, actual contracts will be just added to the expectations
 
     Provides:
-        - `expected_inputs` : n_steps vector giving the predicted inputs at every time-step
-        - `expected_outputs` : n_steps vector giving the predicted outputs at every time-step
-        - `input_cost` : n_steps vector giving the predicted input cost at every time-step
-        - `output_price` : n_steps vector giving the predicted output price at every time-step
+        - `expected_inputs` : n_steps vector giving the predicted inputs at every time-step. It defaults to half the number of lines.
+        - `expected_outputs` : n_steps vector giving the predicted outputs at every time-step. It defaults to half the number of lines.
+        - `input_cost` : n_steps vector giving the predicted input cost at every time-step. It defaults to catalog price.
+        - `output_price` : n_steps vector giving the predicted output price at every time-step. It defaults to catalog price.
 
     Hooks Into:
         - `init`
         - `before_step`
+        - `step`
 
     Abstract:
         - `trade_prediction_init`: Called during init() to initialize the trade prediction.
@@ -75,6 +75,8 @@ class TradePredictionStrategy:
         """Expected unit price of the input"""
         self.output_price: np.ndarray = None
         """Expected unit price of the output"""
+
+        # just for backward compatibilities with ANAC 2020 SCML agents
         self._add_trade = add_trade
 
     @abstractmethod
@@ -82,18 +84,20 @@ class TradePredictionStrategy:
         """Will be called to update expected_outputs, expected_inputs,
         input_cost, output_cost during init()"""
 
+    def trade_prediction_before_step(self) -> None:
+        """Will be called at the beginning of every step to update the prediction"""
+
     def trade_prediction_step(self) -> None:
-        """Will be called at every step to update the prediction"""
+        """Will be called at the end of every step to update the prediction"""
 
     def init(self):
+
         self.input_cost = self.awi.catalog_prices[self.awi.my_input_product] * np.ones(
             self.awi.n_steps, dtype=int
         )
         self.output_price = self.awi.catalog_prices[
             self.awi.my_output_product
         ] * np.ones(self.awi.n_steps, dtype=int)
-
-        inp = self.awi.my_input_product
 
         def adjust(x):
             return max(1, self.awi.n_lines // 2) * np.ones(self.awi.n_steps, dtype=int)
@@ -105,8 +109,12 @@ class TradePredictionStrategy:
         super().init()
 
     def before_step(self):
-        self.trade_prediction_step()
+        self.trade_prediction_before_step()
         super().before_step()
+
+    def step(self):
+        self.trade_prediction_step()
+        super().step()
 
 
 class ExecutionRatePredictionStrategy:
@@ -143,7 +151,7 @@ class ExecutionRatePredictionStrategy:
     @abstractmethod
     def predict_quantity(self, contract: Contract):
         raise NotImplementedError(
-            "predict_quantity should be implemented by some other component."
+            "predict_quantity should be implemented by the ExecutionRatePredictionStrategy"
         )
 
 
@@ -174,13 +182,17 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
 
     """
 
+    def __init__(self, *args, add_trade=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._add_trade = add_trade
+
     def trade_prediction_init(self):
         inp = self.awi.my_input_product
 
         def adjust(x, demand):
             """Adjust the predicted demand/supply filling it with a default value or repeating as needed"""
             if x is None:
-                x = max(1, int(self.awi.n_lines * 0.75))
+                x = max(1, int(self.awi.n_lines))
             elif isinstance(x, Iterable):
                 return np.array(x)
             predicted = int(x) * np.ones(self.awi.n_steps, dtype=int)
@@ -193,9 +205,6 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
         # adjust predicted demand and supply
         self.expected_outputs = adjust(self.expected_outputs, True)
         self.expected_inputs = adjust(self.expected_inputs, False)
-
-    def trade_prediction_step(self):
-        pass
 
     @property
     def internal_state(self):
@@ -220,6 +229,9 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
         if not self._add_trade:
             return
         for contract in signed:
+            # ignore contracts I asked for because they are already covered in estimates
+            if contract.annotation["caller"] == self.id:
+                continue
             t, q = contract.agreement["time"], contract.agreement["quantity"]
             if contract.annotation["seller"] == self.id:
                 self.expected_outputs[t] += q
@@ -255,13 +267,17 @@ class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
 
     """
 
+    def init(self):
+        super().init()
+        self._n_competitors = len(self.awi.all_consumers[self.awi.my_input_product])
+
     def trade_prediction_init(self):
         inp = self.awi.my_input_product
 
         def adjust(x, demand):
             """Adjust the predicted demand/supply filling it with a default value or repeating as needed"""
             if x is None:
-                x = max(1, self.awi.n_lines // 2)
+                x = max(1, self.awi.n_lines)
             elif isinstance(x, Iterable):
                 return np.array(x)
             predicted = int(x) * np.ones(self.awi.n_steps, dtype=int)
@@ -275,13 +291,30 @@ class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
         self.expected_outputs = adjust(self.expected_outputs, True)
         self.expected_inputs = adjust(self.expected_inputs, False)
 
+    def __update(self):
+        if self.awi.settings["public_exogenous_summary"]:
+            exogenous = self.awi.exogenous_contract_summary
+            horizon = self.awi.settings.get("horizon", 1)
+            a, b = self.awi.current_step, self.awi.current_step + horizon
+            self.expected_inputs[a:b] = (
+                exogenous[self.awi.my_input_product, a:b, 0] / self._n_competitors
+            )
+            self.expected_outputs[a:b] = (
+                exogenous[self.awi.my_output_product, a:b, 0] / self._n_competitors
+            )
+
+        if self.awi.settings["public_trading_prices"]:
+            s = self.awi.current_step
+            self.input_cost[s:] = self.awi.trading_prices[self.awi.my_input_product]
+            self.output_price[s:] = self.awi.trading_prices[self.awi.my_output_product]
+
     def trade_prediction_step(self):
-        exogenous = self.awi.exogenous_contract_summary
-        horizon = self.awi.settings.get("horizon", 1)
-        a, b = self.awi.current_step, self.awi.current_step + horizon
-        # breakpoint()
-        self.expected_inputs[a:b] = exogenous[self.awi.my_input_product, a:b, 0]
-        self.expected_outputs[a:b] = exogenous[self.awi.my_output_product, a:b, 0]
+        super().trade_prediction_step()
+        self.__update()
+
+    def trade_prediction_before_step(self):
+        super().trade_prediction_before_step()
+        self.__update()
 
     @property
     def internal_state(self):
@@ -327,7 +360,7 @@ class FixedERPStrategy(ExecutionRatePredictionStrategy):
           action (i.e. not starting with `on_`) are overridden this way.
     """
 
-    def __init__(self, *args, execution_fraction=0.5, **kwargs):
+    def __init__(self, *args, execution_fraction=0.95, **kwargs):
         super().__init__(*args, **kwargs)
         self._execution_fraction = execution_fraction
 
@@ -337,7 +370,7 @@ class FixedERPStrategy(ExecutionRatePredictionStrategy):
 
 class MeanERPStrategy(ExecutionRatePredictionStrategy):
     """
-    Predicts that the there is a fixed execution rate that does not change for all partners
+    Predicts the mean execution fraction for each partner
 
     Args:
         execution_fraction: The expected fraction of any contract's quantity to be executed
@@ -370,7 +403,7 @@ class MeanERPStrategy(ExecutionRatePredictionStrategy):
 
     """
 
-    def __init__(self, *args, execution_fraction=0.5, **kwargs):
+    def __init__(self, *args, execution_fraction=0.95, **kwargs):
         super().__init__(*args, **kwargs)
         self._execution_fraction = execution_fraction
         self._total_quantity = None
