@@ -787,7 +787,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         exogenous_control: Union[Tuple[float, float], float] = (0.2, 0.8),
         cash_availability: Union[Tuple[float, float], float] = (1.5, 2.5),
         force_signing=False,
-        profit_basis=np.mean,
+        profit_basis=np.max,
         horizon: Union[Tuple[float, float], float] = (0.2, 0.5),
         inventory_valuation_trading: Union[
             np.ndarray, Tuple[float, float], float
