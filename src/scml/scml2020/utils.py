@@ -349,9 +349,9 @@ def anac2020_config_generator(
     # _agent_types = copy.deepcopy(world_params.pop("agent_types"))
     # _agent_params = copy.deepcopy(world_params.pop("agent_params"))
     if oneshot_world:
-        generated_world_params = SCML2020OneShotWorld.generate( **world_params)
+        generated_world_params = SCML2020OneShotWorld.generate(**world_params)
     else:
-        generated_world_params = SCML2021World.generate( **world_params)
+        generated_world_params = SCML2021World.generate(**world_params)
     # world_params["agent_types"] = _agent_types
     # world_params["agent_params"] = _agent_params
     for k in ("agent_types", "agent_params"):
@@ -363,7 +363,9 @@ def anac2020_config_generator(
     else:
         for _p in generated_world_params["profiles"]:
             _p.costs = _p.costs.tolist()
-    world_params["__exact_params"] = serialize(generated_world_params, deep=True, ignore_lambda=True)
+    world_params["__exact_params"] = serialize(
+        generated_world_params, deep=True, ignore_lambda=True
+    )
     config = {
         "world_params": world_params,
         "compact": compact,
