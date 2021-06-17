@@ -292,7 +292,7 @@ class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
         self.expected_inputs = adjust(self.expected_inputs, False)
 
     def __update(self):
-        if self.awi.settings["public_exogenous_summary"]:
+        if self.awi.settings.get("public_exogenous_summary", False):
             exogenous = self.awi.exogenous_contract_summary
             horizon = self.awi.settings.get("horizon", 1)
             a, b = self.awi.current_step, self.awi.current_step + horizon
@@ -303,7 +303,7 @@ class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
                 exogenous[self.awi.my_output_product, a:b, 0] / self._n_competitors
             )
 
-        if self.awi.settings["public_trading_prices"]:
+        if self.awi.settings.get("public_trading_prices", False):
             s = self.awi.current_step
             self.input_cost[s:] = self.awi.trading_prices[self.awi.my_input_product]
             self.output_price[s:] = self.awi.trading_prices[self.awi.my_output_product]

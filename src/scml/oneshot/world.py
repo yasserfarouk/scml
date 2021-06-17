@@ -219,6 +219,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         )
         self.bulletin_board.record("settings", 1, "horizon")
         self.bulletin_board.record(
+            "settings", publish_trading_prices, "public_trading_prices"
+        )
+        self.bulletin_board.record(
+            "settings", publish_exogenous_summary, "public_exogenous_summary"
+        )
+        self.bulletin_board.record(
             "settings", financial_report_period, "financial_report_period"
         )
         self.bulletin_board.record(
