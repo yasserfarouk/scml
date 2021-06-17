@@ -153,7 +153,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.publish_exogenous_summary = publish_exogenous_summary
         self.price_multiplier = price_multiplier
         self.publish_trading_prices = publish_trading_prices
-        self.penalize_bankrupt_for_future_contracts = penalize_bankrupt_for_future_contracts
+        self.penalize_bankrupt_for_future_contracts = (
+            penalize_bankrupt_for_future_contracts
+        )
         self.agent_disposal_cost: Dict[str, List[float]] = dict()
         self.agent_shortfall_penalty: Dict[str, List[float]] = dict()
         kwargs["log_to_file"] = not no_logs
@@ -169,8 +171,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             kwargs["save_resolved_breaches"] = False
             kwargs["save_negotiations"] = True
         else:
-            kwargs["log_negotiations"] = True
             kwargs["save_negotiations"] = True
+
         self.compact = compact
         if negotiation_speed == 0:
             negotiation_speed = neg_n_steps + 1
@@ -220,7 +222,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             "settings", financial_report_period, "financial_report_period"
         )
         self.bulletin_board.record(
-            "settings", penalize_bankrupt_for_future_contracts, "penalize_bankrupt_for_future_contracts"
+            "settings",
+            penalize_bankrupt_for_future_contracts,
+            "penalize_bankrupt_for_future_contracts",
         )
         self.bulletin_board.record(
             "settings", exogenous_force_max, "exogenous_force_max"
@@ -791,7 +795,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         agent_types = [
             DefaultOneShotAdapter
             if at and issubclass(get_class(at), OneShotAgent)
-            else OneShotSCML2020Adapter if at else None
+            else OneShotSCML2020Adapter
+            if at
+            else None
             for at in agent_types
         ]
         # generate production costs making sure that every agent can do exactly one process
@@ -1201,9 +1207,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             self.exogenous_pin[buyer] += quantity * unit_price
             self.on_contract_concluded(contract, to_be_signed_at=self.current_step)
             if self.exogenous_force_max:
-                contract.signatures = dict(
-                    zip(contract.partners, contract.partners)
-                )
+                contract.signatures = dict(zip(contract.partners, contract.partners))
             else:
                 if SYSTEM_SELLER_ID in contract.partners:
                     contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
@@ -1298,7 +1302,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
                 continue
-            if not self.penalize_bankrupt_for_future_contracts and self.is_bankrupt[aid]:
+            if (
+                not self.penalize_bankrupt_for_future_contracts
+                and self.is_bankrupt[aid]
+            ):
                 continue
             # agent.profile
             # todo: I am accessing the ufun of the agent directly to avoid running

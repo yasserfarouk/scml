@@ -257,7 +257,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             kwargs["save_negotiations"] = True
         else:
             kwargs["save_negotiations"] = True
-            kwargs["log_negotiations"] = True
+
         self.compact = compact
         if negotiation_speed == 0:
             negotiation_speed = neg_n_steps + 1
@@ -1622,7 +1622,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         )
         assert (
             bought == sold
-            ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
+        ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
         assert (
             buy_cost + sell_cost == 0
         ), f"Step: {self.current_step} Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
