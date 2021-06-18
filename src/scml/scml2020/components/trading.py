@@ -78,6 +78,40 @@ class TradingStrategy:
         self.inputs_needed = np.zeros(awi.n_steps, dtype=int)
         self.outputs_needed = np.zeros(awi.n_steps, dtype=int)
 
+    def step(self):
+        super().step()
+        awi = self.awi
+        s = awi.current_step
+        n = awi.n_steps
+        if s > n - 2:
+            return
+        inventory = awi.current_inventory
+        n_in, n_out = inventory[awi.my_input_product], inventory[awi.my_output_product]
+        # first_layer = self.awi.my_input_product <= 0
+        # if first_layer:
+        #     self.outputs_needed[s + 1] += n_out + n_in
+        # else:
+        for t in range(s + 1, n - 1):
+            if self.inputs_needed[t] >= n_out:
+                n_out = 0
+                self.inputs_needed[t] -= n_out
+                break
+            n_out -= self.inputs_needed[t]
+            self.inputs_needed[t] = 0
+
+        need_to_sell = n_in + n_out
+        if need_to_sell < 1:
+            return
+
+        self.inputs_secured[s + 1] += n_in
+
+        total_to_sell = self.outputs_secured[s + 1 :].sum()
+        need_to_sell -= total_to_sell
+        if need_to_sell <= 0:
+            return
+
+        self.outputs_needed[s + 1] += need_to_sell
+
     @property
     def internal_state(self):
         state = super().internal_state
@@ -172,14 +206,13 @@ class ReactiveTradingStrategy(SignAllPossible, TradingStrategy):
         # call the production strategy
         super().on_contracts_finalized(signed, cancelled, rejectors)
         this_step = self.awi.current_step
-        inp = self.awi.my_input_product
 
         for contract in signed:
             t, q = contract.agreement["time"], contract.agreement["quantity"]
             # If I started this negotiation, I must have had a reason to do so.
             # This implies that I need not plan anything about it
-            if contract.annotation["caller"] == self.id:
-                continue
+            # if contract.annotation["caller"] == self.id:
+            #     continue
             is_seller = contract.annotation["seller"] == self.id
             # If this contract is too late or too early, I can do nothing.
             if t > self.awi.n_steps - 1 or t < this_step:
@@ -395,71 +428,70 @@ class PredictionBasedTradingStrategy(
     ) -> None:
         super().on_agent_bankrupt(agent, contracts, quantities, compensation_money)
 
+        for contract, new_quantity in zip(contracts, quantities):
+            q = contract.agreement["quantity"]
+            if new_quantity == q:
+                continue
+            t = contract.agreement["time"]
+            missing = q - new_quantity
+            s = self.awi.current_step
+            if t < self.awi.current_step:
+                continue
+            # distribute the missing quantity over time
+            if contract.annotation["seller"] == self.id:
+                # self.outputs_secured[t] -= missing
+                if t > s:
+                    for tau in range(t - 1, s - 1, -1):
+                        if self.inputs_needed[tau] <= 0:
+                            continue
+                        if self.inputs_needed[tau] >= missing:
+                            self.inputs_needed[tau] -= missing
+                            missing = 0
+                            break
+                        self.inputs_needed[tau] = 0
+                        missing -= self.inputs_needed[tau]
+                        if missing <= 0:
+                            break
+                if missing > 0:
+                    if t < self.awi.n_steps - 1:
+                        for tau in range(t + 1, self.awi.n_steps):
+                            if self.outputs_secured[tau] <= 0:
+                                continue
+                            if self.outputs_secured[tau] >= missing:
+                                self.outputs_secured[tau] -= missing
+                                missing = 0
+                                break
+                            self.outputs_secured[tau] = 0
+                            missing -= self.outputs_secured[tau]
+                            if missing <= 0:
+                                break
 
-#         for contract, new_quantity in zip(contracts, quantities):
-#             q = contract.agreement["quantity"]
-#             if new_quantity == q:
-#                 continue
-#             t = contract.agreement["time"]
-#             missing = q - new_quantity
-#             s = self.awi.current_step
-#             if t < self.awi.current_step:
-#                 continue
-#             # distribute the missing quantity over time
-#             if contract.annotation["seller"] == self.id:
-#                 # self.outputs_secured[t] -= missing
-#                 if t > s:
-#                     for tau in range(t - 1, s - 1, -1):
-#                         if self.inputs_needed[tau] <= 0:
-#                             continue
-#                         if self.inputs_needed[tau] >= missing:
-#                             self.inputs_needed[tau] -= missing
-#                             missing = 0
-#                             break
-#                         self.inputs_needed[tau] = 0
-#                         missing -= self.inputs_needed[tau]
-#                         if missing <= 0:
-#                             break
-#                 if missing > 0:
-#                     if t < self.awi.n_steps - 1:
-#                         for tau in range(t + 1, self.awi.n_steps):
-#                             if self.outputs_secured[tau] <= 0:
-#                                 continue
-#                             if self.outputs_secured[tau] >= missing:
-#                                 self.outputs_secured[tau] -= missing
-#                                 missing = 0
-#                                 break
-#                             self.outputs_secured[tau] = 0
-#                             missing -= self.outputs_secured[tau]
-#                             if missing <= 0:
-#                                 break
-#
-#             else:
-#                 if t < self.awi.n_steps - 1:
-#                     for tau in range(t + 1, self.awi.n_steps):
-#                         if self.outputs_needed[tau] <= 0:
-#                             continue
-#                         if self.outputs_needed[tau] >= missing:
-#                             self.outputs_needed[tau] -= missing
-#                             missing = 0
-#                             break
-#                         self.outputs_needed[tau] = 0
-#                         missing -= self.outputs_needed[tau]
-#                         if missing <= 0:
-#                             break
-#                 if missing > 0:
-#                     if t > s:
-#                         for tau in range(t - 1, s - 1, -1):
-#                             if self.inputs_secured[tau] <= 0:
-#                                 continue
-#                             if self.inputs_secured[tau] >= missing:
-#                                 self.inputs_secured[tau] -= missing
-#                                 missing = 0
-#                                 break
-#                             self.inputs_secured[tau] = 0
-#                             missing -= self.inputs_secured[tau]
-#                             if missing <= 0:
-#                                 break
+            else:
+                if t < self.awi.n_steps - 1:
+                    for tau in range(t + 1, self.awi.n_steps):
+                        if self.outputs_needed[tau] <= 0:
+                            continue
+                        if self.outputs_needed[tau] >= missing:
+                            self.outputs_needed[tau] -= missing
+                            missing = 0
+                            break
+                        self.outputs_needed[tau] = 0
+                        missing -= self.outputs_needed[tau]
+                        if missing <= 0:
+                            break
+                if missing > 0:
+                    if t > s:
+                        for tau in range(t - 1, s - 1, -1):
+                            if self.inputs_secured[tau] <= 0:
+                                continue
+                            if self.inputs_secured[tau] >= missing:
+                                self.inputs_secured[tau] -= missing
+                                missing = 0
+                                break
+                            self.inputs_secured[tau] = 0
+                            missing -= self.inputs_secured[tau]
+                            if missing <= 0:
+                                break
 
 
 class MarketAwarePredictionBasedTradingStrategy(

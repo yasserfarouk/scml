@@ -271,11 +271,11 @@ class SyncController(SAOSyncController):
                 self.__parent.inputs_secured,
             )
         if offer is None:
-            return -1000
+            return -1000.0
         t = offer[TIME]
         if t < self.__parent.awi.current_step or t > self.__parent.awi.n_steps - 1:
             return -1000.0
-        q = _needed[offer[TIME]] - (offer[QUANTITY] + _secured[t])
+        q = _needed[t] - (offer[QUANTITY] + _secured[t])
         if q < 0:
             return -1000.0
         if self._is_seller:
@@ -329,8 +329,6 @@ class SyncController(SAOSyncController):
                 if k in self.negotiators.keys()
             }
 
-        if best_partner not in self._best_utils.keys():
-            breakpoint()
         relative_time = min(_.relative_time for _ in states.values())
 
         # if this is good enough or the negotiation is about to end accept the best offer
@@ -361,17 +359,17 @@ class SyncController(SAOSyncController):
         )
         return responses
 
-#     def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
-#         """Update the secured quantities whenever a negotiation ends"""
-#         if state.agreement is None:
-#             return
-# 
-#         q, t = state.agreement[QUANTITY], state.agreement[TIME]
-#         if self._is_seller:
-#             self.__parent.outputs_secured[t] += q
-#         else:
-#             self.__parent.inputs_secured[t] += q
-# 
+    #     def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
+    #         """Update the secured quantities whenever a negotiation ends"""
+    #         if state.agreement is None:
+    #             return
+    #
+    #         q, t = state.agreement[QUANTITY], state.agreement[TIME]
+    #         if self._is_seller:
+    #             self.__parent.outputs_secured[t] += q
+    #         else:
+    #             self.__parent.inputs_secured[t] += q
+    #
     def best_proposal(self, nid: str) -> Tuple[Optional[Outcome], float]:
         """
         Finds the best proposal for the given negotiation

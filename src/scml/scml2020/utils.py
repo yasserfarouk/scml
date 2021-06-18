@@ -1587,7 +1587,7 @@ def anac2021_oneshot(
     production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
     profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.1, 0.2),
     profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.05,
-    max_productivity: Union[np.ndarray, Tuple[float, float], float] = (0.8, 1.0),
+    max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
     initial_balance: Optional[Union[np.ndarray, Tuple[int, int], int]] = None,
     cost_increases_with_level=True,
     equal_exogenous_supply=False,

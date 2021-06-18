@@ -26,8 +26,8 @@ class TradePredictionStrategy:
         - `predicted_outputs`: None for default, a number of an n_steps numbers giving predicted outputs
 
     Provides:
-        - `expected_inputs` : n_steps vector giving the predicted inputs at every time-step. It defaults to half the number of lines.
-        - `expected_outputs` : n_steps vector giving the predicted outputs at every time-step. It defaults to half the number of lines.
+        - `expected_inputs` : n_steps vector giving the predicted inputs at every time-step. It defaults to the number of lines.
+        - `expected_outputs` : n_steps vector giving the predicted outputs at every time-step. It defaults to the number of lines.
         - `input_cost` : n_steps vector giving the predicted input cost at every time-step. It defaults to catalog price.
         - `output_price` : n_steps vector giving the predicted output price at every time-step. It defaults to catalog price.
 
@@ -63,7 +63,7 @@ class TradePredictionStrategy:
         *args,
         predicted_outputs: Union[int, np.ndarray] = None,
         predicted_inputs: Union[int, np.ndarray] = None,
-        add_trade=True,
+        add_trade=False,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -100,7 +100,7 @@ class TradePredictionStrategy:
         ] * np.ones(self.awi.n_steps, dtype=int)
 
         def adjust(x):
-            return max(1, self.awi.n_lines // 2) * np.ones(self.awi.n_steps, dtype=int)
+            return max(1, self.awi.n_lines) * np.ones(self.awi.n_steps, dtype=int)
 
         # adjust predicted demand and supply
         self.expected_outputs = adjust(self.expected_outputs)

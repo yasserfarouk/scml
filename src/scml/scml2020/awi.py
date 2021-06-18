@@ -132,13 +132,13 @@ class AWI(AgentWorldInterface):
 
     Actions:
         A. Negotiation Control:
-          - *request_negotiations*: Requests a set of negotiations controlled by a 
+          - *request_negotiations*: Requests a set of negotiations controlled by a
             single controller.
-          - *request_negotiation*: Requests a negotiation controlled by a single 
+          - *request_negotiation*: Requests a negotiation controlled by a single
             negotiator.
 
         B. Production Control:
-          - *schedule_production*: Schedules production using one of the predefined 
+          - *schedule_production*: Schedules production using one of the predefined
             scheduling strategies.
           - *order_production*: Orders production directly for the current step.
           - *set_commands*: Sets production commands directly on the factory.
@@ -515,7 +515,7 @@ class AWI(AgentWorldInterface):
     def state(self) -> FactoryState:
         """Receives the factory state"""
         return self._world.a2f[self.agent.id].state
-    
+
     @property
     def current_balance(self):
         """Current balance of the agent"""

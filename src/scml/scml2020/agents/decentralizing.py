@@ -2,6 +2,7 @@
 Implements the `DecentralizingAgent` which creates ony buy and one sell controller for each time-step and relinquishes
 control of negotiations to buy/sell the required number of items of its input/output product.
 """
+from pprint import pformat
 from typing import Tuple
 
 import numpy as np
@@ -9,11 +10,11 @@ from negmas import LinearUtilityFunction
 
 from scml.scml2020.components import IndependentNegotiationsManager
 from scml.scml2020.components import StepNegotiationManager
+from scml.scml2020.components import MovingRangeNegotiationManager
 from scml.scml2020.components import SupplyDrivenProductionStrategy
 
 from ..components.signing import KeepOnlyGoodPrices
 from ..components.trading import (
-    MarketAwarePredictionBasedTradingStrategy,
     PredictionBasedTradingStrategy,
 )
 from ..components.prediction import MarketAwareTradePredictionStrategy
@@ -32,14 +33,24 @@ class _NegotiationCallbacks:
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
         if sell:
-            return min(production_cost + self.input_cost[step:].min(), self.output_price[step])
-        return max(self.output_price[step:].max() - production_cost, self.input_cost[step])
+            return min(
+                production_cost + self.input_cost[step:].min(), self.output_price[step]
+            )
+        return max(
+            self.output_price[step:].max() - production_cost, self.input_cost[step]
+        )
 
     def target_quantity(self, step: int, sell: bool) -> int:
         if sell:
-            needed, secured = self.outputs_needed[step:].sum(), self.outputs_secured[step:].sum()
+            needed, secured = (
+                self.outputs_needed[step:].sum(),
+                self.outputs_secured[step:].sum(),
+            )
         else:
-            needed, secured = self.inputs_needed[:step].sum(), self.inputs_secured[:step].sum()
+            needed, secured = (
+                self.inputs_needed[:step].sum(),
+                self.inputs_secured[:step].sum(),
+            )
 
         return min(self.awi.n_lines, needed - secured)
 
@@ -67,7 +78,7 @@ class DecentralizingAgent(
 class MarketAwareDecentralizingAgent(
     MarketAwareTradePredictionStrategy,
     _NegotiationCallbacks,
-    StepNegotiationManager,
+    MovingRangeNegotiationManager,
     PredictionBasedTradingStrategy,
     KeepOnlyGoodPrices,
     SupplyDrivenProductionStrategy,
@@ -80,7 +91,7 @@ class MarketAwareDecentralizingAgent(
         selling_margin=None,
         min_price_margin=0.5,
         max_price_margin=0.5,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             *args,
@@ -88,8 +99,14 @@ class MarketAwareDecentralizingAgent(
             selling_margin=selling_margin,
             min_price_margin=min_price_margin,
             max_price_margin=max_price_margin,
-            **kwargs
+            **kwargs,
         )
+
+    # def before_step(self):
+    #     super().before_step()
+    #     self.awi.loginfo_agent(
+    #         f"Step {self.awi.current_step}\n{pformat(self.internal_state)}"
+    #     )
 
 
 class DecentralizingAgentWithLogging(
@@ -128,7 +145,7 @@ class MarketAwareIndDecentralizingAgent(
         selling_margin=None,
         min_price_margin=0.5,
         max_price_margin=0.5,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             *args,
@@ -136,5 +153,5 @@ class MarketAwareIndDecentralizingAgent(
             selling_margin=selling_margin,
             min_price_margin=min_price_margin,
             max_price_margin=max_price_margin,
-            **kwargs
+            **kwargs,
         )
