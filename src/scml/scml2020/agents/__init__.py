@@ -5,6 +5,7 @@ from .bcse import *
 from .decentralizing import *
 from .reactive import *
 from .moving import *
+from .satisficer import *
 
 __all__ = (
     random.__all__
@@ -14,4 +15,5 @@ __all__ = (
     + decentralizing.__all__
     + reactive.__all__
     + moving.__all__
+    + satisficer.__all__
 )

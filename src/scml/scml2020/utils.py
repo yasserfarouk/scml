@@ -24,6 +24,7 @@ from scml.scml2020.agents import BuyCheapSellExpensiveAgent
 from scml.scml2020.agents import DecentralizingAgent
 from scml.scml2020.agents import MarketAwareDecentralizingAgent
 from scml.scml2020.agents import MarketAwareIndDecentralizingAgent
+from scml.scml2020.agents import SatisficerAgent
 from scml.scml2020.agents import MarketAwareMovingRangeAgent
 from scml.scml2020.world import SCML2020World, SCML2021World
 from scml.scml2020.world import is_system_agent
@@ -70,7 +71,8 @@ DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent]
 DefaultAgents2021 = [
     DecentralizingAgent,
     # MarketAwareDecentralizingAgent,
-    # MarketAwareIndDecentralizingAgent,
+    MarketAwareIndDecentralizingAgent,
+    SatisficerAgent,
     # RandomOneShotAgent,
 ]
 

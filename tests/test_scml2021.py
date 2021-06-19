@@ -16,6 +16,7 @@ from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SCML2021World
+from scml.scml2020 import SatisficerAgent
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 
@@ -351,3 +352,16 @@ def test_production_cost_increase():
             for i, (a, b) in enumerate(zip(mean_costs[:-1], mean_costs[1:]))
         ]
     ), f"non-ascending costs {mean_costs}"
+
+
+@mark.parametrize("n_processes", [2, 3, 4])
+def test_satisficer(n_processes):
+    world = generate_world(
+        [SatisficerAgent],
+        buy_missing_products=True,
+        n_processes=n_processes,
+        compact=COMPACT,
+        no_logs=NOLOGS,
+    )
+    world.run()
+    save_stats(world, world.log_folder)

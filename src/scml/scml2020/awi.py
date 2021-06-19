@@ -257,7 +257,8 @@ class AWI(AgentWorldInterface):
         for p, neg, r in zip(partners, negotiators, results):
             if not r:
                 continue
-            controller.add_negotiator(neg)
+            if controller is not None:
+                controller.add_negotiator(neg)
             self._world._registered_negs[tuple(sorted([p, self.agent.id]))] += 1
         return any(results)
 
