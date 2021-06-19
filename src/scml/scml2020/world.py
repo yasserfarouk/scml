@@ -1576,6 +1576,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         has_breaches: bool,
     ):
         """Executes the contract"""
+        q, p, u = int(q), int(p), int(u)
         if seller_factory.is_bankrupt or buyer_factory.is_bankrupt:
             self.logdebug(
                 f"Bankruptcy prevents transferring {q} of {product} at price {u} ({'breached' if has_breaches else ''})"
