@@ -302,6 +302,10 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.current_balance(self.agent.id)
 
     @property
+    def current_inventory(self):
+        return np.zeros(self.n_products)
+
+    @property
     def current_exogenous_input_quantity(self) -> int:
         """
         The exogenous contracts for the input (this step)
