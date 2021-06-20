@@ -273,6 +273,10 @@ class SatisficerAgent(SCML2020Agent, SAONegotiator):
         mx, mn = mx[t0 : t1 + 1] - tentative[t0 : t1 + 1], mn[t0 : t1 + 1]
         mx[mx > q1] = q1
         mn[mn < q0] = q0
+
+        if len(mx) < 1 or len(mn) < 1:
+            return None
+
         options = []
 
         for t in range(t0, t1 + 1):
@@ -325,8 +329,8 @@ class SatisficerAgent(SCML2020Agent, SAONegotiator):
             awi.my_input_product,
         )
 
-        available_input = awi.current_inventory[awi.my_input_product]
-        available_output = awi.current_inventory[awi.my_output_product]
+        available_input = int(awi.current_inventory[awi.my_input_product])
+        available_output = int(awi.current_inventory[awi.my_output_product])
 
         # find the time of tirst and last allowed sale and supply
         first_sale, last_sale = min(s + 1, level), steps - 1
