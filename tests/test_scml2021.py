@@ -14,11 +14,13 @@ from scml.oneshot.agents import RandomOneShotAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
+from scml.scml2020 import SCML2020Agent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SCML2021World
 from scml.scml2020 import SatisficerAgent
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
+from scml.scml2020.utils import anac2021_collusion
 
 random.seed(0)
 
@@ -365,3 +367,55 @@ def test_satisficer(n_processes):
     )
     world.run()
     save_stats(world, world.log_folder)
+
+
+N_AGENTS_PER_COMPETITORS = 3
+
+
+class MyColluders(DoNothingAgent):
+    # define a class-level variable to share the information
+    my_friends = dict()
+
+    def init(self):
+        # share any information that will be static for the whole competition
+        self.my_friends[self.id] = dict(
+            level=self.awi.my_input_product, initial_balance=self.awi.current_balance
+        )
+
+    def before_step(self):
+        # here you can access my_frieds and it will be fully populated.
+        # any thing shared in `init()` or `step()` is available here
+        assert self.id in self.my_friends
+        if self.awi.current_step > 0:
+            for v in self.my_friends.values():
+                assert "last_step_balance" in v
+                if v["level"] < self.awi.my_current_input:
+                    assert "current_step_balance" in v
+
+        # information shared here is consistently available to agents at
+        # higher levels
+        self.my_friends[self.id].update(dict(current_balance=self.awi.current_balance))
+
+    def step(self):
+
+        assert self.id in self.my_friends
+        for v in self.my_friends.values():
+            assert "current_step_balance" in v
+
+        # share any information that is available by the end of the step
+        self.my_friends[self.id].update(
+            dict(
+                last_step_balance=self.awi.current_balance,
+                last_step_inventory=self.awi.current_inventory,
+            )
+        )
+
+
+def test_colluding_agents_find_each_other():
+    anac2021_collusion(
+        competitors=[MyColluders, DoNothingAgent],
+        n_agents_per_competitor=N_AGENTS_PER_COMPETITORS,
+        n_configs=1,
+        n_processes=2,
+        n_steps=4,
+    )
