@@ -10,6 +10,7 @@ from typing import Union
 import numpy as np
 
 __all__ = [
+    "fraction_cut",
     "integer_cut",
     "intin",
     "realin",
@@ -17,6 +18,25 @@ __all__ = [
     "make_array",
     "distribute_quantities",
 ]
+
+
+def fraction_cut(n: int, p: np.ndarray) -> np.ndarray:
+    """Distributes n items on boxes with probabilities relative to p"""
+    l = len(p) - 1
+    x = (np.round(100 * n * p).astype(np.int64) // 100).astype(int)
+
+    total = x.sum()
+
+    while total > n:
+        i = random.randint(0, l)
+        if x[i] > 0:
+            x[i] -= 1
+            total -= 1
+
+    while total < n:
+        x[random.randint(0, l)] += 1
+        total += 1
+    return x
 
 
 def integer_cut(
@@ -31,6 +51,7 @@ def integer_cut(
         n: total
         l: number of levels
         l_m: minimum per level
+        l_x: maximum per level
 
     Returns:
 
@@ -50,7 +71,7 @@ def integer_cut(
         raise ValueError(
             f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {sum(l_x)}"
         )
-    valid = [i for i,s in enumerate(sizes) if l_x[i] > s]
+    valid = [i for i, s in enumerate(sizes) if l_x[i] > s]
     while sizes.sum() < n:
         j = random.choice(valid)
         sizes[j] += 1
@@ -174,7 +195,9 @@ def distribute_quantities(
     base_cut = integer_cut(qz, a, 0, limit)
     limit_sum = sum(limit) if limit is not None else float("inf")
     if limit is not None:
-        assert all([a<=b for a, b in zip(base_cut, limit)]), f"base_cut above limit:\nbase_cut: {base_cut}\nLimit: {limit}"
+        assert all(
+            [a <= b for a, b in zip(base_cut, limit)]
+        ), f"base_cut above limit:\nbase_cut: {base_cut}\nLimit: {limit}"
     assert min(base_cut) >= 0, f"base cut has negative value {base_cut}"
 
     def adjust_values(v, limit):
@@ -212,7 +235,7 @@ def distribute_quantities(
                 for j in range(len(v)):
                     if j == i:
                         continue
-                    if limit[j] - v[j] >=  diffs[j]:
+                    if limit[j] - v[j] >= diffs[j]:
                         v[j] += diffs[j]
                         errs -= diffs[j]
         return v

@@ -38,7 +38,7 @@ def generate_world(
     n_steps=10,
     n_agents_per_process=2,
     n_lines=10,
-    initial_balance=10_000,
+    initial_balance=None,
     buy_missing_products=True,
     **kwargs,
 ):
@@ -248,14 +248,17 @@ def test_agents_go_bankrupt(n_processes):
         #     )
 
 
-def test_generate():
+@mark.parametrize("n_processes", [2, 3, 4, 5, 6])
+def test_generate(n_processes):
     world = SCML2021World(
         **SCML2021World.generate(
-            agent_types=DoNothingAgent, n_steps=10, n_processes=4, initial_balance=None
+            agent_types=DoNothingAgent,
+            n_steps=50,
+            n_processes=n_processes,
+            initial_balance=None,
         )
     )
     world.run()
-    assert True
 
 
 def test_a_tiny_world():

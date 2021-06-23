@@ -1515,6 +1515,12 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
     multiple=False,
     help="A file to load extra configuration parameters for world simulations from.",
 )
+@click.option(
+    "--method",
+    type=click.Choice(["guaranteed_profit", "profitable"]),
+    default="profitable",
+    help="The method used for world generation",
+)
 @click_config_file.configuration_option()
 def run2021(
     steps,
@@ -1530,6 +1536,7 @@ def run2021(
     show_contracts,
     oneshot,
     name,
+    method,
 ):
     if not competitors:
         competitors = (
@@ -1593,6 +1600,7 @@ def run2021(
             name=world_name,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            method=method,
             **kwargs,
         )
     )
