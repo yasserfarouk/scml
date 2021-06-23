@@ -124,7 +124,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
         negotiation_speed=0,
-        avoid_ultimatum=False,
+        avoid_ultimatum=True,
         # public information
         publish_exogenous_summary=True,
         publish_trading_prices=True,
@@ -629,6 +629,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         random_agent_types: bool = False,
         penalties_scale: Union[str, List[str]] = "trading",
         cap_exogenous_quantities: bool = True,
+        method="profitable",
         **kwargs,
     ) -> Dict[str, Any]:
         """
