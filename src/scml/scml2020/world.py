@@ -1026,37 +1026,45 @@ class SCML2020World(TimeInAgreementMixin, World):
             costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
 
         # generate external contract amounts (controlled by productivity):
+        generated_exogenous, trial = False, 0
+        while not generated_exogenous and trial < MAX_WORLD_GENERATION_TRIALS:
+            # - generate total amount of input to the market (it will end up being an n_products list of n_steps vectors)
+            first_quantities = np.round(
+                n_lines * n_agents_per_process[0] * max_productivity_process[0, :]
+            ).astype(int)
+            first_quantities[-n_startup:] = 0
 
-        # - generate total amount of input to the market (it will end up being an n_products list of n_steps vectors)
-        first_quantities = np.round(
-            n_lines * n_agents_per_process[0] * max_productivity_process[0, :]
-        ).astype(int)
-        first_quantities[-n_startup:] = 0
+            # - divide the quantity at every level between factories
+            exogenous_supplies = distribute_quantities(
+                equal_exogenous_supply,
+                exogenous_supply_predictability,
+                first_quantities,
+                n_agents_per_process[0],
+                n_steps,
+            )
+            exogenous_supplies = np.asarray(exogenous_supplies)
 
-        # - divide the quantity at every level between factories
-        exogenous_supplies = distribute_quantities(
-            equal_exogenous_supply,
-            exogenous_supply_predictability,
-            first_quantities,
-            n_agents_per_process[0],
-            n_steps,
-        )
-        exogenous_supplies = np.asarray(exogenous_supplies)
+            # remove extra quantities that cannot be produced and sold
+            possible_production = n_lines * (n_steps - n_processes)
+            extra_supply = exogenous_supplies.sum(axis=0) - possible_production
 
-        # remove extra quantities that cannot be produced and sold
-        possible_production = n_lines * (n_steps - n_products)
-        extra_supply = exogenous_supplies.sum(axis=0) - possible_production
-
-        for a in range(n_agents_per_process[0]):
-            if extra_supply[a] <= 0:
-                continue
-            for s in range(n_steps - 1, -1, -1):
-                to_use = min(extra_supply[a], exogenous_supplies[s, a])
-                if to_use <= 0:
+            for a in range(n_agents_per_process[0]):
+                if extra_supply[a] <= 0:
                     continue
-                extra_supply[a] -= to_use
-                exogenous_supplies[s, a] -= to_use
-        assert np.all(exogenous_supplies[-n_startup:] == 0)
+                for s in range(n_steps - 1, -1, -1):
+                    to_use = min(extra_supply[a], exogenous_supplies[s, a])
+                    if to_use <= 0:
+                        continue
+                    extra_supply[a] -= to_use
+                    exogenous_supplies[s, a] -= to_use
+                    if extra_supply[a] <= 0:
+                        break
+            assert np.all(exogenous_supplies[-n_startup:] == 0)
+            generated_exogenous = np.any(exogenous_supplies > 0)
+            trial += 1
+        assert (
+            generated_exogenous
+        ), f"Cannot generate this world because we cannot generate any exogenous supply: n_steps: {n_steps}, n_processes: {n_processes}"
 
         params = dict(
             n_steps=n_steps,
@@ -1239,13 +1247,12 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         # generate distribution variables that sum
         pc = 0.05 + (production_costs.max() - production_costs) / production_costs.max()
-        relative_production_cost = np.ones_like(pc, dtype=float)
         normalized_production_cost = np.ones_like(pc, dtype=float)
         for p in range(0, n_processes):
             f, l = first_agent[p], last_agent[p]
-            tmp = np.float_power(production_costs[f:l], cost_relativity)
-            relative_production_cost[f:l] = tmp / tmp.max()
-            normalized_production_cost[f:l] = tmp / tmp.sum()
+            normalized_production_cost[f:l] = np.float_power(
+                production_costs[f:l] / production_costs[f:l].max(), cost_relativity
+            )
 
         def distribute_sales(
             active_lines: np.ndarray,
@@ -1272,22 +1279,26 @@ class SCML2020World(TimeInAgreementMixin, World):
                 n_buyers = 1
             else:
                 n_buyers = last_buyer - first_buyer
-            # distribute production
-            production_limit = n_steps - (n_products - product)
-            distribution_limit = n_steps - (n_processes - product)
-            for s in range(production_limit):
-                beg = min(production_time + s, production_limit)
-                end = production_limit
-                n = end - beg
-                if n == 0:
-                    break
+            # distribute production:
+            # the goal here is to produce everything we have as supplies
+
+            # we cannot produce after the time when our output can propagate
+            # to the end of the network and be sold to the BUYER agent
+            production_limit = n_steps - (n_processes - product)
+            # we cannot produce before we can get our first supplies. This is
+            # a speedup no more
+            production_start = product
+            if run_extra_checks:
+                assert supplies[first_seller:last_seller, :production_start].sum() == 0
+            for s in range(production_start, production_limit):
+                n = production_limit - s
                 not_produced = 0
                 for i in range(first_seller, last_seller):
                     if supplies[i, s] < 1:
                         continue
 
                     to_produce, not_produced = supplies[i, s] + not_produced, 0
-                    for k in range(s, end):
+                    for k in range(s, production_limit):
                         can_use = min(
                             n_lines - active_lines[i, k],
                             supplies[i, : k + 1].sum() - active_lines[i, : k + 1].sum(),
@@ -1301,27 +1312,39 @@ class SCML2020World(TimeInAgreementMixin, World):
                         not_produced = to_produce
 
             # distribute sales
-            for s in range(distribution_limit):
-                beg = min(production_time + s, distribution_limit)
-                end = min(beg + 1, distribution_limit)
-                n = end - beg
-                if n <= 0:
-                    continue
-                available = n_lines * n - active_lines[
-                    first_buyer:last_buyer, beg:
-                ].sum(axis=1)
-                if available.sum() > 0:
-                    available = available / available.sum()
-                p1 = (
-                    (p[first_buyer:last_buyer] * available)
-                    if not final
-                    else np.asarray([1.0])
-                )
-                p1 = p1 / p1.sum()
+
+            # I can always sell one step after final production
+            distribution_limit = production_limit + production_time
+            distribution_start = production_start + production_time
+
+            # this loop is for selling production so it goes on the production
+            # rather than distribution limits
+            for s in range(production_start, production_limit):
+                n = production_limit - s
+                # find the probability distribution with which to distribute
+                # the products to the bueyrs.
+                if n_buyers == 1:
+                    p1 = np.asarray([1.0])
+                else:
+                    # the probability of getting products go up with available
+                    # production capacity and with production_costs
+                    available = np.ones(n_buyers)
+                    active = active_lines[first_buyer:last_buyer, s:]
+                    if active.sum() > 0:
+                        active /= active.max()
+                        available = n_lines * n - active.sum(axis=1)
+                        if available.sum() > 0:
+                            available = available / available.sum()
+                    p1 = (production_limit - s) * p[
+                        first_buyer:last_buyer
+                    ] + s * available
+                    if p1.sum() < 1e-5:
+                        p1 = np.ones_like(p1) / len(p1)
+                    else:
+                        p1 = p1 / p1.sum()
                 for i in range(first_seller, last_seller):
-                    limit = distribution_limit
-                    beg = min(production_time + s, limit)
-                    end = min(beg + 1, limit)
+                    beg = min(production_time + s, distribution_limit)
+                    end = min(beg + 1, distribution_limit)
                     n = end - beg
                     if n <= 0:
                         continue
@@ -1355,7 +1378,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                                 continue
                             simulated.append(
                                 ContractRecord(
-                                    product,
+                                    product + 1,
                                     s if not final else k + beg - horizon,
                                     k + beg,
                                     i,
@@ -1369,9 +1392,12 @@ class SCML2020World(TimeInAgreementMixin, World):
             return simulated
 
         # generate a good set of contracts that achieve the givne productivity
-        for p in range(1, n_processes):
-            first_seller, last_seller = first_agent[p - 1], last_agent[p - 1]
-            first_buyer, last_buyer = first_agent[p], last_agent[p]
+        for p in range(0, n_processes):
+            first_seller, last_seller = first_agent[p], last_agent[p]
+            if p < n_processes - 1:
+                first_buyer, last_buyer = first_agent[p + 1], last_agent[p + 1]
+            else:
+                first_buyer, last_buyer = None, None
             simulated_contracts += distribute_sales(
                 active_lines,
                 sales,
@@ -1389,28 +1415,8 @@ class SCML2020World(TimeInAgreementMixin, World):
                 n_lines,
                 p,
                 1,
+                final=first_buyer is None,
             )
-
-        first_seller, last_seller = first_agent[-1], last_agent[-1]
-        simulated_contracts += distribute_sales(
-            active_lines,
-            sales,
-            supplies,
-            revenue,
-            total_costs,
-            production_costs,
-            agent_profits,
-            normalized_production_cost,
-            first_seller,
-            last_seller,
-            None,
-            None,
-            horizon,
-            n_lines,
-            n_processes,
-            1,
-            final=True,
-        )
 
         assert sales.sum() <= supplies.sum()
         assert np.all(active_lines.cumsum(axis=1) >= sales.cumsum(axis=1))
@@ -1458,18 +1464,21 @@ class SCML2020World(TimeInAgreementMixin, World):
                 )
         exogenous_supplies = supplies[first_agent[0] : last_agent[0], :].transpose()
 
-        # if supplies.sum() != sum([_.quantity for _ in simulated_contracts]):
-        #     breakpoint()
-
         # - now exogenous_supplies and exogenous_sales are both n_steps lists of n_agents_per_process[p] vectors (jagged)
         catalog_prices = np.zeros(n_products, dtype=int)
         for p in range(n_products):
             if p < n_processes:
                 f, l = first_agent[p], last_agent[p]
-                supply_unit = total_costs[f:l, :].sum() / supplies[f:l, :].sum()
+                total = supplies[f:l, :].sum()
+                if total < 1:
+                    continue
+                supply_unit = total_costs[f:l, :].sum() / total
             else:
                 f, l = first_agent[p - 1], last_agent[p - 1]
-                supply_unit = revenue[f:l, :].sum() / sales[f:l, :].sum()
+                total = sales[f:l, :].sum()
+                if total < 1:
+                    continue
+                supply_unit = revenue[f:l, :].sum() / total
             catalog_prices[p] = supply_unit
 
         profile_info: List[FactoryProfile] = []
@@ -1582,10 +1591,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                 def _check(s):
                     assert (
                         balances.min() >= 0
-                    ), f"Contract Simulation Issue: Some agents went bankrupt at step {s}!!\n{balances}\n{sales}\n{supplies}\n{active_lines}"
+                    ), f"Contract Simulation Issue: Some agents went bankrupt at step {s}!!\n{balances}\nSupplies:\n{supplies}\nActive:\n{active_lines}\nSales:\n{sales}"
                     assert (
                         inventory.min() >= 0
-                    ), f"Contract Simulation Issue: Some agents has negative inventory at step {s}!!\n{inventory}\n{sales}\n{supplies}\n{active_lines}"
+                    ), f"Contract Simulation Issue: Some agents has negative inventory at step {s}!!\nInventory:{inventory}\nSupplies:\n{supplies}\nActive:\n{active_lines}\nSales:\n{sales}"
 
                 for s in range(n_steps):
                     _check(s)
@@ -1604,11 +1613,15 @@ class SCML2020World(TimeInAgreementMixin, World):
                     for a in range(n_agents):
                         p = process_of_agent[a]
                         q = inventory[a, p]
-                        if not q:
+                        produced = active_lines[a, s]
+                        assert (
+                            produced <= q
+                        ), f"Agent {a} (level {p}) should produce {produced} at step {s} but only have {q} items of product {p}"
+                        if not produced:
                             continue
-                        inventory[a, p + 1] += q
-                        inventory[a, p] = 0
-                        balances[a] -= q * production_costs[a]
+                        inventory[a, p + 1] += produced
+                        inventory[a, p] -= produced
+                        balances[a] -= produced * production_costs[a]
 
                 assets = catalog_valuation * (inventory * catalog_prices)
 
@@ -1632,8 +1645,8 @@ class SCML2020World(TimeInAgreementMixin, World):
                     process_of_agent,
                     catalog_prices,
                 )
-            except AssertionError:
-                raise RecoverableWorldGenerationException()
+            except AssertionError as e:
+                raise RecoverableWorldGenerationException(e)
 
             info["expected_profits_simulated"] = expected_profit
         else:
