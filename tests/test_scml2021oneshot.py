@@ -807,3 +807,47 @@ def test_production_cost_increase():
             for i, (a, b) in enumerate(zip(mean_costs[:-1], mean_costs[1:]))
         ]
     ), f"non-ascending costs {mean_costs}"
+
+
+@mark.parametrize("penalties_scale", ["trading", "catalog"])
+def test_ufun_penalty_scales_are_correct(penalties_scale):
+    from scml.oneshot.ufun import OneShotUFun
+
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate(
+            MyIndNeg,
+            n_agents_per_process=3,
+            n_processes=2,
+            n_steps=30,
+            penalties_scale=penalties_scale,
+        ),
+        compact=True,
+        no_logs=True,
+    )
+    for _ in range(30):
+        old_trading = world.trading_prices.copy()
+        world.step()
+        for _, a in world.agents.items():
+            if is_system_agent(a.id):
+                continue
+            u: OneShotUFun = a.ufun
+            if penalties_scale == "trading":
+                assert (
+                    u.output_penalty_scale
+                    # == a.awi.trading_prices[a.awi.my_output_product]
+                    == old_trading[a.awi.my_output_product]
+                )
+                assert (
+                    u.input_penalty_scale
+                    # == a.awi.trading_prices[a.awi.my_input_product]
+                    == old_trading[a.awi.my_input_product]
+                )
+            else:
+                assert (
+                    u.output_penalty_scale
+                    == a.awi.catalog_prices[a.awi.my_output_product]
+                )
+                assert (
+                    u.input_penalty_scale
+                    == a.awi.catalog_prices[a.awi.my_input_product]
+                )
