@@ -776,10 +776,14 @@ class SCML2020World(TimeInAgreementMixin, World):
                         costs=v.costs.tolist(),
                         n_lines=v.n_lines,
                         input_product=int(
-                            v.input_products[0] if v.input_products else -1
+                            v.input_products[0]
+                            if v.input_products is not None and len(v.input_products)
+                            else -1
                         ),
                         output_product=int(
-                            v.output_products[0] if v.output_products else -1
+                            v.output_products[0]
+                            if v.output_products is not None and len(v.output_products)
+                            else -1
                         ),
                     )
                     for k, v in self.agent_profiles.items()
@@ -826,8 +830,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         random_agent_types: bool = False,
         cost_relativity: float = 1.0,
         method="profitable",
-        exogenous_supply_surplus: Union[Tuple[float, float], float] = 1.0,
-        exogenous_sales_surplus: Union[Tuple[float, float], float] = 1.0,
+        exogenous_supply_surplus: Union[Tuple[float, float], float] = 0.0,
+        exogenous_sales_surplus: Union[Tuple[float, float], float] = 0.0,
         run_extra_checks: bool = True,
         **kwargs,
     ) -> Dict[str, Any]:
@@ -966,7 +970,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         max_productivity_process = make_array(
             max_productivity, n_processes * n_steps, dtype=float
         ).reshape((n_processes, n_steps))
-        n_agents = n_agents_per_process.sum()
+        n_agents = int(n_agents_per_process.sum())
         assert n_agents >= n_processes
         profit_means_agent = make_array(profit_means, n_agents, dtype=float)
         profit_stddevs_agent = make_array(profit_stddevs, n_agents, dtype=float)
@@ -1133,11 +1137,14 @@ class SCML2020World(TimeInAgreementMixin, World):
                 q = int(round(sum(_.quantity for _ in contracts) * surplus))
                 if q < 1:
                     continue
-                unit_price = int(catalog_prices[process if is_sale else process + 1])
+                unit_price = int(catalog_prices[process + 1 if is_sale else process])
+                unit_price = random.randint(
+                    int(unit_price * 0.8), int(unit_price * 1.2)
+                )
                 for step, quantity in enumerate(integer_cut(q, n_steps, 0)):
                     exogenous.append(
                         ExogenousContract(
-                            product=process + 1,
+                            product=process + 1 if is_sale else process,
                             quantity=quantity,
                             unit_price=unit_price,
                             time=step,
@@ -1146,6 +1153,23 @@ class SCML2020World(TimeInAgreementMixin, World):
                             buyer=a if not is_sale else -1,
                         )
                     )
+        if run_extra_checks:
+            for c in exogenous:
+                assert c.revelation_time <= c.time
+                if c.seller < 0:
+                    assert c.product == 0, f"Invalid Exogenous Contract (Seller): {c}"
+                else:
+                    assert (
+                        c.product == process_of_agent[c.seller] + 1
+                    ), f"Invalid Contract (seller): {c}"
+                if c.buyer < 0:
+                    assert (
+                        c.product == n_processes
+                    ), f"Invalid Exogenous Contract (buyer): {c}"
+                else:
+                    assert (
+                        c.product == process_of_agent[c.buyer]
+                    ), f"Invalid Contract (Buyer): {c}"
 
         info = dict(**info, **extra_info)
 
