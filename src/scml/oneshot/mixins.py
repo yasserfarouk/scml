@@ -23,7 +23,7 @@ class OneShotUFunCreatorMixin:
             disposal_cost=awi.current_disposal_cost,
             shortfall_penalty=awi.current_shortfall_penalty,
             input_penalty_scale=awi.penalty_multiplier(True, None),
-            output_penalty_scale=awi.penalty_multiplier(True, None),
+            output_penalty_scale=awi.penalty_multiplier(False, None),
             input_agent=awi.my_input_product == 0,
             output_agent=awi.my_output_product == awi.n_products - 1,
             input_product=awi.my_input_product,
