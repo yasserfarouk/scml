@@ -1,6 +1,23 @@
 Changelog
 =========
 
+0.4.6 (2021.6.15)
+-----------------
+
+*  [all tracks] Adding convenience methods to AWIs. closes #49
+*  [all tracks] reducing production cost range
+*  [all tracks] casting offers to ints explicitly to avoid bugs in agents offering fractional quantities/unit_prices
+*  [oneshot] avoiding ultimatum in oneshot (was disabled)
+*  [oneshot] Add `current-inventory` to OneshotAWI which will always return zero for compatibility with the other tracks
+*  [onesht] adding public_* to summary.
+*  [oneshot] penalty scale was incaccurate
+*  [std/collusion] Adding satisficer agent
+*  [std/collusion] adding guarnteed_profit method of world generation
+*  [std/collusion] better handling of predictions in builtin
+*  [std/collusion] experimental better decentralizing agent
+*  [std/collusion] Increasing profit potential
+*  [speedup] avoid saving negotiations online
+
 0.4.5 (2021.6.14)
 -----------------
 
