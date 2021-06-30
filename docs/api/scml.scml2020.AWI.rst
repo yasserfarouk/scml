@@ -17,6 +17,10 @@ AWI
       ~AWI.current_inventory
       ~AWI.exogenous_contract_summary
       ~AWI.inputs
+      ~AWI.is_first_level
+      ~AWI.is_last_level
+      ~AWI.is_middle_level
+      ~AWI.level
       ~AWI.my_consumers
       ~AWI.my_input_product
       ~AWI.my_input_products
@@ -56,6 +60,10 @@ AWI
    .. autoattribute:: current_inventory
    .. autoattribute:: exogenous_contract_summary
    .. autoattribute:: inputs
+   .. autoattribute:: is_first_level
+   .. autoattribute:: is_last_level
+   .. autoattribute:: is_middle_level
+   .. autoattribute:: level
    .. autoattribute:: my_consumers
    .. autoattribute:: my_input_product
    .. autoattribute:: my_input_products

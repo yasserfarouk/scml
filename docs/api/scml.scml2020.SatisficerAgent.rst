@@ -11,11 +11,11 @@ SatisficerAgent
    .. autosummary::
 
       ~SatisficerAgent.before_step
-      ~SatisficerAgent.confirm_production
       ~SatisficerAgent.do_production
       ~SatisficerAgent.init
-      ~SatisficerAgent.on_agent_bankrupt
       ~SatisficerAgent.on_contracts_finalized
+      ~SatisficerAgent.on_negotiation_failure
+      ~SatisficerAgent.on_negotiation_success
       ~SatisficerAgent.propose
       ~SatisficerAgent.respond
       ~SatisficerAgent.respond_to_negotiation_request
@@ -25,11 +25,11 @@ SatisficerAgent
    .. rubric:: Methods Documentation
 
    .. automethod:: before_step
-   .. automethod:: confirm_production
    .. automethod:: do_production
    .. automethod:: init
-   .. automethod:: on_agent_bankrupt
    .. automethod:: on_contracts_finalized
+   .. automethod:: on_negotiation_failure
+   .. automethod:: on_negotiation_success
    .. automethod:: propose
    .. automethod:: respond
    .. automethod:: respond_to_negotiation_request
