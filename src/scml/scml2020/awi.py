@@ -658,6 +658,33 @@ class AWI(AgentWorldInterface):
         """Number of processes in the world"""
         return self.state.n_processes
 
+    @property
+    def is_first_level(self):
+        """
+        Whether this agent is in the first production level
+        """
+        return self.my_input_product == 0
+
+    @property
+    def is_last_level(self):
+        """
+        Whether this agent is in the last production level
+        """
+        return self.my_output_product == self.n_products - 1
+
+    @property
+    def level(self):
+        """The production level which is the index of the process for
+        this factory (or the index of its input product)"""
+        return self.my_input_product
+
+    @property
+    def is_middle_level(self):
+        """
+        Whether this agent is in neither in the first nor in the last level
+        """
+        return 0 < self.my_input_product < self.n_products - 2
+
     def is_system(self, aid: str) -> bool:
         """
         Checks whether an agent is a system agent or not

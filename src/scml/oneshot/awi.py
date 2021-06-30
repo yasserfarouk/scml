@@ -244,6 +244,12 @@ class OneShotAWI(AgentWorldInterface):
         return self.my_output_product == self.n_products - 1
 
     @property
+    def level(self):
+        """The production level which is the index of the process for
+        this factory (or the index of its input product)"""
+        return self.my_input_product
+
+    @property
     def is_middle_level(self):
         """
         Whether this agent is in neither in the first nor in the last level
