@@ -231,6 +231,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         negotiation_quota_per_simulation=float("inf"),
         n_concurrent_negs_between_partners=float("inf"),
         avoid_ultimatum=True,
+        end_negotiation_on_refusal_to_propose=True,
         # trading price parameters
         trading_price_discount=0.9,
         # spot market parameters
@@ -298,8 +299,8 @@ class SCML2020World(TimeInAgreementMixin, World):
                 "negmas.sao.SAOMechanism": mechanisms.get(
                     "negmas.sao.SAOMechanism",
                     dict(
-                        end_on_no_response=True,
                         avoid_ultimatum=avoid_ultimatum,
+                        end_on_no_response=end_negotiation_on_refusal_to_propose,
                         dynamic_entry=False,
                         max_wait=negotiation_quota_per_step,
                     ),
@@ -395,6 +396,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         if self.info is None:
             self.info = {}
         self.info.update(
+            avoid_ultimatum=avoid_ultimatum,
+            end_negotiation_on_refusal_to_propose=end_negotiation_on_refusal_to_propose,
             process_inputs=process_inputs,
             process_outputs=process_outputs,
             catalog_prices=catalog_prices,
@@ -806,7 +809,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         n_agents_per_process: Union[np.ndarray, Tuple[int, int], int] = (2, 4),
         process_inputs: Union[np.ndarray, Tuple[int, int], int] = 1,
         process_outputs: Union[np.ndarray, Tuple[int, int], int] = 1,
-        production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 10),
+        production_costs: Union[np.ndarray, Tuple[int, int], int] = (1, 4),
         profit_means: Union[np.ndarray, Tuple[float, float], float] = (0.15, 0.2),
         profit_stddevs: Union[np.ndarray, Tuple[float, float], float] = 0.001,
         max_productivity: Union[np.ndarray, Tuple[float, float], float] = 1.0,
@@ -1523,7 +1526,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             # production (even though it may not have enough lines to do so)
             cash_availability = _realin(cash_availability)
             # find maximum money needs
-            initial_balance = total_payments.max(axis=1)
+            initial_balance = total_payments.sum(axis=1)
             max_money_needs_process = np.zeros((n_processes))
             for p in range(n_processes):
                 f, l = first_agent[p], last_agent[p]
