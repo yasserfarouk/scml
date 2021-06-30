@@ -87,7 +87,7 @@ class SatisficerAgent(SCML2020Agent):
                       assumes it will get the same amount of trade as all other agents.
                       Setting it to infinity means that the agent will assume it will take
                       all the trade in the market
-        horizon: Time horizon for negotiations. If None, the exogenous_contracts_revelation 
+        horizon: Time horizon for negotiations. If None, the exogenous_contracts_revelation
                  horizon will be used
     """
 
@@ -547,6 +547,10 @@ class SatisficerAgent(SCML2020Agent):
         max_quantity[max_quantity > q1] = q1
         min_quantity[min_quantity < q0] = q0
 
+        # If we have no quantities to consider, end
+        if len(min_quantity) < 1 or len(max_quantity) < 1:
+            return None
+
         # find all valid times
         ts = [
             _
@@ -690,14 +694,14 @@ class SatisficerAgent(SCML2020Agent):
             return ResponseType.ACCEPT_OFFER
         # otherwise, reject it
         return ResponseType.REJECT_OFFER
-    
+
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         """
         Called when a negotiation fails
 
         Remarks:
             - removes my standing tentative offer for this negotiation if any
-        
+
         """
         partner = [_ for _ in mechanism.agent_ids][0]
         self._remove_tentative_offer(annotation["seller"]==self.id, partner)
@@ -708,15 +712,15 @@ class SatisficerAgent(SCML2020Agent):
 
         Remarks:
             - removes my standing tentative offer for this negotiation if any
-            - adds the agreed quantity in the appropriate times of `accepted`. 
+            - adds the agreed quantity in the appropriate times of `accepted`.
               It will be moved later to `secured`
-        
+
         """
         partner = [_ for _ in contract.partners if _ != self.id][0]
         self._remove_tentative_offer(contract.annotation["seller"]==self.id, partner)
 
-        selling = contract.annotation["seller"] == self.id 
-        accepted = self.accepted_sales if selling else self.accepted_supplies 
+        selling = contract.annotation["seller"] == self.id
+        accepted = self.accepted_sales if selling else self.accepted_supplies
         accepted[contract.agreement["time"]:] += contract.agreement["quantity"]
 
     # ================
@@ -728,7 +732,7 @@ class SatisficerAgent(SCML2020Agent):
         Removes my last offer from the tentative offers
         """
         last_t = self.last_t.pop(partner, None)
-        tentative = self.tentative_sales if selling else self.tentative_supplies 
+        tentative = self.tentative_sales if selling else self.tentative_supplies
         if last_t is None:
             return
         tentative[last_t:] -= self.last_q[partner]
