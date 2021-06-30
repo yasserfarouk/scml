@@ -135,10 +135,12 @@ class SatisficerAgent(SCML2020Agent):
         self.n_competitors = len(awi.all_suppliers[awi.my_output_product])
         assert self.n_consumers > 0 and self.n_suppliers > 0 and self.n_competitors > 0
 
-        # My effective number of lines dependes on production capacity of the market
+        # Market capacity is the total number of items that can be produced per
+        # step in this market. It is totally controlled by the narrowest level
         self.market_capacity = awi.n_lines * min(
             len(awi.all_consumers[i]) for i in range(awi.n_processes)
         )
+        # My market share is calcualted based on my competitor number
         if self.market_share == float("inf"):
             self.market_share = 1.0
         else:
@@ -163,31 +165,23 @@ class SatisficerAgent(SCML2020Agent):
         available_input = int(awi.current_inventory[awi.my_input_product])
         available_output = int(awi.current_inventory[awi.my_output_product])
 
-        # find the time of tirst and last allowed sale and supply
+        # find the time of first and last allowed sale and supply days
         first_supply = max(s, level)
         last_sale = steps - (processes - level - 1)
         first_sale = first_supply + 1
         last_supply = last_sale - 1
 
         period = last_sale - first_sale
-        assert last_supply - first_supply == period
 
-        # # find the time of first and last sale and supply for my consuemrs and suppliers
-        # supplier_first_sale, supplier_last_sale = max(s, level - 1) + 1, last_supply
-        # consumer_first_supply, consumer_last_supply = first_sale, last_sale
-
-        # remove any remaining day-specific data structure
+        # remove any remaining day-specific quantities
         self.tentative_sales = np.zeros(steps, dtype=np.int64)
         self.tentative_supplies = np.zeros(steps, dtype=np.int64)
         self.accepted_sales = np.zeros(steps, dtype=np.int64)
         self.accepted_supplies = np.zeros(steps, dtype=np.int64)
 
-        # find the maximum amount of sales/supplies that can happen in this market
-        # in the future (for me)
-        capacity = min(self.market_capacity, lines)
-        future_sales = int(
-            0.5 + capacity * self.market_share * period * self.target_productivity
-        )
+        # find the maximum amount of sales/supplies that I can expect in the future
+        capacity = min(self.market_capacity * self.market_share, lines)
+        future_sales = int(capacity * period * self.target_productivity)
 
         # find total target sales and supplies to the end of the simulation.
         # I need to sell everything in my inventory but buy only what is not
@@ -195,46 +189,51 @@ class SatisficerAgent(SCML2020Agent):
         self.target_sales = future_sales + available_output + available_input
         self.target_supplies = self.target_sales - available_input
 
-        # self.max_sales = self.secured_sales.copy()
-        # self.max_supplies = self.secured_supplies.copy()
+        # Set the maximum allowed quantities for negotiators per day.
+
+        #   - Initialize at zero
         self.max_sales = np.zeros(steps, dtype=np.int64)
         self.max_supplies = np.zeros(steps, dtype=np.int64)
 
-        if period > 0:
-            prev = 0
-            for t in range(1, steps):
-                limit = (
-                    future_sales + available_output + (0 if t <= s else available_input)
-                )
-                self.max_sales[t] = min(lines, limit - prev)
-                if self.max_sales[t] >= self.target_sales - prev:
-                    break
-                prev += self.max_sales[t]
-            self.max_sales[last_sale - 1 :] = self.max_sales[last_sale - 1]
-            for t in range(0, steps - 1):
-                self.max_supplies[t] = self.max_sales[t + 1:].sum()
-            self.max_sales -= self.secured_sales
-            self.max_supplies -= self.secured_supplies
-            self.max_sales = self.max_sales.cumsum()
-            self.max_supplies = self.max_supplies.cumsum()
-            self.max_supplies = np.minimum(
-                self.max_supplies,
-                int(awi.current_balance // prices[awi.my_input_product]),
-            )
+        #   - At every step I can sell whatever I had earlier plus what I can
+        #     produce. This can be written much faster in numpy but who cares
+        acc, limit = 0, self.target_sales
+        for t in range(s + 1, steps):
+            self.max_sales[t] = min(lines, limit - acc)
+            if self.max_sales[t] >= self.target_sales - acc:
+                break
+            acc += self.max_sales[t]
+        #   - I need to buy no more than what I can sell
+        for t in range(s, steps - 1):
+            self.max_supplies[t] = self.max_sales[t + 1:].sum()
 
-        # TODO use minimums to make sure that I sell everything at the end and I get all my needs for production
-        # items here should be sold/bought at any price or at least with some margin of loss
+        #   - subtract what I have from the maximum possible sales/supplies
+        self.max_sales -= self.secured_sales
+        self.max_supplies -= self.secured_supplies
+
+        #   - Find for each day the maximum sales going forward
+        self.max_sales = self.max_sales.cumsum()
+
+        #   - I cannot buy what I cannot pay for. Here we are very pessimistic
+        #     assuming that we will get no money from sales which should be
+        #     OK as the agent usually starts with enough money to buy everything
+        #     it will ever need for production
+        self.max_supplies = np.minimum(
+            self.max_supplies,
+            int(awi.current_balance // prices[awi.my_input_product]),
+        )
+
+        # Do not REQUIRE any sales or supplies
         self.min_sales = np.zeros(steps, dtype=np.int64)
         self.min_supplies = np.zeros(steps, dtype=np.int64)
 
-        # specify that for any agent, we will strart conceding on price first
+        # specify that for any agent, we will strart conceding one a random issue
         self.next_concession_dim = defaultdict(lambda: random.randint(0, 2))
 
     def step(self):
         """Called at the end of the day. Will request all negotiations"""
         awi: AWI = self.awi
         s = awi.current_step
-        steps = awi.n_steps
         prices = awi.trading_prices
         if prices is None:
             prices = awi.catalog_prices
@@ -257,35 +256,36 @@ class SatisficerAgent(SCML2020Agent):
                 self.max_sales[s:].max(),
             ),
         ):
-            # do nothing if the limit is zero
+            # request nothing if the limit is zero
             if limit < 1:
                 continue
-            # do nothing if the partners are system agents
+            # request nothing if the partners are system agents
             if selling and product >= awi.n_processes:
                 continue
             if not selling and product < 1:
                 continue
 
             # decide the negotiation issue limits
-            # ===================================
-
-            # for quantity, just set the maximum to the limit
+            # - for quantity, just set the maximum to the limit
             qrange = (1, limit)
 
-            # for time, we start at this step if buying else next step and
-            # end at the last step in which I should do trade
+            # - for time, we start at this step if buying else next step and
+            #   end at the last step in which I should do trade or the horizon
             t0 = s if not selling else s + 1
-            if not selling:
-                last_step = awi.n_steps - awi.n_processes - awi.my_input_product - 2
-            else:
+            if selling:
+                # I should always try to sell
                 last_step = awi.n_steps - 1
+            else:
+                # I should only try to buy until it is irrational for agents
+                # after me in the chain to buy
+                last_step = awi.n_steps - awi.n_processes - awi.my_input_product - 2
             trange = (t0, min(t0 + self.horizon, last_step))
 
             # If no time is acceptable, just do not request negotiations
             if trange[0] > trange[1]:
                 continue
 
-            # Calcualt a price in the middle of the price range I am willing to
+            # - Calculate a price in the middle of the price range I am willing to
             #  offer by comparing two prices
             # 1. The selling/buyg price that gives me a satisfactory profit given
             #    the current trading price for input/output (correspondingly)
@@ -333,14 +333,8 @@ class SatisficerAgent(SCML2020Agent):
     # ================================
 
     def respond_to_negotiation_request(
-        self,
-        initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
-    ) -> Optional[Negotiator]:
-        """Called whenever an agent requests a negotiation with you.
-        Return either a negotiator to accept or None (default) to reject it"""
+        self, initiator, issues, annotation, mechanism):
+        # Always accept negotiation
         return ObedientNegotiator(
             selling=annotation["seller"] == self.id,
             requested=False,
@@ -351,12 +345,8 @@ class SatisficerAgent(SCML2020Agent):
     # Contract Control and Feedback
     # =============================
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
-        """
-        Called to ask you to sign all contracts that were concluded in
-        one step (day)
-        """
-        signatures: List[Optional[str]] = [None] * len(contracts)
+    def sign_all_contracts(self, contracts):
+        signatures = [None] * len(contracts)
         awi: AWI = self.awi
 
         # separate sell and buy contracts and sort them with the better price
@@ -377,9 +367,11 @@ class SatisficerAgent(SCML2020Agent):
             ],
             key=lambda x: (x[1].agreement["unit_price"], x[1].agreement["quantity"]),
         )
+
+        # initialize the amoutns bought and sold
         bought, sold = np.zeros(awi.n_steps), np.zeros(awi.n_steps)
         total_bought = total_sold = 0
-        # breakpoint()
+
         for i, c in buy_contracts:
             # If I already signed above my total needs, do not sign any more.
             if total_bought >= self.target_supplies:
@@ -392,7 +384,7 @@ class SatisficerAgent(SCML2020Agent):
             # If I already signed above my total needs FOR THE DAY, do not sign any more.
             if bought[t] >= self.max_supplies[t]:
                 break
-            # End if prices go too high
+            # Do not sign if the price is too high.
             if not self._is_good_price(False, u, slack=self.satisfying_profit * 1.5):
                 continue
             signatures[i] = self.id
@@ -400,7 +392,7 @@ class SatisficerAgent(SCML2020Agent):
 
         for i, c in sell_contracts:
             # If I already signed above my total needs, do not sign any more.
-            if total_sold >= self.target_supplies:
+            if total_sold >= self.target_sales:
                 break
             q, u, t = (
                 c.agreement["quantity"],
@@ -408,9 +400,9 @@ class SatisficerAgent(SCML2020Agent):
                 c.agreement["time"],
             )
             # If I already signed above my total needs FOR THE DAY, do not sign any more.
-            if sold[t] >= self.max_supplies[t]:
+            if sold[t] >= self.max_sales[t]:
                 break
-            # End if prices go too high
+            # Do not sign if the price is too low.
             if not self._is_good_price(True, u, slack=self.satisfying_profit * 1.5):
                 continue
             signatures[i] = self.id
@@ -418,14 +410,8 @@ class SatisficerAgent(SCML2020Agent):
 
         return signatures
 
-    def on_contracts_finalized(
-        self,
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
-    ) -> None:
-        """Called to inform you about the final status of all contracts in
-        a step (day)"""
+    def on_contracts_finalized( self, signed, cancelled, rejectors):
+        # Updates secured_sales/supplies
         awi: AWI = self.awi
         sell_contracts = [_ for _ in signed if _.annotation["seller"] == self.id]
         buy_contracts = [_ for _ in signed if _.annotation["seller"] != self.id]
@@ -453,7 +439,7 @@ class SatisficerAgent(SCML2020Agent):
     # ====================
 
     def do_production(self) -> int:
-        # breakpoint()
+        # Produce everything I can
         awi: AWI = self.awi
         commands = NO_COMMAND * np.ones(awi.n_lines, dtype=int)
 
@@ -483,19 +469,24 @@ class SatisficerAgent(SCML2020Agent):
             is_selling: Whether the agent is selling to this partner
             is_requested: Whether the agent requested this negotiation
         """
-        # remove the last offer we sent to the partner from the tentative list
-        # because it is implicitly rejected by the partner.
-        partner = [_ for _ in ami.agent_ids if _ != self.id][0]
-        self._remove_tentative_offer(is_selling, partner)
-
         awi: AWI = self.awi
         prices = awi.trading_prices
         if prices is None:
             prices = awi.catalog_prices
 
+        # remove the last offer we sent to the partner from the tentative list
+        # because it is implicitly rejected by the partner.
+        partner = [_ for _ in ami.agent_ids if _ != self.id][0]
+        self._remove_tentative_offer(is_selling, partner)
+
+        # get issue limits
         t0, t1 = ami.issues[TIME].min_value, ami.issues[TIME].max_value
         q0, q1 = ami.issues[QUANTITY].min_value, ami.issues[QUANTITY].max_value
         p0, p1 = ami.issues[UNIT_PRICE].min_value, ami.issues[UNIT_PRICE].max_value
+
+        # If there are no valid values for one issue, just end
+        if t1 < t0 or q1 < q0 or p1 < p0:
+            return None
 
         # Select an issue to conceed on and the concession ratio which always
         # goes from 1 to 0 over negotiation time
@@ -512,7 +503,7 @@ class SatisficerAgent(SCML2020Agent):
         ]
         self.next_concession_dim[partner] = random.randint(0, 2)
 
-        # calculate  a price p that is good enough given the number of rounds
+        # calculate  a price that is good enough given the number of rounds
         # remaining. This is a time-based concession strategy on price.
         if is_selling:
             tentative, accepted, max_quantity, min_quantity = (
@@ -521,7 +512,6 @@ class SatisficerAgent(SCML2020Agent):
                 self.max_sales,
                 self.min_sales,
             )
-            n_partners = self.n_consumers
             accaptable_price = prices[awi.my_output_product] * (
                 1 - self.acceptable_loss
             )
@@ -533,10 +523,10 @@ class SatisficerAgent(SCML2020Agent):
                 self.max_supplies,
                 self.min_supplies,
             )
-            n_partners = self.n_suppliers
             accaptable_price = prices[awi.my_input_product] * (1 + self.acceptable_loss)
             p = min((accaptable_price - p0) * r[UNIT_PRICE] + accaptable_price, p1)
             r[TIME] = 1 - r[TIME]
+
 
         # find the range of quantities that I can accept within the time we are
         # negotiating about
@@ -582,6 +572,7 @@ class SatisficerAgent(SCML2020Agent):
                 ),
             )
 
+        # generate the offer
         offer = [0, 0, 0]
         offer[TIME], offer[QUANTITY], offer[UNIT_PRICE] = (
             min(t1, max(t0, t + t0)),
@@ -589,22 +580,16 @@ class SatisficerAgent(SCML2020Agent):
             min(p1, max(p0, int(p + 0.5))),
         )
 
-        partner = [_ for _ in ami.agent_ids if _ != self.id][0]
 
+        # register this offer as a tentative quantity (it may be accepted)
+        partner = [_ for _ in ami.agent_ids if _ != self.id][0]
         tentative[t:] += q
         self.last_q[partner] = q
         self.last_t[partner] = t
 
         return tuple(offer)
 
-    def respond(
-        self,
-        state: SAOState,
-        ami: SAOAMI,
-        offer: Outcome,
-        is_selling: bool,
-        is_requested: bool,
-    ):
+    def respond( self, state, ami, offer, is_selling, is_requested):
         """
         Responds to an offer from one partner.
 
@@ -635,11 +620,8 @@ class SatisficerAgent(SCML2020Agent):
         if prices is None:
             prices = awi.catalog_prices
 
-        # Find the last offer we sent to this partner
-        partner = [_ for _ in ami.agent_ids if _ != self.id][0]
-
         # read limits of quantities and our tentative offers based on whether
-        # we are selling/buygin
+        # we are selling/buying
         if is_selling:
             tentative, accepted, max_quantity, min_quantity = (
                 self.tentative_sales,
@@ -683,8 +665,8 @@ class SatisficerAgent(SCML2020Agent):
             # If buing we conceed up from the lowest price
             p = (worst_acceptable_price - p0) * r + worst_acceptable_price
 
-        # if the quantity offers is not within the range we want for this time-step
-        # reject the offer
+        # if the quantity offered is not within the range we want for the delivery
+        # day reject the offer
         if q + tentative[t] + accepted[t] > max_quantity[t] or q < min_quantity[t]:
             return ResponseType.REJECT_OFFER
 
@@ -696,29 +678,19 @@ class SatisficerAgent(SCML2020Agent):
         return ResponseType.REJECT_OFFER
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
-        """
-        Called when a negotiation fails
-
-        Remarks:
-            - removes my standing tentative offer for this negotiation if any
-
-        """
+        """ Called when a negotiation fails """
+        # removes my standing tentative offer for this negotiation if any
         partner = [_ for _ in mechanism.agent_ids][0]
         self._remove_tentative_offer(annotation["seller"]==self.id, partner)
 
     def on_negotiation_success(self, contract, mechanism):
-        """
-        Called when a negotiation fails
-
-        Remarks:
-            - removes my standing tentative offer for this negotiation if any
-            - adds the agreed quantity in the appropriate times of `accepted`.
-              It will be moved later to `secured`
-
-        """
+        """ Called when a negotiation fails """
+        # remove my standing tentative offer for this negotiation if any
         partner = [_ for _ in contract.partners if _ != self.id][0]
         self._remove_tentative_offer(contract.annotation["seller"]==self.id, partner)
 
+        # add the agreed quantity in the appropriate times of `accepted`.
+        # It will be moved later to `secured` (in `setp()`).
         selling = contract.annotation["seller"] == self.id
         accepted = self.accepted_sales if selling else self.accepted_supplies
         accepted[contract.agreement["time"]:] += contract.agreement["quantity"]
@@ -740,6 +712,10 @@ class SatisficerAgent(SCML2020Agent):
 
 
     def _is_good_price(self, is_selling: bool, u: float, slack: float = 0.0):
+        """
+        Checks whether a price is good relative to current trading prices, and
+        satisfying profit (with possible slack).
+        """
         awi: AWI = self.awi
         prices = awi.trading_prices
         if prices is None:
