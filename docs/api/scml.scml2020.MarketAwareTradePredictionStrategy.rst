@@ -16,6 +16,8 @@ MarketAwareTradePredictionStrategy
 
    .. autosummary::
 
+      ~MarketAwareTradePredictionStrategy.init
+      ~MarketAwareTradePredictionStrategy.trade_prediction_before_step
       ~MarketAwareTradePredictionStrategy.trade_prediction_init
       ~MarketAwareTradePredictionStrategy.trade_prediction_step
 
@@ -25,5 +27,7 @@ MarketAwareTradePredictionStrategy
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: init
+   .. automethod:: trade_prediction_before_step
    .. automethod:: trade_prediction_init
    .. automethod:: trade_prediction_step

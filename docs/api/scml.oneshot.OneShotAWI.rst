@@ -20,6 +20,7 @@ OneShotAWI
       ~OneShotAWI.current_exogenous_output_price
       ~OneShotAWI.current_exogenous_output_quantity
       ~OneShotAWI.current_input_issues
+      ~OneShotAWI.current_inventory
       ~OneShotAWI.current_output_issues
       ~OneShotAWI.current_shortfall_penalty
       ~OneShotAWI.exogenous_contract_summary
@@ -65,6 +66,7 @@ OneShotAWI
    .. autoattribute:: current_exogenous_output_price
    .. autoattribute:: current_exogenous_output_quantity
    .. autoattribute:: current_input_issues
+   .. autoattribute:: current_inventory
    .. autoattribute:: current_output_issues
    .. autoattribute:: current_shortfall_penalty
    .. autoattribute:: exogenous_contract_summary

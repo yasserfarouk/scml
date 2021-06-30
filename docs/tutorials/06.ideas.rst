@@ -316,6 +316,6 @@ better ones*.
 
 
 
-Download :download:`Notebook<notebooks/05.ideas.ipynb>`.
+Download :download:`Notebook<notebooks/06.ideas.ipynb>`.
 
 

@@ -17,6 +17,7 @@ TradingStrategy
    .. autosummary::
 
       ~TradingStrategy.init
+      ~TradingStrategy.step
 
    .. rubric:: Attributes Documentation
 
@@ -25,3 +26,4 @@ TradingStrategy
    .. rubric:: Methods Documentation
 
    .. automethod:: init
+   .. automethod:: step

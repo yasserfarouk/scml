@@ -41,6 +41,8 @@ SCML2020World
       ~SCML2020World.draw
       ~SCML2020World.execute_action
       ~SCML2020World.generate
+      ~SCML2020World.generate_guaranteed_profit
+      ~SCML2020World.generate_profitable
       ~SCML2020World.get_private_state
       ~SCML2020World.is_valid_contact
       ~SCML2020World.negs_between
@@ -89,6 +91,8 @@ SCML2020World
    .. automethod:: draw
    .. automethod:: execute_action
    .. automethod:: generate
+   .. automethod:: generate_guaranteed_profit
+   .. automethod:: generate_profitable
    .. automethod:: get_private_state
    .. automethod:: is_valid_contact
    .. automethod:: negs_between

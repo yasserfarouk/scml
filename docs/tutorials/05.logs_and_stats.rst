@@ -682,6 +682,6 @@ SCML-OneShot simulations):
 
 
 
-Download :download:`Notebook<notebooks/04.logs_and_stats.ipynb>`.
+Download :download:`Notebook<notebooks/05.logs_and_stats.ipynb>`.
 
 
