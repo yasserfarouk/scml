@@ -422,3 +422,71 @@ def test_colluding_agents_find_each_other():
         n_processes=2,
         n_steps=4,
     )
+
+
+@mark.parametrize(
+    ["method", "n_agents", "n_processes", "n_steps"],
+    [
+        ("guaranteed_profit", 1, 2, 5),
+        ("profitable", 1, 2, 5),
+        ("guaranteed_profit", 1, 2, 8),
+        ("profitable", 1, 2, 8),
+        ("guaranteed_profit", 2, 2, 8),
+        ("profitable", 2, 2, 8),
+        ("guaranteed_profit", 5, 2, 8),
+        ("profitable", 5, 2, 8),
+        ("guaranteed_profit", 1, 2, 16),
+        ("profitable", 1, 2, 16),
+        ("guaranteed_profit", 2, 2, 16),
+        ("profitable", 2, 2, 16),
+        ("guaranteed_profit", 5, 2, 16),
+        ("profitable", 5, 2, 16),
+        ("guaranteed_profit", 1, 3, 8),
+        ("profitable", 1, 3, 8),
+        ("guaranteed_profit", 2, 3, 8),
+        ("profitable", 2, 3, 8),
+        ("guaranteed_profit", 5, 3, 8),
+        ("profitable", 5, 3, 8),
+        ("guaranteed_profit", 1, 3, 16),
+        ("profitable", 1, 3, 16),
+        ("guaranteed_profit", 2, 3, 16),
+        ("profitable", 2, 3, 16),
+        ("guaranteed_profit", 5, 3, 16),
+        ("profitable", 5, 3, 16),
+        # ("guaranteed_profit", 2, 3, 80),
+        # ("profitable", 2, 3, 80),
+    ],
+)
+def test_satisficer_n_agent_per_level(method, n_agents, n_processes, n_steps):
+    from scml.scml2020 import SCML2021World
+    from pathlib import Path
+    from negmas.situated import save_stats
+    from negmas.helpers import force_single_thread
+
+    force_single_thread(True)
+    world = SCML2021World(
+        **SCML2021World.generate(
+            [SatisficerAgent] * n_processes,
+            n_agents_per_process=n_agents,
+            n_processes=n_processes,
+            n_steps=n_steps,
+            method=method,
+            random_agent_types=False,
+            neg_step_time_limit=float("inf"),
+            neg_time_limit=float("inf"),
+        ),
+        compact=True,
+        no_logs=True,
+        avoid_ultimatum=True,
+        end_negotiation_on_refusal_to_propose=True,
+        name=f"Satisficer1{method}-a{n_agents}p{n_processes}s{n_steps}",
+    )
+    world.run()
+    world.save_negotiations = True
+    save_stats(
+        world,
+        log_dir=Path.home() / "negmas" / "logs" / "scml" / "scml2021" / world.name,
+    )
+    force_single_thread(False)
+
+    assert True

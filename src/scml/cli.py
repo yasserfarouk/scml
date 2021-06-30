@@ -530,7 +530,7 @@ def tournament2019(
 )
 @click.option(
     "--competitors",
-    default="DecentralizingAgent;BuyCheapSellExpensiveAgent;RandomAgent",
+    default="SatisficerAgent;DecentralizingAgent;BuyCheapSellExpensiveAgent;RandomAgent;SatisficerAgent",
     help="A semicolon (;) separated list of agent types to use for the competition. You"
     " can also pass the special value default for the default builtin"
     " agents",
@@ -1140,7 +1140,7 @@ def run2019(
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
-    default="RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent",
+    default="RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent",
     help="A semicolon (;) separated list of agent types to use for the competition.",
 )
 @click.option(
@@ -1432,9 +1432,9 @@ def run2020(
 
 
 DEFAULT_STD = (
-    "RandomAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent;DoNothingAgent"
+    "RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent"
 )
-DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;RandomAgent;DecentralizingAgent"
+DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;RandomAgent;SatisficerAgent;DecentralizingAgent"
 DEFAULT_2021_NONCOMPETITORS = [
     # "scml.scml2020.agents.DecentralizingAgent",
     "scml.scml2020.agents.BuyCheapSellExpensiveAgent",
@@ -1822,7 +1822,7 @@ def run2021(
 )
 @click.option(
     "--competitors",
-    default="DecentralizingAgent;BuyCheapSellExpensiveAgent;RandomAgent",
+    default="SatisficerAgent;DecentralizingAgent;BuyCheapSellExpensiveAgent;RandomAgent",
     help="A semicolon (;) separated list of agent types to use for the competition. You"
     " can also pass the special value default for the default builtin"
     " agents",

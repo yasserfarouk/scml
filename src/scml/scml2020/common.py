@@ -20,6 +20,7 @@ __all__ = [
     "FinancialReport",
     "FactoryProfile",
     "Failure",
+    "ExogenousContract",
 ]
 
 SYSTEM_SELLER_ID = "SELLER"
