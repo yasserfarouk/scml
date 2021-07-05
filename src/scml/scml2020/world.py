@@ -1823,9 +1823,10 @@ class SCML2020World(TimeInAgreementMixin, World):
             output_total_prices[p, :] = np.ceil(
                 total_costs[p, :] * (1 + profits[p, :])
             ).astype(int)
+        aa = output_total_prices[-1, n_startup - 1 : -1]
+        bb = output_quantity[-1, n_startup - 1 : -1]
         sale_prices[:, n_startup:] = np.ceil(
-            output_total_prices[-1, n_startup - 1 : -1]
-            / output_quantity[-1, n_startup - 1 : -1]
+            np.divide(aa, bb, out=np.zeros_like(aa), where=bb!=0)
         ).astype(int)
         product_prices = np.zeros((n_products, n_steps))
         product_prices[0, :-n_startup] = catalog_prices[0]
