@@ -263,6 +263,7 @@ class NegotiationManager:
             steps: Simulation step
             sell: Sell or buy
         """
+        steps = tuple(max(steps[0], 0), min(steps[-1], self.awi.n_steps))
         return np.array([self.target_quantity(s, sell) for s in range(*steps)])
 
     @abstractmethod
@@ -443,7 +444,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             controller=controller,
             extra=dict(controller_index=step, is_seller=sell),
         ):
-            self.add_controller(
+            self.insert_controller(
                 controller, sell, qvalues[1], uvalues, expected_quantity, step
             )
 
@@ -473,18 +474,19 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         # )
         # create a controller for the time-step if one does not exist or use the one already running
         if controller_info.controller is None:
+            urng_ = self._urange(step, is_seller, (tmin, tmax))
             controller = self.create_controller(
                 is_seller,
                 target,
-                self._urange(step, is_seller, (tmin, tmax)),
+                urng_,
                 int(target),
                 step,
             )
-            controller = self.add_controller(
+            controller = self.insert_controller(
                 controller,
                 is_seller,
                 target,
-                self._urange(step, is_seller, (tmin, tmax)),
+                urng_,
                 int(target),
                 step,
             )
@@ -525,12 +527,27 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
 
     def add_controller(
         self,
-        controller: StepController,
         is_seller: bool,
         target,
         urange: Tuple[int, int],
         expected_quantity: int,
         step: int,
+    ) -> StepController:
+        controller = self.create_controller(
+            is_seller, target, urange, expected_quantity, step
+        )
+        return self.insert_controller(
+            controller, is_seller, target, urange, expected_quantity, step
+        )
+
+    def insert_controller(
+        self,
+        controller: StepController,
+        is_seller: bool,
+        target,
+        urange: Tuple[int, int],
+        expected_quantity: int,
+        step: int = None,
     ) -> StepController:
         if is_seller:
             # assert self.sellers[step].controller is None
