@@ -263,7 +263,7 @@ class NegotiationManager:
             steps: Simulation step
             sell: Sell or buy
         """
-        steps = tuple(max(steps[0], 0), min(steps[-1], self.awi.n_steps))
+        steps = (max(steps[0], 0), min(steps[-1], self.awi.n_steps))
         return np.array([self.target_quantity(s, sell) for s in range(*steps)])
 
     @abstractmethod
