@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.4.7 (2021.7.15)
+-----------------
+
+* [std/collusion] keeping compatibility with 2020
+* [std/collusion] Avoiding crash when agent class names is shorter than 2
+* letters
+* [std/collusion] rare division by zero error
+* [oneshot] forcing n_processes to 2 in tournaments
+
 0.4.6 (2021.6.15)
 -----------------
 
