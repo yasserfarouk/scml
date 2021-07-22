@@ -118,18 +118,9 @@ class AWI(AgentWorldInterface):
             is at level n_products - 1, this will be empty.
 
         D. Agent Information:
-          - *current_exogenous_input_quantity*: The total quantity the agent have
-            in its input exogenous contract.
-          - *current_exogenous_input_price*: The total price of the agent's
-            input exogenous contract.
-          - *current_exogenous_output_quantity*: The total quantity the agent have
-            in its output exogenous contract.
-          - *current_exogenous_output_price*: The total price of the agent's
-            output exogenous contract.
-          - *current_disposal_cost*: The disposal cost per unit item in the current
-            step.
-          - *current_shortfall_penalty*: The shortfall penalty per unit item in the current
-            step.
+          - *spot_market_quantity*: The quantity the agent bought from the spot market at
+                                    a given step
+          - *spot_market_loss*: The spot market loss for the agent.
 
     Actions:
         A. Negotiation Control:
@@ -709,3 +700,31 @@ class AWI(AgentWorldInterface):
         if not aid:
             aid = self.agent.id
         return self._world.a2f[aid].is_bankrupt
+
+    def spot_market_quantity(self, step: Optional[int]) -> int:
+        """
+        The quantity bought by the agent from the spot market at the given step.
+
+        Args:
+            step: The simulation step (day)
+
+        Remarks:
+            If step is `None`, the current step will be used
+        """
+        if step is None:
+            step = self.current_step
+        return self._world._spot_quantity[self._world.a2i[self.agent.id], step]
+
+    def spot_market_loss(self, step: Optional[int]) -> int:
+        """
+        The spot market loss of the agent at the given step.
+
+        Args:
+            step: The simulation step (day)
+
+        Remarks:
+            If step is `None`, the current step will be used
+        """
+        if step is None:
+            step = self.current_step
+        return self._world._agent_spot_loss[self._world.a2i[self.agent.id], step]
