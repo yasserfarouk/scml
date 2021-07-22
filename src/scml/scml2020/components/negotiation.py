@@ -160,8 +160,10 @@ class NegotiationManager:
         )
 
     def step(self):
-        super().step()
         """Generates buy and sell negotiations as needed"""
+        super().step()
+        if self.awi.is_bankrupt():
+            return
         s = self.awi.current_step
         if s == 0:
             # in the first step, generate buy/sell negotiations for horizon steps in the future
@@ -791,6 +793,8 @@ class MovingRangeNegotiationManager:
 
     def step(self):
         super().step()
+        if self.awi.is_bankrupt():
+            return
         step = self.awi.current_step
         self._current_start = step + 1
         self._current_end = min(

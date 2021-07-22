@@ -2086,7 +2086,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             # initialize all agents for this step
             # ===================================
             for _, a in self.agents.items():
-                if hasattr(a, "before_step"):
+                if (not self.a2f[_].is_bankrupt) and  hasattr(a, "before_step"):
                     a.before_step()
             return
 

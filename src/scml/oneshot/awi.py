@@ -2,7 +2,7 @@
 Implements the one shot version of the Agent-World Interface.
 
 """
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 import numpy as np
 from negmas import AgentWorldInterface
@@ -33,6 +33,7 @@ class OneShotAWI(AgentWorldInterface):
           - *all_suppliers*: A list of all suppliers by product.
           - *all_consumers*: A list of all consumers by product.
           - *is_system*: Is the given system ID corresponding to a system agent?
+          - *is_bankrupt*: Is the given agent bankrupt? None asks about self
           - *catalog_prices*: A list of the catalog prices (by product).
           - *price_multiplier*: The multiplier multiplied by the trading/catalog price
             when the negotiation agendas are created to decide the maximum and lower quantities.
@@ -163,6 +164,17 @@ class OneShotAWI(AgentWorldInterface):
             aid: Agent ID
         """
         return is_system_agent(aid)
+
+    def is_bankrupt(self, aid: Optional[str] = None) -> bool:
+        """
+        Checks whether an agent is a system agent or not
+
+        Args:
+            aid: Agent ID
+        """
+        if not aid:
+            aid = self.agent.id
+        return self._world.is_bankrupt[aid]
 
     @property
     def catalog_prices(self) -> np.ndarray:

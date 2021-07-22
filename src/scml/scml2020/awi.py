@@ -47,6 +47,7 @@ class AWI(AgentWorldInterface):
           - *inputs*: Inputs to every manufacturing process.
           - *outputs*: Outputs to every manufacturing process.
           - *is_system*: Is the given system ID corresponding to a system agent?
+          - *is_bankrupt*: Is the given agent bankrupt (None asks about self)?
           - *current_step*: Current simulation step (inherited from `negmas.situated.AgentWorldInterface` ).
           - *n_steps*: Number of simulation steps (inherited from `negmas.situated.AgentWorldInterface` ).
           - *relative_time*: fraction of the simulation completed (inherited from `negmas.situated.AgentWorldInterface`).
@@ -204,6 +205,8 @@ class AWI(AgentWorldInterface):
 
 
         """
+        if self.is_bankrupt():
+            return False
         if controller is not None and negotiators is not None:
             raise ValueError(
                 "You cannot pass both controller and negotiators to request_negotiations"
@@ -246,7 +249,7 @@ class AWI(AgentWorldInterface):
             self.request_negotiation(
                 is_buy, product, quantity, unit_price, time, partner, negotiator, extra
             )
-            if not self._world.a2f[partner].is_bankrupt
+            if not self.is_bankrupt(partner)
             and self._world.can_negotiate(partner, self.agent.id)
             else False
             for partner, negotiator in zip(partners, negotiators)
@@ -303,7 +306,9 @@ class AWI(AgentWorldInterface):
 
 
         """
-        if self._world.a2f[partner].is_bankrupt or not self._world.can_negotiate(
+        if self.is_bankrupt():
+            return False
+        if self.is_bankrupt(partner) or not self._world.can_negotiate(
             partner, self.agent.id
         ):
             return False
@@ -693,3 +698,14 @@ class AWI(AgentWorldInterface):
             aid: Agent ID
         """
         return is_system_agent(aid)
+
+    def is_bankrupt(self, aid: Optional[str] = None) -> bool:
+        """
+        Checks whether the agent is bankrupt
+
+        Args:
+            aid: Agent ID (None means self)
+        """
+        if not aid:
+            aid = self.agent.id
+        return self._world.a2f[aid].is_bankrupt
