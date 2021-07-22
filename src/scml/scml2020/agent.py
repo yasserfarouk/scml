@@ -38,6 +38,11 @@ class SCML2020Agent(Agent):
     def before_step(self):
         pass
 
+    def step_(self):
+        if self.awi.is_bankrupt():
+            return
+        super().step_()
+
     def step(self):
         pass
 
@@ -68,6 +73,8 @@ class SCML2020Agent(Agent):
         role: Optional[str],
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
+        if self.awi._world.a2f[self.id].is_bankrupt:
+            return None
         return self.respond_to_negotiation_request(
             initiator, issues, annotation, mechanism
         )
