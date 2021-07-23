@@ -5,8 +5,9 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 from hypothesis import settings
-from negmas import genius_bridge_is_running
+from negmas import genius_bridge_is_running, ResponseType
 from negmas import save_stats
+from negmas.sao import SAOResponse
 from negmas.genius import Atlas3
 from negmas.genius import GeniusNegotiator
 from negmas.genius import NiceTitForTat
@@ -20,8 +21,8 @@ from pytest import mark
 import scml
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot import builtin_agent_types
-from scml.oneshot.agent import OneShotIndNegotiatorsAgent
-from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.agent import OneShotIndNegotiatorsAgent, OneShotSyncAgent
+from scml.oneshot.agents import RandomOneShotAgent, GreedySyncAgent
 from scml.oneshot.common import QUANTITY
 from scml.oneshot.common import TIME
 from scml.oneshot.common import UNIT_PRICE
@@ -851,3 +852,87 @@ def test_ufun_penalty_scales_are_correct(penalties_scale):
                     u.input_penalty_scale
                     == a.awi.catalog_prices[a.awi.my_input_product]
                 )
+
+
+class MySyncAgent(OneShotSyncAgent):
+    new_step = False
+
+    def step(self):
+        self.new_step = True
+
+    def counter_all(self, offers, states):
+        """Respond to a set of offers given the negotiation state of each."""
+        if self.new_step:
+            raise RuntimeError("counter_all before first_proposals")
+        return dict(
+            zip(
+                self.negotiators.keys(),
+                [SAOResponse(ResponseType.END_NEGOTIATION, None)]
+                * len(self.negotiators),
+            )
+        )
+
+    def get_offer(self, negotiator_id: str):
+        ami = self.get_ami(negotiator_id)
+        quantity_issue = ami.issues[QUANTITY]
+        unit_price_issue = ami.issues[UNIT_PRICE]
+
+        offer = [-1] * 3
+        offer[QUANTITY] = quantity_issue.max_value
+        offer[TIME] = self.awi.current_step
+        offer[UNIT_PRICE] = unit_price_issue.max_value
+        return offer
+
+    def first_proposals(self):
+        """Decide a first proposal on every negotiation.
+        Returning None for a negotiation means ending it."""
+        self.new_step = False
+        return dict(
+            zip(
+                self.negotiators.keys(),
+                (self.get_offer(neg_id) for neg_id in self.negotiators.keys()),
+            )
+        )
+
+
+@mark.parametrize(
+    ("agent_types", "n_agents_per_process", "n_processes"),
+    [
+        ([], 2, 2),
+        ([], 3, 2),
+        ([], 4, 2),
+        ([], 5, 2),
+        ([], 6, 2),
+        ([RandomOneShotAgent], 2, 2),
+        ([RandomOneShotAgent], 3, 2),
+        ([RandomOneShotAgent], 4, 2),
+        ([RandomOneShotAgent], 5, 2),
+        ([RandomOneShotAgent], 6, 2),
+        ([GreedySyncAgent], 2, 2),
+        ([GreedySyncAgent], 3, 2),
+        ([GreedySyncAgent], 4, 2),
+        ([GreedySyncAgent], 5, 2),
+        ([GreedySyncAgent], 6, 2),
+    ],
+)
+def test_sync_agent_receives_first_proposals_before_counter_all(
+    agent_types, n_agents_per_process, n_processes
+):
+    n_steps = 50
+    world = SCML2020OneShotWorld(
+        **SCML2020OneShotWorld.generate(
+            [MySyncAgent] + agent_types,
+            n_processes=n_processes,
+            n_steps=n_steps,
+            n_lines=10,
+            n_agents_per_process=n_agents_per_process,
+            no_logs=True,
+            compact=True,
+            ignore_agent_exceptions=False,
+            ignore_negotiation_exceptions=False,
+            ignore_contract_execution_exceptions=False,
+            ignore_simulation_exceptions=False,
+        )
+    )
+    world.run()
+    assert world.current_step >= n_steps - 1
