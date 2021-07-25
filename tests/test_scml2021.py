@@ -1,4 +1,7 @@
 import random
+import numpy as np
+from numpy.testing import assert_allclose
+from pytest import raises
 
 import hypothesis.strategies as st
 from hypothesis import example
@@ -490,3 +493,94 @@ def test_satisficer_n_agent_per_level(method, n_agents, n_processes, n_steps):
     force_single_thread(False)
 
     assert True
+
+
+class MyRandomAgent(RandomAgent):
+    def has_trade(self, s=None):
+        if s is None:
+            s = self.awi.current_step
+        return (self.awi._world._sold_quantity[:, s] > 0) & (
+            np.abs(self.awi._world._real_price[:, s] - self.catalog) >= 1
+        )
+
+    def trading_(self, s=None):
+        if s is None:
+            s = self.awi.current_step
+        return self.awi._world._trading_price[:, s]
+
+    def init(self):
+        super().init()
+        self.trading, self.trading_before = [], []
+        self.catalog = self.awi.catalog_prices.copy()
+        self.n_products = self.awi.n_products
+        assert_allclose(self.catalog, self.trading_())
+        assert_allclose(self.catalog, self.awi.trading_prices)
+
+    def before_step(self):
+        super().before_step()
+        self.trading_before.append(self.awi.trading_prices.tolist())
+
+        assert_allclose(self.trading_before[-1], self.trading_())
+        assert_allclose(self.catalog, self.awi.catalog_prices)
+
+    def step(self):
+        super().step()
+        self.trading.append(self.awi.trading_prices.tolist())
+
+        assert_allclose(self.catalog, self.awi.catalog_prices)
+        assert_allclose(self.trading[-1], self.trading_())
+        with_trade = self.has_trade()
+
+        if not np.any(with_trade):
+            return
+        with raises(AssertionError):
+            assert_allclose(self.trading[-1], self.catalog)
+
+
+@mark.parametrize(
+    ["n_agents", "n_processes", "n_steps"],
+    [
+        (1, 2, 16),
+        (2, 2, 16),
+        (5, 2, 16),
+        (1, 3, 16),
+        (2, 3, 16),
+        (5, 3, 16),
+    ],
+)
+def test_trading_prices_updated(n_agents, n_processes, n_steps):
+    from scml.scml2020 import SCML2021World
+    from negmas.helpers import force_single_thread
+
+    eps = 1e-3
+
+    world = SCML2021World(
+        **SCML2021World.generate(
+            [MyRandomAgent] * n_processes,
+            n_agents_per_process=n_agents,
+            n_processes=n_processes,
+            n_steps=n_steps,
+        ),
+        compact=True,
+        no_logs=True,
+    )
+    catalog_prices = world.catalog_prices
+    diffs = np.zeros_like(catalog_prices)
+
+    # we start at catlaog prices
+    for aid, agent in world.agents.items():
+        assert np.abs(agent.awi.trading_prices - catalog_prices).max() < eps
+
+    force_single_thread(True)
+    for _ in range(n_steps):
+        world.step()
+        trading_prices = None
+        for aid, agent in world.agents.items():
+            if is_system_agent(aid):
+                continue
+            trading_prices = agent.awi.trading_prices.copy()
+            break
+        diffs = np.maximum(diffs, np.abs(trading_prices - catalog_prices))
+
+    assert diffs.max() > eps
+    force_single_thread(False)

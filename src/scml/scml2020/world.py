@@ -2110,6 +2110,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             + self._sold_quantity[has_trade, s + 1]
         )
         self._trading_price[has_trade, s + 1] /= self._betas_sum[has_trade, s + 1]
+        self._trading_price[:, s + 1:] = self._trading_price[:, s + 1].reshape((self.n_products, 1))
         self._traded_quantity += self._sold_quantity[:, s + 1]
         # self._trading_price[has_trade, s] = (
         #         np.sum(self._betas[:s+1] * self._real_price[has_trade, s::-1])
@@ -2839,6 +2840,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         if self.current_step == self.n_steps:
             return self._trading_price[:, -1]
         return self._trading_price[:, self.current_step + 1]
+
 
     @property
     def stats_df(self) -> pd.DataFrame:
