@@ -1299,6 +1299,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             + self._sold_quantity[has_trade, s + 1]
         )
         self._trading_price[has_trade, s + 1] /= self._betas_sum[has_trade, s + 1]
+        self._trading_price[:, s + 1:] = self._trading_price[:, s + 1].reshape((self.n_products, 1))
         self._traded_quantity += self._sold_quantity[:, s + 1]
         # self._trading_price[has_trade, s] = (
         #         np.sum(self._betas[:s+1] * self._real_price[has_trade, s::-1])
