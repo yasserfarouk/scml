@@ -185,7 +185,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 "negmas.sao.SAOMechanism": mechanisms.get(
                     "negmas.sao.SAOMechanism",
                     dict(
-                        end_on_no_response=False,
+                        end_on_no_response=True,
                         avoid_ultimatum=avoid_ultimatum,
                         dynamic_entry=False,
                         max_wait=len(agent_types),
