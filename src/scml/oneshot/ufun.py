@@ -47,8 +47,8 @@ class OneShotUFun(UtilityFunction):
         shortfall_penalty: penalty for failure to deliver one unit of output.
         input_agent: Is the agent an input agent which means that its input
                      product is the raw material
-        output_agent: Is the agent an input agent which means that its input
-                      product is the raw material
+        output_agent: Is the agent an output agent which means that its output
+                      product is the final product
         n_lines: Number of production lines. If None, will be read through the AWI.
         input_product: Index of the input product. If None, will be read through
                        the AWI
@@ -666,3 +666,65 @@ class OneShotUFun(UtilityFunction):
             exogenous_output_quantity=self.ex_qout if self.force_exogenous else None,
             producible=limit_p,
         )
+
+    def ok_to_buy_at(self, unit_price: float) -> bool:
+        """
+        Checks if the unit price can -- even in principle -- be acceptable for buying
+
+        Remarks:
+            - This method is **very** optimistic. If it returns `False`, an
+              agent should **never** buy at this price. If it returns `True`, it
+              may *still be a bad idea* to buy at this price.
+            - If we **buy** at this price, the **best** case scenario is that we pay it 
+              and pay production cost then receive the unit price of one output.
+            - If we do **not** buy at this price, the **worst** case scenario is that 
+              we will pay shortfall penalty for one item
+            - We should **NOT** buy if the best case scenario when buying is worse than 
+              the worst case scenario when not buying.
+            - If called for agents not at the end of the production chain, it will
+              always return `True` because in these cases we do not know what the
+              the unit price for the output so there is nothing to compare with.
+        """
+        # can reject a price only if we know the output unit price
+        # (i.e. we have an output agent)
+        if not self.output_agent:
+            return True
+        # If we are not selling, we should not buy
+        if self.ex_qout < 1:
+            return False
+        # do not buy at this price if it is **guaranteed** to lead to a loss
+        return (unit_price + self.production_cost - self.ex_pout // self.ex_qout) < self.shortfall_penalty
+
+    def ok_to_sell_at(self, unit_price: float) -> bool:
+        """
+        Checks if the unit price can -- even in principle -- be acceptable for selling
+
+        Remarks:
+            - This method is **very** optimistic. If it returns `False`, an
+              agent should **never** sell at this price. If it returns `True`, it
+              may *still be a bad idea* to sell at this price.
+            - Sales decisions does not affect in any way the amount we pay for 
+              input materials. It only affects the amount we produce, the amout we 
+              get paid in sales and the amount we pay as disposal cost and 
+              shortfall penalty.
+            - If we agree to sell an item at this price, the best case scenario 
+              is that we can actually produce this item and sell it. We pay production
+              cost and receive the given unit price. 
+            - If we do **not** sell at this price, the worst case scenario is that 
+              we really needed that sale. In this case, we will pay disposal cost
+              for one item.
+            - We should **NOT** sell if the best case scenario when selling is worse than 
+              the worst case scenario when not selling.
+            - If called for agents not at the beginning of the production chain, it will
+              always return `True` because in these cases we do not know what the
+              the unit price for the input so there is nothing to compare with.
+        """
+        # can reject a price only if we know the input unit price
+        # (i.e. we have an input agent)
+        if not self.input_agent:
+            return True
+        # If we are not buying, we cannot sell
+        if self.ex_qin < 1:
+            return False
+        # do not sell at this price if it is **guaranteed** to lead to a loss
+        return (self.production_cost - unit_price) < self.disposal_cost

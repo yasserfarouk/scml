@@ -1073,16 +1073,16 @@ class PricePumpingAgent(OneShotAgent):
         )
 
 
-def test_price_pumping_happen():
-    world = generate_world([PricePumpingAgent], 2, 300, 4)
-    world.run()
+def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
     stats = world.stats_df
     contracts = pd.DataFrame(world.saved_contracts)
     negotiations = pd.DataFrame(world.saved_negotiations)
     for aid, agent in world.agents.items():
         if is_system_agent(aid):
             continue
-        if not agent.awi.is_last_level:
+        if not agent.awi.is_last_level or not any(
+            issubclass(agent.__class__, _) for _ in checked_types
+        ):
             continue
         # all sellers should go bankrupt
         assert world.is_bankrupt[aid]
@@ -1140,3 +1140,54 @@ def test_price_pumping_happen():
             )
             > 0
         )
+
+
+def test_price_pumping_happen():
+    world = generate_world([PricePumpingAgent], 2, 300, 4)
+    world.run()
+    check_trading_explosion(world)
+
+
+def test_price_pumping_happen_with_random_included():
+    world = generate_world([PricePumpingAgent, RandomOneShotAgent], 2, 300, 4)
+    world.run()
+    check_trading_explosion(world)
+
+
+def test_price_pumping_bankrupts_random_agents():
+    types = [PricePumpingAgent, RandomOneShotAgent]
+    world = generate_world(types, 2, 300, 4)
+    world.run()
+    check_trading_explosion(world, types)
+
+
+# class RationalRandomOneShotAgent(RandomOneShotAgent):
+#     def top_outcome(self, negotiator_id):
+#         return tuple(_.max_value for _ in self.get_ami(negotiator_id).issues)
+#
+#     def bottom_outcome(self, negotiator_id):
+#         return tuple(_.min_value for _ in self.get_ami(negotiator_id).issues)
+#
+#     def propose(self, negotiator_id, state):
+#         outcome = super().propose(negotiator_id, state)
+#         if self.awi.is_first_level and not self.ufun.ok_to_sell_at(outcome[UNIT_PRICE]):
+#             return self.top_outcome(negotiator_id)
+#         if self.awi.is_last_level and not self.ufun.ok_to_buy_at(outcome[UNIT_PRICE]):
+#             return self.bottom_outcome(negotiator_id)
+#         return outcome
+#
+#     def accept_if(self, x):
+#         return ResponseType.ACCEPT_OFFER if x else ResponseType.REJECT_OFFER
+#
+#     def respond(self, negotiator_id, state, offer):
+#         if self.awi.is_first_level:
+#             return self.accept_if(self.ufun.ok_to_sell_at(offer[UNIT_PRICE]))
+#         if self.awi.is_last_level:
+#             return self.accept_if(self.ufun.ok_to_buy_at(offer[UNIT_PRICE]))
+#         return ResponseType.ACCEPT_OFFER
+#
+# def test_price_pumping_does_not_bankrupt_rational_random_agents():
+#     types = [PricePumpingAgent, RationalRandomOneShotAgent]
+#     world = generate_world(types, 2, 300, 4)
+#     world.run()
+#     check_trading_explosion(world, types)
