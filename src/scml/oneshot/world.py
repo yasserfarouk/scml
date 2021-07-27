@@ -1166,7 +1166,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         """
         current_balance = sum(self._profits[agent.id]) + self.initial_balances[agent.id]
         self.is_bankrupt[agent.id] = (
-            current_balance < self.bankruptcy_limit or self.is_bankrupt[agent.id]
+            (current_balance < self.bankruptcy_limit) or self.is_bankrupt[agent.id]
         )
         report = FinancialReport(
             agent_id=agent.id,
@@ -1673,6 +1673,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             `True` if the partner accepted and the negotiation is ready to start
 
         """
+        if self.is_bankrupt[agent_id]:
+            return True
         if controller is not None and negotiators is not None:
             raise ValueError(
                 "You cannot pass both controller and negotiators to request_negotiations"

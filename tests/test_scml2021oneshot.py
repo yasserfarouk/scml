@@ -1,6 +1,7 @@
 import random
 from collections import defaultdict
 import numpy as np
+import pandas as pd
 from numpy.testing import assert_allclose
 from pytest import raises
 
@@ -24,7 +25,11 @@ from pytest import mark
 import scml
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot import builtin_agent_types
-from scml.oneshot.agent import OneShotIndNegotiatorsAgent, OneShotSyncAgent
+from scml.oneshot.agent import (
+    OneShotIndNegotiatorsAgent,
+    OneShotSyncAgent,
+    OneShotAgent,
+)
 from scml.oneshot.agents import RandomOneShotAgent, GreedySyncAgent
 from scml.oneshot.common import QUANTITY
 from scml.oneshot.common import TIME
@@ -940,6 +945,7 @@ def test_sync_agent_receives_first_proposals_before_counter_all(
     world.run()
     assert world.current_step >= n_steps - 1
 
+
 class MyRandomAgent(RandomOneShotAgent):
     def has_trade(self, s=None):
         if s is None:
@@ -1028,3 +1034,109 @@ def test_trading_prices_updated(n_agents, n_processes, n_steps):
 
     assert diffs.max() > eps
     force_single_thread(False)
+
+
+class MyOneShotDoNothing(OneShotAgent):
+    def propose(self, negotiator_id, state):
+        return None
+
+    def respond(self, negotiator_id, state, offer):
+        return ResponseType.END_NEGOTIATION
+
+
+def test_do_nothing_goes_bankrupt():
+    world = generate_world([MyOneShotDoNothing], 2, 1000, 4, cash_availability=0.001)
+    world.run()
+    for aid, agent in world.agents.items():
+        if is_system_agent(aid):
+            continue
+        assert world.is_bankrupt[
+            aid
+        ], f"Agent {aid} is not bankrupt with balance {world.current_balance(aid)} and initial_balance of {world.initial_balances[aid]}"
+        assert agent.awi.is_bankrupt()
+
+
+class PricePumpingAgent(OneShotAgent):
+    """An agent that causes the intermediate price to go up over time"""
+
+    def top_outcome(self, negotiator_id):
+        return tuple(_.max_value for _ in self.get_ami(negotiator_id).issues)
+
+    def propose(self, negotiator_id, state):
+        return self.top_outcome(negotiator_id)
+
+    def respond(self, negotiator_id, state, offer):
+        return (
+            ResponseType.ACCEPT_OFFER
+            if self.top_outcome(negotiator_id) == offer
+            else ResponseType.REJECT_OFFER
+        )
+
+
+def test_price_pumping_happen():
+    world = generate_world([PricePumpingAgent], 2, 300, 4)
+    world.run()
+    stats = world.stats_df
+    contracts = pd.DataFrame(world.saved_contracts)
+    negotiations = pd.DataFrame(world.saved_negotiations)
+    for aid, agent in world.agents.items():
+        if is_system_agent(aid):
+            continue
+        if not agent.awi.is_last_level:
+            continue
+        # all sellers should go bankrupt
+        assert world.is_bankrupt[aid]
+        assert agent.awi.is_bankrupt()
+        # bankrupt agents remain bankrupt
+        bankrupt = stats[f"bankrupt_{aid}"].values.astype(bool)
+        bankrupt_first_index = np.where(bankrupt == True)[0][0]
+        assert not np.any(bankrupt[:bankrupt_first_index])
+        assert np.all(bankrupt[bankrupt_first_index:])
+
+        # cannot become bankrupt without contracts
+        assert (
+            len(
+                contracts.loc[
+                    (contracts.signed_at <= bankrupt_first_index)
+                    & (contracts.buyer_name == aid),
+                    :,
+                ]
+            )
+            > 0
+        )
+
+        # no contracts after becoming bankrupt
+        assert (
+            len(
+                contracts.loc[
+                    (contracts.signed_at > bankrupt_first_index)
+                    & (contracts.buyer_name == aid),
+                    :,
+                ]
+            )
+            == 0
+        )
+
+        # no negotiations after becoming bankrupt
+        assert (
+            len(
+                negotiations.loc[
+                    (negotiations.requested_at > bankrupt_first_index)
+                    & (negotiations.partners.apply(lambda x: aid in x)),
+                    :,
+                ]
+            )
+            == 0
+        )
+
+        # some negotiations before becoming bankrupt
+        assert (
+            len(
+                negotiations.loc[
+                    (negotiations.requested_at <= bankrupt_first_index)
+                    & (negotiations.partners.apply(lambda x: aid in x)),
+                    :,
+                ]
+            )
+            > 0
+        )
