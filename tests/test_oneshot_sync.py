@@ -1,8 +1,8 @@
+import os
 from typing import Tuple, Dict
-import datetime
-import random
 import time
-from pytest import raises
+from pytest import raises, mark
+from contextlib import contextmanager
 
 from negmas import ResponseType
 from negmas.sao import SAOResponse
@@ -20,34 +20,34 @@ from negmas.helpers import force_single_thread
 class MySyncAgent(OneShotSyncAgent):
     in_counter_all = False
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, use_sleep=False, check_negs=False, **kwargs):
+        super().__init__(**kwargs)
         self.offers: Dict[str, Tuple[int]] = {}
+        self._delay_using_sleep = use_sleep
+        self._check_negs = check_negs
+        self._countering_set = set()
 
-
-    def init(self):
-        self.step_time = datetime.datetime.now()
-
-    def step(self):
-        self.step_time = datetime.datetime.now()
-
-    @staticmethod
-    def delay():
+    def delay(self):
         """Tune this to take ~3s"""
-        before = datetime.datetime.now()
-        time.sleep(3.0)
-        # a = 0
-        # for i in range(100000000):
-        #     a *= i
-        after = datetime.datetime.now()
-        print("delay time:", after - before)
+        if self._delay_using_sleep:
+            time.sleep(3.0)
+        else:
+            a = 0
+            for i in range(100000000):
+                a *= i
 
     def counter_all(self, offers, states):
-        if self.in_counter_all:
-            raise RuntimeError("uh-oh! new offers: {}, previous offers: {}"
-                .format(offers, self.offers))
+        s = set(self.get_ami(_) for _ in offers.keys())
+        if self.in_counter_all and (
+            not self._check_negs
+            or (self._check_negs and len(self.countering_set.intersection(s)))
+        ):
+            raise RuntimeError(
+                "uh-oh! new offers: {}, previous offers: {}".format(offers, self.offers)
+            )
 
         self.in_counter_all = True
+        self.countering_set = s
         self.offers = offers
         self.delay()
         self.in_counter_all = False
@@ -58,10 +58,12 @@ class MySyncAgent(OneShotSyncAgent):
         }
 
     def first_proposals(self):
-        return  dict(zip(
+        return dict(
+            zip(
                 self.negotiators.keys(),
-                (self.get_offer(neg_id) for neg_id in self.negotiators.keys())
-        ))
+                (self.get_offer(neg_id) for neg_id in self.negotiators.keys()),
+            )
+        )
 
     def get_offer(self, negotiator_id: str):
         ami = self.get_ami(negotiator_id)
@@ -75,39 +77,73 @@ class MySyncAgent(OneShotSyncAgent):
         return tuple(offer)
 
 
-def test_sync_counter_all_reenters():
+class SleepingNotChecking(MySyncAgent):
+    def __init__(self, *args, **kwargs):
+        kwargs["use_sleep"], kwargs["check_negs"] = True, False
+        super().__init__(*args, **kwargs)
+
+
+class SleepingChecking(MySyncAgent):
+    def __init__(self, *args, **kwargs):
+        kwargs["use_sleep"], kwargs["check_negs"] = True, True
+        super().__init__(*args, **kwargs)
+
+
+class NotSleepingChecking(MySyncAgent):
+    def __init__(self, *args, **kwargs):
+        kwargs["use_sleep"], kwargs["check_negs"] = False, True
+        super().__init__(*args, **kwargs)
+
+
+class NotSleepingNotChecking(MySyncAgent):
+    def __init__(self, *args, **kwargs):
+        kwargs["use_sleep"], kwargs["check_negs"] = False, False
+        super().__init__(*args, **kwargs)
+
+
+@contextmanager
+def does_not_raise(err):
+    yield None
+
+@mark.skipif(os.environ["GITHUB_ACTIONS"])
+@mark.parametrize(
+    ["use_sleep", "check_negs", "single_thread", "raise_expected"],
+    [
+        (False, False, True, False),
+        (False, True, True, False),
+        (True, False, True, False),
+        (True, True, True, False),
+        (False, True, False, False),
+        (True, True, False, False),
+        (True, False, False, False),
+        (False, False, False, True),
+    ],
+)
+def test_sync_counter_all_reenters_as_expected(
+    use_sleep, check_negs, single_thread, raise_expected
+):
     from scml.oneshot import SCML2020OneShotWorld
+
+    types = {
+        (False, False): NotSleepingNotChecking,
+        (False, True): NotSleepingChecking,
+        (True, False): SleepingNotChecking,
+        (True, True): SleepingChecking,
+    }
 
     n_steps = 5
 
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
-            [MySyncAgent, RandomOneShotAgent],
-            n_agents_per_process=(2, 4),
+            [types[(use_sleep, check_negs)], RandomOneShotAgent],
+            n_agents_per_process=2,
             n_processes=2,
             n_steps=n_steps,
         ),
         compact=True,
         no_logs=True,
     )
-    with raises(RuntimeError):
+    force_single_thread(single_thread)
+    with (raises if raise_expected else does_not_raise)(RuntimeError):
         world.run()
-
-def test_sync_counter_all_doesnot_reenter_in_a_thread():
-    from scml.oneshot import SCML2020OneShotWorld
-
-    n_steps = 5
-
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
-            [MySyncAgent, RandomOneShotAgent],
-            n_agents_per_process=(2, 4),
-            n_processes=2,
-            n_steps=n_steps,
-        ),
-        compact=True,
-        no_logs=True,
-    )
-    force_single_thread(True)
-    world.run()
     force_single_thread(False)
