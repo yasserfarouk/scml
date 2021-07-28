@@ -105,7 +105,7 @@ class NotSleepingNotChecking(MySyncAgent):
 def does_not_raise(err):
     yield None
 
-@mark.skipif(os.environ["GITHUB_ACTIONS"])
+@mark.skipif(os.environ.get("GITHUB_ACTIONS", "false") == "true", reason="Skipped on CI ... toooooo slowwwwww")
 @mark.parametrize(
     ["use_sleep", "check_negs", "single_thread", "raise_expected"],
     [
