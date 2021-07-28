@@ -24,7 +24,7 @@ def read(*names, **kwargs):
 
 setup(
     name="scml",
-    version="0.4.7",
+    version="0.4.8",
     description="ANAC Supply Chain Management League Platform",
     long_description="%s\n%s"
     % (
@@ -76,7 +76,7 @@ setup(
         "prettytable",
         "pulp",
         "python-constraint",
-        "negmas>=0.8.5",
+        "negmas>=0.8.7",
         "tqdm",
         "joblib",
         "jupyter",
