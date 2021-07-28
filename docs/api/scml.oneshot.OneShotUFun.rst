@@ -25,6 +25,8 @@ OneShotUFun
       ~OneShotUFun.from_contracts
       ~OneShotUFun.from_offers
       ~OneShotUFun.is_breach
+      ~OneShotUFun.ok_to_buy_at
+      ~OneShotUFun.ok_to_sell_at
       ~OneShotUFun.outcome_as_tuple
       ~OneShotUFun.register_agrerement
       ~OneShotUFun.utility_range
@@ -45,6 +47,8 @@ OneShotUFun
    .. automethod:: from_contracts
    .. automethod:: from_offers
    .. automethod:: is_breach
+   .. automethod:: ok_to_buy_at
+   .. automethod:: ok_to_sell_at
    .. automethod:: outcome_as_tuple
    .. automethod:: register_agrerement
    .. automethod:: utility_range

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4.8 (2021.7.28)
+-----------------
+
+* [bugfix] Bankrupt agents kepts requesting negotiations
+* [bugfix] trading prices inaccurate during step
+* [std] Adding spot_market_quantity/loss to the AWI
+* [oneshot] Adding helpers to avoid crazy prices
+
 0.4.7 (2021.7.15)
 -----------------
 

@@ -42,6 +42,7 @@ AWI
 
       ~AWI.available_for_production
       ~AWI.cancel_production
+      ~AWI.is_bankrupt
       ~AWI.is_system
       ~AWI.order_production
       ~AWI.reports_at_step
@@ -50,6 +51,8 @@ AWI
       ~AWI.request_negotiations
       ~AWI.schedule_production
       ~AWI.set_commands
+      ~AWI.spot_market_loss
+      ~AWI.spot_market_quantity
 
    .. rubric:: Attributes Documentation
 
@@ -83,6 +86,7 @@ AWI
 
    .. automethod:: available_for_production
    .. automethod:: cancel_production
+   .. automethod:: is_bankrupt
    .. automethod:: is_system
    .. automethod:: order_production
    .. automethod:: reports_at_step
@@ -91,3 +95,5 @@ AWI
    .. automethod:: request_negotiations
    .. automethod:: schedule_production
    .. automethod:: set_commands
+   .. automethod:: spot_market_loss
+   .. automethod:: spot_market_quantity

@@ -32,6 +32,7 @@ SCML2020Agent
       ~SCML2020Agent.set_renegotiation_agenda
       ~SCML2020Agent.sign_all_contracts
       ~SCML2020Agent.step
+      ~SCML2020Agent.step_
       ~SCML2020Agent.to_dict
 
    .. rubric:: Attributes Documentation
@@ -56,4 +57,5 @@ SCML2020Agent
    .. automethod:: set_renegotiation_agenda
    .. automethod:: sign_all_contracts
    .. automethod:: step
+   .. automethod:: step_
    .. automethod:: to_dict
