@@ -38,4 +38,6 @@ class OneShotUFunCreatorMixin:
             n_lines=awi.n_lines,
             current_balance=awi.current_balance,
         )
+        if hasattr(self, "_obj") and not in_adapter:
+            self._obj.ufun = self.ufun
         return self.ufun
