@@ -115,7 +115,6 @@ def does_not_raise(err):
         (True, True, True, False),
         (False, True, False, False),
         (True, True, False, False),
-        (True, False, False, False),
         (False, False, False, True),
     ],
 )
