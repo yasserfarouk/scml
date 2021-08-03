@@ -17,7 +17,7 @@ from negmas.tournaments import WorldRunResults
 from negmas.tournaments import tournament
 from scipy.stats import tmean
 
-from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.agents import GreedyOneShotAgent, SingleAgreementAspirationAgent, GreedySyncAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.oneshot.world import SCML2020OneShotWorld
 from scml.scml2020.agents import BuyCheapSellExpensiveAgent
@@ -78,8 +78,9 @@ DefaultAgents2021 = [
 
 
 DefaultAgentsOneShot = [
-    RandomOneShotAgent,
-    # SyncRandomOneShotAgent,
+    GreedyOneShotAgent, 
+    SingleAgreementAspirationAgent, 
+    GreedySyncAgent
 ]
 
 
@@ -1386,7 +1387,7 @@ def anac2021_std(
         )
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
-        non_competitors = DefaultAgents
+        non_competitors = DefaultAgents2021
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
@@ -1514,7 +1515,7 @@ def anac2021_collusion(
     n_competitors_per_world = 1
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
-        non_competitors = DefaultAgents
+        non_competitors = DefaultAgents2021
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
@@ -1647,7 +1648,7 @@ def anac2021_oneshot(
         )
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
-        non_competitors = ["scml.oneshot.agents.RandomOneShotAgent"]
+        non_competitors = DefaultAgentsOneShot
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
