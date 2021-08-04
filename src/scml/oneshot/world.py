@@ -1379,9 +1379,15 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             "time": self.current_step,
         }
 
+    def _adjust_contract_types(self, contract):
+        for k in ("unit_price", "quantity"):
+            if not isinstance(contract.agreement[k], int):
+                contract.agreement[k] = int(contract.agreement[k] + 0.5)
+        return contract
+
     def on_contract_signed(self, contract: Contract) -> bool:
-        # if any(is_system_agent(_) for _ in contract.partners):
-        #     print(f"Contract with system partner: {str(contract)}")
+        contract = self._adjust_contract_types(contract)
+
         product = contract.annotation["product"]
         bought = contract.agreement["quantity"]
         total_price = bought * contract.agreement["unit_price"]
@@ -1404,9 +1410,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         return super().on_contract_signed(contract)
 
     def contract_size(self, contract: Contract) -> float:
+        contract = self._adjust_contract_types(contract)
         return contract.agreement["quantity"] * contract.agreement["unit_price"]
 
     def contract_record(self, contract: Contract) -> Dict[str, Any]:
+        contract = self._adjust_contract_types(contract)
         c = {
             "id": contract.id,
             "seller_name": self.agents[contract.annotation["seller"]].name,
