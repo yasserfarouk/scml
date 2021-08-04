@@ -189,6 +189,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                         avoid_ultimatum=avoid_ultimatum,
                         dynamic_entry=False,
                         max_wait=len(agent_types),
+                        check_offers=True,
+                        encorce_issue_types=True,
+                        cast_offers=True,
                     ),
                 )
             },
