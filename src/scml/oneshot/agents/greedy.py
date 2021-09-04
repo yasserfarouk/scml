@@ -71,6 +71,7 @@ class GreedyOneShotAgent(OneShotAgent):
         self._opp_price_slack = opp_price_slack
         self._opp_acc_price_slack = opp_acc_price_slack
         self._range_slack = range_slack
+        self._sales = self._supplies = 0
 
     def init(self):
         """Initialize the quantities and best prices received so far"""
