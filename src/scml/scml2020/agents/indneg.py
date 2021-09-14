@@ -63,7 +63,10 @@ class IndependentNegotiationsAgent(
 
         return needed[step] - secured[step]
 
-class MarketAwareIndependentNegotiationsAgent(KeepOnlyGoodPrices, IndependentNegotiationsAgent):
+
+class MarketAwareIndependentNegotiationsAgent(
+    KeepOnlyGoodPrices, IndependentNegotiationsAgent
+):
     """
     Implements the base class for agents that negotiate independently with different partners using trading/catalog
     prices to control signing
@@ -80,6 +83,7 @@ class MarketAwareIndependentNegotiationsAgent(KeepOnlyGoodPrices, IndependentNeg
         - It does not assume that the agent has a single production process.
 
     """
+
     def __init__(
         self,
         *args,

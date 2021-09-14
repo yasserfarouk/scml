@@ -1,26 +1,26 @@
 import random
-import numpy as np
-from numpy.testing import assert_allclose
-from pytest import raises
 
 import hypothesis.strategies as st
+import numpy as np
 from hypothesis import example
 from hypothesis import given
 from hypothesis import reproduce_failure
 from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
+from numpy.testing import assert_allclose
 from pytest import mark
+from pytest import raises
 
 import scml
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
-from scml.scml2020 import SCML2020Agent
 from scml.scml2020 import RandomAgent
-from scml.scml2020 import SCML2021World
 from scml.scml2020 import SatisficerAgent
+from scml.scml2020 import SCML2020Agent
+from scml.scml2020 import SCML2021World
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 from scml.scml2020.utils import anac2021_collusion
@@ -461,10 +461,12 @@ def test_colluding_agents_find_each_other():
     ],
 )
 def test_satisficer_n_agent_per_level(method, n_agents, n_processes, n_steps):
-    from scml.scml2020 import SCML2021World
     from pathlib import Path
-    from negmas.situated import save_stats
+
     from negmas.helpers import force_single_thread
+    from negmas.situated import save_stats
+
+    from scml.scml2020 import SCML2021World
 
     force_single_thread(True)
     world = SCML2021World(
@@ -549,8 +551,9 @@ class MyRandomAgent(RandomAgent):
     ],
 )
 def test_trading_prices_updated(n_agents, n_processes, n_steps):
-    from scml.scml2020 import SCML2021World
     from negmas.helpers import force_single_thread
+
+    from scml.scml2020 import SCML2021World
 
     eps = 1e-3
 

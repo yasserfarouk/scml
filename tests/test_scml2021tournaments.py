@@ -4,7 +4,8 @@ from pathlib import Path
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import given, example
+from hypothesis import example
+from hypothesis import given
 
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.scml2020.utils import anac2021_oneshot
@@ -75,14 +76,19 @@ def test_oneshot(n):
 
 
 class TestTruncatedMean:
-
     @given(s=st.floats(0.0, 100.0), m=st.floats(-50, 50))
     def test_tukey(self, s, m):
         limit = 1.5
         scores = np.hstack(
             (m + s * np.random.randn(90), m + limit * s + 0.1 + s * np.random.rand(10))
         )
-        tmean, limits = truncated_mean(scores, top_limit=limit, bottom_limit=float("inf"), base="tukey", return_limits=True)
+        tmean, limits = truncated_mean(
+            scores,
+            top_limit=limit,
+            bottom_limit=float("inf"),
+            base="tukey",
+            return_limits=True,
+        )
         assert not np.isnan(tmean), f"limits are {(limits)}"
         assert tmean <= np.mean(scores)
 
@@ -94,18 +100,42 @@ class TestTruncatedMean:
         )
         m, s = np.mean(scores), np.std(scores)
         non_outlier = scores[scores <= m + s * limit]
-        tmean, limits = truncated_mean(scores, top_limit=limit, bottom_limit=float("inf"), base="zscore", return_limits=True)
+        tmean, limits = truncated_mean(
+            scores,
+            top_limit=limit,
+            bottom_limit=float("inf"),
+            base="zscore",
+            return_limits=True,
+        )
         assert abs(tmean - np.mean(non_outlier)) < eps, f"limits are {(limits)}"
-        non_outlier = scores[scores <= m + s * (limit+5)]
-        tmean, limits = truncated_mean(scores, top_limit=limit+5, bottom_limit=float("inf"), base="zscore", return_limits=True)
+        non_outlier = scores[scores <= m + s * (limit + 5)]
+        tmean, limits = truncated_mean(
+            scores,
+            top_limit=limit + 5,
+            bottom_limit=float("inf"),
+            base="zscore",
+            return_limits=True,
+        )
         assert abs(tmean - np.mean(non_outlier)) < eps, f"limits are {(limits)}"
-        scores = - scores
+        scores = -scores
         m, s = np.mean(scores), np.std(scores)
         non_outlier = scores[scores <= m + s * limit]
-        tmean, limits = truncated_mean(scores, top_limit=limit, bottom_limit=float("inf"), base="zscore", return_limits=True)
+        tmean, limits = truncated_mean(
+            scores,
+            top_limit=limit,
+            bottom_limit=float("inf"),
+            base="zscore",
+            return_limits=True,
+        )
         assert abs(tmean - np.mean(non_outlier)) < eps, f"limits are {(limits)}"
-        non_outlier = scores[scores <= m + s * (limit+5)]
-        tmean, limits = truncated_mean(scores, top_limit=limit+5, bottom_limit=float("inf"), base="zscore", return_limits=True)
+        non_outlier = scores[scores <= m + s * (limit + 5)]
+        tmean, limits = truncated_mean(
+            scores,
+            top_limit=limit + 5,
+            bottom_limit=float("inf"),
+            base="zscore",
+            return_limits=True,
+        )
         assert abs(tmean - np.mean(non_outlier)) < eps, f"limits are {(limits)}"
         # non_outlier = scores[scores >= -m - s * (limit + 5)]
         # tmean, limits = truncated_mean(scores, top_limit=float("inf"), bottom_limit=limit + 5, base="zscore", return_limits=True)
@@ -120,9 +150,6 @@ class TestTruncatedMean:
         # non_outlier = non_outlier[non_outlier >= -m - s * limit]
         # tmean, limits = truncated_mean(scores, top_limit=limit, bottom_limit=limit, base="zscore", return_limits=True)
         # assert abs(tmean - np.mean(non_outlier)) < eps, f"limits are {(limits)}"
-
-
-
 
     def test_truncates_expected_part_fraction(self):
         # testing fractions method

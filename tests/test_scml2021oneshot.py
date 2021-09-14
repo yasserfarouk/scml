@@ -1,36 +1,36 @@
 import random
 from collections import defaultdict
-import numpy as np
-import pandas as pd
-from numpy.testing import assert_allclose
-from pytest import raises
 
 import hypothesis.strategies as st
+import numpy as np
+import pandas as pd
 import pytest
 from hypothesis import given
 from hypothesis import settings
-from negmas import genius_bridge_is_running, ResponseType
+from negmas import ResponseType
+from negmas import genius_bridge_is_running
 from negmas import save_stats
-from negmas.sao import SAOResponse
 from negmas.genius import Atlas3
 from negmas.genius import GeniusNegotiator
 from negmas.genius import NiceTitForTat
 from negmas.genius import YXAgent
 from negmas.genius.ginfo import ALL_PASSING_NEGOTIATORS
 from negmas.helpers import unique_name
+from negmas.sao import SAOResponse
 from negmas.utilities import LinearUtilityAggregationFunction
 from negmas.utilities import LinearUtilityFunction
+from numpy.testing import assert_allclose
 from pytest import mark
+from pytest import raises
 
 import scml
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot import builtin_agent_types
-from scml.oneshot.agent import (
-    OneShotIndNegotiatorsAgent,
-    OneShotSyncAgent,
-    OneShotAgent,
-)
-from scml.oneshot.agents import RandomOneShotAgent, GreedySyncAgent
+from scml.oneshot.agent import OneShotAgent
+from scml.oneshot.agent import OneShotIndNegotiatorsAgent
+from scml.oneshot.agent import OneShotSyncAgent
+from scml.oneshot.agents import GreedySyncAgent
+from scml.oneshot.agents import RandomOneShotAgent
 from scml.oneshot.common import QUANTITY
 from scml.oneshot.common import TIME
 from scml.oneshot.common import UNIT_PRICE
@@ -56,11 +56,6 @@ std_types = scml.scml2020.builtin_agent_types(as_str=False)
 
 class MyOneShotAgent(RandomOneShotAgent):
     def respond(self, negotiator_id, state, offer):
-        if not (
-            negotiator_id in self.awi.my_consumers
-            or negotiator_id in self.awi.my_suppliers
-        ):
-            breakpoint()
         assert (
             negotiator_id in self.awi.my_consumers
             or negotiator_id in self.awi.my_suppliers
@@ -68,11 +63,6 @@ class MyOneShotAgent(RandomOneShotAgent):
         return super().respond(negotiator_id, state, offer)
 
     def propose(self, negotiator_id, state):
-        if not (
-            negotiator_id in self.awi.my_consumers
-            or negotiator_id in self.awi.my_suppliers
-        ):
-            breakpoint()
         assert (
             negotiator_id in self.awi.my_consumers
             or negotiator_id in self.awi.my_suppliers
@@ -999,8 +989,9 @@ class MyRandomAgent(RandomOneShotAgent):
     ],
 )
 def test_trading_prices_updated(n_agents, n_processes, n_steps):
-    from scml.oneshot import SCML2020OneShotWorld
     from negmas.helpers import force_single_thread
+
+    from scml.oneshot import SCML2020OneShotWorld
 
     eps = 1e-3
 

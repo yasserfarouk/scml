@@ -32,7 +32,9 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
         AspirationMixin.aspiration_init(
             self,
             max_aspiration=1.0,
-            aspiration_type=float(random.randint(1, 4)) if random.random() < 0.7 else random.random(),
+            aspiration_type=float(random.randint(1, 4))
+            if random.random() < 0.7
+            else random.random(),
             above_reserved_value=False,
         )
         # if self.awi.current_exogenous_input_quantity or self.awi.current_exogenous_output_quantity:
@@ -74,7 +76,6 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             key=lambda x: -x[0],
         )
         self._last_index = 0
-
 
     def counter_all(self, offers, states):
 

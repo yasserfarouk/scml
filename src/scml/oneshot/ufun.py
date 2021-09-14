@@ -1,15 +1,24 @@
+import warnings
 from collections import namedtuple
 from copy import deepcopy
-import warnings
-from typing import Iterable, Tuple, Union, List, Collection, Optional
+from typing import Collection
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 from negmas import Contract
-from negmas.utilities import UtilityFunction, UtilityValue
-from negmas.outcomes import Outcome, Issue
+from negmas.outcomes import Issue
+from negmas.outcomes import Outcome
+from negmas.utilities import UtilityFunction
+from negmas.utilities import UtilityValue
 
 from scml.scml2020.common import is_system_agent
 
-from .common import QUANTITY, UNIT_PRICE, TIME
+from .common import QUANTITY
+from .common import TIME
+from .common import UNIT_PRICE
 
 __all__ = ["OneShotUFun", "UFunLimit"]
 
@@ -675,11 +684,11 @@ class OneShotUFun(UtilityFunction):
             - This method is **very** optimistic. If it returns `False`, an
               agent should **never** buy at this price. If it returns `True`, it
               may *still be a bad idea* to buy at this price.
-            - If we **buy** at this price, the **best** case scenario is that we pay it 
+            - If we **buy** at this price, the **best** case scenario is that we pay it
               and pay production cost then receive the unit price of one output.
-            - If we do **not** buy at this price, the **worst** case scenario is that 
+            - If we do **not** buy at this price, the **worst** case scenario is that
               we will pay shortfall penalty for one item
-            - We should **NOT** buy if the best case scenario when buying is worse than 
+            - We should **NOT** buy if the best case scenario when buying is worse than
               the worst case scenario when not buying.
             - If called for agents not at the end of the production chain, it will
               always return `True` because in these cases we do not know what the
@@ -693,7 +702,9 @@ class OneShotUFun(UtilityFunction):
         if self.ex_qout < 1:
             return False
         # do not buy at this price if it is **guaranteed** to lead to a loss
-        return (unit_price + self.production_cost - self.ex_pout // self.ex_qout) < self.shortfall_penalty
+        return (
+            unit_price + self.production_cost - self.ex_pout // self.ex_qout
+        ) < self.shortfall_penalty
 
     def ok_to_sell_at(self, unit_price: float) -> bool:
         """
@@ -703,17 +714,17 @@ class OneShotUFun(UtilityFunction):
             - This method is **very** optimistic. If it returns `False`, an
               agent should **never** sell at this price. If it returns `True`, it
               may *still be a bad idea* to sell at this price.
-            - Sales decisions does not affect in any way the amount we pay for 
-              input materials. It only affects the amount we produce, the amout we 
-              get paid in sales and the amount we pay as disposal cost and 
+            - Sales decisions does not affect in any way the amount we pay for
+              input materials. It only affects the amount we produce, the amout we
+              get paid in sales and the amount we pay as disposal cost and
               shortfall penalty.
-            - If we agree to sell an item at this price, the best case scenario 
+            - If we agree to sell an item at this price, the best case scenario
               is that we can actually produce this item and sell it. We pay production
-              cost and receive the given unit price. 
-            - If we do **not** sell at this price, the worst case scenario is that 
+              cost and receive the given unit price.
+            - If we do **not** sell at this price, the worst case scenario is that
               we really needed that sale. In this case, we will pay disposal cost
               for one item.
-            - We should **NOT** sell if the best case scenario when selling is worse than 
+            - We should **NOT** sell if the best case scenario when selling is worse than
               the worst case scenario when not selling.
             - If called for agents not at the beginning of the production chain, it will
               always return `True` because in these cases we do not know what the

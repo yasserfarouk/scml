@@ -46,7 +46,9 @@ def python_name(java_class: str) -> str:
     ],
 )
 def test_java_factory_manager(java_class):
-    from scml.scml2019.factory_managers import JavaFactoryManager, GreedyFactoryManager
+    from scml.scml2019.factory_managers import GreedyFactoryManager
+    from scml.scml2019.factory_managers import JavaFactoryManager
+
     class JFM(JavaFactoryManager):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, java_class_name=java_class, **kwargs)

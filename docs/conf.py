@@ -20,6 +20,7 @@
 #
 
 import os
+
 import sphinx_rtd_theme
 
 # -- General configuration ---------------------------------------------

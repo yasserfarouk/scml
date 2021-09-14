@@ -259,4 +259,3 @@ sense and act in the world. All negotiations are controlled by **SAONegotiator**
 that may optionally be grouped and controlled centrally by **Controller** objects.
 The preferences of these negotiators and controllers are defined using **UtilityFunction**
 objects.
-

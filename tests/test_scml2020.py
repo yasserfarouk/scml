@@ -11,7 +11,8 @@ from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SCML2020World
-from scml.scml2020 import is_system_agent, builtin_agent_types
+from scml.scml2020 import builtin_agent_types
+from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 from scml.scml2020.world import SCML2021World
 

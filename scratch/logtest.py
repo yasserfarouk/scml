@@ -1,5 +1,7 @@
+from scml import DecentralizingAgent
+from scml import DoNothingAgent
+from scml import RandomAgent
 from scml import SCML2020World
-from scml import DecentralizingAgent, RandomAgent, DoNothingAgent
 
 # create and run the world
 world = SCML2020World(

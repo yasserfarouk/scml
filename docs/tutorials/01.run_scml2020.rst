@@ -464,7 +464,7 @@ happening in the world.
 
 .. code:: ipython3
 
-    agent_types = [DecentralizingAgent, 
+    agent_types = [DecentralizingAgent,
                    MarketAwareDecentralizingAgent,
                   SyncRandomOneShotAgent]
 
@@ -478,7 +478,7 @@ modification in ``SCML2020`` and ``SCML2021`` worlds.
         **SCML2021World.generate(
             agent_types=agent_types,
             n_steps=50
-        ), 
+        ),
         construct_graphs=True,
     )
 
@@ -664,7 +664,7 @@ Let’s see how did our agent do
 
     stats = pd.DataFrame(data=world.stats)
     fig, axs = plt.subplots(2, 3)
-    for ax, key in zip(axs.flatten().tolist(), ["score", "balance", "assets", "productivity", 
+    for ax, key in zip(axs.flatten().tolist(), ["score", "balance", "assets", "productivity",
                              "spot_market_quantity", "spot_market_loss"]):
         ax.plot(stats[f"{key}_{winner}"])
         ax.set(ylabel=key)
@@ -695,8 +695,8 @@ We can see a picture of contracting in this world as follows:
 .. code:: ipython3
 
     plt.plot(world.stats['n_contracts_concluded'], label='Concluded Contracts')
-    plt.plot(world.stats['n_contracts_cancelled'], label='Cancelled Contracts') 
-    plt.plot(world.stats['n_contracts_signed'], label='Signed Contracts') 
+    plt.plot(world.stats['n_contracts_cancelled'], label='Cancelled Contracts')
+    plt.plot(world.stats['n_contracts_signed'], label='Signed Contracts')
     plt.plot(world.stats['n_contracts_executed'], label='Executed Contracts')
     plt.legend()
     plt.xlabel('Simulation Step')
@@ -743,7 +743,7 @@ Let’s check how did the first winner’s inventory changes over time:
     # find the keys in stats for the input and output inventory
     in_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_input')][0]
     out_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_output')][0]
-    
+
     # find input and output product indices
     input_product, output_product = winner.awi.my_input_product, winner.awi.my_output_product
     # draw
@@ -772,7 +772,7 @@ We can actually check what happens to ALL competitors:
     from scml.scml2020.world import is_system_agent
     fig, (profit, score) = plt.subplots(1, 2)
     snames = sorted(world.non_system_agent_names)
-    for name in snames:    
+    for name in snames:
         profit.plot(100.0 * (np.asarray(world.stats[f'balance_{name}'])/world.stats[f'balance_{name}'][0] - 1.0), label=name)
         score.plot(100 * np.asarray(world.stats[f'score_{name}']), label=name)
     profit.set(xlabel='Simulation Step', ylabel='Player Profit Ignoring Inventory (%)')
@@ -790,7 +790,7 @@ We can actually check what happens to ALL competitors:
     from scml.scml2020.world import is_system_agent
     fig, (profit, score) = plt.subplots(1, 2)
     snames = sorted(world.non_system_agent_names)
-    for name in snames:    
+    for name in snames:
         profit.plot((np.asarray(world.stats[f'balance_{name}'])), label=name)
         score.plot(np.asarray(world.stats[f'score_{name}'])*(world.stats[f'balance_{name}'][0]), label=name)
     profit.set(xlabel='Simulation Step', ylabel='Player Balance ($)')
@@ -808,9 +808,9 @@ or just look at the end of the game
 .. code:: ipython3
 
     fig, (score, profit) = plt.subplots(1, 2)
-    final_scores = [100 * world.stats[f"score_{_}"][-1] 
+    final_scores = [100 * world.stats[f"score_{_}"][-1]
                     for _ in world.non_system_agent_names]
-    final_profits = [100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100 
+    final_profits = [100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100
                      for _ in world.non_system_agent_names]
     plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
@@ -818,7 +818,7 @@ or just look at the end of the game
     profit.bar(world.non_system_agent_names, final_profits)
     score.set(ylabel="Final Score (%)")
     profit.set(ylabel="Final Profit (%)")
-    
+
     fig.show()
 
 
@@ -829,9 +829,9 @@ or just look at the end of the game
 .. code:: ipython3
 
     fig, (score, profit) = plt.subplots(1, 2)
-    final_scores = [world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0]) 
+    final_scores = [world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0])
                     for _ in world.non_system_agent_names]
-    final_profits = [world.stats[f"balance_{_}"][-1] 
+    final_profits = [world.stats[f"balance_{_}"][-1]
                      for _ in world.non_system_agent_names]
     plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
@@ -839,7 +839,7 @@ or just look at the end of the game
     profit.bar(world.non_system_agent_names, final_profits)
     score.set(ylabel="Final Unnormalized Score ($)")
     profit.set(ylabel="Final Balance  ($)")
-    
+
     fig.show()
 
 
@@ -908,11 +908,11 @@ For example, let’s see some of the contracts that were signed:
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1086,11 +1086,11 @@ Let’s check some of the contracts that were fully executed
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1262,11 +1262,11 @@ Let’s check some of the contracts that were fully executed
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1430,12 +1430,12 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
     ]
     # may take a long time
     results = anac2021_std(
-        competitors=tournament_types,  
-        n_configs=5, # number of different configurations to generate 
+        competitors=tournament_types,
+        n_configs=5, # number of different configurations to generate
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
         n_steps = 10, # number of days (simulation steps) per simulation
         print_exceptions=True,
-    ) 
+    )
 
 
 .. code:: ipython3
@@ -1493,11 +1493,11 @@ We can also see the scores that every agent type got
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1577,11 +1577,11 @@ You can also do statistical significance testing using ttest or kstest
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1652,11 +1652,11 @@ see the total score
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1697,7 +1697,7 @@ activity level for different simulations.
 .. code:: ipython3
 
     plt.errorbar(range(len(results.agg_stats)),
-                 results.agg_stats.activity_level_mean, 
+                 results.agg_stats.activity_level_mean,
                  np.sqrt(results.agg_stats.activity_level_var)
                  )
     plt.xlabel("Simulation Number")
@@ -1726,11 +1726,11 @@ at every simulation
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1788,7 +1788,7 @@ of each type.
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
     results.scores = results.scores.sort_values("level")
-    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
+    sns.lineplot(data=results.scores[["agent_type", "level", "score"]],
                  x="level", y="score", hue="agent_type", ci=None)
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
@@ -1820,12 +1820,12 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
     tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent, GreedyOneShotAgent, GreedySingleAgreementAgent]
     # may take a long time
     results = anac2021_oneshot(
-        competitors=tournament_types,  
-        n_configs=5, # number of different configurations to generate 
+        competitors=tournament_types,
+        n_configs=5, # number of different configurations to generate
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
         n_steps = 10, # number of days (simulation steps) per simulation
         print_exceptions=True,
-    ) 
+    )
     results = shorten_names(results)
 
 Who was the winner?
@@ -1879,11 +1879,11 @@ We can also see the scores that every agent type got
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -1975,11 +1975,11 @@ You can also do statistical significance testing using ttest or kstest
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -2080,11 +2080,11 @@ see the total score
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -2141,11 +2141,11 @@ at every simulation
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -2203,7 +2203,7 @@ of each type.
 
     results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
     results.scores = results.scores.sort_values("level")
-    sns.lineplot(data=results.scores[["agent_type", "level", "score"]], 
+    sns.lineplot(data=results.scores[["agent_type", "level", "score"]],
                  x="level", y="score", hue="agent_type")
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
@@ -2220,5 +2220,3 @@ are we going to develop a new agent for the SCML2021 league
 
 
 Download :download:`Notebook<notebooks/01.run_scml2020.ipynb>`.
-
-

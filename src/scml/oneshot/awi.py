@@ -2,15 +2,20 @@
 Implements the one shot version of the Agent-World Interface.
 
 """
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 from negmas import AgentWorldInterface
 from negmas.outcomes import Issue
 
-from ..scml2020 import FinancialReport, is_system_agent
-
-from .common import OneShotProfile, OneShotState
+from ..scml2020 import FinancialReport
+from ..scml2020 import is_system_agent
+from .common import OneShotProfile
+from .common import OneShotState
 
 __all__ = ["OneShotAWI"]
 

@@ -10,4 +10,3 @@ for ext in png jpg gif pdf; do
 		cp ../notebooks/tutorials/*.$ext _build/html/$fils/
 	done
 done
-

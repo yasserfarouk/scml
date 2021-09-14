@@ -34,18 +34,17 @@ from scml.scml2019.miners import ReactiveMiner
 from scml.scml2019.world import SCML2019World
 
 if True:
-    from typing import (
-        Tuple,
-        Union,
-        Type,
-        Iterable,
-        Sequence,
-        Optional,
-        Callable,
-        Any,
-        Dict,
-        List,
-    )
+    from typing import Any
+    from typing import Callable
+    from typing import Dict
+    from typing import Iterable
+    from typing import List
+    from typing import Optional
+    from typing import Sequence
+    from typing import Tuple
+    from typing import Type
+    from typing import Union
+
     from .factory_managers.builtins import FactoryManager
 
 __all__ = [

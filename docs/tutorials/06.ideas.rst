@@ -317,5 +317,3 @@ better ones*.
 
 
 Download :download:`Notebook<notebooks/06.ideas.ipynb>`.
-
-

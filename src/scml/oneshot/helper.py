@@ -1,16 +1,22 @@
-from typing import Union, Optional, Tuple, List, Any, Dict
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
+
 import numpy as np
 from negmas import Negotiator
-from negmas.sao import SAOController, SAONegotiator
-from ..scml2020.common import (
-    FactoryState,
-    FactoryProfile,
-    ANY_LINE,
-    ANY_STEP,
-    INFINITE_COST,
-    NO_COMMAND,
-    is_system_agent,
-)
+from negmas.sao import SAOController
+from negmas.sao import SAONegotiator
+
+from ..scml2020.common import ANY_LINE
+from ..scml2020.common import ANY_STEP
+from ..scml2020.common import INFINITE_COST
+from ..scml2020.common import NO_COMMAND
+from ..scml2020.common import FactoryProfile
+from ..scml2020.common import FactoryState
+from ..scml2020.common import is_system_agent
 
 
 class AWIHelper:

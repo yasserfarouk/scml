@@ -1,4 +1,12 @@
 """Implements the world class for the SCML2020 world """
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
+
+import numpy as np
 from negmas import Agent
 from negmas import AgentMechanismInterface
 from negmas import Breach
@@ -7,21 +15,21 @@ from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
 from negmas import RenegotiationRequest
-from typing import Dict, Union, Any, Optional, List, Tuple
-import numpy as np
+from negmas.helpers import get_full_type_name
+from negmas.helpers import instantiate
 from negmas.situated import Adapter
-from negmas.helpers import instantiate, get_full_type_name
 
-
-from ..oneshot.ufun import OneShotUFun
 from ..oneshot.agent import OneShotAgent
-from ..oneshot.common import OneShotState, OneShotProfile
+from ..oneshot.common import OneShotProfile
+from ..oneshot.common import OneShotState
 from ..oneshot.mixins import OneShotUFunCreatorMixin
-
-from .components.trading import MarketAwareTradePredictionStrategy
+from ..oneshot.ufun import OneShotUFun
+from .common import QUANTITY
+from .common import TIME
+from .common import UNIT_PRICE
 from .components.production import DemandDrivenProductionStrategy
 from .components.signing import SignAll
-from .common import TIME, QUANTITY, UNIT_PRICE
+from .components.trading import MarketAwareTradePredictionStrategy
 
 __all__ = [
     "SCML2020Agent",
@@ -234,6 +242,7 @@ class _SystemAgent(SCML2020Agent):
 
     def before_step(self):
         pass
+
     def init(self):
         pass
 
@@ -449,8 +458,10 @@ class AWIHelper:
         x = np.zeros_like(self._world.exogenous_contracts_summary)
         for i in range(0, n_products):
             x[i, 0 : n_steps - i, :] = y[i, i:n_steps, :]
-        summary = [(int(x[i, self.current_step, 0]), int(x[i, self.current_step, 1]))
-        for i in range(n_products)]
+        summary = [
+            (int(x[i, self.current_step, 0]), int(x[i, self.current_step, 1]))
+            for i in range(n_products)
+        ]
         return summary
 
     # Everything else
@@ -465,7 +476,7 @@ class OneShotAdapter(
     MarketAwareTradePredictionStrategy,
     SCML2020Agent,
     Adapter,
-    OneShotUFunCreatorMixin
+    OneShotUFunCreatorMixin,
 ):
     """
     An adapter allowing agents developed for SCML-OneShot to run in

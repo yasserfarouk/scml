@@ -1,23 +1,30 @@
 # required for typing
-from collections import defaultdict
-import random
 import math
-from typing import Any, Dict, List, Optional
+import random
+from collections import defaultdict
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import numpy as np
-from negmas import (
-    AgentMechanismInterface,
-    Contract,
-    Issue,
-    Outcome,
-    MechanismState,
-    Negotiator,
-    ResponseType,
-)
-from negmas.sao import SAONegotiator, SAOState, SAOAMI
+from negmas import AgentMechanismInterface
+from negmas import Contract
+from negmas import Issue
+from negmas import MechanismState
+from negmas import Negotiator
+from negmas import Outcome
+from negmas import ResponseType
+from negmas.sao import SAOAMI
+from negmas.sao import SAONegotiator
+from negmas.sao import SAOState
 
-from scml.scml2020 import SCML2020Agent, AWI
-from scml.scml2020 import TIME, UNIT_PRICE, QUANTITY, NO_COMMAND
+from scml.scml2020 import AWI
+from scml.scml2020 import NO_COMMAND
+from scml.scml2020 import QUANTITY
+from scml.scml2020 import TIME
+from scml.scml2020 import UNIT_PRICE
+from scml.scml2020 import SCML2020Agent
 
 __all__ = ["SatisficerAgent"]
 
@@ -106,7 +113,7 @@ class SatisficerAgent(SCML2020Agent):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.horizon=horizon
+        self.horizon = horizon
         self.satisfying_profit = satisfying_profit
         self.target_productivity = target_productivity
         self.price_range = price_range
@@ -205,7 +212,7 @@ class SatisficerAgent(SCML2020Agent):
             acc += self.max_sales[t]
         #   - I need to buy no more than what I can sell
         for t in range(s, steps - 1):
-            self.max_supplies[t] = self.max_sales[t + 1:].sum()
+            self.max_supplies[t] = self.max_sales[t + 1 :].sum()
 
         #   - subtract what I have from the maximum possible sales/supplies
         self.max_sales -= self.secured_sales
@@ -239,7 +246,6 @@ class SatisficerAgent(SCML2020Agent):
             prices = awi.catalog_prices
 
         self.do_production()
-
 
         # request negotiations
         for product, selling, partners, limit in (
@@ -332,8 +338,7 @@ class SatisficerAgent(SCML2020Agent):
     # Negotiation Control and Feedback
     # ================================
 
-    def respond_to_negotiation_request(
-        self, initiator, issues, annotation, mechanism):
+    def respond_to_negotiation_request(self, initiator, issues, annotation, mechanism):
         # Always accept negotiation
         return ObedientNegotiator(
             selling=annotation["seller"] == self.id,
@@ -410,7 +415,7 @@ class SatisficerAgent(SCML2020Agent):
 
         return signatures
 
-    def on_contracts_finalized( self, signed, cancelled, rejectors):
+    def on_contracts_finalized(self, signed, cancelled, rejectors):
         # Updates secured_sales/supplies
         awi: AWI = self.awi
         sell_contracts = [_ for _ in signed if _.annotation["seller"] == self.id]
@@ -527,7 +532,6 @@ class SatisficerAgent(SCML2020Agent):
             p = min((accaptable_price - p0) * r[UNIT_PRICE] + accaptable_price, p1)
             r[TIME] = 1 - r[TIME]
 
-
         # find the range of quantities that I can accept within the time we are
         # negotiating about
         max_quantity, min_quantity = (
@@ -580,7 +584,6 @@ class SatisficerAgent(SCML2020Agent):
             min(p1, max(p0, int(p + 0.5))),
         )
 
-
         # register this offer as a tentative quantity (it may be accepted)
         partner = [_ for _ in ami.agent_ids if _ != self.id][0]
         tentative[t:] += q
@@ -589,7 +592,7 @@ class SatisficerAgent(SCML2020Agent):
 
         return tuple(offer)
 
-    def respond( self, state, ami, offer, is_selling, is_requested):
+    def respond(self, state, ami, offer, is_selling, is_requested):
         """
         Responds to an offer from one partner.
 
@@ -678,22 +681,22 @@ class SatisficerAgent(SCML2020Agent):
         return ResponseType.REJECT_OFFER
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
-        """ Called when a negotiation fails """
+        """Called when a negotiation fails"""
         # removes my standing tentative offer for this negotiation if any
         partner = [_ for _ in mechanism.agent_ids][0]
-        self._remove_tentative_offer(annotation["seller"]==self.id, partner)
+        self._remove_tentative_offer(annotation["seller"] == self.id, partner)
 
     def on_negotiation_success(self, contract, mechanism):
-        """ Called when a negotiation fails """
+        """Called when a negotiation fails"""
         # remove my standing tentative offer for this negotiation if any
         partner = [_ for _ in contract.partners if _ != self.id][0]
-        self._remove_tentative_offer(contract.annotation["seller"]==self.id, partner)
+        self._remove_tentative_offer(contract.annotation["seller"] == self.id, partner)
 
         # add the agreed quantity in the appropriate times of `accepted`.
         # It will be moved later to `secured` (in `setp()`).
         selling = contract.annotation["seller"] == self.id
         accepted = self.accepted_sales if selling else self.accepted_supplies
-        accepted[contract.agreement["time"]:] += contract.agreement["quantity"]
+        accepted[contract.agreement["time"] :] += contract.agreement["quantity"]
 
     # ================
     # Helper Functions
@@ -709,7 +712,6 @@ class SatisficerAgent(SCML2020Agent):
             return
         tentative[last_t:] -= self.last_q[partner]
         del self.last_q[partner]
-
 
     def _is_good_price(self, is_selling: bool, u: float, slack: float = 0.0):
         """

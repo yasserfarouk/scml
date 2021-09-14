@@ -13,7 +13,7 @@ python setup.py install
 
 ### Overview
 Open your terminal, go into the downloaded source folder and input
-```python
+```shell
 python test.py
 ```
 Then click "Run" button. You will see something like this.
@@ -34,15 +34,15 @@ this.
 from quick import gui_it
 import click
 
+
 @click.command()
 @click.option("--hello", default="world", help="say hello")
-@click.option("--add", type=int, help="input an integer number",\
-              hide_input=True)
+@click.option("--add", type=int, help="input an integer number", hide_input=True)
 @click.option("--minus", type=float, help="input two numbers", nargs=2)
 @click.option("--flag", is_flag=True)
-@click.option('--shout/--no-shout', default=True)
-@click.option('--language', type=click.Choice(['c', 'c++']))
-@click.option('-v', '--verbose', count=True)
+@click.option("--shout/--no-shout", default=True)
+@click.option("--language", type=click.Choice(["c", "c++"]))
+@click.option("-v", "--verbose", count=True)
 def example_cmd(**argvs):
     for k, v in argvs.items():
         print(k, v, type(v))
@@ -62,9 +62,10 @@ add a `--gui` option to it. Then you can do this.
 from quick import gui_option
 import click
 
+
 @gui_option
 @click.group()
-@click.option('--debug/--no-debug', default=False)
+@click.option("--debug/--no-debug", default=False)
 def cli(debug):
     print(debug)
 
@@ -72,7 +73,7 @@ def cli(debug):
 @cli.command()
 @click.argument("arg", nargs=-1)
 @click.option("--hello", default="world", help="say hello")
-@click.option('-v', '--verbose', count=True)
+@click.option("-v", "--verbose", count=True)
 def example_cmd(**argvs):
     for k, v in argvs.items():
         print(k, v, type(v))
@@ -81,12 +82,13 @@ def example_cmd(**argvs):
 @cli.command()
 @click.option("--hello")
 def sync(hello):
-    print('Synching', hello)
+    print("Synching", hello)
 
 
 @cli.command()
 def func(**argvs):
     pass
+
 
 if __name__ == "__main__":
     cli()

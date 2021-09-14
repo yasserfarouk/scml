@@ -21,7 +21,6 @@ from typing import Type
 from typing import Union
 
 import networkx as nx
-from networkx.convert import to_dict_of_dicts
 import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
@@ -41,6 +40,7 @@ from negmas.helpers import unique_name
 from negmas.sao import PassThroughSAONegotiator
 from negmas.sao import SAOController
 from negmas.sao import SAONegotiator
+from networkx.convert import to_dict_of_dicts
 
 from ..common import distribute_quantities
 from ..common import integer_cut
@@ -53,11 +53,14 @@ from ..scml2020.common import INFINITE_COST
 from ..scml2020.common import SYSTEM_BUYER_ID
 from ..scml2020.common import SYSTEM_SELLER_ID
 from ..scml2020.common import is_system_agent
-
-from .common import OneShotProfile, OneShotExogenousContract, QUANTITY, UNIT_PRICE
-from .sysagents import _SystemAgent, DefaultOneShotAdapter
 from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
+from .common import QUANTITY
+from .common import UNIT_PRICE
+from .common import OneShotExogenousContract
+from .common import OneShotProfile
+from .sysagents import DefaultOneShotAdapter
+from .sysagents import _SystemAgent
 from .ufun import OneShotUFun
 
 __all__ = ["SCML2020OneShotWorld"]
@@ -1169,8 +1172,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         """
         current_balance = sum(self._profits[agent.id]) + self.initial_balances[agent.id]
         self.is_bankrupt[agent.id] = (
-            (current_balance < self.bankruptcy_limit) or self.is_bankrupt[agent.id]
-        )
+            current_balance < self.bankruptcy_limit
+        ) or self.is_bankrupt[agent.id]
         report = FinancialReport(
             agent_id=agent.id,
             step=self.current_step,
@@ -1302,7 +1305,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             + self._sold_quantity[has_trade, s + 1]
         )
         self._trading_price[has_trade, s + 1] /= self._betas_sum[has_trade, s + 1]
-        self._trading_price[:, s + 1:] = self._trading_price[:, s + 1].reshape((self.n_products, 1))
+        self._trading_price[:, s + 1 :] = self._trading_price[:, s + 1].reshape(
+            (self.n_products, 1)
+        )
         self._traded_quantity += self._sold_quantity[:, s + 1]
         # self._trading_price[has_trade, s] = (
         #         np.sum(self._betas[:s+1] * self._real_price[has_trade, s::-1])

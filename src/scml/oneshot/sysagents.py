@@ -13,14 +13,15 @@ from negmas import Contract
 from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
-from negmas.sao import PassThroughSAONegotiator
 from negmas import RenegotiationRequest
+from negmas.sao import PassThroughSAONegotiator
 
-from .common import QUANTITY, UNIT_PRICE
-from .ufun import OneShotUFun
 from .agent import OneShotAgent
+from .common import QUANTITY
+from .common import UNIT_PRICE
 from .helper import AWIHelper
 from .mixins import OneShotUFunCreatorMixin
+from .ufun import OneShotUFun
 
 __all__ = ["DefaultOneShotAdapter", "_SystemAgent"]
 
@@ -92,7 +93,9 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         partner = [_ for _ in partners if _ != self.id][0]
         if not self._obj:
             return None
-        neg = self._obj.create_negotiator(PassThroughSAONegotiator, name=partner, id=partner)
+        neg = self._obj.create_negotiator(
+            PassThroughSAONegotiator, name=partner, id=partner
+        )
         return neg
 
     def set_renegotiation_agenda(

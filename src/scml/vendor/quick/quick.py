@@ -5,7 +5,9 @@ from functools import partial
 import click
 
 try:
-    from PyQt5 import QtCore, QtGui, QtWidgets
+    from PyQt5 import QtCore
+    from PyQt5 import QtGui
+    from PyQt5 import QtWidgets
 except:
     pass
 else:
@@ -474,7 +476,7 @@ else:
         return [_OptionLabel(opt.name), value], to_command
 
     def select_type_validator(tp: click.types.ParamType) -> QtGui.QValidator:
-        """ select the right validator for `tp`"""
+        """select the right validator for `tp`"""
 
         if isinstance(tp, click.types.IntParamType):
             return QtGui.QIntValidator()
@@ -484,7 +486,7 @@ else:
         return None
 
     def select_opt_validator(opt):
-        """ select the right validator for `opt`"""
+        """select the right validator for `opt`"""
 
         return select_type_validator(opt.type)
 

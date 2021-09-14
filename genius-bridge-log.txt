@@ -1,7 +1,7 @@
 May 31, 2021 12:02:03 PM com.yasserm.negmasgeniusbridge.NegLoader main
 INFO: Genius Bridge STARTED
 May 31, 2021 12:02:03 PM com.yasserm.negmasgeniusbridge.NegLoader main
-INFO: received options: --die-on-exit --timeout=0 57648 
+INFO: received options: --die-on-exit --timeout=0 57648
 May 31, 2021 12:02:03 PM com.yasserm.negmasgeniusbridge.NegLoader info
 INFO: NegLoader object is constructed
 May 31, 2021 12:02:03 PM com.yasserm.negmasgeniusbridge.NegLoader info

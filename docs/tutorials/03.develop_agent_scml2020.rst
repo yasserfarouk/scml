@@ -29,7 +29,7 @@ Now, let’s try to run a simulation with it
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyDoNothing], n_steps=10), 
+        **SCML2021World.generate([ComparisonAgent, MyDoNothing], n_steps=10),
         construct_graphs=True,
     )
 
@@ -159,7 +159,7 @@ example
 .. parsed-literal::
 
     Base class for all trading strategies.
-    
+
         Provides:
             - `inputs_needed` (np.ndarray):  How many items of the input product do
               I need to buy at every time step (n_steps vector).
@@ -173,11 +173,11 @@ example
             - `outputs_secured` (np.ndarray):  How many units of the output product
               I already contracted to sell (n_steps vector) [out of `outputs_secured`]
               This can be read **but not updated** by the `NegotiationManager`.
-    
+
         Hooks Into:
             - `init`
             - `internal_state`
-    
+
         Remarks:
             - `Attributes` section describes the attributes that can be used to construct the component (passed to its
               `__init__` method).
@@ -194,7 +194,7 @@ example
             - `Overrides` section describes the methods this component overrides without calling `super` effectively
               disallowing any other components after it in the MRO to call this method. Usually methods that do some
               action (i.e. not starting with `on_`) are overridden this way.
-        
+
 
 
 The docstring above describes the six possible sections in each
@@ -282,7 +282,7 @@ complete code (with type-hints and the docstring removed):
                     line=-1,
                     partial_ok=True,
                 )
-                # set the schedule_range which is provided for other components 
+                # set the schedule_range which is provided for other components
                 self.schedule_range[contract.id] = (
                     min(steps) if len(steps) > 0 else -1,
                     max(steps) if len(steps) > 0 else -1,
@@ -308,7 +308,7 @@ Now let’s test our agent with its new production strategy.
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyDoNothing], n_steps=10), 
+        **SCML2021World.generate([ComparisonAgent, MyDoNothing], n_steps=10),
         construct_graphs=True,
     )
     world.run()
@@ -369,7 +369,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyAgent], n_steps=10), 
+        **SCML2021World.generate([ComparisonAgent, MyAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -405,7 +405,7 @@ to see how it works.
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyAgent], n_steps=10), 
+        **SCML2021World.generate([ComparisonAgent, MyAgent], n_steps=10),
         construct_graphs=True
     )
     try:
@@ -441,11 +441,11 @@ Let’s add a simple implementation of both
         def target_quantity(self, step: int, sell: bool) -> int:
             """A fixed target quantity of half my production capacity"""
             return self.awi.n_lines // 2
-            
+
         def acceptable_unit_price(self, step: int, sell: bool) -> int:
             """The catalog price seems OK"""
             return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
-        
+
         def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
             """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
             if is_seller:
@@ -456,14 +456,14 @@ Let’s add a simple implementation of both
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyAgent, RandomAgent], n_steps=10), 
+        **SCML2021World.generate([ComparisonAgent, MyAgent, RandomAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
-    
+
     world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
     plt.show()
-    
+
 
 
 
@@ -537,17 +537,17 @@ NegMAS provides an easy to use controller that fits the bill called
 
 .. parsed-literal::
 
-    
+
         A controller that can manage multiple negotiators synchronously.
-    
+
         Remarks:
             - The controller waits for an offer from each one of its negotiators before deciding what to do.
             - Loops may happen if multiple controllers of this type negotiate with each other. For example controller A
               is negotiating with B, C, while B is also negotiating with C. These loops are broken by the `SAOMechanism`
               by **forcing** some controllers to respond before they have all of the offers. In this case, `counter_all`
               will receive offers from one or more negotiators but not all of them.
-    
-        
+
+
 
 
 Let’s create our controller and see what do we need. The main idea here
@@ -570,25 +570,25 @@ This is a straight forward implementation of this idea
     from negmas import ResponseType, outcome_is_valid, UtilityFunction
     from negmas.sao import SAOResponse
     from typing import List, Dict, Optional, Tuple, Any
-    
+
     class ControllerUFun(UtilityFunction):
         """A utility function for the controller"""
         def __init__(self, controller=None):
             super().__init__(outcome_type=tuple)
             self.controller = controller
-    
+
         def eval(self, offer: "Outcome"):
             return self.controller.utility(offer)
-    
+
         def xml(self, issues):
             pass
-    
-    
+
+
     class SyncController(SAOSyncController):
         """
         Will try to get the best deal which is defined as being nearest to the agent
         needs and with lowest price.
-    
+
         Args:
             is_seller: Are we trying to sell (or to buy)?
             parent: The agent from which we will access `needed` and `secured` arrays
@@ -597,7 +597,7 @@ This is a straight forward implementation of this idea
             time_threshold: Accept anything with a positive utility when we are that close
                             to the end of the negotiation
         """
-    
+
         def __init__(
             self,
             *args,
@@ -615,18 +615,18 @@ This is a straight forward implementation of this idea
             self._price_weight = price_weight
             self._utility_threshold = utility_threshold
             self.utility_function = ControllerUFun(controller=self)
-    
+
         def utility(self, offer: "Outcome") -> float:
             """A simple utility function
-    
+
             Remarks:
                  - If the time is invalid or there is no need to get any more agreements
                    at the given time, return -1000
                  - Otherwise use the price-weight to calculate a linear combination of
                    the price and the how much of the needs is satisfied by this contract
-    
+
             """
-    
+
             # get my needs and secured amounts arrays
             if self._is_seller:
                 _needed, _secured = (
@@ -638,66 +638,66 @@ This is a straight forward implementation of this idea
                     self.__parent.inputs_needed,
                     self.__parent.inputs_secured,
                 )
-    
+
             # invalide offers have no utility
             if offer is None:
                 return -1000
-    
+
             # offers for contracts that can never be executed have no utility
             t = offer[TIME]
             if t < self.__parent.awi.current_step or t > self.__parent.awi.n_steps - 1:
                 return -1000.0
-    
+
             # offers that exceed my needs have no utility (that can be improved)
             q = _needed[offer[TIME]] - (offer[QUANTITY] + _secured[t])
             if q < 0:
                 return -1000.0
-    
+
             # The utility of any offer is a linear combination of its price and how
             # much it satisfy my needs
             price = offer[UNIT_PRICE] if self._is_seller else -offer[UNIT_PRICE]
             return self._price_weight * price + (1 - self._price_weight) * q
-    
+
         def is_valid(self, negotiator_id: str, offer: "Outcome") -> bool:
             """Is this a valid offer for that negotiation"""
             issues = self.negotiators[negotiator_id][0].ami.issues
             return outcome_is_valid(offer, issues)
-    
+
         def counter_all(
             self, offers: Dict[str, "Outcome"], states: Dict[str, "SAOState"]
         ) -> Dict[str, "SAOResponse"]:
             """Calculate a response to all offers from all negotiators (negotiator ID is the key).
-    
+
             Args:
                 offers: Maps negotiator IDs to offers
                 states: Maps negotiator IDs to offers AT the time the offers were made.
-    
+
             Remarks:
                 - The response type CANNOT be WAIT.
-    
+
             """
-    
+
             # find the best offer
             negotiator_ids = list(offers.keys())
             utils = np.array([self.utility(o) for o in offers.values()])
-    
+
             best_index = int(np.argmax(utils))
             best_utility = utils[best_index]
             best_partner = negotiator_ids[best_index]
             best_offer = offers[best_partner]
-    
+
             # find my best proposal for each negotiation
             best_proposals = self.first_proposals()
-    
+
             # if the best offer is still so bad just reject everything
             if best_utility < 0:
                 return {
                     k: SAOResponse(ResponseType.REJECT_OFFER, best_proposals[k])
                     for k in offers.keys()
                 }
-    
+
             relative_time = min(_.relative_time for _ in states.values())
-    
+
             # if this is good enough or the negotiation is about to end accept the best offer
             if (
                 best_utility
@@ -713,7 +713,7 @@ This is a straight forward implementation of this idea
                 }
                 responses[best_partner] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
                 return responses
-    
+
             # send the best offer to everyone else and try to improve it
             responses = {
                 k: SAOResponse(
@@ -726,18 +726,18 @@ This is a straight forward implementation of this idea
                 ResponseType.REJECT_OFFER, best_proposals[best_partner]
             )
             return responses
-    
+
         def on_negotiation_end(self, negotiator_id: str, state: "MechanismState") -> None:
             """Update the secured quantities whenever a negotiation ends"""
             if state.agreement is None:
                 return
-    
+
             q, t = state.agreement[QUANTITY], state.agreement[TIME]
             if self._is_seller:
                 self.__parent.outputs_secured[t] += q
             else:
                 self.__parent.inputs_secured[t] += q
-    
+
 
 
 Let’s understand exactly what is this controller doing. In NegMAS, a
@@ -782,14 +782,14 @@ Our negotiation control strategy will work as follows:
 
     class MyNegotiationManager:
         """My negotiation strategy
-    
+
         Args:
             price_weight: The relative importance of price in the utility calculation.
             utility_threshold: The fraction of maximum utility above which all offers will be accepted.
             time_threshold: The fraction of the negotiation time after which any valid offers will be accepted.
             time_range: The time-range for each controller as a fraction of the number of simulation steps
         """
-    
+
         def __init__(
             self,
             *args,
@@ -823,10 +823,10 @@ Our negotiation control strategy will work as follows:
             }
             self._current_end = -1
             self._current_start = -1
-    
+
         def step(self):
             super().step()
-            
+
             # find the range of steps about which we plan to negotiate
             step = self.awi.current_step
             self._current_start = step + 1
@@ -836,7 +836,7 @@ Our negotiation control strategy will work as follows:
             )
             if self._current_start >= self._current_end:
                 return
-            
+
             for seller, needed, secured, product in [
                 (False, self.inputs_needed, self.inputs_secured, self.awi.my_input_product),
                 (
@@ -853,7 +853,7 @@ Our negotiation control strategy will work as follows:
                 )
                 if needs < 1:
                     continue
-                
+
                 # set a range of prices
                 if seller:
                     # for selling set a price that is at least the catalog price
@@ -870,7 +870,7 @@ Our negotiation control strategy will work as follows:
                     time=(self._current_start, self._current_end),
                     controller=self.controllers[seller],
                 )
-    
+
         def respond_to_negotiation_request(
             self,
             initiator: str,
@@ -896,7 +896,7 @@ our new negotiation manager.
 
 .. code:: ipython3
 
-    class MyNewAgent(MyNegotiationManager, PredictionBasedTradingStrategy, 
+    class MyNewAgent(MyNegotiationManager, PredictionBasedTradingStrategy,
                   DemandDrivenProductionStrategy, SCML2020Agent):
         pass
 
@@ -905,14 +905,14 @@ Let’s see how did our simple new agent do:
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyAgent, MyNewAgent], n_steps=10), 
+        **SCML2021World.generate([ComparisonAgent, MyAgent, MyNewAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
-    
+
     world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
     plt.show()
-    
+
 
 
 
@@ -941,7 +941,7 @@ average prices they get from their negotiations.
 .. code:: ipython3
 
     from scml.scml2020 import is_system_agent
-    
+
     def analyze_unit_price(world, agent_type):
         """Returns the average price relative to the negotiation issues"""
         contracts = pd.DataFrame(world.saved_contracts)
@@ -960,15 +960,15 @@ average prices they get from their negotiations.
         max_vals = contracts.issues.apply(lambda x: x[UNIT_PRICE].max_value)
         # replace the unit price with its fraction of the unit-price issue range
         contracts.unit_price = (contracts.unit_price- min_vals) / (max_vals-min_vals)
-        contracts = contracts.drop("issues", 1)    
+        contracts = contracts.drop("issues", 1)
         contracts = contracts.rename(columns=dict(unit_price="price"))
         # group results by whether the agent is selling/buying/both
         if len(contracts)<1:
             return ""
         print(f"{agent_type}:\n===========")
         return contracts.groupby(["selling", "buying"]).describe().round(1)
-    
-    
+
+
     print(analyze_unit_price(world, "MyNewAgent"))
     print(analyze_unit_price(world, "MyAgent"))
     print(analyze_unit_price(world, "DecentralizingAgent"))
@@ -978,19 +978,19 @@ average prices they get from their negotiations.
 
     MyNewAgent:
     ===========
-                   price                                   
+                   price
                    count mean  std  min  25%  50%  75%  max
-    selling buying                                         
+    selling buying
     False   True     5.0  0.8  0.3  0.2  0.9  1.0  1.0  1.0
     MyAgent:
     ===========
-                   price                                   
+                   price
                    count mean  std  min  25%  50%  75%  max
-    selling buying                                         
+    selling buying
     False   True     4.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
     True    False    4.0  0.8  0.4  0.2  0.8  1.0  1.0  1.0
             True    44.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
-    
+
 
 
 We can see that the new strategy gets lower average prices when buying
@@ -1016,7 +1016,7 @@ Let’s try to run our new agent against itself.
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([MyNewAgent], n_steps=10), 
+        **SCML2021World.generate([MyNewAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -1029,12 +1029,12 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    
+
 
 
 .. parsed-literal::
 
-    
+
 
 
 Notice how *all* agreements are on limits of the unit_price issue. If
@@ -1107,9 +1107,11 @@ appropriate ufun:
 
 .. code:: python
 
-       controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction({
-           TIME: 0.0, QUANTITY: (1-x), UNIT_PRICE: x if seller else -x
-       })) 
+       controller = SAOMetaNegotiatorController(
+           ufun=LinearUtilityFunction(
+               {TIME: 0.0, QUANTITY: (1 - x), UNIT_PRICE: x if seller else -x}
+           )
+       )
 
 where :math:`x` is some weight between zero and one to weight price
 against quantity. We use a negative price weight if we are buying to
@@ -1123,15 +1125,15 @@ exploring the design space.
 .. code:: ipython3
 
     from negmas import SAOMetaNegotiatorController
-    
+
     class YetAnotherNegotiationManager:
         """My new negotiation strategy
-    
+
         Args:
             price_weight: The relative importance of price in the utility calculation.
             time_range: The time-range for each controller as a fraction of the number of simulation steps
         """
-    
+
         def __init__( self, *args, price_weight=0.7, time_horizon=0.1, **kwargs,):
             super().__init__(*args, **kwargs)
             self.index: List[int] = None
@@ -1139,10 +1141,10 @@ exploring the design space.
             self._price_weight = price_weight
             self._current_end = -1
             self._current_start = -1
-    
+
         def step(self):
             super().step()
-            
+
             # find the range of steps about which we plan to negotiate
             step = self.awi.current_step
             self._current_start = step + 1
@@ -1152,7 +1154,7 @@ exploring the design space.
             )
             if self._current_start >= self._current_end:
                 return
-            
+
             for seller, needed, secured, product in [
                 (False, self.inputs_needed, self.inputs_secured, self.awi.my_input_product),
                 ( True, self.outputs_needed, self.outputs_secured, self.awi.my_output_product),
@@ -1178,7 +1180,7 @@ exploring the design space.
                     controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction({
                         TIME: 0.0, QUANTITY: (1-self._price_weight), UNIT_PRICE: -self._price_weight
                     }))
-    
+
                 self.awi.request_negotiations(
                     not seller,
                     product,
@@ -1187,7 +1189,7 @@ exploring the design space.
                     time=(self._current_start, self._current_end),
                     controller=controller,
                 )
-    
+
         def respond_to_negotiation_request(
             self,
             initiator: str,
@@ -1196,15 +1198,15 @@ exploring the design space.
             mechanism: "AgentMechanismInterface",
         ) -> Optional["Negotiator"]:
             return None
-        
-    class AspirationAgent(YetAnotherNegotiationManager, PredictionBasedTradingStrategy, 
+
+    class AspirationAgent(YetAnotherNegotiationManager, PredictionBasedTradingStrategy,
                   DemandDrivenProductionStrategy, SCML2020Agent):
         pass
 
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([MyAgent, MyNewAgent, AspirationAgent], n_steps=10), 
+        **SCML2021World.generate([MyAgent, MyNewAgent, AspirationAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -1230,12 +1232,12 @@ exploring the design space.
 
     MyNewAgent:
     ===========
-                   price                                   
+                   price
                    count mean  std  min  25%  50%  75%  max
-    selling buying                                         
+    selling buying
     False   True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
     True    False    5.0  0.5  0.4  0.0  0.0  0.7  0.7  0.8
-    
+
 
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
@@ -1266,7 +1268,7 @@ is an example:
             inp = self.awi.my_input_product
             self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
             self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
-    
+
     class MyDecentralizingAgent(MyPredictor, DecentralizingAgent):
         pass
 
@@ -1281,7 +1283,7 @@ Let’s test it
 
     world = SCML2021World(
         **SCML2021World.generate([AspirationAgent, ComparisonAgent, MyDecentralizingAgent]
-                                 , n_steps=10), 
+                                 , n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -1344,9 +1346,9 @@ The main idea behind this agent is very simple:
           is_seller = contract.annotation["seller"] == self.id
           oldq = self.quantities[is_seller]
           self.quantities[is_seller] += q
-          self.prices[is_seller] = (
-              oldq * self.prices[is_seller] + p * q
-          ) / self.quantities[is_seller]
+          self.prices[is_seller] = (oldq * self.prices[is_seller] + p * q) / self.quantities[
+              is_seller
+          ]
 
 2. The agent will respond to negotiations by creating a time-strategy
    ``AspirationNegotiator`` with the appropriate ufun. It will use a
@@ -1386,7 +1388,7 @@ The main idea behind this agent is very simple:
 
     from negmas import MappingUtilityFunction, AspirationNegotiator
     from scml.scml2020 import NO_COMMAND
-    
+
     class FromScratchAgent(SCML2020Agent):
         def init(self):
             self.prices = [
@@ -1394,7 +1396,7 @@ The main idea behind this agent is very simple:
                 self.awi.catalog_prices[self.awi.my_output_product],
             ]
             self.quantities = [1, 1]
-    
+
         def step(self):
             super().step()
             # update prices based on market information if available
@@ -1409,13 +1411,13 @@ The main idea behind this agent is very simple:
                     self.awi.trading_prices[self.awi.my_input_product],
                     self.awi.trading_prices[self.awi.my_output_product],
                 ]
-            
+
             # produce everything I can
             commands = NO_COMMAND * np.ones(self.awi.n_lines, dtype=int)
             inputs = min(self.awi.state.inventory[self.awi.my_input_product], len(commands))
             commands[:inputs] = self.awi.my_input_product
             self.awi.set_commands(commands)
-    
+
         def respond_to_negotiation_request(
             self,
             initiator: str,
@@ -1433,12 +1435,12 @@ The main idea behind this agent is very simple:
                 is_seller, (issues[UNIT_PRICE].min_value, issues[UNIT_PRICE].max_value),
             )
             return AspirationNegotiator(ufun=ufun)
-    
+
         def sign_all_contracts(self, contracts: List["Contract"]) -> List[Optional[str]]:
             """Called to ask you to sign all contracts that were concluded in
             one step (day)"""
             return [self.id] * len(contracts)
-    
+
         def on_contracts_finalized(
             self,
             signed: List["Contract"],
@@ -1458,7 +1460,7 @@ The main idea behind this agent is very simple:
                 self.prices[is_seller] = (
                     oldq * self.prices[is_seller] + p * q
                 ) / self.quantities[is_seller]
-                
+
         def create_ufun(self, is_seller, prange):
             if is_seller:
                 return MappingUtilityFunction(
@@ -1471,14 +1473,14 @@ The main idea behind this agent is very simple:
                 else prange[1] - x[UNIT_PRICE],
                 reserved_value=0.0,
             )
-    
+
 
 
 .. code:: ipython3
 
     world = SCML2021World(
         **SCML2021World.generate([AspirationAgent, ComparisonAgent, FromScratchAgent]
-                                 , n_steps=10), 
+                                 , n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -1524,7 +1526,8 @@ is done in the ``on_contracts_finalized`` callback as follows:
 
 .. code:: python
 
-       if contract.annotation["caller"] == self.id
+       if contract.annotation["caller"] == self.id:
+           ...
 
 Here is the improved version:
 
@@ -1545,7 +1548,7 @@ Here is the improved version:
                     contract.agreement["unit_price"],
                     contract.agreement["quantity"],
                 )
-                is_seller = contract.annotation["seller"] == self.id            
+                is_seller = contract.annotation["seller"] == self.id
                 if contract.annotation["caller"] == self.id:
                     continue
                 product = awi.my_output_product if is_seller else awi.my_input_product
@@ -1571,7 +1574,7 @@ Here is the improved version:
 
     world = SCML2021World(
         **SCML2021World.generate([ProactiveFromScratch, ComparisonAgent, FromScratchAgent]
-                                 , n_steps=10), 
+                                 , n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -1603,14 +1606,20 @@ module). To run a tournament you will need this code snippet:
 
    from scml.scml2020.utils import anac2021_std
    import seaborn as sns
-   tournament_types = [ProactiveFromScratch, FromScratchAgent, 
-                       MyAgent, MyNewAgent, AspirationAgent]
+
+   tournament_types = [
+       ProactiveFromScratch,
+       FromScratchAgent,
+       MyAgent,
+       MyNewAgent,
+       AspirationAgent,
+   ]
    results = anac2021_std(
-       competitors=tournament_types,  
-       n_configs=20, # number of different configurations to generate 
-       n_runs_per_world=1, # number of times to repeat every simulation
-       n_steps = (30, 60), # number of days (simulation steps) per simulation
-   ) 
+       competitors=tournament_types,
+       n_configs=20,  # number of different configurations to generate
+       n_runs_per_world=1,  # number of times to repeat every simulation
+       n_steps=(30, 60),  # number of days (simulation steps) per simulation
+   )
    print(results.total_scores)
 
 We ran this tournament and got the following results (you can run the
@@ -1643,16 +1652,16 @@ now:
 .. code:: ipython3
 
     from scml.oneshot.agents import GreedySingleAgreementAgent
-    
+
     world = SCML2021World(
         **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent],
-                                 horizon=1, 
+                                 horizon=1,
                                  n_steps=10
-                                ), 
+                                ),
         construct_graphs=True,
     )
     world.run_with_progress()
-    
+
     world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
     plt.show()
     show_agent_scores(world)
@@ -1681,5 +1690,3 @@ With that we end our tutorial. Have fun developing your agent.
 
 
 Download :download:`Notebook<notebooks/03.develop_agent_scml2020.ipynb>`.
-
-

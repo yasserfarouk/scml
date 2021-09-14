@@ -52,17 +52,15 @@ from scml.scml2019.simulators import storage_as_array
 from scml.scml2019.simulators import temporary_transaction
 
 if True:
-    from typing import (
-        Dict,
-        Iterable,
-        Any,
-        Callable,
-        Collection,
-        Type,
-        List,
-        Optional,
-        Union,
-    )
+    from typing import Any
+    from typing import Callable
+    from typing import Collection
+    from typing import Dict
+    from typing import Iterable
+    from typing import List
+    from typing import Optional
+    from typing import Type
+    from typing import Union
 
 __all__ = [
     "FactoryManager",

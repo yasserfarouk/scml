@@ -1,5 +1,6 @@
-from ..agent import OneShotAgent
 from negmas import ResponseType
+
+from ..agent import OneShotAgent
 
 __all__ = ["OneshotDoNothingAgent"]
 

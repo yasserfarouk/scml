@@ -250,4 +250,3 @@ The ideas presented above are, by no means, exclusive or comprehensive.
 You can combine them and add new ones. The
 main reason we present these ideas is to *challenge you to come with
 better ones*. Happy coding :-)
-

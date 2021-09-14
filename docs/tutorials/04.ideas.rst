@@ -254,5 +254,3 @@ better ones*. Happy coding :-)
 
 
 Download :download:`Notebook<notebooks/04.ideas.ipynb>`.
-
-

@@ -20,11 +20,11 @@ this brief introduction in the remainder of this tutorial.
     from scml.oneshot import *
     from scml.scml2020 import is_system_agent
     from pprint import pprint
-    
+
     def try_agent(agent_type, n_processes=2):
         """Runs an agent in a world simulation against a randomly behaving agent"""
         return try_agents([RandomOneShotAgent, agent_type], n_processes)
-    
+
     def try_agents(agent_types, n_processes=2, n_trials=1, draw=True, agent_params=None):
         """
         Runs a simulation with the given agent_types, and n_processes n_trial times.
@@ -36,12 +36,12 @@ this brief introduction in the remainder of this tutorial.
         for _ in range(n_trials):
             p = n_processes if isinstance(n_processes, int) else random.randint(*n_processes)
             world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(agent_types, agent_params=agent_params, n_steps=10, 
+            **SCML2020OneShotWorld.generate(agent_types, agent_params=agent_params, n_steps=10,
                                             n_processes=p, random_agent_types=True),
             construct_graphs=True,
             )
             world.run()
-    
+
             all_scores = world.scores()
             for aid, agent in world.agents.items():
                 if is_system_agent(aid):
@@ -66,9 +66,9 @@ this brief introduction in the remainder of this tutorial.
                 together=True, ncols=1, figsize=(20, 20)
             )
             plt.show()
-    
+
         return world, agent_scores, type_scores
-    
+
     def analyze_contracts(world):
         """
         Analyzes the contracts signed in the given world
@@ -76,15 +76,15 @@ this brief introduction in the remainder of this tutorial.
         import pandas as pd
         data = pd.DataFrame.from_records(world.saved_contracts)
         return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].mean()
-    
-    
+
+
     def print_agent_scores(agent_scores):
         """
         Prints scores of individiual agent instances
         """
         for aid, (type_, score, bankrupt) in agent_scores.items():
             print(f"Agent {aid} of type {type_} has a final score of {score} {bankrupt}")
-    
+
     def print_type_scores(type_scores):
         """Prints scores of agent types"""
         pprint(sorted(tuple(type_scores.items()), key=lambda x: -x[1]))
@@ -99,7 +99,7 @@ Now we are ready to develop a do-nothing agent:
             return None
         def respond(self, negotiator_id, state, offer):
             return ResponseType.END_NEGOTIATION
-        
+
     world, ascores, tscores = try_agent(MyOneShotDoNothing)
 
 
@@ -128,18 +128,18 @@ Let’s check the scores of different agents to confirm:
 
 .. parsed-literal::
 
-    Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.6944068952119954 
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 1.1091968037702151 
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.7450624606556975 
-    Agent 03MDN@0 of type MyOneShotDoNothing has a final score of 0.6773363560839638 
-    Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.889931458499155 
-    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.9485817404064244 
-    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.8786735485451 
-    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.8751916425602381 
-    Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.7353892618009944 
-    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.9469486266281616 
-    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.8795194773733399 
-    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.9136405327126119 
+    Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.6944068952119954
+    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 1.1091968037702151
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.7450624606556975
+    Agent 03MDN@0 of type MyOneShotDoNothing has a final score of 0.6773363560839638
+    Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.889931458499155
+    Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.9485817404064244
+    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.8786735485451
+    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.8751916425602381
+    Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.7353892618009944
+    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.9469486266281616
+    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.8795194773733399
+    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.9136405327126119
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -178,11 +178,11 @@ market.
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -506,16 +506,16 @@ using the same base class.
 
     class SimpleAgent(OneShotAgent):
         """A greedy agent based on OneShotAgent"""
-    
+
         def before_step(self):
             self.secured = 0
-    
+
         def on_negotiation_success(self, contract, mechanism):
             self.secured += contract.agreement["quantity"]
-    
+
         def propose(self, negotiator_id: str, state) -> "Outcome":
             return self.best_offer(negotiator_id)
-    
+
         def respond(self, negotiator_id, state, offer):
             my_needs = self._needed(negotiator_id)
             if my_needs <= 0:
@@ -525,7 +525,7 @@ using the same base class.
                 if offer[QUANTITY] <= my_needs
                 else ResponseType.REJECT_OFFER
             )
-    
+
         def best_offer(self, negotiator_id):
             my_needs = self._needed(negotiator_id)
             if my_needs <= 0:
@@ -546,15 +546,15 @@ using the same base class.
             else:
                 offer[UNIT_PRICE] = unit_price_issue.min_value
             return tuple(offer)
-    
+
         def _needed(self, negotiator_id=None):
             return self.awi.current_exogenous_input_quantity + \
                    self.awi.current_exogenous_output_quantity - \
                    self.secured
-    
+
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
-        
+
     world, ascores, tscores = try_agent(SimpleAgent)
 
 
@@ -590,6 +590,7 @@ in its ``init``, ``step`` and ``on_negotiation_success`` callbacks.
    def before_step(self):
        self.secured = 0
 
+
    def on_negotiation_success(self, contract, mechanism):
        self.secured += contract.agreement["quantity"]
 
@@ -599,9 +600,11 @@ subtracting the exogenous quantity it has from the amount it secured:
 .. code:: python
 
    def _needed(self):
-       return self.awi.current_exogenous_input_quantity + \
-              self.awi.current_exogenous_output_quantity - \
-              self.secured
+       return (
+           self.awi.current_exogenous_input_quantity
+           + self.awi.current_exogenous_output_quantity
+           - self.secured
+       )
 
 Notice that either the exogenous input quantity or the exogenous output
 quantity (or both) will always be zero. Now that the agent can calculate
@@ -613,7 +616,7 @@ Here is the full implementation of ``propose``:
 .. code:: python
 
    def propose(self, negotiator_id: str, state) -> "Outcome":
-           return self.best_offer(negotiator_id)
+       return self.best_offer(negotiator_id)
 
 The agent is always offering its best offer which is calculated in the
 ``best_offer`` method to be discussed later. It does not conceed at all.
@@ -634,7 +637,11 @@ Responding to opponent offers is also simple:
 
 .. code:: python
 
-       return ResponseType.ACCEPT_OFFER if offer[QUANTITY] <= my_needs else ResponseType.REJECT_OFFER
+       return (
+           ResponseType.ACCEPT_OFFER
+           if offer[QUANTITY] <= my_needs
+           else ResponseType.REJECT_OFFER
+       )
 
 Most of the code is in the ``best_offer`` method which calculates the
 best offer for a negotiation *given the agreements reached so far*.
@@ -675,9 +682,7 @@ Let’s check it line by line:
 
 .. code:: python
 
-       offer[QUANTITY] = max(
-           min(my_needs, quantity_issue.max_value), quantity_issue.min_value
-       )
+       offer[QUANTITY] = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
 
 -  Finally, the unit price is the maximum possible unit price if the
    agent is selling otherwise it is the minimum possible price. Note
@@ -712,11 +717,11 @@ We will try to remedie both of these issues in the following agent:
 
     class BetterAgent(SimpleAgent):
         """A greedy agent based on OneShotAgent with more sane strategy"""
-        
+
         def __init__(self, *args, concession_exponent=0.2, **kwargs):
             super().__init__(*args, **kwargs)
             self._e = concession_exponent
-    
+
         def propose(self, negotiator_id: str, state) -> "Outcome":
             offer = super().propose(negotiator_id, state)
             if not offer:
@@ -724,9 +729,9 @@ We will try to remedie both of these issues in the following agent:
             offer = list(offer)
             offer[UNIT_PRICE] = self._find_good_price(
                 self.get_ami(negotiator_id), state
-            )        
+            )
             return tuple(offer)
-    
+
         def respond(self, negotiator_id, state, offer):
             response = super().respond(negotiator_id, state, offer)
             if response != ResponseType.ACCEPT_OFFER:
@@ -737,19 +742,19 @@ We will try to remedie both of these issues in the following agent:
                 self._is_good_price(ami, state, offer[UNIT_PRICE])
                 else ResponseType.REJECT_OFFER
             )
-            
+
         def _is_good_price(self, ami, state, price):
             """Checks if a given price is good enough at this stage"""
             mn, mx = self._price_range(ami)
-            th = self._th(state.step, ami.n_steps)        
+            th = self._th(state.step, ami.n_steps)
             # a good price is one better than the threshold
             if self._is_selling(ami):
                 return (price - mn) >= th * (mx - mn)
             else:
                 return (mx - price) >= th * (mx - mn)
-        
+
         def _find_good_price(self, ami, state):
-            """Finds a good-enough price conceding linearly over time"""        
+            """Finds a good-enough price conceding linearly over time"""
             mn, mx = self._price_range(ami)
             th = self._th(state.step, ami.n_steps)
             # offer a price that is around th of your best possible price
@@ -757,17 +762,17 @@ We will try to remedie both of these issues in the following agent:
                 return mn + th * (mx - mn)
             else:
                 return mx - th * (mx - mn)
-        
+
         def _price_range(self, ami):
             """Finds the minimum and maximum prices"""
             mn = ami.issues[UNIT_PRICE].min_value
-            mx = ami.issues[UNIT_PRICE].max_value           
+            mx = ami.issues[UNIT_PRICE].max_value
             return mn, mx
-        
+
         def _th(self, step, n_steps):
             """calculates a descending threshold (0 <= th <= 1)"""
-            return ((n_steps - step - 1) / (n_steps - 1)) ** self._e    
-            
+            return ((n_steps - step - 1) / (n_steps - 1)) ** self._e
+
     world, ascores, tscores = try_agent(BetterAgent)
 
 
@@ -800,9 +805,7 @@ separately to avoid the two issues presented earlier:
 
    .. code:: python
 
-        offer[UNIT_PRICE] = self._find_good_price(
-                self.get_ami(negotiator_id), state
-            )        
+        offer[UNIT_PRICE] = self._find_good_price(self.get_ami(negotiator_id), state)
 
    As an aside, notice that we needed to convert the offer to a list in
    order to overwrite the price then back into a tuple to send it to the
@@ -815,10 +818,10 @@ separately to avoid the two issues presented earlier:
    .. code:: python
 
         return (
-                response if
-                self._is_good_price(ami, state, offer[UNIT_PRICE])
-                else ResponseType.REJECT_OFFER
-            )
+            response
+            if self._is_good_price(ami, state, offer[UNIT_PRICE])
+            else ResponseType.REJECT_OFFER
+        )
 
 What we mean by a ``good-enough`` price is defined in ``_is_good_price``
 and ``_find_good_price`` methods. Both start by getting the limits of
@@ -903,11 +906,11 @@ concessions. The following agent implements this idea
 
     class AdaptiveAgent(BetterAgent):
         """Considers best price offers received when making its decisions"""
-    
+
         def before_step(self):
             super().before_step()
             self._best_selling, self._best_buying = 0.0, float("inf")
-                         
+
         def respond(self, negotiator_id, state, offer):
             """Save the best price received"""
             response = super().respond(negotiator_id, state, offer)
@@ -917,7 +920,7 @@ concessions. The following agent implements this idea
             else:
                 self._best_buying = min(offer[UNIT_PRICE], self._best_buying)
             return response
-        
+
         def _price_range(self, ami):
             """Limits the price by the best price received"""
             mn, mx = super()._price_range(ami)
@@ -926,7 +929,7 @@ concessions. The following agent implements this idea
             else:
                 mx = min(mx, self._best_buying)
             return mn, mx
-    
+
     world, ascores, tscores = try_agent(AdaptiveAgent)
 
 
@@ -985,7 +988,7 @@ on accomulated statistics per agent
             self._opp_price_slack = opp_price_slack
             self._opp_acc_price_slack = opp_acc_price_slack
             self._range_slack = range_slack
-    
+
         def init(self):
             """Initialize the quantities and best prices received so far"""
             super().init()
@@ -993,18 +996,18 @@ on accomulated statistics per agent
             self._best_opp_selling = defaultdict(float)
             self._best_opp_buying = defaultdict(lambda: float("inf"))
             self._best_opp_acc_selling = defaultdict(float)
-            self._best_opp_acc_buying = defaultdict(lambda: float("inf"))        
-    
+            self._best_opp_acc_buying = defaultdict(lambda: float("inf"))
+
         def step(self):
             """Initialize the quantities and best prices received for next step"""
             super().step()
             self._best_opp_selling = defaultdict(float)
             self._best_opp_buying = defaultdict(lambda: float("inf"))
-    
+
         def on_negotiation_success(self, contract, mechanism):
             """Record sales/supplies secured"""
             super().on_negotiation_success(contract, mechanism)
-    
+
             # update my current best price to use for limiting concession in other
             # negotiations
             up = contract.agreement["unit_price"]
@@ -1016,7 +1019,7 @@ on accomulated statistics per agent
                 partner = contract.annotation["seller"]
                 self._best_acc_buying = min(up, self._best_acc_buying)
                 self._best_opp_acc_buying[partner] = min(up, self._best_opp_acc_buying[partner])
-    
+
         def respond(self, negotiator_id, state, offer):
             # find the quantity I still need and end negotiation if I need nothing more
             response = super().respond(negotiator_id, state, offer)
@@ -1031,7 +1034,7 @@ on accomulated statistics per agent
                 partner = ami.annotation["seller"]
                 self._best_opp_buying[partner] = min(up, self._best_buying)
             return response
-        
+
         def _price_range(self, ami):
             """Limits the price by the best price received"""
             mn = ami.issues[UNIT_PRICE].min_value
@@ -1071,7 +1074,7 @@ on accomulated statistics per agent
                     ]
                 ))
             return mn, mx
-    
+
     world, ascores, tscores = try_agent(LearningAgent)
 
 
@@ -1179,26 +1182,26 @@ To make an agent that works anywhere, we need just minor modifications:
 .. code:: ipython3
 
     class DeepSimpleAgent(SimpleAgent):
-        """A greedy agent based on OneShotSyncAgent that does something 
+        """A greedy agent based on OneShotSyncAgent that does something
         when in the middle of the production chain"""
-        
+
         def before_step(self):
             self._sales = self._supplies = 0
-            
+
         def on_negotiation_success(self, contract, mechanism):
             if contract.annotation["product"] == self.awi.my_input_product:
                 self._sales += contract.agreement["quantity"]
             else:
                 self._supplies += contract.agreement["quantity"]
-            
+
         def _needed(self, negotiator_id):
             summary = self.awi.exogenous_contract_summary
-            secured = ( 
-                self._sales 
-                if self._is_selling(self.get_ami(negotiator_id)) 
+            secured = (
+                self._sales
+                if self._is_selling(self.get_ami(negotiator_id))
                 else self._supplies
             )
-            demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)     
+            demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)
             return  demand - secured
 
 Firstly, we now keep track of our sales and supplies separately:
@@ -1207,6 +1210,7 @@ Firstly, we now keep track of our sales and supplies separately:
 
    def before_step(self):
        self._sales = self._supplies = 0
+
 
    def on_negotiation_success(self, contract, mechanism):
        if contract.annotation["seller"] == self.id:
@@ -1224,13 +1228,11 @@ needs for supplies and sales:
 
    def _needed(self, negotiator_id):
        summary = self.awi.exogenous_contract_summary
-       secured = ( 
-           self._sales 
-           if self._is_selling(self.get_ami(negotiator_id)) 
-           else self._supplies
+       secured = (
+           self._sales if self._is_selling(self.get_ami(negotiator_id)) else self._supplies
        )
-       demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)     
-       return  demand - secured
+       demand = min(summary[0][0], summary[-1][0]) / (self.awi.n_competitors + 1)
+       return demand - secured
 
 here we start by reading the summary information of exogenous contracts
 into ``summary``. This is a list of two valued tuples giving the
@@ -1326,18 +1328,18 @@ do-nothing agent in this form:
         """My Agent that does nothing"""
         def counter_all(self, offers, states):
             """Respond to a set of offers given the negotiation state of each."""
-            return dict(zip(self.negotiators.keys(), 
-                            [SAOResponse(ResponseType.END_NEGOTIATION, None)] 
+            return dict(zip(self.negotiators.keys(),
+                            [SAOResponse(ResponseType.END_NEGOTIATION, None)]
                             * len(self.negotiators)
                            ))
-        
+
         def first_proposals(self):
-            """Decide a first proposal on every negotiation. 
+            """Decide a first proposal on every negotiation.
             Returning None for a negotiation means ending it."""
-            return dict(zip(self.negotiators.keys(), 
+            return dict(zip(self.negotiators.keys(),
                             [None] * len(self.negotiators)
                            ))
-        
+
     world, ascores, tscores = try_agent(MySyncOneShotDoNothing)
 
 
@@ -1380,34 +1382,34 @@ greedy agent using this approach.
 
     class SyncAgent(OneShotSyncAgent, BetterAgent):
         """A greedy agent based on OneShotSyncAgent"""
-        
+
         def __init__(self, *args, threshold=0.5, **kwargs):
             super().__init__(*args, **kwargs)
             self._threshold = threshold
-        
+
         def before_step(self):
             super().before_step()
             self.ufun.find_limit(True)
             self.ufun.find_limit(False)
-            
+
         def first_proposals(self):
-            """Decide a first proposal on every negotiation. 
+            """Decide a first proposal on every negotiation.
             Returning None for a negotiation means ending it."""
             return  dict(zip(
-                    self.negotiators.keys(), 
+                    self.negotiators.keys(),
                     (self.best_offer(_) for _ in self.negotiators.keys())
             ))
-        
+
         def counter_all(self, offers, states):
             """Respond to a set of offers given the negotiation state of each."""
             responses = {
-                k: SAOResponse(ResponseType.REJECT_OFFER, v) 
+                k: SAOResponse(ResponseType.REJECT_OFFER, v)
                 for k, v in self.first_proposals().items()
             }
             my_needs = self._needed()
             is_selling = ( self._is_selling(self.get_ami(_)) for _ in offers.keys() )
             sorted_offers = sorted(
-                zip(offers.values(), is_selling), 
+                zip(offers.values(), is_selling),
                 key=lambda x: (- x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE]
             )
             secured, outputs, chosen = 0, [], dict()
@@ -1418,15 +1420,15 @@ greedy agent using this approach.
                     break
                 chosen[k] = offer
                 outputs.append(is_output)
-                
+
             u = self.ufun.from_offers(list(chosen.values()), outputs)
             rng = self.ufun.max_utility - self.ufun.min_utility
             threshold = self._threshold * rng + self.ufun.min_utility
             if u >= threshold:
                 for k, v in chosen.items():
-                    responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)                
+                    responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
             return responses
-        
+
     world, ascores, tscores = try_agent(SyncAgent)
 
 
@@ -1471,9 +1473,9 @@ method (called at the beginning of every day):
 .. code:: python
 
     def before_step(self):
-       super().init()
-       self.ufun.find_limit(True)
-       self.ufun.find_limit(False)
+        super().init()
+        self.ufun.find_limit(True)
+        self.ufun.find_limit(False)
 
 After this call, we can access ``maximum_utility``, ``minimum_utility``,
 ``best``, ``worst`` members of the ufun. As explained earlier, ``best``
@@ -1506,7 +1508,7 @@ go over it here:
 .. code:: python
 
    responses = {
-       k: SAOResponse(ResponseType.REJECT_OFFER, _) 
+       k: SAOResponse(ResponseType.REJECT_OFFER, _)
        for k, v in self.first_proposals().items()
    }
    my_needs = self._needed(None)
@@ -1517,10 +1519,10 @@ go over it here:
 
 .. code:: python
 
-   is_selling = ( self._is_selling(self.get_ami(_)) for _ in offers.keys() )
+   is_selling = (self._is_selling(self.get_ami(_)) for _ in offers.keys())
    sorted_offers = sorted(
-       zip(offers.values(), is_selling), 
-       key=lambda x: (- x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE]
+       zip(offers.values(), is_selling),
+       key=lambda x: (-x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE],
    )
 
 -  We *greedily* find a set of offers that satisfy all our needs (or as
@@ -1624,9 +1626,9 @@ To use this agent, you need to implement three methods:
 
 .. code:: python
 
-   mx, mn = self.ufun.max_utility , self.ufun.min_utility
-   u = (self.ufun(offer) - mn) / (mx - mn) 
-   return  u >= (1-state.relative_time)
+   mx, mn = self.ufun.max_utility, self.ufun.min_utility
+   u = (self.ufun(offer) - mn) / (mx - mn)
+   return u >= (1 - state.relative_time)
 
 -  ``best_offer`` finds the best offer among a set of offers. Here we
    simply compare their utility
@@ -1650,25 +1652,25 @@ Here is the full agent
 
     class SimpleSingleAgreementAgent(OneShotSingleAgreementAgent):
         """A greedy agent based on OneShotSingleAgreementAgent"""
-        
+
         def before_step(self):
             self.ufun.find_limit(True) # finds highest utility
             self.ufun.find_limit(False) # finds lowest utility
-        
-        def is_acceptable(self, offer, source, state) -> bool:        
+
+        def is_acceptable(self, offer, source, state) -> bool:
             mx, mn = self.ufun.max_utility , self.ufun.min_utility
-            u = (self.ufun(offer) - mn) / (mx - mn) 
+            u = (self.ufun(offer) - mn) / (mx - mn)
             return  u >= (1-state.relative_time)
-    
+
         def best_offer(self, offers):
-            ufuns = [(self.ufun(_), i) 
+            ufuns = [(self.ufun(_), i)
                      for i, _ in enumerate(offers.values())]
             keys = list(offers.keys())
             return keys[max(ufuns)[1]]
-    
+
         def is_better(self, a, b, negotiator, state):
             return self.ufun(a) > self.ufun(b)
-    
+
     world, ascors, tscores = try_agent(SimpleSingleAgreementAgent)
 
 
@@ -1717,7 +1719,7 @@ This is an example agent that uses this approach:
 .. code:: ipython3
 
     from scml.oneshot import OneShotIndNegotiatorsAgent
-    
+
     class AssumeOthersFailIndNeg(OneShotIndNegotiatorsAgent):
         def generate_ufuns(self):
             return defaultdict(lambda: self.ufun)
@@ -1788,9 +1790,9 @@ because the agent may over-contract.
                     reserved_value=0.0,
                 )
             return d
-    
+
     world, ascors, tscores = try_agent(GreedyIndNeg)
-    
+
     print_type_scores(tscores)
 
 
@@ -1870,13 +1872,13 @@ will work correctly. Here is an example
     # used to check whether or not the negmas-genius bridge
     # is running
     from negmas.genius import genius_bridge_is_running
-    
+
     class GeniusIndNeg(GreedyIndNeg):
         def __init__(self, *args, **kwargs):
             kwargs["default_negotiator_type"] = NiceTitForTat
             kwargs["normalize_ufuns"] = True
             super().__init__(*args, **kwargs)
-    
+
     if genius_bridge_is_running():
         world, ascors, tscores = try_agent(GeniusIndNeg)
         print_type_scores(tscores)
@@ -1905,10 +1907,10 @@ tutorial (we will ignore the do-nothing agents)
         [
             SimpleAgent, DeepSimpleAgent,
             BetterAgent, LearningAgent,
-            AdaptiveAgent, SyncAgent, 
-            SimpleSingleAgreementAgent, 
+            AdaptiveAgent, SyncAgent,
+            SimpleSingleAgreementAgent,
             GreedyIndNeg,
-        ] + 
+        ] +
         [GeniusIndNeg] if genius_bridge_is_running() else [],
         n_trials=20,
         n_processes=2,
@@ -1981,8 +1983,8 @@ track (with some rough edges). Let’s try to do that here:
     from scml.scml2020.agents import BuyCheapSellExpensiveAgent, DecentralizingAgent
     from scml.oneshot.agents import SingleAgreementAspirationAgent as AspirationAgent
     _, _, tscores = try_agents(
-    [SimpleAgent, DeepSimpleAgent, BetterAgent, LearningAgent, 
-    AdaptiveAgent, SyncAgent, AspirationAgent, 
+    [SimpleAgent, DeepSimpleAgent, BetterAgent, LearningAgent,
+    AdaptiveAgent, SyncAgent, AspirationAgent,
     BuyCheapSellExpensiveAgent, DecentralizingAgent],
     n_processes = 4,
     n_trials = 10,
@@ -2025,5 +2027,3 @@ With that we end our tutorial. Have fun developing your agent.
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.
-
-

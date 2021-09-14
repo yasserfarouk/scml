@@ -362,7 +362,7 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
 
 
 class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
-    """ A greedy agent based on `OneShotSingleAgreementAgent`"""
+    """A greedy agent based on `OneShotSingleAgreementAgent`"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

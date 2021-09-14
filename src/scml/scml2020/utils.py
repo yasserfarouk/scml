@@ -10,28 +10,32 @@ from typing import Tuple
 import numpy as np
 from negmas import Agent
 from negmas.helpers import get_full_type_name
-from negmas.serialization import serialize, deserialize
 from negmas.helpers import unique_name
+from negmas.serialization import deserialize
+from negmas.serialization import serialize
 from negmas.tournaments import TournamentResults
 from negmas.tournaments import WorldRunResults
 from negmas.tournaments import tournament
 
-from scml.oneshot.agents import GreedyOneShotAgent, SingleAgreementAspirationAgent, GreedySyncAgent
+from scml.oneshot.agents import GreedyOneShotAgent
+from scml.oneshot.agents import GreedySyncAgent
+from scml.oneshot.agents import SingleAgreementAspirationAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.oneshot.world import SCML2020OneShotWorld
 from scml.scml2020.agents import BuyCheapSellExpensiveAgent
 from scml.scml2020.agents import DecentralizingAgent
 from scml.scml2020.agents import MarketAwareDecentralizingAgent
 from scml.scml2020.agents import MarketAwareIndDecentralizingAgent
-from scml.scml2020.agents import SatisficerAgent
 from scml.scml2020.agents import MarketAwareMovingRangeAgent
-from scml.scml2020.world import SCML2020World, SCML2021World
+from scml.scml2020.agents import SatisficerAgent
+from scml.scml2020.world import SCML2020World
+from scml.scml2020.world import SCML2021World
 from scml.scml2020.world import is_system_agent
-
 
 try:
     from negmas.helpers import truncated_mean
 except Exception as e:
+
     def truncated_mean(
         scores: np.ndarray,
         limits: Optional[Tuple[float, float]] = None,
@@ -70,7 +74,11 @@ except Exception as e:
         scores = scores[~np.isnan(scores)]
 
         if isinstance(limits, str) and limits.lower() == "mean":
-            return tmean(scores, None) if not return_limits else (tmean(scores, None), None)
+            return (
+                tmean(scores, None)
+                if not return_limits
+                else (tmean(scores, None), None)
+            )
         if isinstance(limits, str) and limits.lower() == "median":
             return np.median(scores) if not return_limits else (np.median(scores), None)
         if limits is not None:
@@ -83,7 +91,8 @@ except Exception as e:
             q1, q3 = np.quantile(scores, 0.25), np.quantile(scores, 0.75)
             iqr = q3 - q1
             limits = (
-                q1 - (bottom_limit * iqr if not np.isinf(bottom_limit) else bottom_limit),
+                q1
+                - (bottom_limit * iqr if not np.isinf(bottom_limit) else bottom_limit),
                 q3 + (top_limit * iqr if not np.isinf(top_limit) else top_limit),
             )
         elif base == "iqr_fraction":
@@ -105,7 +114,9 @@ except Exception as e:
             if top_indx < bottom_indx:
                 return float("nan") if not return_limits else (float("nan"), limits)
             m = np.mean(scores[bottom_indx : top_indx + 1])
-            return m if not return_limits else (m, (scores[bottom_indx], scores[top_indx]))
+            return (
+                m if not return_limits else (m, (scores[bottom_indx], scores[top_indx]))
+            )
         elif base == "scores":
             bottom_limit = min(1, max(0, bottom_limit))
             top_limit = min(1, max(0, top_limit))
@@ -134,6 +145,7 @@ except Exception as e:
             return tm if not return_limits else (tm, limits)
         except ValueError:
             return float("nan") if not return_limits else (float("nan"), limits)
+
 
 if True:
     from typing import Any
@@ -184,9 +196,9 @@ DefaultAgents2021 = [
 
 
 DefaultAgentsOneShot = [
-    GreedyOneShotAgent, 
-    SingleAgreementAspirationAgent, 
-    GreedySyncAgent
+    GreedyOneShotAgent,
+    SingleAgreementAspirationAgent,
+    GreedySyncAgent,
 ]
 
 
@@ -1214,8 +1226,6 @@ def anac2020_collusion(
         forced_logs_fraction=forced_logs_fraction,
         **kwargs,
     )
-
-
 
 
 def anac2021_tournament(

@@ -1,12 +1,15 @@
+from pprint import pformat
+
 from negmas import ResponseType
 from negmas.helpers import single_thread
 from negmas.sao import SAOResponse
-from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
-from scml.oneshot import OneShotSyncAgent, SCML2020OneShotWorld
+from scml.oneshot import OneShotSyncAgent
+from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot.agents import RandomOneShotAgent
-
-from pprint import pformat
+from scml.scml2020.common import QUANTITY
+from scml.scml2020.common import TIME
+from scml.scml2020.common import UNIT_PRICE
 
 
 class MyExogAgent(OneShotSyncAgent):

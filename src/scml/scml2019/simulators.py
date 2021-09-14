@@ -1523,13 +1523,13 @@ def temporary_transaction(simulator):
 class _ShadowFactorySimulator:
     """An FactorySimulator As seen by JNegMAS.
 
-        This is an object that is not visible to python code. It is not directly called from python ever. It is only called
-        from a corresponding Java object to represent an internal python object. Because of he way py4j works, we cannot
-        just use dunders to implement this kind of object in general. We will have to implement each such class
-        independently.
+    This is an object that is not visible to python code. It is not directly called from python ever. It is only called
+    from a corresponding Java object to represent an internal python object. Because of he way py4j works, we cannot
+    just use dunders to implement this kind of object in general. We will have to implement each such class
+    independently.
 
-        This kind of classes will always have an internal Java class implementing a Java interface in Jnegmas that starts
-        with Py.
+    This kind of classes will always have an internal Java class implementing a Java interface in Jnegmas that starts
+    with Py.
 
     """
 

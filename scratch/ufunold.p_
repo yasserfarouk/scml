@@ -834,12 +834,12 @@ class OneShotUFun(UtilityFunction):
 
             # input negotiated quantity cannot negative or more than what can be negotiated
             m += qin >= 0  # typing: ignore
-            max_in_neg = self.input_qrange[1] * self.n_input_negs 
+            max_in_neg = self.input_qrange[1] * self.n_input_negs
             m += qin <= max_in_neg # typing: ignore
 
             # output negotiated quantity cannot negative or more than what can be negotiated
             m += qout >= 0  # typing: ignore
-            max_out_neg = self.output_qrange[1] * self.n_output_negs 
+            max_out_neg = self.output_qrange[1] * self.n_output_negs
             m += qout <= max_out_neg # typing: ignore
 
             # production must be positive and below capacity and inputs
@@ -899,7 +899,7 @@ class OneShotUFun(UtilityFunction):
                 # we still CANNOT produce more than what we commit to. This is
                 # hard-coded in our production. See from_offers
                 m += produced <= qout_total
-                # # if production will make us make money, do not do it 
+                # # if production will make us make money, do not do it
                 # if self.production_cost + self.shortfall_penalty * output_scale < uout:
                 #     m += produced == 0
 

@@ -11,7 +11,11 @@ from .common import ANY_LINE
 from .common import ANY_STEP
 from .common import INFINITE_COST
 from .common import NO_COMMAND
-from .common import is_system_agent, FactoryProfile, ContractInfo, FactoryState, Failure
+from .common import ContractInfo
+from .common import FactoryProfile
+from .common import FactoryState
+from .common import Failure
+from .common import is_system_agent
 
 __all__ = [
     "Factory",

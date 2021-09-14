@@ -215,20 +215,20 @@ def generate_configs_single(
     n_worlds_per_condition: 5,
 ) -> List[Dict[str, Any]]:
     """
-        Generates all configs for an experiment with a factorial design
+    Generates all configs for an experiment with a factorial design
 
-        Args:
-            ind_var: The independent variable. Note that multiple variables can be passed by separating them with
-                     semicolons
-            ind_values: The values to try for that independent variable. Note that multiple values can be passed in a
-                        tuple
-            fixed_vars: Fixed variables to be passed directly to the world generator
-            n_worlds_per_condition: Number of simulations for each config
+    Args:
+        ind_var: The independent variable. Note that multiple variables can be passed by separating them with
+                 semicolons
+        ind_values: The values to try for that independent variable. Note that multiple values can be passed in a
+                    tuple
+        fixed_vars: Fixed variables to be passed directly to the world generator
+        n_worlds_per_condition: Number of simulations for each config
 
-        Returns:
-            List of configs
+    Returns:
+        List of configs
 
-        """
+    """
     configs = []
     for val in ind_values:
         vars_ = get_var_vals(ind_var, val)

@@ -27,7 +27,13 @@ from .common import FinancialReport
 from .helpers import pos_gauss
 
 if True:  #
-    from typing import Dict, Any, List, Optional, Union, Tuple
+    from typing import Any
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Tuple
+    from typing import Union
+
     from .common import Loan
 
 if TYPE_CHECKING:

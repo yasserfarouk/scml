@@ -1,17 +1,21 @@
 #!/usr/bin/env python
+import itertools
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
-import tqdm
-from concurrent.futures import as_completed, ProcessPoolExecutor
-import itertools
-import typer
-import pandas as pd
-from scml.oneshot import SCML2020OneShotWorld
-from scml.scml2020.common import is_system_agent
-from scml.oneshot.agents import RandomOneShotAgent, GreedyOneShotAgent
-import seaborn as sns
+
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import tqdm
+import typer
 from negmas.helpers import add_records
+
+from scml.oneshot import SCML2020OneShotWorld
+from scml.oneshot.agents import GreedyOneShotAgent
+from scml.oneshot.agents import RandomOneShotAgent
+from scml.scml2020.common import is_system_agent
 
 app = typer.Typer()
 # disposal_cost = [0.1, 0.2, 0.5, 1.0, 2.0]
@@ -67,7 +71,7 @@ class Recorder(SCML2020OneShotWorld):
             if a.ufun is None:
                 continue
             if self.__util_eval_method.startswith("b"):
-                a.ufun.worst= a.ufun.find_limit_brute_force(False)
+                a.ufun.worst = a.ufun.find_limit_brute_force(False)
                 a.ufun.best = a.ufun.find_limit_brute_force(True)
             elif self.__util_eval_method.startswith("o"):
                 a.ufun.best = a.ufun.find_limit_optimal(True)

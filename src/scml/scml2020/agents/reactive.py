@@ -48,6 +48,7 @@ class ReactiveAgent(
 
         return needed[steps[0] : steps[1]] - secured[steps[0] : steps[1]]
 
+
 class MarketAwareReactiveAgent(KeepOnlyGoodPrices, ReactiveAgent):
     def __init__(
         self,
@@ -66,4 +67,3 @@ class MarketAwareReactiveAgent(KeepOnlyGoodPrices, ReactiveAgent):
             max_price_margin=max_price_margin,
             **kwargs
         )
-

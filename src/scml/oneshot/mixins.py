@@ -1,4 +1,5 @@
-from .common import QUANTITY, UNIT_PRICE
+from .common import QUANTITY
+from .common import UNIT_PRICE
 from .ufun import OneShotUFun
 
 __all__ = ["OneShotUFunCreatorMixin"]

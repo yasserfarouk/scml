@@ -35,7 +35,7 @@ that:
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
-    
+
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
             agent_types = types,
@@ -45,7 +45,7 @@ that:
             construct_graphs=True,
         )
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
     world.run()
@@ -64,7 +64,7 @@ in the agent name. You can confirm it explicity by checking types:
 
 .. code:: ipython3
 
-    [a._obj.__class__.__name__ 
+    [a._obj.__class__.__name__
      for a in world.agents.values()
      if not is_system_agent(a.id)
     ]
@@ -94,7 +94,7 @@ approach we used before:
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
-    
+
     fig, axs = plt.subplots(1, 4)
     for ax in axs:
         world = SCML2020OneShotWorld(
@@ -106,9 +106,9 @@ approach we used before:
                 construct_graphs=True,
             )
         )
-        world.draw(axs=ax, steps=(0, world.n_steps), 
+        world.draw(axs=ax, steps=(0, world.n_steps),
                    what=["contracts-concluded"])
-        
+
 
 
 
@@ -145,7 +145,7 @@ level is **between 3 and 7** not exactly either of them.
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
-    
+
     fig, axs = plt.subplots(1, 4)
     for ax in axs:
         world = SCML2020OneShotWorld(
@@ -180,7 +180,7 @@ choosing:
             construct_graphs=True,
         )
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -210,10 +210,10 @@ follows:
     from scml.scml2020.world import SCML2021World
     from scml.scml2020.agents import DecentralizingAgent, BuyCheapSellExpensiveAgent
     from negmas import NaiveTitForTatNegotiator
-    
+
     types = [DecentralizingAgent] * 2 + [BuyCheapSellExpensiveAgent] * 4
     params = (
-        [dict(negotiator_type=NaiveTitForTatNegotiator), dict()] 
+        [dict(negotiator_type=NaiveTitForTatNegotiator), dict()]
         + [dict()] * 4
     )
     agents_per_process = [2, 3, 1]
@@ -227,7 +227,7 @@ follows:
             construct_graphs=True,
         )
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -264,8 +264,8 @@ same method:
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 4
     params = (
-        [dict(controller_params=dict(concession_exponent=0.4)), 
-         dict(controller_params=dict(concession_exponent=3.0))] 
+        [dict(controller_params=dict(concession_exponent=0.4)),
+         dict(controller_params=dict(concession_exponent=3.0))]
         + [dict()] * 4
     )
     agents_per_process = [2, 3, 1]
@@ -279,7 +279,7 @@ same method:
             construct_graphs=True,
         )
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -365,7 +365,7 @@ but you can decide to test it:
             construct_graphs=True,
         )
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -439,7 +439,7 @@ all of this mingling:
 .. code:: ipython3
 
     world.run()
-    
+
     world.draw(what=["contracts-concluded"], steps=(0, world.n_steps))
     plt.show()
 
@@ -475,11 +475,11 @@ will generate a world in which agents have costs from :math:`1` to
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
             production_costs=list(range(1, 8)),
-            cost_increases_with_level=False,        
+            cost_increases_with_level=False,
             construct_graphs=True,
         )
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -536,13 +536,13 @@ Let’s try to do it for the ``SCML2021World`` first:
     import numpy as np
     from scml.scml2020 import FactoryProfile
     from scml.scml2020.common import INFINITE_COST, ExogenousContract
-    
+
     types = [DecentralizingAgent] * 3
     agents_per_process = [2, 1]
     n_processes=len(agents_per_process)
     n_lines=10
-    
-    # setup the factory profiles. For each factory we 
+
+    # setup the factory profiles. For each factory we
     # set production cost to INFINITE_COST for all processes
     # except the one it can actually run
     profiles = [
@@ -550,12 +550,12 @@ Let’s try to do it for the ``SCML2021World`` first:
         FactoryProfile(np.asarray([[20, INFINITE_COST]]*n_lines)),
         FactoryProfile(np.asarray([[INFINITE_COST, 5]]*n_lines)),
     ]
-    
+
     # create exogenous contracts
     exogenous=[
         ## exogenous supply
         ExogenousContract(
-            product=0, 
+            product=0,
             quantity=10,
             unit_price=5,
             time=1,
@@ -564,7 +564,7 @@ Let’s try to do it for the ``SCML2021World`` first:
             buyer=0,
         ),
         ExogenousContract(
-            product=0, 
+            product=0,
             quantity=10,
             unit_price=7,
             time=2,
@@ -574,7 +574,7 @@ Let’s try to do it for the ``SCML2021World`` first:
         ),
         ## exogenous sales
         ExogenousContract(
-            product=0, 
+            product=0,
             quantity=10,
             unit_price=5,
             time=1,
@@ -583,7 +583,7 @@ Let’s try to do it for the ``SCML2021World`` first:
             buyer=-1,
         ),
     ]
-    
+
     world = SCML2021World(
         process_inputs=np.ones(n_processes),
         process_outputs=np.ones(n_processes),
@@ -593,11 +593,11 @@ Let’s try to do it for the ``SCML2021World`` first:
         agent_params=[dict()] * 3,
         exogenous_contracts=exogenous,
         n_steps=5,
-        construct_graphs=True,    
+        construct_graphs=True,
         agent_name_reveals_position=True,
-        agent_name_reveals_type=True,    
+        agent_name_reveals_type=True,
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -612,7 +612,7 @@ happened:
 .. code:: ipython3
 
     from pprint import pprint
-    pprint(list((list(str(_) 
+    pprint(list((list(str(_)
           for _ in  contracts)
           for s, contracts in world.exogenous_contracts.items()
          )))
@@ -653,10 +653,10 @@ Let’s try to run this world
 .. code:: ipython3
 
     world.run()
-    
+
     _, axs = plt.subplots(2)
     world.draw(
-        what=["negotiations-started", "contracts-concluded"], 
+        what=["negotiations-started", "contracts-concluded"],
         steps=(0, world.n_steps), together=False, axs=axs
     )
     plt.show()
@@ -684,7 +684,7 @@ is slightly different. Here is an example case:
     from scml.oneshot import OneShotProfile
     from scml.oneshot import OneShotExogenousContract
     from scml.oneshot import DefaultOneShotAdapter
-    
+
     types = [DefaultOneShotAdapter] * 3
     params = [
         dict(controller_type=GreedyOneShotAgent)
@@ -693,24 +693,24 @@ is slightly different. Here is an example case:
     n_processes=len(agents_per_process)
     n_lines=10
     common=dict(
-        n_lines=10,    
+        n_lines=10,
         shortfall_penalty_mean=0.2,
         disposal_cost_mean=0.1,
         shortfall_penalty_dev=0.01,
         disposal_cost_dev=0.01,
     )
-    # setup the factory profiles. For each factory we 
+    # setup the factory profiles. For each factory we
     profiles = [
         OneShotProfile(cost=3, input_product=0, **common),
         OneShotProfile(cost=10, input_product=0, **common),
         OneShotProfile(cost=7, input_product=1, **common),
     ]
-    
+
     # create exogenous contracts
     exogenous=[
         ## exogenous supply
         OneShotExogenousContract(
-            product=0, 
+            product=0,
             quantity=10,
             unit_price=5,
             time=1,
@@ -719,7 +719,7 @@ is slightly different. Here is an example case:
             buyer=0,
         ),
         OneShotExogenousContract(
-            product=0, 
+            product=0,
             quantity=10,
             unit_price=7,
             time=2,
@@ -729,7 +729,7 @@ is slightly different. Here is an example case:
         ),
         ## exogenous sales
         OneShotExogenousContract(
-            product=0, 
+            product=0,
             quantity=10,
             unit_price=5,
             time=1,
@@ -738,7 +738,7 @@ is slightly different. Here is an example case:
             buyer=-1,
         ),
     ]
-    
+
     world = SCML2020OneShotWorld(
         catalog_prices=[10, 20, 30],
         profiles=profiles,
@@ -746,11 +746,11 @@ is slightly different. Here is an example case:
         agent_params=params,
         exogenous_contracts=exogenous,
         n_steps=5,
-        construct_graphs=True,    
+        construct_graphs=True,
         agent_name_reveals_position=True,
-        agent_name_reveals_type=True,    
+        agent_name_reveals_type=True,
     )
-    
+
     world.draw(what=["contracts-concluded"])
     plt.show()
 
@@ -764,10 +764,10 @@ The world is constructed. Lets run it and see what happens:
 .. code:: ipython3
 
     world.run()
-    
+
     _, axs = plt.subplots(2)
     world.draw(
-        what=["negotiations-started", "contracts-concluded"], 
+        what=["negotiations-started", "contracts-concluded"],
         steps=(0, world.n_steps), together=False, axs=axs
     )
     plt.show()
@@ -788,9 +788,7 @@ constructor (because ``OneshotAgent`` is a controller and not an
 .. code:: python
 
    types = [DefaultOneShotAdapter] * 3
-   params = [
-       dict(controller_type=GreedyOneShotAgent)
-   ] * 3
+   params = [dict(controller_type=GreedyOneShotAgent)] * 3
 
 The real agent type we want is to be passed in ``controller_type``.
 
@@ -806,5 +804,3 @@ previous case.
 
 
 Download :download:`Notebook<notebooks/04.experiments.ipynb>`.
-
-

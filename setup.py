@@ -83,9 +83,14 @@ setup(
         "gif",
         "mip",
     ],
-    extras_require={"gui": ["pyqt5"],},
+    extras_require={
+        "gui": ["pyqt5"],
+    },
     setup_requires=["pytest-runner"],
     entry_points={
-        "console_scripts": ["scml = scml.cli:main", "cliadv = scml.cliadv:cli",]
+        "console_scripts": [
+            "scml = scml.cli:main",
+            "cliadv = scml.cliadv:cli",
+        ]
     },
 )

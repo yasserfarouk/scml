@@ -5,7 +5,8 @@ import logging
 import math
 import random
 import sys
-from collections import defaultdict, Counter
+from collections import Counter
+from collections import defaultdict
 from collections import namedtuple
 from dataclasses import dataclass
 from typing import Any
@@ -24,9 +25,9 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
-from negmas import Action
 
 # from negmas import Adapter
+from negmas import Action
 from negmas import Agent
 from negmas import Breach
 from negmas import Contract
@@ -42,28 +43,29 @@ from negmas.situated import World
 
 from scml.scml2019.utils import _realin
 
+from ..common import distribute_quantities
+from ..common import fraction_cut
+from ..common import integer_cut
+from ..common import intin
+from ..common import make_array
+from ..common import realin
+from ..oneshot.agent import OneShotAgent
+from .agent import OneShotAdapter
+from .agent import SCML2020Agent
+from .agent import _SystemAgent
+from .awi import AWI
 from .common import COMPENSATION_ID
 from .common import INFINITE_COST
 from .common import NO_COMMAND
 from .common import SYSTEM_BUYER_ID
 from .common import SYSTEM_SELLER_ID
-from .common import (
-    is_system_agent,
-    FactoryProfile,
-    ExogenousContract,
-    FinancialReport,
-    ContractInfo,
-    Failure,
-)
+from .common import ContractInfo
+from .common import ExogenousContract
+from .common import FactoryProfile
+from .common import Failure
+from .common import FinancialReport
+from .common import is_system_agent
 from .factory import Factory
-from .awi import AWI
-from .agent import OneShotAdapter, SCML2020Agent, _SystemAgent
-from ..oneshot.agent import OneShotAgent
-from ..common import integer_cut, fraction_cut
-from ..common import intin
-from ..common import make_array
-from ..common import realin
-from ..common import distribute_quantities
 
 __all__ = [
     "SCML2020World",
@@ -2086,7 +2088,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             # initialize all agents for this step
             # ===================================
             for _, a in self.agents.items():
-                if (not self.a2f[_].is_bankrupt) and  hasattr(a, "before_step"):
+                if (not self.a2f[_].is_bankrupt) and hasattr(a, "before_step"):
                     a.before_step()
             return
 
@@ -2110,7 +2112,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             + self._sold_quantity[has_trade, s + 1]
         )
         self._trading_price[has_trade, s + 1] /= self._betas_sum[has_trade, s + 1]
-        self._trading_price[:, s + 1:] = self._trading_price[:, s + 1].reshape((self.n_products, 1))
+        self._trading_price[:, s + 1 :] = self._trading_price[:, s + 1].reshape(
+            (self.n_products, 1)
+        )
         self._traded_quantity += self._sold_quantity[:, s + 1]
         # self._trading_price[has_trade, s] = (
         #         np.sum(self._betas[:s+1] * self._real_price[has_trade, s::-1])
@@ -2840,7 +2844,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         if self.current_step == self.n_steps:
             return self._trading_price[:, -1]
         return self._trading_price[:, self.current_step + 1]
-
 
     @property
     def stats_df(self) -> pd.DataFrame:

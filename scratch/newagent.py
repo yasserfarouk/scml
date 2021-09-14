@@ -1,5 +1,7 @@
 import numpy as np
-from scml import DecentralizingAgent, TradePredictionStrategy
+
+from scml import DecentralizingAgent
+from scml import TradePredictionStrategy
 
 
 class MyPredictor(TradePredictionStrategy):

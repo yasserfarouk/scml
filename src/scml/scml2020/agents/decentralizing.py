@@ -9,15 +9,13 @@ import numpy as np
 from negmas import LinearUtilityFunction
 
 from scml.scml2020.components import IndependentNegotiationsManager
-from scml.scml2020.components import StepNegotiationManager
 from scml.scml2020.components import MovingRangeNegotiationManager
+from scml.scml2020.components import StepNegotiationManager
 from scml.scml2020.components import SupplyDrivenProductionStrategy
 
-from ..components.signing import KeepOnlyGoodPrices
-from ..components.trading import (
-    PredictionBasedTradingStrategy,
-)
 from ..components.prediction import MarketAwareTradePredictionStrategy
+from ..components.signing import KeepOnlyGoodPrices
+from ..components.trading import PredictionBasedTradingStrategy
 from ..world import SCML2020Agent
 
 __all__ = [

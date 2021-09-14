@@ -1431,10 +1431,10 @@ def run2020(
         save_run_info(world.name, log_dir, "world")
 
 
-DEFAULT_STD = (
-    "RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent"
+DEFAULT_STD = "RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent"
+DEFAULT_STD_2021 = (
+    "MarketAwareDecentralizingAgent;RandomAgent;SatisficerAgent;DecentralizingAgent"
 )
-DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;RandomAgent;SatisficerAgent;DecentralizingAgent"
 DEFAULT_2021_NONCOMPETITORS = [
     # "scml.scml2020.agents.DecentralizingAgent",
     "scml.scml2020.agents.BuyCheapSellExpensiveAgent",

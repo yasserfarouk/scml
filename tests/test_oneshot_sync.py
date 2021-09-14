@@ -1,20 +1,20 @@
 import os
-from typing import Tuple, Dict
 import time
-from pytest import raises, mark
 from contextlib import contextmanager
+from typing import Dict
+from typing import Tuple
 
 from negmas import ResponseType
+from negmas.helpers import force_single_thread
 from negmas.sao import SAOResponse
+from pytest import mark
+from pytest import raises
 
-from scml.oneshot.agent import (
-    OneShotSyncAgent,
-)
+from scml.oneshot.agent import OneShotSyncAgent
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.oneshot.common import QUANTITY
 from scml.oneshot.common import TIME
 from scml.oneshot.common import UNIT_PRICE
-from negmas.helpers import force_single_thread
 
 
 class MySyncAgent(OneShotSyncAgent):
@@ -105,7 +105,11 @@ class NotSleepingNotChecking(MySyncAgent):
 def does_not_raise(err):
     yield None
 
-@mark.skipif(os.environ.get("GITHUB_ACTIONS", "false") == "true", reason="Skipped on CI ... toooooo slowwwwww")
+
+@mark.skipif(
+    os.environ.get("GITHUB_ACTIONS", "false") == "true",
+    reason="Skipped on CI ... toooooo slowwwwww",
+)
 @mark.parametrize(
     ["use_sleep", "check_negs", "single_thread", "raise_expected"],
     [

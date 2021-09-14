@@ -1,4 +1,6 @@
-import copy, itertools, sys
+import copy
+import itertools
+import sys
 from collections import defaultdict
 
 import hypothesis.strategies as st
