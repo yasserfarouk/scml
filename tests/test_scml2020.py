@@ -14,7 +14,6 @@ from scml.scml2020 import SCML2020World
 from scml.scml2020 import builtin_agent_types
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
-from scml.scml2020.world import SCML2021World
 
 random.seed(0)
 

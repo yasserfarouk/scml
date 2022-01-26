@@ -37,7 +37,7 @@ class MySyncAgent(OneShotSyncAgent):
                 a *= i
 
     def counter_all(self, offers, states):
-        s = set(self.get_ami(_) for _ in offers.keys())
+        s = set(self.get_nmi(_) for _ in offers.keys())
         if self.in_counter_all and (
             not self._check_negs
             or (self._check_negs and len(self.countering_set.intersection(s)))
@@ -66,7 +66,7 @@ class MySyncAgent(OneShotSyncAgent):
         )
 
     def get_offer(self, negotiator_id: str):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         quantity_issue = ami.issues[QUANTITY]
         unit_price_issue = ami.issues[UNIT_PRICE]
 

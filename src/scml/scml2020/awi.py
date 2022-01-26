@@ -11,11 +11,11 @@ from typing import Union
 
 import numpy as np
 from negmas import AgentWorldInterface
-from negmas import Issue
 from negmas import Negotiator
 from negmas import PassThroughSAONegotiator
 from negmas import SAOController
 from negmas import SAONegotiator
+from negmas import make_issue
 
 from .common import ANY_LINE
 from .common import ANY_STEP
@@ -340,9 +340,9 @@ class AWI(AgentWorldInterface):
             "caller": self.agent.id,
         }
         issues = [
-            Issue(values(quantity), name="quantity", value_type=int),
-            Issue(values(time), name="time", value_type=int),
-            Issue(values(unit_price), name="unit_price", value_type=int),
+            make_issue(values(quantity), name="quantity"),
+            make_issue(values(time), name="time"),
+            make_issue(values(unit_price), name="unit_price"),
         ]
         partners = [self.agent.id, partner]
         extra["negotiator_id"] = negotiator.id

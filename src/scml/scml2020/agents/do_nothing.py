@@ -4,12 +4,12 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from negmas import AgentMechanismInterface
 from negmas import Breach
 from negmas import Contract
 from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 
 from scml.scml2020 import Failure
 from scml.scml2020 import SCML2020Agent
@@ -25,7 +25,7 @@ class DoNothingAgent(SCML2020Agent):
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         return None
 
@@ -62,13 +62,13 @@ class DoNothingAgent(SCML2020Agent):
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 

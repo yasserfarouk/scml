@@ -11,15 +11,17 @@ from typing import Tuple
 from typing import Union
 
 import numpy as np
-from negmas import AgentMechanismInterface
 from negmas import AspirationNegotiator
 from negmas import Contract
 from negmas import Issue
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 from negmas import SAONegotiator
 from negmas import UtilityFunction
+from negmas import make_issue
 from negmas.helpers import get_class
 from negmas.helpers import instantiate
+from negmas.outcomes.issue_ops import enumerate_issues
 
 from scml.scml2020 import AWI
 from scml.scml2020.common import TIME
@@ -321,7 +323,7 @@ class NegotiationManager:
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         raise ValueError("You must implement respond_to_negotiation_request")
 
@@ -455,7 +457,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
 
         # find negotiation parameters
@@ -472,7 +474,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             return None
         # self.awi.loginfo_agent(
         #     f"Accepting request from {initiator}: {[str(_) for _ in mechanism.issues]} "
-        #     f"({Issue.num_outcomes(mechanism.issues)})"
+        #     f"({num_outcomes(mechanism.issues)})"
         # )
         # create a controller for the time-step if one does not exist or use the one already running
         if controller_info.controller is None:
@@ -672,9 +674,9 @@ class IndependentNegotiationsManager(NegotiationManager):
         # negotiate with all suppliers of the input product I need to produce
 
         issues = [
-            Issue((int(qvalues[0]), int(qvalues[1])), name="quantity"),
-            Issue((int(tvalues[0]), int(tvalues[1])), name="time"),
-            Issue((int(uvalues[0]), int(uvalues[1])), name="uvalues"),
+            make_issue((int(qvalues[0]), int(qvalues[1])), name="quantity"),
+            make_issue((int(tvalues[0]), int(tvalues[1])), name="time"),
+            make_issue((int(uvalues[0]), int(uvalues[1])), name="uvalues"),
         ]
 
         for partner in partners:
@@ -693,7 +695,7 @@ class IndependentNegotiationsManager(NegotiationManager):
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         return self.negotiator(
             annotation["seller"] == self.id, issues=issues, partner=initiator
@@ -709,9 +711,7 @@ class IndependentNegotiationsManager(NegotiationManager):
         self, is_seller: bool, issues=None, outcomes=None, partner=None
     ) -> SAONegotiator:
         """Creates a negotiator"""
-        if outcomes is None and (
-            issues is None or not Issue.enumerate(issues, astype=tuple)
-        ):
+        if outcomes is None and (issues is None or not enumerate_issues(issues)):
             return None
         params = self.negotiator_params
         params["ufun"] = self.create_ufun(
@@ -858,7 +858,7 @@ class MovingRangeNegotiationManager:
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         if not (
             issues[TIME].min_value < self._current_end

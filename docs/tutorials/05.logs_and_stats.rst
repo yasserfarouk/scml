@@ -44,12 +44,6 @@ stored
 
     !rm -r ~/negmas/logs/test_world
 
-
-.. parsed-literal::
-
-    rm: /Users/yasser/negmas/logs/test_world: No such file or directory
-
-
 .. code:: ipython3
 
     from scml import SCML2020World
@@ -109,25 +103,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    2021-03-08 16:06:19,300 - INFO - 0/10 [0.00%]: test_world: World Created
+    2022-01-25 18:19:45,766 - INFO - 0/10 [0.00%]: test_world: World Created
 
-    2021-03-08 16:06:19,302 - INFO - 0/10 [0.00%]: 00DoN@0 joined
+    2022-01-25 18:19:45,768 - INFO - 0/10 [0.00%]: 00DoN@0 joined
 
-    2021-03-08 16:06:19,303 - INFO - 0/10 [0.00%]: 01DoN@0 joined
+    2022-01-25 18:19:45,771 - INFO - 0/10 [0.00%]: 01DoN@0 joined
 
-    2021-03-08 16:06:19,303 - INFO - 0/10 [0.00%]: 02DoN@0 joined
+    2022-01-25 18:19:45,771 - INFO - 0/10 [0.00%]: 02DoN@0 joined
 
-    2021-03-08 16:06:19,304 - INFO - 0/10 [0.00%]: 03DoN@1 joined
+    2022-01-25 18:19:45,772 - INFO - 0/10 [0.00%]: 03DoN@1 joined
 
-    2021-03-08 16:06:19,304 - INFO - 0/10 [0.00%]: 04DoN@1 joined
+    2022-01-25 18:19:45,773 - INFO - 0/10 [0.00%]: 04DoN@1 joined
 
-    2021-03-08 16:06:19,305 - INFO - 0/10 [0.00%]: 05DoN@1 joined
+    2022-01-25 18:19:45,774 - INFO - 0/10 [0.00%]: 05DoN@1 joined
 
-    2021-03-08 16:06:19,305 - INFO - 0/10 [0.00%]: SELLER joined
+    2022-01-25 18:19:45,775 - INFO - 0/10 [0.00%]: SELLER joined
 
-    2021-03-08 16:06:19,305 - INFO - 0/10 [0.00%]: BUYER joined
+    2022-01-25 18:19:45,776 - INFO - 0/10 [0.00%]: BUYER joined
 
-    2021-03-08 16:06:19,313 - INFO - 0/10 [0.00%]: This is a test message
+    2022-01-25 18:19:45,782 - INFO - 0/10 [0.00%]: This is a test message
 
 
 
@@ -172,11 +166,10 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
     │   ├── 01DWL@0.txt
     │   ├── 02DWL@0.txt
     │   ├── 03DWL@1.txt
-    │   ├── 04DWL@1.txt
-    │   └── 05DWL@1.txt
+    │   └── 04DWL@1.txt
     └── events.json
 
-    1 directory, 7 files
+    1 directory, 6 files
 
 
 .. code:: ipython3
@@ -188,25 +181,25 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    2021-03-08 16:06:20,937 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (18.0, 36), t: (1, 6)
+    2022-01-25 18:19:46,867 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (7, 23), t: (1, 6)
 
-    2021-03-08 16:06:20,968 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID 61df1858-727f-460c-81c4-e64a91a95deb)
+    2022-01-25 18:19:46,869 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID 5f3dca0c-1a97-4983-8743-24efe86c3763)
 
-    2021-03-08 16:06:20,971 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
+    2022-01-25 18:19:46,870 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2021-03-08 16:06:20,974 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (18.0, 36), t: (1, 6)
+    2022-01-25 18:19:46,870 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (7, 23), t: (1, 6)
 
-    2021-03-08 16:06:20,975 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 07d3f5bb-5892-46ff-8208-13c2bd288ae3)
+    2022-01-25 18:19:46,872 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID f681abe7-a061-4724-b29d-1cdcc19ba4d3)
 
-    2021-03-08 16:06:20,981 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
+    2022-01-25 18:19:46,873 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2021-03-08 16:06:20,981 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (18.0, 36), t: (1, 6)
+    2022-01-25 18:19:46,876 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (7, 23), t: (2, 7)
 
-    2021-03-08 16:06:20,982 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 8cb9d99d-3a2e-46bb-923e-dc59d52925d3)
+    2022-01-25 18:19:46,877 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID f7bf97e6-3c4e-42ce-9772-27766a7624ea)
 
-    2021-03-08 16:06:20,992 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
+    2022-01-25 18:19:46,878 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2021-03-08 16:06:20,995 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 19), u: (18.0, 36), t: (2, 7)
+    2022-01-25 18:19:46,879 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (7, 23), t: (2, 7)
 
 
 
@@ -300,10 +293,9 @@ Let’s try changing some of these:
     ├── [01;34m_agent_logs[00m
     │   ├── 00DWL@0.txt
     │   ├── 01DWL@0.txt
-    │   ├── 02DWL@0.txt
+    │   ├── 02DWL@1.txt
     │   ├── 03DWL@1.txt
-    │   ├── 04DWL@1.txt
-    │   └── 05DWL@1.txt
+    │   └── 04DWL@1.txt
     ├── agents.json
     ├── breaches.csv
     ├── contracts.csv
@@ -312,10 +304,9 @@ Let’s try changing some of these:
     ├── negotiations.csv
     ├── params.json
     ├── stats.csv
-    ├── stats.csv.csv
-    └── stats.json
+    └── stats.csv.csv
 
-    1 directory, 16 files
+    1 directory, 14 files
 
 
 Now we can see that many more files are created in the log folder. These
@@ -507,20 +498,6 @@ Here are some of the most important parameters stored in this file:
 +--------------------+-------------------------------------------------+
 
 You can check any of these parameters by loading the json file:
-
-.. code:: ipython3
-
-    from negmas.helpers import load
-    load(Path(world.log_folder) / "params.json")["n_processes"]
-
-
-
-
-.. parsed-literal::
-
-    2
-
-
 
 info.json
 ^^^^^^^^^

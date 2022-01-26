@@ -7,21 +7,18 @@ from typing import List
 from typing import Optional
 
 from negmas import Adapter
-from negmas import AgentMechanismInterface
 from negmas import Breach
 from negmas import Contract
 from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 from negmas import RenegotiationRequest
 from negmas.sao import PassThroughSAONegotiator
 
 from .agent import OneShotAgent
-from .common import QUANTITY
-from .common import UNIT_PRICE
 from .helper import AWIHelper
 from .mixins import OneShotUFunCreatorMixin
-from .ufun import OneShotUFun
 
 __all__ = ["DefaultOneShotAdapter", "_SystemAgent"]
 
@@ -86,7 +83,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         partners: List[str],
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         role: Optional[str],
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
@@ -111,7 +108,9 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
     def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
         pass
 
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
+    def on_neg_request_accepted(
+        self, req_id: str, mechanism: NegotiatorMechanismInterface
+    ):
         pass
 
 
@@ -137,7 +136,7 @@ class _SystemAgent(DefaultOneShotAdapter):
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         pass
 
@@ -154,13 +153,13 @@ class _SystemAgent(DefaultOneShotAdapter):
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 

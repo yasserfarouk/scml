@@ -33,6 +33,7 @@ from negmas import Issue
 from negmas import Operations
 from negmas import TimeInAgreementMixin
 from negmas import World
+from negmas import make_issue
 from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
@@ -40,7 +41,6 @@ from negmas.helpers import unique_name
 from negmas.sao import PassThroughSAONegotiator
 from negmas.sao import SAOController
 from negmas.sao import SAONegotiator
-from networkx.convert import to_dict_of_dicts
 
 from ..common import distribute_quantities
 from ..common import integer_cut
@@ -55,8 +55,6 @@ from ..scml2020.common import SYSTEM_SELLER_ID
 from ..scml2020.common import is_system_agent
 from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
-from .common import QUANTITY
-from .common import UNIT_PRICE
 from .common import OneShotExogenousContract
 from .common import OneShotProfile
 from .sysagents import DefaultOneShotAdapter
@@ -564,9 +562,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues.append(
                 [
-                    Issue(values(quantity), name="quantity", value_type=int),
-                    Issue(values(time), name="time", value_type=int),
-                    Issue(values(unit_price), name="unit_price", value_type=int),
+                    make_issue(values(quantity), name="quantity"),
+                    make_issue(values(time), name="time"),
+                    make_issue(values(unit_price), name="unit_price"),
                 ]
             )
 
@@ -1845,7 +1843,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         def values(x: Union[int, Tuple[int, int]]):
             if not isinstance(x, Iterable):
                 return int(x), int(x)
-            return int(x[0]), int(x[1])
+            return int(min(x)), int(max(x))
 
         controllers = dict()
 
@@ -1858,9 +1856,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues[product] = [
-                Issue(values(quantity), name="quantity", value_type=int),
-                Issue(values(time), name="time", value_type=int),
-                Issue(values(unit_price), name="unit_price", value_type=int),
+                make_issue(values(quantity), name="quantity"),
+                make_issue(values(time), name="time"),
+                make_issue(values(unit_price), name="unit_price"),
             ]
             for aid in self.consumers[product]:
                 if is_system_agent(aid) or isinstance(

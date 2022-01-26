@@ -23,7 +23,6 @@ from negmas import save_stats
 from negmas.helpers import humanize_time
 from negmas.helpers import load
 from negmas.helpers import unique_name
-from negmas.java import jnegmas_bridge_is_running
 from tabulate import tabulate
 
 import scml
@@ -224,12 +223,6 @@ def main():
     " agents",
 )
 @click.option(
-    "--jcompetitors",
-    "--java-competitors",
-    default="",
-    help="A semicolon (;) separated list of agent types to use for the competition.",
-)
-@click.option(
     "--non-competitors",
     default="",
     help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
@@ -308,7 +301,6 @@ def tournament2019(
     runs,
     max_runs,
     competitors,
-    jcompetitors,
     non_competitors,
     log,
     world_config,
@@ -357,24 +349,6 @@ def tournament2019(
         if "." not in cp:
             all_competitors[i] = ("scml.scml2019.factory_managers.builtins.") + cp
     all_competitors_params = [dict() for _ in range(len(all_competitors))]
-    if jcompetitors is not None and len(jcompetitors) > 0:
-        jcompetitor_params = [{"java_class_name": _} for _ in jcompetitors.split(";")]
-        for jp in jcompetitor_params:
-            if "." not in jp["java_class_name"]:
-                jp["java_class_name"] = (
-                    "jnegmas.apps.scml.factory_managers." + jp["java_class_name"]
-                )
-        jcompetitors = ["scml.scml2019.JavaFactoryManager"] * len(jcompetitor_params)
-        all_competitors += jcompetitors
-        all_competitors_params += jcompetitor_params
-        print("You are using some Java agents. The tournament MUST run serially")
-        if not jnegmas_bridge_is_running():
-            print(
-                "Error: You are using java competitors but jnegmas bridge is not running\n\nTo correct this issue"
-                " run the following command IN A DIFFERENT TERMINAL because it will block:\n\n"
-                "$ negmas jnegmas"
-            )
-            exit(1)
 
     permutation_size = len(all_competitors) if "sabotage" not in ttype else 1
     if cw > len(all_competitors):
@@ -426,9 +400,6 @@ def tournament2019(
             )
 
     parallelism = "parallel" if parallel else "serial"
-    if len(jcompetitors) > 0:
-        print("You are using java-competitors. The tournament will be run serially")
-        parallelism = "serial"
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -836,12 +807,6 @@ def _path(path) -> Path:
     help="A semicolon (;) separated list of agent types to use for the competition.",
 )
 @click.option(
-    "--jcompetitors",
-    "--java-competitors",
-    default="",
-    help="A semicolon (;) separated list of agent types to use for the competition.",
-)
-@click.option(
     "--log",
     type=click.Path(file_okay=False, dir_okay=True),
     default=default_log_path(),
@@ -886,7 +851,6 @@ def run2019(
     steps,
     levels,
     competitors,
-    jcompetitors,
     log,
     compact,
     log_ufuns,
@@ -947,25 +911,6 @@ def run2019(
     all_competitors_params = [
         dict() if _no_default(_) else factory_kwargs for _ in all_competitors
     ]
-    if jcompetitors is not None and len(jcompetitors) > 0:
-        jcompetitor_params = [{"java_class_name": _} for _ in jcompetitors.split(";")]
-        for jp in jcompetitor_params:
-            if "." not in jp["java_class_name"]:
-                jp["java_class_name"] = (
-                    "jnegmas.apps.scml.factory_managers." + jp["java_class_name"]
-                )
-        jcompetitors = ["scml.scml2019.JavaFactoryManager"] * len(jcompetitor_params)
-        all_competitors += jcompetitors
-        all_competitors_params += jcompetitor_params
-        print("You are using some Java agents. The tournament MUST run serially")
-        parallelism = "serial"
-        if not jnegmas_bridge_is_running():
-            print(
-                "Error: You are using java competitors but jnegmas bridge is not running\n\nTo correct this issue"
-                " run the following command IN A DIFFERENT TERMINAL because it will block:\n\n"
-                "$ negmas jnegmas"
-            )
-            exit(1)
 
     world = SCML2019World.chain_world(
         n_steps=steps,

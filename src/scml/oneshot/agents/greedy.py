@@ -117,7 +117,7 @@ class GreedyOneShotAgent(OneShotAgent):
 
         # over-write the unit price in the best offer with a good-enough price
         offer = list(offer)
-        offer[UNIT_PRICE] = self._find_good_price(self.get_ami(negotiator_id), state)
+        offer[UNIT_PRICE] = self._find_good_price(self.get_nmi(negotiator_id), state)
         return tuple(offer)
 
     def respond(self, negotiator_id, state, offer):
@@ -136,7 +136,7 @@ class GreedyOneShotAgent(OneShotAgent):
             return response
 
         # reject offers with prices that are deemed NOT good-enough
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         response = (
             response
             if self._is_good_price(ami, state, offer[UNIT_PRICE])
@@ -160,7 +160,7 @@ class GreedyOneShotAgent(OneShotAgent):
         my_needs = int(self._needed(negotiator_id))
         if my_needs <= 0:
             return None
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         if not ami:
             return None
         quantity_issue = ami.issues[QUANTITY]
@@ -178,7 +178,7 @@ class GreedyOneShotAgent(OneShotAgent):
         return tuple(offer)
 
     def _needed(self, negotiator_id):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         if not ami:
             return 0
         summary = self.awi.exogenous_contract_summary
@@ -293,7 +293,7 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
             return dict(zip(offers.keys(), itertools.repeat(None)))
 
         good_prices = {
-            k: self._find_good_price(self.get_ami(k), s) for k, s in states.items()
+            k: self._find_good_price(self.get_nmi(k), s) for k, s in states.items()
         }
 
         responses = {
@@ -301,10 +301,10 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
         }
         my_input_needs, my_output_needs = self._needs()
         input_offers = {
-            k: v for k, v in offers.items() if not self._is_selling(self.get_ami(k))
+            k: v for k, v in offers.items() if not self._is_selling(self.get_nmi(k))
         }
         output_offers = {
-            k: v for k, v in offers.items() if self._is_selling(self.get_ami(k))
+            k: v for k, v in offers.items() if self._is_selling(self.get_nmi(k))
         }
 
         def calc_responses(my_needs, offers, is_selling):

@@ -12,15 +12,16 @@ from typing import Union
 import numpy as np
 from negmas import AgentWorldInterface
 from negmas import AspirationMixin
-from negmas import Issue
 from negmas import LinearUtilityFunction
 from negmas import MechanismState
 from negmas import Outcome
 from negmas import PassThroughNegotiator
 from negmas import ResponseType
 from negmas import UtilityFunction
+from negmas import make_issue
+from negmas import make_os
 from negmas import outcome_is_valid
-from negmas.common import AgentMechanismInterface
+from negmas.common import NegotiatorMechanismInterface
 from negmas.events import Notification
 from negmas.events import Notifier
 from negmas.helpers import instantiate
@@ -100,28 +101,44 @@ class StepController(SAOController, AspirationMixin, Notifier):
         negotiator_params = (
             negotiator_params if negotiator_params is not None else dict()
         )
-        self.secured = 0
         if is_seller:
-            self.ufun = LinearUtilityFunction((1, 1, 10))
+            self.ufun = LinearUtilityFunction(
+                weights=(1.0, 1.0, 10.0), outcome_space=self._max_outcome_space()
+            )
         else:
-            self.ufun = LinearUtilityFunction((1, -1, -10))
+            self.ufun = LinearUtilityFunction(
+                weights=(1.0, -1.0, -10.0), outcome_space=self._max_outcome_space()
+            )
         negotiator_params["ufun"] = self.ufun
         self.__negotiator = instantiate(negotiator_type, **negotiator_params)
+        self.secured = 0
         self.completed = defaultdict(bool)
         self.step = step
         self.retries: Dict[str, int] = defaultdict(int)
         self.max_retries = max_retries
 
+    def _max_outcome_space(self):
+        return make_os(
+            [
+                make_issue((1, 1000), name="quantity"),
+                make_issue((1, 1000), name="time"),
+                make_issue((1, 1000), name="unit_price"),
+            ]
+        )
+
     def join(
         self,
         negotiator_id: str,
-        ami: AgentMechanismInterface,
+        nmi: NegotiatorMechanismInterface,
         state: MechanismState,
         *,
+        preferences: Optional["Preferences"] = None,
         ufun: Optional["UtilityFunction"] = None,
         role: str = "agent",
     ) -> bool:
-        joined = super().join(negotiator_id, ami, state, ufun=ufun, role=role)
+        joined = super().join(
+            negotiator_id, nmi, state, preferences=preferences, ufun=ufun, role=role
+        )
         if joined:
             self.completed[negotiator_id] = False
         return joined
@@ -129,7 +146,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
     def propose(self, negotiator_id: str, state: MechanismState) -> Optional["Outcome"]:
         if negotiator_id not in self.negotiators.keys():
             return None
-        self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
+        self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
         return self.__negotiator.propose(state)
 
     def respond(
@@ -141,7 +158,7 @@ class StepController(SAOController, AspirationMixin, Notifier):
             return ResponseType.END_NEGOTIATION
         # if negotiator_id not in self.negotiators:
         #     breakpoint()
-        self.__negotiator._ami = self.negotiators[negotiator_id][0]._ami
+        self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
         return self.__negotiator.respond(offer=offer, state=state)
 
     def __str__(self):
@@ -285,7 +302,7 @@ class SyncController(SAOSyncController):
         return self._price_weight * price + (1 - self._price_weight) * q
 
     def is_valid(self, negotiator_id: str, offer: "Outcome") -> bool:
-        issues = self.negotiators[negotiator_id][0].ami.issues
+        issues = self.negotiators[negotiator_id][0].nmi.issues
         return outcome_is_valid(offer, issues)
 
     def counter_all(
@@ -307,7 +324,7 @@ class SyncController(SAOSyncController):
         utils = np.array(
             [
                 self.utility(
-                    tuple(o), self.negotiators[nid][0].ami.issues[UNIT_PRICE].max_value
+                    tuple(o), self.negotiators[nid][0].nmi.issues[UNIT_PRICE].max_value
                 )
                 for nid, o in offers.items()
             ]
@@ -381,19 +398,20 @@ class SyncController(SAOSyncController):
             The outcome with highest utility and the corresponding utility
         """
         negotiator = self.negotiators[nid][0]
-        if negotiator.ami is None:
+        if negotiator.nmi is None:
             return None, -1000
+        outcomes = negotiator.nmi.discrete_outcomes()
         utils = np.array(
             [
-                self.utility(_, negotiator.ami.issues[UNIT_PRICE].max_value)
-                for _ in negotiator.ami.outcomes
+                self.utility(_, negotiator.nmi.issues[UNIT_PRICE].max_value)
+                for _ in outcomes
             ]
         )
         best_indx = np.argmax(utils)
         self._best_utils[nid] = utils[best_indx]
         if utils[best_indx] < 0:
             return None, utils[best_indx]
-        return negotiator.ami.outcomes[best_indx], utils[best_indx]
+        return outcomes[best_indx], utils[best_indx]
 
     def first_proposals(self) -> Dict[str, "Outcome"]:
         """Gets a set of proposals to use for initializing the negotiation."""

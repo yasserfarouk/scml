@@ -4,7 +4,7 @@ import warnings
 from typing import Iterable, Tuple, Union, List, Collection, Optional
 
 from negmas import Contract
-from negmas.utilities import UtilityFunction, UtilityValue
+from negmas.preferences import UtilityFunction, UtilityValue
 from negmas.outcomes import Outcome, Issue
 
 
@@ -485,8 +485,8 @@ class OneShotUFun(UtilityFunction):
         )
         if product is None and ami:
             product = ami.annotation["product"]
-        if product is None and self.ami:
-            product = self.ami.annotation.get("product", None)
+        if product is None and self.nmi:
+            product = self.nmi.annotation.get("product", None)
         if product is None:
             raise ValueError("Cannot find the utility range of a midlevel agent")
         t = self.current_step

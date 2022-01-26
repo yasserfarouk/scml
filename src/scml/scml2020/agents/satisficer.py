@@ -8,11 +8,11 @@ from typing import List
 from typing import Optional
 
 import numpy as np
-from negmas import AgentMechanismInterface
 from negmas import Contract
 from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 from negmas import Outcome
 from negmas import ResponseType
 from negmas.sao import SAOAMI
@@ -57,12 +57,12 @@ class ObedientNegotiator(SAONegotiator):
 
     def propose(self, state: MechanismState) -> Optional[Outcome]:
         """Simply calls the corresponding method on the owner"""
-        return self.owner.propose(state, self.ami, self.is_selling, self.is_requested)
+        return self.owner.propose(state, self.nmi, self.is_selling, self.is_requested)
 
     def respond(self, state: MechanismState, offer: Outcome) -> ResponseType:
         """Simply calls the corresponding method on the owner"""
         return self.owner.respond(
-            state, self.ami, offer, self.is_selling, self.is_requested
+            state, self.nmi, offer, self.is_selling, self.is_requested
         )
 
 

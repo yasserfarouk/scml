@@ -127,8 +127,8 @@ We can run the last of these worlds just to be sure something happens!!
 
 .. parsed-literal::
 
-    (<AxesSubplot:title={'center':'Step: 11/10 [17s rem -1s] 110.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x1230469a0>)
+    (<AxesSubplot:title={'center':'Step: 11/10 [ 3s rem  0s] 110.00%'}>,
+     <networkx.classes.multidigraph.MultiDiGraph at 0x125e90b50>)
 
 
 
@@ -170,7 +170,7 @@ choosing:
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
-    agents_per_process = [2, 3, 1, 1, 3]
+    agents_per_process = [2, 3, 2, 3]
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
             agent_types = types,
@@ -247,7 +247,7 @@ world itself:
 
 .. parsed-literal::
 
-    [{'negotiator_type': <class 'negmas.sao.negotiators.NaiveTitForTatNegotiator'>}, {}, {}, {}, {}, {}]
+    [{'negotiator_type': <class 'negmas.sao.negotiators.titfortat.NaiveTitForTatNegotiator'>}, {}, {}, {}, {}, {}]
 
 
 We can see that the first agent had the negotiator-type we asked for and
@@ -621,11 +621,11 @@ happened:
 .. parsed-literal::
 
     [["00Dec@0, SELLER agreed on {'time': 1, 'quantity': 10, 'unit_price': 5} [id "
-      '42b06cd5-f47f-4127-b29e-ee729ac66d65]'],
+      'fd03da67-a5a8-4f7e-8578-fa5963a912cf]'],
      ["00Dec@0, SELLER agreed on {'time': 2, 'quantity': 10, 'unit_price': 7} [id "
-      '1d023750-f771-4427-a912-0614fdfb5656]',
+      '11313d0b-0036-410f-8449-493da67eaa33]',
       "BUYER, 02Dec@1 agreed on {'time': 1, 'quantity': 10, 'unit_price': 5} [id "
-      '3e8d941c-a84f-4514-b1c4-d48acff0cbc4]'],
+      '6918a6de-9d40-461c-ad83-52d934a243f9]'],
      [],
      [],
      []]

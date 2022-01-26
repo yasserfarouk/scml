@@ -2,7 +2,7 @@
 from typing import List, Optional, Dict, Any, Union
 
 import numpy as np
-from negmas import Contract, Breach, AgentMechanismInterface, MechanismState, Issue, Negotiator, RandomUtilityFunction
+from negmas import Contract, Breach, NegotiatorMechanismInterface, MechanismState, Issue, Negotiator, RandomUtilityFunction
 from negmas import AspirationNegotiator
 from negmas.helpers import instantiate, unique_name
 
@@ -386,7 +386,7 @@ class SCML2019Adapter(SCML2020Agent):
         self.__base.on_production_failure(fs)
 
     def respond_to_negotiation_request(self, initiator: str, issues: List[Issue], annotation: Dict[str, Any],
-                                       mechanism: AgentMechanismInterface) -> Optional[Negotiator]:
+                                       mechanism: NegotiatorMechanismInterface) -> Optional[Negotiator]:
         cfp = CFP(is_buy=annotation["is_buy"], publisher=initiator, product=annotation["product"], time=issues[TIME].values
                   , unit_price=issues[UNIT_PRICE].values, quantity=issues[QUANTITY].values,money_resolution=1.0, id=unique_name("cfp"))
         return self.__base.respond_to_negotiation_request(cfp, partner=initiator)
@@ -399,10 +399,10 @@ class SCML2019Adapter(SCML2020Agent):
         return self.__base.init()
 
     def on_negotiation_failure(self, partners: List[str], annotation: Dict[str, Any],
-                               mechanism: AgentMechanismInterface, state: MechanismState) -> None:
+                               mechanism: NegotiatorMechanismInterface, state: MechanismState) -> None:
         pass
 
-    def on_negotiation_success(self, contract: Contract, mechanism: AgentMechanismInterface) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:

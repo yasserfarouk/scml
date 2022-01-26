@@ -25,8 +25,8 @@ from typing import Union
 
 import numpy as np
 import yaml
-from negmas import AgentMechanismInterface
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 from negmas import UtilityFunction
 from negmas.events import Event
 from negmas.events import EventSource
@@ -2387,7 +2387,7 @@ class SCML2019World(TimeInAgreementMixin, World):
     #     annotation: Optional[Dict[str, Any]] = None,
     #     mechanism_name: str = None,
     #     mechanism_params: Dict[str, Any] = None,
-    # ) -> Optional[Tuple[Contract, AgentMechanismInterface]]:
+    # ) -> Optional[Tuple[Contract, NegotiatorMechanismInterface]]:
     def run_negotiation(
         self,
         caller: "Agent",
@@ -2400,7 +2400,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         annotation: Optional[Dict[str, Any]] = None,
         mechanism_name: str = None,
         mechanism_params: Dict[str, Any] = None,
-    ) -> Optional[Tuple[Contract, AgentMechanismInterface]]:
+    ) -> Optional[Tuple[Contract, NegotiatorMechanismInterface]]:
         annotation = self._process_annotation(annotation)
         if annotation is None:
             return None
@@ -2429,7 +2429,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         mechanism_names: Optional[Union[str, List[str]]] = None,
         mechanism_params: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
         all_or_none: bool = False,
-    ) -> List[Tuple[Contract, AgentMechanismInterface]]:
+    ) -> List[Tuple[Contract, NegotiatorMechanismInterface]]:
         if annotations is None:
             return None
         for i, annotation in enumerate(annotations):

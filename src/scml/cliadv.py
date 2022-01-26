@@ -19,14 +19,9 @@ import pandas as pd
 import progressbar
 import yaml
 from negmas import save_stats
-from negmas.helpers import camel_case
 from negmas.helpers import humanize_time
 from negmas.helpers import load
 from negmas.helpers import unique_name
-from negmas.java import init_jnegmas_bridge
-from negmas.java import jnegmas_bridge_is_running
-from negmas.tournaments import combine_tournament_stats
-from negmas.tournaments import combine_tournaments
 from negmas.tournaments import create_tournament
 from negmas.tournaments import evaluate_tournament
 from negmas.tournaments import run_tournament
@@ -36,7 +31,6 @@ import scml
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
 from scml.scml2019.utils import anac2019_assigner
 from scml.scml2019.utils import anac2019_config_generator
-from scml.scml2019.utils import anac2019_sabotage
 from scml.scml2019.utils import anac2019_sabotage_assigner
 from scml.scml2019.utils import anac2019_sabotage_config_generator
 from scml.scml2019.utils import anac2019_world_generator
@@ -215,12 +209,6 @@ def tournament(ctx, ignore_warnings):
     help="A semicolon (;) separated list of agent types to use for the competition. You"
     " can also pass the special value default for the default builtin"
     " agents",
-)
-@click.option(
-    "--jcompetitors",
-    "--java-competitors",
-    default="",
-    help="A semicolon (;) separated list of agent types to use for the competition.",
 )
 @click.option(
     "--non-competitors",
@@ -506,7 +494,6 @@ def create(
     max_runs,
     competitors,
     world_config,
-    jcompetitors,
     non_competitors,
     compact,
     factories,
@@ -601,8 +588,6 @@ def create(
             competitors = "RandomAgent;BuyCheapSellExpensiveAgent;DoNothingAgent;DecentralizingAgent"
         else:
             competitors = "DefaultFactoryManager;DoNothingFactoryManager"
-    if jcompetitors is not None and len(jcompetitors) > 0 and "2020" in ttype:
-        raise ValueError("Java competitors are not supported in SCML2020")
     if "2020" in ttype and "sabotage" in ttype.lower():
         raise ValueError("There is no sabotage track in SCML2020")
 
@@ -640,24 +625,6 @@ def create(
                 else "scml.scml2020.agents."
             ) + cp
     all_competitors_params = [dict() for _ in range(len(all_competitors))]
-    if jcompetitors is not None and len(jcompetitors) > 0:
-        jcompetitor_params = [{"java_class_name": _} for _ in jcompetitors.split(";")]
-        for jp in jcompetitor_params:
-            if "." not in jp["java_class_name"]:
-                jp["java_class_name"] = (
-                    "jnegmas.apps.scml.factory_managers." + jp["java_class_name"]
-                )
-        jcompetitors = ["scml.scml2019.JavaFactoryManager"] * len(jcompetitor_params)
-        all_competitors += jcompetitors
-        all_competitors_params += jcompetitor_params
-        print("You are using some Java agents. The tournament MUST run serially")
-        if not jnegmas_bridge_is_running():
-            print(
-                "Error: You are using java competitors but jnegmas bridge is not running\n\nTo correct this issue"
-                " run the following command IN A DIFFERENT TERMINAL because it will block:\n\n"
-                "$ negmas jnegmas"
-            )
-            exit(1)
 
     # if ttype.lower() == "anac2019std":
     #     if (
@@ -720,10 +687,6 @@ def create(
             worlds_per_config = (
                 None if max_runs is None else int(round(max_runs / (configs * runs)))
             )
-
-    if len(jcompetitors) > 0:
-        print("You are using java-competitors. The tournament will be run serially")
-        parallelism = "serial"
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -1145,12 +1108,6 @@ def _path(path) -> Path:
     help="A semicolon (;) separated list of agent types to use for the competition.",
 )
 @click.option(
-    "--jcompetitors",
-    "--java-competitors",
-    default="",
-    help="A semicolon (;) separated list of agent types to use for the competition.",
-)
-@click.option(
     "--log",
     type=click.Path(file_okay=False, dir_okay=True),
     default=default_log_path(),
@@ -1229,7 +1186,6 @@ def run2019(
     max_insurance,
     riskiness,
     competitors,
-    jcompetitors,
     log,
     compact,
     log_ufuns,
@@ -1337,25 +1293,6 @@ def run2019(
     all_competitors_params = [
         dict() if _no_default(_) else factory_kwargs for _ in all_competitors
     ]
-    if jcompetitors is not None and len(jcompetitors) > 0:
-        jcompetitor_params = [{"java_class_name": _} for _ in jcompetitors.split(";")]
-        for jp in jcompetitor_params:
-            if "." not in jp["java_class_name"]:
-                jp["java_class_name"] = (
-                    "jnegmas.apps.scml.factory_managers." + jp["java_class_name"]
-                )
-        jcompetitors = ["scml.scml2019.JavaFactoryManager"] * len(jcompetitor_params)
-        all_competitors += jcompetitors
-        all_competitors_params += jcompetitor_params
-        print("You are using some Java agents. The tournament MUST run serially")
-        parallelism = "serial"
-        if not jnegmas_bridge_is_running():
-            print(
-                "Error: You are using java competitors but jnegmas bridge is not running\n\nTo correct this issue"
-                " run the following command IN A DIFFERENT TERMINAL because it will block:\n\n"
-                "$ negmas jnegmas"
-            )
-            exit(1)
 
     world = SCML2019World.chain_world(
         n_steps=steps,

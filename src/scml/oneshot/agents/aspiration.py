@@ -7,6 +7,7 @@ from negmas import AspirationMixin
 from negmas import Issue
 from negmas import Outcome
 from negmas import ResponseType
+from negmas.outcomes.issue_ops import enumerate_issues
 from negmas.sao import SAOResponse
 from negmas.sao import SAOState
 
@@ -60,7 +61,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             if self.awi.is_first_level
             else self.awi.current_output_issues
         )
-        outcomes = list(Issue.enumerate(issues, astype=tuple))
+        outcomes = list(enumerate_issues(issues))
         self._outcomes = sorted(
             zip(
                 (

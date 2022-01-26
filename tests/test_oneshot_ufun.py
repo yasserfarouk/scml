@@ -77,7 +77,7 @@ class MyExogAgent(OneShotSyncAgent):
         )
 
     def get_offer(self, negotiator_id: str):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         quantity_issue = ami.issues[QUANTITY]
         unit_price_issue = ami.issues[UNIT_PRICE]
 

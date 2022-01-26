@@ -3,14 +3,15 @@ from collections import defaultdict
 from dataclasses import dataclass
 from random import random
 
-from negmas.common import AgentMechanismInterface
 from negmas.common import MechanismState
+from negmas.common import NegotiatorMechanismInterface
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
+from negmas.outcomes import make_issue
+from negmas.preferences import LinearAdditiveUtilityFunction
 from negmas.situated import Breach
 from negmas.situated import Contract
 from negmas.situated import RenegotiationRequest
-from negmas.utilities import LinearUtilityAggregationFunction
 from numpy.random import dirichlet
 
 from .agent import SCML2019Agent
@@ -90,11 +91,13 @@ class ReactiveMiner(Miner):
     def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
         pass
 
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
+    def on_neg_request_accepted(
+        self, req_id: str, mechanism: NegotiatorMechanismInterface
+    ):
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 
@@ -147,7 +150,7 @@ class ReactiveMiner(Miner):
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         # noinspection PyUnusedLocal
@@ -198,13 +201,18 @@ class ReactiveMiner(Miner):
         tau_t = pos_gauss(profile.tau_t, profile.cv)
         tau_q = pos_gauss(profile.tau_q, profile.cv)
 
-        ufun = LinearUtilityAggregationFunction(
-            issue_utilities={
+        ufun = LinearAdditiveUtilityFunction(
+            values={
                 "time": lambda x: x ** tau_t / beta_t,
                 "quantity": lambda x: x ** tau_q / beta_q,
                 "unit_price": lambda x: x ** tau_u / beta_u,
             },
             weights={"time": alpha_t, "quantity": alpha_q, "unit_price": alpha_u},
+            issues=[
+                make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
+                make_issue((cfp.min_time, cfp.max_time), "time"),
+                make_issue((cfp.min_unit_price, cfp.max_unit_price), "unit_price"),
+            ],
         )
         ufun.reserved_value = ufun(
             {

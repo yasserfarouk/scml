@@ -21,8 +21,8 @@ OneShotAgent
 
       ~OneShotAgent.connect_to_2021_adapter
       ~OneShotAgent.connect_to_oneshot_adapter
-      ~OneShotAgent.get_ami
       ~OneShotAgent.get_negotiator
+      ~OneShotAgent.get_nmi
       ~OneShotAgent.init
       ~OneShotAgent.make_ufun
       ~OneShotAgent.on_contract_breached
@@ -45,8 +45,8 @@ OneShotAgent
 
    .. automethod:: connect_to_2021_adapter
    .. automethod:: connect_to_oneshot_adapter
-   .. automethod:: get_ami
    .. automethod:: get_negotiator
+   .. automethod:: get_nmi
    .. automethod:: init
    .. automethod:: make_ufun
    .. automethod:: on_contract_breached

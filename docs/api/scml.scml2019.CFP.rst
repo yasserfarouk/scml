@@ -30,9 +30,9 @@ CFP
 
    .. autosummary::
 
-      ~CFP.from_java
+      ~CFP.from_dict
       ~CFP.satisfies
-      ~CFP.to_java
+      ~CFP.to_dict
 
    .. rubric:: Attributes Documentation
 
@@ -54,6 +54,6 @@ CFP
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: from_java
+   .. automethod:: from_dict
    .. automethod:: satisfies
-   .. automethod:: to_java
+   .. automethod:: to_dict

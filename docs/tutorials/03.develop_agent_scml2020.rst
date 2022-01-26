@@ -379,7 +379,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  6.39it/s]
+    100%|██████████| 10/10 [00:01<00:00,  7.97it/s]
 
 
 
@@ -469,7 +469,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:15<00:00,  1.50s/it]
+    100%|██████████| 10/10 [00:25<00:00,  2.58s/it]
 
 
 
@@ -540,6 +540,11 @@ NegMAS provides an easy to use controller that fits the bill called
 
         A controller that can manage multiple negotiators synchronously.
 
+        Args:
+
+            global_ufun: If true, the controller assumes that the ufun is only
+                         defined globally for the complete set of negotiations
+
         Remarks:
             - The controller waits for an offer from each one of its negotiators before deciding what to do.
             - Loops may happen if multiple controllers of this type negotiate with each other. For example controller A
@@ -574,7 +579,7 @@ This is a straight forward implementation of this idea
     class ControllerUFun(UtilityFunction):
         """A utility function for the controller"""
         def __init__(self, controller=None):
-            super().__init__(outcome_type=tuple)
+            super().__init__()
             self.controller = controller
 
         def eval(self, offer: "Outcome"):
@@ -660,7 +665,7 @@ This is a straight forward implementation of this idea
 
         def is_valid(self, negotiator_id: str, offer: "Outcome") -> bool:
             """Is this a valid offer for that negotiation"""
-            issues = self.negotiators[negotiator_id][0].ami.issues
+            issues = self.negotiators[negotiator_id][0].nmi.issues
             return outcome_is_valid(offer, issues)
 
         def counter_all(
@@ -876,7 +881,7 @@ Our negotiation control strategy will work as follows:
             initiator: str,
             issues: List["Issue"],
             annotation: Dict[str, Any],
-            mechanism: "AgentMechanismInterface",
+            mechanism: "NegotiatorMechanismInterface",
         ) -> Optional["Negotiator"]:
             # refuse to negotiate if the time-range does not intersect
             # the current range
@@ -918,7 +923,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:56<00:00, 11.67s/it]
+    100%|██████████| 10/10 [00:19<00:00,  1.92s/it]
 
 
 
@@ -981,15 +986,15 @@ average prices they get from their negotiations.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     5.0  0.8  0.3  0.2  0.9  1.0  1.0  1.0
+    False   True     6.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
     MyAgent:
     ===========
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     4.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
-    True    False    4.0  0.8  0.4  0.2  0.8  1.0  1.0  1.0
-            True    44.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    False   True    25.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    True    False   28.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+            True    22.0  0.5  0.1  0.4  0.5  0.5  0.6  0.6
 
 
 
@@ -1025,7 +1030,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:06<00:00,  6.64s/it]
+    100%|██████████| 10/10 [00:01<00:00,  7.03it/s]
 
 .. parsed-literal::
 
@@ -1171,15 +1176,15 @@ exploring the design space.
                     # for selling set a price that is at least the catalog price
                     min_price = self.awi.catalog_prices[product]
                     price_range = (min_price, 2 * min_price)
-                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction({
-                        TIME: 0.0, QUANTITY: (1-self._price_weight), UNIT_PRICE: self._price_weight
-                    }))
+                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction(
+                        (0.0, (1-self._price_weight), 0.0, self._price_weight)
+                    ))
                 else:
                     # for buying sell a price that is at most the catalog price
                     price_range = (0, self.awi.catalog_prices[product])
-                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction({
-                        TIME: 0.0, QUANTITY: (1-self._price_weight), UNIT_PRICE: -self._price_weight
-                    }))
+                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction(
+                        ((1-self._price_weight), 0.0, -self._price_weight)
+                    ))
 
                 self.awi.request_negotiations(
                     not seller,
@@ -1195,7 +1200,7 @@ exploring the design space.
             initiator: str,
             issues: List["Issue"],
             annotation: Dict[str, Any],
-            mechanism: "AgentMechanismInterface",
+            mechanism: "NegotiatorMechanismInterface",
         ) -> Optional["Negotiator"]:
             return None
 
@@ -1214,7 +1219,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:10<00:00,  7.01s/it]
+    100%|██████████| 10/10 [00:10<00:00,  1.05s/it]
 
 
 .. code:: ipython3
@@ -1235,9 +1240,14 @@ exploring the design space.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
-    True    False    5.0  0.5  0.4  0.0  0.0  0.7  0.7  0.8
-
+    False   True     4.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    True    False   56.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    AspirationAgent:
+    ===========
+                   price
+                   count mean  std  min  25%  50%  75%  max
+    selling buying
+    True    False   48.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
@@ -1292,7 +1302,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:34<00:00,  3.43s/it]
+    100%|██████████| 10/10 [00:02<00:00,  3.63it/s]
 
 
 .. code:: ipython3
@@ -1423,7 +1433,7 @@ The main idea behind this agent is very simple:
             initiator: str,
             issues: List["Issue"],
             annotation: Dict[str, Any],
-            mechanism: "AgentMechanismInterface",
+            mechanism: "NegotiatorMechanismInterface",
         ) -> Optional["Negotiator"]:
             is_seller = annotation["seller"] == self.id
             # do not engage in negotiations that obviouly have bad prices for me
@@ -1489,7 +1499,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:21<00:00,  2.13s/it]
+    100%|██████████| 10/10 [00:03<00:00,  3.27it/s]
 
 
 
@@ -1583,7 +1593,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:24<00:00,  2.42s/it]
+    100%|██████████| 10/10 [00:03<00:00,  2.91it/s]
 
 
 
@@ -1669,7 +1679,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:13<00:00,  1.32s/it]
+    100%|██████████| 10/10 [00:03<00:00,  2.79it/s]
 
 
 
