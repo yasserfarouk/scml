@@ -215,13 +215,11 @@ class ReactiveMiner(Miner):
             ],
         )
         ufun.reserved_value = ufun(
-            {
-                "time": cfp.max_time,
-                "quantity": cfp.max_quantity,
-                "unit_price": cfp.money_resolution
-                if cfp.money_resolution is not None
-                else 0.0,
-            }
+            (
+                cfp.max_time,
+                cfp.max_quantity,
+                cfp.money_resolution if cfp.money_resolution is not None else 0.0,
+            )
         )
         # ufun = normalize(, outcomes=cfp.outcomes, infeasible_cutoff=-1)
         negotiator = self.negotiator_type(

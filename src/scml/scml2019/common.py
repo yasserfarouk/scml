@@ -515,6 +515,24 @@ class SCMLAgreement:
     def __getitem__(self, k):
         return vars(self)[k]
 
+    def get(self, k, default=None):
+        return vars(self).get(k, default)
+
+    def asdict(self):
+        return vars(self)
+
+    def to_dict(self):
+        return vars(self)
+
+    def keys(self):
+        return vars(self).keys()
+
+    def values(self):
+        return vars(self).values()
+
+    def items(self):
+        return vars(self).items()
+
 
 @dataclass
 class CFP:

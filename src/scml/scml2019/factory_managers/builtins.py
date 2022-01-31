@@ -869,6 +869,8 @@ class NegotiatorUtility(UtilityFunction):
     def eval(self, outcome: Outcome) -> Optional[Value]:
         if outcome is None:
             return float("-inf")
+        if isinstance(outcome, tuple):
+            outcome = dict(zip(("quantity", "time", "unit_price"), outcome))
         if isinstance(outcome, dict):
             return self.call(agreement=SCMLAgreement(**outcome))
         if isinstance(outcome, SCMLAgreement):
