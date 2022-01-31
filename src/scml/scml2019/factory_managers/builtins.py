@@ -11,11 +11,11 @@ from negmas import Negotiator
 from negmas import NegotiatorMechanismInterface
 from negmas import RenegotiationRequest
 from negmas import UtilityFunction
+from negmas import Value
 from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.outcomes import Issue
 from negmas.outcomes import Outcome
-from negmas.preferences import UtilityValue
 
 from scml.scml2019.agent import SCML2019Agent
 from scml.scml2019.awi import SCMLAWI
@@ -824,7 +824,6 @@ class NegotiatorUtility(UtilityFunction):
             )
         super().__init__(
             name=name,
-            issue_names=["time", "unit_price", "quantity", "penalty", "signing_delay"],
             **kwargs,
         )
         self.agent = agent
@@ -834,15 +833,15 @@ class NegotiatorUtility(UtilityFunction):
 
     def _contracts(self, agreements: Iterable[SCMLAgreement]) -> Collection[Contract]:
         """Converts agreements/outcomes into contracts"""
-        if self.nmi is None:
+        if self.owner.nmi is None:
             raise ValueError("No annotation is stored (No mechanism info)")
-        annotation = self.nmi.annotation
+        annotation = self.owner.nmi.annotation
         return [
             Contract(
                 partners=annotation["partners"],
                 agreement=a,
                 annotation=annotation,
-                issues=self.nmi.issues,
+                issues=self.owner.nmi.issues,
             )
             for a in agreements
         ]
@@ -867,7 +866,7 @@ class NegotiatorUtility(UtilityFunction):
             else False
         )
 
-    def eval(self, outcome: Outcome) -> Optional[UtilityValue]:
+    def eval(self, outcome: Outcome) -> Optional[Value]:
         if outcome is None:
             return float("-inf")
         if isinstance(outcome, dict):
@@ -877,7 +876,7 @@ class NegotiatorUtility(UtilityFunction):
         raise ValueError(f"Outcome: {outcome} cannot be converted to an SCMLAgreement")
 
     @abstractmethod
-    def call(self, agreement: SCMLAgreement) -> Optional[UtilityValue]:
+    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
         """Called to evaluate a agreement"""
 
     def xml(self, issues: List[Issue]) -> str:
@@ -887,7 +886,7 @@ class NegotiatorUtility(UtilityFunction):
 class PessimisticNegotiatorUtility(NegotiatorUtility):
     """The utility function of a negotiator that assumes other negotiations currently open will fail."""
 
-    def call(self, agreement: SCMLAgreement) -> Optional[UtilityValue]:
+    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
         """An offer will be a tuple of one value which in turn will be a list of contracts"""
         if self._free_sale(agreement):
             return float("-inf")
@@ -905,7 +904,7 @@ class PessimisticNegotiatorUtility(NegotiatorUtility):
 class OptimisticNegotiatorUtility(NegotiatorUtility):
     """The utility function of a negotiator that assumes other negotiations currently open will succeed."""
 
-    def call(self, agreement: SCMLAgreement) -> Optional[UtilityValue]:
+    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
         if self._free_sale(agreement):
             return float("-inf")
         # contracts = self.agent.contracts
@@ -950,7 +949,7 @@ class AveragingNegotiatorUtility(NegotiatorUtility):
             agent=agent, annotation=annotation, avoid_free_sales=avoid_free_sale
         )
 
-    def call(self, agreement: SCMLAgreement) -> Optional[UtilityValue]:
+    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
         if self._free_sale(agreement):
             return float("-inf")
         opt, pess = self.optimistic(agreement), self.pessimistic(agreement)

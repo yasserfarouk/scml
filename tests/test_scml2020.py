@@ -70,6 +70,27 @@ def generate_world(
     return world
 
 
+@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
+@settings(deadline=300_000, max_examples=20)
+def test_can_run_random_agent(buy_missing, n_processes):
+    agent_type = RandomAgent
+    world = generate_world(
+        [agent_type],
+        buy_missing_products=buy_missing,
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/{agent_type.__name__}"
+            f"{'Buy' if buy_missing else 'Fine'}{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+        compact=COMPACT,
+        no_logs=NOLOGS,
+    )
+    world.run()
+    save_stats(world, world.log_folder)
+
+
 @mark.parametrize("agent_type", types)
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)

@@ -379,7 +379,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  7.97it/s]
+    100%|██████████| 10/10 [00:00<00:00, 19.12it/s]
 
 
 
@@ -469,7 +469,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:25<00:00,  2.58s/it]
+    100%|██████████| 10/10 [00:15<00:00,  1.52s/it]
 
 
 
@@ -923,7 +923,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:19<00:00,  1.92s/it]
+    100%|██████████| 10/10 [00:07<00:00,  1.27it/s]
 
 
 
@@ -986,15 +986,16 @@ average prices they get from their negotiations.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     6.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    False   True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
+    True    False   70.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
     MyAgent:
     ===========
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True    25.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-    True    False   28.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
-            True    22.0  0.5  0.1  0.4  0.5  0.5  0.6  0.6
+    False   True    70.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    True    False   29.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+            True    33.0  0.5  0.0  0.4  0.5  0.5  0.5  0.6
 
 
 
@@ -1030,7 +1031,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  7.03it/s]
+    100%|██████████| 10/10 [00:01<00:00,  5.88it/s]
 
 .. parsed-literal::
 
@@ -1219,7 +1220,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:10<00:00,  1.05s/it]
+    100%|██████████| 10/10 [00:01<00:00,  6.61it/s]
 
 
 .. code:: ipython3
@@ -1240,14 +1241,13 @@ exploring the design space.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     4.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
-    True    False   56.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    False   True    13.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
     AspirationAgent:
     ===========
                    price
-                   count mean  std  min  25%  50%  75%  max
+                   count mean std  min  25%  50%  75%  max
     selling buying
-    True    False   48.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    False   True     1.0  1.0 NaN  1.0  1.0  1.0  1.0  1.0
 
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
@@ -1302,7 +1302,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:02<00:00,  3.63it/s]
+    100%|██████████| 10/10 [00:01<00:00,  5.48it/s]
 
 
 .. code:: ipython3
@@ -1499,7 +1499,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  3.27it/s]
+    100%|██████████| 10/10 [00:01<00:00,  7.44it/s]
 
 
 
@@ -1593,7 +1593,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.91it/s]
+    100%|██████████| 10/10 [00:00<00:00, 10.43it/s]
 
 
 
@@ -1666,7 +1666,8 @@ now:
     world = SCML2021World(
         **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent],
                                  horizon=1,
-                                 n_steps=10
+                                 n_steps=10,
+                                 n_processes=2,
                                 ),
         construct_graphs=True,
     )
@@ -1679,7 +1680,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.79it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.40it/s]
 
 
 
@@ -1697,6 +1698,7 @@ not designed for the full SCML environment and use very restrictive
 assumptions.
 
 With that we end our tutorial. Have fun developing your agent.
+
 
 
 Download :download:`Notebook<notebooks/03.develop_agent_scml2020.ipynb>`.

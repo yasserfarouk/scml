@@ -144,6 +144,8 @@ class OneShotUFun(UtilityFunction):
         self.input_product = input_product
         if self.input_product is not None:
             self.output_product = self.input_product + 1
+        else:
+            self.output_product = None
         if self.normalized:
             self.best = self.find_limit(True, None, None)
             self.worst = self.find_limit(False, None, None)

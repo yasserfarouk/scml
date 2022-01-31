@@ -1,27 +1,12 @@
-from typing import Any
-from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
-from typing import Union
 
-import numpy as np
 from negmas import Adapter
 from negmas import Breach
 from negmas import Contract
-from negmas import Negotiator
-from negmas.sao import SAOController
-from negmas.sao import SAONegotiator
 
-from ..scml2020.common import ANY_LINE
-from ..scml2020.common import ANY_STEP
-from ..scml2020.common import FactoryProfile
-from ..scml2020.common import FactoryState
-from ..scml2020.common import is_system_agent
 from .helper import AWIHelper
-from .mixins import OneShotUFunCreatorMixin
 from .sysagents import DefaultOneShotAdapter
-from .ufun import OneShotUFun
 
 
 class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):

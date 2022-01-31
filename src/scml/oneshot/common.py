@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from negmas import DEFAULT_EDGE_TYPES  # NoContractExecutionMixin,
-
 from ..scml2020.common import QUANTITY
 from ..scml2020.common import TIME
 from ..scml2020.common import UNIT_PRICE

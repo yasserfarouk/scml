@@ -21,6 +21,7 @@ OneShotAgent
 
       ~OneShotAgent.connect_to_2021_adapter
       ~OneShotAgent.connect_to_oneshot_adapter
+      ~OneShotAgent.get_ami
       ~OneShotAgent.get_negotiator
       ~OneShotAgent.get_nmi
       ~OneShotAgent.init
@@ -45,6 +46,7 @@ OneShotAgent
 
    .. automethod:: connect_to_2021_adapter
    .. automethod:: connect_to_oneshot_adapter
+   .. automethod:: get_ami
    .. automethod:: get_negotiator
    .. automethod:: get_nmi
    .. automethod:: init

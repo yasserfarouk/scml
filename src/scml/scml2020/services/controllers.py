@@ -146,7 +146,10 @@ class StepController(SAOController, AspirationMixin, Notifier):
     def propose(self, negotiator_id: str, state: MechanismState) -> Optional["Outcome"]:
         if negotiator_id not in self.negotiators.keys():
             return None
-        self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
+        try:
+            self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
+        except:
+            self.__negotiator._nmi = None
         return self.__negotiator.propose(state)
 
     def respond(

@@ -14,8 +14,8 @@ from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
 from negmas.outcomes import make_issue
-from negmas.preferences import ComplexWeightedUtilityFunction
 from negmas.preferences import MappingUtilityFunction
+from negmas.preferences import WeightedUtilityFunction
 from negmas.situated import Breach
 from negmas.situated import Contract
 from negmas.situated import RenegotiationRequest
@@ -24,6 +24,7 @@ from numpy.random import dirichlet
 from .agent import SCML2019Agent
 from .common import CFP
 from .common import DEFAULT_NEGOTIATOR
+from .common import UNIT_PRICE
 from .common import FinancialReport
 from .helpers import pos_gauss
 
@@ -310,10 +311,10 @@ class JustInTimeConsumer(Consumer):
         beta_u = pos_gauss(profile.beta_u, profile.cv)
         tau_u = pos_gauss(profile.tau_u, profile.cv)
         tau_q = pos_gauss(profile.tau_q, profile.cv)
-        ufun = ComplexWeightedUtilityFunction(
+        ufun = WeightedUtilityFunction(
             ufuns=[
                 MappingUtilityFunction(
-                    mapping=(lambda x: 1 - x["unit_price"] ** tau_u / beta_u),
+                    mapping=(lambda x: 1 - x[UNIT_PRICE] ** tau_u / beta_u),
                     issues=[
                         make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
                         make_issue((cfp.min_time, cfp.max_time), "time"),
@@ -624,10 +625,10 @@ class ScheduleDrivenConsumer(Consumer):
         beta_u = pos_gauss(profile.beta_u, profile.cv)
         tau_u = pos_gauss(profile.tau_u, profile.cv)
         tau_q = pos_gauss(profile.tau_q, profile.cv)
-        ufun = ComplexWeightedUtilityFunction(
+        ufun = WeightedUtilityFunction(
             ufuns=[
                 MappingUtilityFunction(
-                    mapping=lambda x: 1 - x["unit_price"] ** tau_u / beta_u
+                    mapping=lambda x: 1 - x[UNIT_PRICE] ** tau_u / beta_u
                 ),
                 MappingUtilityFunction(
                     mapping=functools.partial(

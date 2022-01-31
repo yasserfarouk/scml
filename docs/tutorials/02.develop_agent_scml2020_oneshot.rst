@@ -1747,8 +1747,8 @@ This is an example agent that uses this approach:
      ('RandomOneShotAgent', 0.016172548063384265)]
 
 
-This agent simply uses its **centeral** ufun for each negotiator. This
-is not a very good strategy because each negotiator is now assuming that
+This agent simply uses its **central** ufun for each negotiator. This is
+not a very good strategy because each negotiator is now assuming that
 *all other negotiations will fail*. Can you see why?
 
 Let’s make a slightly more meaningful agent. This time, the utility
@@ -1758,25 +1758,24 @@ because the agent may over-contract.
 
 .. code:: ipython3
 
-    from negmas.preferences import LinearAdditiveUtilityFunction
+    from negmas.preferences import LinearAdditiveUtilityFunction, LinearUtilityFunction
+    from negmas.preferences.value_fun import AffineFun, IdentityFun
+
     class GreedyIndNeg(OneShotIndNegotiatorsAgent):
         def generate_ufuns(self):
             d = dict()
             # generate ufuns that prefer higher prices when selling
             for partner_id in self.awi.my_consumers:
+                issues = self.awi.current_output_issues
                 if self.awi.is_system(partner_id):
                     continue
-                d[partner_id] = LinearAdditiveUtilityFunction(
-                    dict(
-                        quantity=lambda x: 0.1 * x,
-                        time=lambda x: 0.0,
-                        unit_price=lambda x: x,
-                    ),
+                d[partner_id] = LinearUtilityFunction(
                     weights=dict(
                         quantity=0.1,
                         time=0.0,
                         unit_price=0.9,
                     ),
+                    issues=issues,
                     reserved_value=0.0,
                 )
             # generate ufuns that prefer lower prices when selling
@@ -1786,15 +1785,16 @@ because the agent may over-contract.
                     continue
                 d[partner_id] = LinearAdditiveUtilityFunction(
                     dict(
-                        quantity=lambda x: x,
-                        time=lambda x: 0.0,
-                        unit_price=lambda x: issues[UNIT_PRICE].max_value - x,
+                        quantity=IdentityFun(),
+                        time=IdentityFun(),
+                        unit_price=AffineFun(slope=-1, bias=issues[UNIT_PRICE].max_value),
                     ),
                     weights=dict(
                         quantity=0.1,
                         time=0.0,
                         unit_price=0.9,
                     ),
+                    issues=issues,
                     reserved_value=0.0,
                 )
             return d
@@ -1804,134 +1804,14 @@ because the agent may over-contract.
     print_type_scores(tscores)
 
 
-::
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_53_0.png
 
 
-    ---------------------------------------------------------------------------
+.. parsed-literal::
 
-    ValueError                                Traceback (most recent call last)
-
-    <ipython-input-26-af3427efb9b3> in <module>
-         40         return d
-         41
-    ---> 42 world, ascors, tscores = try_agent(GreedyIndNeg)
-         43
-         44 print_type_scores(tscores)
-
-
-    <ipython-input-3-6fe9c6f702a8> in try_agent(agent_type, n_processes)
-          8 def try_agent(agent_type, n_processes=2):
-          9     """Runs an agent in a world simulation against a randomly behaving agent"""
-    ---> 10     return try_agents([RandomOneShotAgent, agent_type], n_processes)
-         11
-         12 def try_agents(agent_types, n_processes=2, n_trials=1, draw=True, agent_params=None):
-
-
-    <ipython-input-3-6fe9c6f702a8> in try_agents(agent_types, n_processes, n_trials, draw, agent_params)
-         25         construct_graphs=True,
-         26         )
-    ---> 27         world.run()
-         28
-         29         all_scores = world.scores()
-
-
-    ~/code/projects/negmas/negmas/situated/situated.py in run(self)
-       3538             if self.time >= self.time_limit:
-       3539                 break
-    -> 3540             if not self.step():
-       3541                 break
-       3542
-
-
-    ~/code/projects/negmas/negmas/situated/situated.py in step(self)
-       3140             for priority in sorted(self._entities.keys()):
-       3141                 for agent in self._entities[priority]:
-    -> 3142                     self.call(agent, agent.init_)
-       3143                     if self.time >= self.time_limit:
-       3144                         return False
-
-
-    ~/code/projects/negmas/negmas/situated/situated.py in call(self, agent, method, *args, **kwargs)
-       3117             self.on_exception(agent, e)
-       3118             if not self.ignore_agent_exception:
-    -> 3119                 raise e
-       3120             exc_type, exc_value, exc_traceback = sys.exc_info()
-       3121             self.logerror(
-
-
-    ~/code/projects/negmas/negmas/situated/situated.py in call(self, agent, method, *args, **kwargs)
-       3101         try:
-       3102             _strt = time.perf_counter()
-    -> 3103             result = method(*args, **kwargs)
-       3104             _end = time.perf_counter()
-       3105             if self.disable_agent_printing:
-
-
-    ~/code/projects/scml/src/scml/oneshot/sysagents.py in init_(self)
-         56             if not self.ufun:
-         57                 self.make_ufun(add_exogenous=True)
-    ---> 58         super().init_()
-         59
-         60     def init(self):
-
-
-    ~/code/projects/negmas/negmas/situated/situated.py in init_(self)
-        452         self._initialized = True
-        453         self.__current_step = 0
-    --> 454         self.init()
-        455
-        456     def step_(self):
-
-
-    ~/code/projects/scml/src/scml/oneshot/sysagents.py in init(self)
-         63         else:
-         64             self._obj._awi = AWIHelper(self)
-    ---> 65         super().init()
-         66
-         67     def before_step(self):
-
-
-    ~/code/projects/negmas/negmas/situated/situated.py in init(self)
-       2078     def init(self):
-       2079         """Override this method to modify initialization logic"""
-    -> 2080         self._obj.init()
-       2081
-       2082     def step(self):
-
-
-    ~/code/projects/scml/src/scml/oneshot/agent.py in init(self)
-        549     def init(self):
-        550         super().init()
-    --> 551         self._ufuns = self._get_ufuns()
-        552
-        553     def step(self):
-
-
-    ~/code/projects/scml/src/scml/oneshot/agent.py in _get_ufuns(self)
-        518         meaningful value and that the ufun is normalized if needed
-        519         """
-    --> 520         ufuns = self.generate_ufuns()
-        521         if not self._normalize and not self._set_reservation:
-        522             return ufuns
-
-
-    <ipython-input-26-af3427efb9b3> in generate_ufuns(self)
-          7             if self.awi.is_system(partner_id):
-          8                 continue
-    ----> 9             d[partner_id] = LinearAdditiveUtilityFunction(
-         10                 dict(
-         11                     quantity=lambda x: 0.1 * x,
-
-
-    ~/code/projects/negmas/negmas/preferences/linear.py in __init__(self, values, weights, bias, *args, **kwargs)
-        517         if isinstance(values, dict):
-        518             if self.issues is None:
-    --> 519                 raise ValueError(
-        520                     "Must specify issues when passing `issue_utilties` or `weights` is a dict"
-        521                 )
-
-
-    ValueError: Must specify issues when passing `issue_utilties` or `weights` is a dict
+    [('GreedyIndNeg', 0.004681314312553092),
+     ('RandomOneShotAgent', -0.5575657220089572)]
 
 
 Using A Negotiator from the Genius Platform
@@ -1945,13 +1825,14 @@ good utility function per partner (not an easy task at all).
 To be able to use these genius negotiators, you need to have some extra
 constraints on your utility function:
 
--  All ufuns are of the type ``LinearAdditiveUtilityFunction``.
+-  All ufuns are of the type ``LinearAdditiveUtilityFunction`` or
+   ``LinearUtilityFunction``.
 -  All ufuns are normalized with a maximum value of 1.0. You can use
    ``normalize_ufuns=True`` to gruarantee that.
 -  All ufuns have a finite reserved value and at least one outcome is
    above it. You can guarantee that by using ``set_reservation=True``.
--  All weights of the ``LinearAdditiveUtilityFunction`` must be between
-   zero and one and the weights must sum to one.
+-  All weights of the utility function must be between zero and one and
+   the weights must sum to one.
 
 If all of these conditions are satisfied, you can use a Genius based
 negotiator by following these steps:
@@ -1963,21 +1844,7 @@ negotiator by following these steps:
 
       negmas genius-setup
 
-2. Start the negmas-genius bridbe by running on the terminal:
-
-   .. code:: bash
-
-      negmas genius
-
-3. In some cases, the aforementioned command may not work correctly
-   (specially on windows), you can replace it with:
-
-   .. code:: bash
-
-      cd ~/negmas/files
-      java -jar geniusbridge.jar
-
-4. Run a world or a tournament as usual.
+2. Run a world or a tournament as usual.
 
 You need to have ``java`` installed (15.0 or later). *Please note that
 we do not officially support any Genius agents for SCML. Moreover, due
@@ -1985,6 +1852,15 @@ to the way the bridge is implemented, these agents will tend to be much
 slower than negotiators developed directly in python and may suffer from
 more timeouts as a result. It may be a good idea to reimplement whatever
 strategy you prefer in python to guarantee stable performance*.
+
+If your Genius negotiation did not start, you can explicitly run the
+negmas-genius bridge using one of the following two commands:
+
+-  Start the negmas-genius bridbe by running on the terminal:
+   ``bash  negmas genius``
+-  In some cases, the aforementioned command may not work correctly
+   (specially on windows), you can replace it with:
+   ``bash  java -jar ~/nemga/files/geniusbridge.jar``
 
 The only change you need to do in your code is to choose an appropriate
 ``GeniusNegotiator``. Note that not all agents in the genius platform
@@ -2004,9 +1880,19 @@ will work correctly. Here is an example
             kwargs["normalize_ufuns"] = True
             super().__init__(*args, **kwargs)
 
-    if genius_bridge_is_running():
-        world, ascors, tscores = try_agent(GeniusIndNeg)
-        print_type_scores(tscores)
+    world, ascors, tscores = try_agent(GeniusIndNeg)
+    print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_55_0.png
+
+
+.. parsed-literal::
+
+    [('GeniusIndNeg', 0.6397600865076828),
+     ('RandomOneShotAgent', 0.3990541201608428)]
+
 
 Comparing all agents
 ~~~~~~~~~~~~~~~~~~~~
@@ -2023,14 +1909,27 @@ tutorial (we will ignore the do-nothing agents)
             BetterAgent, LearningAgent,
             AdaptiveAgent, SyncAgent,
             SimpleSingleAgreementAgent,
-            GreedyIndNeg,
-        ] +
-        [GeniusIndNeg] if genius_bridge_is_running() else [],
+            GreedyIndNeg, GeniusIndNeg
+        ],
         n_trials=20,
         n_processes=2,
         draw=False
     )
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('BetterAgent', 1.3339646188461831),
+     ('LearningAgent', 1.307591705452945),
+     ('AdaptiveAgent', 1.2788875308815086),
+     ('SimpleAgent', 0.9647352261920996),
+     ('SyncAgent', 0.8210355331013083),
+     ('GreedyIndNeg', 0.7723459026073376),
+     ('SimpleSingleAgreementAgent', 0.6728653212338017),
+     ('GeniusIndNeg', 0.2599275541086003),
+     ('DeepSimpleAgent', 0.1388695171487256)]
+
 
 The way we just compared these agents is not unbiased because not all
 agents are allowed to control the same factories in the same simulation
@@ -2051,6 +1950,19 @@ in this tutorial (with some modifications):
 
     import scml.oneshot.agents as agents
     pprint([ _ for _ in agents.__dir__() if _.endswith("Agent")])
+
+
+.. parsed-literal::
+
+    ['RandomOneShotAgent',
+     'SyncRandomOneShotAgent',
+     'SingleAgreementRandomAgent',
+     'SingleAgreementAspirationAgent',
+     'GreedyOneShotAgent',
+     'GreedySyncAgent',
+     'GreedySingleAgreementAgent',
+     'OneshotDoNothingAgent']
+
 
 Running SCML2020 agents (advanced)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2082,6 +1994,20 @@ track (with some rough edges). Let’s try to do that here:
 
     print_type_scores(tscores)
 
+
+.. parsed-literal::
+
+    [('BetterAgent', 0.8675358107201053),
+     ('LearningAgent', 0.8473342155964605),
+     ('AdaptiveAgent', 0.7975654582499924),
+     ('SimpleAgent', 0.7371751597368243),
+     ('DeepSimpleAgent', 0.7157721667136598),
+     ('SingleAgreementAspirationAgent', 0.6732614240751571),
+     ('SyncAgent', 0.6707045503585998),
+     ('DecentralizingAgent', 0.5662165405370783),
+     ('BuyCheapSellExpensiveAgent', 0.12171760217545255)]
+
+
 For an SCML agent participating in the OneShot game, the main issues to
 take into account are the following:
 
@@ -2096,6 +2022,7 @@ take into account are the following:
    next step.
 
 With that we end our tutorial. Have fun developing your agent.
+
 
 
 

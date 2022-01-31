@@ -4,7 +4,7 @@ import warnings
 from typing import Iterable, Tuple, Union, List, Collection, Optional
 
 from negmas import Contract
-from negmas.preferences import UtilityFunction, UtilityValue
+from negmas import UtilityFunction, Value
 from negmas.outcomes import Outcome, Issue
 
 
@@ -429,8 +429,8 @@ class OneShotUFun(UtilityFunction):
         max_n_outcomes=1000,
         ami=None,
     ) -> Union[
-        Tuple[UtilityValue, UtilityValue],
-        Tuple[UtilityValue, UtilityValue, Outcome, Outcome],
+        Tuple[Value, Value],
+        Tuple[Value, Value, Outcome, Outcome],
     ]:
         """
         Finds the utility range and optionally returns the corresponding outcomes

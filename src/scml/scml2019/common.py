@@ -23,16 +23,10 @@ from negmas.preferences import INVALID_UTILITY
 from negmas.situated import Contract
 from negmas.situated import World
 
-INVALID_STEP = -1000
-NO_PRODUCTION = -1
-
-g_last_product_id = 0
-g_last_process_id = 0
-
-DEFAULT_NEGOTIATOR = "negmas.sao.AspirationNegotiator"
-
-
 __all__ = [
+    "UNIT_PRICE",
+    "TIME",
+    "QUANTITY",
     "Product",
     "Process",
     "InputOutput",
@@ -59,6 +53,25 @@ __all__ = [
     "DEFAULT_NEGOTIATOR",
     "INVALID_UTILITY",
 ]
+
+INVALID_STEP = -1000
+NO_PRODUCTION = -1
+
+g_last_product_id = 0
+g_last_process_id = 0
+
+DEFAULT_NEGOTIATOR = "negmas.sao.AspirationNegotiator"
+
+QUANTITY = 0
+"""Index of quantity in negotiation issues"""
+
+
+TIME = 1
+"""Index of time in negotiation issues"""
+
+
+UNIT_PRICE = 2
+"""Index of unit price in negotiation issues"""
 
 
 @dataclass
@@ -499,6 +512,9 @@ class SCMLAgreement:
     signing_delay: int = -1
     """Delay between agreement conclusion and signing it to be binding"""
 
+    def __getitem__(self, k):
+        return vars(self)[k]
+
 
 @dataclass
 class CFP:
@@ -739,7 +755,7 @@ class CFP:
 
     @property
     def outcomes(self):
-        return enumerate_issues(issues=self.issues, max_n_outcomes=1000)
+        return enumerate_issues(issues=self.issues, max_cardinality=1000)
 
     @property
     def min_time(self):

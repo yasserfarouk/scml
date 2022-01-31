@@ -56,7 +56,7 @@ that:
 .. image:: 04.experiments_files/04.experiments_3_0.png
 
 
-s you can see, the first two agents (“01Gre@0” and “00Gre@0”) are of
+as you can see, the first two agents (“01Gre@0” and “00Gre@0”) are of
 type ``GreedyOneshotAgent`` and the rest are of type
 ``GreedySingleAgreementAgent``. That is clear from the naming convention
 of putting the first :math:`3` letters of the type before the ``@`` sign
@@ -127,8 +127,8 @@ We can run the last of these worlds just to be sure something happens!!
 
 .. parsed-literal::
 
-    (<AxesSubplot:title={'center':'Step: 11/10 [ 3s rem  0s] 110.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x125e90b50>)
+    (<AxesSubplot:title={'center':'Step: 11/10 [ 2s rem  0s] 110.00%'}>,
+     <networkx.classes.multidigraph.MultiDiGraph at 0x11ee16130>)
 
 
 
@@ -621,11 +621,11 @@ happened:
 .. parsed-literal::
 
     [["00Dec@0, SELLER agreed on {'time': 1, 'quantity': 10, 'unit_price': 5} [id "
-      'fd03da67-a5a8-4f7e-8578-fa5963a912cf]'],
+      'e12fb033-bc08-46d7-b213-955748042d1d]'],
      ["00Dec@0, SELLER agreed on {'time': 2, 'quantity': 10, 'unit_price': 7} [id "
-      '11313d0b-0036-410f-8449-493da67eaa33]',
+      'bb0f9105-7734-4ed3-87b9-e634abab2f47]',
       "BUYER, 02Dec@1 agreed on {'time': 1, 'quantity': 10, 'unit_price': 5} [id "
-      '6918a6de-9d40-461c-ad83-52d934a243f9]'],
+      '47652a7b-9861-4962-a13b-972806b2517c]'],
      [],
      [],
      []]
@@ -782,8 +782,8 @@ into the details.
 
 Firstly, in this case, we need to pass ``agent_params`` to the
 constructor (because ``OneshotAgent`` is a controller and not an
-``Agent`` needs and adapter to run. Here we use the default
-``DefaultOneshotAdapter``:
+``Agent`` which means it needs an adapter to run. Here we use the
+default ``DefaultOneshotAdapter``:
 
 .. code:: python
 
