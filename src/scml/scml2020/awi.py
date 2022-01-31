@@ -339,10 +339,15 @@ class AWI(AgentWorldInterface):
             "seller": partner if is_buy else self.agent.id,
             "caller": self.agent.id,
         }
+        tt = values(time)
+        qq = values(quantity)
+        uu = values(unit_price)
+        if qq[0] > qq[1] or tt[0] > tt[1] or uu[0] > uu[1]:
+            return False
         issues = [
-            make_issue(values(quantity), name="quantity"),
-            make_issue(values(time), name="time"),
-            make_issue(values(unit_price), name="unit_price"),
+            make_issue(qq, name="quantity"),
+            make_issue(tt, name="time"),
+            make_issue(uu, name="unit_price"),
         ]
         partners = [self.agent.id, partner]
         extra["negotiator_id"] = negotiator.id

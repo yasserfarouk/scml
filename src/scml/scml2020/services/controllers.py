@@ -233,16 +233,23 @@ class StepController(SAOController, AspirationMixin, Notifier):
                     f"{str(self)} negotiating with {partner} on u={self.urange}"
                     f", q=(1,{self.target-self.secured}), u=({tmin}, {tmax})"
                 )
-                self.awi.request_negotiation(
-                    not self.is_seller,
-                    product=self.product,
-                    quantity=(1, self.target - self.secured),
-                    unit_price=self.urange,
-                    time=(tmin, tmax),
-                    partner=partner,
-                    negotiator=neg,
-                    extra=dict(controller_index=self.step, is_seller=self.is_seller),
-                )
+                if (
+                    self.target > self.secured
+                    and self.urange[0] <= self.urange[1]
+                    and tmin <= tmax
+                ):
+                    self.awi.request_negotiation(
+                        not self.is_seller,
+                        product=self.product,
+                        quantity=(1, self.target - self.secured),
+                        unit_price=self.urange,
+                        time=(tmin, tmax),
+                        partner=partner,
+                        negotiator=neg,
+                        extra=dict(
+                            controller_index=self.step, is_seller=self.is_seller
+                        ),
+                    )
 
 
 # our controller

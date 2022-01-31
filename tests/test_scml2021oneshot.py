@@ -13,6 +13,10 @@ from negmas import save_stats
 from negmas.genius import NiceTitForTat
 from negmas.helpers import unique_name
 from negmas.preferences import LinearAdditiveUtilityFunction
+from negmas.preferences.value_fun import AffineFun
+from negmas.preferences.value_fun import ConstFun
+from negmas.preferences.value_fun import IdentityFun
+from negmas.preferences.value_fun import LinearFun
 from negmas.sao import SAOResponse
 from numpy.testing import assert_allclose
 from pytest import mark
@@ -710,15 +714,16 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
                 continue
             d[partner_id] = LinearAdditiveUtilityFunction(
                 dict(
-                    quantity=lambda x: 0.1 * x,
-                    time=lambda x: 0.0,
-                    unit_price=lambda x: x,
+                    quantity=LinearFun(0.1),
+                    time=ConstFun(0),
+                    unit_price=IdentityFun(),
                 ),
                 weights=dict(
                     quantity=0.1,
                     time=0.0,
                     unit_price=0.9,
                 ),
+                issues=self.awi.current_output_issues,
                 reserved_value=0.0,
             )
         # generate ufuns that prever lower prices when selling
@@ -728,15 +733,16 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
                 continue
             d[partner_id] = LinearAdditiveUtilityFunction(
                 dict(
-                    quantity=lambda x: x,
-                    time=lambda x: 0.0,
-                    unit_price=lambda x: issues[UNIT_PRICE].max_value - x,
+                    quantity=IdentityFun(),
+                    time=ConstFun(0.0),
+                    unit_price=AffineFun(-1, issues[UNIT_PRICE].max_value),
                 ),
                 weights=dict(
                     quantity=0.1,
                     time=0.0,
                     unit_price=0.9,
                 ),
+                issues=self.awi.current_input_issues,
                 reserved_value=0.0,
             )
         return d

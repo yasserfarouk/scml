@@ -203,9 +203,9 @@ class ReactiveMiner(Miner):
 
         ufun = LinearAdditiveUtilityFunction(
             values={
-                "time": lambda x: x ** tau_t / beta_t,
-                "quantity": lambda x: x ** tau_q / beta_q,
-                "unit_price": lambda x: x ** tau_u / beta_u,
+                "time": lambda x: float(x) ** tau_t / beta_t if x else 0,
+                "quantity": lambda x: float(x) ** tau_q / beta_q if x else 0,
+                "unit_price": lambda x: float(x) ** tau_u / beta_u if x else 0,
             },
             weights={"time": alpha_t, "quantity": alpha_q, "unit_price": alpha_u},
             issues=[
