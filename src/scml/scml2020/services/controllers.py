@@ -30,6 +30,7 @@ from negmas.sao import SAONegotiator
 from negmas.sao import SAOResponse
 from negmas.sao import SAOState
 from negmas.sao import SAOSyncController
+from negmas.sao.negotiators.passthrough import PassThroughSAONegotiator
 
 from scml.scml2020.common import QUANTITY
 from scml.scml2020.common import TIME
