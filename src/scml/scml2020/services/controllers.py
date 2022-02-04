@@ -102,14 +102,15 @@ class StepController(SAOController, AspirationMixin, Notifier):
         negotiator_params = (
             negotiator_params if negotiator_params is not None else dict()
         )
+        issues = [
+            make_issue((1, max(int(target_quantity), 1))),
+            make_issue((step, step)),
+            make_issue((int(urange[0]), max(int(urange[0]), int(urange[1])))),
+        ]
         if is_seller:
-            self.ufun = LinearUtilityFunction(
-                weights=(1.0, 1.0, 10.0), outcome_space=self._max_outcome_space()
-            )
+            self.ufun = LinearUtilityFunction(weights=(1.0, 1.0, 10.0), issues=issues)
         else:
-            self.ufun = LinearUtilityFunction(
-                weights=(1.0, -1.0, -10.0), outcome_space=self._max_outcome_space()
-            )
+            self.ufun = LinearUtilityFunction(weights=(1.0, -1.0, -10.0), issues=issues)
         negotiator_params["ufun"] = self.ufun
         self.__negotiator = instantiate(negotiator_type, **negotiator_params)
         self.secured = 0
@@ -117,15 +118,6 @@ class StepController(SAOController, AspirationMixin, Notifier):
         self.step = step
         self.retries: Dict[str, int] = defaultdict(int)
         self.max_retries = max_retries
-
-    def _max_outcome_space(self):
-        return make_os(
-            [
-                make_issue((1, 1000), name="quantity"),
-                make_issue((1, 1000), name="time"),
-                make_issue((1, 1000), name="unit_price"),
-            ]
-        )
 
     def join(
         self,

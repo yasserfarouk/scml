@@ -2,6 +2,7 @@ click
 prettytable
 pulp
 python-constraint
+python-sugar
 negmas>=0.8.8
 tqdm
 jupyter
@@ -10,6 +11,7 @@ joblib
 dataclasses; python_version < '3.7'
 cloudpickle
 mip
+papermill
 -e .
 
 

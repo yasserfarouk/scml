@@ -88,7 +88,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
                 )
             )
         # find current aspiration level between zero and one
-        asp = max(self.aspiration(state.relative_time) for state in states.values())
+        asp = max(self.utility_at(state.relative_time) for state in states.values())
 
         # acceptance strategy
         partner_utils = sorted(

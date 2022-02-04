@@ -543,6 +543,7 @@ class OneShotAdapter(
                 )
             ),
         )
+        unit_price = (int(unit_price[0]), int(max(unit_price)))
         t = self.awi.current_step + (self.awi.my_output_product == product)
         time = (t, t)
         quantity = (1, self.awi.n_lines)
