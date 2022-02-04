@@ -2,7 +2,6 @@ click
 prettytable
 pulp
 python-constraint
-python-sugar
 negmas>=0.8.8
 tqdm
 jupyter
