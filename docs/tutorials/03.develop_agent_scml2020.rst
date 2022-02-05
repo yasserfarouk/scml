@@ -225,9 +225,13 @@ are three main limitations on the answer to this question:
 1. Production capacity which is controlled by the number of lines the
    agent has
 
+   ::
+
       self.awi.n_lines
 
 2. The available quantity of the input material
+
+   ::
 
       self.awi.state.inventory(self.awi.my_input_product)
 
@@ -379,7 +383,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:00<00:00, 19.12it/s]
+    100%|██████████| 10/10 [00:01<00:00,  5.96it/s]
 
 
 
@@ -449,8 +453,8 @@ Let’s add a simple implementation of both
         def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
             """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
             if is_seller:
-                return LinearUtilityFunction((0, 0.25, 1))
-            return LinearUtilityFunction((0, -0.5, -0.8))
+                return LinearUtilityFunction((0, 0.25, 1), issues=issues, outcomes=outcomes)
+            return LinearUtilityFunction((0, -0.5, -0.8), issues=issues, outcomes=outcomes)
 
 
 .. code:: ipython3
@@ -469,7 +473,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:15<00:00,  1.52s/it]
+    100%|██████████| 10/10 [00:23<00:00,  2.39s/it]
 
 
 
@@ -910,7 +914,7 @@ Let’s see how did our simple new agent do:
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyAgent, MyNewAgent], n_steps=10),
+        **SCML2021World.generate([MyAgent, MyNewAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -923,7 +927,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:07<00:00,  1.27it/s]
+    100%|██████████| 10/10 [00:08<00:00,  1.22it/s]
 
 
 
@@ -983,19 +987,19 @@ average prices they get from their negotiations.
 
     MyNewAgent:
     ===========
-                   price
-                   count mean  std  min  25%  50%  75%  max
+                    price
+                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
-    True    False   70.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    False   True     38.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    True    False   112.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
     MyAgent:
     ===========
-                   price
-                   count mean  std  min  25%  50%  75%  max
+                    price
+                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True    70.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-    True    False   29.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
-            True    33.0  0.5  0.0  0.4  0.5  0.5  0.5  0.6
+    False   True    112.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    True    False    38.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+            True     88.0  0.5  0.0  0.4  0.5  0.5  0.5  0.6
 
 
 
@@ -1031,7 +1035,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.88it/s]
+    100%|██████████| 10/10 [00:03<00:00,  3.09it/s]
 
 .. parsed-literal::
 
@@ -1220,7 +1224,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  6.61it/s]
+    100%|██████████| 10/10 [00:05<00:00,  1.68it/s]
 
 
 .. code:: ipython3
@@ -1241,13 +1245,15 @@ exploring the design space.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True    13.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    False   True     6.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    True    False   84.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
     AspirationAgent:
     ===========
                    price
-                   count mean std  min  25%  50%  75%  max
+                   count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     1.0  1.0 NaN  1.0  1.0  1.0  1.0  1.0
+    False   True     3.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    True    False   64.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
@@ -1302,7 +1308,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.48it/s]
+    100%|██████████| 10/10 [00:03<00:00,  3.13it/s]
 
 
 .. code:: ipython3
@@ -1369,17 +1375,19 @@ The main idea behind this agent is very simple:
 
 .. code:: python
 
-   def create_ufun(self, is_seller, prange):
+   def create_ufun(self, is_seller, prange, issues):
        if is_seller:
            return MappingUtilityFunction(
                lambda x: -1000 if x[UNIT_PRICE] < self.prices[1] else x[UNIT_PRICE],
                reserved_value=0.0,
+               issues=issues,
            )
        return MappingUtilityFunction(
            lambda x: -1000
            if x[UNIT_PRICE] > self.prices[0]
            else prange[1] - x[UNIT_PRICE],
            reserved_value=0.0,
+           issues=issues,
        )
 
 3. The agent knows that it never negotiates on bad contracts so it signs
@@ -1443,6 +1451,7 @@ The main idea behind this agent is very simple:
                 return None
             ufun = self.create_ufun(
                 is_seller, (issues[UNIT_PRICE].min_value, issues[UNIT_PRICE].max_value),
+                issues
             )
             return AspirationNegotiator(ufun=ufun)
 
@@ -1471,17 +1480,17 @@ The main idea behind this agent is very simple:
                     oldq * self.prices[is_seller] + p * q
                 ) / self.quantities[is_seller]
 
-        def create_ufun(self, is_seller, prange):
+        def create_ufun(self, is_seller, prange, issues):
             if is_seller:
                 return MappingUtilityFunction(
                     lambda x: -1000 if x[UNIT_PRICE] < self.prices[1] else x[UNIT_PRICE],
-                    reserved_value=0.0,
+                    reserved_value=0.0, issues=issues
                 )
             return MappingUtilityFunction(
                 lambda x: -1000
                 if x[UNIT_PRICE] > self.prices[0]
                 else prange[1] - x[UNIT_PRICE],
-                reserved_value=0.0,
+                reserved_value=0.0,issues=issues
             )
 
 
@@ -1499,7 +1508,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  7.44it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.13it/s]
 
 
 
@@ -1567,7 +1576,7 @@ Here is the improved version:
                 prange = self.prices[not is_seller]
                 trange = (awi.current_step, t) if is_seller else (t, awi.n_steps - 1)
                 negotiators = [
-                    AspirationNegotiator(ufun=self.create_ufun(is_seller, prange))
+                    AspirationNegotiator(ufun=self.create_ufun(is_seller, prange, issues=None))
                     for _ in partners
                 ]
                 awi.request_negotiations(
@@ -1593,7 +1602,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:00<00:00, 10.43it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.03it/s]
 
 
 
@@ -1667,7 +1676,7 @@ now:
         **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent],
                                  horizon=1,
                                  n_steps=10,
-                                 n_processes=2,
+                                 n_processes=2
                                 ),
         construct_graphs=True,
     )
@@ -1680,7 +1689,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:02<00:00,  4.40it/s]
+    100%|██████████| 10/10 [00:02<00:00,  3.68it/s]
 
 
 
@@ -1698,6 +1707,7 @@ not designed for the full SCML environment and use very restrictive
 assumptions.
 
 With that we end our tutorial. Have fun developing your agent.
+
 
 
 

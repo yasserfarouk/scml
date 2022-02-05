@@ -103,25 +103,23 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    2022-01-29 13:50:56,031 - INFO - 0/10 [0.00%]: test_world: World Created
+    2022-02-02 17:35:31,624 - INFO - 0/10 [0.00%]: test_world: World Created
 
-    2022-01-29 13:50:56,032 - INFO - 0/10 [0.00%]: 00DoN@0 joined
+    2022-02-02 17:35:31,632 - INFO - 0/10 [0.00%]: 00DoN@0 joined
 
-    2022-01-29 13:50:56,036 - INFO - 0/10 [0.00%]: 01DoN@0 joined
+    2022-02-02 17:35:31,648 - INFO - 0/10 [0.00%]: 01DoN@0 joined
 
-    2022-01-29 13:50:56,037 - INFO - 0/10 [0.00%]: 02DoN@0 joined
+    2022-02-02 17:35:31,662 - INFO - 0/10 [0.00%]: 02DoN@0 joined
 
-    2022-01-29 13:50:56,038 - INFO - 0/10 [0.00%]: 03DoN@0 joined
+    2022-02-02 17:35:31,669 - INFO - 0/10 [0.00%]: 03DoN@1 joined
 
-    2022-01-29 13:50:56,039 - INFO - 0/10 [0.00%]: 04DoN@1 joined
+    2022-02-02 17:35:31,762 - INFO - 0/10 [0.00%]: 04DoN@1 joined
 
-    2022-01-29 13:50:56,040 - INFO - 0/10 [0.00%]: 05DoN@1 joined
+    2022-02-02 17:35:31,774 - INFO - 0/10 [0.00%]: SELLER joined
 
-    2022-01-29 13:50:56,041 - INFO - 0/10 [0.00%]: SELLER joined
+    2022-02-02 17:35:31,780 - INFO - 0/10 [0.00%]: BUYER joined
 
-    2022-01-29 13:50:56,042 - INFO - 0/10 [0.00%]: BUYER joined
-
-    2022-01-29 13:50:56,099 - INFO - 0/10 [0.00%]: This is a test message
+    2022-02-02 17:35:31,787 - INFO - 0/10 [0.00%]: This is a test message
 
 
 
@@ -164,14 +162,13 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
     ├── [01;34m_agent_logs[00m
     │   ├── 00DWL@0.txt
     │   ├── 01DWL@0.txt
-    │   ├── 02DWL@0.txt
-    │   ├── 03DWL@0.txt
+    │   ├── 02DWL@1.txt
+    │   ├── 03DWL@1.txt
     │   ├── 04DWL@1.txt
-    │   ├── 05DWL@1.txt
-    │   └── 06DWL@1.txt
+    │   └── 05DWL@1.txt
     └── events.json
 
-    1 directory, 8 files
+    1 directory, 7 files
 
 
 .. code:: ipython3
@@ -183,25 +180,25 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    2022-01-29 13:50:58,073 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (7, 23), t: (1, 6)
+    2022-02-02 17:35:35,410 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 02DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-01-29 13:50:58,075 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID bea36419-1707-45f4-9247-2bcd6b881ee0)
+    2022-02-02 17:35:35,412 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '02DWL@1'] (ID 1f0ab3f5-6894-4d3f-9819-8c35eea2f7d0)
 
-    2022-01-29 13:50:58,076 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+    2022-02-02 17:35:35,415 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
 
-    2022-01-29 13:50:58,077 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (7, 23), t: (1, 6)
+    2022-02-02 17:35:35,415 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-01-29 13:50:58,078 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 9c92fa1f-3b77-4a3a-8cbf-6a645afc1583)
+    2022-02-02 17:35:35,421 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID 9d0dee27-1954-4ce0-be7a-67af0d9b8c88)
 
-    2022-01-29 13:50:58,080 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+    2022-02-02 17:35:35,544 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
 
-    2022-01-29 13:50:58,080 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 06DWL@1 q: (1, 10), u: (7, 23), t: (1, 6)
+    2022-02-02 17:35:35,544 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-01-29 13:50:58,082 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '06DWL@1'] (ID ee7a1333-fc95-47fd-9ce3-3258c2cfa4bf)
+    2022-02-02 17:35:35,547 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 702918e8-73f5-4565-adc1-ef9c63d8fa27)
 
-    2022-01-29 13:50:58,084 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+    2022-02-02 17:35:35,558 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
 
-    2022-01-29 13:50:58,085 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (7, 23), t: (2, 7)
+    2022-02-02 17:35:35,559 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
 
 
@@ -296,8 +293,9 @@ Let’s try changing some of these:
     │   ├── 00DWL@0.txt
     │   ├── 01DWL@0.txt
     │   ├── 02DWL@0.txt
-    │   ├── 03DWL@1.txt
-    │   └── 04DWL@1.txt
+    │   ├── 03DWL@0.txt
+    │   ├── 04DWL@1.txt
+    │   └── 05DWL@1.txt
     ├── agents.json
     ├── breaches.csv
     ├── contracts.csv
@@ -308,7 +306,7 @@ Let’s try changing some of these:
     ├── stats.csv
     └── stats.csv.csv
 
-    1 directory, 14 files
+    1 directory, 15 files
 
 
 Now we can see that many more files are created in the log folder. These

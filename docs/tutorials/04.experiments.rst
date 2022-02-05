@@ -127,8 +127,8 @@ We can run the last of these worlds just to be sure something happens!!
 
 .. parsed-literal::
 
-    (<AxesSubplot:title={'center':'Step: 11/10 [ 2s rem  0s] 110.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x11ee16130>)
+    (<AxesSubplot:title={'center':'Step: 11/10 [ 4s rem  0s] 110.00%'}>,
+     <networkx.classes.multidigraph.MultiDiGraph at 0x11c54ef10>)
 
 
 
@@ -621,11 +621,11 @@ happened:
 .. parsed-literal::
 
     [["00Dec@0, SELLER agreed on {'time': 1, 'quantity': 10, 'unit_price': 5} [id "
-      'e12fb033-bc08-46d7-b213-955748042d1d]'],
+      '5c4856ba-b95b-41ef-abbd-a72c32a704e6]'],
      ["00Dec@0, SELLER agreed on {'time': 2, 'quantity': 10, 'unit_price': 7} [id "
-      'bb0f9105-7734-4ed3-87b9-e634abab2f47]',
+      'dd5146a6-d19c-48eb-bd2a-545d835fa797]',
       "BUYER, 02Dec@1 agreed on {'time': 1, 'quantity': 10, 'unit_price': 5} [id "
-      '47652a7b-9861-4962-a13b-972806b2517c]'],
+      '3f20ab1e-b910-4744-98d8-863badbccd4e]'],
      [],
      [],
      []]

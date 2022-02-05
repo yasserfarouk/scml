@@ -503,6 +503,62 @@ Now you can run this world simulation by just calling ``run``.
 
     world.run_with_progress() # may take few minutes
 
+
+.. parsed-literal::
+
+
+      0%|          | 0/50 [00:00<?, ?it/s][A
+      2%|▏         | 1/50 [00:00<00:08,  5.71it/s][A
+      4%|▍         | 2/50 [00:00<00:08,  5.38it/s][A
+      8%|▊         | 4/50 [00:00<00:05,  8.02it/s][A
+     10%|█         | 5/50 [00:00<00:05,  7.87it/s][A
+     12%|█▏        | 6/50 [00:00<00:05,  8.03it/s][A
+     14%|█▍        | 7/50 [00:00<00:05,  7.65it/s][A
+     16%|█▌        | 8/50 [00:01<00:06,  6.34it/s][A
+     18%|█▊        | 9/50 [00:01<00:06,  6.55it/s][A
+     20%|██        | 10/50 [00:01<00:06,  6.64it/s][A
+     22%|██▏       | 11/50 [00:01<00:05,  6.60it/s][A
+     24%|██▍       | 12/50 [00:01<00:05,  6.47it/s][A
+     26%|██▌       | 13/50 [00:01<00:05,  6.52it/s][A
+     28%|██▊       | 14/50 [00:02<00:06,  5.27it/s][A
+     30%|███       | 15/50 [00:02<00:06,  5.37it/s][A
+     32%|███▏      | 16/50 [00:02<00:06,  5.22it/s][A
+     34%|███▍      | 17/50 [00:02<00:06,  5.13it/s][A
+     36%|███▌      | 18/50 [00:03<00:07,  4.43it/s][A
+     38%|███▊      | 19/50 [00:03<00:06,  4.58it/s][A
+     40%|████      | 20/50 [00:03<00:06,  4.62it/s][A
+     42%|████▏     | 21/50 [00:03<00:06,  4.60it/s][A
+     44%|████▍     | 22/50 [00:03<00:06,  4.52it/s][A
+     46%|████▌     | 23/50 [00:04<00:06,  4.11it/s][A
+     48%|████▊     | 24/50 [00:04<00:06,  3.78it/s][A
+     50%|█████     | 25/50 [00:04<00:06,  3.68it/s][A
+     52%|█████▏    | 26/50 [00:05<00:07,  3.36it/s][A
+     54%|█████▍    | 27/50 [00:05<00:06,  3.48it/s][A
+     56%|█████▌    | 28/50 [00:05<00:06,  3.32it/s][A
+     58%|█████▊    | 29/50 [00:06<00:06,  3.14it/s][A
+     60%|██████    | 30/50 [00:06<00:06,  3.28it/s][A
+     62%|██████▏   | 31/50 [00:06<00:05,  3.32it/s][A
+     64%|██████▍   | 32/50 [00:07<00:05,  3.32it/s][A
+     66%|██████▌   | 33/50 [00:07<00:05,  3.19it/s][A
+     68%|██████▊   | 34/50 [00:07<00:05,  3.08it/s][A
+     70%|███████   | 35/50 [00:08<00:04,  3.02it/s][A
+     72%|███████▏  | 36/50 [00:08<00:04,  2.91it/s][A
+     74%|███████▍  | 37/50 [00:08<00:04,  3.00it/s][A
+     76%|███████▌  | 38/50 [00:09<00:04,  2.86it/s][A
+     78%|███████▊  | 39/50 [00:09<00:03,  2.99it/s][A
+     80%|████████  | 40/50 [00:09<00:03,  2.99it/s][A
+     82%|████████▏ | 41/50 [00:10<00:03,  2.87it/s][A
+     84%|████████▍ | 42/50 [00:10<00:02,  2.80it/s][A
+     86%|████████▌ | 43/50 [00:10<00:02,  2.54it/s][A
+     88%|████████▊ | 44/50 [00:11<00:02,  2.21it/s][A
+     90%|█████████ | 45/50 [00:11<00:02,  2.33it/s][A
+     92%|█████████▏| 46/50 [00:12<00:01,  2.27it/s][A
+     94%|█████████▍| 47/50 [00:12<00:01,  2.29it/s][A
+     96%|█████████▌| 48/50 [00:13<00:00,  2.25it/s][A
+     98%|█████████▊| 49/50 [00:13<00:00,  2.18it/s][A
+    100%|██████████| 50/50 [00:14<00:00,  3.53it/s][A
+
+
 Let’s see what happened in this run. Firstly, how many negotiations were
 conducted over time
 
@@ -649,14 +705,14 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_03SRO@1': (0.0, 129.7820476454146),
-     'balance_03SRO@1': (24439, 22081),
+    {'assets_03SRO@1': (0.0, 193.52469401484882),
+     'balance_03SRO@1': (24439, 21557),
      'bankrupt_03SRO@1': (False, False),
-     'inventory_03SRO@1_input': (0, 8),
+     'inventory_03SRO@1_input': (0, 12),
      'inventory_03SRO@1_output': (0, 0),
      'productivity_03SRO@1': (0.1, 0.0),
-     'score_03SRO@1': (1.0, 0.90556114675994),
-     'spot_market_loss_03SRO@1': (0.3, 4.405499999999999),
+     'score_03SRO@1': (1.0, 0.8851250376310112),
+     'spot_market_loss_03SRO@1': (0.3, 4.7565),
      'spot_market_quantity_03SRO@1': (0, 1)}
 
 
@@ -733,7 +789,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [03SRO@1] of type ['syncrandomoneshot:syncrandomoneshot'] won at [90.55611467599401]%
+    [03SRO@1] of type ['syncrandomoneshot:syncrandomoneshot'] won at [88.51250376310112]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -935,20 +991,33 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>587</th>
+          <th>593</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
-          <td>26</td>
+          <td>28</td>
           <td>21</td>
-          <td>31</td>
-          <td>26</td>
+          <td>18</td>
+          <td>28</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>458</th>
+          <th>598</th>
+          <td>01SRO@0</td>
+          <td>02MAD@1</td>
+          <td>33</td>
+          <td>20</td>
+          <td>28</td>
+          <td>31</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>451</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
           <td>17</td>
@@ -961,7 +1030,7 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>320</th>
+          <th>317</th>
           <td>00MAD@0</td>
           <td>03SRO@1</td>
           <td>7</td>
@@ -974,65 +1043,26 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>560</th>
+          <th>570</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
-          <td>27</td>
+          <td>28</td>
+          <td>13</td>
           <td>16</td>
-          <td>19</td>
-          <td>23</td>
+          <td>24</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>594</th>
-          <td>00MAD@0</td>
-          <td>03SRO@1</td>
-          <td>31</td>
-          <td>15</td>
-          <td>12</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>501</th>
-          <td>00MAD@0</td>
-          <td>03SRO@1</td>
-          <td>23</td>
-          <td>15</td>
-          <td>10</td>
-          <td>18</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>577</th>
-          <td>00MAD@0</td>
-          <td>03SRO@1</td>
-          <td>27</td>
-          <td>14</td>
-          <td>15</td>
-          <td>25</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>256</th>
+          <th>530</th>
           <td>01SRO@0</td>
           <td>03SRO@1</td>
-          <td>1</td>
-          <td>9</td>
-          <td>15</td>
-          <td>1</td>
+          <td>21</td>
+          <td>10</td>
+          <td>14</td>
+          <td>21</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1041,18 +1071,44 @@ For example, let’s see some of the contracts that were signed:
         <tr>
           <th>604</th>
           <td>01SRO@0</td>
-          <td>03SRO@1</td>
-          <td>35</td>
+          <td>02MAD@1</td>
+          <td>39</td>
           <td>9</td>
-          <td>15</td>
           <td>35</td>
+          <td>38</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>100</th>
+          <th>262</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>1</td>
+          <td>9</td>
+          <td>15</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>611</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>48</td>
+          <td>9</td>
+          <td>10</td>
+          <td>47</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>94</th>
           <td>02MAD@1</td>
           <td>BUYER</td>
           <td>16</td>
@@ -1113,20 +1169,33 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>587</th>
+          <th>593</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
-          <td>26</td>
+          <td>28</td>
           <td>21</td>
-          <td>31</td>
-          <td>26</td>
+          <td>18</td>
+          <td>28</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>458</th>
+          <th>598</th>
+          <td>01SRO@0</td>
+          <td>02MAD@1</td>
+          <td>33</td>
+          <td>20</td>
+          <td>28</td>
+          <td>31</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>451</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
           <td>17</td>
@@ -1139,7 +1208,7 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>320</th>
+          <th>317</th>
           <td>00MAD@0</td>
           <td>03SRO@1</td>
           <td>7</td>
@@ -1152,65 +1221,26 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>560</th>
+          <th>570</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
-          <td>27</td>
+          <td>28</td>
+          <td>13</td>
           <td>16</td>
-          <td>19</td>
-          <td>23</td>
+          <td>24</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>594</th>
-          <td>00MAD@0</td>
-          <td>03SRO@1</td>
-          <td>31</td>
-          <td>15</td>
-          <td>12</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>501</th>
-          <td>00MAD@0</td>
-          <td>03SRO@1</td>
-          <td>23</td>
-          <td>15</td>
-          <td>10</td>
-          <td>18</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>577</th>
-          <td>00MAD@0</td>
-          <td>03SRO@1</td>
-          <td>27</td>
-          <td>14</td>
-          <td>15</td>
-          <td>25</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>256</th>
+          <th>530</th>
           <td>01SRO@0</td>
           <td>03SRO@1</td>
-          <td>1</td>
-          <td>9</td>
-          <td>15</td>
-          <td>1</td>
+          <td>21</td>
+          <td>10</td>
+          <td>14</td>
+          <td>21</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1219,18 +1249,44 @@ Let’s check some of the contracts that were fully executed
         <tr>
           <th>604</th>
           <td>01SRO@0</td>
-          <td>03SRO@1</td>
-          <td>35</td>
+          <td>02MAD@1</td>
+          <td>39</td>
           <td>9</td>
-          <td>15</td>
           <td>35</td>
+          <td>38</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>100</th>
+          <th>262</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>1</td>
+          <td>9</td>
+          <td>15</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>611</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>48</td>
+          <td>9</td>
+          <td>10</td>
+          <td>47</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>94</th>
           <td>02MAD@1</td>
           <td>BUYER</td>
           <td>16</td>
@@ -1369,6 +1425,15 @@ animation) :
 
     world.save_gif("run.gif")
 
+
+
+
+.. parsed-literal::
+
+    []
+
+
+
 then show the animation
 
 .. code:: ipython3
@@ -1444,7 +1509,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['DecentralizingAgent']
+    ['MarketAwareDecentralizingAgent']
 
 
 
@@ -1513,37 +1578,37 @@ We can also see the scores that every agent type got
           <th>0</th>
           <td>SyncRandomOneShotAgent</td>
           <td>15.00</td>
-          <td>-1.59</td>
-          <td>0.98</td>
-          <td>-3.17</td>
-          <td>-2.26</td>
-          <td>-1.87</td>
-          <td>-0.62</td>
-          <td>-0.16</td>
+          <td>-1.19</td>
+          <td>0.88</td>
+          <td>-2.94</td>
+          <td>-1.70</td>
+          <td>-0.95</td>
+          <td>-0.50</td>
+          <td>-0.08</td>
         </tr>
         <tr>
           <th>1</th>
           <td>DecentralizingAgent</td>
           <td>15.00</td>
-          <td>-0.01</td>
-          <td>0.26</td>
-          <td>-0.50</td>
-          <td>-0.09</td>
-          <td>0.02</td>
-          <td>0.11</td>
-          <td>0.50</td>
+          <td>-0.21</td>
+          <td>0.13</td>
+          <td>-0.42</td>
+          <td>-0.30</td>
+          <td>-0.23</td>
+          <td>-0.12</td>
+          <td>0.00</td>
         </tr>
         <tr>
           <th>2</th>
           <td>MarketAwareDecentralizingAgent</td>
           <td>15.00</td>
-          <td>-0.34</td>
-          <td>0.23</td>
-          <td>-1.00</td>
-          <td>-0.38</td>
-          <td>-0.27</td>
+          <td>-0.16</td>
+          <td>0.09</td>
+          <td>-0.39</td>
           <td>-0.21</td>
+          <td>-0.14</td>
           <td>-0.11</td>
+          <td>-0.04</td>
         </tr>
       </tbody>
     </table>
@@ -1593,9 +1658,9 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>SyncRandomOneShotAgent</td>
           <td>DecentralizingAgent</td>
-          <td>0.80</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.73</td>
           <td>0.00</td>
           <td>15</td>
           <td>15</td>
@@ -1603,19 +1668,19 @@ You can also do statistical significance testing using ttest or kstest
         </tr>
         <tr>
           <th>1</th>
-          <td>SyncRandomOneShotAgent</td>
+          <td>DecentralizingAgent</td>
           <td>MarketAwareDecentralizingAgent</td>
-          <td>0.67</td>
-          <td>0.00</td>
+          <td>0.40</td>
+          <td>0.18</td>
           <td>15</td>
           <td>15</td>
           <td>15</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>DecentralizingAgent</td>
+          <td>SyncRandomOneShotAgent</td>
           <td>MarketAwareDecentralizingAgent</td>
-          <td>0.73</td>
+          <td>0.80</td>
           <td>0.00</td>
           <td>15</td>
           <td>15</td>
@@ -1663,18 +1728,18 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>DecentralizingAgent</td>
-          <td>-0.01</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.16</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.34</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.21</td>
         </tr>
         <tr>
           <th>2</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>-1.59</td>
+          <td>-1.19</td>
         </tr>
       </tbody>
     </table>
@@ -1738,33 +1803,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00SRO@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-2.20</td>
+          <td>00Dec@0</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.23</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>02Dec@1</td>
-          <td>DecentralizingAgent</td>
-          <td>-0.02</td>
+          <td>06SRO@2</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-0.37</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>09MAD@3</td>
+          <td>07MAD@2</td>
           <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.26</td>
+          <td>-0.04</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>00SRO@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-2.78</td>
+          <td>00MAD@0</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.21</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>03Dec@1</td>
+          <td>06Dec@2</td>
           <td>DecentralizingAgent</td>
-          <td>0.02</td>
+          <td>-0.23</td>
         </tr>
       </tbody>
     </table>
@@ -1819,35 +1884,1115 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
     )
     results = shorten_names(results)
 
+
+.. parsed-literal::
+
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    concurrent.futures.process._RemoteTraceback:
+    """
+    Traceback (most recent call last):
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+    """
+
+    The above exception was the direct cause of the following exception:
+
+    Traceback (most recent call last):
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 1388, in _run_parallel
+        ) = future.result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 433, in result
+        return self.__get_result()
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+        raise self._exception
+      File "/Users/yasser/.pyenv/versions/3.9.2/lib/python3.9/concurrent/futures/process.py", line 243, in _process_worker
+        r = call_item.fn(*call_item.args, **call_item.kwargs)
+      File "/Users/yasser/code/projects/negmas/negmas/tournaments/tournaments.py", line 907, in _run_worlds
+        if not world.step():
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3444, in step
+        operation_map[operation]()
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3241, in _simulation_step
+        raise (e)
+      File "/Users/yasser/code/projects/negmas/negmas/situated/situated.py", line 3235, in _simulation_step
+        self.simulation_step(stage)
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/world.py", line 1288, in simulation_step
+        a.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/sysagents.py", line 69, in before_step
+        self._obj.before_step()
+      File "/Users/yasser/code/projects/scml/src/scml/oneshot/agents/aspiration.py", line 33, in before_step
+        AspirationMixin.aspiration_init(
+    TypeError: aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+    aspiration_init() got an unexpected keyword argument 'above_reserved_value'
+
+
+::
+
+
+    ---------------------------------------------------------------------------
+
+    EmptyDataError                            Traceback (most recent call last)
+
+    <ipython-input-49-ccd20164e1da> in <module>
+          1 tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent, GreedyOneShotAgent, GreedySingleAgreementAgent]
+          2 # may take a long time
+    ----> 3 results = anac2021_oneshot(
+          4     competitors=tournament_types,
+          5     n_configs=5, # number of different configurations to generate
+
+
+    ~/code/projects/scml/src/scml/scml2020/utils.py in anac2021_oneshot(competitors, competitor_params, agent_names_reveal_type, n_configs, max_worlds_per_config, n_runs_per_world, min_factories_per_level, tournament_path, total_timeout, parallelism, scheduler_ip, scheduler_port, tournament_progress_callback, world_progress_callback, non_competitors, non_competitor_params, dynamic_non_competitors, dynamic_non_competitor_params, exclude_competitors_from_reassignment, name, verbose, configs_only, compact, n_competitors_per_world, forced_logs_fraction, **kwargs)
+       1668     kwargs["oneshot_world"] = True
+       1669     kwargs["n_processes"] = 2
+    -> 1670     return tournament(
+       1671         competitors=competitors,
+       1672         competitor_params=competitor_params,
+
+
+    ~/code/projects/negmas/negmas/tournaments/tournaments.py in tournament(competitors, config_generator, config_assigner, world_generator, score_calculator, competitor_params, n_competitors_per_world, round_robin, stage_winners_fraction, agent_names_reveal_type, n_agents_per_competitor, n_configs, max_worlds_per_config, n_runs_per_world, max_n_configs, n_runs_per_config, tournament_path, total_timeout, parallelism, scheduler_ip, scheduler_port, tournament_progress_callback, world_progress_callback, non_competitors, non_competitor_params, dynamic_non_competitors, dynamic_non_competitor_params, exclude_competitors_from_reassignment, name, verbose, configs_only, compact, print_exceptions, metric, save_video_fraction, forced_logs_fraction, video_params, video_saver, max_attempts, extra_scores_to_use, **kwargs)
+       1671                 len(competitors) - 1,
+       1672             )
+    -> 1673             results = _run_eval(competitors, stage_name)
+       1674             if n_winners_per_stage == 1:
+       1675                 return results
+
+
+    ~/code/projects/negmas/negmas/tournaments/tournaments.py in _run_eval(competitors_, stage_name)
+       1644             max_attempts=max_attempts,
+       1645         )
+    -> 1646         return evaluate_tournament(
+       1647             tournament_path=final_tournament_path,
+       1648             verbose=verbose,
+
+
+    ~/code/projects/negmas/negmas/tournaments/tournaments.py in evaluate_tournament(tournament_path, scores, stats, world_stats, type_stats, agent_stats, metric, verbose, recursive, extra_scores_to_use, compile)
+       2526         params_file = tournament_path / PARAMS_FILE
+       2527         if world_stats is None and world_stats_file.exists():
+    -> 2528             world_stats = pd.read_csv(world_stats_file, index_col=None)
+       2529         if type_stats is None and type_stats_file.exists():
+       2530             type_stats = pd.read_csv(type_stats_file, index_col=None)
+
+
+    ~/code/projects/scml/.venv/lib/python3.9/site-packages/pandas/io/parsers.py in read_csv(filepath_or_buffer, sep, delimiter, header, names, index_col, usecols, squeeze, prefix, mangle_dupe_cols, dtype, engine, converters, true_values, false_values, skipinitialspace, skiprows, skipfooter, nrows, na_values, keep_default_na, na_filter, verbose, skip_blank_lines, parse_dates, infer_datetime_format, keep_date_col, date_parser, dayfirst, cache_dates, iterator, chunksize, compression, thousands, decimal, lineterminator, quotechar, quoting, doublequote, escapechar, comment, encoding, dialect, error_bad_lines, warn_bad_lines, delim_whitespace, low_memory, memory_map, float_precision, storage_options)
+        608     kwds.update(kwds_defaults)
+        609
+    --> 610     return _read(filepath_or_buffer, kwds)
+        611
+        612
+
+
+    ~/code/projects/scml/.venv/lib/python3.9/site-packages/pandas/io/parsers.py in _read(filepath_or_buffer, kwds)
+        460
+        461     # Create the parser.
+    --> 462     parser = TextFileReader(filepath_or_buffer, **kwds)
+        463
+        464     if chunksize or iterator:
+
+
+    ~/code/projects/scml/.venv/lib/python3.9/site-packages/pandas/io/parsers.py in __init__(self, f, engine, **kwds)
+        817             self.options["has_index_names"] = kwds["has_index_names"]
+        818
+    --> 819         self._engine = self._make_engine(self.engine)
+        820
+        821     def close(self):
+
+
+    ~/code/projects/scml/.venv/lib/python3.9/site-packages/pandas/io/parsers.py in _make_engine(self, engine)
+       1048             )
+       1049         # error: Too many arguments for "ParserBase"
+    -> 1050         return mapping[engine](self.f, **self.options)  # type: ignore[call-arg]
+       1051
+       1052     def _failover_to_python(self):
+
+
+    ~/code/projects/scml/.venv/lib/python3.9/site-packages/pandas/io/parsers.py in __init__(self, src, **kwds)
+       1896
+       1897         try:
+    -> 1898             self._reader = parsers.TextReader(self.handles.handle, **kwds)
+       1899         except Exception:
+       1900             self.handles.close()
+
+
+    pandas/_libs/parsers.pyx in pandas._libs.parsers.TextReader.__cinit__()
+
+
+    EmptyDataError: No columns to parse from file
+
+
 Who was the winner?
 
 .. code:: ipython3
 
     results.winners
 
-
-
-
-.. parsed-literal::
-
-    ['GreedyOneShotAgent']
-
-
-
 How many simulations were actually run?
 
 .. code:: ipython3
 
     len(results.scores.run_id.unique())
-
-
-
-
-.. parsed-literal::
-
-    20
-
-
 
 The total number of simulations :math:`n_{s}` will be
 :math:`n_t \times n_c \times n_r` where :math:`n_t` is the number of
@@ -1860,95 +3005,6 @@ We can also see the scores that every agent type got
 
     results.score_stats
 
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>agent_type</th>
-          <th>count</th>
-          <th>mean</th>
-          <th>std</th>
-          <th>min</th>
-          <th>25%</th>
-          <th>50%</th>
-          <th>75%</th>
-          <th>max</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td>GreedyOneShotAgent</td>
-          <td>5.00</td>
-          <td>0.98</td>
-          <td>0.07</td>
-          <td>0.91</td>
-          <td>0.95</td>
-          <td>0.96</td>
-          <td>0.99</td>
-          <td>1.10</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>GreedySingleAgreementAgent</td>
-          <td>5.00</td>
-          <td>0.72</td>
-          <td>0.11</td>
-          <td>0.61</td>
-          <td>0.63</td>
-          <td>0.70</td>
-          <td>0.74</td>
-          <td>0.89</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>RandomOneShotAgent</td>
-          <td>5.00</td>
-          <td>0.60</td>
-          <td>0.50</td>
-          <td>-0.27</td>
-          <td>0.73</td>
-          <td>0.77</td>
-          <td>0.81</td>
-          <td>0.96</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>SyncRandomOneShotAgent</td>
-          <td>5.00</td>
-          <td>0.59</td>
-          <td>0.47</td>
-          <td>-0.24</td>
-          <td>0.69</td>
-          <td>0.76</td>
-          <td>0.77</td>
-          <td>0.96</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
-
 You can also do statistical significance testing using ttest or kstest
 (with multi-comparison correction)
 
@@ -1956,164 +3012,11 @@ You can also do statistical significance testing using ttest or kstest
 
     results.kstest
 
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>a</th>
-          <th>b</th>
-          <th>t</th>
-          <th>p</th>
-          <th>n_a</th>
-          <th>n_b</th>
-          <th>n_effective</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td>SyncRandomOneShotAgent</td>
-          <td>GreedyOneShotAgent</td>
-          <td>0.80</td>
-          <td>0.08</td>
-          <td>5</td>
-          <td>5</td>
-          <td>5</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>SyncRandomOneShotAgent</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.40</td>
-          <td>0.87</td>
-          <td>5</td>
-          <td>5</td>
-          <td>5</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>SyncRandomOneShotAgent</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.40</td>
-          <td>0.87</td>
-          <td>5</td>
-          <td>5</td>
-          <td>5</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>GreedyOneShotAgent</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>1.00</td>
-          <td>0.01</td>
-          <td>5</td>
-          <td>5</td>
-          <td>5</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>GreedyOneShotAgent</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.80</td>
-          <td>0.08</td>
-          <td>5</td>
-          <td>5</td>
-          <td>5</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>GreedySingleAgreementAgent</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.40</td>
-          <td>0.87</td>
-          <td>5</td>
-          <td>5</td>
-          <td>5</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
-
 see the total score
 
 .. code:: ipython3
 
     results.total_scores
-
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>agent_type</th>
-          <th>score</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td>GreedyOneShotAgent</td>
-          <td>0.95</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.72</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>RandomOneShotAgent</td>
-          <td>0.51</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>SyncRandomOneShotAgent</td>
-          <td>0.50</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
 
 We can even get the scores of every agent belonging to every agent type
 at every simulation
@@ -2121,71 +3024,6 @@ at every simulation
 .. code:: ipython3
 
     results.scores.loc[:, ["agent_name", "agent_type", "score"]].head()
-
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>agent_name</th>
-          <th>agent_type</th>
-          <th>score</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td>04SyR@1</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-0.24</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>00Gre@0</td>
-          <td>GreedyOneShotAgent</td>
-          <td>0.96</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>04GSA@1</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.89</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>00SyR@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>0.76</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>00GSA@0</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.74</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
 
 Let’s see how did the location at the production graph affect the score
 of each type.
@@ -2198,11 +3036,6 @@ of each type.
                  x="level", y="score", hue="agent_type")
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
-
-
-
-.. image:: 01.run_scml2020_files/01.run_scml2020_97_0.png
-
 
 Now that you can run simulations and complete tournaments, let’s see how
 are we going to develop a new agent for the SCML2021 league

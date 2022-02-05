@@ -1743,8 +1743,8 @@ This is an example agent that uses this approach:
 
 .. parsed-literal::
 
-    [('AssumeOthersFailIndNeg', 0.13936148735127274),
-     ('RandomOneShotAgent', 0.016172548063384265)]
+    [('AssumeOthersFailIndNeg', 0.12609880308474705),
+     ('RandomOneShotAgent', -0.12757436938525288)]
 
 
 This agent simply uses its **central** ufun for each negotiator. This is
@@ -1810,8 +1810,8 @@ because the agent may over-contract.
 
 .. parsed-literal::
 
-    [('GreedyIndNeg', 0.004681314312553092),
-     ('RandomOneShotAgent', -0.5575657220089572)]
+    [('GreedyIndNeg', 0.4636477067121894),
+     ('RandomOneShotAgent', 0.0922778042157144)]
 
 
 Using A Negotiator from the Genius Platform
@@ -1890,8 +1890,8 @@ will work correctly. Here is an example
 
 .. parsed-literal::
 
-    [('GeniusIndNeg', 0.6397600865076828),
-     ('RandomOneShotAgent', 0.3990541201608428)]
+    [('GeniusIndNeg', 0.7943845163409805),
+     ('RandomOneShotAgent', -0.23337617886599205)]
 
 
 Comparing all agents
@@ -1920,15 +1920,15 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.3339646188461831),
-     ('LearningAgent', 1.307591705452945),
-     ('AdaptiveAgent', 1.2788875308815086),
-     ('SimpleAgent', 0.9647352261920996),
-     ('SyncAgent', 0.8210355331013083),
-     ('GreedyIndNeg', 0.7723459026073376),
-     ('SimpleSingleAgreementAgent', 0.6728653212338017),
-     ('GeniusIndNeg', 0.2599275541086003),
-     ('DeepSimpleAgent', 0.1388695171487256)]
+    [('AdaptiveAgent', 1.2040874261910173),
+     ('LearningAgent', 1.1589129772098725),
+     ('BetterAgent', 1.1546850156612651),
+     ('GeniusIndNeg', 1.045233829587781),
+     ('SimpleAgent', 0.9201233241262907),
+     ('SyncAgent', 0.8344864061698246),
+     ('SimpleSingleAgreementAgent', 0.742240660741396),
+     ('GreedyIndNeg', 0.57951495714287),
+     ('DeepSimpleAgent', -0.06659333511257991)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1997,15 +1997,15 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('BetterAgent', 0.8675358107201053),
-     ('LearningAgent', 0.8473342155964605),
-     ('AdaptiveAgent', 0.7975654582499924),
-     ('SimpleAgent', 0.7371751597368243),
-     ('DeepSimpleAgent', 0.7157721667136598),
-     ('SingleAgreementAspirationAgent', 0.6732614240751571),
-     ('SyncAgent', 0.6707045503585998),
-     ('DecentralizingAgent', 0.5662165405370783),
-     ('BuyCheapSellExpensiveAgent', 0.12171760217545255)]
+    [('LearningAgent', 1.1486957252802492),
+     ('SimpleAgent', 0.96751046330971),
+     ('SingleAgreementAspirationAgent', 0.8156100836853246),
+     ('AdaptiveAgent', 0.7794520960330327),
+     ('BetterAgent', 0.7754922051998503),
+     ('DecentralizingAgent', 0.7330452643229824),
+     ('SyncAgent', 0.5458278174657928),
+     ('DeepSimpleAgent', 0.40923110057302287),
+     ('BuyCheapSellExpensiveAgent', 0.24088225741361266)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to
@@ -2019,11 +2019,9 @@ take into account are the following:
    adjusted as explaind in the `OneShot game
    description <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__.
 2. The agent will not be able to do any trade about any steps beyond the
-   next step.
-
-With that we end our tutorial. Have fun developing your agent.
-
-
+   next step. 1112wqesdfcgvhjkl;’]
+   :raw-latex:`\uYH` With that we end our tutorial. Have fun developing
+   your agent.
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.
