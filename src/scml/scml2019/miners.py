@@ -208,11 +208,7 @@ class ReactiveMiner(Miner):
                 "unit_price": lambda x: float(x) ** tau_u / beta_u if x else 0,
             },
             weights={"time": alpha_t, "quantity": alpha_q, "unit_price": alpha_u},
-            issues=[
-                make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                make_issue((cfp.min_time, cfp.max_time), "time"),
-                make_issue((cfp.min_unit_price, cfp.max_unit_price), "unit_price"),
-            ],
+            issues=cfp.issues,
         )
         ufun.reserved_value = ufun(
             (

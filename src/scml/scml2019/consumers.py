@@ -315,34 +315,18 @@ class JustInTimeConsumer(Consumer):
             ufuns=[
                 MappingUtilityFunction(
                     mapping=(lambda x: 1 - x[UNIT_PRICE] ** tau_u / beta_u),
-                    issues=[
-                        make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                        make_issue((cfp.min_time, cfp.max_time), "time"),
-                        make_issue(
-                            (cfp.min_unit_price, cfp.max_unit_price), "unit_price"
-                        ),
-                    ],
+                    issues=cfp.issues,
                 ),
                 MappingUtilityFunction(
                     mapping=functools.partial(
                         JustInTimeConsumer._qufun, tau=tau_q, profile=profile
                     ),
-                    issues=[
-                        make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                        make_issue((cfp.min_time, cfp.max_time), "time"),
-                        make_issue(
-                            (cfp.min_unit_price, cfp.max_unit_price), "unit_price"
-                        ),
-                    ],
+                    issues=cfp.issues,
                 ),
             ],
             weights=[alpha_u, alpha_q],
-            issues=[
-                make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                make_issue((cfp.min_time, cfp.max_time), "time"),
-                make_issue((cfp.min_unit_price, cfp.max_unit_price), "unit_price"),
-            ],
             name=self.name + "_" + partner[:4],
+            issues=cfp.issues,
         )
         negotiator = self.negotiator_type(name=self.name + "*" + partner[:4], ufun=ufun)
         # negotiator.utility_function = ufun
@@ -629,34 +613,18 @@ class ScheduleDrivenConsumer(Consumer):
             ufuns=[
                 MappingUtilityFunction(
                     mapping=lambda x: 1 - x[UNIT_PRICE] ** tau_u / beta_u,
-                    issues=[
-                        make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                        make_issue((cfp.min_time, cfp.max_time), "time"),
-                        make_issue(
-                            (cfp.min_unit_price, cfp.max_unit_price), "unit_price"
-                        ),
-                    ],
+                    issues=cfp.issues,
                 ),
                 MappingUtilityFunction(
                     mapping=functools.partial(
                         JustInTimeConsumer._qufun, tau=tau_q, profile=profile
                     ),
-                    issues=[
-                        make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                        make_issue((cfp.min_time, cfp.max_time), "time"),
-                        make_issue(
-                            (cfp.min_unit_price, cfp.max_unit_price), "unit_price"
-                        ),
-                    ],
+                    issues=cfp.issues,
                 ),
             ],
             weights=[alpha_u, alpha_q],
             name=self.name + "_" + partner[:4],
-            issues=[
-                make_issue((cfp.min_quantity, cfp.max_quantity), "quantity"),
-                make_issue((cfp.min_time, cfp.max_time), "time"),
-                make_issue((cfp.min_unit_price, cfp.max_unit_price), "unit_price"),
-            ],
+            issues=cfp.issues,
         )
         negotiator = self.negotiator_type(name=self.name + "*" + partner[:4], ufun=ufun)
         # negotiator.utility_function = ufun

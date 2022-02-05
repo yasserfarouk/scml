@@ -749,7 +749,7 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
 
 
 def test_ind_negotiators():
-    n_processes = 5
+    n_processes = 2
     world = generate_world(
         [MyIndNeg],
         n_processes=n_processes,

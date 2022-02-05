@@ -36,7 +36,6 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             aspiration_type=float(random.randint(1, 4))
             if random.random() < 0.7
             else random.random(),
-            above_reserved_value=False,
         )
         # if self.awi.current_exogenous_input_quantity or self.awi.current_exogenous_output_quantity:
         #     breakpoint()

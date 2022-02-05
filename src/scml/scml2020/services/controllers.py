@@ -103,9 +103,11 @@ class StepController(SAOController, AspirationMixin, Notifier):
             negotiator_params if negotiator_params is not None else dict()
         )
         issues = [
-            make_issue((1, max(int(target_quantity), 1))),
-            make_issue((step, step)),
-            make_issue((int(urange[0]), max(int(urange[0]), int(urange[1])))),
+            make_issue((1, max(int(target_quantity), 1)), "quantity"),
+            make_issue((step, step), "time"),
+            make_issue(
+                (int(urange[0]), max(int(urange[0]), int(urange[1]))), "unit_price"
+            ),
         ]
         if is_seller:
             self.ufun = LinearUtilityFunction(weights=(1.0, 1.0, 10.0), issues=issues)

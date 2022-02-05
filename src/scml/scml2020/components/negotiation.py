@@ -676,7 +676,7 @@ class IndependentNegotiationsManager(NegotiationManager):
         issues = [
             make_issue((int(qvalues[0]), int(qvalues[1])), name="quantity"),
             make_issue((int(tvalues[0]), int(tvalues[1])), name="time"),
-            make_issue((int(uvalues[0]), int(uvalues[1])), name="uvalues"),
+            make_issue((int(uvalues[0]), int(uvalues[1])), name="unit_price"),
         ]
 
         for partner in partners:

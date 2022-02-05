@@ -1,3 +1,7 @@
+import warnings
+
+warnings.filterwarnings("ignore")
+
 import random
 
 import hypothesis.strategies as st
@@ -116,9 +120,9 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
 )
 @settings(deadline=300_000, max_examples=20)
 @example(
-    [RandomAgent, SyncRandomOneShotAgent],
-    False,
-    2,
+    agent_types=[scml.scml2020.agents.indneg.IndependentNegotiationsAgent],
+    buy_missing=False,
+    n_processes=2,
 )
 def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(
