@@ -38,7 +38,7 @@ from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
 from negmas.helpers import unique_name
-from negmas.sao import PassThroughSAONegotiator
+from negmas.sao import ControlledSAONegotiator
 from negmas.sao import SAOController
 from negmas.sao import SAONegotiator
 
@@ -1709,7 +1709,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             return True
         if negotiators is None:
             negotiators = [
-                controller.create_negotiator(PassThroughSAONegotiator, name=_, id=_)
+                controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)
                 for _ in partners
             ]
         results = [

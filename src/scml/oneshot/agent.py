@@ -25,11 +25,11 @@ from typing import List
 from typing import Optional
 
 from negmas import Contract
+from negmas import ControlledSAONegotiator
 from negmas import Entity
 from negmas import MechanismState
 from negmas import NegotiatorMechanismInterface
 from negmas import Outcome
-from negmas import PassThroughSAONegotiator
 from negmas import ResponseType
 from negmas import SAOController
 from negmas import SAOResponse
@@ -38,7 +38,7 @@ from negmas import SAOState
 from negmas import SAOSyncController
 from negmas.helpers import get_class
 from negmas.preferences import UtilityFunction
-from negmas.sao import SAOAMI
+from negmas.sao import SAONMI
 from negmas.sao import SAONegotiator
 from negmas.situated import RunningNegotiationInfo
 
@@ -79,7 +79,7 @@ class OneShotAgent(SAOController, Entity, ABC):
 
     def __init__(self, owner=None, ufun: OneShotUFun | None = None, name=None):
         super().__init__(
-            default_negotiator_type=PassThroughSAONegotiator,
+            default_negotiator_type=ControlledSAONegotiator,
             default_negotiator_params=None,
             auto_kill=False,
             name=name,
@@ -259,17 +259,17 @@ class OneShotAgent(SAOController, Entity, ABC):
         """
         return self.negotiators[partner_id][0]
 
-    def get_ami(self, partner_id: str) -> SAOAMI:
+    def get_ami(self, partner_id: str) -> SAONMI:
         """
-        Returns the `SAOAMI` (Agent Mechanism Interface) connecting the agent
+        Returns the `SAONMI` (Agent Mechanism Interface) connecting the agent
         to the negotiation mechanism for the given partner.
         """
         warnings.warn("get_ami is depricated. Use get_nmi")
         return self.negotiators[partner_id][0].nmi
 
-    def get_nmi(self, partner_id: str) -> SAOAMI:
+    def get_nmi(self, partner_id: str) -> SAONMI:
         """
-        Returns the `SAOAMI` (Agent Mechanism Interface) connecting the agent
+        Returns the `SAONMI` (Agent Mechanism Interface) connecting the agent
         to the negotiation mechanism for the given partner.
         """
         return self.negotiators[partner_id][0].nmi

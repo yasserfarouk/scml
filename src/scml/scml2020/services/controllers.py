@@ -12,10 +12,10 @@ from typing import Union
 import numpy as np
 from negmas import AgentWorldInterface
 from negmas import AspirationMixin
+from negmas import ControlledNegotiator
 from negmas import LinearUtilityFunction
 from negmas import MechanismState
 from negmas import Outcome
-from negmas import PassThroughNegotiator
 from negmas import ResponseType
 from negmas import UtilityFunction
 from negmas import make_issue
@@ -30,7 +30,7 @@ from negmas.sao import SAONegotiator
 from negmas.sao import SAOResponse
 from negmas.sao import SAOState
 from negmas.sao import SAOSyncController
-from negmas.sao.negotiators.passthrough import PassThroughSAONegotiator
+from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
 from scml.scml2020.common import QUANTITY
 from scml.scml2020.common import TIME
@@ -168,11 +168,11 @@ class StepController(SAOController, AspirationMixin, Notifier):
 
     def create_negotiator(
         self,
-        negotiator_type: Union[str, Type[PassThroughNegotiator]] = None,
+        negotiator_type: Union[str, Type[ControlledNegotiator]] = None,
         name: str = None,
         cntxt: Any = None,
         **kwargs,
-    ) -> PassThroughNegotiator:
+    ) -> ControlledNegotiator:
         neg = super().create_negotiator(negotiator_type, name, cntxt, **kwargs)
         self.completed[neg.id] = False
         return neg

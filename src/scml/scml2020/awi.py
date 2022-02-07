@@ -11,8 +11,8 @@ from typing import Union
 
 import numpy as np
 from negmas import AgentWorldInterface
+from negmas import ControlledSAONegotiator
 from negmas import Negotiator
-from negmas import PassThroughSAONegotiator
 from negmas import SAOController
 from negmas import SAONegotiator
 from negmas import make_issue
@@ -233,7 +233,7 @@ class AWI(AgentWorldInterface):
 
         if negotiators is None:
             negotiators = [
-                PassThroughSAONegotiator(
+                ControlledSAONegotiator(
                     name=_ if copy_partner_id else None,
                     id=_ if copy_partner_id else None,
                 )

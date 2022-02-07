@@ -14,7 +14,7 @@ from negmas import MechanismState
 from negmas import Negotiator
 from negmas import NegotiatorMechanismInterface
 from negmas import RenegotiationRequest
-from negmas.sao import PassThroughSAONegotiator
+from negmas.sao import ControlledSAONegotiator
 
 from .agent import OneShotAgent
 from .helper import AWIHelper
@@ -91,7 +91,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if not self._obj:
             return None
         neg = self._obj.create_negotiator(
-            PassThroughSAONegotiator, name=partner, id=partner
+            ControlledSAONegotiator, name=partner, id=partner
         )
         return neg
 

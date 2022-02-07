@@ -176,9 +176,9 @@ historical reasons). You can find more details about the general NegMAS AMI
 
 Each specific **Mechanism** defines a corresponding specific
 **NegotiatorMechanismInterface** class (in the same way that **World** classes
-define their own AWI). The **SAOMechanism** used in SCML defines **SAOAMI** for
+define their own AWI). The **SAOMechanism** used in SCML defines **SAONMI** for
 this purpose (Details are
-[here](http://www.yasserm.com/negmas/api/negmas.sao.SAOAMI.html?highlight=saoami#negmas.sao.SAOAMI)).
+[here](http://www.yasserm.com/negmas/api/negmas.sao.SAONMI.html?highlight=saoami#negmas.sao.SAONMI)).
 
 To negotiate effectively, negotiators employ a **UtilityFunction** to represent
 their preferences over different possible **Outcome**s of the negotiation

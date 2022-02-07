@@ -15,7 +15,7 @@ from negmas import Negotiator
 from negmas import NegotiatorMechanismInterface
 from negmas import Outcome
 from negmas import ResponseType
-from negmas.sao import SAOAMI
+from negmas.sao import SAONMI
 from negmas.sao import SAONegotiator
 from negmas.sao import SAOState
 
@@ -462,7 +462,7 @@ class SatisficerAgent(SCML2020Agent):
     # =====================
 
     def propose(
-        self, state: SAOState, ami: SAOAMI, is_selling: bool, is_requested: bool
+        self, state: SAOState, ami: SAONMI, is_selling: bool, is_requested: bool
     ):
         """
         Used to propose to the opponent
