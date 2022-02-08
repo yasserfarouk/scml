@@ -187,16 +187,16 @@ The interaction between **Mechanism** and **Negotiator** objects mirrors
 the interaction between **World** and **Agent** objects. **Mechanism**
 objects call methods in **Negotiator** objects directly but
 **Negotiator** objects can only access services provided by the
-**Mechanism** object through a **AgentMechanismInterface** (AMI). Note
-that it is an AMI not a NMI (for historical reasons). You can find more
-details about the general NegMAS AMI
-`here <http://www.yasserm.com/negmas/api/negmas.common.AgentMechanismInterface.html>`__.
+**Mechanism** object through a **NegotiatorMechanismInterface** (AMI).
+Note that it is an AMI not a NMI (for historical reasons). You can find
+more details about the general NegMAS AMI
+`here <http://www.yasserm.com/negmas/api/negmas.common.NegotiatorMechanismInterface.html>`__.
 
 Each specific **Mechanism** defines a corresponding specific
-**AgentMechanismInterface** class (in the same way that **World**
+**NegotiatorMechanismInterface** class (in the same way that **World**
 classes define their own AWI). The **SAOMechanism** used in SCML defines
-**SAOAMI** for this purpose (Details are
-`here <http://www.yasserm.com/negmas/api/negmas.sao.SAOAMI.html?highlight=saoami#negmas.sao.SAOAMI>`__).
+**SAONMI** for this purpose (Details are
+`here <http://www.yasserm.com/negmas/api/negmas.sao.SAONMI.html?highlight=saoami#negmas.sao.SAONMI>`__).
 
 To negotiate effectively, negotiators employ a **UtilityFunction** to
 represent their preferences over different possible **Outcome**\ s of
@@ -503,6 +503,63 @@ Now you can run this world simulation by just calling ``run``.
 
     world.run_with_progress() # may take few minutes
 
+
+.. parsed-literal::
+
+
+      0%|          | 0/50 [00:00<?, ?it/s][A
+      2%|▏         | 1/50 [00:00<00:08,  6.00it/s][A
+      4%|▍         | 2/50 [00:00<00:09,  5.24it/s][A
+      6%|▌         | 3/50 [00:00<00:08,  5.35it/s][A
+      8%|▊         | 4/50 [00:00<00:07,  5.76it/s][A
+     10%|█         | 5/50 [00:00<00:08,  5.57it/s][A
+     12%|█▏        | 6/50 [00:01<00:08,  5.47it/s][A
+     14%|█▍        | 7/50 [00:01<00:07,  5.99it/s][A
+     16%|█▌        | 8/50 [00:01<00:07,  5.80it/s][A
+     18%|█▊        | 9/50 [00:01<00:07,  5.76it/s][A
+     20%|██        | 10/50 [00:01<00:08,  4.64it/s][A
+     22%|██▏       | 11/50 [00:02<00:08,  4.42it/s][A
+     24%|██▍       | 12/50 [00:02<00:10,  3.62it/s][A
+     26%|██▌       | 13/50 [00:02<00:10,  3.37it/s][A
+     28%|██▊       | 14/50 [00:03<00:10,  3.43it/s][A
+     30%|███       | 15/50 [00:03<00:09,  3.55it/s][A
+     32%|███▏      | 16/50 [00:03<00:11,  3.02it/s][A
+     34%|███▍      | 17/50 [00:04<00:12,  2.59it/s][A
+     36%|███▌      | 18/50 [00:04<00:14,  2.27it/s][A
+     38%|███▊      | 19/50 [00:05<00:12,  2.44it/s][A
+     40%|████      | 20/50 [00:05<00:11,  2.55it/s][A
+     42%|████▏     | 21/50 [00:06<00:12,  2.34it/s][A
+     44%|████▍     | 22/50 [00:06<00:12,  2.21it/s][A
+     46%|████▌     | 23/50 [00:07<00:13,  1.96it/s][A
+     48%|████▊     | 24/50 [00:07<00:13,  1.93it/s][A
+     50%|█████     | 25/50 [00:08<00:12,  2.01it/s][A
+     52%|█████▏    | 26/50 [00:08<00:11,  2.04it/s][A
+     54%|█████▍    | 27/50 [00:09<00:12,  1.85it/s][A
+     56%|█████▌    | 28/50 [00:09<00:10,  2.01it/s][A
+     58%|█████▊    | 29/50 [00:10<00:10,  2.08it/s][A
+     60%|██████    | 30/50 [00:10<00:09,  2.09it/s][A
+     62%|██████▏   | 31/50 [00:11<00:09,  1.97it/s][A
+     64%|██████▍   | 32/50 [00:11<00:09,  1.87it/s][A
+     66%|██████▌   | 33/50 [00:12<00:09,  1.83it/s][A
+     68%|██████▊   | 34/50 [00:13<00:08,  1.78it/s][A
+     70%|███████   | 35/50 [00:13<00:09,  1.60it/s][A
+     72%|███████▏  | 36/50 [00:14<00:08,  1.63it/s][A
+     74%|███████▍  | 37/50 [00:15<00:08,  1.55it/s][A
+     76%|███████▌  | 38/50 [00:15<00:07,  1.52it/s][A
+     78%|███████▊  | 39/50 [00:16<00:07,  1.45it/s][A
+     80%|████████  | 40/50 [00:17<00:08,  1.23it/s][A
+     82%|████████▏ | 41/50 [00:18<00:07,  1.27it/s][A
+     84%|████████▍ | 42/50 [00:19<00:06,  1.19it/s][A
+     86%|████████▌ | 43/50 [00:20<00:05,  1.25it/s][A
+     88%|████████▊ | 44/50 [00:21<00:05,  1.20it/s][A
+     90%|█████████ | 45/50 [00:21<00:04,  1.19it/s][A
+     92%|█████████▏| 46/50 [00:22<00:03,  1.24it/s][A
+     94%|█████████▍| 47/50 [00:23<00:02,  1.23it/s][A
+     96%|█████████▌| 48/50 [00:24<00:01,  1.25it/s][A
+     98%|█████████▊| 49/50 [00:24<00:00,  1.28it/s][A
+    100%|██████████| 50/50 [00:25<00:00,  1.95it/s][A
+
+
 Let’s see what happened in this run. Firstly, how many negotiations were
 conducted over time
 
@@ -595,15 +652,15 @@ There are statistics specific for each agent that all have
 
 .. parsed-literal::
 
-    ['spot_market_quantity_02MAD@1',
-     'spot_market_loss_02MAD@1',
-     'balance_02MAD@1',
-     'inventory_02MAD@1_input',
-     'inventory_02MAD@1_output',
-     'productivity_02MAD@1',
-     'assets_02MAD@1',
-     'bankrupt_02MAD@1',
-     'score_02MAD@1']
+    ['spot_market_quantity_03SRO@1',
+     'spot_market_loss_03SRO@1',
+     'balance_03SRO@1',
+     'inventory_03SRO@1_input',
+     'inventory_03SRO@1_output',
+     'productivity_03SRO@1',
+     'assets_03SRO@1',
+     'bankrupt_03SRO@1',
+     'score_03SRO@1']
 
 
 The convension is that agent names has the form {ind}{Type}{process}
@@ -649,15 +706,15 @@ Let’s see how did our agent do
 
 .. parsed-literal::
 
-    {'assets_02MAD@1': (0.0, 9444.614261016386),
-     'balance_02MAD@1': (24670, 20322),
-     'bankrupt_02MAD@1': (False, False),
-     'inventory_02MAD@1_input': (0, 152),
-     'inventory_02MAD@1_output': (0, 209),
-     'productivity_02MAD@1': (0.0, 1.0),
-     'score_02MAD@1': (1.0, 0.9712723761553673),
-     'spot_market_loss_02MAD@1': (0.3, 0.948),
-     'spot_market_quantity_02MAD@1': (0, 0)}
+    {'assets_03SRO@1': (0.0, 0.0),
+     'balance_03SRO@1': (24439, 22344),
+     'bankrupt_03SRO@1': (False, False),
+     'inventory_03SRO@1_input': (0, 0),
+     'inventory_03SRO@1_output': (0, 0),
+     'productivity_03SRO@1': (0.1, 0.0),
+     'score_03SRO@1': (1.0, 0.9142763615532551),
+     'spot_market_loss_03SRO@1': (0.3, 4.494),
+     'spot_market_quantity_03SRO@1': (0, 6)}
 
 
 .. code:: ipython3
@@ -733,7 +790,7 @@ Notice that there can be multiple winners
 
 .. parsed-literal::
 
-    [02MAD@1] of type ['marketawaredecentralizing'] won at [97.12723761553673]%
+    [03SRO@1] of type ['syncrandomoneshot:syncrandomoneshot'] won at [91.42763615532552]%
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -935,130 +992,130 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>542</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>24</td>
-          <td>54</td>
-          <td>16</td>
-          <td>21</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>563</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>24</td>
-          <td>51</td>
-          <td>11</td>
-          <td>23</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>603</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>31</td>
-          <td>49</td>
-          <td>16</td>
-          <td>26</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>438</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>16</td>
-          <td>49</td>
-          <td>13</td>
-          <td>14</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>649</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>33</td>
-          <td>43</td>
-          <td>11</td>
-          <td>31</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>361</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>11</td>
-          <td>42</td>
-          <td>13</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>486</th>
+          <th>463</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
           <td>17</td>
-          <td>38</td>
           <td>20</td>
-          <td>17</td>
+          <td>15</td>
+          <td>15</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>626</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>32</td>
-          <td>35</td>
+          <th>527</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>23</td>
+          <td>20</td>
           <td>11</td>
-          <td>27</td>
+          <td>20</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>634</th>
+          <th>321</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>7</td>
+          <td>18</td>
+          <td>8</td>
+          <td>5</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>605</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
-          <td>36</td>
+          <td>40</td>
+          <td>16</td>
           <td>27</td>
-          <td>11</td>
+          <td>40</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>595</th>
+          <td>01SRO@0</td>
+          <td>02MAD@1</td>
           <td>28</td>
+          <td>15</td>
+          <td>20</td>
+          <td>27</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>530</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>21</td>
-          <td>24</td>
+          <th>494</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>23</td>
+          <td>15</td>
+          <td>10</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>570</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>29</td>
           <td>11</td>
-          <td>21</td>
+          <td>6</td>
+          <td>24</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>267</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>1</td>
+          <td>9</td>
+          <td>15</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>103</th>
+          <td>02MAD@1</td>
+          <td>BUYER</td>
+          <td>16</td>
+          <td>8</td>
+          <td>27</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>459</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>15</td>
+          <td>8</td>
+          <td>12</td>
+          <td>15</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1113,130 +1170,130 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>542</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>24</td>
-          <td>54</td>
-          <td>16</td>
-          <td>21</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>563</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>24</td>
-          <td>51</td>
-          <td>11</td>
-          <td>23</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>603</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>31</td>
-          <td>49</td>
-          <td>16</td>
-          <td>26</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>438</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>16</td>
-          <td>49</td>
-          <td>13</td>
-          <td>14</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>649</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>33</td>
-          <td>43</td>
-          <td>11</td>
-          <td>31</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>361</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>11</td>
-          <td>42</td>
-          <td>13</td>
-          <td>8</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>486</th>
+          <th>463</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
           <td>17</td>
-          <td>38</td>
           <td>20</td>
-          <td>17</td>
+          <td>15</td>
+          <td>15</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>626</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>32</td>
-          <td>35</td>
+          <th>527</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>23</td>
+          <td>20</td>
           <td>11</td>
-          <td>27</td>
+          <td>20</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>634</th>
+          <th>321</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>7</td>
+          <td>18</td>
+          <td>8</td>
+          <td>5</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>605</th>
           <td>01SRO@0</td>
           <td>02MAD@1</td>
-          <td>36</td>
+          <td>40</td>
+          <td>16</td>
           <td>27</td>
-          <td>11</td>
+          <td>40</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>595</th>
+          <td>01SRO@0</td>
+          <td>02MAD@1</td>
           <td>28</td>
+          <td>15</td>
+          <td>20</td>
+          <td>27</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>530</th>
-          <td>01SRO@0</td>
-          <td>02MAD@1</td>
-          <td>21</td>
-          <td>24</td>
+          <th>494</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>23</td>
+          <td>15</td>
+          <td>10</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>570</th>
+          <td>00MAD@0</td>
+          <td>03SRO@1</td>
+          <td>29</td>
           <td>11</td>
-          <td>21</td>
+          <td>6</td>
+          <td>24</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>267</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>1</td>
+          <td>9</td>
+          <td>15</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>103</th>
+          <td>02MAD@1</td>
+          <td>BUYER</td>
+          <td>16</td>
+          <td>8</td>
+          <td>27</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>459</th>
+          <td>01SRO@0</td>
+          <td>03SRO@1</td>
+          <td>15</td>
+          <td>8</td>
+          <td>12</td>
+          <td>15</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1453,7 +1510,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['DecentralizingAgent']
+    ['MarketAwareDecentralizingAgent']
 
 
 
@@ -1468,7 +1525,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    15
+    30
 
 
 
@@ -1521,38 +1578,38 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>15.00</td>
-          <td>-0.30</td>
-          <td>0.17</td>
-          <td>-0.62</td>
-          <td>-0.35</td>
-          <td>-0.28</td>
-          <td>-0.16</td>
-          <td>-0.10</td>
+          <td>20.00</td>
+          <td>-1.05</td>
+          <td>0.94</td>
+          <td>-3.21</td>
+          <td>-1.15</td>
+          <td>-0.66</td>
+          <td>-0.49</td>
+          <td>-0.09</td>
         </tr>
         <tr>
           <th>1</th>
           <td>DecentralizingAgent</td>
-          <td>15.00</td>
-          <td>-0.12</td>
-          <td>0.13</td>
+          <td>20.00</td>
+          <td>-0.20</td>
+          <td>0.11</td>
           <td>-0.39</td>
+          <td>-0.25</td>
           <td>-0.22</td>
-          <td>-0.06</td>
-          <td>-0.04</td>
-          <td>0.05</td>
+          <td>-0.12</td>
+          <td>-0.03</td>
         </tr>
         <tr>
           <th>2</th>
           <td>MarketAwareDecentralizingAgent</td>
-          <td>15.00</td>
-          <td>-0.13</td>
-          <td>0.12</td>
-          <td>-0.39</td>
-          <td>-0.22</td>
-          <td>-0.07</td>
-          <td>-0.04</td>
-          <td>0.00</td>
+          <td>20.00</td>
+          <td>-0.18</td>
+          <td>0.11</td>
+          <td>-0.36</td>
+          <td>-0.24</td>
+          <td>-0.20</td>
+          <td>-0.05</td>
+          <td>-0.03</td>
         </tr>
       </tbody>
     </table>
@@ -1602,33 +1659,33 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>SyncRandomOneShotAgent</td>
           <td>DecentralizingAgent</td>
-          <td>0.53</td>
-          <td>0.03</td>
-          <td>15</td>
-          <td>15</td>
-          <td>15</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>0.20</td>
+          <td>0.83</td>
+          <td>20</td>
+          <td>20</td>
+          <td>20</td>
         </tr>
         <tr>
           <th>1</th>
+          <td>DecentralizingAgent</td>
           <td>SyncRandomOneShotAgent</td>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>0.53</td>
-          <td>0.03</td>
-          <td>15</td>
-          <td>15</td>
-          <td>15</td>
+          <td>0.75</td>
+          <td>0.00</td>
+          <td>20</td>
+          <td>20</td>
+          <td>20</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>DecentralizingAgent</td>
           <td>MarketAwareDecentralizingAgent</td>
-          <td>0.13</td>
-          <td>1.00</td>
-          <td>15</td>
-          <td>15</td>
-          <td>15</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.85</td>
+          <td>0.00</td>
+          <td>20</td>
+          <td>20</td>
+          <td>20</td>
         </tr>
       </tbody>
     </table>
@@ -1672,18 +1729,18 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>DecentralizingAgent</td>
-          <td>-0.12</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.18</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.13</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.20</td>
         </tr>
         <tr>
           <th>2</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>-0.30</td>
+          <td>-1.05</td>
         </tr>
       </tbody>
     </table>
@@ -1747,33 +1804,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00SRO@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-0.11</td>
+          <td>00Dec@0</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.25</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>01Dec@0</td>
-          <td>DecentralizingAgent</td>
-          <td>-0.22</td>
+          <td>06MAD@2</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.21</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>07MAD@2</td>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.05</td>
+          <td>00SRO@0</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-1.93</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>00SRO@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>-0.34</td>
+          <td>07Dec@2</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.10</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>01MAD@0</td>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.39</td>
+          <td>00SRO@0</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-2.34</td>
         </tr>
       </tbody>
     </table>
@@ -1907,50 +1964,50 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>GreedyOneShotAgent</td>
-          <td>20.00</td>
-          <td>1.10</td>
-          <td>0.16</td>
+          <td>5.00</td>
+          <td>1.00</td>
+          <td>0.08</td>
           <td>0.89</td>
-          <td>0.98</td>
-          <td>1.09</td>
-          <td>1.17</td>
-          <td>1.43</td>
+          <td>0.93</td>
+          <td>1.06</td>
+          <td>1.06</td>
+          <td>1.06</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedySingleAgreementAgent</td>
-          <td>20.00</td>
-          <td>0.80</td>
-          <td>0.09</td>
-          <td>0.62</td>
-          <td>0.75</td>
-          <td>0.79</td>
-          <td>0.86</td>
-          <td>0.96</td>
+          <td>5.00</td>
+          <td>0.59</td>
+          <td>0.11</td>
+          <td>0.42</td>
+          <td>0.56</td>
+          <td>0.63</td>
+          <td>0.65</td>
+          <td>0.68</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomOneShotAgent</td>
-          <td>20.00</td>
-          <td>0.61</td>
-          <td>0.26</td>
-          <td>0.16</td>
-          <td>0.36</td>
-          <td>0.62</td>
-          <td>0.83</td>
-          <td>0.99</td>
+          <td>5.00</td>
+          <td>0.01</td>
+          <td>0.54</td>
+          <td>-0.48</td>
+          <td>-0.40</td>
+          <td>-0.23</td>
+          <td>0.46</td>
+          <td>0.70</td>
         </tr>
         <tr>
           <th>3</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>20.00</td>
-          <td>0.63</td>
-          <td>0.25</td>
-          <td>0.14</td>
-          <td>0.55</td>
-          <td>0.64</td>
-          <td>0.80</td>
-          <td>1.12</td>
+          <td>5.00</td>
+          <td>0.03</td>
+          <td>0.51</td>
+          <td>-0.42</td>
+          <td>-0.32</td>
+          <td>-0.29</td>
+          <td>0.49</td>
+          <td>0.68</td>
         </tr>
       </tbody>
     </table>
@@ -2001,62 +2058,62 @@ You can also do statistical significance testing using ttest or kstest
         <tr>
           <th>0</th>
           <td>RandomOneShotAgent</td>
-          <td>GreedyOneShotAgent</td>
-          <td>0.85</td>
-          <td>0.00</td>
-          <td>20</td>
-          <td>20</td>
-          <td>20</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.60</td>
+          <td>0.36</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5</td>
         </tr>
         <tr>
           <th>1</th>
           <td>RandomOneShotAgent</td>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.60</td>
-          <td>0.00</td>
-          <td>20</td>
-          <td>20</td>
-          <td>20</td>
+          <td>GreedyOneShotAgent</td>
+          <td>1.00</td>
+          <td>0.01</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomOneShotAgent</td>
           <td>SyncRandomOneShotAgent</td>
-          <td>0.30</td>
-          <td>0.34</td>
-          <td>20</td>
-          <td>20</td>
-          <td>20</td>
+          <td>0.20</td>
+          <td>1.00</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>GreedyOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.80</td>
-          <td>0.00</td>
-          <td>20</td>
-          <td>20</td>
-          <td>20</td>
+          <td>GreedyOneShotAgent</td>
+          <td>1.00</td>
+          <td>0.01</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>GreedyOneShotAgent</td>
+          <td>GreedySingleAgreementAgent</td>
           <td>SyncRandomOneShotAgent</td>
-          <td>0.95</td>
-          <td>0.00</td>
-          <td>20</td>
-          <td>20</td>
-          <td>20</td>
+          <td>0.60</td>
+          <td>0.36</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>GreedySingleAgreementAgent</td>
+          <td>GreedyOneShotAgent</td>
           <td>SyncRandomOneShotAgent</td>
-          <td>0.55</td>
-          <td>0.00</td>
-          <td>20</td>
-          <td>20</td>
-          <td>20</td>
+          <td>1.00</td>
+          <td>0.01</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5</td>
         </tr>
       </tbody>
     </table>
@@ -2101,22 +2158,22 @@ see the total score
         <tr>
           <th>0</th>
           <td>GreedyOneShotAgent</td>
-          <td>1.10</td>
+          <td>1.00</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.80</td>
+          <td>0.59</td>
         </tr>
         <tr>
           <th>2</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>0.63</td>
+          <td>0.03</td>
         </tr>
         <tr>
           <th>3</th>
           <td>RandomOneShotAgent</td>
-          <td>0.61</td>
+          <td>0.01</td>
         </tr>
       </tbody>
     </table>
@@ -2162,33 +2219,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Ran@0</td>
+          <td>04Ran@1</td>
           <td>RandomOneShotAgent</td>
-          <td>0.86</td>
+          <td>-0.48</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>01Gre@0</td>
-          <td>GreedyOneShotAgent</td>
-          <td>1.11</td>
+          <td>04GSA@1</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.63</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>06GSA@1</td>
+          <td>04GSA@1</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.79</td>
+          <td>0.68</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>07SyR@1</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>0.14</td>
+          <td>04Gre@1</td>
+          <td>GreedyOneShotAgent</td>
+          <td>1.06</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00Gre@0</td>
-          <td>GreedyOneShotAgent</td>
-          <td>1.43</td>
+          <td>04GSA@1</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.42</td>
         </tr>
       </tbody>
     </table>
@@ -2213,7 +2270,7 @@ of each type.
 .. image:: 01.run_scml2020_files/01.run_scml2020_97_0.png
 
 
-Now that you can run simulations and complete tournament, let’s see how
+Now that you can run simulations and complete tournaments, let’s see how
 are we going to develop a new agent for the SCML2021 league
 :math:`\rightarrow`
 

@@ -1,7 +1,7 @@
-import warnings
+from __future__ import annotations
+
 from collections import namedtuple
 from copy import deepcopy
-from typing import Collection
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -11,8 +11,10 @@ from typing import Union
 from negmas import Contract
 from negmas.outcomes import Issue
 from negmas.outcomes import Outcome
-from negmas.utilities import UtilityFunction
-from negmas.utilities import UtilityValue
+from negmas.outcomes import OutcomeSpace
+from negmas.outcomes import make_issue
+from negmas.outcomes import make_os
+from negmas.preferences import UtilityFunction
 
 from scml.scml2020.common import is_system_agent
 
@@ -142,17 +144,47 @@ class OneShotUFun(UtilityFunction):
         self.input_product = input_product
         if self.input_product is not None:
             self.output_product = self.input_product + 1
+        else:
+            self.output_product = None
         if self.normalized:
             self.best = self.find_limit(True, None, None)
             self.worst = self.find_limit(False, None, None)
         else:
             self.best = UFunLimit(*tuple([None] * 10))
             self.worst = UFunLimit(*tuple([None] * 10))
+        if self.input_agent or self.output_agent:
+            # if this is an edge agent, all negotiations will be on the same product so we can define its outcome-space
+            qrange = self.input_qrange if self.output_agent else self.output_qrange
+            prange = self.input_prange if self.output_agent else self.output_prange
+            self.outcome_space = make_os(
+                [
+                    make_issue(qrange, name="quantity"),
+                    make_issue((self.current_step, self.current_step), name="time"),
+                    make_issue(prange, name="unit_price"),
+                ]
+            )
+        else:
+            # if this is not an edge agent, we have a different outcome space for each side
+            self.outcome_spaces = [
+                make_os(
+                    [
+                        make_issue(qrange, name="quantity"),
+                        make_issue((self.current_step, self.current_step), name="time"),
+                        make_issue(prange, name="unit_price"),
+                    ]
+                )
+                for qrange, prange in (
+                    (self.input_qrange, self.input_prange),
+                    (self.output_qrange, self.output_qrange),
+                )
+            ]
+        # slightly bias toward agreements
+        self.reserved_value = self.from_contracts([], ignore_exogenous=False) - 1e-3
 
     def xml(self, issues) -> str:
         raise NotImplementedError("Cannot convert the ufun to xml")
 
-    def __call__(self, offer) -> float:
+    def eval(self, offer) -> float:
         """
         Calculates the utility function given a single contract.
 
@@ -440,18 +472,56 @@ class OneShotUFun(UtilityFunction):
             self.worst = self.find_limit(False)
         return self.worst.utility
 
+    def minmax(self, *args, **kwargs) -> tuple[float, float]:
+        worst, best = self.extreme_outcomes(*args, **kwargs)
+        return self(worst), self(best)
+
+    def extreme_outcomes(
+        self,
+        outcome_space: OutcomeSpace | None = None,
+        issues: Iterable[Issue] | None = None,
+        outcomes: Iterable[Outcome] | None = None,
+        max_cardinality=1000,
+    ) -> tuple[Outcome, Outcome]:
+        product = (
+            self.output_product
+            if self.input_agent
+            else self.input_product
+            if self.output_agent
+            else None
+        )
+        if product is None:
+            raise ValueError(
+                f"Cannot find the utility range of a midlevel agent: {self.id}\n{vars(self)}"
+            )
+        t = self.current_step
+        is_input = int(product == self.input_product)
+        best = self.find_limit(
+            True,
+            n_input_negs=is_input,
+            n_output_negs=1 - is_input,
+        )
+        worst = self.find_limit(
+            False,
+            n_input_negs=is_input,
+            n_output_negs=1 - is_input,
+        )
+        if self.input_agent:
+            worst_outcome = (worst.output_quantity, t, worst.output_price)
+            best_outcome = (best.output_quantity, t, best.output_price)
+        else:
+            worst_outcome = (worst.input_quantity, t, worst.input_price)
+            best_outcome = (best.input_quantity, t, best.input_price)
+        return worst_outcome, best_outcome
+
     def utility_range(
         self,
+        outcome_space: OutcomeSpace | None = None,
         issues: List[Issue] = None,
-        outcomes: Collection[Outcome] = None,
-        infeasible_cutoff: Optional[float] = None,
+        outcomes: List[Outcome] = None,
         return_outcomes=False,
         max_n_outcomes=1000,
-        ami=None,
-    ) -> Union[
-        Tuple[UtilityValue, UtilityValue],
-        Tuple[UtilityValue, UtilityValue, Outcome, Outcome],
-    ]:
+    ) -> Union[Tuple[float, float], Tuple[float, float, Outcome, Outcome],]:
         """
         Finds the utility range and optionally returns the corresponding outcomes
         from a given issue space or in a single negotiation.
@@ -488,53 +558,12 @@ class OneShotUFun(UtilityFunction):
               negotiation not a set of negotiations and under the assumption that
               all other negotiations if any will end in failure
         """
-        if outcomes is not None:
-            warnings.warn(
-                "Using utility_range with outcomes instead of issues is "
-                "extremely inefficient for OneShotUFun"
-            )
-            return super().utility_range(
-                issues, outcomes, infeasible_cutoff, return_outcomes, max_n_outcomes
-            )
-        product = (
-            self.output_product
-            if self.input_agent
-            else self.input_product
-            if self.output_agent
-            else None
-        )
-        if product is None and ami:
-            product = ami.annotation["product"]
-        if product is None and self.ami:
-            product = self.ami.annotation.get("product", None)
-        if product is None:
-            raise ValueError("Cannot find the utility range of a midlevel agent")
-        t = self.current_step
-        is_input = int(product == self.input_product)
-        best = self.find_limit(
-            True,
-            n_input_negs=is_input,
-            n_output_negs=1 - is_input,
-        )
-        worst = self.find_limit(
-            False,
-            n_input_negs=is_input,
-            n_output_negs=1 - is_input,
-        )
         if not return_outcomes:
-            return worst.utility, best.utility
-        if self.input_agent:
-            worst_outcome = (worst.output_quantity, t, worst.output_price)
-            best_outcome = (best.output_quantity, t, best.output_price)
-        else:
-            worst_outcome = (worst.input_quantity, t, worst.input_price)
-            best_outcome = (best.input_quantity, t, best.input_price)
-        return (  # typing: ignore
-            worst.utility,
-            best.utility,
-            worst_outcome,
-            best_outcome,
-        )  # typing: ignore
+            return self.minmax(outcome_space, issues, list(outcomes), max_n_outcomes)  # type: ignore
+        worst, best = self.extreme_outcomes(
+            outcome_space, issues, outcomes, max_n_outcomes
+        )
+        return (self(worst), self(best), worst, best)
 
     def _is_midlevel(self):
         return not self.input_agent and not self.output_agent
@@ -600,9 +629,6 @@ class OneShotUFun(UtilityFunction):
         elif set_worst:
             self.worst = result
         return result
-
-    def register_agrerement(is_output: bool, quantity: int, unit_price: int) -> None:
-        pass
 
     def find_limit_brute_force(
         self,

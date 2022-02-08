@@ -8,21 +8,23 @@ from random import randint
 from random import random
 from typing import TYPE_CHECKING
 
-from negmas import AgentMechanismInterface
 from negmas import MechanismState
+from negmas import NegotiatorMechanismInterface
 from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
+from negmas.outcomes import make_issue
+from negmas.preferences import MappingUtilityFunction
+from negmas.preferences import WeightedUtilityFunction
 from negmas.situated import Breach
 from negmas.situated import Contract
 from negmas.situated import RenegotiationRequest
-from negmas.utilities import ComplexWeightedUtilityFunction
-from negmas.utilities import MappingUtilityFunction
 from numpy.random import dirichlet
 
 from .agent import SCML2019Agent
 from .common import CFP
 from .common import DEFAULT_NEGOTIATOR
+from .common import UNIT_PRICE
 from .common import FinancialReport
 from .helpers import pos_gauss
 
@@ -130,20 +132,22 @@ class JustInTimeConsumer(Consumer):
     def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
         pass
 
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
+    def on_neg_request_accepted(
+        self, req_id: str, mechanism: NegotiatorMechanismInterface
+    ):
         pass
 
     def on_negotiation_failure(
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 
@@ -307,19 +311,22 @@ class JustInTimeConsumer(Consumer):
         beta_u = pos_gauss(profile.beta_u, profile.cv)
         tau_u = pos_gauss(profile.tau_u, profile.cv)
         tau_q = pos_gauss(profile.tau_q, profile.cv)
-        ufun = ComplexWeightedUtilityFunction(
+        ufun = WeightedUtilityFunction(
             ufuns=[
                 MappingUtilityFunction(
-                    mapping=lambda x: 1 - x["unit_price"] ** tau_u / beta_u
+                    mapping=(lambda x: 1 - x[UNIT_PRICE] ** tau_u / beta_u),
+                    issues=cfp.issues,
                 ),
                 MappingUtilityFunction(
                     mapping=functools.partial(
                         JustInTimeConsumer._qufun, tau=tau_q, profile=profile
-                    )
+                    ),
+                    issues=cfp.issues,
                 ),
             ],
             weights=[alpha_u, alpha_q],
             name=self.name + "_" + partner[:4],
+            issues=cfp.issues,
         )
         negotiator = self.negotiator_type(name=self.name + "*" + partner[:4], ufun=ufun)
         # negotiator.utility_function = ufun
@@ -423,20 +430,22 @@ class ScheduleDrivenConsumer(Consumer):
     def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
         pass
 
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
+    def on_neg_request_accepted(
+        self, req_id: str, mechanism: NegotiatorMechanismInterface
+    ):
         pass
 
     def on_negotiation_failure(
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 
@@ -600,19 +609,22 @@ class ScheduleDrivenConsumer(Consumer):
         beta_u = pos_gauss(profile.beta_u, profile.cv)
         tau_u = pos_gauss(profile.tau_u, profile.cv)
         tau_q = pos_gauss(profile.tau_q, profile.cv)
-        ufun = ComplexWeightedUtilityFunction(
+        ufun = WeightedUtilityFunction(
             ufuns=[
                 MappingUtilityFunction(
-                    mapping=lambda x: 1 - x["unit_price"] ** tau_u / beta_u
+                    mapping=lambda x: 1 - x[UNIT_PRICE] ** tau_u / beta_u,
+                    issues=cfp.issues,
                 ),
                 MappingUtilityFunction(
                     mapping=functools.partial(
                         JustInTimeConsumer._qufun, tau=tau_q, profile=profile
-                    )
+                    ),
+                    issues=cfp.issues,
                 ),
             ],
             weights=[alpha_u, alpha_q],
             name=self.name + "_" + partner[:4],
+            issues=cfp.issues,
         )
         negotiator = self.negotiator_type(name=self.name + "*" + partner[:4], ufun=ufun)
         # negotiator.utility_function = ufun

@@ -11,11 +11,11 @@ from typing import Union
 
 import numpy as np
 from negmas import AgentWorldInterface
-from negmas import Issue
+from negmas import ControlledSAONegotiator
 from negmas import Negotiator
-from negmas import PassThroughSAONegotiator
 from negmas import SAOController
 from negmas import SAONegotiator
+from negmas import make_issue
 
 from .common import ANY_LINE
 from .common import ANY_STEP
@@ -233,7 +233,7 @@ class AWI(AgentWorldInterface):
 
         if negotiators is None:
             negotiators = [
-                PassThroughSAONegotiator(
+                ControlledSAONegotiator(
                     name=_ if copy_partner_id else None,
                     id=_ if copy_partner_id else None,
                 )
@@ -300,6 +300,8 @@ class AWI(AgentWorldInterface):
 
 
         """
+        if not negotiator:
+            return False
         if self.is_bankrupt():
             return False
         if self.is_bankrupt(partner) or not self._world.can_negotiate(
@@ -339,10 +341,15 @@ class AWI(AgentWorldInterface):
             "seller": partner if is_buy else self.agent.id,
             "caller": self.agent.id,
         }
+        tt = values(time)
+        qq = values(quantity)
+        uu = values(unit_price)
+        if qq[0] > qq[1] or tt[0] > tt[1] or uu[0] > uu[1]:
+            return False
         issues = [
-            Issue(values(quantity), name="quantity", value_type=int),
-            Issue(values(time), name="time", value_type=int),
-            Issue(values(unit_price), name="unit_price", value_type=int),
+            make_issue(qq, name="quantity"),
+            make_issue(tt, name="time"),
+            make_issue(uu, name="unit_price"),
         ]
         partners = [self.agent.id, partner]
         extra["negotiator_id"] = negotiator.id

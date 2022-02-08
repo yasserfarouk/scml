@@ -7,9 +7,9 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from negmas import AgentMechanismInterface
 from negmas import Mechanism
 from negmas import MechanismState
+from negmas import NegotiatorMechanismInterface
 from negmas.negotiators import Negotiator
 from negmas.outcomes import Issue
 from negmas.situated import Agent
@@ -40,7 +40,7 @@ class InsuranceCompany(Agent, ABC):
         partners: List[str],
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         role: Optional[str],
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
@@ -49,20 +49,22 @@ class InsuranceCompany(Agent, ABC):
     def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
         pass
 
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
+    def on_neg_request_accepted(
+        self, req_id: str, mechanism: NegotiatorMechanismInterface
+    ):
         pass
 
     def on_negotiation_failure(
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 

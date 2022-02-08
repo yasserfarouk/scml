@@ -33,14 +33,14 @@ from negmas import Issue
 from negmas import Operations
 from negmas import TimeInAgreementMixin
 from negmas import World
+from negmas import make_issue
 from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
 from negmas.helpers import unique_name
-from negmas.sao import PassThroughSAONegotiator
+from negmas.sao import ControlledSAONegotiator
 from negmas.sao import SAOController
 from negmas.sao import SAONegotiator
-from networkx.convert import to_dict_of_dicts
 
 from ..common import distribute_quantities
 from ..common import integer_cut
@@ -55,13 +55,10 @@ from ..scml2020.common import SYSTEM_SELLER_ID
 from ..scml2020.common import is_system_agent
 from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
-from .common import QUANTITY
-from .common import UNIT_PRICE
 from .common import OneShotExogenousContract
 from .common import OneShotProfile
 from .sysagents import DefaultOneShotAdapter
 from .sysagents import _SystemAgent
-from .ufun import OneShotUFun
 
 __all__ = ["SCML2020OneShotWorld"]
 
@@ -104,7 +101,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         catalog_prices: np.ndarray,
         profiles: List[OneShotProfile],
         agent_types: List[Type["OneShotAgent"]],
-        agent_params: List[Dict[str, Any]] = None,
+        agent_params: List[Dict[str, Any]],
         catalog_quantities: Union[int, np.ndarray] = 50,
         # breach processing parameters
         financial_report_period=5,
@@ -124,7 +121,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         time_limit=60 * 90,
         # mechanism params
         neg_n_steps=20,
-        neg_time_limit=2 * 60,
+        neg_time_limit=None,
+        neg_hidden_time_limit=3 * 60,
         neg_step_time_limit=60,
         negotiation_speed=0,
         avoid_ultimatum=True,
@@ -195,6 +193,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                         check_offers=True,
                         enforce_issue_types=True,
                         cast_offers=True,
+                        hidden_time_limit=neg_hidden_time_limit,
                     ),
                 )
             },
@@ -223,6 +222,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             name=name,
             **kwargs,
         )
+        if not self.bulletin_board:
+            raise ValueError(f"Cannot find the bulletin-board")
         self.bulletin_board.record("settings", 1, "horizon")
         self.bulletin_board.record(
             "settings", publish_trading_prices, "public_trading_prices"
@@ -278,7 +279,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             process_outputs=process_outputs,
             catalog_prices=catalog_prices,
             agent_types_final=[get_full_type_name(_) for _ in agent_types],
-            agent_params_final=[copy.deepcopy(_) for _ in agent_params],
+            agent_params_final=[copy.deepcopy(_) for _ in agent_params]
+            if agent_params is not None
+            else agent_params,
             initial_balance_final=initial_balance,
             penalties_scale_final=penalties_scale,
             penalize_bankrupt_for_future_contracts=penalize_bankrupt_for_future_contracts,
@@ -362,7 +365,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             agent_params = []
             for i, name in enumerate(default_names):
                 b = copy.deepcopy(a)
-                b["name"] = name
+                b["name"] = name  # type: ignore
                 agent_params.append(b)
         elif len(agent_params) == 1:
             a = copy.copy(agent_params[0])
@@ -376,7 +379,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 for i, (ns, ps) in enumerate(zip(default_names, agent_params)):
                     agent_params[i] = dict(**ps)
                     agent_params[i]["name"] = ns
-        agent_types += [_SystemAgent, _SystemAgent]
+        agent_types += [_SystemAgent, _SystemAgent]  # type: ignore
         agent_params += [
             {"role": SYSTEM_SELLER_ID, "obj": None},
             {"role": SYSTEM_BUYER_ID, "obj": None},
@@ -564,9 +567,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues.append(
                 [
-                    Issue(values(quantity), name="quantity", value_type=int),
-                    Issue(values(time), name="time", value_type=int),
-                    Issue(values(unit_price), name="unit_price", value_type=int),
+                    make_issue(values(quantity), name="quantity"),
+                    make_issue(values(time), name="time"),
+                    make_issue(values(unit_price), name="unit_price"),
                 ]
             )
 
@@ -1706,7 +1709,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             return True
         if negotiators is None:
             negotiators = [
-                controller.create_negotiator(PassThroughSAONegotiator, name=_, id=_)
+                controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)
                 for _ in partners
             ]
         results = [
@@ -1845,7 +1848,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         def values(x: Union[int, Tuple[int, int]]):
             if not isinstance(x, Iterable):
                 return int(x), int(x)
-            return int(x[0]), int(x[1])
+            return int(min(x)), int(max(x))
 
         controllers = dict()
 
@@ -1858,9 +1861,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues[product] = [
-                Issue(values(quantity), name="quantity", value_type=int),
-                Issue(values(time), name="time", value_type=int),
-                Issue(values(unit_price), name="unit_price", value_type=int),
+                make_issue(values(quantity), name="quantity"),
+                make_issue(values(time), name="time"),
+                make_issue(values(unit_price), name="unit_price"),
             ]
             for aid in self.consumers[product]:
                 if is_system_agent(aid) or isinstance(

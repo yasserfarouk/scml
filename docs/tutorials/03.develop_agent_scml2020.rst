@@ -225,9 +225,13 @@ are three main limitations on the answer to this question:
 1. Production capacity which is controlled by the number of lines the
    agent has
 
+   ::
+
       self.awi.n_lines
 
 2. The available quantity of the input material
+
+   ::
 
       self.awi.state.inventory(self.awi.my_input_product)
 
@@ -379,7 +383,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  6.39it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.20it/s]
 
 
 
@@ -449,8 +453,8 @@ Let’s add a simple implementation of both
         def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
             """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
             if is_seller:
-                return LinearUtilityFunction((0, 0.25, 1))
-            return LinearUtilityFunction((0, -0.5, -0.8))
+                return LinearUtilityFunction((0, 0.25, 1), issues=issues, outcomes=outcomes)
+            return LinearUtilityFunction((0, -0.5, -0.8), issues=issues, outcomes=outcomes)
 
 
 .. code:: ipython3
@@ -469,7 +473,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:15<00:00,  1.50s/it]
+    100%|██████████| 10/10 [00:42<00:00,  4.27s/it]
 
 
 
@@ -540,6 +544,11 @@ NegMAS provides an easy to use controller that fits the bill called
 
         A controller that can manage multiple negotiators synchronously.
 
+        Args:
+
+            global_ufun: If true, the controller assumes that the ufun is only
+                         defined globally for the complete set of negotiations
+
         Remarks:
             - The controller waits for an offer from each one of its negotiators before deciding what to do.
             - Loops may happen if multiple controllers of this type negotiate with each other. For example controller A
@@ -574,7 +583,7 @@ This is a straight forward implementation of this idea
     class ControllerUFun(UtilityFunction):
         """A utility function for the controller"""
         def __init__(self, controller=None):
-            super().__init__(outcome_type=tuple)
+            super().__init__()
             self.controller = controller
 
         def eval(self, offer: "Outcome"):
@@ -660,7 +669,7 @@ This is a straight forward implementation of this idea
 
         def is_valid(self, negotiator_id: str, offer: "Outcome") -> bool:
             """Is this a valid offer for that negotiation"""
-            issues = self.negotiators[negotiator_id][0].ami.issues
+            issues = self.negotiators[negotiator_id][0].nmi.issues
             return outcome_is_valid(offer, issues)
 
         def counter_all(
@@ -876,7 +885,7 @@ Our negotiation control strategy will work as follows:
             initiator: str,
             issues: List["Issue"],
             annotation: Dict[str, Any],
-            mechanism: "AgentMechanismInterface",
+            mechanism: "NegotiatorMechanismInterface",
         ) -> Optional["Negotiator"]:
             # refuse to negotiate if the time-range does not intersect
             # the current range
@@ -905,7 +914,7 @@ Let’s see how did our simple new agent do:
 .. code:: ipython3
 
     world = SCML2021World(
-        **SCML2021World.generate([ComparisonAgent, MyAgent, MyNewAgent], n_steps=10),
+        **SCML2021World.generate([MyAgent, MyNewAgent], n_steps=10),
         construct_graphs=True
     )
     world.run_with_progress()
@@ -918,7 +927,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:56<00:00, 11.67s/it]
+    100%|██████████| 10/10 [00:02<00:00,  4.16it/s]
 
 
 
@@ -981,15 +990,16 @@ average prices they get from their negotiations.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     5.0  0.8  0.3  0.2  0.9  1.0  1.0  1.0
+    False   True    22.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+    True    False   14.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
     MyAgent:
     ===========
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     4.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
-    True    False    4.0  0.8  0.4  0.2  0.8  1.0  1.0  1.0
-            True    44.0  0.5  0.0  0.5  0.5  0.5  0.5  0.6
+    False   True    14.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    True    False   22.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+            True    22.0  0.5  0.1  0.4  0.4  0.5  0.5  0.6
 
 
 
@@ -1025,7 +1035,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:06<00:00,  6.64s/it]
+    100%|██████████| 10/10 [00:01<00:00,  8.77it/s]
 
 .. parsed-literal::
 
@@ -1171,15 +1181,15 @@ exploring the design space.
                     # for selling set a price that is at least the catalog price
                     min_price = self.awi.catalog_prices[product]
                     price_range = (min_price, 2 * min_price)
-                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction({
-                        TIME: 0.0, QUANTITY: (1-self._price_weight), UNIT_PRICE: self._price_weight
-                    }))
+                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction(
+                        (0.0, (1-self._price_weight), 0.0, self._price_weight)
+                    ))
                 else:
                     # for buying sell a price that is at most the catalog price
                     price_range = (0, self.awi.catalog_prices[product])
-                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction({
-                        TIME: 0.0, QUANTITY: (1-self._price_weight), UNIT_PRICE: -self._price_weight
-                    }))
+                    controller = SAOMetaNegotiatorController(ufun=LinearUtilityFunction(
+                        ((1-self._price_weight), 0.0, -self._price_weight)
+                    ))
 
                 self.awi.request_negotiations(
                     not seller,
@@ -1195,7 +1205,7 @@ exploring the design space.
             initiator: str,
             issues: List["Issue"],
             annotation: Dict[str, Any],
-            mechanism: "AgentMechanismInterface",
+            mechanism: "NegotiatorMechanismInterface",
         ) -> Optional["Negotiator"]:
             return None
 
@@ -1214,7 +1224,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [01:10<00:00,  7.01s/it]
+    100%|██████████| 10/10 [00:01<00:00,  9.26it/s]
 
 
 .. code:: ipython3
@@ -1230,14 +1240,13 @@ exploring the design space.
 
 .. parsed-literal::
 
-    MyNewAgent:
+
+    AspirationAgent:
     ===========
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True     1.0  1.0  NaN  1.0  1.0  1.0  1.0  1.0
-    True    False    5.0  0.5  0.4  0.0  0.0  0.7  0.7  0.8
-
+    False   True    24.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
 
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
@@ -1292,7 +1301,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:34<00:00,  3.43s/it]
+    100%|██████████| 10/10 [00:03<00:00,  2.73it/s]
 
 
 .. code:: ipython3
@@ -1359,17 +1368,19 @@ The main idea behind this agent is very simple:
 
 .. code:: python
 
-   def create_ufun(self, is_seller, prange):
+   def create_ufun(self, is_seller, prange, issues):
        if is_seller:
            return MappingUtilityFunction(
                lambda x: -1000 if x[UNIT_PRICE] < self.prices[1] else x[UNIT_PRICE],
                reserved_value=0.0,
+               issues=issues,
            )
        return MappingUtilityFunction(
            lambda x: -1000
            if x[UNIT_PRICE] > self.prices[0]
            else prange[1] - x[UNIT_PRICE],
            reserved_value=0.0,
+           issues=issues,
        )
 
 3. The agent knows that it never negotiates on bad contracts so it signs
@@ -1423,7 +1434,7 @@ The main idea behind this agent is very simple:
             initiator: str,
             issues: List["Issue"],
             annotation: Dict[str, Any],
-            mechanism: "AgentMechanismInterface",
+            mechanism: "NegotiatorMechanismInterface",
         ) -> Optional["Negotiator"]:
             is_seller = annotation["seller"] == self.id
             # do not engage in negotiations that obviouly have bad prices for me
@@ -1433,6 +1444,7 @@ The main idea behind this agent is very simple:
                 return None
             ufun = self.create_ufun(
                 is_seller, (issues[UNIT_PRICE].min_value, issues[UNIT_PRICE].max_value),
+                issues
             )
             return AspirationNegotiator(ufun=ufun)
 
@@ -1461,17 +1473,17 @@ The main idea behind this agent is very simple:
                     oldq * self.prices[is_seller] + p * q
                 ) / self.quantities[is_seller]
 
-        def create_ufun(self, is_seller, prange):
+        def create_ufun(self, is_seller, prange, issues):
             if is_seller:
                 return MappingUtilityFunction(
                     lambda x: -1000 if x[UNIT_PRICE] < self.prices[1] else x[UNIT_PRICE],
-                    reserved_value=0.0,
+                    reserved_value=0.0, issues=issues
                 )
             return MappingUtilityFunction(
                 lambda x: -1000
                 if x[UNIT_PRICE] > self.prices[0]
                 else prange[1] - x[UNIT_PRICE],
-                reserved_value=0.0,
+                reserved_value=0.0,issues=issues
             )
 
 
@@ -1489,7 +1501,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:21<00:00,  2.13s/it]
+    100%|██████████| 10/10 [00:00<00:00, 16.79it/s]
 
 
 
@@ -1557,7 +1569,7 @@ Here is the improved version:
                 prange = self.prices[not is_seller]
                 trange = (awi.current_step, t) if is_seller else (t, awi.n_steps - 1)
                 negotiators = [
-                    AspirationNegotiator(ufun=self.create_ufun(is_seller, prange))
+                    AspirationNegotiator(ufun=self.create_ufun(is_seller, prange, issues=None))
                     for _ in partners
                 ]
                 awi.request_negotiations(
@@ -1583,7 +1595,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:24<00:00,  2.42s/it]
+    100%|██████████| 10/10 [00:00<00:00, 12.64it/s]
 
 
 
@@ -1656,7 +1668,8 @@ now:
     world = SCML2021World(
         **SCML2021World.generate([ComparisonAgent, GreedySingleAgreementAgent],
                                  horizon=1,
-                                 n_steps=10
+                                 n_steps=10,
+                                 n_processes=2
                                 ),
         construct_graphs=True,
     )
@@ -1669,7 +1682,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:13<00:00,  1.32s/it]
+    100%|██████████| 10/10 [00:01<00:00,  5.99it/s]
 
 
 
@@ -1687,6 +1700,8 @@ not designed for the full SCML environment and use very restrictive
 assumptions.
 
 With that we end our tutorial. Have fun developing your agent.
+
+
 
 
 Download :download:`Notebook<notebooks/03.develop_agent_scml2020.ipynb>`.

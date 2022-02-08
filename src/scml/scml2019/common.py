@@ -17,22 +17,16 @@ from typing import Tuple
 from typing import Union
 
 import numpy as np
-from negmas.outcomes import Issue
-from negmas.outcomes import OutcomeType
+from negmas.outcomes import make_issue
+from negmas.outcomes.issue_ops import enumerate_issues
+from negmas.preferences import INVALID_UTILITY
 from negmas.situated import Contract
 from negmas.situated import World
-from negmas.utilities import INVALID_UTILITY
-
-INVALID_STEP = -1000
-NO_PRODUCTION = -1
-
-g_last_product_id = 0
-g_last_process_id = 0
-
-DEFAULT_NEGOTIATOR = "negmas.sao.AspirationNegotiator"
-
 
 __all__ = [
+    "UNIT_PRICE",
+    "TIME",
+    "QUANTITY",
     "Product",
     "Process",
     "InputOutput",
@@ -59,6 +53,25 @@ __all__ = [
     "DEFAULT_NEGOTIATOR",
     "INVALID_UTILITY",
 ]
+
+INVALID_STEP = -1000
+NO_PRODUCTION = -1
+
+g_last_product_id = 0
+g_last_process_id = 0
+
+DEFAULT_NEGOTIATOR = "negmas.sao.AspirationNegotiator"
+
+QUANTITY = 0
+"""Index of quantity in negotiation issues"""
+
+
+TIME = 1
+"""Index of time in negotiation issues"""
+
+
+UNIT_PRICE = 2
+"""Index of unit price in negotiation issues"""
 
 
 @dataclass
@@ -487,7 +500,7 @@ class ProductionReport:
 
 
 @dataclass
-class SCMLAgreement(OutcomeType):
+class SCMLAgreement:
     time: int
     """delivery time"""
     unit_price: float
@@ -499,9 +512,30 @@ class SCMLAgreement(OutcomeType):
     signing_delay: int = -1
     """Delay between agreement conclusion and signing it to be binding"""
 
+    def __getitem__(self, k):
+        return vars(self)[k]
+
+    def get(self, k, default=None):
+        return vars(self).get(k, default)
+
+    def asdict(self):
+        return vars(self)
+
+    def to_dict(self):
+        return vars(self)
+
+    def keys(self):
+        return vars(self).keys()
+
+    def values(self):
+        return vars(self).values()
+
+    def items(self):
+        return vars(self).items()
+
 
 @dataclass
-class CFP(OutcomeType):
+class CFP:
     """A Call for proposal upon which a negotiation can start"""
 
     is_buy: bool
@@ -704,15 +738,15 @@ class CFP(OutcomeType):
             return [x]
 
         issues = [
-            Issue(
+            make_issue(
                 name="time",
                 values=_values(self.time, ensure_list=True, ensure_int=True),
             ),
-            Issue(
+            make_issue(
                 name="quantity",
                 values=_values(self.quantity, ensure_list=True, ensure_int=True),
             ),
-            Issue(
+            make_issue(
                 name="unit_price",
                 values=_values(
                     self.unit_price, ensure_list=self.money_resolution is not None
@@ -721,7 +755,7 @@ class CFP(OutcomeType):
         ]
         if self.penalty is not None:
             issues.append(
-                Issue(
+                make_issue(
                     name="penalty",
                     values=_values(
                         self.penalty, ensure_list=self.money_resolution is not None
@@ -730,7 +764,7 @@ class CFP(OutcomeType):
             )
         if self.signing_delay is not None:
             issues.append(
-                Issue(
+                make_issue(
                     name="signing_delay",
                     values=_values(self.quantity, ensure_list=True, ensure_int=True),
                 )
@@ -739,7 +773,7 @@ class CFP(OutcomeType):
 
     @property
     def outcomes(self):
-        return Issue.enumerate(issues=self.issues, max_n_outcomes=1000)
+        return enumerate_issues(issues=self.issues, max_cardinality=1000)
 
     @property
     def min_time(self):
@@ -829,7 +863,7 @@ class CFP(OutcomeType):
             return max(self.penalty)
         return self.penalty
 
-    def to_java(self):
+    def to_dict(self):
         d = {
             "is_buy": self.is_buy,
             "publisher": self.publisher,
@@ -860,7 +894,7 @@ class CFP(OutcomeType):
         return d
 
     @classmethod
-    def from_java(
+    def from_dict(
         cls, idict: Dict[str, Any], class_name: Optional[str] = None
     ) -> "CFP":
         if idict["min_time"] == idict["max_time"]:
@@ -1040,9 +1074,6 @@ class Loan:
             f"{self.amount} @ {self.interest} paid in {self.n_installments} [{self.installment} each] "
             f"for a total {self.total} [starts at {self.starts_at}]"
         )
-
-    class Java:
-        implements = ["jnegmas.apps.scml.common.Loan"]
 
 
 RunningNegotiationInfo = namedtuple(

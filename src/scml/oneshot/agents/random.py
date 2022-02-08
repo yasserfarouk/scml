@@ -22,7 +22,7 @@ PROB_END = 0.005
 
 class RandomOneShotAgent(OneShotAgent):
     def _random_offer(self, negotiator_id: str):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         if not ami:
             return None
         return ami.random_outcomes(1)[0]
@@ -40,7 +40,7 @@ class RandomOneShotAgent(OneShotAgent):
 
 class SyncRandomOneShotAgent(OneShotSyncAgent):
     def _random_offer(self, negotiator_id: str):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         if not ami:
             return None
         return ami.random_outcomes(1)[0]

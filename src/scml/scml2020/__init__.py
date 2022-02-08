@@ -27,9 +27,7 @@ def builtin_agent_types(as_str=False):
     """
     from negmas.helpers import get_class
 
-    types = [
-        f"scml.scml2020.agents.{_}" for _ in agents.__all__ if not _.startswith("Java")
-    ]
+    types = [f"scml.scml2020.agents.{_}" for _ in agents.__all__]
     if as_str:
         return types
     return [get_class(_) for _ in types]

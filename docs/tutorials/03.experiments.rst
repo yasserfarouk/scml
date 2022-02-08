@@ -1,3 +1,0 @@
-
-
-Download :download:`Notebook<notebooks/03.experiments.ipynb>`.

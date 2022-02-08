@@ -10,7 +10,7 @@ from typing import List
 from typing import Optional
 
 from negmas import UtilityFunction
-from negmas.common import AgentMechanismInterface
+from negmas.common import NegotiatorMechanismInterface
 from negmas.negotiators import Negotiator
 from negmas.outcomes import Issue
 from negmas.situated import Agent
@@ -195,7 +195,7 @@ class SCML2019Agent(Agent):
         partners: List[str],
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         role: Optional[str],
         req_id: Optional[str],
     ) -> Optional[Negotiator]:

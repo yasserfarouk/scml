@@ -14,7 +14,6 @@ from scml.scml2020 import SCML2020World
 from scml.scml2020 import builtin_agent_types
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
-from scml.scml2020.world import SCML2021World
 
 random.seed(0)
 
@@ -69,6 +68,27 @@ def generate_world(
             n_agents_per_process if world.agent_outputs[a][0] != n_processes else 1
         )
     return world
+
+
+@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
+@settings(deadline=300_000, max_examples=20)
+def test_can_run_random_agent(buy_missing, n_processes):
+    agent_type = RandomAgent
+    world = generate_world(
+        [agent_type],
+        buy_missing_products=buy_missing,
+        n_processes=n_processes,
+        name=unique_name(
+            f"scml2020tests/single/{agent_type.__name__}"
+            f"{'Buy' if buy_missing else 'Fine'}{n_processes}",
+            add_time=True,
+            rand_digits=4,
+        ),
+        compact=COMPACT,
+        no_logs=NOLOGS,
+    )
+    world.run()
+    save_stats(world, world.log_folder)
 
 
 @mark.parametrize("agent_type", types)

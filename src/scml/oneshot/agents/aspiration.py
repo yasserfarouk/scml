@@ -7,6 +7,7 @@ from negmas import AspirationMixin
 from negmas import Issue
 from negmas import Outcome
 from negmas import ResponseType
+from negmas.outcomes.issue_ops import enumerate_issues
 from negmas.sao import SAOResponse
 from negmas.sao import SAOState
 
@@ -35,7 +36,6 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             aspiration_type=float(random.randint(1, 4))
             if random.random() < 0.7
             else random.random(),
-            above_reserved_value=False,
         )
         # if self.awi.current_exogenous_input_quantity or self.awi.current_exogenous_output_quantity:
         #     breakpoint()
@@ -60,7 +60,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             if self.awi.is_first_level
             else self.awi.current_output_issues
         )
-        outcomes = list(Issue.enumerate(issues, astype=tuple))
+        outcomes = list(enumerate_issues(issues))
         self._outcomes = sorted(
             zip(
                 (
@@ -87,7 +87,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
                 )
             )
         # find current aspiration level between zero and one
-        asp = max(self.aspiration(state.relative_time) for state in states.values())
+        asp = max(self.utility_at(state.relative_time) for state in states.values())
 
         # acceptance strategy
         partner_utils = sorted(

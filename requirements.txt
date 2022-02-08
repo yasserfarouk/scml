@@ -10,6 +10,7 @@ joblib
 dataclasses; python_version < '3.7'
 cloudpickle
 mip
+papermill
 -e .
 
 

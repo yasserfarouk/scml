@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
@@ -18,11 +21,14 @@ from ..scml2020.common import FactoryProfile
 from ..scml2020.common import FactoryState
 from ..scml2020.common import is_system_agent
 
+if TYPE_CHECKING:
+    from .adapter import OneShotSCML2020Adapter
+
 
 class AWIHelper:
     """The Agent SCML2020World Interface for SCML2020 world allowing a single process per agent"""
 
-    def __init__(self, owner: "OneShotSCML2020Adapter"):
+    def __init__(self, owner: OneShotSCML2020Adapter):
         self._owner = owner
         self._world = owner.awi._world
 
