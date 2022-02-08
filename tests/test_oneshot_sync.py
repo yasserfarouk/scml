@@ -119,7 +119,7 @@ def does_not_raise(err):
         (True, True, True, False),
         (False, True, False, False),
         (True, True, False, False),
-        (False, False, False, True),
+        # (False, False, False, True),
     ],
 )
 def test_sync_counter_all_reenters_as_expected(

@@ -20,6 +20,7 @@ from scml.oneshot import OneShotSingleAgreementAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
+from scml.scml2020 import IndependentNegotiationsAgent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SatisficerAgent
 from scml.scml2020 import SCML2021World
@@ -87,9 +88,29 @@ def generate_world(
     return world
 
 
+# def test_can_run_with_a_single_agent_type_example():
+#     agent_type=IndependentNegotiationsAgent; buy_missing=True; n_processes=2
+#     world = generate_world(
+#         [agent_type],
+#         buy_missing_products=buy_missing,
+#         n_processes=n_processes,
+#         name=unique_name(
+#             f"scml2020tests/single/{agent_type.__name__}"
+#             f"{'Buy' if buy_missing else 'Fine'}{n_processes}",
+#             add_time=True,
+#             rand_digits=4,
+#         ),
+#         compact=COMPACT,
+#         no_logs=NOLOGS,
+#     )
+#     world.run()
+#     save_stats(world, world.log_folder)
+
+
 @mark.parametrize("agent_type", types)
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=500_000, max_examples=20)
+@example(agent_type=IndependentNegotiationsAgent, buy_missing=True, n_processes=2)
 def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
     world = generate_world(
         [agent_type],
