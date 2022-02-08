@@ -300,6 +300,8 @@ class AWI(AgentWorldInterface):
 
 
         """
+        if not negotiator:
+            return False
         if self.is_bankrupt():
             return False
         if self.is_bankrupt(partner) or not self._world.can_negotiate(
