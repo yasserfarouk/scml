@@ -14,6 +14,7 @@ import numpy as np
 from negmas import AspirationNegotiator
 from negmas import Contract
 from negmas import Issue
+from negmas import LinearUtilityFunction
 from negmas import Negotiator
 from negmas import NegotiatorMechanismInterface
 from negmas import SAONegotiator
@@ -701,11 +702,13 @@ class IndependentNegotiationsManager(NegotiationManager):
             annotation["seller"] == self.id, issues=issues, partner=initiator
         )
 
-    @abstractmethod
     def create_ufun(
         self, is_seller: bool, issues=None, outcomes=None
     ) -> UtilityFunction:
         """Creates a utility function"""
+        if is_seller:
+            return LinearUtilityFunction((1, 1, 10), issues=issues, outcomes=outcomes)
+        return LinearUtilityFunction((1, -1, -10), issues=issues, outcomes=outcomes)
 
     def negotiator(
         self, is_seller: bool, issues=None, outcomes=None, partner=None
