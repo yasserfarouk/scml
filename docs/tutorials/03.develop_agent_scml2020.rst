@@ -383,7 +383,7 @@ Let’s use the ``PredictionBasedTradingStrategy`` for our agent.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:02<00:00,  4.20it/s]
+    100%|██████████| 10/10 [00:01<00:00,  5.67it/s]
 
 
 
@@ -473,7 +473,7 @@ Let’s add a simple implementation of both
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:42<00:00,  4.27s/it]
+    100%|██████████| 10/10 [00:34<00:00,  3.47s/it]
 
 
 
@@ -927,7 +927,7 @@ Let’s see how did our simple new agent do:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:02<00:00,  4.16it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.20it/s]
 
 
 
@@ -990,16 +990,14 @@ average prices they get from their negotiations.
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True    22.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
-    True    False   14.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    True    False   24.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
     MyAgent:
     ===========
                    price
                    count mean  std  min  25%  50%  75%  max
     selling buying
-    False   True    14.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-    True    False   22.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
-            True    22.0  0.5  0.1  0.4  0.4  0.5  0.5  0.6
+    False   True    24.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+    True    True    22.0  0.5  0.1  0.4  0.5  0.5  0.6  0.6
 
 
 
@@ -1035,7 +1033,7 @@ Let’s try to run our new agent against itself.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  8.77it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.76it/s]
 
 .. parsed-literal::
 
@@ -1224,7 +1222,7 @@ exploring the design space.
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  9.26it/s]
+    100%|██████████| 10/10 [00:02<00:00,  3.51it/s]
 
 
 .. code:: ipython3
@@ -1241,12 +1239,7 @@ exploring the design space.
 .. parsed-literal::
 
 
-    AspirationAgent:
-    ===========
-                   price
-                   count mean  std  min  25%  50%  75%  max
-    selling buying
-    False   True    24.0  1.0  0.0  1.0  1.0  1.0  1.0  1.0
+
 
 
 The ``AspirationAgent`` seems to be better than our earlier attempts in
@@ -1301,7 +1294,7 @@ Let’s test it
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:03<00:00,  2.73it/s]
+    100%|██████████| 10/10 [00:03<00:00,  2.66it/s]
 
 
 .. code:: ipython3
@@ -1501,7 +1494,7 @@ The main idea behind this agent is very simple:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:00<00:00, 16.79it/s]
+    100%|██████████| 10/10 [00:03<00:00,  2.75it/s]
 
 
 
@@ -1595,7 +1588,7 @@ Here is the improved version:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:00<00:00, 12.64it/s]
+    100%|██████████| 10/10 [00:02<00:00,  3.67it/s]
 
 
 
@@ -1682,7 +1675,7 @@ now:
 
 .. parsed-literal::
 
-    100%|██████████| 10/10 [00:01<00:00,  5.99it/s]
+    100%|██████████| 10/10 [00:02<00:00,  4.36it/s]
 
 
 

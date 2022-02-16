@@ -103,25 +103,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    2022-02-08 20:57:58,729 - INFO - 0/10 [0.00%]: test_world: World Created
+    2022-02-16 18:27:00,554 - INFO - 0/10 [0.00%]: test_world: World Created
 
-    2022-02-08 20:57:58,731 - INFO - 0/10 [0.00%]: 00DoN@0 joined
+    2022-02-16 18:27:00,555 - INFO - 0/10 [0.00%]: 00DoN@0 joined
 
-    2022-02-08 20:57:58,775 - INFO - 0/10 [0.00%]: 01DoN@0 joined
+    2022-02-16 18:27:00,559 - INFO - 0/10 [0.00%]: 01DoN@0 joined
 
-    2022-02-08 20:57:58,777 - INFO - 0/10 [0.00%]: 02DoN@0 joined
+    2022-02-16 18:27:00,560 - INFO - 0/10 [0.00%]: 02DoN@0 joined
 
-    2022-02-08 20:57:58,781 - INFO - 0/10 [0.00%]: 03DoN@0 joined
+    2022-02-16 18:27:00,561 - INFO - 0/10 [0.00%]: 03DoN@0 joined
 
-    2022-02-08 20:57:58,783 - INFO - 0/10 [0.00%]: 04DoN@1 joined
+    2022-02-16 18:27:00,562 - INFO - 0/10 [0.00%]: 04DoN@1 joined
 
-    2022-02-08 20:57:58,785 - INFO - 0/10 [0.00%]: 05DoN@1 joined
+    2022-02-16 18:27:00,563 - INFO - 0/10 [0.00%]: 05DoN@1 joined
 
-    2022-02-08 20:57:58,787 - INFO - 0/10 [0.00%]: 06DoN@1 joined
+    2022-02-16 18:27:00,564 - INFO - 0/10 [0.00%]: SELLER joined
 
-    2022-02-08 20:57:58,788 - INFO - 0/10 [0.00%]: 07DoN@1 joined
+    2022-02-16 18:27:00,565 - INFO - 0/10 [0.00%]: BUYER joined
 
-    2022-02-08 20:57:58,790 - INFO - 0/10 [0.00%]: SELLER joined
+    2022-02-16 18:27:00,574 - INFO - 0/10 [0.00%]: This is a test message
 
 
 
@@ -164,12 +164,15 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
     ├── [01;34m_agent_logs[00m
     │   ├── 00DWL@0.txt
     │   ├── 01DWL@0.txt
-    │   ├── 02DWL@1.txt
-    │   ├── 03DWL@1.txt
-    │   └── 04DWL@1.txt
+    │   ├── 02DWL@0.txt
+    │   ├── 03DWL@0.txt
+    │   ├── 04DWL@1.txt
+    │   ├── 05DWL@1.txt
+    │   ├── 06DWL@1.txt
+    │   └── 07DWL@1.txt
     └── events.json
 
-    1 directory, 6 files
+    1 directory, 9 files
 
 
 .. code:: ipython3
@@ -181,25 +184,25 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    2022-02-08 20:58:00,326 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 02DWL@1 q: (1, 10), u: (8, 24), t: (1, 6)
+    2022-02-16 18:27:02,437 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-02-08 20:58:00,327 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '02DWL@1'] (ID 0ea81625-35f9-415c-9f4a-4953060cc903)
+    2022-02-16 18:27:02,444 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 41e303e2-a162-43e7-8d3c-fda463dc12e3)
 
-    2022-02-08 20:58:00,329 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
+    2022-02-16 18:27:02,445 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2022-02-08 20:58:00,329 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 03DWL@1 q: (1, 10), u: (8, 24), t: (1, 6)
+    2022-02-16 18:27:02,446 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-02-08 20:58:00,331 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '03DWL@1'] (ID ff25bfc1-5ab9-483d-a9f8-cfcac43a19dd)
+    2022-02-16 18:27:02,449 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 5d1f8b9a-9517-40bc-a2eb-f880b766fd12)
 
-    2022-02-08 20:58:00,333 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
+    2022-02-16 18:27:02,451 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2022-02-08 20:58:00,334 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 24), t: (1, 6)
+    2022-02-16 18:27:02,451 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 06DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-02-08 20:58:00,336 - INFO - 0/10 [0.01%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 183f996e-648a-4f0c-b2ed-ac5e6bc9250b)
+    2022-02-16 18:27:02,452 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '06DWL@1'] (ID 9f536b49-68bc-4d48-89f5-ded7b4289ea6)
 
-    2022-02-08 20:58:00,338 - INFO - 0/10 [0.01%]: 01DWL@0 request was accepted
+    2022-02-16 18:27:02,454 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2022-02-08 20:58:00,340 - DEBUG - 0/10 [0.01%]: 01DWL@0 requested to sell 1 to 02DWL@1 q: (1, 10), u: (8, 24), t: (2, 7)
+    2022-02-16 18:27:02,454 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 07DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
 
 
@@ -293,8 +296,8 @@ Let’s try changing some of these:
     ├── [01;34m_agent_logs[00m
     │   ├── 00DWL@0.txt
     │   ├── 01DWL@0.txt
-    │   ├── 02DWL@0.txt
-    │   ├── 03DWL@0.txt
+    │   ├── 02DWL@1.txt
+    │   ├── 03DWL@1.txt
     │   ├── 04DWL@1.txt
     │   └── 05DWL@1.txt
     ├── agents.json
