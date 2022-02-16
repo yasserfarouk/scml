@@ -11,11 +11,11 @@ from typing import Union
 
 import numpy as np
 from negmas import AgentWorldInterface
-from negmas import AspirationMixin
 from negmas import ControlledNegotiator
 from negmas import LinearUtilityFunction
 from negmas import MechanismState
 from negmas import Outcome
+from negmas import PolyAspiration
 from negmas import ResponseType
 from negmas import UtilityFunction
 from negmas import make_issue
@@ -39,7 +39,7 @@ from scml.scml2020.common import UNIT_PRICE
 __all__ = ["StepController", "SyncController"]
 
 
-class StepController(SAOController, AspirationMixin, Notifier):
+class StepController(SAOController, Notifier):
     """A controller for managing a set of negotiations about selling or buying (but not both)  starting/ending at some
     specific time-step.
 
