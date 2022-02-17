@@ -2,7 +2,7 @@ click
 prettytable
 pulp
 python-constraint
-negmas>=0.8.8
+negmas>=0.9.0
 tqdm
 jupyter
 gif
