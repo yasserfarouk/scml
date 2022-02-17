@@ -1,10 +1,9 @@
-import os
 from pathlib import Path
 
 import papermill as pm
 import pytest
 
-SCML_IGNORE_TEST_NOTEBOOKS = os.environ.get("SCML_TEST_NOTEBOOKS", False)
+from .switches import SCML_RUN_NOTEBOOKS
 
 
 def notebooks():
@@ -13,8 +12,8 @@ def notebooks():
 
 
 @pytest.mark.skipif(
-    condition=SCML_IGNORE_TEST_NOTEBOOKS,
-    reason="No Genius Bridge, skipping genius-agent tests",
+    condition=not SCML_RUN_NOTEBOOKS,
+    reason="Environment set to ignore running notebook tests. See switches.py",
 )
 @pytest.mark.parametrize("notebook", notebooks())
 def test_notebook(notebook):

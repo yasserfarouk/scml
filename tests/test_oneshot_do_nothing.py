@@ -1,5 +1,5 @@
+import pytest
 from negmas import ResponseType
-from rich import print
 
 from scml import OneShotAgent
 from scml import SCML2020OneShotWorld

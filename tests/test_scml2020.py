@@ -1,6 +1,7 @@
 import random
 
 import hypothesis.strategies as st
+import pytest
 from hypothesis import given
 from hypothesis import settings
 from negmas import save_stats
@@ -14,6 +15,7 @@ from scml.scml2020 import SCML2020World
 from scml.scml2020 import builtin_agent_types
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
+from tests.switches import SCML_RUN2020
 
 random.seed(0)
 
@@ -72,6 +74,14 @@ def generate_world(
 
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_can_run_random_agent(buy_missing, n_processes):
     agent_type = RandomAgent
     world = generate_world(
@@ -94,6 +104,10 @@ def test_can_run_random_agent(buy_missing, n_processes):
 @mark.parametrize("agent_type", types)
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
     world = generate_world(
         [agent_type],
@@ -123,6 +137,10 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
     n_processes=st.integers(2, 4),
 )
 @settings(deadline=300_000, max_examples=20)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_can_run_with_a_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(
         agent_types,
@@ -148,6 +166,10 @@ def test_can_run_with_a_multiple_agent_types(agent_types, buy_missing, n_process
     initial_balance=st.sampled_from([0, 50, 10_000, 10_000_000]),
 )
 @settings(deadline=1500)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balance):
     world = generate_world(
         [DoNothingAgent],
@@ -186,6 +208,10 @@ def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balan
 
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_something_happens_with_random_agents(buy_missing, n_processes):
     world = generate_world(
         [RandomAgent],
@@ -209,6 +235,10 @@ def test_something_happens_with_random_agents(buy_missing, n_processes):
 
 @given(n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=3)
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_agents_go_bankrupt(n_processes):
     buy_missing = True
     world = generate_world(
@@ -256,6 +286,10 @@ def test_agents_go_bankrupt(n_processes):
         #     )
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_generate():
     world = SCML2020World(
         **SCML2020World.generate(
@@ -266,6 +300,10 @@ def test_generate():
     assert True
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_a_tiny_world():
     world = generate_world(
         [DecentralizingAgent],
@@ -280,6 +318,10 @@ def test_a_tiny_world():
     assert True
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_graph():
     world = generate_world(
         [DecentralizingAgent],
@@ -299,6 +341,10 @@ def test_graph():
     world.graph((0, world.n_steps), together=True)
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020,
+    reason="Environment set to ignore running 2020 tests. See switches.py",
+)
 def test_graphs_lead_to_no_unknown_nodes():
     world = SCML2020World(
         **SCML2020World.generate(

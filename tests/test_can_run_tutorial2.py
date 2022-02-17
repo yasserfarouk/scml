@@ -23,6 +23,8 @@ from scml.oneshot import OneShotIndNegotiatorsAgent
 from scml.oneshot import *
 from scml.scml2020 import is_system_agent
 
+from .switches import *
+
 
 def try_agent(agent_type, n_processes=2):
     """Runs an agent in a world simulation against a randomly behaving agent"""
@@ -523,9 +525,17 @@ class GeniusIndNeg(GreedyIndNeg):
         GeniusIndNeg,
     ],
 )
+@pytest.mark.skipif(
+    not SCML_RUN_TUTORIAL2,
+    reason="Environment is set not to run this  test. Check switches.py for details",
+)
 def test_examples(agent_type):
     try_agent(agent_type)
 
 
+@pytest.mark.skipif(
+    not SCML_RUN_TUTORIAL2 or not SCML_RUN_GENIUS,
+    reason="Environment is set not to run this  test. Check switches.py for details",
+)
 def test_examples_genius():
     try_agent(GeniusIndNeg)

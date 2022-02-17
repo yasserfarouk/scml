@@ -1,5 +1,7 @@
 import warnings
 
+from tests.switches import SCML_RUN2021_STD
+
 warnings.filterwarnings("ignore")
 
 import random
@@ -111,6 +113,10 @@ def generate_world(
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=500_000, max_examples=20)
 @example(agent_type=IndependentNegotiationsAgent, buy_missing=True, n_processes=2)
+@mark.skipif(
+    condition=not SCML_RUN2021_STD,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
     world = generate_world(
         [agent_type],
@@ -145,6 +151,10 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
     buy_missing=False,
     n_processes=2,
 )
+@mark.skipif(
+    condition=not SCML_RUN2021_STD,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(
         agent_types,
@@ -170,6 +180,10 @@ def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes
     initial_balance=st.sampled_from([50, 10_000, 10_000_000]),
 )
 @settings(deadline=500_000)
+@mark.skipif(
+    condition=not SCML_RUN2021_STD,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balance):
     world = generate_world(
         [DoNothingAgent],

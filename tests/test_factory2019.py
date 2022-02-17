@@ -1,9 +1,7 @@
 import copy
 import itertools
 import sys
-from collections import defaultdict
 
-import numpy as np
 import pytest
 from pytest import fixture
 from pytest import mark
@@ -17,8 +15,9 @@ from scml.scml2019 import RunningCommandInfo
 from scml.scml2019.common import NO_PRODUCTION
 from scml.scml2019.simulators import FastFactorySimulator
 from scml.scml2019.simulators import SlowFactorySimulator
-from scml.scml2019.simulators import storage_as_array
 from scml.scml2019.world import Factory
+
+from .switches import *
 
 n_lines = 5
 n_levels = 4
@@ -125,10 +124,16 @@ def slow_simulator(profiles, products):
     )
 
 
+@pytest.mark.skipif(
+    not SCML_RUN2019, reason="Environment set to skip 2019 tests. see switches.py"
+)
 def test_can_init_factory(empty_factory):
     assert empty_factory._n_lines == n_lines
 
 
+@pytest.mark.skipif(
+    not SCML_RUN2019, reason="Environment set to skip 2019 tests. see switches.py"
+)
 def test_schedule_and_job(factory_with_storage):
     profile_ind = 0
     factory = factory_with_storage
@@ -184,6 +189,7 @@ def test_schedule_and_job(factory_with_storage):
 
 
 @mark.parametrize("wallet", [initial_wallet, 0], ids=["has_money", "no_money"])
+@pytest.mark.skipif(not SCML_RUN2019, reason="Environment set to skip 2019 tests")
 def test_schedule_and_job_with_failures(empty_factory, wallet):
     profile_ind = 0
     factory = empty_factory
@@ -226,6 +232,7 @@ def test_schedule_and_job_with_failures(empty_factory, wallet):
         assert all(command.action == "none" for command in factory._commands)
 
 
+@pytest.mark.skipif(not SCML_RUN2019, reason="Environment set to skip 2019 tests")
 def test_slow_factory_simulator_can_be_initialized(slow_simulator):
     assert slow_simulator is not None
 
@@ -447,6 +454,7 @@ def do_simulator_run(simulator, profiles, t, at, profile_ind, override):
         (3, 0, "middle", False, "fast"),
     ],
 )
+@pytest.mark.skipif(not SCML_RUN2019, reason="Environment set to skip 2019 tests")
 def test_slow_factory_simulator_with_jobs(
     products, profiles, profile_ind, t, at_, override, simulator_type
 ):

@@ -1,5 +1,6 @@
 from pprint import pformat
 
+import pytest
 from negmas import ResponseType
 from negmas.helpers import single_thread
 from negmas.sao import SAOResponse
