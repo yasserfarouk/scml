@@ -95,7 +95,6 @@ tags
 /docs/_build
 tags
 .vscode
-.*
 .eggs
 .venv
 venv
