@@ -25,12 +25,6 @@ import sphinx_rtd_theme
 
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-if on_rtd:
-    import sphinx_rtd_theme
-else:
-    # import sphinx_rtd_theme
-    # import sphinx_press_theme
-    import groundwork_sphinx_theme
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -143,7 +137,8 @@ if on_rtd:  # only set the theme if we're building docs locally
     }
 else:
     # html_theme = "press"
-    html_theme = "groundwork"
+    html_theme = "sphinx_rtd_theme"
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 html_sidebars = {
     "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
