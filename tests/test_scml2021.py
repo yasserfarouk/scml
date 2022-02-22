@@ -1,10 +1,15 @@
+import warnings
+
+from tests.switches import SCML_RUN2021_STD
+
+warnings.filterwarnings("ignore")
+
 import random
 
 import hypothesis.strategies as st
 import numpy as np
 from hypothesis import example
 from hypothesis import given
-from hypothesis import reproduce_failure
 from hypothesis import settings
 from negmas import save_stats
 from negmas.helpers import unique_name
@@ -13,13 +18,13 @@ from pytest import mark
 from pytest import raises
 
 import scml
-from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot import OneShotSingleAgreementAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import BuyCheapSellExpensiveAgent
 from scml.scml2020 import DoNothingAgent
+from scml.scml2020 import IndependentNegotiationsAgent
 from scml.scml2020 import RandomAgent
 from scml.scml2020 import SatisficerAgent
-from scml.scml2020 import SCML2020Agent
 from scml.scml2020 import SCML2021World
 from scml.scml2020 import is_system_agent
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
@@ -31,7 +36,11 @@ COMPACT = True
 NOLOGS = True
 # agent types to be tested
 types = scml.scml2020.builtin_agent_types(as_str=False)
-oneshot_types = scml.oneshot.builtin_agent_types(as_str=False)
+oneshot_types = [
+    _
+    for _ in scml.oneshot.builtin_agent_types(as_str=False)
+    if not issubclass(_, OneShotSingleAgreementAgent)
+]
 active_types = [_ for _ in types if _ != DoNothingAgent]
 
 
@@ -81,9 +90,33 @@ def generate_world(
     return world
 
 
+# def test_can_run_with_a_single_agent_type_example():
+#     agent_type=IndependentNegotiationsAgent; buy_missing=True; n_processes=2
+#     world = generate_world(
+#         [agent_type],
+#         buy_missing_products=buy_missing,
+#         n_processes=n_processes,
+#         name=unique_name(
+#             f"scml2020tests/single/{agent_type.__name__}"
+#             f"{'Buy' if buy_missing else 'Fine'}{n_processes}",
+#             add_time=True,
+#             rand_digits=4,
+#         ),
+#         compact=COMPACT,
+#         no_logs=NOLOGS,
+#     )
+#     world.run()
+#     save_stats(world, world.log_folder)
+
+
 @mark.parametrize("agent_type", types)
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
 @settings(deadline=500_000, max_examples=20)
+@example(agent_type=IndependentNegotiationsAgent, buy_missing=True, n_processes=2)
+@mark.skipif(
+    condition=not SCML_RUN2021_STD,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
     world = generate_world(
         [agent_type],
@@ -114,9 +147,13 @@ def test_can_run_with_a_single_agent_type(agent_type, buy_missing, n_processes):
 )
 @settings(deadline=300_000, max_examples=20)
 @example(
-    [RandomAgent, SyncRandomOneShotAgent],
-    False,
-    2,
+    agent_types=[scml.scml2020.agents.indneg.IndependentNegotiationsAgent],
+    buy_missing=False,
+    n_processes=2,
+)
+@mark.skipif(
+    condition=not SCML_RUN2021_STD,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
 )
 def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes):
     world = generate_world(
@@ -143,6 +180,10 @@ def test_can_run_with_multiple_agent_types(agent_types, buy_missing, n_processes
     initial_balance=st.sampled_from([50, 10_000, 10_000_000]),
 )
 @settings(deadline=500_000)
+@mark.skipif(
+    condition=not SCML_RUN2021_STD,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balance):
     world = generate_world(
         [DoNothingAgent],
@@ -315,7 +356,6 @@ def test_graphs_lead_to_no_unknown_nodes():
 )
 @example(
     atype=[
-        scml.oneshot.agents.greedy.GreedySyncAgent,
         scml.scml2020.agents.random.RandomAgent,
     ],
 )

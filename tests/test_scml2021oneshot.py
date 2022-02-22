@@ -10,20 +10,20 @@ from hypothesis import settings
 from negmas import ResponseType
 from negmas import genius_bridge_is_running
 from negmas import save_stats
-from negmas.genius import Atlas3
-from negmas.genius import GeniusNegotiator
 from negmas.genius import NiceTitForTat
-from negmas.genius import YXAgent
-from negmas.genius.ginfo import ALL_PASSING_NEGOTIATORS
 from negmas.helpers import unique_name
+from negmas.preferences import LinearAdditiveUtilityFunction
+from negmas.preferences.value_fun import AffineFun
+from negmas.preferences.value_fun import ConstFun
+from negmas.preferences.value_fun import IdentityFun
+from negmas.preferences.value_fun import LinearFun
 from negmas.sao import SAOResponse
-from negmas.utilities import LinearUtilityAggregationFunction
-from negmas.utilities import LinearUtilityFunction
 from numpy.testing import assert_allclose
 from pytest import mark
 from pytest import raises
 
 import scml
+from scml.oneshot import OneShotSingleAgreementAgent
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot import builtin_agent_types
 from scml.oneshot.agent import OneShotAgent
@@ -36,7 +36,6 @@ from scml.oneshot.common import TIME
 from scml.oneshot.common import UNIT_PRICE
 from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020 import is_system_agent
-from scml.scml2020.components import production
 
 random.seed(0)
 
@@ -156,6 +155,8 @@ def test_quantity_distribution(n_processes):
 @given(n_processes=st.integers(2, 4))
 @settings(deadline=300_000, max_examples=20)
 def test_can_run_with_a_single_agent_type(agent_type, n_processes):
+    if issubclass(agent_type, OneShotSingleAgreementAgent) and n_processes > 2:
+        return
     world = generate_world(
         [agent_type],
         n_processes=n_processes,
@@ -182,6 +183,11 @@ def test_can_run_with_a_single_agent_type(agent_type, n_processes):
 )
 @settings(deadline=300_000, max_examples=20)
 def test_can_run_with_a_multiple_agent_types(agent_types, n_processes):
+    if (
+        any(issubclass(_, OneShotSingleAgreementAgent) for _ in agent_types)
+        and n_processes > 2
+    ):
+        return
     world = generate_world(
         agent_types,
         name=unique_name(
@@ -198,7 +204,7 @@ def test_can_run_with_a_multiple_agent_types(agent_types, n_processes):
     save_stats(world, world.log_folder)
 
 
-@given(n_processes=st.integers(2, 4))
+@given(n_processes=st.integers(2, 2))
 @settings(deadline=300_000, max_examples=20)
 def test_something_happens_with_random_agents(n_processes):
     world = generate_world(
@@ -706,18 +712,18 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
         for partner_id in self.awi.my_consumers:
             if self.awi.is_system(partner_id):
                 continue
-            d[partner_id] = LinearUtilityAggregationFunction(
+            d[partner_id] = LinearAdditiveUtilityFunction(
                 dict(
-                    quantity=lambda x: 0.1 * x,
-                    time=lambda x: 0.0,
-                    unit_price=lambda x: x,
+                    quantity=LinearFun(0.1),
+                    time=ConstFun(0),
+                    unit_price=IdentityFun(),
                 ),
                 weights=dict(
                     quantity=0.1,
                     time=0.0,
                     unit_price=0.9,
                 ),
-                outcome_type=tuple,
+                issues=self.awi.current_output_issues,
                 reserved_value=0.0,
             )
         # generate ufuns that prever lower prices when selling
@@ -725,25 +731,25 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
             issues = self.awi.current_input_issues
             if self.awi.is_system(partner_id):
                 continue
-            d[partner_id] = LinearUtilityAggregationFunction(
+            d[partner_id] = LinearAdditiveUtilityFunction(
                 dict(
-                    quantity=lambda x: x,
-                    time=lambda x: 0.0,
-                    unit_price=lambda x: issues[UNIT_PRICE].max_value - x,
+                    quantity=IdentityFun(),
+                    time=ConstFun(0.0),
+                    unit_price=AffineFun(-1, issues[UNIT_PRICE].max_value),
                 ),
                 weights=dict(
                     quantity=0.1,
                     time=0.0,
                     unit_price=0.9,
                 ),
-                outcome_type=tuple,
+                issues=self.awi.current_input_issues,
                 reserved_value=0.0,
             )
         return d
 
 
 def test_ind_negotiators():
-    n_processes = 5
+    n_processes = 2
     world = generate_world(
         [MyIndNeg],
         n_processes=n_processes,
@@ -871,7 +877,7 @@ class MySyncAgent(OneShotSyncAgent):
         )
 
     def get_offer(self, negotiator_id: str):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         quantity_issue = ami.issues[QUANTITY]
         unit_price_issue = ami.issues[UNIT_PRICE]
 
@@ -1051,7 +1057,7 @@ class PricePumpingAgent(OneShotAgent):
     """An agent that causes the intermediate price to go up over time"""
 
     def top_outcome(self, negotiator_id):
-        return tuple(_.max_value for _ in self.get_ami(negotiator_id).issues)
+        return tuple(_.max_value for _ in self.get_nmi(negotiator_id).issues)
 
     def propose(self, negotiator_id, state):
         return self.top_outcome(negotiator_id)
@@ -1154,10 +1160,10 @@ def test_price_pumping_bankrupts_random_agents():
 
 # class RationalRandomOneShotAgent(RandomOneShotAgent):
 #     def top_outcome(self, negotiator_id):
-#         return tuple(_.max_value for _ in self.get_ami(negotiator_id).issues)
+#         return tuple(_.max_value for _ in self.get_nmi(negotiator_id).issues)
 #
 #     def bottom_outcome(self, negotiator_id):
-#         return tuple(_.min_value for _ in self.get_ami(negotiator_id).issues)
+#         return tuple(_.min_value for _ in self.get_nmi(negotiator_id).issues)
 #
 #     def propose(self, negotiator_id, state):
 #         outcome = super().propose(negotiator_id, state)

@@ -2,6 +2,8 @@
 Implements the one shot version of the Agent-World Interface.
 
 """
+from __future__ import annotations
+
 from typing import Any
 from typing import Dict
 from typing import List
@@ -204,7 +206,7 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.price_multiplier
 
     @property
-    def is_exogenous_forced(self):
+    def is_exogenous_forced(self) -> bool:
         """
         Are exogenous contracts forced in the sense that the agent cannot decide
         not to sign them?
@@ -277,9 +279,6 @@ class OneShotAWI(AgentWorldInterface):
     def my_input_product(self) -> int:
         """the product I need to buy"""
         return self.profile.input_product if self.profile else -10
-
-    level = my_input_product
-    """The production level of the agent"""
 
     @property
     def my_output_product(self) -> int:
@@ -356,7 +355,7 @@ class OneShotAWI(AgentWorldInterface):
         """
         return self._world.exogenous_pout[self.agent.id]
 
-    def penalty_multiplier(self, is_input: bool, unit_price: float) -> float:
+    def penalty_multiplier(self, is_input: bool, unit_price: float | None) -> float:
         """
         Returns the penalty multiplier for a contract with the give unit price.
 
@@ -375,6 +374,10 @@ class OneShotAWI(AgentWorldInterface):
             return self.catalog_prices[
                 self.my_input_product if is_input else self.my_output_product
             ]
+        if unit_price is None:
+            raise ValueError(
+                f"Must pass unit price to the penalty multiplier if the scale does not start with n, t or c"
+            )
         return unit_price
 
     @property

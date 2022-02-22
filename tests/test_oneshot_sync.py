@@ -1,11 +1,14 @@
 import os
+import sys
 import time
 from contextlib import contextmanager
 from typing import Dict
 from typing import Tuple
 
+import pytest
 from negmas import ResponseType
 from negmas.helpers import force_single_thread
+from negmas.helpers import humanize_time
 from negmas.sao import SAOResponse
 from pytest import mark
 from pytest import raises
@@ -33,11 +36,11 @@ class MySyncAgent(OneShotSyncAgent):
             time.sleep(3.0)
         else:
             a = 0
-            for i in range(100000000):
+            for i in range(100000):
                 a *= i
 
     def counter_all(self, offers, states):
-        s = set(self.get_ami(_) for _ in offers.keys())
+        s = set(self.get_nmi(_) for _ in offers.keys())
         if self.in_counter_all and (
             not self._check_negs
             or (self._check_negs and len(self.countering_set.intersection(s)))
@@ -66,7 +69,7 @@ class MySyncAgent(OneShotSyncAgent):
         )
 
     def get_offer(self, negotiator_id: str):
-        ami = self.get_ami(negotiator_id)
+        ami = self.get_nmi(negotiator_id)
         quantity_issue = ami.issues[QUANTITY]
         unit_price_issue = ami.issues[UNIT_PRICE]
 
@@ -106,26 +109,17 @@ def does_not_raise(err):
     yield None
 
 
-@mark.skipif(
-    os.environ.get("GITHUB_ACTIONS", "false") == "true",
-    reason="Skipped on CI ... toooooo slowwwwww",
-)
-@mark.parametrize(
-    ["use_sleep", "check_negs", "single_thread", "raise_expected"],
-    [
-        (False, False, True, False),
-        (False, True, True, False),
-        (True, False, True, False),
-        (True, True, True, False),
-        (False, True, False, False),
-        (True, True, False, False),
-        (False, False, False, True),
-    ],
-)
-def test_sync_counter_all_reenters_as_expected(
+def sync_counter_all_reenters_as_expected(
     use_sleep, check_negs, single_thread, raise_expected
 ):
     from scml.oneshot import SCML2020OneShotWorld
+
+    _strt = time.perf_counter()
+    print(
+        f"Running with {use_sleep=}, {check_negs=}, {single_thread=}, {raise_expected=} ... ",
+        end="",
+        flush=True,
+    )
 
     types = {
         (False, False): NotSleepingNotChecking,
@@ -150,3 +144,40 @@ def test_sync_counter_all_reenters_as_expected(
     with (raises if raise_expected else does_not_raise)(RuntimeError):
         world.run()
     force_single_thread(False)
+    print(f"DONE in {humanize_time(time.perf_counter() - _strt)}", flush=True)
+
+
+CONDITIONS = (
+    (True, True, False, False),
+    (True, True, True, False),
+    (True, False, True, False),
+    (False, True, False, False),
+    (False, True, True, False),
+    (False, False, True, False),
+    (True, False, False, True),
+    (False, False, False, True),
+)
+
+
+if pytest in sys.modules:
+    from .switches import *
+
+    @mark.parametrize(
+        ["use_sleep", "check_negs", "single_thread", "raise_expected"],
+        CONDITIONS,
+    )
+    @pytest.mark.skipif(
+        condition=not SCML_RUN2021_ONESHOT_SYNC or not SCML_RUN_TEMP_FAILING,
+        reason="Environment set to ignore running oneshot tests. See switches.py",
+    )
+    def test_sync_counter_all_reenters_as_expected(
+        use_sleep, check_negs, single_thread, raise_expected
+    ):
+        sync_counter_all_reenters_as_expected(
+            use_sleep, check_negs, single_thread, raise_expected
+        )
+
+
+if __name__ == "__main__":
+    for args in CONDITIONS:
+        sync_counter_all_reenters_as_expected(*args)

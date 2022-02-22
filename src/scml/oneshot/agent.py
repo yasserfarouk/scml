@@ -13,37 +13,38 @@ Remarks:
       which is useful if you are keeping information about past negotiations and
       partner behavior.
 """
+from __future__ import annotations
+
+import warnings
 from abc import ABC
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 
-from negmas import AgentMechanismInterface
 from negmas import Contract
+from negmas import ControlledSAONegotiator
 from negmas import Entity
 from negmas import MechanismState
+from negmas import NegotiatorMechanismInterface
 from negmas import Outcome
-from negmas import PassThroughSAONegotiator
 from negmas import ResponseType
 from negmas import SAOController
 from negmas import SAOResponse
 from negmas import SAOSingleAgreementController
 from negmas import SAOState
 from negmas import SAOSyncController
-from negmas.common import NegotiatorInfo
 from negmas.helpers import get_class
-from negmas.helpers import get_full_type_name
-from negmas.outcomes import Issue
-from negmas.sao import SAOAMI
+from negmas.preferences import UtilityFunction
+from negmas.sao import SAONMI
 from negmas.sao import SAONegotiator
 from negmas.situated import RunningNegotiationInfo
-from negmas.utilities import LinearUtilityAggregationFunction
-from negmas.utilities import LinearUtilityFunction
-from negmas.utilities import UtilityFunction
-from negmas.utilities import normalize
 
+if TYPE_CHECKING:
+    from scml.oneshot import OneShotAWI
+    from scml.oneshot import OneShotUFun
 __all__ = [
     "OneShotAgent",
     "OneShotSyncAgent",
@@ -76,21 +77,23 @@ class OneShotAgent(SAOController, Entity, ABC):
           partner behavior.
     """
 
-    def __init__(self, owner=None, ufun=None, name=None):
+    def __init__(self, owner=None, ufun: OneShotUFun | None = None, name=None):
         super().__init__(
-            default_negotiator_type=PassThroughSAONegotiator,
+            default_negotiator_type=ControlledSAONegotiator,
             default_negotiator_params=None,
             auto_kill=False,
             name=name,
-            ufun=ufun,
+            preferences=ufun,
         )
         self._awi = owner._awi if owner else None
         self._owner = owner
-        self.ufun = owner.ufun if owner else None
+        self.set_preferences(owner.ufun if owner else None)
 
     @property
-    def awi(self):
+    def awi(self) -> OneShotAWI:
         """Returns a `OneShotAWI` object for accessing the simulation."""
+        if not self._awi:
+            raise ValueError("The AWI is not assigned yet.")
         return self._awi
 
     @property
@@ -209,7 +212,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         """
@@ -219,21 +222,21 @@ class OneShotAgent(SAOController, Entity, ABC):
             partners: List of the partner IDs consisting from self and the opponent.
             annotation: The annotation of the negotiation including the seller ID,
                         buyer ID, and the product.
-            mechanism: The `AgentMechanismInterface` instance containing all information
+            mechanism: The `NegotiatorMechanismInterface` instance containing all information
                        about the negotiation.
             state: The final state of the negotiation of the type `SAOState`
                    including the agreement if any.
         """
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         """
         Called whenever a negotiation ends with agreement.
 
         Args:
             contract: The `Contract` agreed upon.
-            mechanism: The `AgentMechanismInterface` instance containing all information
+            mechanism: The `NegotiatorMechanismInterface` instance containing all information
                        about the negotiation that led to the `Contract` if any.
         """
 
@@ -256,12 +259,20 @@ class OneShotAgent(SAOController, Entity, ABC):
         """
         return self.negotiators[partner_id][0]
 
-    def get_ami(self, partner_id: str) -> SAOAMI:
+    def get_ami(self, partner_id: str) -> SAONMI:
         """
-        Returns the `SAOAMI` (Agent Mechanism Interface) connecting the agent
+        Returns the `SAONMI` (Agent Mechanism Interface) connecting the agent
         to the negotiation mechanism for the given partner.
         """
-        return self.negotiators[partner_id][0].ami
+        warnings.warn("get_ami is depricated. Use get_nmi")
+        return self.negotiators[partner_id][0].nmi
+
+    def get_nmi(self, partner_id: str) -> SAONMI:
+        """
+        Returns the `SAONMI` (Agent Mechanism Interface) connecting the agent
+        to the negotiation mechanism for the given partner.
+        """
+        return self.negotiators[partner_id][0].nmi
 
 
 class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
@@ -436,14 +447,12 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
           want to change the negotiator type used depending on the partner, you
           can also override `generate_negotiator`.
         - If you are using a `GeniusNegotiator` you must guarantee the following:
-            - All ufuns are of the type `LinearUtilityAggregationFunction`.
+            - All ufuns are of the type `LinearAdditiveUtilityFunction`.
             - All ufuns are normalized with a maximum value of 1.0. You can
               use `normalize_ufuns=True` to gruarantee that.
             - All ufuns have a finite reserved value and at least one outcome is
              above it. You can guarantee that by using `set_reservation=True`.
-            - All ufuns are created with `outcome_type=tuple`. See `test_ind_negotiators_genius()`
-              at `tests/test_scml2021oneshot.py` for an example.
-            - All weights of the `LinearUtilityAggregationFunction` must be between
+            - All weights of the `LinearAdditiveUtilityFunction` must be between
               zero and one and the weights must sum to one.
 
 
@@ -472,7 +481,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
     def generate_ufuns(self) -> Dict[str, UtilityFunction]:
         """
         Returns a utility function for each partner. All ufuns **MUST** be of
-        type `LinearUtilityAggregationFunction` if a genius negotiator is used.
+        type `LinearAdditiveUtilityFunction` if a genius negotiator is used.
         """
 
     def generate_negotiator(self, partner_id: str) -> SAONegotiator:
@@ -486,32 +495,34 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         return self._default_negotiator_type(**self._default_negotiator_params)
 
     def _urange(self, u: UtilityFunction, issues):
-        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(
-            u, LinearUtilityFunction
-        ):
-            return u.utility_range(issues=issues)
-        mn = mx = 0.0
-        for (_, w), issue in zip(u.weights.items(), issues):
-            values = list(issue.values)
-            mnv, mxv = min(values), max(values)
-            if w > 0:
-                mn += mnv * w
-                mx += mxv * w
-            else:
-                mn += mxv * w
-                mx += mnv * w
-        return mn, mx
+        return u.minmax(issues=issues)
+        # if not isinstance(u, LinearAdditiveUtilityFunction) and not isinstance(
+        #     u, LinearUtilityFunction
+        # ):
+        # mn = mx = 0.0
+        # for w, issue in zip(u.weights, issues):
+        #     values = list(issue.values)
+        #     mnv, mxv = min(values), max(values)
+        #     if w > 0:
+        #         mn += mnv * w
+        #         mx += mxv * w
+        #     else:
+        #         mn += mxv * w
+        #         mx += mnv * w
+        # return mn, mx
 
     def _unorm(self, u: UtilityFunction, mn, mx):
-        if not isinstance(u, LinearUtilityAggregationFunction) and not isinstance(
-            u, LinearUtilityFunction
-        ):
-            return normalize(u, outcomes=Issue.enumerate(issues, max_n_outcomes=1000))
-        # _, mx = self._urange(u, issues)
-        if mx < 0:
-            return None
-        u.weights = {k: _ / mx for k, _ in u.weights.items()}
-        return u
+        if mn == 0:
+            return u.scale_max(mx)
+        return u.normalize((mn, mx))
+        # if not isinstance(u, LinearAdditiveUtilityFunction) and not isinstance(
+        #     u, LinearUtilityFunction
+        # ):
+        # # _, mx = self._urange(u, issues)
+        # if mx < 0:
+        #     return None
+        # u.weights = {k: _ / mx for k, _ in u.weights.items()}
+        # return u
 
     def _get_ufuns(self):
         """
@@ -521,6 +532,8 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         ufuns = self.generate_ufuns()
         if not self._normalize and not self._set_reservation:
             return ufuns
+        if not self.awi:
+            raise ValueError(f"AWI is not found!!!")
         for partner_id, u in ufuns.items():
             if self.awi.is_system(partner_id):
                 continue

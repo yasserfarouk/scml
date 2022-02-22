@@ -8,13 +8,14 @@ from typing import Union
 
 import numpy as np
 from negmas import Agent
-from negmas import AgentMechanismInterface
 from negmas import Breach
 from negmas import Contract
 from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 from negmas import RenegotiationRequest
+from negmas import make_issue
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
 from negmas.situated import Adapter
@@ -23,10 +24,6 @@ from ..oneshot.agent import OneShotAgent
 from ..oneshot.common import OneShotProfile
 from ..oneshot.common import OneShotState
 from ..oneshot.mixins import OneShotUFunCreatorMixin
-from ..oneshot.ufun import OneShotUFun
-from .common import QUANTITY
-from .common import TIME
-from .common import UNIT_PRICE
 from .components.production import DemandDrivenProductionStrategy
 from .components.signing import SignAll
 from .components.trading import MarketAwareTradePredictionStrategy
@@ -77,7 +74,7 @@ class SCML2020Agent(Agent):
         partners: List[str],
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         role: Optional[str],
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
@@ -100,7 +97,9 @@ class SCML2020Agent(Agent):
     def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
         pass
 
-    def on_neg_request_accepted(self, req_id: str, mechanism: AgentMechanismInterface):
+    def on_neg_request_accepted(
+        self, req_id: str, mechanism: NegotiatorMechanismInterface
+    ):
         pass
 
     @property
@@ -112,13 +111,13 @@ class SCML2020Agent(Agent):
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         """Called whenever a negotiation ends without agreement"""
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         """Called whenever a negotiation ends with agreement"""
 
@@ -161,7 +160,7 @@ class SCML2020Agent(Agent):
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         """
         Called whenever another agent requests a negotiation with this agent.
@@ -170,7 +169,7 @@ class SCML2020Agent(Agent):
             initiator: The ID of the agent that requested this negotiation
             issues: Negotiation issues
             annotation: Annotation attached with this negotiation
-            mechanism: The `AgentMechanismInterface` interface to the mechanism to be used for this negotiation.
+            mechanism: The `NegotiatorMechanismInterface` interface to the mechanism to be used for this negotiation.
 
         Returns:
             None to reject the negotiation, otherwise a negotiator
@@ -233,7 +232,7 @@ class _SystemAgent(SCML2020Agent):
         initiator: str,
         issues: List[Issue],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         pass
 
@@ -250,13 +249,13 @@ class _SystemAgent(SCML2020Agent):
         self,
         partners: List[str],
         annotation: Dict[str, Any],
-        mechanism: AgentMechanismInterface,
+        mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
     def on_negotiation_success(
-        self, contract: Contract, mechanism: AgentMechanismInterface
+        self, contract: Contract, mechanism: NegotiatorMechanismInterface
     ) -> None:
         pass
 
@@ -414,9 +413,9 @@ class AWIHelper:
         else:
             u, t, q = self._owner._make_issues(self.my_input_product)
             issues = [
-                Issue(values=q, name="quantity"),
-                Issue(values=t, name="time"),
-                Issue(values=u, name="unit_price"),
+                make_issue(values=q, name="quantity"),
+                make_issue(values=t, name="time"),
+                make_issue(values=u, name="unit_price"),
             ]
         return issues
 
@@ -427,9 +426,9 @@ class AWIHelper:
         else:
             u, t, q = self._owner._make_issues(self.my_output_product)
             issues = [
-                Issue(values=q, name="quantity"),
-                Issue(values=t, name="time"),
-                Issue(values=u, name="unit_price"),
+                make_issue(values=q, name="quantity"),
+                make_issue(values=t, name="time"),
+                make_issue(values=u, name="unit_price"),
             ]
         return issues
 
@@ -544,6 +543,7 @@ class OneShotAdapter(
                 )
             ),
         )
+        unit_price = (int(unit_price[0]), int(max(unit_price)))
         t = self.awi.current_step + (self.awi.my_output_product == product)
         time = (t, t)
         quantity = (1, self.awi.n_lines)

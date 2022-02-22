@@ -1,14 +1,25 @@
 from pathlib import Path
 
+import pytest
+
 from scml.scml2019 import DoNothingFactoryManager
 from scml.scml2019 import GreedyFactoryManager
 from scml.scml2019 import anac2019_collusion
 from scml.scml2019 import anac2019_std
 from scml.scml2019.utils import anac2019_sabotage
 
+from .switches import SCML_RUN2019
+from .switches import SCML_RUN_COLLUSION_TOURNAMENTS
+from .switches import SCML_RUN_SABOTAGE_TOURNAMENTS
+from .switches import SCML_RUN_STD_TOURNAMENTS
+
 PARALLELISM = "serial"
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2019 or not SCML_RUN_STD_TOURNAMENTS,
+    reason="Environment set to ignore running 2019 or tournament tests. See switches.py",
+)
 def test_std():
     results = anac2019_std(
         competitors=[DoNothingFactoryManager, GreedyFactoryManager],
@@ -30,6 +41,10 @@ def test_std():
     )
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2019 or not SCML_RUN_COLLUSION_TOURNAMENTS,
+    reason="Environment set to ignore running 2019 or tournament tests. See switches.py",
+)
 def test_collusion():
     results = anac2019_collusion(
         competitors=[DoNothingFactoryManager, GreedyFactoryManager],
@@ -54,6 +69,10 @@ class Greedy1(GreedyFactoryManager):
     pass
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2019 or not SCML_RUN_SABOTAGE_TOURNAMENTS,
+    reason="Environment set to ignore running 2019 or tournament tests. See switches.py",
+)
 def test_sabotage():
     results = anac2019_sabotage(
         competitors=[DoNothingFactoryManager, Greedy1],

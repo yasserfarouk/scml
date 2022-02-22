@@ -166,9 +166,6 @@ These are the *optional* arguments of this tool:
                                             default builtin agents  [default: Decentral
                                             izingAgent;BuyCheapSellExpensiveAgent;Rando
                                             mAgent]
-  --jcompetitors, --java-competitors TEXT   A semicolon (;) separated list of agent
-                                            types to use for the competition.
-                                            [default: ]
   --non-competitors TEXT                    A semicolon (;) separated list of agent
                                             types to exist in the worlds as non-
                                             competitors (their scores will not be

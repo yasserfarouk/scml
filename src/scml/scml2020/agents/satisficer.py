@@ -8,14 +8,14 @@ from typing import List
 from typing import Optional
 
 import numpy as np
-from negmas import AgentMechanismInterface
 from negmas import Contract
 from negmas import Issue
 from negmas import MechanismState
 from negmas import Negotiator
+from negmas import NegotiatorMechanismInterface
 from negmas import Outcome
 from negmas import ResponseType
-from negmas.sao import SAOAMI
+from negmas.sao import SAONMI
 from negmas.sao import SAONegotiator
 from negmas.sao import SAOState
 
@@ -57,12 +57,12 @@ class ObedientNegotiator(SAONegotiator):
 
     def propose(self, state: MechanismState) -> Optional[Outcome]:
         """Simply calls the corresponding method on the owner"""
-        return self.owner.propose(state, self.ami, self.is_selling, self.is_requested)
+        return self.owner.propose(state, self.nmi, self.is_selling, self.is_requested)
 
     def respond(self, state: MechanismState, offer: Outcome) -> ResponseType:
         """Simply calls the corresponding method on the owner"""
         return self.owner.respond(
-            state, self.ami, offer, self.is_selling, self.is_requested
+            state, self.nmi, offer, self.is_selling, self.is_requested
         )
 
 
@@ -462,7 +462,7 @@ class SatisficerAgent(SCML2020Agent):
     # =====================
 
     def propose(
-        self, state: SAOState, ami: SAOAMI, is_selling: bool, is_requested: bool
+        self, state: SAOState, ami: SAONMI, is_selling: bool, is_requested: bool
     ):
         """
         Used to propose to the opponent

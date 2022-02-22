@@ -1,4 +1,6 @@
 """Implements the world class for the SCML2020 world """
+from __future__ import annotations
+
 import copy
 import itertools
 import logging
@@ -806,7 +808,7 @@ class SCML2020World(TimeInAgreementMixin, World):
     @classmethod
     def generate(
         cls,
-        agent_types: List[Type[SCML2020Agent]],
+        agent_types: List[Type[SCML2020Agent] | str],
         agent_params: List[Dict[str, Any]] = None,
         n_steps: Union[Tuple[int, int], int] = (50, 200),
         n_processes: Union[Tuple[int, int], int] = (2, 4),

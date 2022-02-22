@@ -7,6 +7,9 @@ from scml.scml2020.utils import anac2020_collusion
 from scml.scml2020.utils import anac2020_std
 from scml.scml2020.utils import anac2021_collusion
 from scml.scml2020.utils import anac2021_std
+from tests.switches import SCML_RUN2020
+from tests.switches import SCML_RUN_COLLUSION_TOURNAMENTS
+from tests.switches import SCML_RUN_STD_TOURNAMENTS
 
 BaseAgent = DoNothingAgent
 
@@ -53,6 +56,10 @@ class MyAgent9(BaseAgent):
 
 # @pytest.mark.parametrize("n", [2])
 @pytest.mark.parametrize("n", [2, 3])
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020 or not SCML_RUN_STD_TOURNAMENTS,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_std(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2020_std(
@@ -75,6 +82,10 @@ def test_std(n):
 
 
 @pytest.mark.parametrize("n", [2, 3])
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020 or not SCML_RUN_COLLUSION_TOURNAMENTS,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_collusion(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2020_collusion(
@@ -97,6 +108,10 @@ def test_collusion(n):
 
 
 @pytest.mark.parametrize("n", [2, 3])
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020 or not SCML_RUN_STD_TOURNAMENTS,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_std21(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2021_std(
@@ -119,6 +134,10 @@ def test_std21(n):
 
 
 @pytest.mark.parametrize("n", [2, 3])
+@pytest.mark.skipif(
+    condition=not SCML_RUN2020 or not SCML_RUN_COLLUSION_TOURNAMENTS,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_collusion21(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2021_collusion(

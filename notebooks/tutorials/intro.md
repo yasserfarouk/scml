@@ -170,15 +170,15 @@ The interaction between **Mechanism** and **Negotiator** objects mirrors the
 interaction between **World** and **Agent** objects. **Mechanism** objects call
 methods in **Negotiator** objects directly but **Negotiator** objects can only
 access services provided by the **Mechanism** object through a
-**AgentMechanismInterface** (AMI).  Note that it is an AMI not a NMI (for
+**NegotiatorMechanismInterface** (AMI).  Note that it is an AMI not a NMI (for
 historical reasons). You can find more details about the general NegMAS AMI
-[here](http://www.yasserm.com/negmas/api/negmas.common.AgentMechanismInterface.html).
+[here](http://www.yasserm.com/negmas/api/negmas.common.NegotiatorMechanismInterface.html).
 
 Each specific **Mechanism** defines a corresponding specific
-**AgentMechanismInterface** class (in the same way that **World** classes
-define their own AWI). The **SAOMechanism** used in SCML defines **SAOAMI** for
+**NegotiatorMechanismInterface** class (in the same way that **World** classes
+define their own AWI). The **SAOMechanism** used in SCML defines **SAONMI** for
 this purpose (Details are
-[here](http://www.yasserm.com/negmas/api/negmas.sao.SAOAMI.html?highlight=saoami#negmas.sao.SAOAMI)).
+[here](http://www.yasserm.com/negmas/api/negmas.sao.SAONMI.html?highlight=saoami#negmas.sao.SAONMI)).
 
 To negotiate effectively, negotiators employ a **UtilityFunction** to represent
 their preferences over different possible **Outcome**s of the negotiation

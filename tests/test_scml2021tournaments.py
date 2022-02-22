@@ -1,15 +1,16 @@
-import random
 from pathlib import Path
 
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import example
 from hypothesis import given
 
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.scml2020.utils import anac2021_oneshot
 from scml.scml2020.utils import truncated_mean
+
+from .switches import SCML_RUN2021_ONESHOT
+from .switches import SCML_RUN_STD_TOURNAMENTS
 
 
 class MyAgent0(RandomOneShotAgent):
@@ -53,6 +54,10 @@ class MyAgent9(RandomOneShotAgent):
 
 
 @pytest.mark.parametrize("n", [2, 3])
+@pytest.mark.skipif(
+    condition=not SCML_RUN2021_ONESHOT or not SCML_RUN_STD_TOURNAMENTS,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 def test_oneshot(n):
     competitors = [eval(f"MyAgent{_}") for _ in range(n)]
     results = anac2021_oneshot(
@@ -75,6 +80,10 @@ def test_oneshot(n):
     ), f"Agents do not appear the same number of times:\n{df}"
 
 
+@pytest.mark.skipif(
+    condition=not SCML_RUN2021_ONESHOT or not SCML_RUN_STD_TOURNAMENTS,
+    reason="Environment set to ignore running 2020 or tournament tests. See switches.py",
+)
 class TestTruncatedMean:
     @given(s=st.floats(0.0, 100.0), m=st.floats(-50, 50))
     def test_tukey(self, s, m):

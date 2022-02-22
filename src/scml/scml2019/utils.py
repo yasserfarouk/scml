@@ -14,7 +14,7 @@ from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import instantiate
 from negmas.helpers import unique_name
-from negmas.java import to_dict
+from negmas.serialization import serialize
 from negmas.situated import Entity
 from negmas.tournaments import TournamentResults
 from negmas.tournaments import WorldRunResults
@@ -423,8 +423,8 @@ def anac2019_config_generator(
     world_params.update(kwargs)
     config = {
         "world_params": world_params,
-        "products": [to_dict(p, add_type_field=False, camel=False) for p in products],
-        "processes": [to_dict(p, add_type_field=False, camel=False) for p in processes],
+        "products": [serialize(p, add_type_field=False) for p in products],
+        "processes": [serialize(p, add_type_field=False) for p in processes],
         "factories": [
             {
                 "profile": {
@@ -447,8 +447,7 @@ def anac2019_config_generator(
                 type=get_full_type_name(miner_type),
                 args=miner_kwargs,
                 profiles={
-                    k: to_dict(v, add_type_field=False, camel=False)
-                    for k, v in m.profiles.items()
+                    k: serialize(v, add_type_field=False) for k, v in m.profiles.items()
                 },
             )
             for m in miners
@@ -460,8 +459,7 @@ def anac2019_config_generator(
                 type=get_full_type_name(consumer_type),
                 args=consumer_kwargs,
                 profiles={
-                    k: to_dict(v, add_type_field=False, camel=False)
-                    for k, v in c.profiles.items()
+                    k: serialize(v, add_type_field=False) for k, v in c.profiles.items()
                 },
             )
             for c in consumers
@@ -517,8 +515,6 @@ def anac2019_sabotage_assigner(
     configs = []
 
     def shorten(long_name: str, d: Dict[str, Any]) -> str:
-        if long_name.endswith("JavaFactoryManager"):
-            long_name = d.get("java_class_name", long_name)
         name = (
             long_name.split(".")[-1]
             .lower()
@@ -738,8 +734,6 @@ def anac2019_assigner(
                 configs.append(_copy_config(perm, config, k))
 
     def shorten(long_name: str, d: Dict[str, Any]) -> str:
-        if long_name.endswith("JavaFactoryManager"):
-            long_name = d.get("java_class_name", long_name)
         name = (
             long_name.split(".")[-1]
             .lower()

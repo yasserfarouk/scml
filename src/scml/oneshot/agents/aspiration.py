@@ -1,21 +1,19 @@
 import itertools
 import random
 from typing import Dict
-from typing import Optional
 
-from negmas import AspirationMixin
-from negmas import Issue
 from negmas import Outcome
+from negmas import PolyAspiration
 from negmas import ResponseType
+from negmas.outcomes.issue_ops import enumerate_issues
 from negmas.sao import SAOResponse
-from negmas.sao import SAOState
 
 from ..agent import OneShotSyncAgent
 
 __all__ = ["SingleAgreementAspirationAgent"]
 
 
-class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
+class SingleAgreementAspirationAgent(OneShotSyncAgent):
     """
     Uses a time-based strategy to accept a single agreement from the set
     it is considering.
@@ -29,13 +27,11 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
         # and calculate our ufun limits and reserved value
         self.ufun.reserved_value = self.ufun.from_contracts([])
         self._reserved_value = self.ufun.reserved_value
-        AspirationMixin.aspiration_init(
-            self,
+        self._asp = PolyAspiration(
             max_aspiration=1.0,
             aspiration_type=float(random.randint(1, 4))
             if random.random() < 0.7
             else random.random(),
-            above_reserved_value=False,
         )
         # if self.awi.current_exogenous_input_quantity or self.awi.current_exogenous_output_quantity:
         #     breakpoint()
@@ -60,7 +56,7 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
             if self.awi.is_first_level
             else self.awi.current_output_issues
         )
-        outcomes = list(Issue.enumerate(issues, astype=tuple))
+        outcomes = list(enumerate_issues(issues))
         self._outcomes = sorted(
             zip(
                 (
@@ -87,7 +83,9 @@ class SingleAgreementAspirationAgent(AspirationMixin, OneShotSyncAgent):
                 )
             )
         # find current aspiration level between zero and one
-        asp = max(self.aspiration(state.relative_time) for state in states.values())
+        asp = max(
+            self._asp.utility_at(state.relative_time) for state in states.values()
+        )
 
         # acceptance strategy
         partner_utils = sorted(

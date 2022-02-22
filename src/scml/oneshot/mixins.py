@@ -1,13 +1,20 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from .common import QUANTITY
 from .common import UNIT_PRICE
 from .ufun import OneShotUFun
+
+if TYPE_CHECKING:
+    from .agent import OneShotAgent
 
 __all__ = ["OneShotUFunCreatorMixin"]
 
 
 class OneShotUFunCreatorMixin:
-    def make_ufun(self, add_exogenous, in_adapter):
-        awi = self._obj.awi if in_adapter else self.awi
+    def make_ufun(self: OneShotAgent, add_exogenous, in_adapter):  # type: ignore
+        awi = self._obj.awi if in_adapter else self.awi  # type: ignore
 
         iq = awi.current_input_issues[QUANTITY] if awi.current_input_issues else None
         ip = awi.current_input_issues[UNIT_PRICE] if awi.current_input_issues else None
@@ -40,5 +47,5 @@ class OneShotUFunCreatorMixin:
             current_balance=awi.current_balance,
         )
         if hasattr(self, "_obj") and not in_adapter:
-            self._obj.ufun = self.ufun
+            self._obj.ufun = self.ufun  # type: ignore
         return self.ufun

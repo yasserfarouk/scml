@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["master"]
+    branches: ["*"]
   pull_request:
-    branches: ["master"]
+    branches: ["*"]
 
 jobs:
   tests:
@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.8.12", "3.9.10", "3.10.2"]
 
     steps:
       - uses: "actions/checkout@v2"
@@ -74,5 +74,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
           python -m pip install -r docs/requirements.txt
           python -m pip install -e .
+          yes | python -m pip uninstall negmas
+          python -m pip install git+https://github.com/yasserfarouk/negmas.git
       - name: "Import package"
         run: "python -c 'import scml; print(scml.__version__)'"

@@ -5,8 +5,6 @@ from typing import Optional
 
 from negmas import Contract
 
-from scml.scml2020.world import is_system_agent
-
 
 class SignAll:
     """Signs all contracts no matter what.
@@ -64,6 +62,8 @@ class SignAllPossible:
     """
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+        from scml.scml2020.world import is_system_agent
+
         results = [None] * len(contracts)
         # sort contracts by time and then put system contracts first within each time-step
         contracts = sorted(
