@@ -119,6 +119,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         no_logs=False,
         n_steps=1000,
         time_limit=60 * 90,
+        sync_calls=False,
         # mechanism params
         neg_n_steps=20,
         neg_time_limit=None,
@@ -194,6 +195,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                         enforce_issue_types=True,
                         cast_offers=True,
                         hidden_time_limit=neg_hidden_time_limit,
+                        sync_calls=sync_calls,
                     ),
                 )
             },
