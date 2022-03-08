@@ -21,8 +21,8 @@ import tqdm
 import yaml
 from negmas import save_stats
 from negmas.helpers import humanize_time
-from negmas.helpers import load
 from negmas.helpers import unique_name
+from negmas.helpers.inout import load
 from tabulate import tabulate
 
 import scml
