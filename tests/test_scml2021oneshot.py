@@ -596,8 +596,8 @@ def _ufun_unit(
 
     assert mx >= mn or mx == mn == 0
     u = ufun.from_offers(
-        [(qin, 0, pin / qin if qin else 0), (qout, 0, pout / qout if qout else 0)],
-        [False, True],
+        ((qin, 0, pin / qin if qin else 0), (qout, 0, pout / qout if qout else 0)),
+        (False, True),
     )
     # u = ufun.from_aggregates(qin, qout, pin, pout)
     # assert mn <= u <= mx, f"{mn}, {u}, {mx}\nworst: {ufun.worst}\nbest: {ufun.best}"

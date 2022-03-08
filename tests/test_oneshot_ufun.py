@@ -48,12 +48,21 @@ class MyExogAgent(OneShotSyncAgent):
             o[UNIT_PRICE] = price
             o[QUANTITY] = i
             o[TIME] = self.awi.current_step
-            utils.append(self.ufun.from_offers([o], [is_selling]))
+            utils.append(
+                self.ufun.from_offers(
+                    (
+                        tuple(
+                            o,
+                        ),
+                    ),
+                    (is_selling,),
+                )
+            )
         assumed_best = [-1, -1, -1]
         assumed_best[UNIT_PRICE] = price
         assumed_best[QUANTITY] = ex_quant
         assumed_best[TIME] = self.awi.current_step
-        assumed_best_u = self.ufun.from_offers([assumed_best], [is_selling])
+        assumed_best_u = self.ufun.from_offers((tuple(assumed_best),), (is_selling,))
 
         best_u, best_quant = max([(u, idx) for idx, u in enumerate(utils)])
 

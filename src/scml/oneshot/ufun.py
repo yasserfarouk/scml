@@ -198,7 +198,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         """
         if not self.input_agent and not self.output_agent:
             return float("-inf")
-        return self.from_offers((offer,), (self.input_agent,))
+        return self.from_offers((tuple(offer) if offer else None,), (self.input_agent,))
 
     def from_contracts(
         self, contracts: Iterable[Contract], ignore_exogenous=True

@@ -325,7 +325,7 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
                 outputs.append(is_selling)
 
             if (
-                self.ufun.from_offers(list(chosen.values()), outputs)
+                self.ufun.from_offers(tuple(chosen.values()), tuple(outputs))
                 >= self._th(self.awi.current_step, self.awi.n_steps)
                 * self.ufun.max_utility
             ):

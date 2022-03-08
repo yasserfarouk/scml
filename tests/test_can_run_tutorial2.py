@@ -427,7 +427,7 @@ class SyncAgent(OneShotSyncAgent, BetterAgent):
             chosen[k] = offer
             outputs.append(is_output)
 
-        u = self.ufun.from_offers(list(chosen.values()), outputs)
+        u = self.ufun.from_offers(tuple(chosen.values()), tuple(outputs))
         rng = self.ufun.max_utility - self.ufun.min_utility
         threshold = self._threshold * rng + self.ufun.min_utility
         if u >= threshold:

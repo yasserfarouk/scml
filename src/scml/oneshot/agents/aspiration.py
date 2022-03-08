@@ -61,7 +61,7 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
             zip(
                 (
                     (
-                        self.ufun.from_offers([_], [self.awi.is_first_level])
+                        self.ufun.from_offers((_,), (self.awi.is_first_level,))
                         - self._reserved_value
                     )
                     / (self._urange)
