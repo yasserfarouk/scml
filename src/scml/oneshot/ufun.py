@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from copy import deepcopy
+from copy import copy
+from functools import lru_cache
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
+from typing import overload
 
 from negmas import Contract
 from negmas.outcomes import Issue
@@ -14,6 +17,7 @@ from negmas.outcomes import Outcome
 from negmas.outcomes import OutcomeSpace
 from negmas.outcomes import make_issue
 from negmas.outcomes import make_os
+from negmas.preferences import StationaryMixin
 from negmas.preferences import UtilityFunction
 
 from scml.scml2020.common import is_system_agent
@@ -42,7 +46,7 @@ UFunLimit = namedtuple(
 """Information about one utility limit (either highest or lowest). See `OnShotUFun.find_limit` for details."""
 
 
-class OneShotUFun(UtilityFunction):
+class OneShotUFun(StationaryMixin, UtilityFunction):
     """
     Calculates the utility function of a list of contracts or offers.
 
@@ -194,7 +198,7 @@ class OneShotUFun(UtilityFunction):
         """
         if not self.input_agent and not self.output_agent:
             return float("-inf")
-        return self.from_offers([offer], [self.input_agent])
+        return self.from_offers((offer,), (self.input_agent,))
 
     def from_contracts(
         self, contracts: Iterable[Contract], ignore_exogenous=True
@@ -227,7 +231,7 @@ class OneShotUFun(UtilityFunction):
             is_output = product == output_product
             outputs.append(is_output)
             offers.append(self.outcome_as_tuple(c.agreement))
-        return self.from_offers(offers, outputs)
+        return self.from_offers(tuple(offers), tuple(outputs))
 
     @staticmethod
     def outcome_as_tuple(offer):
@@ -239,9 +243,31 @@ class OneShotUFun(UtilityFunction):
             return tuple(outcome)
         return tuple(offer)
 
+    @overload
     def from_offers(
-        self, offers: Iterable[Tuple], outputs: Iterable[bool], return_producible=False
-    ) -> Union[float, Tuple[float, int]]:
+        self,
+        offers: tuple[tuple[int, int, int], ...],
+        outputs: tuple[bool],
+        return_producible: Literal[False] = False,
+    ) -> float:
+        ...
+
+    @overload
+    def from_offers(
+        self,
+        offers: tuple[tuple[int, int, int], ...],
+        outputs: tuple[bool],
+        return_producible: Literal[True],
+    ) -> tuple[float, float]:
+        ...
+
+    @lru_cache
+    def from_offers(
+        self,
+        offers: tuple[tuple[int, int, int], ...],
+        outputs: tuple[bool],
+        return_producible=False,
+    ) -> float | tuple[float, int]:
         """
         Calculates the utility value given a list of offers and whether each
         offer is for output or not (= input).
@@ -271,7 +297,7 @@ class OneShotUFun(UtilityFunction):
             return -offer[UNIT_PRICE] if is_output else offer[UNIT_PRICE]
 
         # copy inputs because we are going to modify them.
-        offers, outputs = deepcopy(list(offers)), deepcopy(list(outputs))
+        offers, outputs = list(offers), list(outputs)
         # indicate that all inputs are not exogenous and that we are adding two
         # exogenous contracts after them.
         exogenous = [False] * len(offers) + [True, True]
@@ -289,14 +315,16 @@ class OneShotUFun(UtilityFunction):
         output_offers = []
         # sort contracts in the optimal order of execution: from cheapest when
         # buying and from the most expensive when selling. See `order` above.
-        sorted_offers = list(sorted(zip(offers, outputs, exogenous), key=order))
+        sorted_offers = sorted(zip(offers, outputs, exogenous), key=order)
 
         # we calculate the total quantity we are are required to pay for `qin` and
         # the associated amount of money we are going to pay `pin`. Moreover,
         # we calculate the total quantity we can actually buy given our limited
         # money balance (`qin_bar`).
         for offer, is_output, is_exogenous in sorted_offers:
-            offer = self.outcome_as_tuple(offer)
+            if not offer:
+                continue
+            offer: tuple[int, int, int]
             if is_output:
                 output_offers.append((offer, is_exogenous))
                 continue
@@ -615,11 +643,11 @@ class OneShotUFun(UtilityFunction):
             secured_output_unit_price,
         )
         actual_util = self.from_offers(
-            [
+            (
                 (result.output_quantity, 0, result.output_price),
                 (result.input_quantity, 0, result.input_price),
-            ],
-            [True, False],
+            ),
+            (True, False),
         )
         assert (
             abs(result.utility - actual_util) < 1e-2
@@ -630,6 +658,7 @@ class OneShotUFun(UtilityFunction):
             self.worst = result
         return result
 
+    @lru_cache
     def find_limit_brute_force(
         self,
         best,
@@ -677,8 +706,8 @@ class OneShotUFun(UtilityFunction):
         for i in range(imax):
             for o in range(omax):
                 u, p = self.from_offers(
-                    [(i, 0, ip), (o, 0, op)],
-                    [False, True],
+                    ((i, 0, ip), (o, 0, op)),
+                    (False, True),
                     return_producible=True,
                 )
                 if (best and u >= limit_u) or (not best and u <= limit_u):
