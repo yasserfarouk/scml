@@ -657,6 +657,10 @@ class SatisficerAgent(SCML2020Agent):
             offer[TIME],
         )
 
+        # reject crazy offers
+        if q <= 0 or t >= len(tentative) or t < state.step:
+            return ResponseType.REJECT_OFFER
+
         # r will go from one to zero over the negotiation time and controls our
         # concession
         r = 1 - math.pow(state.relative_time, self.ep)
