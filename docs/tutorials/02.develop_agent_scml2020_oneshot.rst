@@ -62,7 +62,7 @@ this brief introduction in the remainder of this tutorial.
         if draw:
             world.draw(
                 what=["contracts-concluded"],
-                steps=(0, world.n_steps),
+                steps=(0, world.n_steps - 1),
                 together=True, ncols=1, figsize=(20, 20)
             )
             plt.show()
@@ -129,17 +129,17 @@ Let’s check the scores of different agents to confirm:
 .. parsed-literal::
 
     Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.5618181128339336
-    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.986641975972104
+    Agent 01Ran@0 of type RandomOneShotAgent has a final score of 0.933819980498316
     Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.6849210221645556
     Agent 03MDN@0 of type MyOneShotDoNothing has a final score of 0.6039422056361495
     Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.7754821463007091
     Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.8958313153141294
-    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.7143879750376534
-    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.8323896859544185
+    Agent 06Ran@1 of type RandomOneShotAgent has a final score of 0.803545995694227
+    Agent 07Ran@1 of type RandomOneShotAgent has a final score of 0.9426235727688185
     Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.48704975546325124
-    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.8786014074593169
-    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.8276963097529048
-    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.8129031884717791
+    Agent 09Ran@1 of type RandomOneShotAgent has a final score of 0.7924968546119284
+    Agent 10Ran@1 of type RandomOneShotAgent has a final score of 0.9599564144107027
+    Agent 11Ran@1 of type RandomOneShotAgent has a final score of 0.8833928132562742
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -154,7 +154,7 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.842103423774696),
+    [('RandomOneShotAgent', 0.8859726052067113),
      ('MyOneShotDoNothing', 0.6681740929521213)]
 
 
@@ -206,28 +206,28 @@ market.
         <tr>
           <th rowspan="5" valign="top">01Ran@0</th>
           <th>06Ran@1</th>
-          <td>4.500000</td>
-          <td>18.000000</td>
+          <td>4.700000</td>
+          <td>15.400000</td>
         </tr>
         <tr>
           <th>07Ran@1</th>
-          <td>5.750000</td>
-          <td>15.500000</td>
+          <td>4.250000</td>
+          <td>11.250000</td>
         </tr>
         <tr>
           <th>09Ran@1</th>
-          <td>4.500000</td>
-          <td>15.000000</td>
+          <td>4.200000</td>
+          <td>14.600000</td>
         </tr>
         <tr>
           <th>10Ran@1</th>
-          <td>5.777778</td>
-          <td>16.333333</td>
+          <td>5.375000</td>
+          <td>14.125000</td>
         </tr>
         <tr>
           <th>11Ran@1</th>
-          <td>6.555556</td>
-          <td>15.888889</td>
+          <td>4.888889</td>
+          <td>14.222222</td>
         </tr>
         <tr>
           <th>04MDN@1</th>
@@ -571,7 +571,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.0618490425022955), ('RandomOneShotAgent', 0.779155817275618)]
+    [('SimpleAgent', 1.1834734588935005),
+     ('RandomOneShotAgent', 0.40920799626165133)]
 
 
 This simple agent is slightly better than the random agent. Let’s
@@ -788,8 +789,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('BetterAgent', 0.9285759579447519),
-     ('RandomOneShotAgent', 0.5560642374450893)]
+    [('BetterAgent', 1.9375134565879335),
+     ('RandomOneShotAgent', 0.04304236536779151)]
 
 
 It seems that ``BetterAgent`` is getting higher scores than
@@ -945,8 +946,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('AdaptiveAgent', 1.573309689260109),
-     ('RandomOneShotAgent', 0.31531037520482535)]
+    [('AdaptiveAgent', 1.6540962807223063),
+     ('RandomOneShotAgent', 0.09027638393369423)]
 
 
 Not as good as the previous agent at least in this simulation (we will
@@ -1088,8 +1089,8 @@ on accomulated statistics per agent
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.7658792975735875),
-     ('RandomOneShotAgent', -0.13521083800317218)]
+    [('LearningAgent', 1.3687108068212783),
+     ('RandomOneShotAgent', 0.6337669285716161)]
 
 
 The main idea of this agent is to limit the minimum price (for selling)
@@ -1169,7 +1170,7 @@ More General Simple Agent (advanced)
 
 .. container::
 
-   This section is not necessary for SCML-OneShot 2021 competition
+   This section is not necessary for SCML-OneShot 2022 competition
    because all worlds in the competition will have exactly 2 processes
    (3 products). It is here for readers interested in making their
    agents future-proof.
@@ -1273,7 +1274,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.0629370580165551), ('DeepSimpleAgent', -0.10452587813433352)]
+    [('DeepSimpleAgent', 0.7988395672301384), ('BetterAgent', 0.7647935048997926)]
 
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
@@ -1562,7 +1563,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('SyncAgent', 1.118821407026792), ('RandomOneShotAgent', 0.8024416020898135)]
+    [('SyncAgent', 1.081781283820725), ('RandomOneShotAgent', 0.8713396060467092)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1684,8 +1685,8 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.8662845582516588),
-     ('SimpleSingleAgreementAgent', 0.7669599207057102)]
+    [('SimpleSingleAgreementAgent', 0.8667195207905396),
+     ('RandomOneShotAgent', 0.31892984970939936)]
 
 
 Using Independent Negotiators
@@ -1732,8 +1733,8 @@ This is an example agent that uses this approach:
 
 .. parsed-literal::
 
-    [('AssumeOthersFailIndNeg', 0.34763409665435563),
-     ('RandomOneShotAgent', -0.12546060103598855)]
+    [('AssumeOthersFailIndNeg', 0.12092155343081437),
+     ('RandomOneShotAgent', -0.6405390914149994)]
 
 
 This agent simply uses its **central** ufun for each negotiator. This is
@@ -1799,8 +1800,8 @@ because the agent may over-contract.
 
 .. parsed-literal::
 
-    [('GreedyIndNeg', 0.35376615806100403),
-     ('RandomOneShotAgent', -0.007792102081922242)]
+    [('GreedyIndNeg', 0.29327982535353675),
+     ('RandomOneShotAgent', -0.3280710088344561)]
 
 
 Using A Negotiator from the Genius Platform
@@ -1849,7 +1850,7 @@ negmas-genius bridge using one of the following two commands:
    ``bash  negmas genius``
 -  In some cases, the aforementioned command may not work correctly
    (specially on windows), you can replace it with:
-   ``bash  java -jar ~/nemga/files/geniusbridge.jar``
+   ``bash  java -jar $HOME/nemgas/files/geniusbridge.jar``
 
 The only change you need to do in your code is to choose an appropriate
 ``GeniusNegotiator``. Note that not all agents in the genius platform
@@ -1859,9 +1860,6 @@ will work correctly. Here is an example
 
     # import a specific agent from the Genius platform
     from negmas.genius import NiceTitForTat
-    # used to check whether or not the negmas-genius bridge
-    # is running
-    from negmas.genius import genius_bridge_is_running
 
     class GeniusIndNeg(GreedyIndNeg):
         def __init__(self, *args, **kwargs):
@@ -1879,8 +1877,8 @@ will work correctly. Here is an example
 
 .. parsed-literal::
 
-    [('GeniusIndNeg', 0.9172427805270843),
-     ('RandomOneShotAgent', -0.018133541328785974)]
+    [('GeniusIndNeg', 1.0803797329669167),
+     ('RandomOneShotAgent', 0.01461169468008266)]
 
 
 Comparing all agents
@@ -1909,15 +1907,15 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.2288677080700625),
-     ('AdaptiveAgent', 1.1431130690447189),
-     ('BetterAgent', 1.0914302132024296),
-     ('GeniusIndNeg', 1.0441383365834571),
-     ('SyncAgent', 0.9523479290212987),
-     ('SimpleAgent', 0.9429384494467841),
-     ('SimpleSingleAgreementAgent', 0.8001324461048595),
-     ('GreedyIndNeg', 0.5245262940513329),
-     ('DeepSimpleAgent', -0.05917603579247174)]
+    [('BetterAgent', 1.1874231846596959),
+     ('AdaptiveAgent', 1.179037078493458),
+     ('LearningAgent', 1.1071699572872975),
+     ('GeniusIndNeg', 0.9619441666008351),
+     ('SimpleAgent', 0.9613996470664397),
+     ('SyncAgent', 0.8908643375788454),
+     ('SimpleSingleAgreementAgent', 0.7712921019437593),
+     ('GreedyIndNeg', 0.3105679942368415),
+     ('DeepSimpleAgent', 0.2296499362091902)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -1958,7 +1956,7 @@ Running SCML2020 agents (advanced)
 
 .. container::
 
-   This section is not necessary for SCML-OneShot 2021 competition.
+   This section is not necessary for SCML-OneShot 2022 competition.
 
 The SCML-OneShot game is much simpler than the full SCML2020 game used
 in the ANAC 2020 SCML league or the ANAC 2021 SCML standard and
@@ -1974,7 +1972,7 @@ track (with some rough edges). Let’s try to do that here:
     [SimpleAgent, DeepSimpleAgent, BetterAgent, LearningAgent,
     AdaptiveAgent, SyncAgent, AspirationAgent,
     BuyCheapSellExpensiveAgent, DecentralizingAgent],
-    n_processes = 4,
+    n_processes = 2,
     n_trials = 10,
     draw = False,
     )
@@ -1986,15 +1984,15 @@ track (with some rough edges). Let’s try to do that here:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 0.9544178234639343),
-     ('SingleAgreementAspirationAgent', 0.953908348272002),
-     ('LearningAgent', 0.9511419076855497),
-     ('AdaptiveAgent', 0.935086620326453),
-     ('BetterAgent', 0.9272982807347759),
-     ('SyncAgent', 0.9113784443846548),
-     ('DecentralizingAgent', 0.8242395591838448),
-     ('BuyCheapSellExpensiveAgent', 0.6955505738047882),
-     ('DeepSimpleAgent', 0.622779532203584)]
+    [('AdaptiveAgent', 1.292577800675111),
+     ('BetterAgent', 1.1015928141682376),
+     ('SyncAgent', 1.0870765677825986),
+     ('LearningAgent', 1.051964299956667),
+     ('SimpleAgent', 1.0143791782314702),
+     ('SingleAgreementAspirationAgent', 0.9831247639434478),
+     ('DecentralizingAgent', 0.6135450812249436),
+     ('DeepSimpleAgent', 0.4803111916323573),
+     ('BuyCheapSellExpensiveAgent', 0.4428900385918905)]
 
 
 For an SCML agent participating in the OneShot game, the main issues to
@@ -2008,9 +2006,9 @@ take into account are the following:
    adjusted as explaind in the `OneShot game
    description <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__.
 2. The agent will not be able to do any trade about any steps beyond the
-   next step. 1112wqesdfcgvhjkl;’]
-   :raw-latex:`\uYH` With that we end our tutorial. Have fun developing
-   your agent.
+   next step.
+
+With that we end our tutorial. Have fun developing your agent.
 
 
 
