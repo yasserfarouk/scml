@@ -27,6 +27,7 @@ from typing import Optional
 from negmas import Contract
 from negmas import ControlledSAONegotiator
 from negmas import Entity
+from negmas import Issue
 from negmas import MechanismState
 from negmas import NegotiatorMechanismInterface
 from negmas import Outcome
@@ -494,8 +495,8 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         """
         return self._default_negotiator_type(**self._default_negotiator_params)
 
-    def _urange(self, u: UtilityFunction, issues):
-        return u.minmax(issues=issues)
+    def _urange(self, u: UtilityFunction, issues: tuple[Issue, ...]):
+        return u.minmax(issues=tuple(issues))
         # if not isinstance(u, LinearAdditiveUtilityFunction) and not isinstance(
         #     u, LinearUtilityFunction
         # ):
