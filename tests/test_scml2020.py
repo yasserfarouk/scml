@@ -207,7 +207,7 @@ def test_nothing_happens_with_do_nothing(buy_missing, n_processes, initial_balan
 
 
 @given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
-@settings(deadline=300_000, max_examples=20)
+@settings(deadline=1000_000, max_examples=20)
 @pytest.mark.skipif(
     condition=not SCML_RUN2020,
     reason="Environment set to ignore running 2020 tests. See switches.py",
