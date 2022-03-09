@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.5.1 (2022.3.10)
+-----------------
+
+* giving more time to testing 2020 with random
+* avoiding a hashing issue in second tutorial
+* rejecting crazy offers in satisficer
+* ensuring that from_offers recevied tuple[tuple]
+* oneshto ufun speedup
+* adding ANAC 2022 running functions scml2020.utils
+* import cleanup
+* control sync_calls when creating oneshot worlds
+* fix: requirements.txt to reduce vulnerabilities
+
 0.5.0 (2022.2.17)
 -----------------
 
