@@ -2187,7 +2187,7 @@ def anac2022_oneshot(
         world_generator=anac2020oneshot_world_generator,
         config_generator=anac2020_config_generator,
         config_assigner=anac2020_assigner,
-        score_calculator=balance_calculator2022oneshot,
+        score_calculator=balance_calculator2021oneshot,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
