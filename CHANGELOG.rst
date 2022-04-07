@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.2 (2022.4.8)
+----------------
+
+* Minor fixes in the utilities module to simplify running anac 2022 tournaments.
+
 0.5.1 (2022.3.10)
 -----------------
 
