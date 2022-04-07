@@ -177,6 +177,7 @@ __all__ = [
     "balance_calculator2021oneshot",
     "DefaultAgents",
     "DefaultAgents2021",
+    "DefaultAgents2022",
     "DefaultAgentsOneShot",
     "anac2021_collusion",
     "anac2021_std",
@@ -197,6 +198,14 @@ DefaultAgents = [DecentralizingAgent, BuyCheapSellExpensiveAgent]
 
 
 DefaultAgents2021 = [
+    DecentralizingAgent,
+    # MarketAwareDecentralizingAgent,
+    MarketAwareIndDecentralizingAgent,
+    SatisficerAgent,
+    # RandomOneShotAgent,
+]
+
+DefaultAgents2022 = [
     DecentralizingAgent,
     # MarketAwareDecentralizingAgent,
     MarketAwareIndDecentralizingAgent,
@@ -1915,7 +1924,7 @@ def anac2022_std(
         world_generator=anac2020_world_generator,
         config_generator=anac2020_config_generator,
         config_assigner=anac2020_assigner,
-        score_calculator=balance_calculator2022,
+        score_calculator=balance_calculator2021,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
