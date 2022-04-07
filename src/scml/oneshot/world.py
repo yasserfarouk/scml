@@ -126,7 +126,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_hidden_time_limit=3 * 60,
         neg_step_time_limit=60,
         negotiation_speed=0,
-        avoid_ultimatum=True,
+        avoid_ultimatum=False,
         # public information
         publish_exogenous_summary=True,
         publish_trading_prices=True,
