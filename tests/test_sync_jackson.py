@@ -1,20 +1,18 @@
+from __future__ import annotations
 from collections import defaultdict
-from collections import defaultdict
-from rich import print
 import itertools
 import math
 import random as rand
+import sys
+
 from hypothesis import given, settings
 import hypothesis.strategies as st
+from negmas import Outcome, ResponseType, SAOResponse
+from negmas.sao.negotiators.controlled import ControlledSAONegotiator
+import numpy as np
 import pytest
 
-from negmas import Outcome, ResponseType, SAOResponse
-import numpy as np
-
-from scml.oneshot import (
-    OneShotAgent,
-    OneShotSyncAgent,
-)
+from scml.oneshot import OneShotAgent, OneShotSyncAgent
 from scml.oneshot import *
 from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
@@ -205,6 +203,8 @@ class ReporterAgent(BetterAgent):
         self.round_nums = defaultdict(int)
 
     def respond(self, negotiator_id, state, offer):
+        assert state.running, (f"{self.id} called to respond in a negotiation that "
+            f"is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}")
         self.round_nums[negotiator_id] += 1
         max_diff = max(self.round_nums.values()) - min(self.round_nums.values())
         if max_diff > self.max_round_diff:
@@ -219,20 +219,20 @@ class ReporterAgent(BetterAgent):
             if max_diff > (self.max_round_diff * mnsteps + 1):
                 msg = (
                     f"{self.negotiators[negotiator_id][0].owner.id}: Max round diff is "
-                    f"{max_diff} (allowed up to {self.max_round_diff * mnsteps + 1} with mnsteps {mnsteps} and mn {mn}) which happens in negotiations with {mx_id} ({mx}) and "
+                    f"{max_diff} (allowed up to {self.max_round_diff * mnsteps + 1} with"
+                    f" mnsteps {mnsteps} and mn {mn}) which happens in negotiations with {mx_id} ({mx}) and "
                     f"{mn_id} {mn}\n{mn_id} state: {self.negotiators[mn_id][0].nmi.state}"
                     f"\n{mx_id} state: {self.negotiators[mx_id][0].nmi.state}"
                 )
-                if "Syn" in mn_id:
+                if isinstance(self.negotiators[mn_id][0], ControlledSAONegotiator):
                     sync_partner = [
                         _
                         for _ in self.negotiators[mn_id][0].nmi.mechanism.negotiators
                         if _.owner.id == mn_id
                     ][0].parent
-                    msg += "\n"
                     for k, v in vars(sync_partner).items():
                         if k.startswith("_SAOSync"):
-                            msg += f'{k.replace("_SAOSyncController__", "")}:{str(v)}\t'
+                            msg += f'\n{k.replace("_SAOSyncController__", "")}:{str(v)}\n'
                 raise AssertionError(msg)
                 # print(msg)
                 # log_str = f"{datetime.now()}: on round {self.round_nums[negotiator_id]} with opp {negotiator_id}"
@@ -258,7 +258,7 @@ class ReporterAgent(BetterAgent):
         assert (
             len(npartners) == 1
         ), f"id={self.id}, partners={partners}\n{annotation}\n{state}"
-        if partners[0] in self.round_nums.keys():
+        if npartners[0] in self.round_nums.keys():
             del self.round_nums[npartners[0]]
 
 
@@ -343,22 +343,17 @@ def test_sync_experiment_multiple_seeds_2022_conditions(
 ):
     if not consumer_reporter and not supplier_reporter:
         return
-    try:
-        run_experiment(
-            n_sync_suppliers=n_sync_suppliers,
-            n_sync_consumers=n_sync_consumers,
-            supplier_reporter=supplier_reporter,
-            consumer_reporter=consumer_reporter,
-            name=f"out_of_sync_bug_s{seed}",
-            seed=seed,
-            enable_time_limit=False,
-            avoid_ultimatum=False,
-            shuffle_negotiations=False,
-        )
-    except AssertionError as e:
-        # we expect errors when negotiations are shuffledd or when we are avoiding ultimatum
-        if not avoid_ultimatum and not shuffle_negotiations:
-            raise e
+    run_experiment(
+        n_sync_suppliers=n_sync_suppliers,
+        n_sync_consumers=n_sync_consumers,
+        supplier_reporter=supplier_reporter,
+        consumer_reporter=consumer_reporter,
+        name=f"out_of_sync_bug_s{seed}",
+        seed=seed,
+        enable_time_limit=False,
+        avoid_ultimatum=False,
+        shuffle_negotiations=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -493,3 +488,7 @@ def test_no_sync_agents_active_negotiations_are_synced():
         avoid_ultimatum=avoid_ultimatum,
         shuffle_negotiations=shuffle_negotiations,
     )
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main(["--show-capture=no", __file__]))
