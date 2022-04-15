@@ -234,7 +234,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         negotiation_quota_per_step=None,
         negotiation_quota_per_simulation=float("inf"),
         n_concurrent_negs_between_partners=float("inf"),
-        avoid_ultimatum=True,
+        avoid_ultimatum=False,
+        shuffle_negotiations=False,
         end_negotiation_on_refusal_to_propose=True,
         # trading price parameters
         trading_price_discount=0.9,
@@ -299,6 +300,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             bulletin_board=None,
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.scml2020.AWI",
+            shuffle_negotiations=shuffle_negotiations,
             mechanisms={
                 "negmas.sao.SAOMechanism": mechanisms.get(
                     "negmas.sao.SAOMechanism",
@@ -401,6 +403,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             self.info = {}
         self.info.update(
             avoid_ultimatum=avoid_ultimatum,
+            shuffle_negotiations=shuffle_negotiations,
             end_negotiation_on_refusal_to_propose=end_negotiation_on_refusal_to_propose,
             process_inputs=process_inputs,
             process_outputs=process_outputs,

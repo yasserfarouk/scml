@@ -127,6 +127,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_step_time_limit=60,
         negotiation_speed=0,
         avoid_ultimatum=False,
+        shuffle_negotiations=False,
         # public information
         publish_exogenous_summary=True,
         publish_trading_prices=True,
@@ -183,6 +184,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             bulletin_board=None,
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.oneshot.OneShotAWI",
+            shuffle_negotiations=shuffle_negotiations,
             mechanisms={
                 "negmas.sao.SAOMechanism": mechanisms.get(
                     "negmas.sao.SAOMechanism",
@@ -277,6 +279,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             else -int(0.5 + bankruptcy_limit * initial_balance.mean())
         )
         self.info.update(
+            avoid_ultimatum=avoid_ultimatum,
+            shuffle_negotiations=shuffle_negotiations,
             process_inputs=process_inputs,
             process_outputs=process_outputs,
             catalog_prices=catalog_prices,
@@ -417,6 +421,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             a = instantiate(atype, **aparams)
             a.id = a.name
             if a.adapted_object:
+                a.adapted_object.id = a.id
+                a.adapted_object.name = a.name
                 if isinstance(a.adapted_object, OneShotAgent):
                     a.adapted_object.connect_to_oneshot_adapter(a)
                 else:

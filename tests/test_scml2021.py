@@ -522,7 +522,7 @@ def test_satisficer_n_agent_per_level(method, n_agents, n_processes, n_steps):
         ),
         compact=True,
         no_logs=True,
-        avoid_ultimatum=True,
+        avoid_ultimatum=False,
         end_negotiation_on_refusal_to_propose=True,
         name=f"Satisficer1{method}-a{n_agents}p{n_processes}s{n_steps}",
     )
