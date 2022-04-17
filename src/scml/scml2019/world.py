@@ -952,7 +952,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 list
             )  # will keep the costs for generating products
             for process in new_processes:
-                process.inputs = set(
+                process.inputs = {
                     InputOutput(
                         product=_.index,
                         quantity=_intin(quantity_per_input),
@@ -964,15 +964,15 @@ class SCML2019World(TimeInAgreementMixin, World):
                         last_level_products=last_level_products,
                         k=_intin(n_inputs_per_process),
                     )
-                )
-                process.outputs = set(
+                }
+                process.outputs = {
                     InputOutput(
                         product=_.index,
                         quantity=_intin(quantity_per_output),
                         step=_realin(output_step),
                     )
                     for _ in sample(new_products, _intin(n_outputs_per_process))
-                )
+                }
                 process.historical_cost = sum(
                     products[_.product].catalog_price * _.quantity
                     for _ in process.inputs
@@ -1110,10 +1110,10 @@ class SCML2019World(TimeInAgreementMixin, World):
             else:
                 return [x]
 
-        miner_types_list, consumer_types_list, factory_manager_types_list = [
+        miner_types_list, consumer_types_list, factory_manager_types_list = (
             _ensure_list(_)
             for _ in (miner_types, consumer_types, factory_manager_types)
-        ]
+        )
 
         factory_managers = [
             current(**factory_kwargs)
@@ -1580,7 +1580,7 @@ class SCML2019World(TimeInAgreementMixin, World):
     def start_contract_execution(self, contract: Contract) -> Set[Breach]:
 
         partners, agreement = (
-            set(self.agents[_] for _ in contract.partners),
+            {self.agents[_] for _ in contract.partners},
             contract.agreement,
         )
         cfp = contract.annotation["cfp"]  # type: ignore
@@ -1893,7 +1893,7 @@ class SCML2019World(TimeInAgreementMixin, World):
 
         """
         partners, agreement = (
-            set(self.agents[_] for _ in contract.partners),
+            {self.agents[_] for _ in contract.partners},
             contract.agreement,
         )
         cfp = contract.annotation["cfp"]  # type: ignore
@@ -1993,10 +1993,10 @@ class SCML2019World(TimeInAgreementMixin, World):
         insured_money, insured_money_quantity = 0.0, 0
 
         # confirm partial execution
-        perpetrators = set([b.perpetrator for b in breaches])
+        perpetrators = {b.perpetrator for b in breaches}
         victims = set()
         if 0 < len(perpetrators) < len(partners):
-            victims = set(_.id for _ in partners) - set(perpetrators)
+            victims = {_.id for _ in partners} - set(perpetrators)
         execute = (
             all(
                 self.agents[victim].confirm_partial_execution(

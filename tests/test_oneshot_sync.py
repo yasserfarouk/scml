@@ -40,13 +40,13 @@ class MySyncAgent(OneShotSyncAgent):
                 a *= i
 
     def counter_all(self, offers, states):
-        s = set(self.get_nmi(_) for _ in offers.keys())
+        s = {self.get_nmi(_) for _ in offers.keys()}
         if self.in_counter_all and (
             not self._check_negs
             or (self._check_negs and len(self.countering_set.intersection(s)))
         ):
             raise RuntimeError(
-                "uh-oh! new offers: {}, previous offers: {}".format(offers, self.offers)
+                f"uh-oh! new offers: {offers}, previous offers: {self.offers}"
             )
 
         self.in_counter_all = True

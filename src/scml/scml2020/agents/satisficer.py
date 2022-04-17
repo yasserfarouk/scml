@@ -357,19 +357,19 @@ class SatisficerAgent(SCML2020Agent):
         # separate sell and buy contracts and sort them with the better price
         # first (ties are broken by smallest quantity first)
         sell_contracts = sorted(
-            [
+            (
                 (i, _)
                 for i, _ in enumerate(contracts)
                 if _.annotation["seller"] == self.id
-            ],
+            ),
             key=lambda x: (-x[1].agreement["unit_price"], x[1].agreement["quantity"]),
         )
         buy_contracts = sorted(
-            [
+            (
                 (i, _)
                 for i, _ in enumerate(contracts)
                 if _.annotation["seller"] != self.id
-            ],
+            ),
             key=lambda x: (x[1].agreement["unit_price"], x[1].agreement["quantity"]),
         )
 

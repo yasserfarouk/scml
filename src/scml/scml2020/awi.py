@@ -543,10 +543,7 @@ class AWI(AgentWorldInterface):
         if result is not None:
             return result
         steps = sorted(
-            [
-                int(i)
-                for i in self.bb_query("reports_time", None, query_keys=True).keys()
-            ]
+            int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()
         )
         for (s, prev) in zip(steps[1:], steps[:-1]):
             if s > step:

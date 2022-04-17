@@ -64,7 +64,7 @@ class MyExogAgent(OneShotSyncAgent):
         assumed_best[TIME] = self.awi.current_step
         assumed_best_u = self.ufun.from_offers((tuple(assumed_best),), (is_selling,))
 
-        best_u, best_quant = max([(u, idx) for idx, u in enumerate(utils)])
+        best_u, best_quant = max((u, idx) for idx, u in enumerate(utils))
 
         assert (
             (not is_selling)

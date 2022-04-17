@@ -727,11 +727,11 @@ class CFP:
                         return [int(x[0])]
                     return [x[0]]
                 if ensure_int:
-                    return list(set(int(_) for _ in xs))
+                    return list({int(_) for _ in xs})
                 return list(set(xs))
             if isinstance(x, Iterable):
                 if ensure_int:
-                    return list(set(int(_) for _ in x))
+                    return list({int(_) for _ in x})
                 return list(set(x))
             if ensure_int:
                 return [int(x)]
@@ -1186,7 +1186,7 @@ class Factory:
         # will be numbered from 0 to `n_lines` - 1
         if self.max_storage is None or self.max_storage < 0:
             self.max_storage = sys.maxsize
-        given_lines = sorted(list(set(p.line for p in self.profiles)))
+        given_lines = sorted(list({p.line for p in self.profiles}))
         mapping = dict(zip(given_lines, range(len(given_lines))))
         for profile in self.profiles:
             profile.line = mapping[profile.line]

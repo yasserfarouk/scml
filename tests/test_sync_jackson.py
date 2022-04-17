@@ -1,20 +1,27 @@
 from __future__ import annotations
-from collections import defaultdict
+
 import itertools
 import math
 import random as rand
 import sys
+from collections import defaultdict
 
-from hypothesis import given, settings
 import hypothesis.strategies as st
-from negmas import Outcome, ResponseType, SAOResponse
-from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 import numpy as np
 import pytest
+from hypothesis import given
+from hypothesis import settings
+from negmas import Outcome
+from negmas import ResponseType
+from negmas import SAOResponse
+from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
-from scml.oneshot import OneShotAgent, OneShotSyncAgent
+from scml.oneshot import OneShotAgent
+from scml.oneshot import OneShotSyncAgent
 from scml.oneshot import *
-from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
+from scml.scml2020.common import QUANTITY
+from scml.scml2020.common import TIME
+from scml.scml2020.common import UNIT_PRICE
 
 DEFAULT_SEED = 1
 
@@ -203,8 +210,10 @@ class ReporterAgent(BetterAgent):
         self.round_nums = defaultdict(int)
 
     def respond(self, negotiator_id, state, offer):
-        assert state.running, (f"{self.id} called to respond in a negotiation that "
-            f"is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}")
+        assert state.running, (
+            f"{self.id} called to respond in a negotiation that "
+            f"is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}"
+        )
         self.round_nums[negotiator_id] += 1
         max_diff = max(self.round_nums.values()) - min(self.round_nums.values())
         if max_diff > self.max_round_diff:
@@ -232,7 +241,9 @@ class ReporterAgent(BetterAgent):
                     ][0].parent
                     for k, v in vars(sync_partner).items():
                         if k.startswith("_SAOSync"):
-                            msg += f'\n{k.replace("_SAOSyncController__", "")}:{str(v)}\n'
+                            msg += (
+                                f'\n{k.replace("_SAOSyncController__", "")}:{str(v)}\n'
+                            )
                 raise AssertionError(msg)
                 # print(msg)
                 # log_str = f"{datetime.now()}: on round {self.round_nums[negotiator_id]} with opp {negotiator_id}"

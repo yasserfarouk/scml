@@ -154,12 +154,12 @@ class OneShotAWI(AgentWorldInterface):
         return self.n_products - 1
 
     @property
-    def all_suppliers(self) -> List[List[str]]:
+    def all_suppliers(self) -> list[list[str]]:
         """Returns a list of agent IDs for all suppliers for every product"""
         return self._world.suppliers
 
     @property
-    def all_consumers(self) -> List[List[str]]:
+    def all_consumers(self) -> list[list[str]]:
         """Returns a list of agent IDs for all consumers for every product"""
         return self._world.consumers
 
@@ -172,7 +172,7 @@ class OneShotAWI(AgentWorldInterface):
         """
         return is_system_agent(aid)
 
-    def is_bankrupt(self, aid: Optional[str] = None) -> bool:
+    def is_bankrupt(self, aid: str | None = None) -> bool:
         """
         Checks whether an agent is a system agent or not
 
@@ -286,14 +286,14 @@ class OneShotAWI(AgentWorldInterface):
         return self.profile.output_product if self.profile else -10
 
     @property
-    def my_suppliers(self) -> List[str]:
+    def my_suppliers(self) -> list[str]:
         """Returns a list of IDs for all of the agent's suppliers
         (agents that can supply the product I need).
         """
         return self.all_suppliers[self.level]
 
     @property
-    def my_consumers(self) -> List[str]:
+    def my_consumers(self) -> list[str]:
         """Returns a list of IDs for all the agent's consumers
         (agents that can consume at least one product it may produce).
 
@@ -407,7 +407,7 @@ class OneShotAWI(AgentWorldInterface):
         )
 
     @property
-    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
+    def exogenous_contract_summary(self) -> list[tuple[int, int]]:
         """
         The exogenous contracts in the current step for all products
 
@@ -425,22 +425,19 @@ class OneShotAWI(AgentWorldInterface):
     # Other agents' information
     # -------------------------
 
-    def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
+    def reports_of_agent(self, aid: str) -> dict[int, FinancialReport]:
         """Returns a dictionary mapping time-steps to financial reports of
         the given agent"""
         return self.bb_read("reports_agent", aid)
 
-    def reports_at_step(self, step: int) -> Dict[str, FinancialReport]:
+    def reports_at_step(self, step: int) -> dict[str, FinancialReport]:
         """Returns a dictionary mapping agent ID to its financial report for
         the given time-step"""
         result = self.bb_read("reports_time", str(step))
         if result is not None:
             return result
         steps = sorted(
-            [
-                int(i)
-                for i in self.bb_query("reports_time", None, query_keys=True).keys()
-            ]
+            int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()
         )
         for (s, prev) in zip(steps[1:], steps[:-1]):
             if s > step:
@@ -451,9 +448,9 @@ class OneShotAWI(AgentWorldInterface):
     # ---------------------------
 
     @property
-    def current_input_issues(self) -> List[Issue]:
+    def current_input_issues(self) -> list[Issue]:
         return self._world._current_issues[self.my_input_product]
 
     @property
-    def current_output_issues(self) -> List[Issue]:
+    def current_output_issues(self) -> list[Issue]:
         return self._world._current_issues[self.my_output_product]

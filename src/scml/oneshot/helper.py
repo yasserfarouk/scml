@@ -40,13 +40,13 @@ class AWIHelper:
         self,
         is_buy: bool,
         product: int,
-        quantity: Union[int, Tuple[int, int]],
-        unit_price: Union[int, Tuple[int, int]],
-        time: Union[int, Tuple[int, int]],
-        controller: Optional[SAOController] = None,
-        negotiators: List[Negotiator] = None,
-        partners: List[str] = None,
-        extra: Dict[str, Any] = None,
+        quantity: int | tuple[int, int],
+        unit_price: int | tuple[int, int],
+        time: int | tuple[int, int],
+        controller: SAOController | None = None,
+        negotiators: list[Negotiator] = None,
+        partners: list[str] = None,
+        extra: dict[str, Any] = None,
         copy_partner_id=True,
     ) -> bool:
         if not is_buy:
@@ -78,12 +78,12 @@ class AWIHelper:
         self,
         is_buy: bool,
         product: int,
-        quantity: Union[int, Tuple[int, int]],
-        unit_price: Union[int, Tuple[int, int]],
-        time: Union[int, Tuple[int, int]],
+        quantity: int | tuple[int, int],
+        unit_price: int | tuple[int, int],
+        time: int | tuple[int, int],
         partner: str,
         negotiator: SAONegotiator,
-        extra: Dict[str, Any] = None,
+        extra: dict[str, Any] = None,
     ) -> bool:
         if not is_buy:
             return False
@@ -114,12 +114,12 @@ class AWIHelper:
         self,
         process: int,
         repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        step: int | tuple[int, int] = ANY_STEP,
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
         partial_ok: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         return [[], []]
 
     def order_production(
@@ -130,11 +130,11 @@ class AWIHelper:
     def available_for_production(
         self,
         repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        step: int | tuple[int, int] = ANY_STEP,
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         return [
             np.asarray([self._world.current_step] * self._owner.awi.n_lines),
             np.arange(self._owner.awi.n_lines),
@@ -179,12 +179,12 @@ class AWIHelper:
     @property
     def inputs(self) -> np.ndarray:
         """Returns the number of inputs to every production process"""
-        return np.ones((self.n_products - 1))
+        return np.ones(self.n_products - 1)
 
     @property
     def outputs(self) -> np.ndarray:
         """Returns the number of outputs to every production process"""
-        return np.ones((self.n_products - 1))
+        return np.ones(self.n_products - 1)
 
     @property
     def my_input_products(self) -> np.ndarray:

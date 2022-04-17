@@ -98,7 +98,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         return self._awi
 
     @property
-    def running_negotiations(self) -> List[RunningNegotiationInfo]:
+    def running_negotiations(self) -> list[RunningNegotiationInfo]:
         """The negotiations currently requested by the agent.
 
         Returns:
@@ -108,7 +108,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         return self._owner.running_negotiations
 
     @property
-    def unsigned_contracts(self) -> List[Contract]:
+    def unsigned_contracts(self) -> list[Contract]:
         """
         All contracts that are not yet signed.
         """
@@ -161,7 +161,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         self.utility_function = owner.ufun
 
     @abstractmethod
-    def propose(self, negotiator_id: str, state: MechanismState) -> "Outcome":
+    def propose(self, negotiator_id: str, state: MechanismState) -> Outcome:
         """
         Proposes an offer to one of the partners.
 
@@ -174,8 +174,8 @@ class OneShotAgent(SAOController, Entity, ABC):
         """
 
     def respond(
-        self, negotiator_id: str, state: MechanismState, offer: "Outcome"
-    ) -> "ResponseType":
+        self, negotiator_id: str, state: MechanismState, offer: Outcome
+    ) -> ResponseType:
         """
         Responds to an offer from one of the partners.
 
@@ -199,7 +199,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         return ResponseType.REJECT_OFFER
 
     @property
-    def internal_state(self) -> Dict[str, Any]:
+    def internal_state(self) -> dict[str, Any]:
         """
         Returns the internal state of the agent for debugging purposes.
 
@@ -211,8 +211,8 @@ class OneShotAgent(SAOController, Entity, ABC):
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
@@ -241,7 +241,7 @@ class OneShotAgent(SAOController, Entity, ABC):
                        about the negotiation that led to the `Contract` if any.
         """
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         """Signs all contracts (used internally)"""
         return [self.id] * len(contracts)
 
@@ -295,8 +295,8 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
 
     @abstractmethod
     def counter_all(
-        self, offers: Dict[str, "Outcome"], states: Dict[str, SAOState]
-    ) -> Dict[str, SAOResponse]:
+        self, offers: dict[str, Outcome], states: dict[str, SAOState]
+    ) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).
 
@@ -319,7 +319,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
         """
 
     @abstractmethod
-    def first_proposals(self) -> Dict[str, "Outcome"]:
+    def first_proposals(self) -> dict[str, Outcome]:
         """
         Gets a set of proposals to use for initializing the negotiation.
 
@@ -331,7 +331,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
         """
         return super().first_proposals()
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         """Signs all contracts (used internally)"""
         return [self.id] * len(contracts)
 
@@ -374,7 +374,7 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         super().__init__(*args, strict=strict, **kwargs)
 
     @abstractmethod
-    def is_acceptable(self, offer: "Outcome", source: str, state: SAOState) -> bool:
+    def is_acceptable(self, offer: Outcome, source: str, state: SAOState) -> bool:
         """Should decide if the given offer is acceptable
 
         Args:
@@ -388,7 +388,7 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         """
 
     @abstractmethod
-    def best_offer(self, offers: Dict[str, "Outcome"]) -> Optional[str]:
+    def best_offer(self, offers: dict[str, Outcome]) -> str | None:
         """
         Return the ID of the negotiator with the best offer
 
@@ -401,7 +401,7 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         """
 
     @abstractmethod
-    def is_better(self, a: "Outcome", b: "Outcome", negotiator: str, state: SAOState):
+    def is_better(self, a: Outcome, b: Outcome, negotiator: str, state: SAOState):
         """Compares two outcomes of the same negotiation
 
         Args:
@@ -479,7 +479,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         self._set_reservation = set_reservation
 
     @abstractmethod
-    def generate_ufuns(self) -> Dict[str, UtilityFunction]:
+    def generate_ufuns(self) -> dict[str, UtilityFunction]:
         """
         Returns a utility function for each partner. All ufuns **MUST** be of
         type `LinearAdditiveUtilityFunction` if a genius negotiator is used.

@@ -312,7 +312,7 @@ class SCMLAWI(AgentWorldInterface):
         if step is None:
             reports = self.bb_query(section="reports_time", query=None)
             reports = self.bb_read(
-                "reports_time", key=str(max([int(_) for _ in reports.keys()]))
+                "reports_time", key=str(max(int(_) for _ in reports.keys()))
             )
         else:
             reports = self.bb_read("reports_time", key=str(step))

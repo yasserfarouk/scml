@@ -106,19 +106,19 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         production_cost: float,
         disposal_cost: float,
         shortfall_penalty: float,
-        input_penalty_scale: Optional[float],
-        output_penalty_scale: Optional[float],
+        input_penalty_scale: float | None,
+        output_penalty_scale: float | None,
         n_input_negs: int,
         n_output_negs: int,
         current_step: int,
-        input_qrange: Tuple[int, int] = (0, 0),
-        input_prange: Tuple[int, int] = (0, 0),
-        output_qrange: Tuple[int, int] = (0, 0),
-        output_prange: Tuple[int, int] = (0, 0),
+        input_qrange: tuple[int, int] = (0, 0),
+        input_prange: tuple[int, int] = (0, 0),
+        output_qrange: tuple[int, int] = (0, 0),
+        output_prange: tuple[int, int] = (0, 0),
         force_exogenous: bool = True,
         n_lines: int = 10,
         normalized: bool = False,
-        current_balance: Union[int, float] = float("inf"),
+        current_balance: int | float = float("inf"),
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -545,11 +545,11 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
     def utility_range(
         self,
         outcome_space: OutcomeSpace | None = None,
-        issues: List[Issue] = None,
-        outcomes: List[Outcome] = None,
+        issues: list[Issue] = None,
+        outcomes: list[Outcome] = None,
         return_outcomes=False,
         max_n_outcomes=1000,
-    ) -> Union[Tuple[float, float], Tuple[float, float, Outcome, Outcome],]:
+    ) -> tuple[float, float] | tuple[float, float, Outcome, Outcome]:
         """
         Finds the utility range and optionally returns the corresponding outcomes
         from a given issue space or in a single negotiation.

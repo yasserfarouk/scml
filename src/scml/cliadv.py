@@ -1416,11 +1416,11 @@ def run2019(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                [
+                (
                     [_.name, world.a2f[_.id].total_balance]
                     for _ in world.agents.values()
                     if isinstance(_, FactoryManager)
-                ],
+                ),
                 key=lambda x: x[1],
                 reverse=True,
             )
@@ -1983,11 +1983,11 @@ def run2020(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                [
+                (
                     [_.name, world.a2f[_.id].total_balance]
                     for _ in world.agents.values()
                     if isinstance(_, FactoryManager)
-                ],
+                ),
                 key=lambda x: x[1],
                 reverse=True,
             )

@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
 
 import io
 import re
@@ -16,7 +13,7 @@ from setuptools import setup
 
 
 def read(*names, **kwargs):
-    with io.open(
+    with open(
         join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
     ) as fh:
         return fh.read()

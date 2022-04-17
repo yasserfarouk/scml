@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # SCML documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
@@ -73,9 +72,9 @@ source_parsers = {".md": "recommonmark.parser.CommonMarkParser"}
 master_doc = "index"
 
 # General information about the project.
-project = u"scml"
-copyright = u"2019, Yasser Mohammad"
-author = u"Yasser Mohammad"
+project = "scml"
+copyright = "2019, Yasser Mohammad"
+author = "Yasser Mohammad"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -178,7 +177,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "scml.tex", u"SCML Documentation", u"Yasser Mohammad", "manual")
+    (master_doc, "scml.tex", "SCML Documentation", "Yasser Mohammad", "manual")
 ]
 
 # -- Options for graphviz used in inheritence diagrams -----------------
@@ -194,7 +193,7 @@ inheritance_graph_attrs = dict(
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "scml", u"SCML Documentation", [author], 1)]
+man_pages = [(master_doc, "scml", "SCML Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------
@@ -206,7 +205,7 @@ texinfo_documents = [
     (
         master_doc,
         "scml",
-        u"SCML Documentation",
+        "SCML Documentation",
         author,
         "SCML",
         "Supply Chain Management League Library.",

@@ -45,12 +45,12 @@ except Exception as e:
 
     def truncated_mean(
         scores: np.ndarray,
-        limits: Optional[tuple[float, float]] = None,
+        limits: tuple[float, float] | None = None,
         top_limit=2.0,
         bottom_limit=float("inf"),
         base="tukey",
         return_limits=False,
-    ) -> Union[float, tuple[float, Optional[tuple[float, float]]]]:
+    ) -> float | tuple[float, tuple[float, float] | None]:
         """
         Calculates the truncated mean
 
@@ -224,8 +224,8 @@ DefaultAgentsOneShot = [
 def integer_cut(
     n: int,
     l: int,
-    l_m: Union[int, list[int]],
-    l_max: Union[int, list[int]] = float("inf"),
+    l_m: int | list[int],
+    l_max: int | list[int] = float("inf"),
 ) -> list[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
@@ -308,7 +308,7 @@ def integer_cut_dynamic(
     return sizes
 
 
-def _realin(rng: Union[tuple[float, float], float]) -> float:
+def _realin(rng: tuple[float, float] | float) -> float:
     """
     Selects a random number within a range if given or the input if it was a float
 
@@ -326,7 +326,7 @@ def _realin(rng: Union[tuple[float, float], float]) -> float:
     return rng[0] + random() * (rng[1] - rng[0])
 
 
-def _intin(rng: Union[tuple[int, int], int]) -> int:
+def _intin(rng: tuple[int, int] | int) -> int:
     """
     Selects a random number within a range if given or the input if it was an int
 
@@ -348,11 +348,11 @@ def anac2020_config_generator(
     n_competitors: int,
     n_agents_per_competitor: int,
     agent_names_reveal_type: bool = False,
-    non_competitors: Optional[tuple[Union[str, SCML2020Agent]]] = None,
-    non_competitor_params: Optional[tuple[dict[str, Any]]] = None,
+    non_competitors: tuple[str | SCML2020Agent] | None = None,
+    non_competitor_params: tuple[dict[str, Any]] | None = None,
     compact: bool = False,
     *,
-    n_steps: Union[int, tuple[int, int]] = (50, 200),
+    n_steps: int | tuple[int, int] = (50, 200),
     n_processes: tuple[int, int] = (
         2,
         4,
@@ -524,10 +524,10 @@ def anac2020_assigner(
     max_n_worlds: int,
     n_agents_per_competitor: int = 1,
     fair: bool = True,
-    competitors: Sequence[Type[Agent]] = (),
+    competitors: Sequence[type[Agent]] = (),
     params: Sequence[dict[str, Any]] = (),
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
 ) -> list[list[dict[str, Any]]]:
     config = config[0]
@@ -907,26 +907,26 @@ def balance_calculator2021(
 
 
 def anac2020_tournament(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
+    competitors: Sequence[str | type[SCML2020Agent]],
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 2,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (collusion track).
 
@@ -994,24 +994,24 @@ def anac2020_tournament(
 
 
 def anac2020_std(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
     name: str = None,
     verbose: bool = False,
@@ -1020,7 +1020,7 @@ def anac2020_std(
     n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (standard track).
 
@@ -1120,25 +1120,25 @@ def anac2020_std(
 
 
 def anac2020_collusion(
-    competitors: Sequence[Union[str, Type]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
     name: str = None,
     verbose: bool = False,
@@ -1147,7 +1147,7 @@ def anac2020_collusion(
     n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (collusion track).
 
@@ -1248,26 +1248,26 @@ def anac2020_collusion(
 
 
 def anac2021_tournament(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
+    competitors: Sequence[str | type[SCML2020Agent]],
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 2,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (collusion track).
 
@@ -1335,24 +1335,24 @@ def anac2021_tournament(
 
 
 def anac2021_std(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
     name: str = None,
     verbose: bool = False,
@@ -1361,7 +1361,7 @@ def anac2021_std(
     n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (standard track).
 
@@ -1463,25 +1463,25 @@ def anac2021_std(
 
 
 def anac2021_collusion(
-    competitors: Sequence[Union[str, Type]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
     name: str = None,
     verbose: bool = False,
@@ -1490,7 +1490,7 @@ def anac2021_collusion(
     n_competitors_per_world=1,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (collusion track).
 
@@ -1591,24 +1591,24 @@ def anac2021_collusion(
 
 
 def anac2021_oneshot(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     min_factories_per_level: int = 4,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
     name: str = None,
     verbose: bool = False,
@@ -1617,7 +1617,7 @@ def anac2021_oneshot(
     n_competitors_per_world=1,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2021 SCML tournament (oneshot track).
 
@@ -1726,26 +1726,26 @@ def anac2021_oneshot(
 
 
 def anac2022_tournament(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
+    competitors: Sequence[str | type[SCML2020Agent]],
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 2,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (collusion track).
 
@@ -1813,24 +1813,24 @@ def anac2022_tournament(
 
 
 def anac2022_std(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
     name: str = None,
     verbose: bool = False,
@@ -1839,7 +1839,7 @@ def anac2022_std(
     n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (standard track).
 
@@ -1941,25 +1941,25 @@ def anac2022_std(
 
 
 def anac2022_collusion(
-    competitors: Sequence[Union[str, Type]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     n_agents_per_competitor: int = 3,
     min_factories_per_level: int = 2,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
     name: str = None,
     verbose: bool = False,
@@ -1968,7 +1968,7 @@ def anac2022_collusion(
     n_competitors_per_world=1,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2020 SCML tournament (collusion track).
 
@@ -2069,24 +2069,24 @@ def anac2022_collusion(
 
 
 def anac2022_oneshot(
-    competitors: Sequence[Union[str, Type[SCML2020Agent]]],
-    competitor_params: Optional[Sequence[dict[str, Any]]] = None,
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = None,
+    max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
     min_factories_per_level: int = 4,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2020World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[SCML2020Agent]]]] = None,
-    dynamic_non_competitors: Optional[list[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[list[dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
     name: str = None,
     verbose: bool = False,
@@ -2095,7 +2095,7 @@ def anac2022_oneshot(
     n_competitors_per_world=1,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2022 SCML tournament (oneshot track).
 
