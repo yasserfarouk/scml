@@ -18,8 +18,8 @@ __all__ = [
     "SCML_RUN_TEMP_FAILING",
 ]
 
-SCML_RUNALL_TESTS = (os.environ.get("SCML_RUNALL_TESTS", False),)
-SCML_ON_GITHUB = (os.environ.get("GITHUB_ACTIONS", False),)
+SCML_RUNALL_TESTS = os.environ.get("SCML_RUNALL_TESTS", False)
+SCML_ON_GITHUB = os.environ.get("GITHUB_ACTIONS", False)
 SCML_FASTRUN = os.environ.get("SCML_FASTRUN", SCML_ON_GITHUB and not SCML_RUNALL_TESTS)
 SCML_RUN_TEMP_FAILING = os.environ.get("SCML_RUN_TEMP_FAILING", False)
 SCML_RUN2021_ONESHOT = os.environ.get("SCML_RUN2021_ONESHOT", True)
