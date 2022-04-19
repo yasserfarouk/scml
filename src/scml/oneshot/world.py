@@ -13,14 +13,7 @@ from collections import defaultdict
 from typing import Any
 from typing import Callable
 from typing import Collection
-from typing import Dict
 from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
-from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -141,7 +134,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         signing_delay=0,
         force_signing=False,
         batch_signing=True,
-        name: str = None,
+        name: str | None = None,
         # debugging parameters
         agent_name_reveals_position: bool = True,
         agent_name_reveals_type: bool = True,
@@ -331,7 +324,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             if financial_report_period >= 1
             else int(0.5 + financial_report_period * n_steps)
         )
-        # breakpoint()
         agent_types = [get_class(_) for _ in agent_types]
         for p in agent_params:
             p["obj"] = get_class(p["controller_type"])(
