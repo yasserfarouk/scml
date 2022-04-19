@@ -1677,8 +1677,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         unit_price: Union[int, Tuple[int, int]],
         time: Union[int, Tuple[int, int]],
         controller: Optional[SAOController] = None,
-        negotiators: List[SAONegotiator] = None,
-        extra: Dict[str, Any] = None,
+        negotiators: List[SAONegotiator] | None = None,
+        extra: Dict[str, Any] | None = None,
     ) -> bool:
         """
         Requests negotiations (used internally)
@@ -1700,7 +1700,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             `True` if the partner accepted and the negotiation is ready to start
 
         """
-        if self.is_bankrupt[agent_id]:
+        if self.is_bankrupt[agent_id] or is_system_agent(agent_id):
             return True
         if controller is not None and negotiators is not None:
             raise ValueError(
@@ -1712,7 +1712,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             )
         if extra is None:
             extra = dict()
-        partners = [_ for _ in self.suppliers[product] if not self.is_bankrupt[_]]
+        partners = [
+            _
+            for _ in self.suppliers[product]
+            if not self.is_bankrupt[_] and not is_system_agent(_)
+        ]
         if not partners:
             return True
         if negotiators is None:

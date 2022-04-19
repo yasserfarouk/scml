@@ -65,6 +65,8 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         super().init()
 
     def before_step(self):
+        if hasattr(self._obj, "reset"):
+            self._obj.reset()
         if hasattr(self._obj, "before_step"):
             self._obj.before_step()
 

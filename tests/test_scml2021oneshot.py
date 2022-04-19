@@ -31,6 +31,7 @@ from scml.oneshot.agent import OneShotIndNegotiatorsAgent
 from scml.oneshot.agent import OneShotSyncAgent
 from scml.oneshot.agents import GreedySyncAgent
 from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY
 from scml.oneshot.common import TIME
 from scml.oneshot.common import UNIT_PRICE
@@ -237,17 +238,14 @@ def test_basic_awi_info_suppliers_consumers():
         if is_system_agent(aid):
             continue
         a = world.agents[aid]
-        assert a.id in a.awi.all_suppliers[a.awi.my_output_product]
-        assert a.id in a.awi.all_consumers[a.awi.my_input_product]
-        assert a.awi.my_consumers == world.agent_consumers[aid]
-        assert a.awi.my_suppliers == world.agent_suppliers[aid]
-        l = a.awi.my_input_product
-        assert all(
-            _.endswith(str(l - 1)) or a.awi.is_system(_) for _ in a.awi.my_suppliers
-        )
-        assert all(
-            _.endswith(str(l + 1)) or a.awi.is_system(_) for _ in a.awi.my_consumers
-        )
+        awi: OneShotAWI = a.awi  # type: ignore
+        assert a.id in awi.all_suppliers[awi.my_output_product]
+        assert a.id in awi.all_consumers[awi.my_input_product]
+        assert awi.my_consumers == world.agent_consumers[aid]
+        assert awi.my_suppliers == world.agent_suppliers[aid]
+        l = awi.my_input_product
+        assert all(_.endswith(str(l - 1)) or awi.is_system(_) for _ in awi.my_suppliers)
+        assert all(_.endswith(str(l + 1)) or awi.is_system(_) for _ in awi.my_consumers)
 
 
 def test_generate():
@@ -680,7 +678,7 @@ def test_builtin_aspiration():
 
 @given(
     atype=st.lists(
-        st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6
+        st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6  # type: ignore
     )
 )
 @settings(deadline=900_000, max_examples=10)

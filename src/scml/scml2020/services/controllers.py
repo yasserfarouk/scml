@@ -329,7 +329,7 @@ class SyncController(SAOSyncController):
         utils = np.array(
             [
                 self.utility(
-                    tuple(o), self.negotiators[nid][0].nmi.issues[UNIT_PRICE].max_value
+                    o, self.negotiators[nid][0].nmi.issues[UNIT_PRICE].max_value
                 )
                 for nid, o in offers.items()
             ]
