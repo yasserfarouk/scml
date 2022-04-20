@@ -31,8 +31,6 @@ jobs:
           python -m pip install --upgrade  virtualenv
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
-          yes | python -m pip uninstall negmas
-          python -m pip install git+https://github.com/yasserfarouk/negmas.git
       - name: "Run pytest for ${{ matrix.python-version }}"
         run: "python -m pytest tests"
 
