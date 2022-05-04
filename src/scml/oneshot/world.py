@@ -1281,6 +1281,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             self._output_quantity = defaultdict(int)
             self._output_price = defaultdict(int)
 
+            # Reset all agents
+            # ================
+            for aid, a in self.agents.items():
+                if hasattr(a, "reset"):
+                    a.reset()
+
             # request all negotiations
             # ========================
             self._make_negotiations()
@@ -1290,6 +1296,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             for aid, a in self.agents.items():
                 if hasattr(a, "before_step"):
                     a.before_step()
+
             return
 
         # update trading price information
