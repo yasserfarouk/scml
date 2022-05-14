@@ -1,6 +1,32 @@
 Changelog
 =========
 
+0.5.3 (2022.5.14)
+-----------------
+* randomizing starting agents in oneshot
+* improving AWI typing in oneshot
+* Resetting agents before making negotiations
+*   - before_step() was also resetting agents in oneshot. This meant that all
+*   negotiators that were created in _make_negotiations() were deleted in
+*   reset().
+*   - Now we call  reset() before making negotaitions and before_step() after
+*   that.
+*   - This guarantees that the agent has access to its negotiators in
+*   before_step() as in 2020.
+* Adding new collusion evaluation
+* Goal: Disentangle the quality of the collusion strategy and the standard
+* strategy.
+* Method: Each agent now has 3 factories in collusion. We run four
+* simulations:
+* - s0: The agent controls all of the three factories
+* - s1-s3: The agent controls one of them
+* The final score of the agent is its score in s0 minus the average score
+* it got in s1-s3
+* Avoid calling counter_all before first_offers
+* github actions update
+* improved testing of sync behavior
+* Confirming that OneShotSync gets all offers every counter_all() call and upper limiting the difference in negotiation speeds based on Jackson's code
+
 0.5.2 (2022.4.8)
 ----------------
 

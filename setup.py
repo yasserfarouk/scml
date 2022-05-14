@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import io
 import re
 from glob import glob
 from os.path import basename
@@ -21,7 +20,7 @@ def read(*names, **kwargs):
 
 setup(
     name="scml",
-    version="0.5.2",
+    version="0.5.3",
     description="ANAC Supply Chain Management League Platform",
     long_description="%s\n%s"
     % (
@@ -72,7 +71,7 @@ setup(
         "prettytable",
         "pulp",
         "python-constraint",
-        "negmas>=0.9.2",
+        "negmas>=0.9.3",
         "tqdm",
         "joblib",
         "jupyter",
