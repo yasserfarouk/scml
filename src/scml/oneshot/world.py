@@ -1682,6 +1682,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         controller: SAOController | None = None,
         negotiators: list[SAONegotiator] | None = None,
         extra: dict[str, Any] | None = None,
+        consumer_starts: bool = True,
     ) -> bool:
         """
         Requests negotiations (used internally)
@@ -1697,6 +1698,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             negotiators: An optional list of negotiators to use for negotiating with the given partners (in the same
                          order).
             extra: Extra information accessible through the negotiation annotation to the caller
+            consumer_starts: Whether the consumer or supplier sends the first offer in the negotiation
 
         Returns:
 
@@ -1715,9 +1717,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             )
         if extra is None:
             extra = dict()
+
+        responding_agents = (
+            self.suppliers[product] if consumer_starts else self.consumers[product]
+        )
         partners = [
             _
-            for _ in self.suppliers[product]
+            for _ in responding_agents
             if not self.is_bankrupt[_] and not is_system_agent(_)
         ]
         if not partners:
@@ -1737,6 +1743,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 partner,
                 negotiator,
                 extra,
+                consumer_starts=consumer_starts,
             )
             for partner, negotiator in zip(partners, negotiators)
         ]
@@ -1754,7 +1761,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         time: int | tuple[int, int],
         partner: str,
         negotiator: SAONegotiator,
-        extra: dict[str, Any] = None,
+        extra: dict[str, Any] | None = None,
+        consumer_starts: bool = True,
     ) -> bool:
         """
         Requests a negotiation
@@ -1768,6 +1776,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             partner: ID of the partner to negotiate with.
             negotiator: The negotiator to use for this negotiation (if the partner accepted to negotiate)
             extra: Extra information accessible through the negotiation annotation to the caller
+            consumer_starts: whether the consumer starts the negotiation
 
         Returns:
 
@@ -1775,7 +1784,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         """
         agent = self.agents[agent_id]
-        is_buy = True
+        is_buy = consumer_starts
         if extra is None:
             extra = dict()
         # if is_buy:
@@ -1860,6 +1869,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         return unit_price, time, quantity
 
     def _make_negotiations(self):
+        consumer_starts = random.random() > 0.5
+
         def values(x: int | tuple[int, int]):
             if not isinstance(x, Iterable):
                 return int(x), int(x)
@@ -1880,7 +1891,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 make_issue(values(time), name="time"),
                 make_issue(values(unit_price), name="unit_price"),
             ]
-            for aid in self.consumers[product]:
+            requesting_agents = (
+                self.consumers[product] if consumer_starts else self.suppliers[product]
+            )
+            for aid in requesting_agents:
                 if is_system_agent(aid) or isinstance(
                     self.agents[aid], OneShotSCML2020Adapter
                 ):
@@ -1894,6 +1908,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     controller=controllers[aid],
                     negotiators=None,
                     extra=None,
+                    consumer_starts=consumer_starts,
                 )
             # if not success:
             #     raise ValueError(
