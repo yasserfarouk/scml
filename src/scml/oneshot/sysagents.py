@@ -17,6 +17,7 @@ from negmas import RenegotiationRequest
 from negmas.sao import ControlledSAONegotiator
 
 from .agent import OneShotAgent
+from .awi import OneShotAWI
 from .helper import AWIHelper
 from .mixins import OneShotUFunCreatorMixin
 
@@ -116,6 +117,15 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         self, req_id: str, mechanism: NegotiatorMechanismInterface
     ):
         pass
+
+    @property
+    def awi(self) -> OneShotAWI:
+        return self._awi  # type: ignore
+
+    @awi.setter
+    def awi(self, awi: OneShotAWI):
+        """Sets the Agent-world interface. Should only be called by the world."""
+        self._awi = awi
 
 
 class _SystemAgent(DefaultOneShotAdapter):
