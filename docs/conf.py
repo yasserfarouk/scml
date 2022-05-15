@@ -89,6 +89,7 @@ author = "Yasser Mohammad"
 # the built documents.
 #
 # The short X.Y version.
+
 version = "0.5.3"
 release = version
 
