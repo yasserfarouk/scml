@@ -610,7 +610,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
     def generate(
         cls,
         agent_types: list[str | type[OneShotAgent]],
-        agent_params: list[dict[str, Any]] = None,
+        agent_params: list[dict[str, Any]] | None = None,
+        agent_processes: list[int] | None = None,
         n_steps: tuple[int, int] | int = (50, 200),
         n_processes: tuple[int, int] | int = 2,
         n_lines: np.ndarray | tuple[int, int] | int = 10,
@@ -666,6 +667,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             max_productivity:  Maximum possible productivity per level (i.e. process).
             initial_balance: The initial balance of all agents
             n_agents_per_process: Number of agents per process
+            agent_processes: The process for each agent. If not `None` , it will override `n_agents_per_process` and must be a list/tuple
+                             of the same length as `agent_types` . Morevoer, `random_agent_types` must be False in this case
             cost_increases_with_level: If true, production cost will be higher for processes nearer to the final
                                        product.
             profit_basis: The statistic used when controlling catalog prices by profit arguments. It can be np.mean,
@@ -705,6 +708,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                             price in the contract and `non` means the `storage-cost`
                             and `shortfall_penalty` are absolute values (in money unit).
                             If not given will be read through the AWI
+            method: the generation method. This is only for compatibility with SCML2020World and is not used.
             **kwargs:
 
         Returns:
@@ -713,6 +717,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         Remarks:
 
+            - There are two general ways to use this generator:
+                1. Pass `random_agent_types = True`, and pass `agent_types`, `agent_processes` to control placement of each
+                   agent in each level of the production graph.
+                2. Pass `random_agent_types = False` and pass `agent_types`, `n_agents_per_process` to make the system randomly
+                   place the specified number of agents in each production level
             - Most parameters (i.e. `process_inputs` , `process_outputs` , `n_agents_per_process` , `costs` ) can
               take a single value, a tuple of two values, or a list of values.
               If it has a single value, it is repeated for all processes/factories as appropriate. If it is a
@@ -721,11 +730,20 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
               it is otherwise, it is used to sample values for each process.
 
         """
+        if agent_processes is not None and random_agent_types:
+            raise ValueError(
+                "You cannot pass `agent_processes` and use `random_agent_types`. The first is only used when you want to fix the assignment of all agents to specific processes which is compatible with randomizing agnet types"
+            )
+        if agent_processes is not None and len(agent_processes) != len(agent_types):
+            raise ValueError(
+                f"Length of `agent_processes` ({len(agent_processes)}) must equal the length of `agent_types` ({len(agent_types)})"
+            )
         info = dict(
             n_steps=n_steps,
             n_processes=n_processes,
             n_lines=n_lines,
             force_signing=force_signing,
+            agent_processes=agent_processes,
             n_agents_per_process=n_agents_per_process,
             process_inputs=process_inputs,
             process_outputs=process_outputs,
@@ -770,7 +788,23 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         process_inputs = make_array(process_inputs, n_processes, dtype=int)
         process_outputs = make_array(process_outputs, n_processes, dtype=int)
-        n_agents_per_process = make_array(n_agents_per_process, n_processes, dtype=int)
+        fixed_assignment = agent_processes is not None and not random_agent_types
+        if agent_processes is not None:
+            pcount = defaultdict(int)
+            for i in agent_processes:
+                pcount[i] += 1
+            pnums = list(pcount.keys())
+            assert (
+                min(pnums) == 0 and max(pnums) == len(pnums) - 1
+            ), f"`agent_processes` is invalid: {agent_processes} as it leads to the following `n_agents_per_process`: {dict(pcount)}"
+            n_agents_per_process = np.asarray([pcount[i] for i in range(len(pnums))])
+            assert not any(
+                _ <= 0 for _ in n_agents_per_process
+            ), f"We have some levels with no processes"
+        else:
+            n_agents_per_process = make_array(
+                n_agents_per_process, n_processes, dtype=int
+            )
         profit_means = make_array(profit_means, n_processes, dtype=float)
         profit_stddevs = make_array(profit_stddevs, n_processes, dtype=float)
         max_productivity = make_array(
@@ -791,7 +825,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             else:
                 assert len(agent_params) == 1
                 agent_params = [copy.copy(agent_params[0]) for _ in range(n_agents)]
-        elif len(agent_types) != n_agents or random_agent_types:
+        elif not fixed_assignment:
             if agent_params is None:
                 agent_params = [dict() for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
@@ -1523,7 +1557,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             and contract.agreement["quantity"] > 0
         )
 
-    def scores(self, assets_multiplier: float = 0.5) -> dict[str, float]:
+    def scores(self, assets_multiplier: float = 0.0) -> dict[str, float]:
         """Scores of all agents given the asset multiplier.
 
         Args:
@@ -1853,7 +1887,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         Returns:
             A tuple of minimum and maximum values for unit-price, time, and quantity in that order
         """
-        p2 = (
+        price_of_product = (
             self.trading_prices[product]
             if self.publish_trading_prices
             else self.catalog_prices[product]
@@ -1868,13 +1902,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             else:
                 p = 0
         else:
-            p = p2
+            p = price_of_product
         unit_price = (
             max(
                 1,
                 int(p // self.price_multiplier),
             ),
-            int(self.price_multiplier * p2),
+            int(self.price_multiplier * price_of_product),
         )
         time = (self.current_step, self.current_step)
         quantity = (1, self._max_n_lines)
