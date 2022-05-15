@@ -23,50 +23,8 @@ Let’s first bring in what we need:
     from scml.oneshot.world import is_system_agent
     from scml.oneshot.agents import GreedyOneShotAgent, GreedySingleAgreementAgent
 
-Levels of control
-~~~~~~~~~~~~~~~~~
-
-There are three general ways to generate worlds in SCML:
-
-1. Use one of the tournament running functions defined in the ``utils``
-   module. For example: ``anac2022_std()``. This method allows you to
-   run complete tournament as was shown in previous tutorials. You can
-   control how many simulations are run and the paramters of each
-   simulation by passing keyword arguments to the tournament runner. Any
-   customization that you can do using the following approach
-   (``generate()`` method) can be done when running complete tournament.
-   This tutorial will not discuss tournaments but individual world
-   generation.
-2. The simplest way to generate individual worlds is to use the world’s
-   ``generate()`` method (e.g. ``SCML2020OneShotWorld.generate()`` ).
-   This method can be used to provide high-level control over the world
-   generation process. It will create exogenous contracts, agent
-   profiles and other parameters based on the arguments you provide.
-   This method hides a lot of complexity and does not provide
-   fine-grained control over exogenous contracts specifically.
-3. The most versatile method for controlling world generation is to
-   directly call the constructor of your world
-   (e.g. ``SCML2020OneShotWorld()`` ). This is the most complex approach
-   but it provides complete control over all aspects of the simulation.
-
-The following subsections will discuss the second and third approaches
-above.
-
 Controlling agent allocation to factories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``generate()`` method can be used in two main ways:
-
-1. You specify some agent types and allow the system to randomly assign
-   factories to them (``random_agent_types=True``). In this case, you
-   will need to at least pass ``agent_types`` to use for sampling agents
-   and can also pass ``n_agents_per_process`` to control how many agents
-   to use for each process.
-2. You specify exactly the agent type controlling each factory
-   (``random_agent_types=False``). In this case, you need to at least
-   pass ``agent_types`` indicating the type of each agent and
-   ``agent_processes`` indicating the production level (= process number
-   = input product index) for each agent individually.
 
 You can control which agents are allocated to which factory by using the
 ``generate()`` method of the ``SCML2020OneShotWorld`` class (or any SCML
@@ -133,12 +91,11 @@ in the agent name. You can confirm it explicity by checking types:
 
 What happens if we want to create a world in which the number of agents
 at every level are different. Let’s first try just extending the
-approach we used before (while allowing the agent type to be randomly
-chosen):
+approach we used before:
 
 .. code:: ipython3
 
-    types = [GreedyOneShotAgent, GreedySingleAgreementAgent]
+    types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
 
     fig, axs = plt.subplots(1, 4)
     for ax in axs:
@@ -173,7 +130,7 @@ We can run the last of these worlds just to be sure something happens!!
 .. parsed-literal::
 
     (<AxesSubplot:title={'center':'Step: 10/10 [ 0s rem  0s] 100.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x2875b6770>)
+     <networkx.classes.multidigraph.MultiDiGraph at 0x28a4a64a0>)
 
 
 
@@ -189,7 +146,7 @@ level is **between 3 and 7** not exactly either of them.
 
 .. code:: ipython3
 
-    types = [GreedyOneShotAgent, GreedySingleAgreementAgent]
+    types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
 
     fig, axs = plt.subplots(1, 4)
     for ax in axs:
@@ -215,13 +172,15 @@ choosing:
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
+    agents_per_process = [2, 3, 2, 3]
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
             agent_types = types,
-            agent_processes=[0,0,1,1,1,2,2,3,3,3],
-            n_processes=4,
+            n_agents_per_process=agents_per_process,
+            n_processes=len(agents_per_process),
             n_steps=5,
             construct_graphs=True,
+            random_agent_types=False,
         )
     )
 
@@ -321,7 +280,7 @@ same method:
             n_processes=3,
             n_steps=5,
             construct_graphs=True,
-            random_agent_types=False,
+            random_agent_types=False
         )
     )
 
@@ -396,11 +355,12 @@ but you can decide to test it:
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 7
+    agents_per_process = [2, 3, 2]
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
             agent_types = types,
-            agent_processes=[0,0,1,1,1,2,2],
-            n_processes=3,
+            n_agents_per_process=agents_per_process,
+            n_processes=len(agents_per_process),
             n_steps=20,
             neg_n_steps=100,
             production_costs=50,
@@ -513,10 +473,11 @@ will generate a world in which agents have costs from :math:`1` to
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 7
+    agents_per_process = [2, 3, 2]
     world = SCML2020OneShotWorld(
         **SCML2020OneShotWorld.generate(
             agent_types = types,
-            agent_processes=[0,0,1,1,1,2,2],
+            n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
             production_costs=list(range(1, 8)),
             cost_increases_with_level=False,
@@ -670,19 +631,19 @@ happened:
       "'00Dec@0', 'caller': 'SELLER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=1, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='e56bdef7-6f12-4f00-9f5d-022ce4e75bfa')"],
+      "id='eb5929a6-6cb5-47ee-b82c-a8b1f2a55181')"],
      ["Contract(agreement={'time': 2, 'quantity': 10, 'unit_price': 7}, "
       "partners=('00Dec@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
       "'00Dec@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='69219840-4dc9-421e-8dea-ac8ad4515eec')",
+      "id='49ca68ae-c3ea-4aab-b705-b1ac3a634a56')",
       "Contract(agreement={'time': 1, 'quantity': 10, 'unit_price': 5}, "
       "partners=('BUYER', '02Dec@1'), annotation={'seller': '02Dec@1', 'buyer': "
       "'BUYER', 'caller': 'BUYER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='325ca716-bb2d-47ad-9211-0248e35f5b7e')"],
+      "id='b93a1720-de88-4ef6-934e-9d396c019bac')"],
      [],
      [],
      []]
@@ -857,7 +818,6 @@ Gaussians describing shortfall penalties and disposal costs.
 
 Other than these two differences, the rest is almost the same as in the
 previous case.
-
 
 
 
