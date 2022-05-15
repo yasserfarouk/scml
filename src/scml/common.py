@@ -1,6 +1,7 @@
 """Common functions used in all modules"""
+from __future__ import annotations
+
 import random
-from dataclasses import dataclass
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -43,9 +44,9 @@ def fraction_cut(n: int, p: np.ndarray) -> np.ndarray:
 def integer_cut(
     n: int,
     l: int,
-    l_m: Union[int, List[int]],
-    l_x: Optional[Union[int, List[int]]] = None,
-) -> List[int]:
+    l_m: int | list[int],
+    l_x: int | list[int] | None = None,
+) -> list[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
     Args:
@@ -81,7 +82,7 @@ def integer_cut(
     return sizes.tolist()
 
 
-def realin(rng: Union[Tuple[float, float], float]) -> float:
+def realin(rng: tuple[float, float] | float) -> float:
     """
     Selects a random number within a range if given or the input if it was a float
 
@@ -99,7 +100,7 @@ def realin(rng: Union[Tuple[float, float], float]) -> float:
     return rng[0] + random.random() * (rng[1] - rng[0])
 
 
-def strin(lst: Union[List[str], str]) -> str:
+def strin(lst: list[str] | str) -> str:
     """
     Selects a random string from a list (or just returns the string if no list
     is given)
@@ -116,7 +117,7 @@ def strin(lst: Union[List[str], str]) -> str:
     return random.choice(lst)
 
 
-def intin(rng: Union[Tuple[int, int], int]) -> int:
+def intin(rng: tuple[int, int] | int) -> int:
     """
     Selects a random number within a range if given or the input if it was an int
 
@@ -135,9 +136,9 @@ def intin(rng: Union[Tuple[int, int], int]) -> int:
 
 
 def make_array(
-    x: Union[np.ndarray, Tuple[int | float, int | float], int | float],
+    x: np.ndarray | tuple[int | float, int | float] | int | float,
     n,
-    dtype: Type[float] | Type[int] = int,
+    dtype: type[float] | type[int] = int,
 ) -> np.ndarray:
     """Creates an array with the given choices"""
     if not isinstance(x, Iterable):
@@ -155,10 +156,10 @@ def make_array(
 def distribute_quantities(
     equal: bool,
     predictability: float,
-    q: List[int],
+    q: list[int],
     a: int,
     n_steps: int,
-    limit: Optional[List[int]] = None,
+    limit: list[int] | None = None,
 ):
     """Used internally by generate() methods to distribute exogenous contracts
 
