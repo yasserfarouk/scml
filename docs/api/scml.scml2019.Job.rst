@@ -17,6 +17,12 @@ Job
       ~Job.profile
       ~Job.time
 
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~Job.is_cancelling
+
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: action
@@ -25,3 +31,7 @@ Job
    .. autoattribute:: override
    .. autoattribute:: profile
    .. autoattribute:: time
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: is_cancelling

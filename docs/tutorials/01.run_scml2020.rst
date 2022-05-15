@@ -1,3 +1,4 @@
+
 What is SCM and SCML?
 ---------------------
 
@@ -557,7 +558,7 @@ Now you can run this world simulation by just calling ``run``.
      94%|█████████▍| 47/50 [00:11<00:01,  2.96it/s][A
      96%|█████████▌| 48/50 [00:11<00:00,  3.01it/s][A
      98%|█████████▊| 49/50 [00:11<00:00,  3.08it/s][A
-    100%|██████████| 50/50 [00:11<00:00,  4.19it/s]
+    100%|██████████| 50/50 [00:11<00:00,  4.19it/s][A
 
 
 Let’s see what happened in this run. Firstly, how many negotiations were
@@ -642,7 +643,7 @@ data as a pandas dataframe.
 
 
 There are statistics specific for each agent that all have
-"_{agent_name}". Lets check what is available for the winner agent:
+“_{agent_name}“. Lets check what is available for the winner agent:
 
 .. code:: ipython3
 
