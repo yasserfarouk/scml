@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.5.4 (2022.5.15)
+-----------------
+* Disabling adapter testing. Adapting SCML2020 and OneShot agents is too much effort and is not reallly that useful. We will eventually remove support for that.
+* Improving control over oneshot world generation. SCML2020OneShotWorld.generat() method now is more consistent in the way it creates agents.
+* Adding wide_price_range to control the unit-price range
+
 0.5.3 (2022.5.14)
 -----------------
 * randomizing starting agents in oneshot
