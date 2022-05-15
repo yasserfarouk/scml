@@ -5,6 +5,7 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import Union
 
 import numpy as np
@@ -133,7 +134,11 @@ def intin(rng: Union[Tuple[int, int], int]) -> int:
     return random.randint(rng[0], rng[1])
 
 
-def make_array(x: Union[np.ndarray, Tuple[int, int], int], n, dtype=int) -> np.ndarray:
+def make_array(
+    x: Union[np.ndarray, Tuple[int | float, int | float], int | float],
+    n,
+    dtype: Type[float] | Type[int] = int,
+) -> np.ndarray:
     """Creates an array with the given choices"""
     if not isinstance(x, Iterable):
         return np.ones(n, dtype=dtype) * x

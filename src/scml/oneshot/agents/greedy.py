@@ -1,13 +1,9 @@
 import itertools
 import random
 from collections import defaultdict
-from typing import Optional
 
-from negmas import Outcome
 from negmas import ResponseType
 from negmas import SAOResponse
-from negmas import SAOSingleAgreementController
-from negmas import SAOSingleAgreementRandomController
 
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agent import OneShotSingleAgreementAgent
