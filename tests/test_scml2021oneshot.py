@@ -676,20 +676,20 @@ def test_builtin_aspiration():
     world.run()
 
 
-@given(
-    atype=st.lists(
-        st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6  # type: ignore
-    )
-)
-@settings(deadline=900_000, max_examples=10)
-def test_adapter(atype):
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
-        construct_graphs=False,
-        compact=True,
-        no_logs=True,
-    )
-    world.run()
+# @given(
+#     atype=st.lists(
+#         st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6  # type: ignore
+#     )
+# )
+# @settings(deadline=900_000, max_examples=10)
+# def test_adapter(atype):
+#     world = SCML2020OneShotWorld(
+#         **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
+#         construct_graphs=False,
+#         compact=True,
+#         no_logs=True,
+#     )
+#     world.run()
 
 
 class MyIndNeg(OneShotIndNegotiatorsAgent):
