@@ -29,12 +29,19 @@ class OneShotState:
     ]
 
     exogenous_input_quantity: int
+    """Exogenous input quantity for the current step"""
     exogenous_input_price: int
+    """Exogenous input unit price for the current step"""
     exogenous_output_quantity: int
+    """Exogenous output quantity for the current step"""
     exogenous_output_price: int
+    """Exogenous output unit price for the current step"""
     disposal_cost: float
+    """Current unit disposal cost"""
     shortfall_penalty: float
+    """Current unit shortfall penalty"""
     current_balance: int
+    """Current balance of the agent."""
 
 
 @dataclass
@@ -52,12 +59,19 @@ class OneShotExogenousContract:
     ]
 
     quantity: int
+    """Contract quantity"""
     unit_price: int
+    """Contract unit price"""
     product: int
+    """Product index"""
     seller: str
+    """Seller ID (when passing contrtacts to the constructor of SCML2020OneShotWorld, you can also pass an interged index referring to the agent's index in the `agent_types` list)"""
     buyer: str
+    """Buyer ID (when passing contrtacts to the constructor of SCML2020OneShotWorld, you can also pass an interged index referring to the agent's index in the `agent_types` list)"""
     time: int
+    """Simulation step at which the contract is exceucted"""
     revelation_time: int
+    """Simulation step at which the contract is revealed to its owner. Should not exceed `time` and the default `generate()` method sets it to time"""
 
 
 @dataclass
