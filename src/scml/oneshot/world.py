@@ -128,6 +128,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         publish_trading_prices=True,
         # negotiation params,
         price_multiplier=2.0,
+        wide_price_range=True,
         # trading price parameters
         trading_price_discount=0.9,
         # simulation parameters
@@ -150,6 +151,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.catalog_quantities = catalog_quantities
         self.publish_exogenous_summary = publish_exogenous_summary
         self.price_multiplier = price_multiplier
+        self.wide_price_range = wide_price_range
         self.publish_trading_prices = publish_trading_prices
         self.penalize_bankrupt_for_future_contracts = (
             penalize_bankrupt_for_future_contracts
@@ -306,6 +308,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             publish_exogenous_summary=publish_exogenous_summary,
             publish_trading_prices=publish_trading_prices,
             selected_price_multiplier=price_multiplier,
+            wide_price_range=wide_price_range,
         )
 
         if not isinstance(agent_types, Iterable):
@@ -1839,30 +1842,39 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         #     self._registered_negs.add(tuple(sorted([partner, agent_id])))
         return result
 
-    def _make_issues(self, product):
+    def _make_issues(
+        self, product
+    ) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int]]:
+        """Creates the negotiation agendas
+
+        Args:
+            product (int): The product to be negotiated about
+
+        Returns:
+            A tuple of minimum and maximum values for unit-price, time, and quantity in that order
+        """
+        p2 = (
+            self.trading_prices[product]
+            if self.publish_trading_prices
+            else self.catalog_prices[product]
+        )
+        if self.wide_price_range:
+            if product:
+                p = (
+                    self.trading_prices[product - 1]
+                    if self.publish_trading_prices
+                    else self.catalog_prices[product - 1]
+                )
+            else:
+                p = 0
+        else:
+            p = p2
         unit_price = (
             max(
                 1,
-                int(
-                    1.0
-                    / self.price_multiplier
-                    * (
-                        self.trading_prices[product - 1]
-                        if self.publish_trading_prices
-                        else self.catalog_prices[product - 1]
-                    )
-                    if product
-                    else 0
-                ),
+                int(p // self.price_multiplier),
             ),
-            int(
-                self.price_multiplier
-                * (
-                    self.trading_prices[product]
-                    if self.publish_trading_prices
-                    else self.catalog_prices[product]
-                )
-            ),
+            int(self.price_multiplier * p2),
         )
         time = (self.current_step, self.current_step)
         quantity = (1, self._max_n_lines)
