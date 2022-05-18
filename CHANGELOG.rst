@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.5.5 (2022.5.18)
+-----------------
+* bugfix in anac2022_* methods: Score reporting was not accurate because of a change in naming convention in negmas.
+* adding agent-processes to SCML2022World.generate
+* Adding SCML2022World which is just an alias for SCML2021World
+* bugfix #96 Partial List of Agent Scores: Also discussion $94
+    * Incorrect agent types and mysterious agents appearing in the scores
+      list.
+    * Inaccurate placement of agents in the simulation
+* disabling tests taking too long on CI
+* commenting members of Profile, Contract in oneshot
+
 0.5.4 (2022.5.15)
 -----------------
 * Disabling adapter testing. Adapting SCML2020 and OneShot agents is too much effort and is not reallly that useful. We will eventually remove support for that.
