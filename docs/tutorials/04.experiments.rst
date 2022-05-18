@@ -15,7 +15,56 @@ everthing we discuss applies exactly to all SCML environments. Moreover,
 we will use builtin agents for illustration but of course the same
 methods apply to any agents.
 
-Let’s first bring in what we need:
+Levels of control
+~~~~~~~~~~~~~~~~~
+
+There are four levels of control for world generation:
+
+1. The tournament level: In this case you use ``negmas.tournament`` or —
+   more conveniently — ``scml.scml2020.utils.anac2022_*`` functions to
+   run a tournament. You can adjust the parameters used to create worlds
+   in this simulation using almost all the same parameters that are
+   received by ``SCML2020OneShotWorld.generate()`` method (next level of
+   control below). It is harder in this case to control the number of
+   simulations and factory assignment.
+2. You can use ``SCML2020OneShotWorld.generate()`` or
+   ``SCML2021World.generate()`` method to generate a **single** world
+   for which you can either allow the system to select agent types and
+   their placement or with full control over those. Using this approach
+   (recommended), you can control almost all aspects of the simulations
+   except the **exact** exogenous contracts and profiles for agents.
+3. Finally, you can just construct ``SCML2020OneShotWorld`` and
+   ``SCML2021World`` objects directly which allows you to control
+   everything including every single profile and exogenous contract.
+4. You can subclass the world and override some of its private members
+   to modify how the simulation runs. For example, you can override
+   ``_make_issues()`` to change the ranges of issues for negotiations.
+
+This tutorial will focus on the second approach and will touch upon the
+third.
+
+Using ``generate()``:
+~~~~~~~~~~~~~~~~~~~~~
+
+There are two general ways to use the ``generate()`` method of SCML
+worlds for world generation:
+
+1. You pass ``random_agent_types=True``: In this case, you need only
+   pass ``agent_types`` and the system will generate random simulations
+   using these types. If you want a specific type to be more represented
+   than others, just repeat it in the ``agent_types`` list. You can also
+   pass ``n_agents_per_process`` to control how many agents are present
+   on each production level but you cannot control the exact type of
+   each one of them.
+2. You pass ``random_agent_types=False``: In this case, you need to pass
+   ``agent_types`` and ``agent_processes`` (``n_agents_per_process``
+   will be ignored). The former gives the type of each single agent in
+   the simulation and the later gives the corresponding production
+   level. This gives you full control over the type of agent controlling
+   every single factory in the simulation.
+
+We will see examples of both of these approaches in this tutorial. Let’s
+first import in what we need:
 
 .. code:: ipython3
 
@@ -130,7 +179,7 @@ We can run the last of these worlds just to be sure something happens!!
 .. parsed-literal::
 
     (<AxesSubplot:title={'center':'Step: 10/10 [ 0s rem  0s] 100.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x28a4a64a0>)
+     <networkx.classes.multidigraph.MultiDiGraph at 0x17f7d14b0>)
 
 
 
@@ -631,19 +680,19 @@ happened:
       "'00Dec@0', 'caller': 'SELLER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=1, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='eb5929a6-6cb5-47ee-b82c-a8b1f2a55181')"],
+      "id='c0b45236-a804-4d1a-8616-35b1156fe9b5')"],
      ["Contract(agreement={'time': 2, 'quantity': 10, 'unit_price': 7}, "
       "partners=('00Dec@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
       "'00Dec@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='49ca68ae-c3ea-4aab-b705-b1ac3a634a56')",
+      "id='10d7a2f7-ba7e-4e7d-a997-f423e5b9ace3')",
       "Contract(agreement={'time': 1, 'quantity': 10, 'unit_price': 5}, "
       "partners=('BUYER', '02Dec@1'), annotation={'seller': '02Dec@1', 'buyer': "
       "'BUYER', 'caller': 'BUYER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='b93a1720-de88-4ef6-934e-9d396c019bac')"],
+      "id='18d772ef-2e5e-4f22-9091-6637475f5349')"],
      [],
      [],
      []]

@@ -66,7 +66,7 @@ methods:
 
           import logging
           World(..., log_screen_level=logging.DEBUG)
-          # or create_tournament/anac2020std/anac2020collusion/tournament(..., log_screen_level=logging.DEBUG)
+          # or create_tournament/anac2022std/anac2022collusion/tournament(..., log_screen_level=logging.DEBUG)
 
           # You can then use something like athis to log to the screen (and file)
           self.awi.logdebug("MY LOG MESSAGE")
@@ -87,13 +87,13 @@ Any other code *must* be protected inside::
 
 For example, if you want to run a simulation to test your agent. *DO NOT USE SOMETHING LIKE THIS*::
 
-    w = SCML2020World(....)
+    w = SCML2021World(....)
     w.run()
 
 But something like this::
 
     def main():
-        w = SCML2020World(...)
+        w = SCML2021World(...)
         w.run()
 
     if __name__ == "__main__":
@@ -101,11 +101,11 @@ But something like this::
 
 This way, importing your module will not run the world simulation.
 
-I ran a simulation using "scml run2020" command. Where are my log files?
+I ran a simulation using "scml run2022" command. Where are my log files?
 ------------------------------------------------------------------------
 
 If you did not pass a log location through "--log", you will find the log files
-at *~/negmas/logs/scml/scml2020/[date-time-uuid]*
+at *~/negmas/logs/scml/scml2022/[date-time-uuid]*
 
 
 I implement my agent using multiple files. How should I import them?
@@ -163,7 +163,7 @@ How can I run simulations with the same parameters as the actual competition (e.
 ---------------------------------------------------------------------------------------------------------
 
 You can use the `utils` submodule of `scml.scml2020` to generate worlds with the same parameters as in the
-competition. Here is some example script to run `1` such world using three built-in agents::
+competition for all tracks. Here is some example script to run `1` such world using three built-in agents::
 
     from typing import List, Union
     from scml.scml2020.utils import (
@@ -206,7 +206,7 @@ competition. Here is some example script to run `1` such world using three built
 Notice that `generate_worlds` will not generate a single world but a set of them putting the `COMPETITORS`
 in all possible assignments of factories. The detailed process of world generation is described in the appendices of the
 `description
-<http://www.yasserm.com/scml/scml2020.pdf>`_ .
+<http://www.yasserm.com/scml/scml2022.pdf>`_ .
 
 You can change the competitors by just changing the `COMPETITORS` list. Setting the third parameter of `generate_worlds`
 to `1` generates a standard league world and setting it to a random number between 2 and 4 generates a collusion
