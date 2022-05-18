@@ -36,6 +36,7 @@ from scml.scml2020.agents import SatisficerAgent
 from scml.scml2020.world import SCML2020Agent
 from scml.scml2020.world import SCML2020World
 from scml.scml2020.world import SCML2021World
+from scml.scml2020.world import SCML2022World
 from scml.scml2020.world import is_system_agent
 
 # try:
@@ -432,6 +433,10 @@ def anac2020_config_generator(
         for _ in agent_types
     ]
     no_logs = compact
+    agent_processes = []
+    for i, n in enumerate(n_f_list):
+        for j in range(n):
+            agent_processes.append(i)
     if oneshot_world:
         world_params = dict(
             name=world_name,
@@ -443,12 +448,13 @@ def anac2020_config_generator(
             neg_step_time_limit=10,
             negotiation_speed=21,
             start_negotiations_immediately=False,
-            n_agents_per_process=n_f_list,
+            agent_processes=agent_processes,
             n_processes=n_processes,
             n_steps=n_steps,
             n_lines=n_lines,
             compact=compact,
             no_logs=no_logs,
+            random_agent_types=False,
         )
     else:
         world_params = dict(
@@ -465,12 +471,13 @@ def anac2020_config_generator(
             bankruptcy_limit=1.0,
             initial_balance=None,
             start_negotiations_immediately=False,
-            n_agents_per_process=n_f_list,
+            agent_processes=agent_processes,
             n_processes=n_processes,
             n_steps=n_steps,
             n_lines=n_lines,
             compact=compact,
             no_logs=no_logs,
+            random_agent_types=False,
         )
     world_params.update(kwargs)
     # _agent_types = copy.deepcopy(world_params.pop("agent_types"))
@@ -478,7 +485,7 @@ def anac2020_config_generator(
     if oneshot_world:
         generated_world_params = SCML2020OneShotWorld.generate(**world_params)
     else:
-        generated_world_params = SCML2021World.generate(**world_params)
+        generated_world_params = SCML2022World.generate(**world_params)
     # world_params["agent_types"] = _agent_types
     # world_params["agent_params"] = _agent_params
     for k in ("agent_types", "agent_params"):
@@ -832,12 +839,18 @@ def anac2021_assigner_collusion(
 
 
 def anac2020_world_generator(**kwargs):
-    assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
-        kwargs["world_params"]["agent_types"]
-    )
+    if "n_agents_per_process" in kwargs["world_params"]:
+        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
+            kwargs["world_params"]["agent_types"]
+        )
+    else:
+        assert len(kwargs["world_params"]["agent_processes"]) == len(
+            kwargs["world_params"]["agent_types"]
+        )
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
-    cnfg2 = SCML2021World.generate(**kwargs["world_params"])
+    kwargs["world_params"]["random_agent_typea"] = False
+    cnfg2 = SCML2022World.generate(**kwargs["world_params"])
     for k in ("agent_types", "agent_params"):
         cnfg[k] = cnfg2[k]
     for _p in cnfg["profiles"]:
@@ -845,19 +858,25 @@ def anac2020_world_generator(**kwargs):
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
     cnfg["info"]["is_default"] = kwargs["is_default"]
-    world = SCML2021World(**cnfg)
+    world = SCML2022World(**cnfg)
     return world
 
 
 def anac2020oneshot_world_generator(**kwargs):
-    assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
-        kwargs["world_params"]["agent_types"]
-    )
+    if "n_agents_per_process" in kwargs["world_params"]:
+        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
+            kwargs["world_params"]["agent_types"]
+        )
+    else:
+        assert len(kwargs["world_params"]["agent_processes"]) == len(
+            kwargs["world_params"]["agent_types"]
+        )
     # cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
     # for k in ("n_agents_per_process","n_processes"):
     #     del kwargs["world_params"][k]
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
+    kwargs["world_params"]["random_agent_typea"] = False
     cnfg2 = SCML2020OneShotWorld.generate(**kwargs["world_params"])
     for k in ("agent_types", "agent_params", "name"):
         cnfg[k] = cnfg2[k]
@@ -1880,7 +1899,7 @@ def anac2021_oneshot(
     verbose: bool = False,
     configs_only=False,
     compact=False,
-    n_competitors_per_world=1,
+    n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> TournamentResults | PathLike:
@@ -2362,7 +2381,7 @@ def anac2022_oneshot(
     verbose: bool = False,
     configs_only=False,
     compact=False,
-    n_competitors_per_world=1,
+    n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
     **kwargs,
 ) -> TournamentResults | PathLike:
