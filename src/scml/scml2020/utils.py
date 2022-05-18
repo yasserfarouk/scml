@@ -16,6 +16,7 @@ from typing import Type
 
 import numpy as np
 from negmas import Agent
+from negmas.helpers import get_class
 from negmas.helpers import get_full_type_name
 from negmas.helpers import unique_name
 from negmas.helpers.numeric import truncated_mean
@@ -28,7 +29,9 @@ from negmas.tournaments import tournament
 from scml.oneshot.agents import GreedyOneShotAgent
 from scml.oneshot.agents import GreedySyncAgent
 from scml.oneshot.agents import SingleAgreementAspirationAgent
+from scml.oneshot.sysagents import _SystemAgent as OneShotSysAgent
 from scml.oneshot.world import SCML2020OneShotWorld
+from scml.scml2020.agent import _SystemAgent as StdSysAgent
 from scml.scml2020.agents import BuyCheapSellExpensiveAgent
 from scml.scml2020.agents import DecentralizingAgent
 from scml.scml2020.agents import MarketAwareIndDecentralizingAgent
@@ -935,12 +938,23 @@ def balance_calculator2020(
     initial_balances = []
     is_default = world.info["is_default"]
     factories = [_ for _ in world.factories if not is_system_agent(_.agent_id)]
-    agents = [world.agents[f.agent_id] for f in factories]
+    agents = [
+        world.agents[f.agent_id] for f in factories if not is_system_agent(f.agent_id)
+    ]
     agent_types = [
-        _ for _ in world.agent_unique_types if not _.startswith("system_agent")
+        _
+        for _ in world.agent_unique_types
+        if not _.startswith("system_agent")
+        and not _.split(".")[-1].startswith("_System")
     ]
     if len(set(agent_types)) == len(set(world.agent_types)):
-        agent_types = [_ for _ in world.agent_types if not _.startswith("system_agent")]
+        agent_types = [
+            _
+            for _ in world.agent_types
+            if not _.startswith("system_agent")
+            and not _.split(".")[-1].startswith("_System")
+            and not get_class(_) == StdSysAgent
+        ]
     for i, factory in enumerate(factories):
         if is_default[i] and ignore_default:
             continue
@@ -949,6 +963,9 @@ def balance_calculator2020(
     consolidated_scores = defaultdict(float)
     individual_scores = list()
     initial_sums = defaultdict(float)
+    assert len(is_default) == len(agents)
+    assert len(agents) == len(factories)
+    assert len(factories) == len(agent_types)
     for default, factory, manager, agent_type in zip(
         is_default, factories, agents, agent_types
     ):
@@ -1030,15 +1047,22 @@ def balance_calculator2021oneshot(
         world_names=[world.name], log_file_names=[world.log_file_name]
     )
     is_default = world.info["is_default"]
-    agents = list(world.agents.values())
+    agents = list(_ for _ in world.agents.values() if _.__class__ != OneShotSysAgent)
     agent_types = [
-        _ for _ in world.agent_unique_types if not _.startswith("system_agent")
+        _
+        for _ in world.agent_unique_types
+        if not _.startswith("system_agent") and not _.startswith("System")
     ]
     if len(set(agent_types)) == len(set(world.agent_types)):
-        agent_types = [_ for _ in world.agent_types if not _.startswith("system_agent")]
+        agent_types = [
+            _
+            for _ in world.agent_types
+            if not _.startswith("system_agent") and not _.startswith("System")
+        ]
     consolidated_scores = defaultdict(float)
     individual_scores = list()
     scores = world.scores()
+    assert len(agents) == len(is_default) and len(agents) == len(agent_types)
     for default, manager, agent_type in zip(is_default, agents, agent_types):
         if default and ignore_default:
             continue
