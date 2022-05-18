@@ -72,6 +72,7 @@ from .factory import Factory
 __all__ = [
     "SCML2020World",
     "SCML2021World",
+    "SCML2022World",
     "Failure",
     "AWI",
 ]
@@ -2948,3 +2949,7 @@ class SCML2021World(SCML2020World):
         kwargs["inventory_valuation_trading"] = inventory_valuation_trading
         kwargs["horizon"] = horizon
         return super().generate(*args, **kwargs)
+
+
+class SCML2022World(SCML2021World):
+    pass
