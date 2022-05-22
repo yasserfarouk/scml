@@ -1,10 +1,6 @@
 name: CI-Dev
 
-on:
-  push:
-    branches: ["*"]
-  pull_request:
-    branches: ["*"]
+on: [push]
 
 jobs:
   install-dev:
@@ -27,7 +23,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
           python -m pip install -r docs/requirements.txt
           python -m pip install -e .
+          python -c 'import scml; print(scml.__version__)'          
           yes | python -m pip uninstall negmas
           python -m pip install git+https://github.com/yasserfarouk/negmas.git
-      - name: "Import package"
-        run: "python -c 'import scml; print(scml.__version__)'"
+          python -c 'import scml; print(scml.__version__)'
