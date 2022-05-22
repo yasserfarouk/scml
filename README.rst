@@ -10,7 +10,7 @@ Overview
     * - docs
       - |docs| |binder|
     * - tests
-      - | |CI| |PyPiPublished| |requires| |codecov| |codacy|
+      - | |CI| |PyPiPublished| |codecov| |codacy|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
     * - Gitter
@@ -18,10 +18,6 @@ Overview
 .. |docs| image:: https://readthedocs.org/projects/scml/badge/?style=flat
     :target: http://www.yasserm.com/scml/scml2020docs
     :alt: Documentation Status
-
-.. |requires| image:: https://requires.io/github/yasserfarouk/scml/requirements.svg?branch=master
-    :alt: Requirements Status
-    :target: https://requires.io/github/yasserfarouk/scml/requirements/?branch=master
 
 .. |codecov| image:: https://codecov.io/gh/yasserfarouk/scml/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/yasserfarouk/scml
