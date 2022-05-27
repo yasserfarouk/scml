@@ -354,8 +354,18 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 s2 = get_class(at["obj"]).__class__.__name__
                 s = s2.replace("Agent", "").replace("OneShot", "")
                 s = "".join([c for c in s if c.isupper()])[:3]
-                if len(s) < 3:
-                    s = s[0] + s2[1 : 1 + (3 - len(s))] + s[1:]
+                try:
+                    if len(s) < 3:
+                        if len(s2) > 3:
+                            s = s2[:2]
+                        elif len(s2) >= 2:
+                            s = s2[0] + s2[1 : 1 + (3 - len(s))] + s2[1:]
+                        elif len(s2) > 0:
+                            s = s2[0] * 3
+                        else:
+                            s = "Agt"
+                except:
+                    pass
                 default_names[i] += f"{s}"
         agent_levels = [p.level for p in profiles]
         if agent_name_reveals_position:
