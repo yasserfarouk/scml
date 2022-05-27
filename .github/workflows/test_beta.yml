@@ -1,0 +1,22 @@
+name: CI-Beta
+
+on: [push]
+
+jobs:
+  install-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.11-dev'
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install -e .
+          python -c 'import scml; print(scml.__version__)'
+          yes | python -m pip uninstall negmas
+          python -m pip install git+https://github.com/yasserfarouk/negmas.git
+          python -c 'import scml; print(scml.__version__)'
