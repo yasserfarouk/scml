@@ -1146,6 +1146,7 @@ def balance_calculator2021collusion(
     ignore_default=True,
     inventory_catalog_price_weight=0.0,
     inventory_trading_average_weight=0.5,
+    raw_collusion_score_multiplier=0.2,
 ) -> WorldRunResults:
     """A scoring function that scores factory managers' performance by the
     final balance only ignoring whatever still in their inventory after
@@ -1161,6 +1162,7 @@ def balance_calculator2021collusion(
         ignore_default: Whether to ignore non-competitors (default agents)
         inventory_catalog_price_weight: The weight assigned to catalog price
         inventory_trading_average_weight: The weight assigned to trading price average
+        raw_collusion_score_multiplier: multiplies the raw collusion score with one minus this value multiplying the difference between collusion and standard scores.
 
     Returns:
         WorldRunResults giving the names, scores, and types of factory managers.
@@ -1202,7 +1204,8 @@ def balance_calculator2021collusion(
     allscores = list(chain(*(_.scores for _ in results_without_collusion)))
     mean_score = sum(allscores) / len(allscores)
     results_with_collusion.scores = [
-        _ - mean_score for _ in results_with_collusion.scores
+        _ - (1.0 - raw_collusion_score_multiplier) * mean_score
+        for _ in results_with_collusion.scores
     ]
     # todo: check consolidated scores
     return results_with_collusion
