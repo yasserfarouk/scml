@@ -506,11 +506,18 @@ class SCML2020World(TimeInAgreementMixin, World):
                 else:
                     s2 = at._type_name().split(".")[-1].replace("Agent", "")
                 s = "".join([c for c in s2 if c.isupper()])[:3]
-                if len(s) < 3:
-                    try:
-                        s = s[0] + s2[1 : 1 + (3 - len(s))] + s[1:]
-                    except:
-                        pass
+                try:
+                    if len(s) < 3:
+                        if len(s2) > 3:
+                            s = s2[:2]
+                        elif len(s2) >= 2:
+                            s = s2[0] + s2[1 : 1 + (3 - len(s))] + s2[1:]
+                        elif len(s2) > 0:
+                            s = s2[0] * 3
+                        else:
+                            s = "Agt"
+                except:
+                    pass
                 default_names[i] += f"{s}"
         agent_levels = [
             int(np.nonzero(np.max(p.costs != INFINITE_COST, axis=0).flatten())[0])
