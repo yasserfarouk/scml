@@ -57,12 +57,12 @@ std_types = scml.scml2020.builtin_agent_types(as_str=False)
 
 
 class MyOneShotAgent(RandomOneShotAgent):
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source=""):
         assert (
             negotiator_id in self.awi.my_consumers
             or negotiator_id in self.awi.my_suppliers
         ), (self.id, self.name, negotiator_id)
-        return super().respond(negotiator_id, state, offer)
+        return super().respond(negotiator_id, state, offer, source)
 
     def propose(self, negotiator_id, state):
         assert (

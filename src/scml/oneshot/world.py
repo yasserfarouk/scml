@@ -121,7 +121,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_hidden_time_limit=3 * 60,
         neg_step_time_limit=60,
         negotiation_speed=0,
-        avoid_ultimatum=False,
         shuffle_negotiations=False,
         # public information
         publish_exogenous_summary=True,
@@ -187,7 +186,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     "negmas.sao.SAOMechanism",
                     dict(
                         end_on_no_response=True,
-                        avoid_ultimatum=avoid_ultimatum,
                         dynamic_entry=False,
                         max_wait=len(agent_types),
                         check_offers=True,
@@ -276,7 +274,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             else -int(0.5 + bankruptcy_limit * initial_balance.mean())
         )
         self.info.update(
-            avoid_ultimatum=avoid_ultimatum,
             shuffle_negotiations=shuffle_negotiations,
             process_inputs=process_inputs,
             process_outputs=process_outputs,

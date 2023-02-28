@@ -148,7 +148,11 @@ class StepController(SAOController, Notifier):
         return self.__negotiator.propose(state)
 
     def respond(
-        self, negotiator_id: str, state: MechanismState, offer: "Outcome"
+        self,
+        negotiator_id: str,
+        state: MechanismState,
+        offer: "Outcome",
+        source: str = "",
     ) -> ResponseType:
         if negotiator_id not in self.negotiators.keys():
             return ResponseType.END_NEGOTIATION
@@ -157,7 +161,10 @@ class StepController(SAOController, Notifier):
         # if negotiator_id not in self.negotiators:
         #     breakpoint()
         self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
-        return self.__negotiator.respond(offer=offer, state=state)
+        try:
+            return self.__negotiator.respond(offer=offer, state=state, source=source)
+        except TypeError:
+            return self.__negotiator.respond(offer=offer, state=state)
 
     def __str__(self):
         return (

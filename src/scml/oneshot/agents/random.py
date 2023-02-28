@@ -28,7 +28,7 @@ class RandomOneShotAgent(OneShotAgent):
     def propose(self, negotiator_id: str, state: MechanismState) -> "Outcome":
         return self._random_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source=""):
         if random.random() < PROB_END:
             return ResponseType.END_NEGOTIATION
         if random.random() < PROB_ACCEPTANCE:
@@ -48,7 +48,6 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
     ) -> Dict[str, SAOResponse]:
         proposals = dict()
         for id in self.negotiators.keys():
-
             proposals[id] = (
                 SAOResponse(ResponseType.ACCEPT_OFFER, None)
                 if random.random() < PROB_ACCEPTANCE

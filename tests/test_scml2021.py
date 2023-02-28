@@ -112,8 +112,12 @@ def generate_world(
 #     save_stats(world, world.log_folder)
 
 
-@mark.parametrize("agent_type", types)
-@given(buy_missing=st.booleans(), n_processes=st.integers(2, 4))
+# @mark.parametrize("agent_type", types)
+@given(
+    agent_type=st.sampled_from(types),
+    buy_missing=st.booleans(),
+    n_processes=st.integers(2, 4),
+)
 @settings(deadline=500_000, max_examples=20)
 @example(agent_type=IndependentNegotiationsAgent, buy_missing=True, n_processes=2)
 @mark.skipif(
@@ -448,7 +452,6 @@ class MyColluders(DoNothingAgent):
         self.my_friends[self.id].update(dict(current_balance=self.awi.current_balance))
 
     def step(self):
-
         assert self.id in self.my_friends
         for v in self.my_friends.values():
             assert "current_step_balance" in v
@@ -527,7 +530,6 @@ def test_satisficer_n_agent_per_level(method, n_agents, n_processes, n_steps):
         ),
         compact=True,
         no_logs=True,
-        avoid_ultimatum=False,
         end_negotiation_on_refusal_to_propose=True,
         name=f"Satisficer1{method}-a{n_agents}p{n_processes}s{n_steps}",
     )

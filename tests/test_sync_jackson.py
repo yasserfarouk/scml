@@ -38,7 +38,7 @@ class SimpleAgent(OneShotAgent):
     def propose(self, negotiator_id: str, state) -> Outcome | None:
         return self.best_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source):
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return ResponseType.END_NEGOTIATION
@@ -96,8 +96,8 @@ class BetterAgent(SimpleAgent):
         )
         return tuple(offer)
 
-    def respond(self, negotiator_id, state, offer):
-        response = super().respond(negotiator_id, state, offer)
+    def respond(self, negotiator_id, state, offer, source):
+        response = super().respond(negotiator_id, state, offer, source)
         if response != ResponseType.ACCEPT_OFFER:
             return response
         nmi = self.get_nmi(negotiator_id)
@@ -209,7 +209,7 @@ class ReporterAgent(BetterAgent):
     def step(self):
         self.round_nums = defaultdict(int)
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source=""):
         assert state.running, (
             f"{self.id} called to respond in a negotiation that "
             f"is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}"
@@ -248,7 +248,7 @@ class ReporterAgent(BetterAgent):
                 # print(msg)
                 # log_str = f"{datetime.now()}: on round {self.round_nums[negotiator_id]} with opp {negotiator_id}"
                 # self.awi.logdebug_agent(log_str)
-        return super().respond(negotiator_id, state, offer)
+        return super().respond(negotiator_id, state, offer, source)
 
     def on_negotiation_success(self, contract, mechanism):
         partners = [_ for _ in contract.partners if _ != self.id]
@@ -282,7 +282,6 @@ def run_experiment(
     n_steps: int = 5,
     name: str = "experiment",
     enable_time_limit=True,
-    avoid_ultimatum=False,
     shuffle_negotiations=False,
 ):
     suppliers = ([ReporterAgent] if supplier_reporter else []) + [SyncAgent] * n_sync_suppliers + [BetterAgent] * (2 - n_sync_suppliers)  # type: ignore
@@ -326,7 +325,6 @@ def run_experiment(
             n_processes=2,
             n_steps=n_steps,
             construct_graphs=True,
-            avoid_ultimatum=avoid_ultimatum,
             shuffle_negotiations=shuffle_negotiations,
             name=name,
             **time_limit_args,
@@ -362,7 +360,6 @@ def test_sync_experiment_multiple_seeds_2022_conditions(
         name=f"out_of_sync_bug_s{seed}",
         seed=seed,
         enable_time_limit=False,
-        avoid_ultimatum=False,
         shuffle_negotiations=False,
     )
 
@@ -373,7 +370,6 @@ def test_sync_experiment_multiple_seeds_2022_conditions(
         "n_sync_consumers",
         "consumer_reporter",
         "supplier_reporter",
-        "avoid_ultimatum",
         "shuffle_negotiations",
     ],
     list(
@@ -381,7 +377,6 @@ def test_sync_experiment_multiple_seeds_2022_conditions(
             range(2),
             range(2),
             (True, False),
-            (False, True),
             (False, True),
             (False, True),
         )
@@ -392,7 +387,6 @@ def test_sync_experiment(
     n_sync_consumers,
     supplier_reporter,
     consumer_reporter,
-    avoid_ultimatum,
     shuffle_negotiations,
 ):
     if not consumer_reporter and not supplier_reporter:
@@ -407,12 +401,11 @@ def test_sync_experiment(
             name=f"out_of_sync_bug_s{seed}",
             seed=seed,
             enable_time_limit=False,
-            avoid_ultimatum=avoid_ultimatum,
             shuffle_negotiations=shuffle_negotiations,
         )
     except AssertionError as e:
         # we expect errors when negotiations are shuffledd or when we are avoiding ultimatum
-        if not avoid_ultimatum and not shuffle_negotiations:
+        if not shuffle_negotiations:
             raise e
 
 
@@ -422,7 +415,6 @@ def test_should_raise_in_2020_conditions():
     n_sync_consumers = 2
     supplier_reporter = True
     consumer_reporter = True
-    avoid_ultimatum = True
     shuffle_negotiations = True
     seed = DEFAULT_SEED
     with pytest.raises(AssertionError):
@@ -434,7 +426,6 @@ def test_should_raise_in_2020_conditions():
             name=f"out_of_sync_bug_s{seed}",
             seed=seed,
             enable_time_limit=False,
-            avoid_ultimatum=avoid_ultimatum,
             shuffle_negotiations=shuffle_negotiations,
         )
 
@@ -444,7 +435,6 @@ def test_one_sync_supplier_and_one_sync_consumer_active_negotiations_are_synced(
     n_sync_consumers = 1
     supplier_reporter = True
     consumer_reporter = True
-    avoid_ultimatum = False
     shuffle_negotiations = False
     seed = DEFAULT_SEED
     run_experiment(
@@ -455,7 +445,6 @@ def test_one_sync_supplier_and_one_sync_consumer_active_negotiations_are_synced(
         name=f"out_of_sync_bug_s{seed}",
         seed=seed,
         enable_time_limit=False,
-        avoid_ultimatum=avoid_ultimatum,
         shuffle_negotiations=shuffle_negotiations,
     )
 
@@ -465,7 +454,6 @@ def test_one_sync_agents_active_negotiations_are_synced():
     n_sync_consumers = 0
     supplier_reporter = True
     consumer_reporter = False
-    avoid_ultimatum = False
     shuffle_negotiations = False
     seed = DEFAULT_SEED
     run_experiment(
@@ -476,7 +464,6 @@ def test_one_sync_agents_active_negotiations_are_synced():
         name=f"out_of_sync_bug_s{seed}",
         seed=seed,
         enable_time_limit=False,
-        avoid_ultimatum=avoid_ultimatum,
         shuffle_negotiations=shuffle_negotiations,
     )
 
@@ -486,7 +473,6 @@ def test_no_sync_agents_active_negotiations_are_synced():
     n_sync_consumers = 0
     supplier_reporter = True
     consumer_reporter = False
-    avoid_ultimatum = False
     shuffle_negotiations = False
     seed = DEFAULT_SEED
     run_experiment(
@@ -497,7 +483,6 @@ def test_no_sync_agents_active_negotiations_are_synced():
         name=f"out_of_sync_bug_s{seed}",
         seed=seed,
         enable_time_limit=False,
-        avoid_ultimatum=avoid_ultimatum,
         shuffle_negotiations=shuffle_negotiations,
     )
 

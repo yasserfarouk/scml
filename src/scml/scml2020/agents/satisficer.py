@@ -59,7 +59,9 @@ class ObedientNegotiator(SAONegotiator):
         """Simply calls the corresponding method on the owner"""
         return self.owner.propose(state, self.nmi, self.is_selling, self.is_requested)
 
-    def respond(self, state: MechanismState, offer: Outcome) -> ResponseType:
+    def respond(
+        self, state: MechanismState, offer: Outcome, source: str = ""
+    ) -> ResponseType:
         """Simply calls the corresponding method on the owner"""
         return self.owner.respond(
             state, self.nmi, offer, self.is_selling, self.is_requested

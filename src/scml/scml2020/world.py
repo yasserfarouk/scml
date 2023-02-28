@@ -235,7 +235,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         negotiation_quota_per_step=None,
         negotiation_quota_per_simulation=float("inf"),
         n_concurrent_negs_between_partners=float("inf"),
-        avoid_ultimatum=False,
         shuffle_negotiations=False,
         end_negotiation_on_refusal_to_propose=True,
         # trading price parameters
@@ -306,7 +305,6 @@ class SCML2020World(TimeInAgreementMixin, World):
                 "negmas.sao.SAOMechanism": mechanisms.get(
                     "negmas.sao.SAOMechanism",
                     dict(
-                        avoid_ultimatum=avoid_ultimatum,
                         end_on_no_response=end_negotiation_on_refusal_to_propose,
                         dynamic_entry=False,
                         max_wait=negotiation_quota_per_step,
@@ -403,7 +401,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         if self.info is None:
             self.info = {}
         self.info.update(
-            avoid_ultimatum=avoid_ultimatum,
             shuffle_negotiations=shuffle_negotiations,
             end_negotiation_on_refusal_to_propose=end_negotiation_on_refusal_to_propose,
             process_inputs=process_inputs,
@@ -853,7 +850,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         run_extra_checks: bool = True,
         **kwargs,
     ) -> dict[str, Any]:
-
         """
         Generates the configuration for a world
 

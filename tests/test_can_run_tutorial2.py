@@ -14,6 +14,7 @@ from negmas import SAOResponse
 # import a specific agent from the Genius platform
 from negmas.genius import NiceTitForTat
 from negmas.genius import genius_bridge_is_running
+from negmas.outcomes import Outcome
 from negmas.preferences import LinearAdditiveUtilityFunction
 from negmas.preferences import LinearUtilityFunction
 from negmas.preferences.value_fun import AffineFun
@@ -98,10 +99,10 @@ class SimpleAgent(OneShotAgent):
     def on_negotiation_success(self, contract, mechanism):
         self.secured += contract.agreement["quantity"]
 
-    def propose(self, negotiator_id: str, state) -> "Outcome":
+    def propose(self, negotiator_id: str, state) -> Outcome:
         return self.best_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source: str = ""):
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return ResponseType.END_NEGOTIATION
@@ -157,8 +158,8 @@ class BetterAgent(SimpleAgent):
         offer[UNIT_PRICE] = self._find_good_price(self.get_nmi(negotiator_id), state)
         return tuple(offer)
 
-    def respond(self, negotiator_id, state, offer):
-        response = super().respond(negotiator_id, state, offer)
+    def respond(self, negotiator_id, state, offer, source=""):
+        response = super().respond(negotiator_id, state, offer, source)
         if response != ResponseType.ACCEPT_OFFER:
             return response
         ami = self.get_nmi(negotiator_id)
@@ -206,9 +207,9 @@ class AdaptiveAgent(BetterAgent):
         super().before_step()
         self._best_selling, self._best_buying = 0.0, float("inf")
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source=""):
         """Save the best price received"""
-        response = super().respond(negotiator_id, state, offer)
+        response = super().respond(negotiator_id, state, offer, source)
         ami = self.get_nmi(negotiator_id)
         if self._is_selling(ami):
             self._best_selling = max(offer[UNIT_PRICE], self._best_selling)
@@ -279,9 +280,9 @@ class LearningAgent(AdaptiveAgent):
                 up, self._best_opp_acc_buying[partner]
             )
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state, offer, source=""):
         # find the quantity I still need and end negotiation if I need nothing more
-        response = super().respond(negotiator_id, state, offer)
+        response = super().respond(negotiator_id, state, offer, source)
         # update my current best price to use for limiting concession in other
         # negotiations
         ami = self.get_nmi(negotiator_id)
