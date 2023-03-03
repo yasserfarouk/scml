@@ -4,16 +4,10 @@ from unittest import mock
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import example
-from hypothesis import given
-from hypothesis.stateful import Bundle
-from hypothesis.stateful import RuleBasedStateMachine
-from hypothesis.stateful import rule
+from hypothesis import example, given
+from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
 
-from scml.scml2020 import NO_COMMAND
-from scml.scml2020 import Factory
-from scml.scml2020 import FactoryProfile
-from scml.scml2020 import FactoryState
+from scml.scml2020 import NO_COMMAND, Factory, FactoryProfile, FactoryState
 from scml.scml2020.components.simulation import FactorySimulator
 
 PROCESSES = 5

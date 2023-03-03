@@ -1,28 +1,23 @@
 """Implements the world class for the SCML2020 world """
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from negmas import Agent
-from negmas import Breach
-from negmas import Contract
-from negmas import Issue
-from negmas import MechanismState
-from negmas import Negotiator
-from negmas import NegotiatorMechanismInterface
-from negmas import RenegotiationRequest
-from negmas import make_issue
-from negmas.helpers import get_full_type_name
-from negmas.helpers import instantiate
+from negmas import (
+    Agent,
+    Breach,
+    Contract,
+    Issue,
+    MechanismState,
+    Negotiator,
+    NegotiatorMechanismInterface,
+    RenegotiationRequest,
+    make_issue,
+)
+from negmas.helpers import get_full_type_name, instantiate
 from negmas.situated import Adapter
 
 from ..oneshot.agent import OneShotAgent
-from ..oneshot.common import OneShotProfile
-from ..oneshot.common import OneShotState
+from ..oneshot.common import OneShotProfile, OneShotState
 from ..oneshot.mixins import OneShotUFunCreatorMixin
 from .components.production import DemandDrivenProductionStrategy
 from .components.signing import SignAll

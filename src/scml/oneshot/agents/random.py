@@ -1,16 +1,15 @@
 import random
-from typing import Dict
-from typing import Optional
+from typing import Dict, Optional
 
-from negmas import MechanismState
-from negmas import ResponseType
+from negmas import MechanismState, ResponseType
 from negmas.outcomes import Outcome
-from negmas.sao import SAOResponse
-from negmas.sao import SAOState
+from negmas.sao import SAOResponse, SAOState
 
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agent import OneShotSingleAgreementAgent
-from scml.oneshot.agent import OneShotSyncAgent
+from scml.oneshot.agent import (
+    OneShotAgent,
+    OneShotSingleAgreementAgent,
+    OneShotSyncAgent,
+)
 
 __all__ = ["RandomOneShotAgent", "SyncRandomOneShotAgent", "SingleAgreementRandomAgent"]
 

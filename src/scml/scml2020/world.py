@@ -7,21 +7,21 @@ import logging
 import math
 import random
 import sys
-from collections import Counter
-from collections import defaultdict
-from collections import namedtuple
+from collections import Counter, defaultdict, namedtuple
 from dataclasses import dataclass
-from typing import Any
-from typing import Callable
-from typing import Collection
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
-from typing import Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 import networkx as nx
 import numpy as np
@@ -29,50 +29,49 @@ import pandas as pd
 from matplotlib.axis import Axis
 
 # from negmas import Adapter
-from negmas import Action
-from negmas import Agent
-from negmas import Breach
-from negmas import Contract
-from negmas.helpers import get_class
-from negmas.helpers import get_full_type_name
-from negmas.helpers import instantiate
-from negmas.helpers import unique_name
-from negmas.situated import DEFAULT_EDGE_TYPES
-from negmas.situated import BreachProcessing
-from negmas.situated import Operations
-from negmas.situated import TimeInAgreementMixin
-from negmas.situated import World
+from negmas import Action, Agent, Breach, Contract
+from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
+from negmas.situated import (
+    DEFAULT_EDGE_TYPES,
+    BreachProcessing,
+    Operations,
+    TimeInAgreementMixin,
+    World,
+)
 
 from scml.scml2019.utils import _realin
 
-from ..common import distribute_quantities
-from ..common import fraction_cut
-from ..common import integer_cut
-from ..common import intin
-from ..common import make_array
-from ..common import realin
+from ..common import (
+    distribute_quantities,
+    fraction_cut,
+    integer_cut,
+    intin,
+    make_array,
+    realin,
+)
 from ..oneshot.agent import OneShotAgent
-from .agent import OneShotAdapter
-from .agent import SCML2020Agent
-from .agent import _SystemAgent
+from .agent import OneShotAdapter, SCML2020Agent, _SystemAgent
 from .awi import AWI
-from .common import COMPENSATION_ID
-from .common import INFINITE_COST
-from .common import NO_COMMAND
-from .common import SYSTEM_BUYER_ID
-from .common import SYSTEM_SELLER_ID
-from .common import ContractInfo
-from .common import ExogenousContract
-from .common import FactoryProfile
-from .common import Failure
-from .common import FinancialReport
-from .common import is_system_agent
+from .common import (
+    COMPENSATION_ID,
+    INFINITE_COST,
+    NO_COMMAND,
+    SYSTEM_BUYER_ID,
+    SYSTEM_SELLER_ID,
+    ContractInfo,
+    ExogenousContract,
+    FactoryProfile,
+    Failure,
+    FinancialReport,
+    is_system_agent,
+)
 from .factory import Factory
 
 __all__ = [
     "SCML2020World",
     "SCML2021World",
     "SCML2022World",
+    "SCML2023World",
     "Failure",
     "AWI",
 ]
@@ -2989,4 +2988,8 @@ class SCML2021World(SCML2020World):
 
 
 class SCML2022World(SCML2021World):
+    pass
+
+
+class SCML2023World(SCML2022World):
     pass

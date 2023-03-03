@@ -1,15 +1,15 @@
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 from negmas import Contract
 
-from scml.scml2020.common import ANY_LINE
-from scml.scml2020.common import is_system_agent
+from scml.scml2020.common import ANY_LINE, is_system_agent
 from scml.scml2020.components import SignAllPossible
-from scml.scml2020.components.prediction import FixedTradePredictionStrategy
-from scml.scml2020.components.prediction import MarketAwareTradePredictionStrategy
-from scml.scml2020.components.prediction import MeanERPStrategy
+from scml.scml2020.components.prediction import (
+    FixedTradePredictionStrategy,
+    MarketAwareTradePredictionStrategy,
+    MeanERPStrategy,
+)
 
 __all__ = [
     "TradingStrategy",

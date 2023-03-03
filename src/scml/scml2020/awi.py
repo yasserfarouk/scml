@@ -1,28 +1,26 @@
 """
 Implements the Agent-World-Interface for SCML2020 worlds
 """
-from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
-from negmas import AgentWorldInterface
-from negmas import ControlledSAONegotiator
-from negmas import Negotiator
-from negmas import SAOController
-from negmas import SAONegotiator
-from negmas import make_issue
+from negmas import (
+    AgentWorldInterface,
+    ControlledSAONegotiator,
+    Negotiator,
+    SAOController,
+    SAONegotiator,
+    make_issue,
+)
 
-from .common import ANY_LINE
-from .common import ANY_STEP
-from .common import FactoryProfile
-from .common import FactoryState
-from .common import FinancialReport
-from .common import is_system_agent
+from .common import (
+    ANY_LINE,
+    ANY_STEP,
+    FactoryProfile,
+    FactoryState,
+    FinancialReport,
+    is_system_agent,
+)
 
 __all__ = [
     "AWI",

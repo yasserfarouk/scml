@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .common import QUANTITY
-from .common import UNIT_PRICE
+from .common import QUANTITY, UNIT_PRICE
 from .ufun import OneShotUFun
 
 if TYPE_CHECKING:

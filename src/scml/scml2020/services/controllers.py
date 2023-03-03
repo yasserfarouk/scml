@@ -1,40 +1,34 @@
 import random
 from collections import defaultdict
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
-from negmas import AgentWorldInterface
-from negmas import ControlledNegotiator
-from negmas import LinearUtilityFunction
-from negmas import MechanismState
-from negmas import Outcome
-from negmas import PolyAspiration
-from negmas import ResponseType
-from negmas import UtilityFunction
-from negmas import make_issue
-from negmas import make_os
-from negmas import outcome_is_valid
+from negmas import (
+    AgentWorldInterface,
+    ControlledNegotiator,
+    LinearUtilityFunction,
+    MechanismState,
+    Outcome,
+    PolyAspiration,
+    ResponseType,
+    UtilityFunction,
+    make_issue,
+    make_os,
+    outcome_is_valid,
+)
 from negmas.common import NegotiatorMechanismInterface
-from negmas.events import Notification
-from negmas.events import Notifier
+from negmas.events import Notification, Notifier
 from negmas.helpers import instantiate
-from negmas.sao import SAOController
-from negmas.sao import SAONegotiator
-from negmas.sao import SAOResponse
-from negmas.sao import SAOState
-from negmas.sao import SAOSyncController
+from negmas.sao import (
+    SAOController,
+    SAONegotiator,
+    SAOResponse,
+    SAOState,
+    SAOSyncController,
+)
 from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
-from scml.scml2020.common import QUANTITY
-from scml.scml2020.common import TIME
-from scml.scml2020.common import UNIT_PRICE
+from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
 __all__ = ["StepController", "SyncController"]
 

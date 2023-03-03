@@ -2,24 +2,15 @@
 
 import math
 import sys
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import contextmanager
-from dataclasses import dataclass
-from dataclasses import field
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from scml.scml2020 import ANY_LINE
-from scml.scml2020 import ANY_STEP
-from scml.scml2020 import NO_COMMAND
-from scml.scml2020 import FactoryProfile
+from scml.scml2020 import ANY_LINE, ANY_STEP, NO_COMMAND, FactoryProfile
 
 __all__ = ["FactorySimulator", "transaction", "temporary_transaction"]
 

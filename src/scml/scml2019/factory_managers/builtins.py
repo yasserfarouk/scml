@@ -1,52 +1,55 @@
 import itertools
 import warnings
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from negmas import Breach
-from negmas import Contract
-from negmas import MechanismState
-from negmas import Negotiator
-from negmas import NegotiatorMechanismInterface
-from negmas import RenegotiationRequest
-from negmas import UtilityFunction
-from negmas import Value
+from negmas import (
+    Breach,
+    Contract,
+    MechanismState,
+    Negotiator,
+    NegotiatorMechanismInterface,
+    RenegotiationRequest,
+    UtilityFunction,
+    Value,
+)
 from negmas.events import Notification
 from negmas.helpers import get_class
-from negmas.outcomes import Issue
-from negmas.outcomes import Outcome
+from negmas.outcomes import Issue, Outcome
 
 from scml.scml2019.agent import SCML2019Agent
 from scml.scml2019.awi import SCMLAWI
-from scml.scml2019.common import CFP
-from scml.scml2019.common import DEFAULT_NEGOTIATOR
-from scml.scml2019.common import Factory
-from scml.scml2019.common import FinancialReport
-from scml.scml2019.common import Loan
-from scml.scml2019.common import ProductionFailure
-from scml.scml2019.common import ProductionReport
-from scml.scml2019.common import SCMLAgreement
-from scml.scml2019.consumers import ConsumptionProfile
-from scml.scml2019.consumers import JustInTimeConsumer
-from scml.scml2019.schedulers import GreedyScheduler
-from scml.scml2019.schedulers import ScheduleInfo
-from scml.scml2019.schedulers import Scheduler
-from scml.scml2019.simulators import FactorySimulator
-from scml.scml2019.simulators import FastFactorySimulator
-from scml.scml2019.simulators import storage_as_array
-from scml.scml2019.simulators import temporary_transaction
+from scml.scml2019.common import (
+    CFP,
+    DEFAULT_NEGOTIATOR,
+    Factory,
+    FinancialReport,
+    Loan,
+    ProductionFailure,
+    ProductionReport,
+    SCMLAgreement,
+)
+from scml.scml2019.consumers import ConsumptionProfile, JustInTimeConsumer
+from scml.scml2019.schedulers import GreedyScheduler, ScheduleInfo, Scheduler
+from scml.scml2019.simulators import (
+    FactorySimulator,
+    FastFactorySimulator,
+    storage_as_array,
+    temporary_transaction,
+)
 
 if True:
-    from typing import Any
-    from typing import Callable
-    from typing import Collection
-    from typing import Dict
-    from typing import Iterable
-    from typing import List
-    from typing import Optional
-    from typing import Type
-    from typing import Union
+    from typing import (
+        Any,
+        Callable,
+        Collection,
+        Dict,
+        Iterable,
+        List,
+        Optional,
+        Type,
+        Union,
+    )
 
 __all__ = [
     "FactoryManager",

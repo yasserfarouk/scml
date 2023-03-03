@@ -5,64 +5,57 @@ import math
 import sys
 import uuid
 from collections import defaultdict
-from random import choices
-from random import randint
-from random import random
-from random import sample
-from random import shuffle
-from typing import Any
-from typing import Callable
-from typing import Collection
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Set
-from typing import Tuple
-from typing import Type
-from typing import Union
+from random import choices, randint, random, sample, shuffle
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 import yaml
-from negmas import Negotiator
-from negmas import NegotiatorMechanismInterface
-from negmas import UtilityFunction
-from negmas.events import Event
-from negmas.events import EventSource
-from negmas.helpers import instantiate
-from negmas.helpers import unique_name
+from negmas import Negotiator, NegotiatorMechanismInterface, UtilityFunction
+from negmas.events import Event, EventSource
+from negmas.helpers import instantiate, unique_name
 from negmas.outcomes import Issue
-from negmas.situated import Action
-from negmas.situated import Agent
-from negmas.situated import Breach
-from negmas.situated import BreachProcessing
-from negmas.situated import Contract
-from negmas.situated import Operations
-from negmas.situated import TimeInAgreementMixin
-from negmas.situated import World
+from negmas.situated import (
+    Action,
+    Agent,
+    Breach,
+    BreachProcessing,
+    Contract,
+    Operations,
+    TimeInAgreementMixin,
+    World,
+)
 
 from .agent import SCML2019Agent
 from .bank import DefaultBank
-from .common import DEFAULT_NEGOTIATOR
-from .common import Factory
-from .common import FactoryState
-from .common import FinancialReport
-from .common import InputOutput
-from .common import Job
-from .common import ManufacturingProfile
-from .common import Process
-from .common import Product
-from .common import SCMLAgreement
-from .consumers import Consumer
-from .consumers import ConsumptionProfile
-from .consumers import JustInTimeConsumer
-from .factory_managers.builtins import FactoryManager
-from .factory_managers.builtins import GreedyFactoryManager
+from .common import (
+    DEFAULT_NEGOTIATOR,
+    Factory,
+    FactoryState,
+    FinancialReport,
+    InputOutput,
+    Job,
+    ManufacturingProfile,
+    Process,
+    Product,
+    SCMLAgreement,
+)
+from .consumers import Consumer, ConsumptionProfile, JustInTimeConsumer
+from .factory_managers.builtins import FactoryManager, GreedyFactoryManager
 from .insurance import DefaultInsuranceCompany
-from .miners import Miner
-from .miners import MiningProfile
-from .miners import ReactiveMiner
+from .miners import Miner, MiningProfile, ReactiveMiner
 
 CONSUMER_SIMULATION_PRIORITY = 1
 MANAGER_SIMULATION_PRIORITY = 2

@@ -1,9 +1,6 @@
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
-from negmas import Adapter
-from negmas import Breach
-from negmas import Contract
+from negmas import Adapter, Breach, Contract
 
 from .helper import AWIHelper
 from .sysagents import DefaultOneShotAdapter

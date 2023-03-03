@@ -3,13 +3,17 @@ from pathlib import Path
 import pytest
 
 from scml.scml2020.agents import DoNothingAgent
-from scml.scml2020.utils import anac2020_collusion
-from scml.scml2020.utils import anac2020_std
-from scml.scml2020.utils import anac2021_collusion
-from scml.scml2020.utils import anac2021_std
-from tests.switches import SCML_RUN2020
-from tests.switches import SCML_RUN_COLLUSION_TOURNAMENTS
-from tests.switches import SCML_RUN_STD_TOURNAMENTS
+from scml.scml2020.utils import (
+    anac2020_collusion,
+    anac2020_std,
+    anac2021_collusion,
+    anac2021_std,
+)
+from tests.switches import (
+    SCML_RUN2020,
+    SCML_RUN_COLLUSION_TOURNAMENTS,
+    SCML_RUN_STD_TOURNAMENTS,
+)
 
 BaseAgent = DoNothingAgent
 

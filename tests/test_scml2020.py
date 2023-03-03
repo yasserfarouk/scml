@@ -2,18 +2,19 @@ import random
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given
-from hypothesis import settings
+from hypothesis import given, settings
 from negmas import save_stats
 from negmas.helpers import unique_name
 from pytest import mark
 
-from scml.scml2020 import BuyCheapSellExpensiveAgent
-from scml.scml2020 import DoNothingAgent
-from scml.scml2020 import RandomAgent
-from scml.scml2020 import SCML2020World
-from scml.scml2020 import builtin_agent_types
-from scml.scml2020 import is_system_agent
+from scml.scml2020 import (
+    BuyCheapSellExpensiveAgent,
+    DoNothingAgent,
+    RandomAgent,
+    SCML2020World,
+    builtin_agent_types,
+    is_system_agent,
+)
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 from tests.switches import SCML_RUN2020
 

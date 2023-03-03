@@ -2,22 +2,17 @@ import os
 import sys
 import time
 from contextlib import contextmanager
-from typing import Dict
-from typing import Tuple
+from typing import Dict, Tuple
 
 import pytest
 from negmas import ResponseType
-from negmas.helpers import force_single_thread
-from negmas.helpers import humanize_time
+from negmas.helpers import force_single_thread, humanize_time
 from negmas.sao import SAOResponse
-from pytest import mark
-from pytest import raises
+from pytest import mark, raises
 
 from scml.oneshot.agent import OneShotSyncAgent
 from scml.oneshot.agents import RandomOneShotAgent
-from scml.oneshot.common import QUANTITY
-from scml.oneshot.common import TIME
-from scml.oneshot.common import UNIT_PRICE
+from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
 
 
 class MySyncAgent(OneShotSyncAgent):

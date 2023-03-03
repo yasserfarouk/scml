@@ -16,36 +16,31 @@ Remarks:
 from __future__ import annotations
 
 import warnings
-from abc import ABC
-from abc import abstractmethod
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from negmas import Contract
-from negmas import ControlledSAONegotiator
-from negmas import Entity
-from negmas import Issue
-from negmas import MechanismState
-from negmas import NegotiatorMechanismInterface
-from negmas import Outcome
-from negmas import ResponseType
-from negmas import SAOController
-from negmas import SAOResponse
-from negmas import SAOSingleAgreementController
-from negmas import SAOState
-from negmas import SAOSyncController
+from negmas import (
+    Contract,
+    ControlledSAONegotiator,
+    Entity,
+    Issue,
+    MechanismState,
+    NegotiatorMechanismInterface,
+    Outcome,
+    ResponseType,
+    SAOController,
+    SAOResponse,
+    SAOSingleAgreementController,
+    SAOState,
+    SAOSyncController,
+)
 from negmas.helpers import get_class
 from negmas.preferences import UtilityFunction
-from negmas.sao import SAONMI
-from negmas.sao import SAONegotiator
+from negmas.sao import SAONMI, SAONegotiator
 from negmas.situated import RunningNegotiationInfo
 
 if TYPE_CHECKING:
-    from scml.oneshot import OneShotAWI
-    from scml.oneshot import OneShotUFun
+    from scml.oneshot import OneShotAWI, OneShotUFun
 __all__ = [
     "OneShotAgent",
     "OneShotSyncAgent",

@@ -5,9 +5,7 @@ __all__ = [
     "TradeDrivenProductionStrategy",
 ]
 
-from typing import Dict
-from typing import List
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 from negmas import Contract

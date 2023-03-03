@@ -3,18 +3,18 @@ import itertools
 import sys
 
 import pytest
-from pytest import fixture
-from pytest import mark
+from pytest import fixture, mark
 
-from scml.scml2019 import InputOutput
-from scml.scml2019 import Job
-from scml.scml2019 import ManufacturingProfile
-from scml.scml2019 import Process
-from scml.scml2019 import Product
-from scml.scml2019 import RunningCommandInfo
+from scml.scml2019 import (
+    InputOutput,
+    Job,
+    ManufacturingProfile,
+    Process,
+    Product,
+    RunningCommandInfo,
+)
 from scml.scml2019.common import NO_PRODUCTION
-from scml.scml2019.simulators import FastFactorySimulator
-from scml.scml2019.simulators import SlowFactorySimulator
+from scml.scml2019.simulators import FastFactorySimulator, SlowFactorySimulator
 from scml.scml2019.world import Factory
 
 from .switches import *

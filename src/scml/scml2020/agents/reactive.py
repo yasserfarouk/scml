@@ -6,8 +6,10 @@ from typing import Tuple
 
 import numpy as np
 
-from scml.scml2020.components import FixedTradePredictionStrategy
-from scml.scml2020.components import StepNegotiationManager
+from scml.scml2020.components import (
+    FixedTradePredictionStrategy,
+    StepNegotiationManager,
+)
 from scml.scml2020.components.production import TradeDrivenProductionStrategy
 
 from ..components.signing import KeepOnlyGoodPrices

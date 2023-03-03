@@ -7,8 +7,7 @@ import traceback
 import warnings
 from functools import partial
 from pathlib import Path
-from pprint import pformat
-from pprint import pprint
+from pprint import pformat, pprint
 from time import perf_counter
 
 import click
@@ -19,25 +18,25 @@ import pandas as pd
 import progressbar
 import yaml
 from negmas import save_stats
-from negmas.helpers import humanize_time
-from negmas.helpers import load
-from negmas.helpers import unique_name
-from negmas.tournaments import create_tournament
-from negmas.tournaments import evaluate_tournament
-from negmas.tournaments import run_tournament
+from negmas.helpers import humanize_time, load, unique_name
+from negmas.tournaments import create_tournament, evaluate_tournament, run_tournament
 from tabulate import tabulate
 
 import scml
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
-from scml.scml2019.utils import anac2019_assigner
-from scml.scml2019.utils import anac2019_config_generator
-from scml.scml2019.utils import anac2019_sabotage_assigner
-from scml.scml2019.utils import anac2019_sabotage_config_generator
-from scml.scml2019.utils import anac2019_world_generator
-from scml.scml2019.utils import sabotage_effectiveness
-from scml.scml2020.utils import anac2020_assigner
-from scml.scml2020.utils import anac2020_config_generator
-from scml.scml2020.utils import anac2020_world_generator
+from scml.scml2019.utils import (
+    anac2019_assigner,
+    anac2019_config_generator,
+    anac2019_sabotage_assigner,
+    anac2019_sabotage_config_generator,
+    anac2019_world_generator,
+    sabotage_effectiveness,
+)
+from scml.scml2020.utils import (
+    anac2020_world_generator,
+    anac_assigner_std,
+    anac_config_generator_std,
+)
 
 try:
     from .vendor.quick.quick import gui_option
@@ -763,8 +762,8 @@ def create(
             verbose=verbosity > 0,
             n_agents_per_competitor=1,
             world_generator=anac2020_world_generator,
-            config_generator=anac2020_config_generator,
-            config_assigner=anac2020_assigner,
+            config_generator=anac_config_generator_std,
+            config_assigner=anac_assigner_std,
             score_calculator=scml.scml2020.utils.balance_calculator2020,
             min_factories_per_level=factories[0],
             max_factories_per_level=factories[1],

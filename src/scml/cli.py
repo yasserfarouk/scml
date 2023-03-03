@@ -7,8 +7,7 @@ import traceback
 from collections import defaultdict
 from functools import partial
 from pathlib import Path
-from pprint import pformat
-from pprint import pprint
+from pprint import pformat, pprint
 from time import perf_counter
 from typing import List
 
@@ -20,28 +19,29 @@ import pandas as pd
 import tqdm
 import yaml
 from negmas import save_stats
-from negmas.helpers import humanize_time
-from negmas.helpers import unique_name
+from negmas.helpers import humanize_time, unique_name
 from negmas.helpers.inout import load
 from tabulate import tabulate
 
 import scml
-from scml.oneshot import SCML2020OneShotWorld
-from scml.scml2019 import FactoryManager
-from scml.scml2019 import SCML2019World
-from scml.scml2019.utils import DefaultGreedyManager
-from scml.scml2019.utils import anac2019_collusion
-from scml.scml2019.utils import anac2019_sabotage
-from scml.scml2019.utils import anac2019_std
-from scml.scml2020 import SCML2020Agent
-from scml.scml2020 import SCML2020World
-from scml.scml2020 import SCML2021World
-from scml.scml2020 import is_system_agent
-from scml.scml2020.utils import anac2020_collusion
-from scml.scml2020.utils import anac2020_std
-from scml.scml2020.utils import anac2021_collusion
-from scml.scml2020.utils import anac2021_oneshot
-from scml.scml2020.utils import anac2021_std
+from scml.oneshot import SCML2020OneShotWorld, SCML2023OneShotWorld
+from scml.oneshot.world import SCML2021OneShotWorld, SCML2022OneShotWorld
+from scml.scml2019 import FactoryManager, SCML2019World
+from scml.scml2019.utils import (
+    DefaultGreedyManager,
+    anac2019_collusion,
+    anac2019_sabotage,
+    anac2019_std,
+)
+from scml.scml2020 import SCML2020Agent, is_system_agent
+from scml.scml2020.utils import (
+    anac2020_collusion,
+    anac2020_std,
+    anac2021_collusion,
+    anac2021_oneshot,
+    anac2021_std,
+)
+from scml.scml2020.world import SCML2020World, SCML2021World, SCML2023World
 
 try:
     from scml.vendor.quick.quick import gui_option
@@ -1467,6 +1467,662 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
     help="The method used for world generation",
 )
 @click_config_file.configuration_option()
+def run2023(
+    steps,
+    time,
+    competitors,
+    log,
+    compact,
+    log_ufuns,
+    log_negs,
+    raise_exceptions,
+    path,
+    world_config,
+    show_contracts,
+    oneshot,
+    name,
+    method,
+):
+    if not competitors:
+        competitors = (
+            (DEFAULT_ONESHOT + ";" + ";".join(DEFAULT_ONESHOT_NONCOMPETITORS))
+            if oneshot
+            else (DEFAULT_STD_2021 + ";" + ";".join(DEFAULT_2021_NONCOMPETITORS))
+        )
+    world_type = SCML2023OneShotWorld if oneshot else SCML2023World
+    if time <= 0:
+        time = None
+    kwargs = {"n_steps": steps}
+    if world_config is not None and len(world_config) > 0:
+        for wc in world_config:
+            kwargs.update(load(wc))
+    if len(path) > 0:
+        sys.path.append(path)
+
+    params = kwargs
+
+    if compact:
+        log_ufuns = False
+        log_negs = False
+
+    log_dir = _path(log)
+
+    world_name = (
+        unique_name(
+            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
+        )
+        if not name
+        else name
+    )
+    log_dir = log_dir / world_name
+    log_dir = log_dir.absolute()
+    os.makedirs(log_dir, exist_ok=True)
+
+    exception = None
+
+    def _no_default(s):
+        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
+            oneshot and not (s.startswith("scml.oneshot.agents."))
+        )
+
+    all_competitors = competitors.split(";")
+    for i, cp in enumerate(all_competitors):
+        if "." not in cp:
+            if oneshot:
+                all_competitors[i] = "scml.oneshot.agents." + cp
+            else:
+                all_competitors[i] = "scml.scml2020.agents." + cp
+    all_competitors_params = [dict() for _ in all_competitors]
+    world = world_type(
+        **world_type.generate(
+            time_limit=time,
+            compact=compact,
+            log_ufuns=log_ufuns,
+            agent_types=all_competitors,
+            agent_params=all_competitors_params,
+            log_negotiations=log_negs,
+            log_folder=log_dir,
+            name=world_name,
+            ignore_agent_exceptions=not raise_exceptions,
+            ignore_contract_execution_exceptions=not raise_exceptions,
+            method=method,
+            **kwargs,
+        )
+    )
+    failed = False
+    strt = perf_counter()
+    try:
+        for i in tqdm.tqdm(range(world.n_steps)):
+            elapsed = perf_counter() - strt
+            if world.time_limit is not None and elapsed >= world.time_limit:
+                break
+            if not world.step():
+                break
+    except Exception:
+        exception = traceback.format_exc()
+        failed = True
+    elapsed = perf_counter() - strt
+
+    def print_and_log(s):
+        world.logdebug(s)
+        print(s)
+
+    world.logdebug(f"{pformat(world.stats, compact=True)}")
+    world.logdebug(
+        f"=================================================\n"
+        f"steps: {steps}, time: {time}\n"
+        f"=================================================="
+    )
+
+    save_stats(world=world, log_dir=log_dir, params=params)
+
+    if len(world.saved_contracts) > 0:
+        data = pd.DataFrame(world.saved_contracts)
+        data = data.sort_values(["delivery_time"])
+        data = data.loc[
+            data.signed_at >= 0,
+            [
+                "seller_name",
+                "buyer_name",
+                "delivery_time",
+                "unit_price",
+                "quantity",
+                "product_name",
+                "n_neg_steps",
+                "signed_at",
+                "executed_at",
+            ],
+        ]
+        data.columns = [
+            "seller",
+            "buyer",
+            "t",
+            "price",
+            "q",
+            "product",
+            "steps",
+            "signed",
+            "executed",
+        ]
+        data["executed"] = data["signed"] = data["t"]
+        if show_contracts:
+            print_and_log(tabulate(data, headers="keys", tablefmt="psql"))
+
+        d2 = (
+            data.loc[(~(data["executed"].isnull())) & (data["executed"] > -1), :]
+            .groupby(["product"])
+            .apply(
+                lambda x: pd.DataFrame(
+                    [
+                        {
+                            "uprice": np.sum(x["price"] * x["q"]) / np.sum(x["q"]),
+                            "quantity": np.sum(x["q"]),
+                        }
+                    ]
+                )
+            )
+        )
+        d2 = d2.reset_index().sort_values(["product"])
+        d2["Catalog"] = world.catalog_prices[
+            d2["product"].str.slice(start=-1).astype(int).values
+        ]
+        d2["Trading"] = world.trading_prices[
+            d2["product"].str.slice(start=-1).astype(int).values
+        ]
+        d2["Product"] = d2["product"]
+        d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
+
+        d2.columns = ["Product", "Quantity", "Avg. Price", "Catalog", "Trading"]
+        print_and_log(tabulate(d2, headers="keys", tablefmt="psql"))
+
+        n_executed = sum(world.stats["n_contracts_executed"])
+        n_negs = sum(world.stats["n_negotiations"])
+        n_contracts = len(world.saved_contracts)
+        try:
+            agent_scores = sorted(
+                (
+                    [_.name, world.scores()[_.id]]
+                    for _ in world.agents.values()
+                    if not is_system_agent(_)
+                ),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            agent_scores = pd.DataFrame(
+                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
+            )
+            print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
+        except:
+            pass
+        winners = [f"{_.name} gaining {world.scores()[_.id]}" for _ in world.winners]
+        print_and_log(
+            f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
+            f"{world.agreement_fraction:0.0%}]"
+            f" (rounds/successful negotiation: {world.n_negotiation_rounds_successful:5.2f}, "
+            f"rounds/broken negotiation: {world.n_negotiation_rounds_failed:5.2f})"
+        )
+        total = (
+            world.contract_dropping_fraction
+            + world.contract_nullification_fraction
+            + world.contract_err_fraction
+            + world.breach_fraction
+            + world.contract_execution_fraction
+        )
+        n_cancelled = (
+            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
+        )
+        n_signed = n_contracts - n_cancelled
+        n_dropped = int(round(n_signed * world.contract_dropping_fraction))
+        n_nullified = int(round(n_signed * world.contract_nullification_fraction))
+        n_erred = int(round(n_signed * world.contract_err_fraction))
+        n_breached = int(round(n_signed * world.breach_fraction))
+        n_executed = int(round(n_signed * world.contract_execution_fraction))
+        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
+        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        n_exogenous = len(exogenous)
+        n_negotiated = len(negotiated)
+        n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
+        n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
+        print_and_log(
+            f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
+            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+        )
+        print_and_log(
+            f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
+            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+        )
+        print_and_log(
+            f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
+            f" were signed ({1-world.cancellation_rate:0.1%})"
+        )
+        print_and_log(
+            f"Executed: {world.contract_execution_fraction:0.1%}"
+            f", Breached: {world.breach_fraction:0.1%}"
+            f", Erred: {world.contract_err_fraction:0.1%}"
+            f", Nullified: {world.contract_nullification_fraction:0.1%}"
+            f", Dropped: {world.contract_dropping_fraction:0.1%}"
+            f" (Sum:{total: 0.0%})\n"
+            f"Negotiated: {n_negs} Concluded: {n_contracts} Signed: {n_signed} Dropped: {n_dropped}  "
+            f"Nullified: {n_nullified} "
+            f"Erred {n_erred} Breached {n_breached} (b. level {world.breach_level:0.1%}) => Executed: {n_executed}\n"
+            f"Business size: "
+            f"{world.business_size}\n"
+            f"Welfare: {world.welfare(True)} ({world.relative_welfare(True):5.03%})\n"
+            f"Winners: {winners}\n"
+            f"Running Time {humanize_time(elapsed)}"
+        )
+    else:
+        print_and_log("No contracts! :-(")
+        print_and_log(f"Running Time {humanize_time(elapsed)}")
+
+    if failed:
+        print(exception)
+        world.logdebug(exception)
+        print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
+    else:
+        save_run_info(world.name, log_dir, "world")
+
+
+@main.command(help="Run an SCML2021 world simulation")
+@click.option("--steps", default=10, type=int, help="Number of steps.")
+@click.option(
+    "--competitors",
+    default=None,
+    help="A semicolon (;) separated list of agent types to use for the competition.",
+)
+@click.option(
+    "--log",
+    type=click.Path(file_okay=False, dir_okay=True),
+    default=default_world_path(),
+    help="Default location to save logs (A folder will be created under it)",
+)
+@click.option(
+    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
+)
+@click.option(
+    "--log-ufuns/--no-ufun-logs",
+    default=False,
+    help="Log ufuns into their own CSV file. Only effective if --debug is given",
+)
+@click.option(
+    "--log-negs/--no-neg-logs",
+    default=True,
+    help="Log all negotiations. Only effective if --debug is given",
+)
+@click.option(
+    "--compact/--debug",
+    default=False,
+    help="If True, effort is exerted to reduce the memory footprint which"
+    "includes reducing logs dramatically.",
+)
+@click.option(
+    "--show-contracts/--no-contracts",
+    default=True,
+    help="Show or do not show all signed contracts",
+)
+@click.option(
+    "--raise-exceptions/--ignore-exceptions",
+    default=True,
+    help="Whether to ignore agent exceptions",
+)
+@click.option(
+    "--oneshot/--multishot",
+    default=False,
+    help="Whether to run a one-shot game or a standard/collusion game",
+)
+@click.option(
+    "--path",
+    default="",
+    help="A path to be added to PYTHONPATH in which all competitors are stored. You can path a : separated list of "
+    "paths on linux/mac and a ; separated list in windows",
+)
+@click.option(
+    "--name",
+    default="",
+    help="World name. Used as the folder name in which it will be saved",
+)
+@click.option(
+    "--world-config",
+    type=click.Path(dir_okay=False, file_okay=True),
+    default=None,
+    multiple=False,
+    help="A file to load extra configuration parameters for world simulations from.",
+)
+@click.option(
+    "--method",
+    type=click.Choice(["guaranteed_profit", "profitable"]),
+    default="profitable",
+    help="The method used for world generation",
+)
+@click_config_file.configuration_option()
+def run2022(
+    steps,
+    time,
+    competitors,
+    log,
+    compact,
+    log_ufuns,
+    log_negs,
+    raise_exceptions,
+    path,
+    world_config,
+    show_contracts,
+    oneshot,
+    name,
+    method,
+):
+    if not competitors:
+        competitors = (
+            (DEFAULT_ONESHOT + ";" + ";".join(DEFAULT_ONESHOT_NONCOMPETITORS))
+            if oneshot
+            else (DEFAULT_STD_2021 + ";" + ";".join(DEFAULT_2021_NONCOMPETITORS))
+        )
+    world_type = SCML2022OneShotWorld if oneshot else SCML2022World
+    if time <= 0:
+        time = None
+    kwargs = {"n_steps": steps}
+    if world_config is not None and len(world_config) > 0:
+        for wc in world_config:
+            kwargs.update(load(wc))
+    if len(path) > 0:
+        sys.path.append(path)
+
+    params = kwargs
+
+    if compact:
+        log_ufuns = False
+        log_negs = False
+
+    log_dir = _path(log)
+
+    world_name = (
+        unique_name(
+            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
+        )
+        if not name
+        else name
+    )
+    log_dir = log_dir / world_name
+    log_dir = log_dir.absolute()
+    os.makedirs(log_dir, exist_ok=True)
+
+    exception = None
+
+    def _no_default(s):
+        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
+            oneshot and not (s.startswith("scml.oneshot.agents."))
+        )
+
+    all_competitors = competitors.split(";")
+    for i, cp in enumerate(all_competitors):
+        if "." not in cp:
+            if oneshot:
+                all_competitors[i] = "scml.oneshot.agents." + cp
+            else:
+                all_competitors[i] = "scml.scml2020.agents." + cp
+    all_competitors_params = [dict() for _ in all_competitors]
+    world = world_type(
+        **world_type.generate(
+            time_limit=time,
+            compact=compact,
+            log_ufuns=log_ufuns,
+            agent_types=all_competitors,
+            agent_params=all_competitors_params,
+            log_negotiations=log_negs,
+            log_folder=log_dir,
+            name=world_name,
+            ignore_agent_exceptions=not raise_exceptions,
+            ignore_contract_execution_exceptions=not raise_exceptions,
+            method=method,
+            **kwargs,
+        )
+    )
+    failed = False
+    strt = perf_counter()
+    try:
+        for i in tqdm.tqdm(range(world.n_steps)):
+            elapsed = perf_counter() - strt
+            if world.time_limit is not None and elapsed >= world.time_limit:
+                break
+            if not world.step():
+                break
+    except Exception:
+        exception = traceback.format_exc()
+        failed = True
+    elapsed = perf_counter() - strt
+
+    def print_and_log(s):
+        world.logdebug(s)
+        print(s)
+
+    world.logdebug(f"{pformat(world.stats, compact=True)}")
+    world.logdebug(
+        f"=================================================\n"
+        f"steps: {steps}, time: {time}\n"
+        f"=================================================="
+    )
+
+    save_stats(world=world, log_dir=log_dir, params=params)
+
+    if len(world.saved_contracts) > 0:
+        data = pd.DataFrame(world.saved_contracts)
+        data = data.sort_values(["delivery_time"])
+        data = data.loc[
+            data.signed_at >= 0,
+            [
+                "seller_name",
+                "buyer_name",
+                "delivery_time",
+                "unit_price",
+                "quantity",
+                "product_name",
+                "n_neg_steps",
+                "signed_at",
+                "executed_at",
+            ],
+        ]
+        data.columns = [
+            "seller",
+            "buyer",
+            "t",
+            "price",
+            "q",
+            "product",
+            "steps",
+            "signed",
+            "executed",
+        ]
+        data["executed"] = data["signed"] = data["t"]
+        if show_contracts:
+            print_and_log(tabulate(data, headers="keys", tablefmt="psql"))
+
+        d2 = (
+            data.loc[(~(data["executed"].isnull())) & (data["executed"] > -1), :]
+            .groupby(["product"])
+            .apply(
+                lambda x: pd.DataFrame(
+                    [
+                        {
+                            "uprice": np.sum(x["price"] * x["q"]) / np.sum(x["q"]),
+                            "quantity": np.sum(x["q"]),
+                        }
+                    ]
+                )
+            )
+        )
+        d2 = d2.reset_index().sort_values(["product"])
+        d2["Catalog"] = world.catalog_prices[
+            d2["product"].str.slice(start=-1).astype(int).values
+        ]
+        d2["Trading"] = world.trading_prices[
+            d2["product"].str.slice(start=-1).astype(int).values
+        ]
+        d2["Product"] = d2["product"]
+        d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
+
+        d2.columns = ["Product", "Quantity", "Avg. Price", "Catalog", "Trading"]
+        print_and_log(tabulate(d2, headers="keys", tablefmt="psql"))
+
+        n_executed = sum(world.stats["n_contracts_executed"])
+        n_negs = sum(world.stats["n_negotiations"])
+        n_contracts = len(world.saved_contracts)
+        try:
+            agent_scores = sorted(
+                (
+                    [_.name, world.scores()[_.id]]
+                    for _ in world.agents.values()
+                    if not is_system_agent(_)
+                ),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            agent_scores = pd.DataFrame(
+                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
+            )
+            print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
+        except:
+            pass
+        winners = [f"{_.name} gaining {world.scores()[_.id]}" for _ in world.winners]
+        print_and_log(
+            f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
+            f"{world.agreement_fraction:0.0%}]"
+            f" (rounds/successful negotiation: {world.n_negotiation_rounds_successful:5.2f}, "
+            f"rounds/broken negotiation: {world.n_negotiation_rounds_failed:5.2f})"
+        )
+        total = (
+            world.contract_dropping_fraction
+            + world.contract_nullification_fraction
+            + world.contract_err_fraction
+            + world.breach_fraction
+            + world.contract_execution_fraction
+        )
+        n_cancelled = (
+            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
+        )
+        n_signed = n_contracts - n_cancelled
+        n_dropped = int(round(n_signed * world.contract_dropping_fraction))
+        n_nullified = int(round(n_signed * world.contract_nullification_fraction))
+        n_erred = int(round(n_signed * world.contract_err_fraction))
+        n_breached = int(round(n_signed * world.breach_fraction))
+        n_executed = int(round(n_signed * world.contract_execution_fraction))
+        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
+        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        n_exogenous = len(exogenous)
+        n_negotiated = len(negotiated)
+        n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
+        n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
+        print_and_log(
+            f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
+            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+        )
+        print_and_log(
+            f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
+            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+        )
+        print_and_log(
+            f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
+            f" were signed ({1-world.cancellation_rate:0.1%})"
+        )
+        print_and_log(
+            f"Executed: {world.contract_execution_fraction:0.1%}"
+            f", Breached: {world.breach_fraction:0.1%}"
+            f", Erred: {world.contract_err_fraction:0.1%}"
+            f", Nullified: {world.contract_nullification_fraction:0.1%}"
+            f", Dropped: {world.contract_dropping_fraction:0.1%}"
+            f" (Sum:{total: 0.0%})\n"
+            f"Negotiated: {n_negs} Concluded: {n_contracts} Signed: {n_signed} Dropped: {n_dropped}  "
+            f"Nullified: {n_nullified} "
+            f"Erred {n_erred} Breached {n_breached} (b. level {world.breach_level:0.1%}) => Executed: {n_executed}\n"
+            f"Business size: "
+            f"{world.business_size}\n"
+            f"Welfare: {world.welfare(True)} ({world.relative_welfare(True):5.03%})\n"
+            f"Winners: {winners}\n"
+            f"Running Time {humanize_time(elapsed)}"
+        )
+    else:
+        print_and_log("No contracts! :-(")
+        print_and_log(f"Running Time {humanize_time(elapsed)}")
+
+    if failed:
+        print(exception)
+        world.logdebug(exception)
+        print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
+    else:
+        save_run_info(world.name, log_dir, "world")
+
+
+@main.command(help="Run an SCML2021 world simulation")
+@click.option("--steps", default=10, type=int, help="Number of steps.")
+@click.option(
+    "--competitors",
+    default=None,
+    help="A semicolon (;) separated list of agent types to use for the competition.",
+)
+@click.option(
+    "--log",
+    type=click.Path(file_okay=False, dir_okay=True),
+    default=default_world_path(),
+    help="Default location to save logs (A folder will be created under it)",
+)
+@click.option(
+    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
+)
+@click.option(
+    "--log-ufuns/--no-ufun-logs",
+    default=False,
+    help="Log ufuns into their own CSV file. Only effective if --debug is given",
+)
+@click.option(
+    "--log-negs/--no-neg-logs",
+    default=True,
+    help="Log all negotiations. Only effective if --debug is given",
+)
+@click.option(
+    "--compact/--debug",
+    default=False,
+    help="If True, effort is exerted to reduce the memory footprint which"
+    "includes reducing logs dramatically.",
+)
+@click.option(
+    "--show-contracts/--no-contracts",
+    default=True,
+    help="Show or do not show all signed contracts",
+)
+@click.option(
+    "--raise-exceptions/--ignore-exceptions",
+    default=True,
+    help="Whether to ignore agent exceptions",
+)
+@click.option(
+    "--oneshot/--multishot",
+    default=False,
+    help="Whether to run a one-shot game or a standard/collusion game",
+)
+@click.option(
+    "--path",
+    default="",
+    help="A path to be added to PYTHONPATH in which all competitors are stored. You can path a : separated list of "
+    "paths on linux/mac and a ; separated list in windows",
+)
+@click.option(
+    "--name",
+    default="",
+    help="World name. Used as the folder name in which it will be saved",
+)
+@click.option(
+    "--world-config",
+    type=click.Path(dir_okay=False, file_okay=True),
+    default=None,
+    multiple=False,
+    help="A file to load extra configuration parameters for world simulations from.",
+)
+@click.option(
+    "--method",
+    type=click.Choice(["guaranteed_profit", "profitable"]),
+    default="profitable",
+    help="The method used for world generation",
+)
+@click_config_file.configuration_option()
 def run2021(
     steps,
     time,
@@ -1489,7 +2145,7 @@ def run2021(
             if oneshot
             else (DEFAULT_STD_2021 + ";" + ";".join(DEFAULT_2021_NONCOMPETITORS))
         )
-    world_type = SCML2020OneShotWorld if oneshot else SCML2021World
+    world_type = SCML2021OneShotWorld if oneshot else SCML2021World
     if time <= 0:
         time = None
     kwargs = {"n_steps": steps}

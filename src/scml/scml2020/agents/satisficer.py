@@ -2,29 +2,21 @@
 import math
 import random
 from collections import defaultdict
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
-from negmas import Contract
-from negmas import Issue
-from negmas import MechanismState
-from negmas import Negotiator
-from negmas import NegotiatorMechanismInterface
-from negmas import Outcome
-from negmas import ResponseType
-from negmas.sao import SAONMI
-from negmas.sao import SAONegotiator
-from negmas.sao import SAOState
+from negmas import (
+    Contract,
+    Issue,
+    MechanismState,
+    Negotiator,
+    NegotiatorMechanismInterface,
+    Outcome,
+    ResponseType,
+)
+from negmas.sao import SAONMI, SAONegotiator, SAOState
 
-from scml.scml2020 import AWI
-from scml.scml2020 import NO_COMMAND
-from scml.scml2020 import QUANTITY
-from scml.scml2020 import TIME
-from scml.scml2020 import UNIT_PRICE
-from scml.scml2020 import SCML2020Agent
+from scml.scml2020 import AWI, NO_COMMAND, QUANTITY, TIME, UNIT_PRICE, SCML2020Agent
 
 __all__ = ["SatisficerAgent"]
 

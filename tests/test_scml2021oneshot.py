@@ -5,36 +5,30 @@ import hypothesis.strategies as st
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import given
-from hypothesis import settings
-from negmas import ResponseType
-from negmas import genius_bridge_is_running
-from negmas import save_stats
+from hypothesis import given, settings
+from negmas import ResponseType, genius_bridge_is_running, save_stats
 from negmas.genius import NiceTitForTat
 from negmas.helpers import unique_name
 from negmas.preferences import LinearAdditiveUtilityFunction
-from negmas.preferences.value_fun import AffineFun
-from negmas.preferences.value_fun import ConstFun
-from negmas.preferences.value_fun import IdentityFun
-from negmas.preferences.value_fun import LinearFun
+from negmas.preferences.value_fun import AffineFun, ConstFun, IdentityFun, LinearFun
 from negmas.sao import SAOResponse
 from numpy.testing import assert_allclose
-from pytest import mark
-from pytest import raises
+from pytest import mark, raises
 
 import scml
-from scml.oneshot import OneShotSingleAgreementAgent
-from scml.oneshot import SCML2020OneShotWorld
-from scml.oneshot import builtin_agent_types
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agent import OneShotIndNegotiatorsAgent
-from scml.oneshot.agent import OneShotSyncAgent
-from scml.oneshot.agents import GreedySyncAgent
-from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot import (
+    OneShotSingleAgreementAgent,
+    SCML2020OneShotWorld,
+    builtin_agent_types,
+)
+from scml.oneshot.agent import (
+    OneShotAgent,
+    OneShotIndNegotiatorsAgent,
+    OneShotSyncAgent,
+)
+from scml.oneshot.agents import GreedySyncAgent, RandomOneShotAgent
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.common import QUANTITY
-from scml.oneshot.common import TIME
-from scml.oneshot.common import UNIT_PRICE
+from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
 from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020 import is_system_agent
 

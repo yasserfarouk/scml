@@ -1,8 +1,7 @@
 import pytest
 from negmas import ResponseType
 
-from scml import OneShotAgent
-from scml import SCML2020OneShotWorld
+from scml import OneShotAgent, SCML2020OneShotWorld
 from scml.oneshot.agents.random import RandomOneShotAgent
 
 

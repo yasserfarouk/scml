@@ -3,27 +3,20 @@ from collections import defaultdict
 from dataclasses import dataclass
 from random import random
 
-from negmas.common import MechanismState
-from negmas.common import NegotiatorMechanismInterface
+from negmas.common import MechanismState, NegotiatorMechanismInterface
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
 from negmas.outcomes import make_issue
 from negmas.preferences import LinearAdditiveUtilityFunction
-from negmas.situated import Breach
-from negmas.situated import Contract
-from negmas.situated import RenegotiationRequest
+from negmas.situated import Breach, Contract, RenegotiationRequest
 from numpy.random import dirichlet
 
 from .agent import SCML2019Agent
-from .common import DEFAULT_NEGOTIATOR
-from .common import FinancialReport
+from .common import DEFAULT_NEGOTIATOR, FinancialReport
 from .helpers import pos_gauss
 
 if True:
-    from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
+    from typing import Any, Dict, List, Optional
 
     from .common import Loan
 

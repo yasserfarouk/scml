@@ -3,27 +3,23 @@ import itertools
 import math
 from abc import abstractmethod
 from collections import defaultdict
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from negmas import UtilityFunction
 from negmas.common import NegotiatorMechanismInterface
 from negmas.negotiators import Negotiator
 from negmas.outcomes import Issue
-from negmas.situated import Agent
-from negmas.situated import Breach
-from negmas.situated import Contract
+from negmas.situated import Agent, Breach, Contract
 
-from .common import CFP
-from .common import FinancialReport
-from .common import Loan
-from .common import ManufacturingProfileCompiled
-from .common import Process
-from .common import Product
-from .common import ProductManufacturingInfo
+from .common import (
+    CFP,
+    FinancialReport,
+    Loan,
+    ManufacturingProfileCompiled,
+    Process,
+    Product,
+    ProductManufacturingInfo,
+)
 
 if TYPE_CHECKING:
     from .awi import SCMLAWI

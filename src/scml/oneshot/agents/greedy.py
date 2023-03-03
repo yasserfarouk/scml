@@ -2,15 +2,14 @@ import itertools
 import random
 from collections import defaultdict
 
-from negmas import ResponseType
-from negmas import SAOResponse
+from negmas import ResponseType, SAOResponse
 
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agent import OneShotSingleAgreementAgent
-from scml.oneshot.agent import OneShotSyncAgent
-from scml.scml2020.common import QUANTITY
-from scml.scml2020.common import TIME
-from scml.scml2020.common import UNIT_PRICE
+from scml.oneshot.agent import (
+    OneShotAgent,
+    OneShotSingleAgreementAgent,
+    OneShotSyncAgent,
+)
+from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
 __all__ = ["GreedyOneShotAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"]
 

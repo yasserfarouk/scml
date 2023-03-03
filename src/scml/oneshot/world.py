@@ -10,52 +10,53 @@ import math
 import random
 import sys
 from collections import defaultdict
-from typing import Any
-from typing import Callable
-from typing import Collection
-from typing import Iterable
+from typing import Any, Callable, Collection, Iterable
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib.axis import Axis
-from negmas import DEFAULT_EDGE_TYPES
-from negmas import Agent
-from negmas import Breach
-from negmas import BreachProcessing
-from negmas import Contract
-from negmas import Issue
-from negmas import Operations
-from negmas import TimeInAgreementMixin
-from negmas import World
-from negmas import make_issue
-from negmas.helpers import get_class
-from negmas.helpers import get_full_type_name
-from negmas.helpers import instantiate
-from negmas.helpers import unique_name
-from negmas.sao import ControlledSAONegotiator
-from negmas.sao import SAOController
-from negmas.sao import SAONegotiator
+from negmas import (
+    DEFAULT_EDGE_TYPES,
+    Agent,
+    Breach,
+    BreachProcessing,
+    Contract,
+    Issue,
+    Operations,
+    TimeInAgreementMixin,
+    World,
+    make_issue,
+)
+from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
+from negmas.sao import ControlledSAONegotiator, SAOController, SAONegotiator
 
-from ..common import distribute_quantities
-from ..common import integer_cut
-from ..common import intin
-from ..common import make_array
-from ..common import realin
-from ..common import strin
+from ..common import (
+    distribute_quantities,
+    integer_cut,
+    intin,
+    make_array,
+    realin,
+    strin,
+)
 from ..scml2020 import FinancialReport
-from ..scml2020.common import INFINITE_COST
-from ..scml2020.common import SYSTEM_BUYER_ID
-from ..scml2020.common import SYSTEM_SELLER_ID
-from ..scml2020.common import is_system_agent
+from ..scml2020.common import (
+    INFINITE_COST,
+    SYSTEM_BUYER_ID,
+    SYSTEM_SELLER_ID,
+    is_system_agent,
+)
 from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
-from .common import OneShotExogenousContract
-from .common import OneShotProfile
-from .sysagents import DefaultOneShotAdapter
-from .sysagents import _SystemAgent
+from .common import OneShotExogenousContract, OneShotProfile
+from .sysagents import DefaultOneShotAdapter, _SystemAgent
 
-__all__ = ["SCML2020OneShotWorld"]
+__all__ = [
+    "SCML2020OneShotWorld",
+    "SCML2021OneShotWorld",
+    "SCML2022OneShotWorld",
+    "SCML2023OneShotWorld",
+]
 
 
 class SCML2020OneShotWorld(TimeInAgreementMixin, World):
@@ -126,8 +127,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         # negotiation params,
-        price_multiplier=2.0,
-        wide_price_range=True,
+        price_multiplier=0.0,
+        wide_price_range=False,
         # trading price parameters
         trading_price_discount=0.9,
         # simulation parameters
@@ -1910,13 +1911,20 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 p = 0
         else:
             p = price_of_product
-        unit_price = (
-            max(
-                1,
-                int(p // self.price_multiplier),
-            ),
-            int(self.price_multiplier * price_of_product),
-        )
+        if self.price_multiplier > 1e-6:
+            unit_price = (
+                max(
+                    1,
+                    int(p // self.price_multiplier),
+                ),
+                int(self.price_multiplier * price_of_product),
+            )
+        else:
+            ceil = int(math.ceil(price_of_product))
+            unit_price = (
+                max(1, ceil - 1),
+                ceil,
+            )
         time = (self.current_step, self.current_step)
         quantity = (1, self._max_n_lines)
         return unit_price, time, quantity
@@ -1982,3 +1990,21 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         record = super()._contract_record(contract)
         record["executed_at"] = self.current_step
         return record
+
+
+class SCML2021OneShotWorld(SCML2020OneShotWorld):
+    def __init__(self, *args, **kwargs):
+        kwargs["price_multiplier"] = 2.0
+        kwargs["wide_price_range"] = True
+        super().__init__(*args, **kwargs)
+
+
+class SCML2022OneShotWorld(SCML2021OneShotWorld):
+    pass
+
+
+class SCML2023OneShotWorld(SCML2020OneShotWorld):
+    def __init__(self, *args, **kwargs):
+        kwargs["price_multiplier"] = 0.0
+        kwargs["wide_price_range"] = False
+        super().__init__(*args, **kwargs)

@@ -2,16 +2,20 @@ from pathlib import Path
 
 import pytest
 
-from scml.scml2019 import DoNothingFactoryManager
-from scml.scml2019 import GreedyFactoryManager
-from scml.scml2019 import anac2019_collusion
-from scml.scml2019 import anac2019_std
+from scml.scml2019 import (
+    DoNothingFactoryManager,
+    GreedyFactoryManager,
+    anac2019_collusion,
+    anac2019_std,
+)
 from scml.scml2019.utils import anac2019_sabotage
 
-from .switches import SCML_RUN2019
-from .switches import SCML_RUN_COLLUSION_TOURNAMENTS
-from .switches import SCML_RUN_SABOTAGE_TOURNAMENTS
-from .switches import SCML_RUN_STD_TOURNAMENTS
+from .switches import (
+    SCML_RUN2019,
+    SCML_RUN_COLLUSION_TOURNAMENTS,
+    SCML_RUN_SABOTAGE_TOURNAMENTS,
+    SCML_RUN_STD_TOURNAMENTS,
+)
 
 PARALLELISM = "serial"
 
@@ -30,10 +34,10 @@ def test_std():
         max_worlds_per_config=2,
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
-    assert len(results.total_scores) >= 2
+    assert len(results.total_scores) >= 2  # type: ignore
     assert (
-        results.total_scores.loc[
-            results.total_scores.agent_type
+        results.total_scores.loc[  # type: ignore
+            results.total_scores.agent_type  # type: ignore
             == "scml.scml2019.factory_managers.builtins.DoNothingFactoryManager",
             "score",
         ].values[0]
@@ -54,10 +58,10 @@ def test_collusion():
         max_worlds_per_config=2,
         parallelism=PARALLELISM,
     )
-    assert len(results.total_scores) >= 2
+    assert len(results.total_scores) >= 2  # type: ignore
     assert (
-        results.total_scores.loc[
-            results.total_scores.agent_type
+        results.total_scores.loc[  # type: ignore
+            results.total_scores.agent_type  # type: ignore
             == "scml.scml2019.factory_managers.builtins.DoNothingFactoryManager",
             "score",
         ].values[0]
@@ -85,4 +89,4 @@ def test_sabotage():
         n_agents_per_competitor=2,
         max_worlds_per_config=2,
     )
-    assert len(results.total_scores) >= 2
+    assert len(results.total_scores) >= 2  # type: ignore

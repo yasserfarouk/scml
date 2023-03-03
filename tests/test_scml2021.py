@@ -8,30 +8,28 @@ import random
 
 import hypothesis.strategies as st
 import numpy as np
-from hypothesis import example
-from hypothesis import given
-from hypothesis import settings
+from hypothesis import example, given, settings
 from negmas import save_stats
 from negmas.helpers import unique_name
 from numpy.testing import assert_allclose
-from pytest import mark
-from pytest import raises
+from pytest import mark, raises
 
 import scml
 from scml.oneshot import OneShotSingleAgreementAgent
 from scml.oneshot.agents import SyncRandomOneShotAgent
-from scml.scml2020 import BuyCheapSellExpensiveAgent
-from scml.scml2020 import DoNothingAgent
-from scml.scml2020 import IndependentNegotiationsAgent
-from scml.scml2020 import RandomAgent
-from scml.scml2020 import SatisficerAgent
-from scml.scml2020 import SCML2021World
-from scml.scml2020 import is_system_agent
+from scml.scml2020 import (
+    BuyCheapSellExpensiveAgent,
+    DoNothingAgent,
+    IndependentNegotiationsAgent,
+    RandomAgent,
+    SatisficerAgent,
+    SCML2021World,
+    is_system_agent,
+)
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 from scml.scml2020.utils import anac2021_collusion
 
-from .switches import SCML_ON_GITHUB
-from .switches import SCML_RUN2021_STD
+from .switches import SCML_ON_GITHUB, SCML_RUN2021_STD
 
 random.seed(0)
 

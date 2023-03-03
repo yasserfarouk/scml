@@ -2,9 +2,7 @@ import itertools
 import random
 from typing import Dict
 
-from negmas import Outcome
-from negmas import PolyAspiration
-from negmas import ResponseType
+from negmas import Outcome, PolyAspiration, ResponseType
 from negmas.outcomes.issue_ops import enumerate_issues
 from negmas.sao import SAOResponse
 

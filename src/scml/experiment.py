@@ -6,23 +6,15 @@ import traceback
 from collections import namedtuple
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Tuple
-from typing import Union
+from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
 
 import click
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from negmas.helpers import unique_name
 from tqdm import tqdm
 
-from scml import DecentralizingAgent
-from scml import SCML2020World
+from scml import DecentralizingAgent, SCML2020World
 
 N_STEPS = 10
 N_WORLDS = 2

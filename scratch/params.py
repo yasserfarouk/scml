@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import itertools
-from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures import as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
 
@@ -13,8 +12,7 @@ import typer
 from negmas.helpers import add_records
 
 from scml.oneshot import SCML2020OneShotWorld
-from scml.oneshot.agents import GreedyOneShotAgent
-from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.agents import GreedyOneShotAgent, RandomOneShotAgent
 from scml.scml2020.common import is_system_agent
 
 app = typer.Typer()

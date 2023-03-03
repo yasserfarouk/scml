@@ -6,11 +6,9 @@ import pytest
 from hypothesis import given
 
 from scml.oneshot.agents import RandomOneShotAgent
-from scml.scml2020.utils import anac2021_oneshot
-from scml.scml2020.utils import truncated_mean
+from scml.scml2020.utils import anac2021_oneshot, truncated_mean
 
-from .switches import SCML_RUN2021_ONESHOT
-from .switches import SCML_RUN_STD_TOURNAMENTS
+from .switches import SCML_RUN2021_ONESHOT, SCML_RUN_STD_TOURNAMENTS
 
 
 class MyAgent0(RandomOneShotAgent):

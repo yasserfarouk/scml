@@ -1,7 +1,9 @@
 from negmas import LinearUtilityFunction
 
-from .indneg import IndependentNegotiationsAgent
-from .indneg import MarketAwareIndependentNegotiationsAgent
+from .indneg import (
+    IndependentNegotiationsAgent,
+    MarketAwareIndependentNegotiationsAgent,
+)
 
 __all__ = ["BuyCheapSellExpensiveAgent", "MarketAwareBuyCheapSellExpensiveAgent"]
 

@@ -8,10 +8,12 @@ from typing import Tuple
 import numpy as np
 from negmas import LinearUtilityFunction
 
-from scml.scml2020.components import IndependentNegotiationsManager
-from scml.scml2020.components import MovingRangeNegotiationManager
-from scml.scml2020.components import StepNegotiationManager
-from scml.scml2020.components import SupplyDrivenProductionStrategy
+from scml.scml2020.components import (
+    IndependentNegotiationsManager,
+    MovingRangeNegotiationManager,
+    StepNegotiationManager,
+    SupplyDrivenProductionStrategy,
+)
 
 from ..components.prediction import MarketAwareTradePredictionStrategy
 from ..components.signing import KeepOnlyGoodPrices

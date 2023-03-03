@@ -1,13 +1,16 @@
-from typing import List
-from typing import Union
+from typing import List, Union
 
 from scml.scml2020 import SCML2020Agent
-from scml.scml2020.agents import BuyCheapSellExpensiveAgent
-from scml.scml2020.agents import DecentralizingAgent
-from scml.scml2020.agents import RandomAgent
-from scml.scml2020.utils import anac2020_assigner
-from scml.scml2020.utils import anac2020_config_generator
-from scml.scml2020.utils import anac2020_world_generator
+from scml.scml2020.agents import (
+    BuyCheapSellExpensiveAgent,
+    DecentralizingAgent,
+    RandomAgent,
+)
+from scml.scml2020.utils import (
+    anac2020_world_generator,
+    anac_assigner_std,
+    anac_config_generator_std,
+)
 
 COMPETITORS = [DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent]
 
@@ -15,12 +18,12 @@ COMPETITORS = [DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent]
 def generate_world(
     n_steps: int, competitors: List[Union[str, SCML2020Agent]], n_agents_per_competitor
 ):
-    config = anac2020_config_generator(
+    config = anac_config_generator_std(
         n_competitors=len(competitors),
         n_agents_per_competitor=n_agents_per_competitor,
         n_steps=n_steps,
     )
-    assigned = anac2020_assigner(
+    assigned = anac_assigner_std(
         config,
         max_n_worlds=None,
         n_agents_per_competitor=n_agents_per_competitor,

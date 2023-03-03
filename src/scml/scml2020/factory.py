@@ -1,21 +1,20 @@
 """Implements the world class for the SCML2020 world """
 import copy
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
-from .common import ANY_LINE
-from .common import ANY_STEP
-from .common import INFINITE_COST
-from .common import NO_COMMAND
-from .common import ContractInfo
-from .common import FactoryProfile
-from .common import FactoryState
-from .common import Failure
-from .common import is_system_agent
+from .common import (
+    ANY_LINE,
+    ANY_STEP,
+    INFINITE_COST,
+    NO_COMMAND,
+    ContractInfo,
+    FactoryProfile,
+    FactoryState,
+    Failure,
+    is_system_agent,
+)
 
 __all__ = [
     "Factory",

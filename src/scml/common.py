@@ -2,12 +2,7 @@
 from __future__ import annotations
 
 import random
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
+from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 

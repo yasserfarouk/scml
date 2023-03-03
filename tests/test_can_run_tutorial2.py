@@ -6,22 +6,18 @@ from time import sleep
 import numpy as np
 import pandas as pd
 import pytest
-from negmas import ResponseType
-from negmas import SAOResponse
+from negmas import ResponseType, SAOResponse
 
 # used to check whether or not the negmas-genius bridge
 # is running
 # import a specific agent from the Genius platform
-from negmas.genius import NiceTitForTat
-from negmas.genius import genius_bridge_is_running
+from negmas.genius import NiceTitForTat, genius_bridge_is_running
 from negmas.outcomes import Outcome
-from negmas.preferences import LinearAdditiveUtilityFunction
-from negmas.preferences import LinearUtilityFunction
-from negmas.preferences.value_fun import AffineFun
-from negmas.preferences.value_fun import IdentityFun
+from negmas.preferences import LinearAdditiveUtilityFunction, LinearUtilityFunction
+from negmas.preferences.value_fun import AffineFun, IdentityFun
 
-from scml.oneshot import OneShotIndNegotiatorsAgent
 from scml.oneshot import *
+from scml.oneshot import OneShotIndNegotiatorsAgent
 from scml.scml2020 import is_system_agent
 
 from .switches import *

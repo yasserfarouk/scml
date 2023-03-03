@@ -3,28 +3,15 @@ from __future__ import annotations
 from collections import namedtuple
 from copy import copy
 from functools import lru_cache
-from typing import Iterable
-from typing import List
-from typing import Literal
-from typing import Optional
-from typing import Tuple
-from typing import Union
-from typing import overload
+from typing import Iterable, List, Literal, Optional, Tuple, Union, overload
 
 from negmas import Contract
-from negmas.outcomes import Issue
-from negmas.outcomes import Outcome
-from negmas.outcomes import OutcomeSpace
-from negmas.outcomes import make_issue
-from negmas.outcomes import make_os
-from negmas.preferences import StationaryMixin
-from negmas.preferences import UtilityFunction
+from negmas.outcomes import Issue, Outcome, OutcomeSpace, make_issue, make_os
+from negmas.preferences import StationaryMixin, UtilityFunction
 
 from scml.scml2020.common import is_system_agent
 
-from .common import QUANTITY
-from .common import TIME
-from .common import UNIT_PRICE
+from .common import QUANTITY, TIME, UNIT_PRICE
 
 __all__ = ["OneShotUFun", "UFunLimit"]
 

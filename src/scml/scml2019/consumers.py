@@ -4,37 +4,24 @@ import math
 from abc import ABC
 from collections import defaultdict
 from dataclasses import dataclass
-from random import randint
-from random import random
+from random import randint, random
 from typing import TYPE_CHECKING
 
-from negmas import MechanismState
-from negmas import NegotiatorMechanismInterface
+from negmas import MechanismState, NegotiatorMechanismInterface
 from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
 from negmas.outcomes import make_issue
-from negmas.preferences import MappingUtilityFunction
-from negmas.preferences import WeightedUtilityFunction
-from negmas.situated import Breach
-from negmas.situated import Contract
-from negmas.situated import RenegotiationRequest
+from negmas.preferences import MappingUtilityFunction, WeightedUtilityFunction
+from negmas.situated import Breach, Contract, RenegotiationRequest
 from numpy.random import dirichlet
 
 from .agent import SCML2019Agent
-from .common import CFP
-from .common import DEFAULT_NEGOTIATOR
-from .common import UNIT_PRICE
-from .common import FinancialReport
+from .common import CFP, DEFAULT_NEGOTIATOR, UNIT_PRICE, FinancialReport
 from .helpers import pos_gauss
 
 if True:  #
-    from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Tuple
-    from typing import Union
+    from typing import Any, Dict, List, Optional, Tuple, Union
 
     from .common import Loan
 

@@ -1,7 +1,6 @@
 __all__ = ["SignAll", "SignAllPossible", "KeepOnlyGoodPrices"]
 
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
 from negmas import Contract
 

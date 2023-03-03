@@ -1,12 +1,8 @@
 from abc import abstractmethod
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Iterable, List, Optional, Union
 
 import numpy as np
-from negmas import Breach
-from negmas import Contract
+from negmas import Breach, Contract
 
 __all__ = [
     "TradePredictionStrategy",

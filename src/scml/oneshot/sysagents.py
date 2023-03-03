@@ -1,19 +1,18 @@
 """
 Implements the one shot version of SCML
 """
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
-from negmas import Adapter
-from negmas import Breach
-from negmas import Contract
-from negmas import Issue
-from negmas import MechanismState
-from negmas import Negotiator
-from negmas import NegotiatorMechanismInterface
-from negmas import RenegotiationRequest
+from negmas import (
+    Adapter,
+    Breach,
+    Contract,
+    Issue,
+    MechanismState,
+    Negotiator,
+    NegotiatorMechanismInterface,
+    RenegotiationRequest,
+)
 from negmas.sao import ControlledSAONegotiator
 
 from .agent import OneShotAgent

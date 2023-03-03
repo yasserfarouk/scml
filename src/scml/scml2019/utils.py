@@ -3,47 +3,41 @@ import itertools
 import math
 import sys
 from os import PathLike
-from random import choices
-from random import randint
-from random import random
-from random import shuffle
+from random import choices, randint, random, shuffle
 
 import numpy as np
 from negmas import Agent
-from negmas.helpers import get_class
-from negmas.helpers import get_full_type_name
-from negmas.helpers import instantiate
-from negmas.helpers import unique_name
+from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
 from negmas.serialization import serialize
 from negmas.situated import Entity
-from negmas.tournaments import TournamentResults
-from negmas.tournaments import WorldRunResults
-from negmas.tournaments import tournament
+from negmas.tournaments import TournamentResults, WorldRunResults, tournament
 
-from scml.scml2019.common import DEFAULT_NEGOTIATOR
-from scml.scml2019.common import Factory
-from scml.scml2019.common import InputOutput
-from scml.scml2019.common import ManufacturingProfile
-from scml.scml2019.common import Process
-from scml.scml2019.common import Product
-from scml.scml2019.consumers import ConsumptionProfile
-from scml.scml2019.consumers import JustInTimeConsumer
+from scml.scml2019.common import (
+    DEFAULT_NEGOTIATOR,
+    Factory,
+    InputOutput,
+    ManufacturingProfile,
+    Process,
+    Product,
+)
+from scml.scml2019.consumers import ConsumptionProfile, JustInTimeConsumer
 from scml.scml2019.factory_managers.builtins import GreedyFactoryManager
-from scml.scml2019.miners import MiningProfile
-from scml.scml2019.miners import ReactiveMiner
+from scml.scml2019.miners import MiningProfile, ReactiveMiner
 from scml.scml2019.world import SCML2019World
 
 if True:
-    from typing import Any
-    from typing import Callable
-    from typing import Dict
-    from typing import Iterable
-    from typing import List
-    from typing import Optional
-    from typing import Sequence
-    from typing import Tuple
-    from typing import Type
-    from typing import Union
+    from typing import (
+        Any,
+        Callable,
+        Dict,
+        Iterable,
+        List,
+        Optional,
+        Sequence,
+        Tuple,
+        Type,
+        Union,
+    )
 
     from .factory_managers.builtins import FactoryManager
 

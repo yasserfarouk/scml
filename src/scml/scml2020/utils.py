@@ -1,184 +1,70 @@
 from __future__ import annotations
 
 import copy
-import sys
 from collections import defaultdict
+from functools import partial
 from itertools import chain
 from os import PathLike
-from random import randint
-from random import random
-from random import shuffle
-from typing import Any
-from typing import Callable
-from typing import Iterable
-from typing import Sequence
-from typing import Type
+from random import randint, random, shuffle
+from typing import Any, Callable, Iterable, Sequence
 
 import numpy as np
 from negmas import Agent
-from negmas.helpers import get_class
-from negmas.helpers import get_full_type_name
-from negmas.helpers import unique_name
+from negmas.helpers import get_class, get_full_type_name, unique_name
 from negmas.helpers.numeric import truncated_mean
-from negmas.serialization import deserialize
-from negmas.serialization import serialize
-from negmas.tournaments import TournamentResults
-from negmas.tournaments import WorldRunResults
-from negmas.tournaments import tournament
+from negmas.serialization import deserialize, serialize
+from negmas.tournaments import TournamentResults, WorldRunResults, tournament
 
-from scml.oneshot.agents import GreedyOneShotAgent
-from scml.oneshot.agents import GreedySyncAgent
-from scml.oneshot.agents import SingleAgreementAspirationAgent
+from scml.oneshot.agents import (
+    GreedyOneShotAgent,
+    GreedySyncAgent,
+    SingleAgreementAspirationAgent,
+)
 from scml.oneshot.sysagents import _SystemAgent as OneShotSysAgent
 from scml.oneshot.world import SCML2020OneShotWorld
+from scml.scml2019.utils import anac2019_config_generator
 from scml.scml2020.agent import _SystemAgent as StdSysAgent
-from scml.scml2020.agents import BuyCheapSellExpensiveAgent
-from scml.scml2020.agents import DecentralizingAgent
-from scml.scml2020.agents import MarketAwareIndDecentralizingAgent
-from scml.scml2020.agents import SatisficerAgent
-from scml.scml2020.world import SCML2020Agent
-from scml.scml2020.world import SCML2020World
-from scml.scml2020.world import SCML2021World
-from scml.scml2020.world import SCML2022World
-from scml.scml2020.world import is_system_agent
-
-# try:
-# except Exception as e:
-#
-#     def truncated_mean(
-#         scores: np.ndarray,
-#         limits: tuple[float, float] | None = None,
-#         top_limit=2.0,
-#         bottom_limit=float("inf"),
-#         base="tukey",
-#         return_limits=False,
-#     ) -> float | tuple[float, tuple[float, float] | None]:
-#         """
-#         Calculates the truncated mean
-#
-#         Args:
-#             scores: A list of scores for which to calculate the truncated mean
-#             limits: The limits to use for trimming the scores. If not given, they will
-#                     be calculated based on `top_fraction`, `bottom_fraction` and `base.`
-#                     You can pass the special value "mean" as a string to disable limits and
-#                     calcualte the mean. You can pass the special value "median" to calculate
-#                     the median (which is the same as passing top_fraction==bottom_fraction=0.5
-#                     and base == "scores").
-#             top_limit: top limit on scores to use for truncated mean calculation. See `base`
-#             bottom_limit: bottom limit on scores to use for truncated mean calculation. See `base`
-#             base: The base for calculating the limits used to apply the `top_limit` and `bottom_limit`.
-#                   Possible values are:
-#                   - zscore: the number of sigmas to remove above/below. A good default choice is 3. Pass inf to disable a side.
-#                   - tukey: the fraction of IQR to remove above/below. A good default choice is 1.5 or 3 (we use 2). Pass inf to disable a side.
-#                   - iqr : same as tukey
-#                   - iqr_fraction: the fraction is interpreted as the fraction of scores above/below the 1st/3rd qauntile
-#                   - scores: the fraction is interpreted as fraction of highest and lowest scores
-#                   - fraction: the fraction is interpreted as literal fraction of the values (i.e. given 10 values and 0.1, removes 1 value)
-#                   - mean: simply returns the mean (limits ignored)
-#                   - median: simply returns the median (limits ignored)
-#             return_limits: If true, the method will also return the limiting scores used in its mean calculation.
-#         """
-#
-#         scores = np.asarray(scores)
-#         scores = scores[~np.isnan(scores)]
-#
-#         if isinstance(limits, str) and limits.lower() == "mean":
-#             return (
-#                 tmean(scores, None)
-#                 if not return_limits
-#                 else (tmean(scores, None), None)
-#             )
-#         if isinstance(limits, str) and limits.lower() == "median":
-#             return np.median(scores) if not return_limits else (np.median(scores), None)
-#         if limits is not None:
-#             return np.mean(scores) if not return_limits else (np.mean(scores), None)
-#
-#         if base == "zscore":
-#             m, s = np.nanmean(scores), np.nanstd(scores)
-#             limits = (m - s * bottom_limit, m + s * top_limit)
-#         elif base in ("tukey", "iqr"):
-#             q1, q3 = np.quantile(scores, 0.25), np.quantile(scores, 0.75)
-#             iqr = q3 - q1
-#             limits = (
-#                 q1
-#                 - (bottom_limit * iqr if not np.isinf(bottom_limit) else bottom_limit),
-#                 q3 + (top_limit * iqr if not np.isinf(top_limit) else top_limit),
-#             )
-#         elif base == "iqr_fraction":
-#             bottom_limit = min(1, max(0, bottom_limit))
-#             top_limit = min(1, max(0, top_limit))
-#             limits = (np.quantile(scores, 0.25), np.quantile(scores, 0.75))
-#             high = np.sort(scores[scores > limits[1]])
-#             low = np.sort(scores[scores < limits[0]])
-#             limits = (
-#                 low[int((len(low) - 1) * bottom_limit)] if len(low) > 0 else None,
-#                 high[int((len(high) - 1) * (1 - top_limit))] if len(high) > 0 else None,
-#             )
-#         elif base == "fraction":
-#             bottom_limit = min(1, max(0, bottom_limit))
-#             top_limit = min(1, max(0, top_limit))
-#             scores = np.sort(scores)
-#             top_indx = int((len(scores) - 1) * (1 - top_limit))
-#             bottom_indx = int((len(scores) - 1) * bottom_limit)
-#             if top_indx < bottom_indx:
-#                 return float("nan") if not return_limits else (float("nan"), limits)
-#             m = np.mean(scores[bottom_indx : top_indx + 1])
-#             return (
-#                 m if not return_limits else (m, (scores[bottom_indx], scores[top_indx]))
-#             )
-#         elif base == "scores":
-#             bottom_limit = min(1, max(0, bottom_limit))
-#             top_limit = min(1, max(0, top_limit))
-#             limits = (
-#                 np.quantile(scores, bottom_limit),
-#                 np.quantile(scores, 1 - top_limit),
-#             )
-#             if limits[0] > limits[1]:
-#                 return float("nan") if not return_limits else (float("nan"), limits)
-#         elif base == "mean":
-#             return np.mean(scores) if not return_limits else (np.mean(scores), None)
-#         elif base == "median":
-#             return np.median(scores) if not return_limits else (np.median(scores), None)
-#         else:
-#             raise ValueError(f"Unknown base for truncated_mean ({base})")
-#         if len(scores) == 0 or limits[1] < limits[0]:
-#             return float("nan") if not return_limits else (float("nan"), limits)
-#         try:
-#             # this is an inclusive trimmed mean
-#             # tm = tmean(scores, limits)
-#             scores = scores[scores >= limits[0]]
-#             scores = scores[scores <= limits[1]]
-#             if len(scores) == 0:
-#                 return float("nan") if not return_limits else (float("nan"), limits)
-#             tm = np.mean(scores)
-#             return tm if not return_limits else (tm, limits)
-#         except ValueError:
-#             return float("nan") if not return_limits else (float("nan"), limits)
-#
-
+from scml.scml2020.agents import (
+    BuyCheapSellExpensiveAgent,
+    DecentralizingAgent,
+    MarketAwareIndDecentralizingAgent,
+    SatisficerAgent,
+)
+from scml.scml2020.world import (
+    SCML2020Agent,
+    SCML2020World,
+    SCML2022World,
+    is_system_agent,
+)
 
 __all__ = [
-    "anac2020_config_generator",
-    "anac2021_config_generator_collusion",
-    "anac2020_assigner",
-    "anac2020_world_generator",
-    "anac2020_tournament",
-    "anac2020_collusion",
-    "anac2020_std",
-    "balance_calculator2020",
-    "balance_calculator2021",
-    "balance_calculator2021oneshot",
-    "balance_calculator2021collusion",
+    "anac_config_generator_oneshot",
+    "anac_config_generator_std",
+    "anac_config_generator_collusion",
+    "anac_assigner_oneshot",
+    "anac_assigner_std",
+    "anac_assigner_collusion",
+    "anac_oneshot_world_generator",
+    "anac_world_generator",
+    "balance_calculator",
+    "balance_calculator_oneshot",
     "DefaultAgents",
     "DefaultAgents2021",
     "DefaultAgents2022",
+    "DefaultAgents2023",
     "DefaultAgentsOneShot",
-    "anac2021_collusion",
-    "anac2021_std",
+    "anac2020_tournament",
+    "anac2020_std",
+    "anac2020_collusion",
     "anac2021_oneshot",
-    "anac2022_collusion",
-    "anac2022_std",
+    "anac2021_std",
+    "anac2021_collusion",
     "anac2022_oneshot",
+    "anac2022_std",
+    "anac2022_collusion",
+    "anac2023_oneshot",
+    "anac2023_std",
+    "anac2023_collusion",
 ]
 
 
@@ -210,6 +96,13 @@ DefaultAgents2022 = [
     # RandomOneShotAgent,
 ]
 
+DefaultAgents2023 = [
+    DecentralizingAgent,
+    # MarketAwareDecentralizingAgent,
+    MarketAwareIndDecentralizingAgent,
+    SatisficerAgent,
+    # RandomOneShotAgent,
+]
 
 DefaultAgentsOneShot = [
     GreedyOneShotAgent,
@@ -341,12 +234,13 @@ def _intin(rng: tuple[int, int] | int) -> int:
     return randint(rng[0], rng[1])
 
 
-def anac2020_config_generator(
+def anac_config_generator(
+    year: int,
     n_competitors: int,
     n_agents_per_competitor: int,
     agent_names_reveal_type: bool = False,
-    non_competitors: tuple[str | type[SCML2020Agent], ...] | None = None,
-    non_competitor_params: tuple[dict[str, Any], ...] | None = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     compact: bool = False,
     *,
     n_steps: int | tuple[int, int] = (50, 200),
@@ -372,11 +266,11 @@ def anac2020_config_generator(
     n_steps = _intin(n_steps)
 
     if select_n_levels_first:
-        n_processes = randint(*n_processes)
+        np = randint(*n_processes)
         n_agents = n_agents_per_competitor * n_competitors
-        n_default_managers = max(0, n_processes * min_factories_per_level)
-        n_defaults = integer_cut(n_default_managers, n_processes, 0)
-        n_a_list = integer_cut(n_agents, n_processes, 0)
+        n_default_managers = max(0, np * min_factories_per_level)
+        n_defaults = integer_cut(n_default_managers, np, 0)
+        n_a_list = integer_cut(n_agents, np, 0)
         for i, n_a in enumerate(n_a_list):
             if n_a + n_defaults[i] < min_factories_per_level:
                 n_defaults[i] = min_factories_per_level - n_a
@@ -395,10 +289,10 @@ def anac2020_config_generator(
             max_factories_per_level,
             min_n_processes,
         )
-        n_processes = len(n_f_list)
-        n_defaults = [0] * n_processes
+        np = len(n_f_list)
+        n_defaults = [0] * np
         while n_default_managers > 0:
-            indx = randint(0, n_processes - 1)
+            indx = randint(0, np - 1)
             if n_f_list[indx] <= n_defaults[indx]:
                 continue
             n_defaults[indx] += 1
@@ -407,7 +301,7 @@ def anac2020_config_generator(
     n_factories = sum(n_f_list)
 
     if non_competitor_params is None:
-        non_competitor_params = [{}] * len(non_competitors)
+        non_competitor_params = [{}] * len(non_competitors)  # type: ignore
 
     non_competitors = [get_full_type_name(_) for _ in non_competitors]
 
@@ -415,7 +309,7 @@ def anac2020_config_generator(
     agent_types = [None] * n_factories
     manager_params = [None] * n_factories
     first_in_level = 0
-    for level in range(n_processes):
+    for level in range(np):
         n_d = n_defaults[level]
         n_f = n_f_list[level]
         assert (
@@ -424,10 +318,10 @@ def anac2020_config_generator(
         for j in range(n_f):
             if j >= n_f - n_d:  # default managers are last managers in the list
                 def_indx = randint(0, max_def_agents)
-                agent_types[first_in_level + j] = non_competitors[def_indx]
+                agent_types[first_in_level + j] = non_competitors[def_indx]  # type: ignore
                 params_ = copy.deepcopy(non_competitor_params[def_indx])
                 params_["name"] = f"_df_{level}_{j}"
-                manager_params[first_in_level + j] = params_
+                manager_params[first_in_level + j] = params_  # type: ignore
         first_in_level += n_f
 
     world_name = unique_name("", add_time=True, rand_digits=4)
@@ -452,7 +346,7 @@ def anac2020_config_generator(
             negotiation_speed=21,
             start_negotiations_immediately=False,
             agent_processes=agent_processes,
-            n_processes=n_processes,
+            n_processes=np,
             n_steps=n_steps,
             n_lines=n_lines,
             compact=compact,
@@ -475,7 +369,7 @@ def anac2020_config_generator(
             initial_balance=None,
             start_negotiations_immediately=False,
             agent_processes=agent_processes,
-            n_processes=n_processes,
+            n_processes=np,
             n_steps=n_steps,
             n_lines=n_lines,
             compact=compact,
@@ -486,9 +380,10 @@ def anac2020_config_generator(
     # _agent_types = copy.deepcopy(world_params.pop("agent_types"))
     # _agent_params = copy.deepcopy(world_params.pop("agent_params"))
     if oneshot_world:
-        generated_world_params = SCML2020OneShotWorld.generate(**world_params)
+        cls = get_class(f"scml.oneshot.world.SCML{int(year)}OneShotWorld")
     else:
-        generated_world_params = SCML2022World.generate(**world_params)
+        cls = get_class(f"scml.scml2020.world.SCML{int(year)}World")
+    generated_world_params = cls.generate(**world_params)  # type: ignore
     # world_params["agent_types"] = _agent_types
     # world_params["agent_params"] = _agent_params
     for k in ("agent_types", "agent_params"):
@@ -516,7 +411,12 @@ def anac2020_config_generator(
     return [config]
 
 
-def anac2021_config_generator_collusion(
+anac_config_generator_std = anac_config_generator
+anac_config_generator_oneshot = anac_config_generator
+
+
+def anac_config_generator_collusion(
+    year: int,
     n_competitors: int,
     n_agents_per_competitor: int,
     agent_names_reveal_type: bool = False,
@@ -526,25 +426,49 @@ def anac2021_config_generator_collusion(
     **kwargs,
 ) -> list[dict[str, Any]]:
     assert n_agents_per_competitor > 1
-    return anac2020_config_generator(
+    return anac_config_generator(
+        *args,
+        year=year,
         n_competitors=n_competitors,
         n_agents_per_competitor=n_agents_per_competitor,
         agent_names_reveal_type=agent_names_reveal_type,
         non_competitors=non_competitors,
         non_competitor_params=non_competitor_params,
-        *args,
         **kwargs,
     )
 
 
-def anac2020_assigner(
+anac2020_config_generator_std = partial(anac_config_generator, year=2020)
+anac2021_config_generator_std = partial(anac_config_generator, year=2021)
+anac2022_config_generator_std = partial(anac_config_generator, year=2022)
+anac2023_config_generator_std = partial(anac_config_generator, year=2023)
+anac2020_config_generator_oneshot = partial(anac_config_generator, year=2020)
+anac2021_config_generator_oneshot = partial(anac_config_generator, year=2021)
+anac2022_config_generator_oneshot = partial(anac_config_generator, year=2022)
+anac2023_config_generator_oneshot = partial(anac_config_generator, year=2023)
+
+anac2020_config_generator_collusion = partial(
+    anac_config_generator_collusion, year=2020
+)
+anac2021_config_generator_collusion = partial(
+    anac_config_generator_collusion, year=2021
+)
+anac2022_config_generator_collusion = partial(
+    anac_config_generator_collusion, year=2022
+)
+anac2023_config_generator_collusion = partial(
+    anac_config_generator_collusion, year=2023
+)
+
+
+def anac_assigner_std(
     config: list[dict[str, Any]],
     max_n_worlds: int,
     n_agents_per_competitor: int = 1,
     fair: bool = True,
-    competitors: Sequence[type[Agent]] = (),
+    competitors: Sequence[str | type[Agent]] = (),
     params: Sequence[dict[str, Any]] = (),
-    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitors: Sequence[str | type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
 ) -> list[list[dict[str, Any]]]:
@@ -610,12 +534,10 @@ def anac2020_assigner(
                     current_config["agent_params"][i] = dynamic_non_competitor_params[
                         extra_indx
                     ]
-        assignable_factories = [
-            i for i, mtype in enumerate(agent_types) if mtype is None
-        ]
-        shuffle(assignable_factories)
+        _assignable_f = [i for i, mtype in enumerate(agent_types) if mtype is None]
+        shuffle(_assignable_f)
         assignable_factories = (
-            np.asarray(assignable_factories)
+            np.asarray(_assignable_f)
             .reshape((n_competitors, n_agents_per_competitor))
             .tolist()
         )
@@ -623,6 +545,7 @@ def anac2020_assigner(
         current_configs = []
 
         def _copy_config(perm_, c, indx):
+            _ = indx
             new_config = copy.deepcopy(c)
             new_config["is_default"] = is_default
             for (a, p_), assignable in zip(perm_, assignable_factories):
@@ -682,14 +605,17 @@ def anac2020_assigner(
     return final_configs
 
 
-def anac2021_assigner_collusion(
+anac_assigner_oneshot = anac_assigner_std
+
+
+def anac_assigner_collusion(
     config: list[dict[str, Any]],
     max_n_worlds: int,
     n_agents_per_competitor: int = 1,
     fair: bool = True,
-    competitors: Sequence[type[Agent]] = (),
+    competitors: Sequence[type[Agent] | str] = (),
     params: Sequence[dict[str, Any]] = (),
-    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitors: list[type[Agent] | str] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
 ) -> list[list[dict[str, Any]]]:
@@ -747,17 +673,16 @@ def anac2021_assigner_collusion(
                 current_config["agent_params"][i] = dynamic_non_competitor_params[
                     extra_indx
                 ]
-    assignable_factories = [i for i, mtype in enumerate(agent_types) if mtype is None]
-    shuffle(assignable_factories)
+    afs = [i for i, mtype in enumerate(agent_types) if mtype is None]
+    shuffle(afs)
     assignable_factories = (
-        np.asarray(assignable_factories)
-        .reshape((n_competitors, n_agents_per_competitor))
-        .tolist()
+        np.asarray(afs).reshape((n_competitors, n_agents_per_competitor)).tolist()
     )
 
     current_configs = []
 
     def _copy_config(perm_, c, indx):
+        _ = indx
         new_config = copy.deepcopy(c)
         new_config["is_default"] = is_default
         for (a, p_), assignable in zip(perm_, assignable_factories):
@@ -841,7 +766,7 @@ def anac2021_assigner_collusion(
     return current_configs
 
 
-def anac2020_world_generator(**kwargs):
+def anac_world_generator(*, year: int, **kwargs):
     if "n_agents_per_process" in kwargs["world_params"]:
         assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
             kwargs["world_params"]["agent_types"]
@@ -853,19 +778,26 @@ def anac2020_world_generator(**kwargs):
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
     kwargs["world_params"]["random_agent_typea"] = False
-    cnfg2 = SCML2022World.generate(**kwargs["world_params"])
+    cls = get_class(f"scml.scml2020.world.SCML{int(year)}World")
+    cnfg2 = cls.generate(**kwargs["world_params"])  # type: ignore
     for k in ("agent_types", "agent_params"):
-        cnfg[k] = cnfg2[k]
-    for _p in cnfg["profiles"]:
-        _p.costs = np.asarray(_p.costs)
-    if "info" not in cnfg.keys():
-        cnfg["info"] = dict()
-    cnfg["info"]["is_default"] = kwargs["is_default"]
-    world = SCML2022World(**cnfg)
+        cnfg[k] = cnfg2[k]  # type: ignore
+    for _p in cnfg["profiles"]:  # type: ignore
+        _p.costs = np.asarray(_p.costs)  # type: ignore
+    if "info" not in cnfg.keys():  # type: ignore
+        cnfg["info"] = dict()  # type: ignore
+    cnfg["info"]["is_default"] = kwargs["is_default"]  # type: ignore
+    world = cls(**cnfg)  # type: ignore
     return world
 
 
-def anac2020oneshot_world_generator(**kwargs):
+anac2020_world_generator = partial(anac_world_generator, year=2020)
+anac2021_world_generator = partial(anac_world_generator, year=2021)
+anac2022_world_generator = partial(anac_world_generator, year=2022)
+anac2023_world_generator = partial(anac_world_generator, year=2023)
+
+
+def anac_oneshot_world_generator(*, year, **kwargs):
     if "n_agents_per_process" in kwargs["world_params"]:
         assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
             kwargs["world_params"]["agent_types"]
@@ -880,17 +812,23 @@ def anac2020oneshot_world_generator(**kwargs):
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
     kwargs["world_params"]["random_agent_typea"] = False
-    cnfg2 = SCML2020OneShotWorld.generate(**kwargs["world_params"])
+    cls = get_class(f"scml.oneshot.world.SCML{int(year)}OneShotWorld")
+    cnfg2 = cls.generate(**kwargs["world_params"])
     for k in ("agent_types", "agent_params", "name"):
         cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
     cnfg["info"]["is_default"] = kwargs["is_default"]
-    world = SCML2020OneShotWorld(**cnfg)
+    world = cls(**cnfg)
     return world
 
 
-def balance_calculator2020(
+anac2021_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2021)
+anac2022_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2022)
+anac2023_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2023)
+
+
+def balance_calculator(
     worlds: list[SCML2020World],
     scoring_context: dict[str, Any],
     dry_run: bool,
@@ -1014,7 +952,101 @@ def balance_calculator2020(
     return result
 
 
-def balance_calculator2021oneshot(
+balance_calculator2020 = partial(balance_calculator, consolidated=False)
+balance_calculator2021 = partial(balance_calculator, consolidated=False)
+balance_calculator2022 = partial(balance_calculator, consolidated=True)
+balance_calculator2023 = partial(balance_calculator, consolidated=True)
+
+
+def balance_calculator_collusion(
+    year: int,
+    worlds: list[SCML2020World],
+    scoring_context: dict[str, Any],
+    dry_run: bool,
+    ignore_default=True,
+    inventory_catalog_price_weight=0.0,
+    inventory_trading_average_weight=0.5,
+    raw_collusion_score_multiplier=0.2,
+) -> WorldRunResults:
+    """A scoring function that scores factory managers' performance by the
+    final balance only ignoring whatever still in their inventory after
+    consolidating all factories in the simulation that belong to the same
+    agent type.
+
+    Args:
+
+        worlds: The world which is assumed to be run up to the point at which the scores are to be calculated.
+        scoring_context:  A dict of context parameters passed by the world generator or assigner.
+        dry_run: A boolean specifying whether this is a dry_run. For dry runs, only names and types are expected in
+                 the returned `WorldRunResults`
+        ignore_default: Whether to ignore non-competitors (default agents)
+        inventory_catalog_price_weight: The weight assigned to catalog price
+        inventory_trading_average_weight: The weight assigned to trading price average
+        raw_collusion_score_multiplier: multiplies the raw collusion score with one minus this value multiplying the difference between collusion and standard scores.
+
+    Returns:
+        WorldRunResults giving the names, scores, and types of factory managers.
+
+    Remarks:
+
+        - If multiple agents belonged to the same agent_type, the score of
+          all of these agents will be set to the same value which is the
+          consolidated profit of the group. This means that agent types that
+          have more instantiations will tend to have higher scores at the end.
+          When using this balance calculator, it is recommended to have the
+          same number of instantiations of all agent types in each simulation
+          to make sure that scores of different agent types are comparable in
+          each and every simulation.
+
+    """
+    if year < 2021:
+        return balance_calculator2020(
+            [worlds[0]],
+            scoring_context,
+            dry_run,
+            ignore_default,
+            inventory_catalog_price_weight,
+            inventory_trading_average_weight,
+        )
+    assert len(worlds) > 1
+    results_with_collusion = balance_calculator2021(
+        [worlds[0]],
+        scoring_context,
+        dry_run,
+        ignore_default,
+        inventory_catalog_price_weight,
+        inventory_trading_average_weight,
+    )
+    results_without_collusion = [
+        balance_calculator2021(
+            [w],
+            scoring_context,
+            dry_run,
+            ignore_default,
+            inventory_catalog_price_weight,
+            inventory_trading_average_weight,
+        )
+        for w in worlds[1:]
+    ]
+    if dry_run:
+        return results_with_collusion
+    allscores = list(chain(*(_.scores for _ in results_without_collusion)))
+    mean_score = sum(allscores) / len(allscores)
+    results_with_collusion.scores = [
+        _ - (1.0 - raw_collusion_score_multiplier) * mean_score
+        for _ in results_with_collusion.scores
+    ]
+    # todo: check consolidated scores
+    return results_with_collusion
+
+
+balance_calculator2020collusion = partial(balance_calculator_collusion, year=2020)
+balance_calculator2021collusion = partial(balance_calculator_collusion, year=2021)
+balance_calculator2022collusion = partial(balance_calculator_collusion, year=2022)
+balance_calculator2023collusion = partial(balance_calculator_collusion, year=2023)
+
+
+def balance_calculator_oneshot(
     worlds: list[SCML2020World],
     scoring_context: dict[str, Any],
     dry_run: bool,
@@ -1088,127 +1120,6 @@ def balance_calculator2021oneshot(
         result.scores = individual_scores
 
     return result
-
-
-def balance_calculator2021(
-    worlds: list[SCML2020World],
-    scoring_context: dict[str, Any],
-    dry_run: bool,
-    ignore_default=True,
-    inventory_catalog_price_weight=0.0,
-    inventory_trading_average_weight=0.5,
-) -> WorldRunResults:
-    """A scoring function that scores factory managers' performance by the
-    final balance only ignoring whatever still in their inventory after
-    consolidating all factories in the simulation that belong to the same
-    agent type.
-
-    Args:
-
-        worlds: The world which is assumed to be run up to the point at which the scores are to be calculated.
-        scoring_context:  A dict of context parameters passed by the world generator or assigner.
-        dry_run: A boolean specifying whether this is a dry_run. For dry runs, only names and types are expected in
-                 the returned `WorldRunResults`
-        ignore_default: Whether to ignore non-competitors (default agents)
-        inventory_catalog_price_weight: The weight assigned to catalog price
-        inventory_trading_average_weight: The weight assigned to trading price average
-
-    Returns:
-        WorldRunResults giving the names, scores, and types of factory managers.
-
-    Remarks:
-
-        - If multiple agents belonged to the same agent_type, the score of
-          all of these agents will be set to the same value which is the
-          consolidated profit of the group. This means that agent types that
-          have more instantiations will tend to have higher scores at the end.
-          When using this balance calculator, it is recommended to have the
-          same number of instantiations of all agent types in each simulation
-          to make sure that scores of different agent types are comparable in
-          each and every simulation.
-
-    """
-    return balance_calculator2020(
-        worlds,
-        scoring_context,
-        dry_run,
-        ignore_default,
-        inventory_catalog_price_weight,
-        inventory_trading_average_weight,
-        consolidated=True,
-    )
-
-
-def balance_calculator2021collusion(
-    worlds: list[SCML2020World],
-    scoring_context: dict[str, Any],
-    dry_run: bool,
-    ignore_default=True,
-    inventory_catalog_price_weight=0.0,
-    inventory_trading_average_weight=0.5,
-    raw_collusion_score_multiplier=0.2,
-) -> WorldRunResults:
-    """A scoring function that scores factory managers' performance by the
-    final balance only ignoring whatever still in their inventory after
-    consolidating all factories in the simulation that belong to the same
-    agent type.
-
-    Args:
-
-        worlds: The world which is assumed to be run up to the point at which the scores are to be calculated.
-        scoring_context:  A dict of context parameters passed by the world generator or assigner.
-        dry_run: A boolean specifying whether this is a dry_run. For dry runs, only names and types are expected in
-                 the returned `WorldRunResults`
-        ignore_default: Whether to ignore non-competitors (default agents)
-        inventory_catalog_price_weight: The weight assigned to catalog price
-        inventory_trading_average_weight: The weight assigned to trading price average
-        raw_collusion_score_multiplier: multiplies the raw collusion score with one minus this value multiplying the difference between collusion and standard scores.
-
-    Returns:
-        WorldRunResults giving the names, scores, and types of factory managers.
-
-    Remarks:
-
-        - If multiple agents belonged to the same agent_type, the score of
-          all of these agents will be set to the same value which is the
-          consolidated profit of the group. This means that agent types that
-          have more instantiations will tend to have higher scores at the end.
-          When using this balance calculator, it is recommended to have the
-          same number of instantiations of all agent types in each simulation
-          to make sure that scores of different agent types are comparable in
-          each and every simulation.
-
-    """
-    assert len(worlds) > 1
-    results_with_collusion = balance_calculator2021(
-        [worlds[0]],
-        scoring_context,
-        dry_run,
-        ignore_default,
-        inventory_catalog_price_weight,
-        inventory_trading_average_weight,
-    )
-    results_without_collusion = [
-        balance_calculator2021(
-            [w],
-            scoring_context,
-            dry_run,
-            ignore_default,
-            inventory_catalog_price_weight,
-            inventory_trading_average_weight,
-        )
-        for w in worlds[1:]
-    ]
-    if dry_run:
-        return results_with_collusion
-    allscores = list(chain(*(_.scores for _ in results_without_collusion)))
-    mean_score = sum(allscores) / len(allscores)
-    results_with_collusion.scores = [
-        _ - (1.0 - raw_collusion_score_multiplier) * mean_score
-        for _ in results_with_collusion.scores
-    ]
-    # todo: check consolidated scores
-    return results_with_collusion
 
 
 def anac2020_tournament(
@@ -1316,7 +1227,7 @@ def anac2020_std(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
@@ -1410,8 +1321,8 @@ def anac2020_std(
         configs_only=configs_only,
         n_agents_per_competitor=1,
         world_generator=anac2020_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
+        config_generator=anac2020_config_generator_std,
+        config_assigner=anac_assigner_std,
         score_calculator=balance_calculator2020,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
@@ -1444,7 +1355,7 @@ def anac2020_collusion(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
@@ -1539,8 +1450,8 @@ def anac2020_collusion(
         verbose=verbose,
         configs_only=configs_only,
         world_generator=anac2020_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
+        config_generator=anac2020_config_generator_collusion,
+        config_assigner=anac_assigner_collusion,
         score_calculator=balance_calculator2020,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
@@ -1578,7 +1489,7 @@ def anac2021_tournament(
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
-    The function used to run ANAC 2020 SCML tournament (collusion track).
+    The function used to run ANAC 2021 SCML tournament (collusion track).
 
     Args:
 
@@ -1660,7 +1571,7 @@ def anac2021_std(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
@@ -1673,7 +1584,7 @@ def anac2021_std(
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
-    The function used to run ANAC 2020 SCML tournament (standard track).
+    The function used to run ANAC 2021 SCML tournament (standard track).
 
     Args:
 
@@ -1753,9 +1664,9 @@ def anac2021_std(
         verbose=verbose,
         configs_only=configs_only,
         n_agents_per_competitor=1,
-        world_generator=anac2020_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
+        world_generator=anac2021_world_generator,
+        config_generator=anac2021_config_generator_std,
+        config_assigner=anac_assigner_std,
         score_calculator=balance_calculator2021,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
@@ -1790,7 +1701,7 @@ def anac2021_collusion(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
@@ -1803,7 +1714,7 @@ def anac2021_collusion(
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
-    The function used to run ANAC 2020 SCML tournament (collusion track).
+    The function used to run ANAC 2021 SCML tournament (collusion track).
 
     Args:
 
@@ -1882,9 +1793,9 @@ def anac2021_collusion(
         name=name,
         verbose=verbose,
         configs_only=configs_only,
-        world_generator=anac2020_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
+        world_generator=anac2021_world_generator,
+        config_generator=anac2021_config_generator_collusion,
+        config_assigner=anac_assigner_collusion,
         score_calculator=balance_calculator2021,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
@@ -1918,7 +1829,7 @@ def anac2021_oneshot(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
@@ -2018,10 +1929,10 @@ def anac2021_oneshot(
         verbose=verbose,
         configs_only=configs_only,
         n_agents_per_competitor=1,
-        world_generator=anac2020oneshot_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
-        score_calculator=balance_calculator2021oneshot,
+        world_generator=anac2021_oneshot_world_generator,
+        config_generator=anac2021_config_generator_oneshot,
+        config_assigner=anac_assigner_std,
+        score_calculator=balance_calculator_oneshot,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
@@ -2060,7 +1971,7 @@ def anac2022_tournament(
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
-    The function used to run ANAC 2020 SCML tournament (collusion track).
+    The function used to run ANAC 2022 SCML tournament (collusion track).
 
     Args:
 
@@ -2142,7 +2053,7 @@ def anac2022_std(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
@@ -2155,7 +2066,7 @@ def anac2022_std(
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
-    The function used to run ANAC 2020 SCML tournament (standard track).
+    The function used to run ANAC 2022 SCML tournament (standard track).
 
     Args:
 
@@ -2235,10 +2146,10 @@ def anac2022_std(
         verbose=verbose,
         configs_only=configs_only,
         n_agents_per_competitor=1,
-        world_generator=anac2020_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
-        score_calculator=balance_calculator2021,
+        world_generator=anac2022_world_generator,
+        config_generator=anac2022_config_generator_std,
+        config_assigner=anac_assigner_std,
+        score_calculator=balance_calculator2022,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
@@ -2272,7 +2183,7 @@ def anac2022_collusion(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
@@ -2285,7 +2196,7 @@ def anac2022_collusion(
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
-    The function used to run ANAC 2020 SCML tournament (collusion track).
+    The function used to run ANAC 2022 SCML tournament (collusion track).
 
     Args:
 
@@ -2364,10 +2275,10 @@ def anac2022_collusion(
         name=name,
         verbose=verbose,
         configs_only=configs_only,
-        world_generator=anac2020_world_generator,
-        config_generator=anac2021_config_generator_collusion,
-        config_assigner=anac2021_assigner_collusion,
-        score_calculator=balance_calculator2021collusion,
+        world_generator=anac2022_world_generator,
+        config_generator=anac2022_config_generator_collusion,
+        config_assigner=anac_assigner_collusion,
+        score_calculator=balance_calculator2022collusion,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
@@ -2400,7 +2311,7 @@ def anac2022_oneshot(
     | None = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
-    non_competitor_params: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
@@ -2414,6 +2325,450 @@ def anac2022_oneshot(
 ) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2022 SCML tournament (oneshot track).
+
+    Args:
+    Returns:
+
+        `TournamentResults` The results of the tournament or a `PathLike` giving the location where configs were saved
+
+    Remarks:
+
+        Default parameters will be used in the league with the exception of `parallelism` which may use distributed
+        processing
+
+    """
+    # if competitor_params is None:
+    #     competitor_params = [dict() for _ in range(len(competitors))]
+    # for t, p in zip(competitors, competitor_params):
+    #     p["controller_type"] = get_full_type_name(t)
+    # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
+    if n_competitors_per_world is None:
+        n_competitors_per_world = kwargs.get(
+            "n_competitors_per_world", randint(2, min(4, len(competitors)))
+        )
+    kwargs.pop("n_competitors_per_world", None)
+    if non_competitors is None:
+        non_competitors = DefaultAgentsOneShot
+        non_competitor_params = [dict() for _ in non_competitors]
+    kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
+    kwargs["oneshot_world"] = True
+    kwargs["n_processes"] = 2
+    return tournament(
+        competitors=competitors,
+        competitor_params=competitor_params,
+        non_competitors=non_competitors,
+        non_competitor_params=non_competitor_params,
+        agent_names_reveal_type=agent_names_reveal_type,
+        n_configs=n_configs,
+        n_runs_per_world=n_runs_per_world,
+        max_worlds_per_config=max_worlds_per_config,
+        tournament_path=tournament_path,
+        total_timeout=total_timeout,
+        parallelism=parallelism,
+        scheduler_ip=scheduler_ip,
+        scheduler_port=scheduler_port,
+        tournament_progress_callback=tournament_progress_callback,
+        world_progress_callback=world_progress_callback,
+        name=name,
+        verbose=verbose,
+        configs_only=configs_only,
+        n_agents_per_competitor=1,
+        world_generator=anac2022_oneshot_world_generator,
+        config_generator=anac2022_config_generator_oneshot,
+        config_assigner=anac_assigner_oneshot,
+        score_calculator=balance_calculator_oneshot,
+        min_factories_per_level=min_factories_per_level,
+        compact=compact,
+        metric=truncated_mean,
+        n_competitors_per_world=n_competitors_per_world,
+        dynamic_non_competitors=dynamic_non_competitors,
+        dynamic_non_competitor_params=dynamic_non_competitor_params,
+        exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
+        save_video_fraction=0.0,
+        forced_logs_fraction=forced_logs_fraction,
+        publish_exogenous_summary=True,
+        publish_trading_prices=True,
+        **kwargs,
+    )
+
+
+def anac2023_tournament(
+    competitors: Sequence[str | type[SCML2020Agent]],
+    agent_names_reveal_type=False,
+    n_configs: int = 5,
+    max_worlds_per_config: int | None = None,
+    n_runs_per_world: int = 2,
+    n_agents_per_competitor: int = 3,
+    min_factories_per_level: int = 2,
+    tournament_path: str | None = None,
+    total_timeout: int | None = None,
+    parallelism="parallel",
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None]
+    | None = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
+    name: str | None = None,
+    verbose: bool = False,
+    configs_only=False,
+    compact=False,
+    **kwargs,
+) -> TournamentResults | PathLike:
+    """
+    The function used to run ANAC 2023 SCML tournament (standard track).
+
+    Args:
+
+        name: Tournament name
+        competitors: A list of class names for the competitors
+        agent_names_reveal_type: If true then the type of an agent should be readable in its name (most likely at its
+                                 beginning).
+        n_configs: The number of different world configs (up to competitor assignment) to be generated.
+        max_worlds_per_config: The maximum number of worlds to run per config. If None, then all possible assignments
+                             of competitors within each config will be tried (by rotating agents over factories).
+        n_runs_per_world: Number of runs per world. All of these world runs will have identical competitor assignment
+                          and identical world configuration.
+        n_agents_per_competitor: Number of agents per competitor
+        min_factories_per_level: Minimum number of factories for each production level
+        total_timeout: Total timeout for the complete process
+        tournament_path: Path at which to store all results. A scores.csv file will keep the scores and logs folder will
+                         keep detailed logs
+        parallelism: Type of parallelism. Can be 'serial' for serial, 'parallel' for parallel and 'distributed' for distributed
+        scheduler_port: Port of the dask scheduler if parallelism is dask, dist, or distributed
+        scheduler_ip: IP Address of the dask scheduler if parallelism is dask, dist, or distributed
+        world_progress_callback: A function to be called after everystep of every world run (only allowed for serial
+                                 evaluation and should be used with cautious).
+        tournament_progress_callback: A function to be called with `WorldRunResults` after each world finished
+                                      processing
+        verbose: Verbosity
+        configs_only: If true, a config file for each
+        compact: If true, effort will be made to reduce memory footprint including disableing most logs
+        kwargs: Arguments to pass to the `world_generator` function
+
+    Returns:
+
+        `TournamentResults` The results of the tournament or a `PathLike` giving the location where configs were saved
+
+    Remarks:
+
+        Default parameters will be used in the league with the exception of `parallelism` which may use distributed
+        processing
+
+    """
+    return anac2023_std(
+        competitors=competitors,
+        agent_names_reveal_type=agent_names_reveal_type,
+        n_configs=n_configs,
+        max_worlds_per_config=max_worlds_per_config,
+        n_runs_per_world=n_runs_per_world,
+        n_agents_per_competitor=n_agents_per_competitor,
+        tournament_path=tournament_path,
+        total_timeout=total_timeout,
+        parallelism=parallelism,
+        scheduler_ip=scheduler_ip,
+        scheduler_port=scheduler_port,
+        min_factories_per_level=min_factories_per_level,
+        tournament_progress_callback=tournament_progress_callback,
+        world_progress_callback=world_progress_callback,
+        name=name,
+        verbose=verbose,
+        compact=compact,
+        configs_only=configs_only,
+        non_competitors=None,
+        non_competitor_params=None,
+        **kwargs,
+    )
+
+
+def anac2023_std(
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
+    agent_names_reveal_type=False,
+    n_configs: int = 5,
+    max_worlds_per_config: int | None = None,
+    n_runs_per_world: int = 1,
+    min_factories_per_level: int = 2,
+    tournament_path: str | None = None,
+    total_timeout: int | None = None,
+    parallelism="parallel",
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None]
+    | None = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
+    exclude_competitors_from_reassignment: bool = True,
+    name: str | None = None,
+    verbose: bool = False,
+    configs_only=False,
+    compact=False,
+    n_competitors_per_world=None,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
+    **kwargs,
+) -> TournamentResults | PathLike:
+    """
+    The function used to run ANAC 2023 SCML tournament (standard track).
+
+    Args:
+
+        name: Tournament name
+        competitors: A list of class names for the competitors
+        competitor_params: A list of competitor parameters (used to initialize the competitors).
+        agent_names_reveal_type: If true then the type of an agent should be readable in its name (most likely at its
+                                 beginning).
+        n_configs: The number of different world configs (up to competitor assignment) to be generated.
+        max_worlds_per_config: The maximum number of worlds to run per config. If None, then all possible assignments
+                             of competitors within each config will be tried (all permutations).
+        n_runs_per_world: Number of runs per world. All of these world runs will have identical competitor assignment
+                          and identical world configuration.
+        min_factories_per_level: Minimum number of factories for each production level
+        total_timeout: Total timeout for the complete process
+        tournament_path: Path at which to store all results. A scores.csv file will keep the scores and logs folder will
+                         keep detailed logs
+        parallelism: Type of parallelism. Can be 'serial' for serial, 'parallel' for parallel and 'distributed' for
+                     distributed
+        scheduler_port: Port of the dask scheduler if parallelism is dask, dist, or distributed
+        scheduler_ip: IP Address of the dask scheduler if parallelism is dask, dist, or distributed
+        world_progress_callback: A function to be called after everystep of every world run (only allowed for serial
+                                 evaluation and should be used with cautious).
+        tournament_progress_callback: A function to be called with `WorldRunResults` after each world finished
+                                      processing
+        non_competitors: A list of agent types that will not be competing in the sabotage competition but will exist
+                         in the world
+        non_competitor_params: parameters of non competitor agents
+        dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
+                                 the creation of the final assignment instead when the configuration is created
+        dynamic_non_competitor_params: paramters of dynamic non competitor agents
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        verbose: Verbosity
+        configs_only: If true, a config file for each
+        compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
+        n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
+                                 between 2 and min(2, n), where n is the number of competitors
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
+        kwargs: Arguments to pass to the `world_generator` function
+
+    Returns:
+
+        `TournamentResults` The results of the tournament or a `PathLike` giving the location where configs were saved
+
+    Remarks:
+
+        Default parameters will be used in the league with the exception of `parallelism` which may use distributed
+        processing
+
+    """
+    if n_competitors_per_world is None:
+        n_competitors_per_world = kwargs.get(
+            "n_competitors_per_world", randint(2, min(4, len(competitors)))
+        )
+    kwargs.pop("n_competitors_per_world", None)
+    if non_competitors is None:
+        non_competitors = DefaultAgents2023
+        non_competitor_params = [dict() for _ in non_competitors]
+    kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
+    return tournament(
+        competitors=competitors,
+        competitor_params=competitor_params,
+        non_competitors=non_competitors,
+        non_competitor_params=non_competitor_params,
+        agent_names_reveal_type=agent_names_reveal_type,
+        n_configs=n_configs,
+        n_runs_per_world=n_runs_per_world,
+        max_worlds_per_config=max_worlds_per_config,
+        tournament_path=tournament_path,
+        total_timeout=total_timeout,
+        parallelism=parallelism,
+        scheduler_ip=scheduler_ip,
+        scheduler_port=scheduler_port,
+        tournament_progress_callback=tournament_progress_callback,
+        world_progress_callback=world_progress_callback,
+        name=name,
+        verbose=verbose,
+        configs_only=configs_only,
+        n_agents_per_competitor=1,
+        world_generator=anac2023_world_generator,
+        config_generator=anac2023_config_generator_std,
+        config_assigner=anac_assigner_std,
+        score_calculator=balance_calculator2023,
+        min_factories_per_level=min_factories_per_level,
+        compact=compact,
+        metric=truncated_mean,
+        n_competitors_per_world=n_competitors_per_world,
+        dynamic_non_competitors=dynamic_non_competitors,
+        dynamic_non_competitor_params=dynamic_non_competitor_params,
+        exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
+        save_video_fraction=0.0,
+        forced_logs_fraction=forced_logs_fraction,
+        publish_exogenous_summary=True,
+        publish_trading_prices=True,
+        **kwargs,
+    )
+
+
+def anac2023_collusion(
+    competitors: Sequence[str | type],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
+    agent_names_reveal_type=False,
+    n_configs: int = 5,
+    max_worlds_per_config: int | None = None,
+    n_runs_per_world: int = 1,
+    n_agents_per_competitor: int = 3,
+    min_factories_per_level: int = 2,
+    tournament_path: str | None = None,
+    total_timeout: int | None = None,
+    parallelism="parallel",
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None]
+    | None = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
+    exclude_competitors_from_reassignment: bool = False,
+    name: str | None = None,
+    verbose: bool = False,
+    configs_only=False,
+    compact=False,
+    n_competitors_per_world=1,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
+    **kwargs,
+) -> TournamentResults | PathLike:
+    """
+    The function used to run ANAC 2023 SCML tournament (collusion track).
+
+    Args:
+
+        name: Tournament name
+        competitors: A list of class names for the competitors
+        competitor_params: A list of competitor parameters (used to initialize the competitors).
+        agent_names_reveal_type: If true then the type of an agent should be readable in its name (most likely at its
+                                 beginning).
+        n_configs: The number of different world configs (up to competitor assignment) to be generated.
+        max_worlds_per_config: The maximum number of worlds to run per config. If None, then all possible assignments
+                             of competitors within each config will be tried (all permutations).
+        n_runs_per_world: Number of runs per world. All of these world runs will have identical competitor assignment
+                          and identical world configuration.
+        n_agents_per_competitor: Number of agents per competitor
+        min_factories_per_level: Minimum number of factories for each production level
+        total_timeout: Total timeout for the complete process
+        tournament_path: Path at which to store all results. A scores.csv file will keep the scores and logs folder will
+                         keep detailed logs
+        parallelism: Type of parallelism. Can be 'serial' for serial, 'parallel' for parallel and 'distributed' for
+                     distributed
+        scheduler_port: Port of the dask scheduler if parallelism is dask, dist, or distributed
+        scheduler_ip: IP Address of the dask scheduler if parallelism is dask, dist, or distributed
+        world_progress_callback: A function to be called after everystep of every world run (only allowed for serial
+                                 evaluation and should be used with cautious).
+        tournament_progress_callback: A function to be called with `WorldRunResults` after each world finished
+                                      processing
+        non_competitors: A list of agent types that will not be competing in the sabotage competition but will exist
+                         in the world
+        non_competitor_params: parameters of non competitor agents
+        dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
+                                 the creation of the final assignment instead when the configuration is created
+        dynamic_non_competitor_params: paramters of dynamic non competitor agents
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
+                                 between 2 and min(2, n), where n is the number of competitors. This value will
+                                 always be set to 1 in SCML2022
+        verbose: Verbosity
+        configs_only: If true, a config file for each
+        compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
+        forced_logs_fraction: Fraction of simulations for which logs are always saved (including negotiations)
+        kwargs: Arguments to pass to the `world_generator` function
+
+    Returns:
+
+        `TournamentResults` The results of the tournament or a `PathLike` giving the location where configs were saved
+
+    Remarks:
+
+        Default parameters will be used in the league with the exception of `parallelism` which may use distributed
+        processing
+
+    """
+    n_competitors_per_world = 1
+    kwargs.pop("n_competitors_per_world", None)
+    if non_competitors is None:
+        non_competitors = DefaultAgents2023
+        non_competitor_params = [dict() for _ in non_competitors]
+    kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
+    return tournament(
+        competitors=competitors,
+        competitor_params=competitor_params,
+        non_competitors=non_competitors,
+        non_competitor_params=non_competitor_params,
+        agent_names_reveal_type=agent_names_reveal_type,
+        n_configs=n_configs,
+        n_runs_per_world=n_runs_per_world,
+        max_worlds_per_config=max_worlds_per_config,
+        tournament_path=tournament_path,
+        total_timeout=total_timeout,
+        n_agents_per_competitor=n_agents_per_competitor,
+        parallelism=parallelism,
+        scheduler_ip=scheduler_ip,
+        scheduler_port=scheduler_port,
+        tournament_progress_callback=tournament_progress_callback,
+        world_progress_callback=world_progress_callback,
+        name=name,
+        verbose=verbose,
+        configs_only=configs_only,
+        world_generator=anac2023_world_generator,
+        config_generator=anac2023_config_generator_collusion,
+        config_assigner=anac_assigner_collusion,
+        score_calculator=balance_calculator2023collusion,
+        min_factories_per_level=min_factories_per_level,
+        compact=compact,
+        metric=truncated_mean,
+        n_competitors_per_world=n_competitors_per_world,
+        dynamic_non_competitors=dynamic_non_competitors,
+        dynamic_non_competitor_params=dynamic_non_competitor_params,
+        exclude_competitors_from_reassignment=exclude_competitors_from_reassignment,
+        save_video_fraction=0.0,
+        forced_logs_fraction=forced_logs_fraction,
+        publish_exogenous_summary=True,
+        publish_trading_prices=True,
+        **kwargs,
+    )
+
+
+def anac2023_oneshot(
+    competitors: Sequence[str | type[SCML2020Agent]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
+    agent_names_reveal_type=False,
+    n_configs: int = 5,
+    max_worlds_per_config: int | None = None,
+    n_runs_per_world: int = 1,
+    min_factories_per_level: int = 4,
+    tournament_path: str | None = None,
+    total_timeout: int | None = None,
+    parallelism="parallel",
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None]
+    | None = None,
+    world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
+    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
+    exclude_competitors_from_reassignment: bool = False,
+    name: str | None = None,
+    verbose: bool = False,
+    configs_only=False,
+    compact=False,
+    n_competitors_per_world=None,
+    forced_logs_fraction: float = FORCED_LOGS_FRACTION,
+    **kwargs,
+) -> TournamentResults | PathLike:
+    """
+    The function used to run ANAC 2023 SCML tournament (oneshot track).
 
     Args:
 
@@ -2500,10 +2855,10 @@ def anac2022_oneshot(
         verbose=verbose,
         configs_only=configs_only,
         n_agents_per_competitor=1,
-        world_generator=anac2020oneshot_world_generator,
-        config_generator=anac2020_config_generator,
-        config_assigner=anac2020_assigner,
-        score_calculator=balance_calculator2021oneshot,
+        world_generator=anac2023_oneshot_world_generator,
+        config_generator=anac2023_config_generator_oneshot,
+        config_assigner=anac_assigner_oneshot,
+        score_calculator=balance_calculator_oneshot,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,

@@ -9,19 +9,13 @@ from collections import defaultdict
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import given
-from hypothesis import settings
-from negmas import Outcome
-from negmas import ResponseType
-from negmas import SAOResponse
+from hypothesis import given, settings
+from negmas import Outcome, ResponseType, SAOResponse
 from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
-from scml.oneshot import OneShotAgent
-from scml.oneshot import OneShotSyncAgent
 from scml.oneshot import *
-from scml.scml2020.common import QUANTITY
-from scml.scml2020.common import TIME
-from scml.scml2020.common import UNIT_PRICE
+from scml.oneshot import OneShotAgent, OneShotSyncAgent
+from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
 DEFAULT_SEED = 1
 
