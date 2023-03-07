@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from negmas.outcomes.cardinal_issue import DiscreteCardinalIssue
+
 """
 Implements the one shot version of SCML
 """
@@ -22,6 +24,7 @@ from negmas import (
     Breach,
     BreachProcessing,
     Contract,
+    DiscreteIssue,
     Issue,
     Operations,
     TimeInAgreementMixin,
@@ -740,7 +743,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         """
         if agent_processes is not None and random_agent_types:
             raise ValueError(
-                "You cannot pass `agent_processes` and use `random_agent_types`. The first is only used when you want to fix the assignment of all agents to specific processes which is compatible with randomizing agnet types"
+                "You cannot pass `agent_processes` and use `random_agent_types`. The first is only "
+                "used when you want to fix the assignment of all agents to specific processes which is compatible with randomizing agnet types"
             )
         if agent_processes is not None and len(agent_processes) != len(agent_types):
             raise ValueError(
@@ -1887,7 +1891,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
     def _make_issues(
         self, product
     ) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int]]:
-        """Creates the negotiation agendas
+        """
+        Creates the negotiation agendas
 
         Args:
             product (int): The product to be negotiated about
@@ -1923,8 +1928,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             ceil = int(math.ceil(price_of_product))
             unit_price = (
                 max(1, ceil - 1),
-                ceil,
+                max(1, ceil),
             )
+            assert unit_price[0] + 1 == unit_price[1] or unit_price[1] == 1
         time = (self.current_step, self.current_step)
         quantity = (1, self._max_n_lines)
         return unit_price, time, quantity
@@ -1948,10 +1954,14 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues[product] = [
-                make_issue(values(quantity), name="quantity"),
-                make_issue(values(time), name="time"),
-                make_issue(values(unit_price), name="unit_price"),
+                DiscreteCardinalIssue(values(quantity), name="quantity"),
+                DiscreteCardinalIssue(values(time), name="time"),
+                DiscreteCardinalIssue(values(unit_price), name="unit_price"),
             ]
+            # for ii in self._current_issues[product]:
+            #     assert isinstance(
+            #         ii, DiscreteCardinalIssue
+            #     ), f"Issue {ii.name} has type {type(ii.name)}"
             requesting_agents = (
                 self.consumers[product] if consumer_starts else self.suppliers[product]
             )

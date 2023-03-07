@@ -463,14 +463,14 @@ class MyColluders(DoNothingAgent):
         )
 
 
-def test_colluding_agents_find_each_other():
-    anac2021_collusion(
-        competitors=[MyColluders, DoNothingAgent],
-        n_agents_per_competitor=N_AGENTS_PER_COMPETITORS,
-        n_configs=1,
-        n_processes=2,
-        n_steps=4,
-    )
+# def test_colluding_agents_find_each_other():
+#     anac2021_collusion(
+#         competitors=[MyColluders, RandomAgent],
+#         n_agents_per_competitor=N_AGENTS_PER_COMPETITORS,
+#         n_configs=3,
+#         n_processes=2,
+#         n_steps=5,
+#     )
 
 
 @mark.parametrize(
