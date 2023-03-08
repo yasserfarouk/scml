@@ -8,4 +8,6 @@ pysnooper
 coverage
 pytest-coverage
 pytest-repeat
+jupyter
+ipykerenel
 -r docs/requirements.txt

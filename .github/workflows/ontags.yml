@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v1"
+      - uses: "actions/setup-python@v2"
         with:
           python-version: "${{ matrix.python-version }}"
       - name: "Install dependencies"
@@ -29,6 +29,8 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel pytest
           python -m pip install --upgrade  virtualenv
           python -m pip install -r requirements.txt
+          python -m pip install jupyter ipykernel
+          python -m ipykernel install --user --name=scml
       - name: "Run pytest for ${{ matrix.python-version }}"
         run: "python -m pytest tests"
 
@@ -38,7 +40,7 @@ jobs:
 
     steps:
       - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v1"
+      - uses: "actions/setup-python@v2"
         with:
           python-version: '3.10'
 
@@ -61,7 +63,7 @@ jobs:
 
     steps:
       - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v1"
+      - uses: "actions/setup-python@v2"
         with:
           python-version: '3.10'
       - name: "Install in dev mode"

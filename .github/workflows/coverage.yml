@@ -19,6 +19,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r docs/requirements.txt
           python -m pip install -r requirements-dev.txt
+          python -m ipykernel install --user --name=scml
           python -m pip install -e .
           yes | python -m pip uninstall negmas
           python -m pip install git+https://github.com/yasserfarouk/negmas.git
