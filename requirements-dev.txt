@@ -9,5 +9,5 @@ coverage
 pytest-coverage
 pytest-repeat
 jupyter
-ipykerenel
+ipykernel
 -r docs/requirements.txt
