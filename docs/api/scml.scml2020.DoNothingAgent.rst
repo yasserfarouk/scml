@@ -15,6 +15,7 @@ DoNothingAgent
       ~DoNothingAgent.crisp_ufun
       ~DoNothingAgent.has_cardinal_preferences
       ~DoNothingAgent.has_preferences
+      ~DoNothingAgent.has_ufun
       ~DoNothingAgent.id
       ~DoNothingAgent.initialized
       ~DoNothingAgent.internal_state
@@ -90,6 +91,7 @@ DoNothingAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

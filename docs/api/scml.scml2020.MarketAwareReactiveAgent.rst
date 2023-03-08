@@ -15,6 +15,7 @@ MarketAwareReactiveAgent
       ~MarketAwareReactiveAgent.crisp_ufun
       ~MarketAwareReactiveAgent.has_cardinal_preferences
       ~MarketAwareReactiveAgent.has_preferences
+      ~MarketAwareReactiveAgent.has_ufun
       ~MarketAwareReactiveAgent.id
       ~MarketAwareReactiveAgent.initialized
       ~MarketAwareReactiveAgent.internal_state
@@ -104,6 +105,7 @@ MarketAwareReactiveAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

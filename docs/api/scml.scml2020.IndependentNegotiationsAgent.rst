@@ -15,6 +15,7 @@ IndependentNegotiationsAgent
       ~IndependentNegotiationsAgent.crisp_ufun
       ~IndependentNegotiationsAgent.has_cardinal_preferences
       ~IndependentNegotiationsAgent.has_preferences
+      ~IndependentNegotiationsAgent.has_ufun
       ~IndependentNegotiationsAgent.id
       ~IndependentNegotiationsAgent.initialized
       ~IndependentNegotiationsAgent.internal_state
@@ -100,6 +101,7 @@ IndependentNegotiationsAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

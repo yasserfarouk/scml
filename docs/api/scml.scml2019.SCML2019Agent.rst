@@ -15,6 +15,7 @@ SCML2019Agent
       ~SCML2019Agent.crisp_ufun
       ~SCML2019Agent.has_cardinal_preferences
       ~SCML2019Agent.has_preferences
+      ~SCML2019Agent.has_ufun
       ~SCML2019Agent.id
       ~SCML2019Agent.initialized
       ~SCML2019Agent.name
@@ -96,6 +97,7 @@ SCML2019Agent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

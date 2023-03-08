@@ -15,6 +15,7 @@ MarketAwareIndependentNegotiationsAgent
       ~MarketAwareIndependentNegotiationsAgent.crisp_ufun
       ~MarketAwareIndependentNegotiationsAgent.has_cardinal_preferences
       ~MarketAwareIndependentNegotiationsAgent.has_preferences
+      ~MarketAwareIndependentNegotiationsAgent.has_ufun
       ~MarketAwareIndependentNegotiationsAgent.id
       ~MarketAwareIndependentNegotiationsAgent.initialized
       ~MarketAwareIndependentNegotiationsAgent.internal_state
@@ -100,6 +101,7 @@ MarketAwareIndependentNegotiationsAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

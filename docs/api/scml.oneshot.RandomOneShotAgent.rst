@@ -15,6 +15,7 @@ RandomOneShotAgent
       ~RandomOneShotAgent.crisp_ufun
       ~RandomOneShotAgent.has_cardinal_preferences
       ~RandomOneShotAgent.has_preferences
+      ~RandomOneShotAgent.has_ufun
       ~RandomOneShotAgent.id
       ~RandomOneShotAgent.internal_state
       ~RandomOneShotAgent.name
@@ -89,6 +90,7 @@ RandomOneShotAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

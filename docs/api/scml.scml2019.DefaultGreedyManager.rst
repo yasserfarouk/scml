@@ -15,6 +15,7 @@ DefaultGreedyManager
       ~DefaultGreedyManager.crisp_ufun
       ~DefaultGreedyManager.has_cardinal_preferences
       ~DefaultGreedyManager.has_preferences
+      ~DefaultGreedyManager.has_ufun
       ~DefaultGreedyManager.id
       ~DefaultGreedyManager.initialized
       ~DefaultGreedyManager.name
@@ -101,6 +102,7 @@ DefaultGreedyManager
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

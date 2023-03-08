@@ -15,6 +15,7 @@ GreedySingleAgreementAgent
       ~GreedySingleAgreementAgent.crisp_ufun
       ~GreedySingleAgreementAgent.has_cardinal_preferences
       ~GreedySingleAgreementAgent.has_preferences
+      ~GreedySingleAgreementAgent.has_ufun
       ~GreedySingleAgreementAgent.id
       ~GreedySingleAgreementAgent.internal_state
       ~GreedySingleAgreementAgent.name
@@ -99,6 +100,7 @@ GreedySingleAgreementAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

@@ -15,6 +15,7 @@ RandomAgent
       ~RandomAgent.crisp_ufun
       ~RandomAgent.has_cardinal_preferences
       ~RandomAgent.has_preferences
+      ~RandomAgent.has_ufun
       ~RandomAgent.id
       ~RandomAgent.initialized
       ~RandomAgent.internal_state
@@ -100,6 +101,7 @@ RandomAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

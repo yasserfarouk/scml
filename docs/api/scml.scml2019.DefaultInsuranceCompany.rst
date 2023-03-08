@@ -15,6 +15,7 @@ DefaultInsuranceCompany
       ~DefaultInsuranceCompany.crisp_ufun
       ~DefaultInsuranceCompany.has_cardinal_preferences
       ~DefaultInsuranceCompany.has_preferences
+      ~DefaultInsuranceCompany.has_ufun
       ~DefaultInsuranceCompany.id
       ~DefaultInsuranceCompany.initialized
       ~DefaultInsuranceCompany.name
@@ -87,6 +88,7 @@ DefaultInsuranceCompany
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

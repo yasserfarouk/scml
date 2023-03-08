@@ -15,6 +15,7 @@ MarketAwareMovingRangeAgent
       ~MarketAwareMovingRangeAgent.crisp_ufun
       ~MarketAwareMovingRangeAgent.has_cardinal_preferences
       ~MarketAwareMovingRangeAgent.has_preferences
+      ~MarketAwareMovingRangeAgent.has_ufun
       ~MarketAwareMovingRangeAgent.id
       ~MarketAwareMovingRangeAgent.initialized
       ~MarketAwareMovingRangeAgent.internal_state
@@ -95,6 +96,7 @@ MarketAwareMovingRangeAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

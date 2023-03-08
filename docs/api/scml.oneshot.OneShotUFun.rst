@@ -74,6 +74,7 @@ OneShotUFun
       ~OneShotUFun.outcome_as_tuple
       ~OneShotUFun.rank
       ~OneShotUFun.rank_with_weights
+      ~OneShotUFun.reset_changes
       ~OneShotUFun.sample_outcome_with_utility
       ~OneShotUFun.scale_by
       ~OneShotUFun.scale_max
@@ -159,6 +160,7 @@ OneShotUFun
    .. automethod:: outcome_as_tuple
    .. automethod:: rank
    .. automethod:: rank_with_weights
+   .. automethod:: reset_changes
    .. automethod:: sample_outcome_with_utility
    .. automethod:: scale_by
    .. automethod:: scale_max

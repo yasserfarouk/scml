@@ -15,6 +15,7 @@ OneShotIndNegotiatorsAgent
       ~OneShotIndNegotiatorsAgent.crisp_ufun
       ~OneShotIndNegotiatorsAgent.has_cardinal_preferences
       ~OneShotIndNegotiatorsAgent.has_preferences
+      ~OneShotIndNegotiatorsAgent.has_ufun
       ~OneShotIndNegotiatorsAgent.id
       ~OneShotIndNegotiatorsAgent.internal_state
       ~OneShotIndNegotiatorsAgent.name
@@ -91,6 +92,7 @@ OneShotIndNegotiatorsAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

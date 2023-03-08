@@ -15,6 +15,7 @@ GreedyOneShotAgent
       ~GreedyOneShotAgent.crisp_ufun
       ~GreedyOneShotAgent.has_cardinal_preferences
       ~GreedyOneShotAgent.has_preferences
+      ~GreedyOneShotAgent.has_ufun
       ~GreedyOneShotAgent.id
       ~GreedyOneShotAgent.internal_state
       ~GreedyOneShotAgent.name
@@ -91,6 +92,7 @@ GreedyOneShotAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

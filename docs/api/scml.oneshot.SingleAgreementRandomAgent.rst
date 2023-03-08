@@ -15,6 +15,7 @@ SingleAgreementRandomAgent
       ~SingleAgreementRandomAgent.crisp_ufun
       ~SingleAgreementRandomAgent.has_cardinal_preferences
       ~SingleAgreementRandomAgent.has_preferences
+      ~SingleAgreementRandomAgent.has_ufun
       ~SingleAgreementRandomAgent.id
       ~SingleAgreementRandomAgent.internal_state
       ~SingleAgreementRandomAgent.name
@@ -98,6 +99,7 @@ SingleAgreementRandomAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

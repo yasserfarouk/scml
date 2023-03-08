@@ -17,6 +17,7 @@ JustInTimeConsumer
       ~JustInTimeConsumer.crisp_ufun
       ~JustInTimeConsumer.has_cardinal_preferences
       ~JustInTimeConsumer.has_preferences
+      ~JustInTimeConsumer.has_ufun
       ~JustInTimeConsumer.id
       ~JustInTimeConsumer.initialized
       ~JustInTimeConsumer.name
@@ -102,6 +103,7 @@ JustInTimeConsumer
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

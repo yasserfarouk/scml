@@ -15,6 +15,7 @@ SatisficerAgent
       ~SatisficerAgent.crisp_ufun
       ~SatisficerAgent.has_cardinal_preferences
       ~SatisficerAgent.has_preferences
+      ~SatisficerAgent.has_ufun
       ~SatisficerAgent.id
       ~SatisficerAgent.initialized
       ~SatisficerAgent.internal_state
@@ -93,6 +94,7 @@ SatisficerAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

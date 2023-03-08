@@ -15,6 +15,7 @@ SingleAgreementAspirationAgent
       ~SingleAgreementAspirationAgent.crisp_ufun
       ~SingleAgreementAspirationAgent.has_cardinal_preferences
       ~SingleAgreementAspirationAgent.has_preferences
+      ~SingleAgreementAspirationAgent.has_ufun
       ~SingleAgreementAspirationAgent.id
       ~SingleAgreementAspirationAgent.internal_state
       ~SingleAgreementAspirationAgent.name
@@ -94,6 +95,7 @@ SingleAgreementAspirationAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

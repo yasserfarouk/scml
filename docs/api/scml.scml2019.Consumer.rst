@@ -15,6 +15,7 @@ Consumer
       ~Consumer.crisp_ufun
       ~Consumer.has_cardinal_preferences
       ~Consumer.has_preferences
+      ~Consumer.has_ufun
       ~Consumer.id
       ~Consumer.initialized
       ~Consumer.name
@@ -96,6 +97,7 @@ Consumer
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

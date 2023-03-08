@@ -15,6 +15,7 @@ OneShotSingleAgreementAgent
       ~OneShotSingleAgreementAgent.crisp_ufun
       ~OneShotSingleAgreementAgent.has_cardinal_preferences
       ~OneShotSingleAgreementAgent.has_preferences
+      ~OneShotSingleAgreementAgent.has_ufun
       ~OneShotSingleAgreementAgent.id
       ~OneShotSingleAgreementAgent.internal_state
       ~OneShotSingleAgreementAgent.name
@@ -98,6 +99,7 @@ OneShotSingleAgreementAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

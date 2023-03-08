@@ -15,6 +15,7 @@ FactoryManager
       ~FactoryManager.crisp_ufun
       ~FactoryManager.has_cardinal_preferences
       ~FactoryManager.has_preferences
+      ~FactoryManager.has_ufun
       ~FactoryManager.id
       ~FactoryManager.initialized
       ~FactoryManager.name
@@ -98,6 +99,7 @@ FactoryManager
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

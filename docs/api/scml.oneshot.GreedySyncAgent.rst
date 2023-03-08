@@ -15,6 +15,7 @@ GreedySyncAgent
       ~GreedySyncAgent.crisp_ufun
       ~GreedySyncAgent.has_cardinal_preferences
       ~GreedySyncAgent.has_preferences
+      ~GreedySyncAgent.has_ufun
       ~GreedySyncAgent.id
       ~GreedySyncAgent.internal_state
       ~GreedySyncAgent.name
@@ -94,6 +95,7 @@ GreedySyncAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

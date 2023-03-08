@@ -16,6 +16,7 @@ OneShotAdapter
       ~OneShotAdapter.crisp_ufun
       ~OneShotAdapter.has_cardinal_preferences
       ~OneShotAdapter.has_preferences
+      ~OneShotAdapter.has_ufun
       ~OneShotAdapter.id
       ~OneShotAdapter.initialized
       ~OneShotAdapter.internal_state
@@ -108,6 +109,7 @@ OneShotAdapter
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

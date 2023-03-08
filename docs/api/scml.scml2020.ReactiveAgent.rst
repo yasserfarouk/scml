@@ -15,6 +15,7 @@ ReactiveAgent
       ~ReactiveAgent.crisp_ufun
       ~ReactiveAgent.has_cardinal_preferences
       ~ReactiveAgent.has_preferences
+      ~ReactiveAgent.has_ufun
       ~ReactiveAgent.id
       ~ReactiveAgent.initialized
       ~ReactiveAgent.internal_state
@@ -104,6 +105,7 @@ ReactiveAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

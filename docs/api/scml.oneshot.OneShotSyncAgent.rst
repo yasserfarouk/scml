@@ -15,6 +15,7 @@ OneShotSyncAgent
       ~OneShotSyncAgent.crisp_ufun
       ~OneShotSyncAgent.has_cardinal_preferences
       ~OneShotSyncAgent.has_preferences
+      ~OneShotSyncAgent.has_ufun
       ~OneShotSyncAgent.id
       ~OneShotSyncAgent.internal_state
       ~OneShotSyncAgent.name
@@ -92,6 +93,7 @@ OneShotSyncAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

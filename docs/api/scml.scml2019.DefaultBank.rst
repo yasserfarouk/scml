@@ -15,6 +15,7 @@ DefaultBank
       ~DefaultBank.crisp_ufun
       ~DefaultBank.has_cardinal_preferences
       ~DefaultBank.has_preferences
+      ~DefaultBank.has_ufun
       ~DefaultBank.id
       ~DefaultBank.initialized
       ~DefaultBank.name
@@ -87,6 +88,7 @@ DefaultBank
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

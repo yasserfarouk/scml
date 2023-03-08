@@ -15,6 +15,7 @@ OneshotDoNothingAgent
       ~OneshotDoNothingAgent.crisp_ufun
       ~OneshotDoNothingAgent.has_cardinal_preferences
       ~OneshotDoNothingAgent.has_preferences
+      ~OneshotDoNothingAgent.has_ufun
       ~OneshotDoNothingAgent.id
       ~OneshotDoNothingAgent.internal_state
       ~OneshotDoNothingAgent.name
@@ -89,6 +90,7 @@ OneshotDoNothingAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

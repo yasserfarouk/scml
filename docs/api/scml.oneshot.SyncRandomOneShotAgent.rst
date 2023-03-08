@@ -15,6 +15,7 @@ SyncRandomOneShotAgent
       ~SyncRandomOneShotAgent.crisp_ufun
       ~SyncRandomOneShotAgent.has_cardinal_preferences
       ~SyncRandomOneShotAgent.has_preferences
+      ~SyncRandomOneShotAgent.has_ufun
       ~SyncRandomOneShotAgent.id
       ~SyncRandomOneShotAgent.internal_state
       ~SyncRandomOneShotAgent.name
@@ -92,6 +93,7 @@ SyncRandomOneShotAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

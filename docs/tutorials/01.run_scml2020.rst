@@ -1,4 +1,3 @@
-
 What is SCM and SCML?
 ---------------------
 
@@ -25,7 +24,7 @@ There are two different yet related games in SCML each represented by a
 `World <http://www.yasserm.com/negmas/api/negmas.situated.World.html>`__
 class:
 
--  `SCML2021World <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.SCML2021World.html>`__
+-  `SCML2023World <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.SCML2021World.html>`__
    A world representing the *complete* SCML game described
    `here <http://www.yasserm.com/scml/scml2021.pdf>`__ in which the
    agent is responsible of defining its own utility function, with who
@@ -34,7 +33,7 @@ class:
    trading with a combination of long-term planning, negotiation, and
    production scheduling.
 
--  `SCML2020OneShotWorld <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html>`__
+-  `SCML2023OneShotWorld <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html>`__
    A simpler form of the SCM world in which agents do not need to
    consider long-term planning or production scheduling described
    `here <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__. This form
@@ -44,19 +43,19 @@ You can use the SCM world simulation in your own development and
 research as you see fit but it is primarily intended for the SCM league
 (SCML) of the ANAC competition. SCML has three tracks:
 
-1. **Standard track** based on the **SCML2021World** full game
+1. **Standard track** based on the **SCML2023World** full game
    simulation. In the standard track, a single instance of each agent
    type exists in the world. This precludes any possibility of
    *collusion* between agent instances of the same type and focuses on
    business operation of a single factory.
-2. **Collusion track** based on the **SCML2021World** full game
+2. **Collusion track** based on the **SCML2023World** full game
    simulation. In the collusion track, *multiple* instances of each
    agent type exist in the world. This opens the possibility for these
    agents instances to **collude** in order to corner the market and get
    higher profits that what each of them can get on its own. In this
    track, collusion is not considered a form of *cheating* but is
    encouraged.
-3. **OneShot track** based on the simpler **SCML2020OneShotWorld** game
+3. **OneShot track** based on the simpler **SCML2023OneShotWorld** game
    simulation. In the OneShot track, a single instance of each agent
    type exists in the world precluding any possibility of collusion. The
    focus here is on negotiation with less focus on long-term planning as
@@ -109,9 +108,10 @@ implementing new world simulations).
 
 The designer of the game implements a **World** class by overriding few
 abstract methods in the base **World** class. This is how the
-**SCML2019World**, **SCML2020World**, **SCML2021World** and
-**SCML2020OneShotWorld** were created. As a participant in SCML, you
-*never* need to interact directly with the **World** object.
+**SCML2019World**, **SCML2020World**, **SCML2021World**,
+**SCML2023World**, **SCML2020OneShotWorld** and **SCML2023OneShotWorld**
+were created. As a participant in SCML, you *never* need to interact
+directly with the **World** object.
 
 The logic of an agent is NegMAS is implemented in an **Agent** object.
 The designer of the simulation, should provide a base class for its
@@ -160,8 +160,8 @@ implemented in the SCML package to be described now.
 
 For SCML, there are – as you may already expect – two AWIs. The first is
 called **OneShotAWI** and is defined in *scml.scml2020* to go with
-*SCML2021World* and *SCML2020Agent* and the second is defined in
-*scml.oneshot* to go with *SCML2020OneShotWorld* and *OneShotAgent*. An
+*SCML2023World* and *SCML2020Agent* and the second is defined in
+*scml.oneshot* to go with *SCML2023OneShotWorld* and *OneShotAgent*. An
 earlier version is also defined in *scml.scml2019* which is a
 *discontinued* form of the game used in ANAC 2019 competition. You can
 find all the services provided by these AWIs
@@ -294,7 +294,7 @@ A brief introduction to SCM
 ---------------------------
 
 Here we only provide a 10,000-feet birds-eye view of the two games used
-in SCML 2021’s three tracks. Each section provides pointers to more
+in SCML 2023’s three tracks. Each section provides pointers to more
 information.
 
 The Oneshot game (OneShot)
@@ -424,15 +424,15 @@ differences (that make a lot of difference):
    partners with contracts at the same step from getting the products
    they agreed upon at the agreed upon price.
 -  The only **difference between the standard and collusion tracks** in
-   SCML 2021 is that in the former, there is a single instantiation of
-   each competitor’s agent class (type) in the world while there are
-   multiple instances of it in the later. This means that agents of the
-   same class (that can find themselves easily by sharing class level
+   SCML is that in the former, there is a single instantiation of each
+   competitor’s agent class (type) in the world while there are multiple
+   instances of it in the later. This means that agents of the same
+   class (that can find themselves easily by sharing class level
    attributes for example) can try to **collude together to corner the
    market** and increase their aggregated profits above what each of
    them could have achieved on its own in the *collusion* track.
 
-Run a session of the SCML world (2021)
+Run a session of the SCML world (2023)
 --------------------------------------
 
 The SCML world (Supply Chain Management League) runs on top of
@@ -442,12 +442,12 @@ In this tutorial, you will test a run of this world.
 
 Firstly, let’s import everything from the SCML app
 
-**Note that the 2021 standard and collusion leagues are almost the same
+**Note that the 2023 standard and collusion leagues are almost the same
 as 2020 versions with minor changes in the configuration and available
 data to the agent which will be explained later**. All agents developed
-for SCML2020 run with no modification in SCML2021’s standard and
-collusion leagues. Moreover, agents devleoped for SCML-OneShot run
-normally in SCML2021 worlds.
+for SCML2020, SCML2021, and SCML2022 run with no modification in
+SCML2023’s standard and collusion leagues. Moreover, agents devleoped
+for SCML-OneShot run normally in SCML2023 worlds.
 
 .. code:: ipython3
 
@@ -455,8 +455,8 @@ normally in SCML2021 worlds.
     from scml.oneshot import *
 
 There are several ways to create an SCML world. One of the simplest is
-to use the ``generate`` method of the ``SCML2021World`` class. This will
-create a dict that can be passed to the ``SCML2021World`` constructor as
+to use the ``generate`` method of the ``SCML2023World`` class. This will
+create a dict that can be passed to the ``SCML2023World`` constructor as
 keyword arguments.
 
 Here we explicitly set ``construct_graphs`` to True which slows the
@@ -470,13 +470,14 @@ happening in the world.
                   SyncRandomOneShotAgent]
 
 Notice that we have a one-shot agent in the mix. Even though one-shot
-agents are designed for ``SCML2020OneShot`` worlds, they can run with no
-modification in ``SCML2020`` and ``SCML2021`` worlds.
+agents are designed for ``SCML2020OneShot`` and ``SCML2023OneShot``
+worlds, they can run with no modification in ``SCML2020``, ``SCML2021``,
+``SCML2023`` worlds.
 
 .. code:: ipython3
 
-    world = SCML2021World(
-        **SCML2021World.generate(
+    world = SCML2023World(
+        **SCML2023World.generate(
             agent_types=agent_types,
             n_steps=50
         ),
@@ -506,16 +507,16 @@ Now you can run this world simulation by just calling ``run``.
 
 
 
-.. parsed-literal::
-
-    Output()
-
-
-
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
 
+
+
+
+.. parsed-literal::
+
+    Output()
 
 
 
@@ -608,7 +609,7 @@ data as a pandas dataframe.
 
 
 There are statistics specific for each agent that all have
-“_{agent_name}“. Lets check what is available for the winner agent:
+“\_{agent_name}“. Lets check what is available for the winner agent:
 
 .. code:: ipython3
 
@@ -958,7 +959,7 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>216</th>
+          <th>49</th>
           <td>02MAD@1</td>
           <td>BUYER</td>
           <td>16</td>
@@ -971,7 +972,7 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>308</th>
+          <th>314</th>
           <td>SELLER</td>
           <td>01SRO@0</td>
           <td>25</td>
@@ -984,7 +985,7 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>15</th>
+          <th>201</th>
           <td>03SRO@1</td>
           <td>BUYER</td>
           <td>13</td>
@@ -997,20 +998,7 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>43</th>
-          <td>SELLER</td>
-          <td>01SRO@0</td>
-          <td>0</td>
-          <td>7</td>
-          <td>10</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>100</th>
+          <th>69</th>
           <td>SELLER</td>
           <td>01SRO@0</td>
           <td>3</td>
@@ -1023,7 +1011,20 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>395</th>
+          <th>205</th>
+          <td>SELLER</td>
+          <td>01SRO@0</td>
+          <td>0</td>
+          <td>7</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>387</th>
           <td>SELLER</td>
           <td>01SRO@0</td>
           <td>31</td>
@@ -1036,20 +1037,7 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>38</th>
-          <td>03SRO@1</td>
-          <td>BUYER</td>
-          <td>2</td>
-          <td>6</td>
-          <td>27</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>91</th>
+          <th>58</th>
           <td>03SRO@1</td>
           <td>BUYER</td>
           <td>17</td>
@@ -1062,7 +1050,7 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>107</th>
+          <th>76</th>
           <td>02MAD@1</td>
           <td>BUYER</td>
           <td>14</td>
@@ -1075,7 +1063,20 @@ For example, let’s see some of the contracts that were signed:
           <td>False</td>
         </tr>
         <tr>
-          <th>228</th>
+          <th>113</th>
+          <td>03SRO@1</td>
+          <td>BUYER</td>
+          <td>2</td>
+          <td>6</td>
+          <td>27</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>218</th>
           <td>03SRO@1</td>
           <td>BUYER</td>
           <td>14</td>
@@ -1136,7 +1137,7 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>216</th>
+          <th>49</th>
           <td>02MAD@1</td>
           <td>BUYER</td>
           <td>16</td>
@@ -1149,7 +1150,7 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>308</th>
+          <th>314</th>
           <td>SELLER</td>
           <td>01SRO@0</td>
           <td>25</td>
@@ -1162,7 +1163,7 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>15</th>
+          <th>201</th>
           <td>03SRO@1</td>
           <td>BUYER</td>
           <td>13</td>
@@ -1175,20 +1176,7 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>43</th>
-          <td>SELLER</td>
-          <td>01SRO@0</td>
-          <td>0</td>
-          <td>7</td>
-          <td>10</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>100</th>
+          <th>69</th>
           <td>SELLER</td>
           <td>01SRO@0</td>
           <td>3</td>
@@ -1201,7 +1189,20 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>395</th>
+          <th>205</th>
+          <td>SELLER</td>
+          <td>01SRO@0</td>
+          <td>0</td>
+          <td>7</td>
+          <td>10</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>387</th>
           <td>SELLER</td>
           <td>01SRO@0</td>
           <td>31</td>
@@ -1214,20 +1215,7 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>38</th>
-          <td>03SRO@1</td>
-          <td>BUYER</td>
-          <td>2</td>
-          <td>6</td>
-          <td>27</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>91</th>
+          <th>58</th>
           <td>03SRO@1</td>
           <td>BUYER</td>
           <td>17</td>
@@ -1240,7 +1228,7 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>107</th>
+          <th>76</th>
           <td>02MAD@1</td>
           <td>BUYER</td>
           <td>14</td>
@@ -1253,7 +1241,20 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>228</th>
+          <th>113</th>
+          <td>03SRO@1</td>
+          <td>BUYER</td>
+          <td>2</td>
+          <td>6</td>
+          <td>27</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>218</th>
           <td>03SRO@1</td>
           <td>BUYER</td>
           <td>14</td>
@@ -1424,17 +1425,17 @@ Now that you can run simple world simulations, let’s try to run a
 complete tournament and see its results. Let’s start by running a
 standard tournament (in which each agent is represented by a single
 factory). Running a collusion tournament will be exactly the same with
-the only difference that ``anac2021_std`` will be replaced with
-``anac2021_collusion``.Running a one-shot tournament (new in 2021)
-similarily just requires a change from ``anac2021_std`` to
-``anac2021_oneshot``
+the only difference that ``anac2023_std`` will be replaced with
+``anac2023_collusion``.Running a one-shot tournament (new in 2021)
+similarily just requires a change from ``anac2023_std`` to
+``anac2023_oneshot``
 
 Note that in the real competition we use thousands of configurations and
 longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    from scml.scml2020.utils import anac2021_std
+    from scml.scml2020.utils import anac2023_std
     pd.options.display.float_format = '{:,.2f}'.format
     def shorten_names(results):
         # just make agent types more readable
@@ -1452,7 +1453,7 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
         DecentralizingAgent, MarketAwareDecentralizingAgent, SyncRandomOneShotAgent
     ]
     # may take a long time
-    results = anac2021_std(
+    results = anac2023_std(
         competitors=tournament_types,
         n_configs=5, # number of different configurations to generate
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
@@ -1535,7 +1536,7 @@ We can also see the scores that every agent type got
           <th>std</th>
           <th>min</th>
           <th>25%</th>
-          <th>50%</th>
+          <th>median</th>
           <th>75%</th>
           <th>max</th>
         </tr>
@@ -1543,26 +1544,26 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>OneShotAdapter:SyncRandomOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
           <td>15.00</td>
           <td>-0.70</td>
-          <td>0.94</td>
-          <td>-3.25</td>
-          <td>-0.51</td>
-          <td>-0.39</td>
+          <td>0.83</td>
+          <td>-3.28</td>
+          <td>-0.70</td>
+          <td>-0.53</td>
           <td>-0.24</td>
-          <td>-0.14</td>
+          <td>-0.12</td>
         </tr>
         <tr>
           <th>1</th>
           <td>DecentralizingAgent</td>
           <td>15.00</td>
-          <td>-0.04</td>
-          <td>0.10</td>
-          <td>-0.24</td>
-          <td>-0.14</td>
+          <td>-0.09</td>
+          <td>0.12</td>
+          <td>-0.38</td>
+          <td>-0.15</td>
+          <td>-0.09</td>
           <td>-0.01</td>
-          <td>0.03</td>
           <td>0.08</td>
         </tr>
         <tr>
@@ -1570,11 +1571,11 @@ We can also see the scores that every agent type got
           <td>MarketAwareDecentralizingAgent</td>
           <td>15.00</td>
           <td>-0.11</td>
-          <td>0.09</td>
+          <td>0.10</td>
           <td>-0.36</td>
-          <td>-0.15</td>
-          <td>-0.09</td>
-          <td>-0.05</td>
+          <td>-0.14</td>
+          <td>-0.07</td>
+          <td>-0.06</td>
           <td>-0.01</td>
         </tr>
       </tbody>
@@ -1625,19 +1626,19 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
+          <td>SyncRandomOneShotAgent</td>
           <td>MarketAwareDecentralizingAgent</td>
-          <td>DecentralizingAgent</td>
-          <td>0.47</td>
-          <td>0.08</td>
+          <td>0.73</td>
+          <td>0.00</td>
           <td>15</td>
           <td>15</td>
           <td>15</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>OneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.80</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>DecentralizingAgent</td>
+          <td>0.67</td>
           <td>0.00</td>
           <td>15</td>
           <td>15</td>
@@ -1645,10 +1646,10 @@ You can also do statistical significance testing using ttest or kstest
         </tr>
         <tr>
           <th>2</th>
+          <td>MarketAwareDecentralizingAgent</td>
           <td>DecentralizingAgent</td>
-          <td>OneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.80</td>
-          <td>0.00</td>
+          <td>0.33</td>
+          <td>0.39</td>
           <td>15</td>
           <td>15</td>
           <td>15</td>
@@ -1696,7 +1697,7 @@ see the total score
         <tr>
           <th>0</th>
           <td>DecentralizingAgent</td>
-          <td>-0.04</td>
+          <td>-0.09</td>
         </tr>
         <tr>
           <th>1</th>
@@ -1705,7 +1706,7 @@ see the total score
         </tr>
         <tr>
           <th>2</th>
-          <td>OneShotAdapter:SyncRandomOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
           <td>-0.70</td>
         </tr>
       </tbody>
@@ -1770,33 +1771,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00MAD@0</td>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.20</td>
+          <td>02SRO@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-3.28</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>04Dec@1</td>
-          <td>DecentralizingAgent</td>
-          <td>-0.07</td>
+          <td>03MAD@1</td>
+          <td>MarketAwareDecentralizingAgent</td>
+          <td>-0.08</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>05SRO@1</td>
-          <td>OneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>-0.21</td>
+          <td>07De@2</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.26</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>00MAD@0</td>
-          <td>MarketAwareDecentralizingAgent</td>
-          <td>-0.14</td>
+          <td>00De@0</td>
+          <td>DecentralizingAgent</td>
+          <td>-0.13</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>03Dec@1</td>
-          <td>DecentralizingAgent</td>
-          <td>0.04</td>
+          <td>03SRO@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>-0.59</td>
         </tr>
       </tbody>
     </table>
@@ -1827,22 +1828,22 @@ Running a One-Shot tournament
 In 2021, a new track was introduced to the SCM league called the
 SCML-OneShot track which simplified the problem in order to focus
 research efforts on the core many-to-many concurrent negotiation
-challeng. You can run a tournament for this league in almost the same
-way as we did with standard/collusion tournaments using
-``anac2021_oneshot``
+challeng. You can run a tournament for this track with the latest
+settings in almost the same way as we did with standard/collusion
+tournaments using ``anac2023_oneshot``
 
 Note that in the real competition we use thousands of configurations and
 longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    from scml.scml2020.utils import anac2021_oneshot
+    from scml.scml2020.utils import anac2023_oneshot
 
 .. code:: ipython3
 
     tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent, GreedyOneShotAgent, GreedySingleAgreementAgent]
     # may take a long time
-    results = anac2021_oneshot(
+    results = anac2023_oneshot(
         competitors=tournament_types,
         n_configs=5, # number of different configurations to generate
         n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
@@ -1862,7 +1863,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['DefaultOneShotAdapter:GreedyOneShotAgent']
+    ['GreedyOneShotAgent']
 
 
 
@@ -1921,7 +1922,7 @@ We can also see the scores that every agent type got
           <th>std</th>
           <th>min</th>
           <th>25%</th>
-          <th>50%</th>
+          <th>median</th>
           <th>75%</th>
           <th>max</th>
         </tr>
@@ -1929,51 +1930,51 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>DefaultOneShotAdapter:GreedyOneShotAgent</td>
+          <td>GreedyOneShotAgent</td>
           <td>20.00</td>
-          <td>1.08</td>
-          <td>0.24</td>
-          <td>0.70</td>
-          <td>0.90</td>
-          <td>1.07</td>
-          <td>1.18</td>
-          <td>1.62</td>
+          <td>0.76</td>
+          <td>0.21</td>
+          <td>0.36</td>
+          <td>0.63</td>
+          <td>0.79</td>
+          <td>0.91</td>
+          <td>1.06</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>DefaultOneShotAdapter:GreedySingleAgreementAgent</td>
+          <td>GreedySingleAgreementAgent</td>
           <td>20.00</td>
           <td>0.71</td>
-          <td>0.11</td>
-          <td>0.54</td>
+          <td>0.10</td>
+          <td>0.58</td>
           <td>0.65</td>
-          <td>0.68</td>
-          <td>0.77</td>
-          <td>0.92</td>
+          <td>0.70</td>
+          <td>0.76</td>
+          <td>0.96</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>DefaultOneShotAdapter:RandomOneShotAgent</td>
+          <td>RandomOneShotAgent</td>
           <td>20.00</td>
-          <td>0.26</td>
+          <td>0.76</td>
+          <td>0.15</td>
           <td>0.42</td>
-          <td>-0.54</td>
-          <td>-0.14</td>
-          <td>0.34</td>
           <td>0.66</td>
-          <td>0.71</td>
+          <td>0.77</td>
+          <td>0.87</td>
+          <td>1.00</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
           <td>20.00</td>
-          <td>0.16</td>
-          <td>0.42</td>
-          <td>-0.51</td>
-          <td>-0.24</td>
-          <td>0.22</td>
-          <td>0.53</td>
-          <td>0.71</td>
+          <td>0.76</td>
+          <td>0.14</td>
+          <td>0.45</td>
+          <td>0.67</td>
+          <td>0.75</td>
+          <td>0.84</td>
+          <td>1.01</td>
         </tr>
       </tbody>
     </table>
@@ -2023,60 +2024,60 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>DefaultOneShotAdapter:GreedyOneShotAgent</td>
-          <td>DefaultOneShotAdapter:GreedySingleAgreementAgent</td>
-          <td>0.75</td>
-          <td>0.00</td>
+          <td>GreedyOneShotAgent</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.35</td>
+          <td>0.17</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>DefaultOneShotAdapter:GreedyOneShotAgent</td>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.95</td>
-          <td>0.00</td>
+          <td>GreedyOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.15</td>
+          <td>0.98</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>DefaultOneShotAdapter:GreedyOneShotAgent</td>
-          <td>DefaultOneShotAdapter:RandomOneShotAgent</td>
-          <td>0.95</td>
-          <td>0.00</td>
+          <td>GreedyOneShotAgent</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.25</td>
+          <td>0.57</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>DefaultOneShotAdapter:GreedySingleAgreementAgent</td>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.75</td>
-          <td>0.00</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.25</td>
+          <td>0.57</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>DefaultOneShotAdapter:GreedySingleAgreementAgent</td>
-          <td>DefaultOneShotAdapter:RandomOneShotAgent</td>
-          <td>0.65</td>
-          <td>0.00</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.35</td>
+          <td>0.17</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>DefaultOneShotAdapter:RandomOneShotAgent</td>
-          <td>0.20</td>
-          <td>0.83</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.15</td>
+          <td>0.98</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
@@ -2123,23 +2124,23 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>DefaultOneShotAdapter:GreedyOneShotAgent</td>
-          <td>1.08</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.76</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>DefaultOneShotAdapter:GreedySingleAgreementAgent</td>
-          <td>0.71</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.76</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>DefaultOneShotAdapter:RandomOneShotAgent</td>
-          <td>0.26</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.76</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.16</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.71</td>
         </tr>
       </tbody>
     </table>
@@ -2185,33 +2186,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Gre@0</td>
-          <td>DefaultOneShotAdapter:GreedyOneShotAgent</td>
-          <td>0.82</td>
+          <td>00Gr@0</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.72</td>
         </tr>
         <tr>
           <th>1</th>
           <td>01GSA@0</td>
-          <td>DefaultOneShotAdapter:GreedySingleAgreementAgent</td>
-          <td>0.56</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.59</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>02SyR@0</td>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.67</td>
+          <td>02Sy@0</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.91</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>03Ran@0</td>
-          <td>DefaultOneShotAdapter:RandomOneShotAgent</td>
-          <td>0.67</td>
+          <td>03Ra@0</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.79</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00SyR@0</td>
-          <td>DefaultOneShotAdapter:SyncRandomOneShotAgent</td>
-          <td>0.54</td>
+          <td>00GSA@0</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.68</td>
         </tr>
       </tbody>
     </table>
@@ -2228,7 +2229,7 @@ of each type.
     results.scores = results.scores.sort_values("level")
     sns.lineplot(data=results.scores[["agent_type", "level", "score"]],
                  x="level", y="score", hue="agent_type")
-    plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
+    # plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
 
 
@@ -2237,7 +2238,7 @@ of each type.
 
 
 Now that you can run simulations and complete tournaments, let’s see how
-are we going to develop a new agent for the SCML2021 league
+are we going to develop a new agent for the SCML2023 league
 :math:`\rightarrow`
 
 

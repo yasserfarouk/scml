@@ -15,6 +15,7 @@ OneShotAgent
       ~OneShotAgent.crisp_ufun
       ~OneShotAgent.has_cardinal_preferences
       ~OneShotAgent.has_preferences
+      ~OneShotAgent.has_ufun
       ~OneShotAgent.id
       ~OneShotAgent.internal_state
       ~OneShotAgent.name
@@ -89,6 +90,7 @@ OneShotAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: internal_state
    .. autoattribute:: name

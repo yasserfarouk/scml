@@ -15,6 +15,7 @@ BuyCheapSellExpensiveAgent
       ~BuyCheapSellExpensiveAgent.crisp_ufun
       ~BuyCheapSellExpensiveAgent.has_cardinal_preferences
       ~BuyCheapSellExpensiveAgent.has_preferences
+      ~BuyCheapSellExpensiveAgent.has_ufun
       ~BuyCheapSellExpensiveAgent.id
       ~BuyCheapSellExpensiveAgent.initialized
       ~BuyCheapSellExpensiveAgent.internal_state
@@ -100,6 +101,7 @@ BuyCheapSellExpensiveAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

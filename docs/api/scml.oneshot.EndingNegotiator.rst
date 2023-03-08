@@ -15,6 +15,7 @@ EndingNegotiator
       ~EndingNegotiator.crisp_ufun
       ~EndingNegotiator.has_cardinal_preferences
       ~EndingNegotiator.has_preferences
+      ~EndingNegotiator.has_ufun
       ~EndingNegotiator.id
       ~EndingNegotiator.name
       ~EndingNegotiator.nmi
@@ -33,13 +34,13 @@ EndingNegotiator
 
    .. autosummary::
 
+      ~EndingNegotiator.__call__
       ~EndingNegotiator.add_capabilities
       ~EndingNegotiator.add_handler
       ~EndingNegotiator.before_death
       ~EndingNegotiator.cancel
       ~EndingNegotiator.checkpoint
       ~EndingNegotiator.checkpoint_info
-      ~EndingNegotiator.counter
       ~EndingNegotiator.create
       ~EndingNegotiator.from_checkpoint
       ~EndingNegotiator.handlers
@@ -52,8 +53,8 @@ EndingNegotiator
       ~EndingNegotiator.on_negotiation_start
       ~EndingNegotiator.on_notification
       ~EndingNegotiator.on_notification_
+      ~EndingNegotiator.on_partner_ended
       ~EndingNegotiator.on_partner_proposal
-      ~EndingNegotiator.on_partner_refused_to_propose
       ~EndingNegotiator.on_partner_response
       ~EndingNegotiator.on_preferences_changed
       ~EndingNegotiator.on_round_end
@@ -75,6 +76,7 @@ EndingNegotiator
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: name
    .. autoattribute:: nmi
@@ -91,13 +93,13 @@ EndingNegotiator
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: add_capabilities
    .. automethod:: add_handler
    .. automethod:: before_death
    .. automethod:: cancel
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
-   .. automethod:: counter
    .. automethod:: create
    .. automethod:: from_checkpoint
    .. automethod:: handlers
@@ -110,8 +112,8 @@ EndingNegotiator
    .. automethod:: on_negotiation_start
    .. automethod:: on_notification
    .. automethod:: on_notification_
+   .. automethod:: on_partner_ended
    .. automethod:: on_partner_proposal
-   .. automethod:: on_partner_refused_to_propose
    .. automethod:: on_partner_response
    .. automethod:: on_preferences_changed
    .. automethod:: on_round_end

@@ -15,6 +15,7 @@ SCML2020Agent
       ~SCML2020Agent.crisp_ufun
       ~SCML2020Agent.has_cardinal_preferences
       ~SCML2020Agent.has_preferences
+      ~SCML2020Agent.has_ufun
       ~SCML2020Agent.id
       ~SCML2020Agent.initialized
       ~SCML2020Agent.internal_state
@@ -90,6 +91,7 @@ SCML2020Agent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

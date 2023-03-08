@@ -15,6 +15,7 @@ MarketAwareBuyCheapSellExpensiveAgent
       ~MarketAwareBuyCheapSellExpensiveAgent.crisp_ufun
       ~MarketAwareBuyCheapSellExpensiveAgent.has_cardinal_preferences
       ~MarketAwareBuyCheapSellExpensiveAgent.has_preferences
+      ~MarketAwareBuyCheapSellExpensiveAgent.has_ufun
       ~MarketAwareBuyCheapSellExpensiveAgent.id
       ~MarketAwareBuyCheapSellExpensiveAgent.initialized
       ~MarketAwareBuyCheapSellExpensiveAgent.internal_state
@@ -100,6 +101,7 @@ MarketAwareBuyCheapSellExpensiveAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

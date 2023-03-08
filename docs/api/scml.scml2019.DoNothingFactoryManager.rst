@@ -15,6 +15,7 @@ DoNothingFactoryManager
       ~DoNothingFactoryManager.crisp_ufun
       ~DoNothingFactoryManager.has_cardinal_preferences
       ~DoNothingFactoryManager.has_preferences
+      ~DoNothingFactoryManager.has_ufun
       ~DoNothingFactoryManager.id
       ~DoNothingFactoryManager.initialized
       ~DoNothingFactoryManager.name
@@ -98,6 +99,7 @@ DoNothingFactoryManager
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

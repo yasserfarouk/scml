@@ -15,6 +15,7 @@ Miner
       ~Miner.crisp_ufun
       ~Miner.has_cardinal_preferences
       ~Miner.has_preferences
+      ~Miner.has_ufun
       ~Miner.id
       ~Miner.initialized
       ~Miner.name
@@ -96,6 +97,7 @@ Miner
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

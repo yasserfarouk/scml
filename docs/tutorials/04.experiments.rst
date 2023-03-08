@@ -1,4 +1,3 @@
-
 Running Controlled Experiments
 ------------------------------
 
@@ -68,7 +67,7 @@ first import in what we need:
 
 .. code:: ipython3
 
-    from scml.oneshot.world import SCML2020OneShotWorld
+    from scml.oneshot.world import SCML2023OneShotWorld
     from scml.oneshot.world import is_system_agent
     from scml.oneshot.agents import GreedyOneShotAgent, GreedySingleAgreementAgent
 
@@ -86,8 +85,8 @@ that:
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
 
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = SCML2023OneShotWorld(
+        **SCML2023OneShotWorld.generate(
             agent_types = types,
             agent_processes=[0,0,0,0,0, 1,1,1,1,1],
             n_processes=2,
@@ -148,8 +147,8 @@ approach we used before:
 
     fig, axs = plt.subplots(1, 4)
     for ax in axs:
-        world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(
+        world = SCML2023OneShotWorld(
+            **SCML2023OneShotWorld.generate(
                 agent_types = types,
                 n_agents_per_process=(3, 7),
                 n_processes=2,
@@ -178,8 +177,8 @@ We can run the last of these worlds just to be sure something happens!!
 
 .. parsed-literal::
 
-    (<AxesSubplot:title={'center':'Step: 10/10 [ 0s rem  0s] 100.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x17f7d14b0>)
+    (<AxesSubplot: title={'center': 'Step: 10/10 [ 0s rem  0s] 100.00%'}>,
+     <networkx.classes.multidigraph.MultiDiGraph at 0x147542290>)
 
 
 
@@ -199,8 +198,8 @@ level is **between 3 and 7** not exactly either of them.
 
     fig, axs = plt.subplots(1, 4)
     for ax in axs:
-        world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(
+        world = SCML2023OneShotWorld(
+            **SCML2023OneShotWorld.generate(
                 agent_types = types,
                 n_agents_per_process=[3, 7],
                 n_processes=2,
@@ -222,8 +221,8 @@ choosing:
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 8
     agents_per_process = [2, 3, 2, 3]
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = SCML2023OneShotWorld(
+        **SCML2023OneShotWorld.generate(
             agent_types = types,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
@@ -259,7 +258,7 @@ follows:
 
 .. code:: ipython3
 
-    from scml.scml2020.world import SCML2021World
+    from scml.scml2020.world import SCML2023World
     from scml.scml2020.agents import DecentralizingAgent, BuyCheapSellExpensiveAgent
     from negmas import NaiveTitForTatNegotiator
 
@@ -269,8 +268,8 @@ follows:
         + [dict()] * 4
     )
     agents_per_process = [2, 3, 1]
-    world = SCML2021World(
-        **SCML2021World.generate(
+    world = SCML2023World(
+        **SCML2023World.generate(
             agent_types = types,
             agent_params = params,
             n_agents_per_process=agents_per_process,
@@ -300,7 +299,7 @@ world itself:
 
 .. parsed-literal::
 
-    [{'negotiator_type': <class 'negmas.sao.negotiators.titfortat.NaiveTitForTatNegotiator'>}, {}, {}, {}, {}, {}]
+    [{}, {}, {'negotiator_type': <class 'negmas.gb.negotiators.titfortat.NaiveTitForTatNegotiator'>}, {}, {}, {}]
 
 
 We can see that the first agent had the negotiator-type we asked for and
@@ -321,8 +320,8 @@ same method:
          dict(controller_params=dict(concession_exponent=3.0))]
         + [dict()] * 4
     )
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = SCML2023OneShotWorld(
+        **SCML2023OneShotWorld.generate(
             agent_types = types,
             agent_params = params,
             agent_processes=[0,0,1,1,1,2],
@@ -405,8 +404,8 @@ but you can decide to test it:
 
     types = [GreedyOneShotAgent] * 7
     agents_per_process = [2, 3, 2]
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = SCML2023OneShotWorld(
+        **SCML2023OneShotWorld.generate(
             agent_types = types,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
@@ -457,13 +456,13 @@ harder. Let’s look at the initial balances:
 
 .. parsed-literal::
 
-    00Gre@0 -> 1000
-    01Gre@0 -> 1000
-    02Gre@1 -> 1000
-    03Gre@1 -> 1000
-    04Gre@1 -> 1000
-    05Gre@2 -> 1000
-    06Gre@2 -> 1000
+    00Gr@0 -> 1000
+    01Gr@0 -> 1000
+    02Gr@1 -> 1000
+    03Gr@1 -> 1000
+    04Gr@1 -> 1000
+    05Gr@2 -> 1000
+    06Gr@2 -> 1000
 
 
 As expected again. What about production cost?
@@ -478,13 +477,13 @@ As expected again. What about production cost?
 
 .. parsed-literal::
 
-    00Gre@0 -> 50
-    01Gre@0 -> 50
-    02Gre@1 -> 50
-    03Gre@1 -> 50
-    04Gre@1 -> 50
-    05Gre@2 -> 50
-    06Gre@2 -> 50
+    00Gr@0 -> 50
+    01Gr@0 -> 50
+    02Gr@1 -> 50
+    03Gr@1 -> 50
+    04Gr@1 -> 50
+    05Gr@2 -> 50
+    06Gr@2 -> 50
 
 
 This time, we will run this world to just see that it still works after
@@ -523,8 +522,8 @@ will generate a world in which agents have costs from :math:`1` to
 
     types = [GreedyOneShotAgent] * 7
     agents_per_process = [2, 3, 2]
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = SCML2023OneShotWorld(
+        **SCML2023OneShotWorld.generate(
             agent_types = types,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
@@ -555,13 +554,13 @@ Let’s now check the production costs:
 
 .. parsed-literal::
 
-    00Gre@0 -> 1
-    01Gre@0 -> 2
-    02Gre@1 -> 3
-    03Gre@1 -> 4
-    04Gre@1 -> 5
-    05Gre@2 -> 6
-    06Gre@2 -> 7
+    00Gr@0 -> 1
+    01Gr@0 -> 2
+    02Gr@1 -> 3
+    03Gr@1 -> 4
+    04Gr@1 -> 5
+    05Gr@2 -> 6
+    06Gr@2 -> 7
 
 
 It is crucial here that we passed ``cost_increases_with_level=False``,
@@ -581,10 +580,10 @@ Here we cannot use the ``generate()`` method and must call the world
 constructor directly. This is the most complex approach as we need to
 set everything up exactly right.
 
-Standard SCML2020World
+Standard SCML2023World
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Let’s try to do it for the ``SCML2021World`` first:
+Let’s try to do it for the ``SCML2023World`` first:
 
 .. code:: ipython3
 
@@ -639,7 +638,7 @@ Let’s try to do it for the ``SCML2021World`` first:
         ),
     ]
 
-    world = SCML2021World(
+    world = SCML2023World(
         process_inputs=np.ones(n_processes),
         process_outputs=np.ones(n_processes),
         catalog_prices=[10, 20, 30],
@@ -676,23 +675,23 @@ happened:
 .. parsed-literal::
 
     [["Contract(agreement={'time': 1, 'quantity': 10, 'unit_price': 5}, "
-      "partners=('00Dec@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
-      "'00Dec@0', 'caller': 'SELLER', 'is_buy': True, 'product': 0}, issues=(), "
+      "partners=('00De@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
+      "'00De@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=1, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='c0b45236-a804-4d1a-8616-35b1156fe9b5')"],
+      "id='0226ef72-cdb3-4f08-8a24-88ea18fa3896')"],
      ["Contract(agreement={'time': 2, 'quantity': 10, 'unit_price': 7}, "
-      "partners=('00Dec@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
-      "'00Dec@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
+      "partners=('00De@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
+      "'00De@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='10d7a2f7-ba7e-4e7d-a997-f423e5b9ace3')",
+      "id='297068a3-7178-4e50-829a-2cfa52893388')",
       "Contract(agreement={'time': 1, 'quantity': 10, 'unit_price': 5}, "
-      "partners=('BUYER', '02Dec@1'), annotation={'seller': '02Dec@1', 'buyer': "
-      "'BUYER', 'caller': 'BUYER', 'is_buy': True, 'product': 0}, issues=(), "
+      "partners=('BUYER', '02De@1'), annotation={'seller': '02De@1', 'buyer': "
+      "'BUYER', 'caller': 'BUYER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='18d772ef-2e5e-4f22-9091-6637475f5349')"],
+      "id='04cdf76e-5c6c-4f58-ad51-d08dfe02c879')"],
      [],
      [],
      []]
@@ -806,7 +805,7 @@ is slightly different. Here is an example case:
         ),
     ]
 
-    world = SCML2020OneShotWorld(
+    world = SCML2023OneShotWorld(
         catalog_prices=[10, 20, 30],
         profiles=profiles,
         agent_types=types,
@@ -867,6 +866,7 @@ Gaussians describing shortfall penalties and disposal costs.
 
 Other than these two differences, the rest is almost the same as in the
 previous case.
+
 
 
 

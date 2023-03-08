@@ -15,6 +15,7 @@ MarketAwareIndDecentralizingAgent
       ~MarketAwareIndDecentralizingAgent.crisp_ufun
       ~MarketAwareIndDecentralizingAgent.has_cardinal_preferences
       ~MarketAwareIndDecentralizingAgent.has_preferences
+      ~MarketAwareIndDecentralizingAgent.has_ufun
       ~MarketAwareIndDecentralizingAgent.id
       ~MarketAwareIndDecentralizingAgent.initialized
       ~MarketAwareIndDecentralizingAgent.internal_state
@@ -102,6 +103,7 @@ MarketAwareIndDecentralizingAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

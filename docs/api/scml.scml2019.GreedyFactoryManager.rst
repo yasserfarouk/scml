@@ -15,6 +15,7 @@ GreedyFactoryManager
       ~GreedyFactoryManager.crisp_ufun
       ~GreedyFactoryManager.has_cardinal_preferences
       ~GreedyFactoryManager.has_preferences
+      ~GreedyFactoryManager.has_ufun
       ~GreedyFactoryManager.id
       ~GreedyFactoryManager.initialized
       ~GreedyFactoryManager.name
@@ -101,6 +102,7 @@ GreedyFactoryManager
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name

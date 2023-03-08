@@ -1,4 +1,3 @@
-
 Logging and Statistics
 ----------------------
 
@@ -47,12 +46,12 @@ stored
 
 .. code:: ipython3
 
-    from scml import SCML2020World
+    from scml import SCML2023World
     from scml import DecentralizingAgent, RandomAgent, DoNothingAgent, DecentralizingAgentWithLogging
 
     # create and run the world
-    world = SCML2020World(
-        **SCML2020World.generate(
+    world = SCML2023World(
+        **SCML2023World.generate(
             agent_types=[DoNothingAgent],
             n_steps=10,
             n_processes=2,
@@ -80,10 +79,10 @@ Let’s check our logs
 
 .. parsed-literal::
 
-    [01;34m/Users/yasser/negmas/logs/test_world[00m
-    ├── [01;34m_agent_logs[00m
-    ├── events.json
-    └── log.txt
+    [01;34m/Users/yasser/negmas/logs/test_world[0m
+    ├── [01;34m_agent_logs[0m
+    ├── [00mevents.json[0m
+    └── [00mlog.txt[0m
 
     1 directory, 2 files
 
@@ -104,25 +103,25 @@ Now we have agent logs. We can inspect one of them
 
 .. parsed-literal::
 
-    2022-02-16 18:27:00,554 - INFO - 0/10 [0.00%]: test_world: World Created
+    2023-03-07 16:34:41,382 - INFO - 0/10 [0.00%]: test_world: World Created
 
-    2022-02-16 18:27:00,555 - INFO - 0/10 [0.00%]: 00DoN@0 joined
+    2023-03-07 16:34:41,383 - INFO - 0/10 [0.00%]: 00Do@0 joined
 
-    2022-02-16 18:27:00,559 - INFO - 0/10 [0.00%]: 01DoN@0 joined
+    2023-03-07 16:34:41,388 - INFO - 0/10 [0.00%]: 01Do@0 joined
 
-    2022-02-16 18:27:00,560 - INFO - 0/10 [0.00%]: 02DoN@0 joined
+    2023-03-07 16:34:41,389 - INFO - 0/10 [0.00%]: 02Do@0 joined
 
-    2022-02-16 18:27:00,561 - INFO - 0/10 [0.00%]: 03DoN@0 joined
+    2023-03-07 16:34:41,392 - INFO - 0/10 [0.00%]: 03Do@0 joined
 
-    2022-02-16 18:27:00,562 - INFO - 0/10 [0.00%]: 04DoN@1 joined
+    2023-03-07 16:34:41,394 - INFO - 0/10 [0.00%]: 04Do@1 joined
 
-    2022-02-16 18:27:00,563 - INFO - 0/10 [0.00%]: 05DoN@1 joined
+    2023-03-07 16:34:41,394 - INFO - 0/10 [0.00%]: 05Do@1 joined
 
-    2022-02-16 18:27:00,564 - INFO - 0/10 [0.00%]: SELLER joined
+    2023-03-07 16:34:41,395 - INFO - 0/10 [0.00%]: 06Do@1 joined
 
-    2022-02-16 18:27:00,565 - INFO - 0/10 [0.00%]: BUYER joined
+    2023-03-07 16:34:41,395 - INFO - 0/10 [0.00%]: 07Do@1 joined
 
-    2022-02-16 18:27:00,574 - INFO - 0/10 [0.00%]: This is a test message
+    2023-03-07 16:34:41,395 - INFO - 0/10 [0.00%]: SELLER joined
 
 
 
@@ -144,8 +143,8 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. code:: ipython3
 
-    SCML2020World(
-        **SCML2020World.generate(
+    SCML2023World(
+        **SCML2023World.generate(
             agent_types=[DecentralizingAgentWithLogging],
             n_steps=10,
             n_processes=2,
@@ -161,19 +160,18 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    [01;34m/Users/yasser/negmas/logs/test_world[00m
-    ├── [01;34m_agent_logs[00m
-    │   ├── 00DWL@0.txt
-    │   ├── 01DWL@0.txt
-    │   ├── 02DWL@0.txt
-    │   ├── 03DWL@0.txt
-    │   ├── 04DWL@1.txt
-    │   ├── 05DWL@1.txt
-    │   ├── 06DWL@1.txt
-    │   └── 07DWL@1.txt
-    └── events.json
+    [01;34m/Users/yasser/negmas/logs/test_world[0m
+    ├── [01;34m_agent_logs[0m
+    │   ├── [00m00DWL@0.txt[0m
+    │   ├── [00m01DWL@0.txt[0m
+    │   ├── [00m02DWL@0.txt[0m
+    │   ├── [00m03DWL@0.txt[0m
+    │   ├── [00m04DWL@1.txt[0m
+    │   ├── [00m05DWL@1.txt[0m
+    │   └── [00m06DWL@1.txt[0m
+    └── [00mevents.json[0m
 
-    1 directory, 9 files
+    1 directory, 8 files
 
 
 .. code:: ipython3
@@ -185,25 +183,25 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
 
 .. parsed-literal::
 
-    2022-02-16 18:27:02,437 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+    2023-03-07 16:34:41,843 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-02-16 18:27:02,444 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 41e303e2-a162-43e7-8d3c-fda463dc12e3)
+    2023-03-07 16:34:41,844 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 11d47784-44a9-4c1a-93b6-ae74fe8026eb)
 
-    2022-02-16 18:27:02,445 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+    2023-03-07 16:34:41,844 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2022-02-16 18:27:02,446 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+    2023-03-07 16:34:41,844 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-02-16 18:27:02,449 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 5d1f8b9a-9517-40bc-a2eb-f880b766fd12)
+    2023-03-07 16:34:41,844 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 64aa28eb-ce25-4d9d-9039-a2954c9bc9cd)
 
-    2022-02-16 18:27:02,451 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+    2023-03-07 16:34:41,845 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2022-02-16 18:27:02,451 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 06DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+    2023-03-07 16:34:41,845 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 06DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
 
-    2022-02-16 18:27:02,452 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '06DWL@1'] (ID 9f536b49-68bc-4d48-89f5-ded7b4289ea6)
+    2023-03-07 16:34:41,845 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '06DWL@1'] (ID 3231f970-b4e4-4141-b2b3-255dd906800a)
 
-    2022-02-16 18:27:02,454 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+    2023-03-07 16:34:41,845 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
 
-    2022-02-16 18:27:02,454 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 07DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+    2023-03-07 16:34:41,846 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (2, 7)
 
 
 
@@ -224,10 +222,10 @@ file.
 Controlling logging
 ~~~~~~~~~~~~~~~~~~~
 
-You can control several aspects of logging using **log_\*** parameters
+You can control several aspects of logging using **log\_\*** parameters
 of the world constructor. These parameters can also be passed to world
-generation method (**SCML2020World.generate**) and to all tournament
-creation functions (i.e. **anac2020std**, **anac2020collusion**,
+generation method (**SCML2023World.generate**) and to all tournament
+creation functions (i.e. **anac2023std**, **anac2023collusion**,
 **tournament**, etc).
 
 This is a full list of these parameters:
@@ -276,8 +274,8 @@ Let’s try changing some of these:
 
 .. code:: ipython3
 
-    SCML2020World(
-        **SCML2020World.generate(
+    SCML2023World(
+        **SCML2023World.generate(
             agent_types=[DecentralizingAgentWithLogging],
             n_steps=10,
             n_processes=2,
@@ -293,23 +291,23 @@ Let’s try changing some of these:
 
 .. parsed-literal::
 
-    [01;34m/Users/yasser/negmas/logs/test_world[00m
-    ├── [01;34m_agent_logs[00m
-    │   ├── 00DWL@0.txt
-    │   ├── 01DWL@0.txt
-    │   ├── 02DWL@1.txt
-    │   ├── 03DWL@1.txt
-    │   ├── 04DWL@1.txt
-    │   └── 05DWL@1.txt
-    ├── agents.json
-    ├── breaches.csv
-    ├── contracts.csv
-    ├── events.json
-    ├── info.json
-    ├── negotiations.csv
-    ├── params.json
-    ├── stats.csv
-    └── stats.csv.csv
+    [01;34m/Users/yasser/negmas/logs/test_world[0m
+    ├── [01;34m_agent_logs[0m
+    │   ├── [00m00DWL@0.txt[0m
+    │   ├── [00m01DWL@0.txt[0m
+    │   ├── [00m02DWL@0.txt[0m
+    │   ├── [00m03DWL@0.txt[0m
+    │   ├── [00m04DWL@1.txt[0m
+    │   └── [00m05DWL@1.txt[0m
+    ├── [00magents.json[0m
+    ├── [00mbreaches.csv[0m
+    ├── [00mcontracts.csv[0m
+    ├── [00mevents.json[0m
+    ├── [00minfo.json[0m
+    ├── [00mnegotiations.csv[0m
+    ├── [00mparams.json[0m
+    ├── [00mstats.csv[0m
+    └── [00mstats.csv.csv[0m
 
     1 directory, 15 files
 
@@ -324,8 +322,8 @@ method without needing to enable periodic saving using
 
     !rm -r ~/negmas/logs/test_world
     from negmas import save_stats
-    world = SCML2020World(
-        **SCML2020World.generate(
+    world = SCML2023World(
+        **SCML2023World.generate(
             agent_types=[DecentralizingAgent],
             n_steps=10,
             n_processes=2,
@@ -339,17 +337,17 @@ method without needing to enable periodic saving using
 
 .. parsed-literal::
 
-    [01;34m/Users/yasser/negmas/logs/test_world[00m
-    ├── [01;34m_agent_logs[00m
-    ├── agents.json
-    ├── breaches.csv
-    ├── contracts.csv
-    ├── events.json
-    ├── info.json
-    ├── negotiations.csv
-    ├── params.json
-    ├── stats.csv
-    └── stats.json
+    [01;34m/Users/yasser/negmas/logs/test_world[0m
+    ├── [01;34m_agent_logs[0m
+    ├── [00magents.json[0m
+    ├── [00mbreaches.csv[0m
+    ├── [00mcontracts.csv[0m
+    ├── [00mevents.json[0m
+    ├── [00minfo.json[0m
+    ├── [00mnegotiations.csv[0m
+    ├── [00mparams.json[0m
+    ├── [00mstats.csv[0m
+    └── [00mstats.json[0m
 
     1 directory, 9 files
 
@@ -363,7 +361,7 @@ Let’s examine each of the files ``save_stats`` saves in your
 -  **World information**
 
    -  **params.json** The parameters passed to the world constructor
-      (SCML2020World.__init__).
+      (SCML2020World.\__init\_\_).
    -  **info.json** Information about the world. You can pass extra
       information to be saved here while constructing the world through
       the **info** parameter of the contractor as a dictionary of
@@ -529,33 +527,33 @@ statistics, and agent statistics. - World statistics reveal information
 about the state of the world after every simulation step. Names of these
 statistics are self-explanatory
 
--  Product statsitics all end with \*_{p}\* where *p* is the product
+-  Product statsitics all end with \*\_{p}\* where *p* is the product
    number:
 
-   -  **trading_price_{p}** The trading price of the product at the end
+   -  **trading_price\_{p}** The trading price of the product at the end
       of every simulation step.
-   -  **sold_quantity_{p}** The quantity sold/bought of that product at
+   -  **sold_quantity\_{p}** The quantity sold/bought of that product at
       every simulation step.
    -  **unit_price+{p}** The average unit price of the product at every
       simulation step (if its sold_quantity was nonzero).
 
--  Agent statsitics all end with \*_{a}\* (or have \*_{a}\* in the
+-  Agent statsitics all end with \*\_{a}\* (or have \*\_{a}\* in the
    middle) where *a* is the agent ID:
 
-   -  **balance_{a}** The balance of the agent.
-   -  \**inventory_{a}_input*\* The number of units of the agent’s input
-      product currently available in its inventory
-   -  \**inventory_{a}_output*\* The number of units of the agent’s
+   -  **balance\_{a}** The balance of the agent.
+   -  \**inventory\_{a}_input*\* The number of units of the agent’s
+      input product currently available in its inventory
+   -  \**inventory\_{a}_output*\* The number of units of the agent’s
       output product currently available in its inventory
-   -  **assets_{a}** The value of the agent’s inventory.
-   -  **score_{a}** The score of the agent which is a combination of its
-      balance and assets value according to SCML2020 rules.
-   -  **productivity_{a}** The fraction of production lines of the
+   -  **assets\_{a}** The value of the agent’s inventory.
+   -  **score\_{a}** The score of the agent which is a combination of
+      its balance and assets value according to SCML2020 rules.
+   -  **productivity\_{a}** The fraction of production lines of the
       agent’s factory that are active during every simulation step.
-   -  **bankrupt_{a}** Whether the agent is bankrupt
-   -  **spot_market_quantity_{a}** The quantity the agent bought from
+   -  **bankrupt\_{a}** Whether the agent is bankrupt
+   -  **spot_market_quantity\_{a}** The quantity the agent bought from
       the spot market (of its output product).
-   -  **spot_market_loss_{a}** The personalized spot market loss of the
+   -  **spot_market_loss\_{a}** The personalized spot market loss of the
       agent.
 
 Contracts and Negotiations

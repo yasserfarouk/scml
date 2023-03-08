@@ -15,6 +15,7 @@ DecentralizingAgent
       ~DecentralizingAgent.crisp_ufun
       ~DecentralizingAgent.has_cardinal_preferences
       ~DecentralizingAgent.has_preferences
+      ~DecentralizingAgent.has_ufun
       ~DecentralizingAgent.id
       ~DecentralizingAgent.initialized
       ~DecentralizingAgent.internal_state
@@ -104,6 +105,7 @@ DecentralizingAgent
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state

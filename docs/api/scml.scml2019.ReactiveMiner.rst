@@ -15,6 +15,7 @@ ReactiveMiner
       ~ReactiveMiner.crisp_ufun
       ~ReactiveMiner.has_cardinal_preferences
       ~ReactiveMiner.has_preferences
+      ~ReactiveMiner.has_ufun
       ~ReactiveMiner.id
       ~ReactiveMiner.initialized
       ~ReactiveMiner.name
@@ -97,6 +98,7 @@ ReactiveMiner
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
+   .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: name
