@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.5.6 (2023.3.8)
+----------------
+
+* Upgrading to be compatible with NegMAS 0.9.8
+* Updating notebooks for 2023 release
+* Adding 2023 specific classes and utility functions
+* Supporting most recent negmas version on Github
+* Adding the ability to use raw collusion scores
+	In the collusion track, it is now possible to control how much does the
+	raw collusion score affect the final score relative to the difference
+	between raw collusion score and standard score.
+* more reobust renaming when reveal-names is set
+
 0.5.5 (2022.5.18)
 -----------------
 * bugfix in anac2022_* methods: Score reporting was not accurate because of a change in naming convention in negmas.
