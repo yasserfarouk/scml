@@ -21,9 +21,9 @@ this brief introduction in the remainder of this tutorial.
     from scml.scml2020 import is_system_agent
     from pprint import pprint
 
-    def try_agent(agent_type, n_processes=2):
+    def try_agent(agent_type, n_processes=2, draw=True):
         """Runs an agent in a world simulation against a randomly behaving agent"""
-        return try_agents([RandomOneShotAgent, agent_type], n_processes)
+        return try_agents([RandomOneShotAgent, agent_type], n_processes, draw=draw)
 
     def try_agents(agent_types, n_processes=2, n_trials=1, draw=True, agent_params=None):
         """
@@ -129,17 +129,17 @@ Let’s check the scores of different agents to confirm:
 .. parsed-literal::
 
     Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.5618181128339336
-    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.8878437122220373
+    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.7502469992967512
     Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.6849210221645556
     Agent 03MDN@0 of type MyOneShotDoNothing has a final score of 0.6039422056361495
     Agent 04MDN@1 of type MyOneShotDoNothing has a final score of 0.7754821463007091
     Agent 05MDN@1 of type MyOneShotDoNothing has a final score of 0.8958313153141294
-    Agent 06Ra@1 of type RandomOneShotAgent has a final score of 0.8264519628830137
-    Agent 07Ra@1 of type RandomOneShotAgent has a final score of 0.7913916702363109
+    Agent 06Ra@1 of type RandomOneShotAgent has a final score of 0.805394818137981
+    Agent 07Ra@1 of type RandomOneShotAgent has a final score of 0.6381018106371946
     Agent 08MDN@1 of type MyOneShotDoNothing has a final score of 0.48704975546325124
-    Agent 09Ra@1 of type RandomOneShotAgent has a final score of 0.814240734499465
-    Agent 10Ra@1 of type RandomOneShotAgent has a final score of 0.8430155933318002
-    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8878643982817646
+    Agent 09Ra@1 of type RandomOneShotAgent has a final score of 1.287237507697377
+    Agent 10Ra@1 of type RandomOneShotAgent has a final score of 0.6028349465552685
+    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8135628948718752
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -154,7 +154,7 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.8418013452423986),
+    [('RandomOneShotAgent', 0.8162298295327414),
      ('MyOneShotDoNothing', 0.6681740929521213)]
 
 
@@ -206,28 +206,28 @@ market.
         <tr>
           <th rowspan="5" valign="top">01Ra@0</th>
           <th>06Ra@1</th>
-          <td>4.375000</td>
-          <td>14.750000</td>
+          <td>2.800000</td>
+          <td>14.300000</td>
         </tr>
         <tr>
           <th>07Ra@1</th>
-          <td>5.500000</td>
-          <td>14.500000</td>
-        </tr>
-        <tr>
-          <th>09Ra@1</th>
-          <td>4.600000</td>
+          <td>3.700000</td>
           <td>14.600000</td>
         </tr>
         <tr>
-          <th>10Ra@1</th>
-          <td>3.700000</td>
+          <th>09Ra@1</th>
+          <td>8.200000</td>
           <td>14.500000</td>
         </tr>
         <tr>
+          <th>10Ra@1</th>
+          <td>8.200000</td>
+          <td>14.600000</td>
+        </tr>
+        <tr>
           <th>11Ra@1</th>
-          <td>1.900000</td>
-          <td>14.500000</td>
+          <td>5.000000</td>
+          <td>14.222222</td>
         </tr>
         <tr>
           <th>04MDN@1</th>
@@ -571,8 +571,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.0746339271901488),
-     ('RandomOneShotAgent', 0.31029707934701634)]
+    [('SimpleAgent', 1.076862555579364),
+     ('RandomOneShotAgent', 0.48687279190913113)]
 
 
 This simple agent is better than the random agent. Let’s understand how
@@ -789,8 +789,7 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.0028639421086751),
-     ('RandomOneShotAgent', 0.8399367667323409)]
+    [('BetterAgent', 1.114329895919795), ('RandomOneShotAgent', 0.6689395329718287)]
 
 
 It seems that ``BetterAgent`` is getting even **lwer** scores than
@@ -902,6 +901,89 @@ range is limited to only two consecutive values (e.g. (9, 10)) which
 increases the relative importance of avoiding penalties by matching
 demand and supply.
 
+Effect of price (new in 2023)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let’s see how much is the price affecting our utility value. We will do
+that by comparing the utility we get for different offers as a function
+of price and quantity independently.
+
+.. code:: ipython3
+
+    from collections import defaultdict
+    import seaborn as sns
+    quantity_value = []
+    class UfunTester(SimpleAgent):
+        def step(self):
+            super().step()
+            # find the quantity needed (needs), and price/quantity ranges
+            seller = self.awi.is_first_level
+            npartners = len(self.awi.my_consumers) if seller else len(self.awi.my_suppliers)
+            issues = (
+                self.awi.current_output_issues if seller else self.awi.current_input_issues
+            )
+            needs = (
+                self.awi.current_exogenous_input_quantity
+                if seller
+                else self.awi.current_exogenous_output_quantity
+            )
+            pmin, pmax = issues[UNIT_PRICE].min_value, issues[UNIT_PRICE].max_value
+            qmin, qmax = issues[QUANTITY].min_value, issues[QUANTITY].max_value
+            pbest, pworst = (pmax, pmin) if seller else (pmin, pmax)
+            # we can get maximum quantity from each partner
+            qrange = (0, (qmax * npartners) + 1)
+
+            s = self.awi.current_step
+            for q in range(*qrange):
+                # difference between matching our needs exactly at the worst possible price and
+                # a (q - needs) mismatch at the best possible price
+                diff = self.ufun((needs, s, pworst)) - self.ufun((q, s, pbest))
+                quantity_value.append({"Mismatch (items)":q-needs, "Profit Difference (dollars)": diff})
+
+
+    try_agents([UfunTester], draw=False, n_trials=10)
+    data = pd.DataFrame(quantity_value)
+
+.. code:: ipython3
+
+    sns.lineplot(data=data, x=data.columns[0], y=data.columns[1])
+    plt.plot(data[data.columns[0]], [0]*len(data))
+    plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed)")
+    plt.title("Difference in profit between matching at worst price and mismatch at best price");
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_25_0.png
+
+
+As the figure above shows, being able to match supply to demand through
+negotiation is **orders of magnitude** more important than being able to
+buy at a low price or sell at a high price. This is a new feature of the
+game in SCML 2023 due to the small range of prices available (only two
+values).
+
+The following properties can be gleaned from this figure (and they are
+robust for all world simulations in SCML OneShot 2023):
+
+1. The more mismatch between the supply and demand (i.e. the quantity
+   needed and the quantity secured), the less important price becomes.
+2. Buying/selling less than what we need is as dangerous as
+   buying/selling more (from the fact that the slope of the curve for
+   negative mismatch (buying less than needs) is almost the same as for
+   positive mismatch (buying more than needs).
+3. A random agent, will be at a higher risk of buying/selling more than
+   what it needs because it has multiple partners. The worst case
+   scenario for buying/selling too much is zero which corresponds of a
+   maximum mismatch of 10 items (because exogenous contracts never
+   exceed 10 units) while the worst case scenario for buying/selling too
+   little is 10 multiplied by the number of partners.
+
+.. container::
+
+   As a result, agents developed for SCML OneShot 2023 should focus on
+   matching demand and supply through concurrent negotiation rather than
+   focusing on price negotiation
+
 Thinking about other negotiations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -943,7 +1025,7 @@ concessions. The following agent implements this idea
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_23_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_28_0.png
 
 
 Let’s see how well did this agent behave:
@@ -955,8 +1037,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('AdaptiveAgent', 1.076207753894318),
-     ('RandomOneShotAgent', 0.3388720295161711)]
+    [('AdaptiveAgent', 1.0762107477258884),
+     ('RandomOneShotAgent', 0.6767407869817968)]
 
 
 Almost as good as ``SimpleAgent``, at least in this simulation (we will
@@ -1093,7 +1175,7 @@ demand.**.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_28_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_33_0.png
 
 
 .. code:: ipython3
@@ -1103,8 +1185,8 @@ demand.**.
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.0462597133590914),
-     ('RandomOneShotAgent', 0.8081331966554511)]
+    [('LearningAgent', 1.0031954270409487),
+     ('RandomOneShotAgent', 0.49894998988514366)]
 
 
 The main idea of this agent is to limit the minimum price (for selling)
@@ -1272,7 +1354,7 @@ agent in a deep world simulation
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_35_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_40_0.png
 
 
 Examining the graph above, you can see that ``DeepSimple`` agents could
@@ -1292,7 +1374,7 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('BetterAgent', 0.8765416325209004), ('DeepSimpleAgent', 0.47742596740111354)]
+    [('BetterAgent', 0.8370061024181819), ('DeepSimpleAgent', 0.15127026983560932)]
 
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
@@ -1358,7 +1440,7 @@ do-nothing agent in this form:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_40_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_45_0.png
 
 
 As you can see, in this case, we need to override ``counter_all`` to
@@ -1447,7 +1529,7 @@ greedy agent using this approach.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_43_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_48_0.png
 
 
 This agent shows a case of parameterizing your agent so that it can be
@@ -1577,7 +1659,7 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('SyncAgent', 1.0342460341508266), ('RandomOneShotAgent', 0.412019474477254)]
+    [('SyncAgent', 0.9463587133639607), ('RandomOneShotAgent', 0.5669980654613119)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1689,7 +1771,7 @@ Here is the full agent
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_48_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_53_0.png
 
 
 .. code:: ipython3
@@ -1699,8 +1781,8 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('SimpleSingleAgreementAgent', 0.8243117595438729),
-     ('RandomOneShotAgent', 0.7400662062561739)]
+    [('RandomOneShotAgent', 0.8620961479517629),
+     ('SimpleSingleAgreementAgent', 0.6895517321611313)]
 
 
 Using Independent Negotiators
@@ -1742,13 +1824,13 @@ This is an example agent that uses this approach:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_51_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_56_0.png
 
 
 .. parsed-literal::
 
-    [('AssumeOthersFailIndNeg', -0.004600817482171793),
-     ('RandomOneShotAgent', -0.1644389743152678)]
+    [('RandomOneShotAgent', 0.11922310121751455),
+     ('AssumeOthersFailIndNeg', 0.06375507997358978)]
 
 
 This agent simply uses its **central** ufun for each negotiator. This is
@@ -1809,13 +1891,13 @@ because the agent may over-contract.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_53_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_58_0.png
 
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.13944801745587115),
-     ('GreedyIndNeg', -0.20789432421566553)]
+    [('RandomOneShotAgent', 0.17432167865781872),
+     ('GreedyIndNeg', -0.44345263490132886)]
 
 
 Using A Negotiator from the Genius Platform
@@ -1886,13 +1968,13 @@ will work correctly. Here is an example
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_55_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_60_0.png
 
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.3925775300085692),
-     ('GeniusIndNeg', 0.2604252819141048)]
+    [('RandomOneShotAgent', 0.40874765734981255),
+     ('GeniusIndNeg', -0.0495481422388025)]
 
 
 Comparing all agents
@@ -1921,15 +2003,15 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.065052407126625),
-     ('SyncAgent', 0.9959168277048277),
-     ('BetterAgent', 0.9861069892940587),
-     ('AdaptiveAgent', 0.9811670272265963),
-     ('LearningAgent', 0.9642867825310156),
-     ('SimpleSingleAgreementAgent', 0.7574396967886348),
-     ('GreedyIndNeg', 0.5150285527557665),
-     ('GeniusIndNeg', 0.4433810791709829),
-     ('DeepSimpleAgent', 0.2814534311410903)]
+    [('BetterAgent', 1.044624499311696),
+     ('SimpleAgent', 1.036659404747118),
+     ('LearningAgent', 1.0205147804870642),
+     ('AdaptiveAgent', 1.0147035529225326),
+     ('SyncAgent', 0.9985249181990442),
+     ('SimpleSingleAgreementAgent', 0.7688874265374536),
+     ('GreedyIndNeg', 0.42052773560306517),
+     ('GeniusIndNeg', 0.36667999114234684),
+     ('DeepSimpleAgent', 0.1979185999242106)]
 
 
 The way we just compared these agents is not unbiased because not all
