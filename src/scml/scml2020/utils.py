@@ -19,10 +19,9 @@ from scml.oneshot.agents import (
     GreedyOneShotAgent,
     GreedySyncAgent,
     SingleAgreementAspirationAgent,
+    SyncRandomOneShotAgent,
 )
 from scml.oneshot.sysagents import _SystemAgent as OneShotSysAgent
-from scml.oneshot.world import SCML2020OneShotWorld
-from scml.scml2019.utils import anac2019_config_generator
 from scml.scml2020.agent import _SystemAgent as StdSysAgent
 from scml.scml2020.agents import (
     BuyCheapSellExpensiveAgent,
@@ -30,12 +29,7 @@ from scml.scml2020.agents import (
     MarketAwareIndDecentralizingAgent,
     SatisficerAgent,
 )
-from scml.scml2020.world import (
-    SCML2020Agent,
-    SCML2020World,
-    SCML2022World,
-    is_system_agent,
-)
+from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
 
 __all__ = [
     "anac_config_generator_oneshot",
@@ -108,6 +102,12 @@ DefaultAgentsOneShot = [
     GreedyOneShotAgent,
     SingleAgreementAspirationAgent,
     GreedySyncAgent,
+]
+
+DefaultAgentsOneShot2023 = [
+    GreedyOneShotAgent,
+    SingleAgreementAspirationAgent,
+    SyncRandomOneShotAgent,
 ]
 
 

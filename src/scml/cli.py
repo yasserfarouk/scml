@@ -40,6 +40,9 @@ from scml.scml2020.utils import (
     anac2021_collusion,
     anac2021_oneshot,
     anac2021_std,
+    anac2023_collusion,
+    anac2023_oneshot,
+    anac2023_std,
 )
 from scml.scml2020.world import SCML2020World, SCML2021World, SCML2023World
 
@@ -744,18 +747,20 @@ def display_results(results, metric, file_name=None):
         if file:
             file.write(x)
 
-    viewmetric = ["50%" if metric == "median" else metric]
+    viewmetric = [
+        "50%"
+        if metric == "median" and "median" not in results.score_stats.columns
+        else metric
+    ]
     strs = results.score_stats["agent_type"].values.tolist()
     short_names = shortest_unique_names(strs)
     mapping = dict(zip(strs, short_names))
     results.score_stats["agent_type"] = short_names
-    print_and_save(
-        tabulate(
-            results.score_stats.sort_values(by=viewmetric, ascending=False),
-            headers="keys",
-            tablefmt="psql",
-        )
-    )
+    try:
+        xdata = results.score_stats.sort_values(by=viewmetric, ascending=False)
+    except:
+        xdata = results.score_stats
+    print_and_save(tabulate(xdata, headers="keys", tablefmt="psql"))
     if metric in ("mean", "sum"):
         results.ttest["a"] = [mapping[_] for _ in results.ttest["a"]]
         results.ttest["b"] = [mapping[_] for _ in results.ttest["b"]]
@@ -1387,10 +1392,10 @@ DEFAULT_2021_NONCOMPETITORS = [
 # DEFAULT_STD_2021 = (
 #     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
 # )
-DEFAULT_ONESHOT = "GreedySyncAgent;SingleAgreementAspirationAgent"
+DEFAULT_ONESHOT = "GreedySyncAgent;SyncRandomOneShotAgent;SingleAgreementAspirationAgent;RandomOneShotAgent"
 DEFAULT_ONESHOT_NONCOMPETITORS = [
     "scml.oneshot.agents.RandomOneShotAgent",
-    "scml.oneshot.agents.GreedyOneShotAgent",
+    "scml.oneshot.agents.SyncRandomOneShotAgent",
     "scml.oneshot.agents.SingleAgreementAspirationAgent",
 ]
 
@@ -2917,6 +2922,303 @@ def tournament2021(
         else anac2021_collusion
         if ttype == "collusion"
         else anac2021_oneshot
+    )
+    parallelism = "parallel" if parallel else "serial"
+    prog_callback = print_world_progress if verbosity > 1 else None
+    start = perf_counter()
+    kwargs["round_robin"] = True
+    results = runner(
+        competitors=all_competitors,
+        competitor_params=all_competitors_params,
+        non_competitors=non_competitors,
+        non_competitor_params=non_competitor_params,
+        agent_names_reveal_type=reveal_names,
+        n_competitors_per_world=cw,
+        n_configs=configs,
+        n_runs_per_world=runs,
+        max_worlds_per_config=worlds_per_config,
+        tournament_path=log,
+        total_timeout=timeout,
+        name=name,
+        verbose=verbosity > 0,
+        compact=compact,
+        n_steps=steps,
+        parallelism=parallelism,
+        world_progress_callback=prog_callback,
+        log_ufuns=log_ufuns,
+        log_negotiations=log_negs,
+        ignore_agent_exceptions=not raise_exceptions,
+        ignore_contract_execution_exceptions=not raise_exceptions,
+        **kwargs,
+    )
+    end_time = humanize_time(perf_counter() - start)
+    display_results(results, "median", output)
+    print(f"Finished in {end_time}")
+    save_run_info(name, results.path, "tournament")
+
+
+@main.command(help="Runs an SCML2023 tournament")
+@click.option(
+    "--name",
+    "-n",
+    default="random",
+    help='The name of the tournament. The special value "random" will result in a random name',
+)
+@click.option(
+    "--steps",
+    "-s",
+    default=10,
+    type=int,
+    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+)
+@click.option(
+    "--ttype",
+    "--tournament-type",
+    "--tournament",
+    default="std",
+    type=click.Choice(["collusion", "std", "oneshot"]),
+    help="The config to use. It can be collusion, std, or oneshot",
+)
+@click.option(
+    "--timeout",
+    "-t",
+    default=-1,
+    type=int,
+    help="Timeout the whole tournament after the given number of seconds (0 for infinite)",
+)
+@click.option(
+    "--configs",
+    default=5,
+    type=int,
+    help="Number of unique configurations to generate.",
+)
+@click.option("--runs", default=2, help="Number of runs for each configuration")
+@click.option(
+    "--max-runs",
+    default=-1,
+    type=int,
+    help="Maximum total number of runs. Zero or negative numbers mean no limit",
+)
+@click.option(
+    "--competitors",
+    default=None,
+    help="A semicolon (;) separated list of agent types to use for the competition. You"
+    " can also pass the special value default for the default builtin"
+    " agents",
+)
+@click.option(
+    "--non-competitors",
+    default="",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
+    "(their scores will not be calculated).",
+)
+@click.option(
+    "--log",
+    "-l",
+    type=click.Path(dir_okay=True, file_okay=False),
+    default=default_tournament_path(),
+    help="Default location to save logs (A folder will be created under it)",
+)
+@click.option(
+    "--world-config",
+    type=click.Path(dir_okay=False, file_okay=True),
+    default=None,
+    multiple=False,
+    help="A file to load extra configuration parameters for world simulations from.",
+)
+@click.option(
+    "--verbosity",
+    default=1,
+    type=int,
+    help="verbosity level (from 0 == silent to 1 == world progress)",
+)
+@click.option(
+    "--log-ufuns/--no-ufun-logs",
+    default=False,
+    help="Log ufuns into their own CSV file. Only effective if --debug is given",
+)
+@click.option(
+    "--log-negs/--no-neg-logs",
+    default=True,
+    help="Log all negotiations. Only effective if --debug is given",
+)
+@click.option(
+    "--compact/--debug",
+    default=True,
+    help="If True, effort is exerted to reduce the memory footprint which"
+    "includes reducing logs dramatically.",
+)
+@click.option(
+    "--raise-exceptions/--ignore-exceptions",
+    default=True,
+    help="Whether to ignore agent exceptions",
+)
+@click.option(
+    "--path",
+    default="",
+    help="A path to be added to PYTHONPATH in which all competitors are stored. You can path a : separated list of "
+    "paths on linux/mac and a ; separated list in windows",
+)
+@click.option(
+    "--cw",
+    default=1,
+    type=int,
+    help="Number of competitors to run at every world simulation. It must "
+    "either be left at default or be a number > 1 and < the number "
+    "of competitors passed using --competitors",
+)
+@click.option(
+    "--parallel/--serial",
+    default=True,
+    help="Run a parallel/serial tournament on a single machine",
+)
+@click.option(
+    "--output",
+    default="",
+    type=str,
+    help="A file to save the final results to",
+)
+@click_config_file.configuration_option()
+def tournament2023(
+    name,
+    steps,
+    timeout,
+    ttype,
+    log,
+    verbosity,
+    runs,
+    configs,
+    max_runs,
+    competitors,
+    world_config,
+    non_competitors,
+    compact,
+    log_ufuns,
+    log_negs,
+    raise_exceptions,
+    path,
+    cw,
+    parallel,
+    output,
+):
+    oneshot = ttype == "oneshot"
+    if not competitors:
+        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
+    world_type = SCML2020OneShotWorld if oneshot else SCML2021World
+    if len(output) == 0 or output == "none":
+        output = None
+    if output:
+        output = Path(output).absolute()
+        parent = output.parent
+        parent.mkdir(exist_ok=True, parents=True)
+
+    kwargs = {}
+    if world_config is not None and len(world_config) > 0:
+        for wc in world_config:
+            kwargs.update(load(wc))
+    log = _path(log)
+    if len(path) > 0:
+        sys.path.append(path)
+    warning_n_runs = 2000
+    if timeout <= 0:
+        timeout = None
+    if name == "random":
+        name = unique_name(base="", rand_digits=0)
+    if max_runs <= 0:
+        max_runs = None
+    if compact:
+        log_ufuns = False
+
+    reveal_names = True
+    if not compact:
+        verbosity = max(1, verbosity)
+
+    worlds_per_config = (
+        None if max_runs is None else int(round(max_runs / (configs * runs)))
+    )
+
+    all_competitors = competitors.split(";")
+    for i, cp in enumerate(all_competitors):
+        if "." not in cp:
+            if oneshot:
+                all_competitors[i] = ("scml.oneshot.agents.") + cp
+            else:
+                all_competitors[i] = ("scml.scml2020.agents.") + cp
+    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+
+    permutation_size = len(all_competitors)
+    if cw > len(all_competitors):
+        cw = len(all_competitors)
+    recommended = runs * configs * permutation_size
+    if worlds_per_config is not None and worlds_per_config < 1:
+        print(
+            f"You need at least {(configs * runs)} runs even with a single permutation of managers."
+            f".\n\nSet --max-runs to at least {(configs * runs)} (Recommended {recommended})"
+        )
+        return
+
+    if max_runs is not None and max_runs < recommended:
+        print(
+            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
+            f"{recommended}. Will continue"
+        )
+
+    if ttype == "std":
+        agents = 1
+
+    if worlds_per_config is None:
+        n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
+        if n_worlds > warning_n_runs:
+            print(
+                f"You are running the maximum possible number of permutations for each configuration. This is roughly"
+                f" {n_worlds} simulations (each for {steps} steps). That will take a VERY long time."
+                f"\n\nYou can reduce the number of simulations by setting --configs>=1 (currently {configs}) or "
+                f"--runs>= 1 (currently {runs}) to a lower value. "
+                f"\nFinally, you can limit the maximum number of worlds to run by setting --max-runs=integer."
+            )
+            max_runs = int(
+                input(
+                    f"Input the maximum number of simulations to run. Zero to run all of the {n_worlds} "
+                    f"simulations. ^C or a negative number to exit [0 : {n_worlds}]:"
+                )
+            )
+            if max_runs == 0:
+                max_runs = None
+            if max_runs is not None and max_runs < 0:
+                exit(0)
+            worlds_per_config = (
+                None if max_runs is None else int(round(max_runs / (configs * runs)))
+            )
+
+    non_competitor_params = None
+    if len(non_competitors) < 1:
+        non_competitors = None
+    else:
+        non_competitors = non_competitors.split(";")
+        for i, cp in enumerate(non_competitors):
+            if "." not in cp:
+                if oneshot:
+                    non_competitors[i] = ("scml.oneshot.agents.") + cp
+                else:
+                    non_competitors[i] = ("scml.scml2020.agents.") + cp
+
+    if non_competitors is None:
+        non_competitors = (
+            DEFAULT_ONESHOT_NONCOMPETITORS
+            if ttype == "oneshot"
+            else DEFAULT_2021_NONCOMPETITORS
+        )
+        non_competitor_params = tuple({} for _ in range(len(non_competitors)))
+    print(f"Tournament will be run between {len(all_competitors)} agents: ")
+    pprint(all_competitors)
+    print("Non-competitors are: ")
+    pprint(non_competitors)
+    runner = (
+        anac2023_std
+        if ttype == "std"
+        else anac2023_collusion
+        if ttype == "collusion"
+        else anac2023_oneshot
     )
     parallelism = "parallel" if parallel else "serial"
     prog_callback = print_world_progress if verbosity > 1 else None

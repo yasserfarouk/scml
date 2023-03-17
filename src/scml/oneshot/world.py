@@ -23,9 +23,8 @@ from negmas import (
     Agent,
     Breach,
     BreachProcessing,
+    ContiguousIssue,
     Contract,
-    DiscreteIssue,
-    Issue,
     Operations,
     TimeInAgreementMixin,
     World,
@@ -571,7 +570,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.initial_balances = dict(zip(self.agents.keys(), initial_balance))
         self._max_n_lines = max(_.n_lines for _ in self.profiles)
         self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
-        self._current_issues: list[list[Issue]] = []
+        self._current_issues: list[list[ContiguousIssue]] = []
         self.__contracts: dict[str, list[Contract]] = defaultdict(list)
 
         def values(x: int | tuple[int, int]):
@@ -581,13 +580,13 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         for product in range(self.n_products):
             unit_price, time, quantity = self._make_issues(product)
-            self._current_issues.append(
-                [
-                    make_issue(values(quantity), name="quantity"),
-                    make_issue(values(time), name="time"),
-                    make_issue(values(unit_price), name="unit_price"),
-                ]
-            )
+            _issues = [
+                make_issue(values(quantity), name="quantity"),
+                make_issue(values(time), name="time"),
+                make_issue(values(unit_price), name="unit_price"),
+            ]
+            assert all(isinstance(_, ContiguousIssue) for _ in _issues)
+            self._current_issues.append(_issues)
 
         def to_lists(d):
             return {
@@ -1954,14 +1953,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues[product] = [
-                DiscreteCardinalIssue(values(quantity), name="quantity"),
-                DiscreteCardinalIssue(values(time), name="time"),
-                DiscreteCardinalIssue(values(unit_price), name="unit_price"),
+                make_issue(values(quantity), name="quantity"),
+                make_issue(values(time), name="time"),
+                make_issue(values(unit_price), name="unit_price"),
             ]
-            # for ii in self._current_issues[product]:
-            #     assert isinstance(
-            #         ii, DiscreteCardinalIssue
-            #     ), f"Issue {ii.name} has type {type(ii.name)}"
             requesting_agents = (
                 self.consumers[product] if consumer_starts else self.suppliers[product]
             )
