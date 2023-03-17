@@ -40,6 +40,7 @@ SyncRandomOneShotAgent
       ~SyncRandomOneShotAgent.add_negotiator
       ~SyncRandomOneShotAgent.after_join
       ~SyncRandomOneShotAgent.before_join
+      ~SyncRandomOneShotAgent.before_step
       ~SyncRandomOneShotAgent.call
       ~SyncRandomOneShotAgent.checkpoint
       ~SyncRandomOneShotAgent.checkpoint_info
@@ -48,6 +49,7 @@ SyncRandomOneShotAgent
       ~SyncRandomOneShotAgent.counter_all
       ~SyncRandomOneShotAgent.create
       ~SyncRandomOneShotAgent.create_negotiator
+      ~SyncRandomOneShotAgent.distribute_needs
       ~SyncRandomOneShotAgent.first_offer
       ~SyncRandomOneShotAgent.first_proposals
       ~SyncRandomOneShotAgent.from_checkpoint
@@ -116,6 +118,7 @@ SyncRandomOneShotAgent
    .. automethod:: add_negotiator
    .. automethod:: after_join
    .. automethod:: before_join
+   .. automethod:: before_step
    .. automethod:: call
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
@@ -124,6 +127,7 @@ SyncRandomOneShotAgent
    .. automethod:: counter_all
    .. automethod:: create
    .. automethod:: create_negotiator
+   .. automethod:: distribute_needs
    .. automethod:: first_offer
    .. automethod:: first_proposals
    .. automethod:: from_checkpoint
