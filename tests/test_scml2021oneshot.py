@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import given, settings
-from negmas import ResponseType, genius_bridge_is_running, save_stats
-from negmas.genius import NiceTitForTat
+from negmas import ResponseType, save_stats
+from negmas.genius.bridge import genius_bridge_is_running
+from negmas.genius.gnegotiators import NiceTitForTat
 from negmas.helpers import unique_name
 from negmas.preferences import LinearAdditiveUtilityFunction
 from negmas.preferences.value_fun import AffineFun, ConstFun, IdentityFun, LinearFun

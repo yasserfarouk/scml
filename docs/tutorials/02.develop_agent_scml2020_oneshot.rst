@@ -2254,7 +2254,7 @@ will work correctly. Here is an example
 .. code:: ipython3
 
     # import a specific agent from the Genius platform
-    from negmas.genius import Atlas3
+    from negmas.genius.gnegotiators import Atlas3
 
     class GeniusIndNeg(GreedyIndNeg):
         def __init__(self, *args, **kwargs):
