@@ -5,6 +5,7 @@ import random
 from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
+from negmas.preferences.inv_ufun import NDArray
 
 __all__ = [
     "fraction_cut",
@@ -140,18 +141,18 @@ def make_array(
         return np.ones(n, dtype=dtype) * x
     if isinstance(x, tuple) and len(x) == 2:
         if dtype == int:
-            return np.random.randint(x[0], x[1] + 1, n, dtype=dtype)
+            return np.random.randint(x[0], x[1] + 1, n, dtype=dtype)  # type: ignore
         return x[0] + np.random.rand(n) * (x[1] - x[0])
-    x = list(x)
-    if len(x) == n:
-        return np.array(x)
-    return np.array(list(random.choices(x, k=n)))
+    xlst = list(x)
+    if len(xlst) == n:
+        return np.array(xlst)
+    return np.array(list(random.choices(xlst, k=n)))
 
 
 def distribute_quantities(
     equal: bool,
     predictability: float,
-    q: list[int],
+    q: list[int] | NDArray,
     a: int,
     n_steps: int,
     limit: list[int] | None = None,
@@ -164,15 +165,16 @@ def distribute_quantities(
                         times are similar
         q: The quantity per step to be distributed
         a: The number of agents to distribute over.
-        limit: The maximum quantity per step for each agent (len(limit) == a)
+        limit: The maximum quantity per step for each agent (len(limit) == a). Only used if `equal==False`
 
     Returns:
         an n_steps * a list of lists giving the distributed quantities where
         sum[s, :] ~= q[s]. The error can be up to 2*a per step
 
     """
+    q = np.asarray(q)
     if limit is not None and not isinstance(limit, Iterable):
-        limit = [limit] * a
+        limit = [limit] * a  # type: ignore
     # if we do not distribute anything just return all zeros
     if sum(q) == 0:
         return [np.asarray([0] * a, dtype=int) for _ in range(n_steps)]
@@ -180,9 +182,9 @@ def distribute_quantities(
     # ensuring each agent gets at least one item.
     # what happens if q does not divide a? q/a is rounded.
     if equal:
-        values = np.maximum(1, np.round(q / a).astype(int)).tolist()
-        if limit is not None:
-            values = [a if a < b else b for a, b in zip(values, limit)]
+        values = np.maximum(np.round(q / a).astype(int), 1).tolist()
+        # if limit is not None:
+        #     values = [a if a < b else b for a, b in zip(values, limit)]
         return [np.asarray([values[_]] * a, dtype=int) for _ in range(n_steps)]
     if predictability < 0.01:
         values = []
