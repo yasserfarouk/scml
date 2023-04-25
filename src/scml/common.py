@@ -5,7 +5,7 @@ import random
 from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
-from negmas.preferences.inv_ufun import NDArray
+from numpy.typing import NDArray
 
 __all__ = [
     "fraction_cut",
