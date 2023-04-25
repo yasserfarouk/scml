@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import random
-from typing import Iterable, List, Optional, Tuple, Type, Union
+from typing import Iterable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -55,25 +55,25 @@ def integer_cut(
 
     """
     if l_x is None:
-        l_x = [float("inf")] * l
+        l_x = [float("inf")] * l  # type: ignore
     if not isinstance(l_x, Iterable):
-        l_x = [l_x] * l
+        l_x = [l_x] * l  # type: ignore
     if not isinstance(l_m, Iterable):
-        l_m = [l_m] * l
+        l_m = [l_m] * l  # type: ignore
     sizes = np.asarray(l_m)
     if n < sizes.sum():
         raise ValueError(
             f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
         )
-    if n > sum(l_x):
+    if n > sum(l_x):  # type: ignore
         raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {sum(l_x)}"
+            f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {sum(l_x)}"  # type: ignore
         )
-    valid = [i for i, s in enumerate(sizes) if l_x[i] > s]
+    valid = [i for i, s in enumerate(sizes) if l_x[i] > s]  # type: ignore
     while sizes.sum() < n:
         j = random.choice(valid)
         sizes[j] += 1
-        if sizes[j] >= l_x[j]:
+        if sizes[j] >= l_x[j]:  # type: ignore
             valid.remove(j)
     return sizes.tolist()
 
