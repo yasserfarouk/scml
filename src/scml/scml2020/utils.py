@@ -427,7 +427,6 @@ def anac_config_generator_collusion(
 ) -> list[dict[str, Any]]:
     assert n_agents_per_competitor > 1
     return anac_config_generator(
-        *args,
         year=year,
         n_competitors=n_competitors,
         n_agents_per_competitor=n_agents_per_competitor,
@@ -957,16 +956,16 @@ balance_calculator2021 = partial(balance_calculator, consolidated=False)
 balance_calculator2022 = partial(balance_calculator, consolidated=True)
 balance_calculator2023 = partial(balance_calculator, consolidated=True)
 
-
 def balance_calculator_collusion(
-    year: int,
     worlds: list[SCML2020World],
     scoring_context: dict[str, Any],
     dry_run: bool,
+    year: int,
     ignore_default=True,
     inventory_catalog_price_weight=0.0,
     inventory_trading_average_weight=0.5,
     raw_collusion_score_multiplier=0.2,
+    **kwargs,
 ) -> WorldRunResults:
     """A scoring function that scores factory managers' performance by the
     final balance only ignoring whatever still in their inventory after
