@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.6.0 (2023.7.9)
+----------------
+
+* Upgrading to be compatible with NegMAS 0.10.0
+* Adding step_with() to oneshot allowing for single counter-offer set stepping of the simulation (to be used to expose the simulation as RL and MARL environments later).
+* Adding current_negotiation_details to OneShotAWI to get details of running negotiation
+* Adding managed sales, supplies, total_sales, total_supplies, needed_sales, and needed_supplies to the OneShotAWI
+* Extending OneShotState returned from awi.state and awi.default_state_encoder(mechanism_states) to expose more information about the simulation
+
 0.5.6 (2023.3.8)
 ----------------
 
