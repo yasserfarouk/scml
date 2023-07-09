@@ -32,7 +32,10 @@ class SimpleAgent(OneShotAgent):
     def propose(self, negotiator_id: str, state) -> Outcome | None:
         return self.best_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, offer, source):
+    def respond(self, negotiator_id, state, source=None):
+        offer = state.current_offer
+        if offer is None:
+            return ResponseType.REJECT_OFFER
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return ResponseType.END_NEGOTIATION
@@ -90,8 +93,9 @@ class BetterAgent(SimpleAgent):
         )
         return tuple(offer)
 
-    def respond(self, negotiator_id, state, offer, source):
-        response = super().respond(negotiator_id, state, offer, source)
+    def respond(self, negotiator_id, state, source=None):
+        offer = state.current_offer
+        response = super().respond(negotiator_id, state, source=source)
         if response != ResponseType.ACCEPT_OFFER:
             return response
         nmi = self.get_nmi(negotiator_id)
@@ -203,7 +207,8 @@ class ReporterAgent(BetterAgent):
     def step(self):
         self.round_nums = defaultdict(int)
 
-    def respond(self, negotiator_id, state, offer, source=""):
+    def respond(self, negotiator_id, state, source=""):
+        offer = state.current_offer
         assert state.running, (
             f"{self.id} called to respond in a negotiation that "
             f"is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}"
@@ -242,7 +247,7 @@ class ReporterAgent(BetterAgent):
                 # print(msg)
                 # log_str = f"{datetime.now()}: on round {self.round_nums[negotiator_id]} with opp {negotiator_id}"
                 # self.awi.logdebug_agent(log_str)
-        return super().respond(negotiator_id, state, offer, source)
+        return super().respond(negotiator_id, state, source=source)
 
     def on_negotiation_success(self, contract, mechanism):
         partners = [_ for _ in contract.partners if _ != self.id]

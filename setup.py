@@ -76,6 +76,7 @@ setup(
     ],
     extras_require={
         "gui": ["pyqt5"],
+        "rl": ["gymnasium"],
     },
     setup_requires=["pytest-runner"],
     entry_points={

@@ -40,6 +40,7 @@ OneShotSingleAgreementAgent
       ~OneShotSingleAgreementAgent.add_negotiator
       ~OneShotSingleAgreementAgent.after_join
       ~OneShotSingleAgreementAgent.before_join
+      ~OneShotSingleAgreementAgent.before_step
       ~OneShotSingleAgreementAgent.best_offer
       ~OneShotSingleAgreementAgent.best_outcome
       ~OneShotSingleAgreementAgent.call
@@ -122,6 +123,7 @@ OneShotSingleAgreementAgent
    .. automethod:: add_negotiator
    .. automethod:: after_join
    .. automethod:: before_join
+   .. automethod:: before_step
    .. automethod:: best_offer
    .. automethod:: best_outcome
    .. automethod:: call

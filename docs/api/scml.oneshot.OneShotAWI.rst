@@ -21,8 +21,11 @@ OneShotAWI
       ~OneShotAWI.current_exogenous_output_price
       ~OneShotAWI.current_exogenous_output_quantity
       ~OneShotAWI.current_input_issues
+      ~OneShotAWI.current_input_outcome_space
       ~OneShotAWI.current_inventory
+      ~OneShotAWI.current_negotiation_details
       ~OneShotAWI.current_output_issues
+      ~OneShotAWI.current_output_outcome_space
       ~OneShotAWI.current_shortfall_penalty
       ~OneShotAWI.current_step
       ~OneShotAWI.default_signing_delay
@@ -44,6 +47,8 @@ OneShotAWI
       ~OneShotAWI.n_processes
       ~OneShotAWI.n_products
       ~OneShotAWI.n_steps
+      ~OneShotAWI.needed_sales
+      ~OneShotAWI.needed_supplies
       ~OneShotAWI.negotiation_requests
       ~OneShotAWI.params
       ~OneShotAWI.penalties_scale
@@ -51,8 +56,13 @@ OneShotAWI
       ~OneShotAWI.profile
       ~OneShotAWI.relative_time
       ~OneShotAWI.requested_negotiations
+      ~OneShotAWI.running_mechanism_dicts
       ~OneShotAWI.running_negotiations
+      ~OneShotAWI.sales
       ~OneShotAWI.settings
+      ~OneShotAWI.supplies
+      ~OneShotAWI.total_sales
+      ~OneShotAWI.total_supplies
       ~OneShotAWI.trading_prices
       ~OneShotAWI.unsigned_contracts
 
@@ -64,6 +74,7 @@ OneShotAWI
       ~OneShotAWI.bb_read
       ~OneShotAWI.bb_record
       ~OneShotAWI.bb_remove
+      ~OneShotAWI.default_encoded_state
       ~OneShotAWI.execute
       ~OneShotAWI.is_bankrupt
       ~OneShotAWI.is_system
@@ -96,8 +107,11 @@ OneShotAWI
    .. autoattribute:: current_exogenous_output_price
    .. autoattribute:: current_exogenous_output_quantity
    .. autoattribute:: current_input_issues
+   .. autoattribute:: current_input_outcome_space
    .. autoattribute:: current_inventory
+   .. autoattribute:: current_negotiation_details
    .. autoattribute:: current_output_issues
+   .. autoattribute:: current_output_outcome_space
    .. autoattribute:: current_shortfall_penalty
    .. autoattribute:: current_step
    .. autoattribute:: default_signing_delay
@@ -119,6 +133,8 @@ OneShotAWI
    .. autoattribute:: n_processes
    .. autoattribute:: n_products
    .. autoattribute:: n_steps
+   .. autoattribute:: needed_sales
+   .. autoattribute:: needed_supplies
    .. autoattribute:: negotiation_requests
    .. autoattribute:: params
    .. autoattribute:: penalties_scale
@@ -126,8 +142,13 @@ OneShotAWI
    .. autoattribute:: profile
    .. autoattribute:: relative_time
    .. autoattribute:: requested_negotiations
+   .. autoattribute:: running_mechanism_dicts
    .. autoattribute:: running_negotiations
+   .. autoattribute:: sales
    .. autoattribute:: settings
+   .. autoattribute:: supplies
+   .. autoattribute:: total_sales
+   .. autoattribute:: total_supplies
    .. autoattribute:: trading_prices
    .. autoattribute:: unsigned_contracts
 
@@ -137,6 +158,7 @@ OneShotAWI
    .. automethod:: bb_read
    .. automethod:: bb_record
    .. automethod:: bb_remove
+   .. automethod:: default_encoded_state
    .. automethod:: execute
    .. automethod:: is_bankrupt
    .. automethod:: is_system

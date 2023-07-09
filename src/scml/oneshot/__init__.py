@@ -1,10 +1,11 @@
-from .common import *
+from .agent import *
+from .agents import *
 from .awi import *
+from .common import *
+from .policy import *
 from .sysagents import *
 from .ufun import *
 from .world import *
-from .agent import *
-from .agents import *
 
 
 def builtin_agent_types(as_str=False):
@@ -28,6 +29,7 @@ __all__ = (
     + world.__all__
     + ufun.__all__
     + agent.__all__
+    + policy.__all__
     + agents.__all__
     + awi.__all__
     + ["builtin_agent_types"]

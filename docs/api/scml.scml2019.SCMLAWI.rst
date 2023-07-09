@@ -21,6 +21,7 @@ SCMLAWI
       ~SCMLAWI.products
       ~SCMLAWI.relative_time
       ~SCMLAWI.requested_negotiations
+      ~SCMLAWI.running_mechanism_dicts
       ~SCMLAWI.running_negotiations
       ~SCMLAWI.settings
       ~SCMLAWI.state
@@ -79,6 +80,7 @@ SCMLAWI
    .. autoattribute:: products
    .. autoattribute:: relative_time
    .. autoattribute:: requested_negotiations
+   .. autoattribute:: running_mechanism_dicts
    .. autoattribute:: running_negotiations
    .. autoattribute:: settings
    .. autoattribute:: state

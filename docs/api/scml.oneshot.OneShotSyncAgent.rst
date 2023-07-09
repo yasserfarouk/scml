@@ -40,6 +40,7 @@ OneShotSyncAgent
       ~OneShotSyncAgent.add_negotiator
       ~OneShotSyncAgent.after_join
       ~OneShotSyncAgent.before_join
+      ~OneShotSyncAgent.before_step
       ~OneShotSyncAgent.call
       ~OneShotSyncAgent.checkpoint
       ~OneShotSyncAgent.checkpoint_info
@@ -116,6 +117,7 @@ OneShotSyncAgent
    .. automethod:: add_negotiator
    .. automethod:: after_join
    .. automethod:: before_join
+   .. automethod:: before_step
    .. automethod:: call
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info

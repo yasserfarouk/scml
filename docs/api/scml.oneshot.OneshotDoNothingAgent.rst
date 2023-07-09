@@ -40,6 +40,7 @@ OneshotDoNothingAgent
       ~OneshotDoNothingAgent.add_negotiator
       ~OneshotDoNothingAgent.after_join
       ~OneshotDoNothingAgent.before_join
+      ~OneshotDoNothingAgent.before_step
       ~OneshotDoNothingAgent.call
       ~OneshotDoNothingAgent.checkpoint
       ~OneshotDoNothingAgent.checkpoint_info
@@ -113,6 +114,7 @@ OneshotDoNothingAgent
    .. automethod:: add_negotiator
    .. automethod:: after_join
    .. automethod:: before_join
+   .. automethod:: before_step
    .. automethod:: call
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info

@@ -96,7 +96,7 @@ Now we are ready to develop a do-nothing agent:
         """My Agent that does nothing"""
         def propose(self, negotiator_id, state):
             return None
-        def respond(self, negotiator_id, state, offer, source = ''):
+        def respond(self, negotiator_id, state, source = ''):
             return ResponseType.END_NEGOTIATION
 
     world, ascores, tscores = try_agent(MyOneShotDoNothing, n_trials=1)
@@ -128,17 +128,17 @@ Let’s check the scores of different agents to confirm:
 .. parsed-literal::
 
     Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.5419496768168798
-    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.950729210763428
+    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.8429593858196377
     Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.5779058592822465
-    Agent 03Ra@0 of type RandomOneShotAgent has a final score of 1.052632769437528
-    Agent 04Ra@0 of type RandomOneShotAgent has a final score of 0.9826125684426005
+    Agent 03Ra@0 of type RandomOneShotAgent has a final score of 1.07404322825529
+    Agent 04Ra@0 of type RandomOneShotAgent has a final score of 0.9613665223429178
     Agent 05MDN@0 of type MyOneShotDoNothing has a final score of 0.5278984195503129
     Agent 06MDN@0 of type MyOneShotDoNothing has a final score of 0.48263427095216405
     Agent 07MDN@0 of type MyOneShotDoNothing has a final score of 0.49452087770114345
-    Agent 08Ra@1 of type RandomOneShotAgent has a final score of 0.9320634631326228
+    Agent 08Ra@1 of type RandomOneShotAgent has a final score of 0.908545992618144
     Agent 09MDN@1 of type MyOneShotDoNothing has a final score of 0.6957672799890143
     Agent 10MDN@1 of type MyOneShotDoNothing has a final score of 0.7505249202460941
-    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.916784742330441
+    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8557839236180342
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -153,7 +153,7 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.9669645508213242),
+    [('RandomOneShotAgent', 0.9285398105308047),
      ('MyOneShotDoNothing', 0.5816001863625507)]
 
 
@@ -205,35 +205,35 @@ market.
         <tr>
           <th rowspan="2" valign="top">01Ra@0</th>
           <th>08Ra@1</th>
-          <td>5.400000</td>
-          <td>16.500000</td>
+          <td>6.333333</td>
+          <td>16.444444</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>4.777778</td>
-          <td>16.444444</td>
+          <td>5.200000</td>
+          <td>16.200000</td>
         </tr>
         <tr>
           <th rowspan="2" valign="top">03Ra@0</th>
           <th>08Ra@1</th>
-          <td>5.200000</td>
-          <td>16.600000</td>
+          <td>6.555556</td>
+          <td>16.666667</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>4.300000</td>
+          <td>5.100000</td>
           <td>16.600000</td>
         </tr>
         <tr>
           <th rowspan="2" valign="top">04Ra@0</th>
           <th>08Ra@1</th>
           <td>5.000000</td>
-          <td>16.600000</td>
+          <td>16.444444</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>3.900000</td>
-          <td>16.200000</td>
+          <td>6.200000</td>
+          <td>16.600000</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
@@ -509,16 +509,11 @@ using the same base class.
     class SimpleAgent(OneShotAgent):
         """A greedy agent based on OneShotAgent"""
 
-        def before_step(self):
-            self.secured = 0
-
-        def on_negotiation_success(self, contract, mechanism):
-            self.secured += contract.agreement["quantity"]
-
         def propose(self, negotiator_id: str, state) -> "Outcome":
             return self.best_offer(negotiator_id)
 
-        def respond(self, negotiator_id, state, offer, source=''):
+        def respond(self, negotiator_id, state, source=''):
+            offer = state.current_offer
             my_needs = self._needed(negotiator_id)
             if my_needs <= 0:
                 return ResponseType.END_NEGOTIATION
@@ -549,10 +544,11 @@ using the same base class.
                 offer[UNIT_PRICE] = unit_price_issue.min_value
             return tuple(offer)
 
+        def is_seller(self, negotiator_id):
+            return negotiator_id in self.awi.current_negotiation_details["sell"].keys()
+
         def _needed(self, negotiator_id=None):
-            return self.awi.current_exogenous_input_quantity + \
-                   self.awi.current_exogenous_output_quantity - \
-                   self.secured
+            return self.awi.needed_sales if self.is_seller(negotiator_id) else self.awi.needed_supplies
 
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
@@ -573,8 +569,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.1025118316318945),
-     ('RandomOneShotAgent', 0.6751583983831062)]
+    [('SimpleAgent', 0.8591494720767391),
+     ('RandomOneShotAgent', 0.6848959598289409)]
 
 
 This simple agent is better than the random agent. Let’s understand how
@@ -584,33 +580,20 @@ The main idea of this agent is pretty simple. It tries to *secure* as
 much of its needs (sales/supplies) as possible in every negotiation at
 the best possible price for itself.
 
-To achieve this goal, the agent keeps track of the quantity it secured
-in its ``init``, ``step`` and ``on_negotiation_success`` callbacks.
-
-.. code:: python
-
-   def before_step(self):
-       self.secured = 0
-
-
-   def on_negotiation_success(self, contract, mechanism):
-       self.secured += contract.agreement["quantity"]
-
-Moreover, it defines a helper that calculates the amount it needs by
-subtracting the exogenous quantity it has from the amount it secured:
+To achieve this goal, the agent uses the fact that the ``AWI`` already
+keeps track of this information as ``needed_supplies`` and
+``needed_sales``. Therefore, it defines a helper that calculates the
+amount it needs by subtracting the exogenous quantity it has from the
+amount it secured
 
 .. code:: python
 
    def _needed(self):
-       return (
-           self.awi.current_exogenous_input_quantity
-           + self.awi.current_exogenous_output_quantity
-           - self.secured
-       )
+       self.awi.needed_sales if self.is_seller(negotiator_id) else self.awi.needed_supplies
 
-Notice that either the exogenous input quantity or the exogenous output
-quantity (or both) will always be zero. Now that the agent can calculate
-how much it needs to buy/sell, it implements the negotiation related
+where it uses ``needed_sales`` if the current negotiation is for selling
+and ``needed_supplies`` otherwise. Now that the agent can calculate how
+much it needs to buy/sell, it implements the negotiation related
 call-backs (``propose`` and ``respond``).
 
 Here is the full implementation of ``propose``:
@@ -625,7 +608,7 @@ The agent is always offering its best offer which is calculated in the
 
 Responding to opponent offers is also simple:
 
--  it starts by calculating its needs using the helper ``needed``, and
+-  it starts by calculating its needs using the helper ``_needed``, and
    ends the negotiation if it needs no more sales/supplies
 
 .. code:: python
@@ -734,8 +717,11 @@ We will try to remedie both of these issues in the following agent:
             )
             return tuple(offer)
 
-        def respond(self, negotiator_id, state, offer, source=''):
-            response = super().respond(negotiator_id, state, offer, source)
+        def respond(self, negotiator_id, state, source=''):
+            offer = state.current_offer
+            if offer is None:
+                return ResponseType.REJECT_OFFER
+            response = super().respond(negotiator_id, state, source)
             if response != ResponseType.ACCEPT_OFFER:
                 return response
             ami = self.get_nmi(negotiator_id)
@@ -791,8 +777,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.1111568317242977),
-     ('RandomOneShotAgent', 0.2859810415894507)]
+    [('BetterAgent', 0.8380852890935055),
+     ('RandomOneShotAgent', 0.6406130091227857)]
 
 
 It seems that ``BetterAgent`` is getting a score that is not any better
@@ -962,7 +948,7 @@ of price and quantity independently.
     sns.lineplot(data=data, x=data.columns[0], y=data.columns[1])
     plt.plot(data[data.columns[0]], [0]*len(data))
     plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed)")
-    plt.title("Difference in profit between matching at worst price and mismatch at best price");
+    plt.title("Difference in profit between matching at worst price and mismatch at best price [2023]");
 
 
 
@@ -1040,12 +1026,12 @@ concessions. The following agent implements this idea
         """Considers best price offers received when making its decisions"""
 
         def before_step(self):
-            super().before_step()
             self._best_selling, self._best_buying = 0.0, float("inf")
 
-        def respond(self, negotiator_id, state, offer, source=''):
+        def respond(self, negotiator_id, state, source=''):
             """Save the best price received"""
-            response = super().respond(negotiator_id, state, offer, source)
+            offer = state.current_offer
+            response = super().respond(negotiator_id, state, source)
             ami = self.get_nmi(negotiator_id)
             if self._is_selling(ami):
                 self._best_selling = max(offer[UNIT_PRICE], self._best_selling)
@@ -1078,8 +1064,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('AdaptiveAgent', 1.0605481478631613),
-     ('RandomOneShotAgent', 0.6370364196341125)]
+    [('AdaptiveAgent', 0.8291915955389123),
+     ('RandomOneShotAgent', 0.6759746798687081)]
 
 
 Almost as good as ``SimpleAgent``, at least in this simulation (we will
@@ -1157,9 +1143,10 @@ demand.**.
                 self._best_acc_buying = min(up, self._best_acc_buying)
                 self._best_opp_acc_buying[partner] = min(up, self._best_opp_acc_buying[partner])
 
-        def respond(self, negotiator_id, state, offer, source=''):
+        def respond(self, negotiator_id, state, source=''):
+            offer = state.current_offer
             # find the quantity I still need and end negotiation if I need nothing more
-            response = super().respond(negotiator_id, state, offer, source)
+            response = super().respond(negotiator_id, state, source)
             # update my current best price to use for limiting concession in other
             # negotiations
             ami = self.get_nmi(negotiator_id)
@@ -1226,8 +1213,8 @@ demand.**.
 
 .. parsed-literal::
 
-    [('LearningAgent', 0.9993487774088212),
-     ('RandomOneShotAgent', 0.632990856909521)]
+    [('LearningAgent', 0.8679079753967904),
+     ('RandomOneShotAgent', 0.7075611174041524)]
 
 
 The main idea of this agent is to limit the minimum price (for selling)
@@ -1459,8 +1446,96 @@ greedy agent using this approach.
     world, ascores, tscores = try_agent(NaiveSyncAgent)
 
 
+::
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_42_0.png
+
+    ---------------------------------------------------------------------------
+
+    AttributeError                            Traceback (most recent call last)
+
+    Cell In[28], line 63
+         60                 responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
+         61         return responses
+    ---> 63 world, ascores, tscores = try_agent(NaiveSyncAgent)
+
+
+    Cell In[3], line 10, in try_agent(agent_type, n_processes, **kwargs)
+          8 def try_agent(agent_type, n_processes=2, **kwargs):
+          9     """Runs an agent in a world simulation against a randomly behaving agent"""
+    ---> 10     return try_agents([RandomOneShotAgent, agent_type], n_processes,**kwargs)
+
+
+    Cell In[3], line 26, in try_agents(agent_types, n_processes, n_trials, draw, agent_params, year)
+         22 cls = {2022:SCML2022OneShotWorld, 2023: SCML2023OneShotWorld}[year]
+         23 world = cls(
+         24 **cls.generate(agent_types, agent_params=agent_params, n_steps=10,
+         25                n_processes=p, random_agent_types=True), construct_graphs=True,)
+    ---> 26 world.run()
+         28 all_scores = world.scores()
+         29 for aid, agent in world.agents.items():
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:2180, in World.run(self)
+       2178 if self.time >= self.time_limit:
+       2179     break
+    -> 2180 if not self.step():
+       2181     break
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1775, in World.step(self, n_neg_steps, n_mechanisms, actions, neg_actions)
+       1773     return True
+       1774 assert self.__next_operation_index == 0
+    -> 1775 if not self._step_to_negotiations(cross_step_boundary):
+       1776     return False
+       1777 self.__stepped_mechanisms = set()
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:2087, in World._step_to_negotiations(self, cross_step_boundary)
+       2085     self.__next_operation_index = i
+       2086     break
+    -> 2087 operation_map[operation]()
+       2088 if self.time >= self.time_limit:
+       2089     self.__next_operation_index = i
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1875, in World._step_to_negotiations.<locals>._simulation_step()
+       1873     self.simulation_exceptions[self._current_step].append(exception2str())
+       1874     if not self.ignore_simulation_exceptions:
+    -> 1875         raise (e)
+       1876 self.__stage += 1
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1869, in World._step_to_negotiations.<locals>._simulation_step()
+       1867 def _simulation_step():
+       1868     try:
+    -> 1869         self.simulation_step(self.__stage)
+       1870         if self.time >= self.time_limit:
+       1871             return
+
+
+    File ~/code/projects/scml/src/scml/oneshot/world.py:1350, in SCML2020OneShotWorld.simulation_step(self, stage)
+       1348     for aid, a in self.agents.items():
+       1349         if hasattr(a, "before_step"):
+    -> 1350             a.before_step()
+       1352     return
+       1354 # update trading price information
+       1355 # --------------------------------
+
+
+    File ~/code/projects/scml/src/scml/oneshot/sysagents.py:88, in DefaultOneShotAdapter.before_step(self)
+         86 self.awi._reset_sales_and_supplies()
+         87 if hasattr(self._obj, "before_step"):
+    ---> 88     self._obj.before_step()
+
+
+    Cell In[28], line 9, in NaiveSyncAgent.before_step(self)
+          8 def before_step(self):
+    ----> 9     super().before_step()
+         10     self.ufun.find_limit(True)
+         11     self.ufun.find_limit(False)
+
+
+    AttributeError: 'super' object has no attribute 'before_step'
 
 
 This agent shows a case of parameterizing your agent so that it can be
@@ -1587,13 +1662,6 @@ Let’s see how did it do:
 
     print_type_scores(tscores)
 
-
-.. parsed-literal::
-
-    [('NaiveSyncAgent', 0.9883631365465695),
-     ('RandomOneShotAgent', 0.4740468137157062)]
-
-
 This base-class simplifies the job of the agent developer by providing a
 single function (``counter_all``) in which to handle all offers it
 receive (most of the time, remember that sometimes you will receive a
@@ -1630,15 +1698,6 @@ Here are few examples of how it would distribute :math:`10` units over
 .. code:: ipython3
 
     [distribute(10, 4) for _ in range(5)]
-
-
-
-
-.. parsed-literal::
-
-    [[3, 3, 3, 1], [3, 1, 2, 4], [3, 1, 3, 3], [4, 1, 2, 3], [3, 4, 2, 1]]
-
-
 
 We will also need a helper function to find all subsets of a given set
 (powerset):
@@ -1762,21 +1821,9 @@ We will also need a helper function to find all subsets of a given set
 
     world, ascores, tscores = try_agent(SyncRandomAgent)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_52_0.png
-
-
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('SyncRandomAgent', 1.0581706603297951),
-     ('RandomOneShotAgent', 0.4106293878452046)]
-
 
 This is the highest score we got so far even though that agent is not
 that intelligent in its decision making. Let’s check it in details:
@@ -2068,21 +2115,9 @@ Here is the full agent
 
     world, ascors, tscores = try_agent(SimpleSingleAgreementAgent)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_56_0.png
-
-
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('RandomOneShotAgent', 0.805461134193934),
-     ('SimpleSingleAgreementAgent', 0.7030710320705922)]
-
 
 Using Independent Negotiators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2120,17 +2155,6 @@ This is an example agent that uses this approach:
             return defaultdict(lambda: self.ufun)
     world, ascors, tscores = try_agent(AssumeOthersFailIndNeg)
     print_type_scores(tscores)
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_59_0.png
-
-
-.. parsed-literal::
-
-    [('RandomOneShotAgent', 0.13186185606847967),
-     ('AssumeOthersFailIndNeg', -0.05538196161910981)]
-
 
 This agent simply uses its **central** ufun for each negotiator. This is
 not a very good strategy because each negotiator is now assuming that
@@ -2187,17 +2211,6 @@ because the agent may over-contract.
     world, ascors, tscores = try_agent(GreedyIndNeg)
 
     print_type_scores(tscores)
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_61_0.png
-
-
-.. parsed-literal::
-
-    [('RandomOneShotAgent', 0.29737105905332556),
-     ('GreedyIndNeg', 0.07321240171904214)]
-
 
 Using A Negotiator from the Genius Platform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2264,17 +2277,6 @@ will work correctly. Here is an example
 
     world, ascors, tscores = try_agent(GeniusIndNeg)
     print_type_scores(tscores)
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_63_0.png
-
-
-.. parsed-literal::
-
-    [('RandomOneShotAgent', 0.3648968755578326),
-     ('GeniusIndNeg', 0.12988970734083566)]
-
 
 More General Simple Agent (advanced)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2363,11 +2365,6 @@ agent in a deep world simulation
 
     world, ascores, tscores = try_agents([SyncRandomAgent, DeepSimpleAgent], n_processes=3)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_67_0.png
-
-
 Examining the graph above, you can see that ``DeepSimple`` agents could
 get contracts when they were in the middle of the production chain. The
 ``Simple`` agent on the other hand cannot do so.
@@ -2381,13 +2378,6 @@ We can check the results now:
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('SyncRandomAgent', 0.8571496062260304),
-     ('DeepSimpleAgent', 0.3766028241073015)]
-
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
 in the middle, it seems that it did worse than ``BetterAgent`` in terms
@@ -2419,21 +2409,6 @@ tutorial (we will ignore the do-nothing agents)
     )
     print_type_scores(tscores)
 
-
-.. parsed-literal::
-
-    [('SyncRandomAgent', 1.0763557620400306),
-     ('AdaptiveAgent', 1.0591176753841167),
-     ('SimpleAgent', 1.0480257592304445),
-     ('BetterAgent', 0.9966002382355627),
-     ('NaiveSyncAgent', 0.9810447859302609),
-     ('LearningAgent', 0.9738274612433196),
-     ('SimpleSingleAgreementAgent', 0.7666013858322174),
-     ('GreedyIndNeg', 0.5918076520848469),
-     ('DeepSimpleAgent', 0.2554030642217714),
-     ('GeniusIndNeg', 0.2143858624336628)]
-
-
 The way we just compared these agents is not unbiased because not all
 agents are allowed to control the same factories in the same simulation
 envoironment. The best way to compare these agents is to run a
@@ -2454,17 +2429,6 @@ in this tutorial (with some modifications):
     import scml.oneshot.agents as agents
     pprint([ _ for _ in agents.__dir__() if _.endswith("Agent")])
 
-
-.. parsed-literal::
-
-    ['RandomOneShotAgent',
-     'SyncRandomOneShotAgent',
-     'SingleAgreementRandomAgent',
-     'SingleAgreementAspirationAgent',
-     'GreedyOneShotAgent',
-     'GreedySyncAgent',
-     'GreedySingleAgreementAgent',
-     'OneshotDoNothingAgent']
 
 
 

@@ -139,6 +139,7 @@ SCML2020OneShotWorld
       ~SCML2020OneShotWorld.spawn_object
       ~SCML2020OneShotWorld.start_contract_execution
       ~SCML2020OneShotWorld.step
+      ~SCML2020OneShotWorld.step_with
       ~SCML2020OneShotWorld.trading_prices_for
       ~SCML2020OneShotWorld.unregister_stats_monitor
       ~SCML2020OneShotWorld.unregister_world_monitor
@@ -274,6 +275,7 @@ SCML2020OneShotWorld
    .. automethod:: spawn_object
    .. automethod:: start_contract_execution
    .. automethod:: step
+   .. automethod:: step_with
    .. automethod:: trading_prices_for
    .. automethod:: unregister_stats_monitor
    .. automethod:: unregister_world_monitor

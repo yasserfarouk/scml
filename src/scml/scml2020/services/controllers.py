@@ -145,7 +145,6 @@ class StepController(SAOController, Notifier):
         self,
         negotiator_id: str,
         state: MechanismState,
-        offer: "Outcome",
         source: str = "",
     ) -> ResponseType:
         if negotiator_id not in self.negotiators.keys():
@@ -156,9 +155,9 @@ class StepController(SAOController, Notifier):
         #     breakpoint()
         self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
         try:
-            return self.__negotiator.respond(offer=offer, state=state, source=source)
+            return self.__negotiator.respond(state=state, source=source)
         except TypeError:
-            return self.__negotiator.respond(offer=offer, state=state)
+            return self.__negotiator.respond(state=state)
 
     def __str__(self):
         return (

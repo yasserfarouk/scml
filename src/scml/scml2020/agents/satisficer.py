@@ -51,13 +51,9 @@ class ObedientNegotiator(SAONegotiator):
         """Simply calls the corresponding method on the owner"""
         return self.owner.propose(state, self.nmi, self.is_selling, self.is_requested)
 
-    def respond(
-        self, state: MechanismState, offer: Outcome, source: str = ""
-    ) -> ResponseType:
+    def respond(self, state: MechanismState, source: str = "") -> ResponseType:
         """Simply calls the corresponding method on the owner"""
-        return self.owner.respond(
-            state, self.nmi, offer, self.is_selling, self.is_requested
-        )
+        return self.owner.respond(state, self.nmi, self.is_selling, self.is_requested)
 
 
 class SatisficerAgent(SCML2020Agent):
@@ -586,7 +582,7 @@ class SatisficerAgent(SCML2020Agent):
 
         return tuple(offer)
 
-    def respond(self, state, ami, offer, is_selling, is_requested):
+    def respond(self, state, ami, is_selling, is_requested):
         """
         Responds to an offer from one partner.
 
@@ -608,6 +604,7 @@ class SatisficerAgent(SCML2020Agent):
               the trading price for buying/selling.
 
         """
+        offer = state.current_offer
         # Find the price range for this negotiation
         p0, p1 = ami.issues[UNIT_PRICE].min_value, ami.issues[UNIT_PRICE].max_value
 

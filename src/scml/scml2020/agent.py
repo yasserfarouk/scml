@@ -1,17 +1,19 @@
 """Implements the world class for the SCML2020 world """
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 from negmas import (
     Agent,
     Breach,
     Contract,
+    DiscreteCartesianOutcomeSpace,
     Issue,
     MechanismState,
     Negotiator,
     NegotiatorMechanismInterface,
     RenegotiationRequest,
     make_issue,
+    make_os,
 )
 from negmas.helpers import get_full_type_name, instantiate
 from negmas.situated import Adapter
@@ -346,9 +348,11 @@ class AWIHelper:
         """Gets the profile (static private information) associated with the agent"""
         return self._owner.get_profile()
 
-    def state(self) -> Any:
+    def state(self) -> OneShotState:
         q, p = self._owner.get_exogenous_input()
         qo, po = self._owner.get_exogenous_output()
+        # TODO add missing components
+        all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
         return OneShotState(
             exogenous_input_quantity=q,
             exogenous_input_price=p,
@@ -357,6 +361,49 @@ class AWIHelper:
             disposal_cost=self._owner.get_disposal_cost(),
             shortfall_penalty=self._owner.get_shortfall_penalty(),
             current_balance=self._owner.get_current_balance(),
+            total_sales=0,
+            total_supplies=0,
+            n_products=self.n_products,
+            n_processes=self.n_processes,
+            n_competitors=self.n_competitors,
+            all_suppliers=self.all_suppliers,
+            all_consumers=self.all_consumers,
+            catalog_prices=self.catalog_prices.tolist(),
+            price_multiplier=1.0,
+            is_exogenous_forced=False,
+            current_step=self._owner.awi.current_step,
+            n_steps=self._owner.awi.n_steps,
+            relative_simulation_time=self._owner.awi.relative_time,
+            profile=self.profile,
+            n_lines=self.n_lines,
+            is_first_level=self.is_first_level,
+            is_last_level=self.is_last_level,
+            is_middle_level=self.is_middle_level,
+            my_input_product=self.my_input_product,
+            my_output_product=self.my_output_product,
+            level=self.level,
+            my_suppliers=self.my_suppliers,
+            my_consumers=self.my_consumers,
+            penalties_scale=self.penalties_scale,
+            n_input_negotiations=self.n_input_negotiations,
+            n_output_negotiations=self.n_output_negotiations,
+            trading_prices=self.trading_prices.tolist(),
+            exogenous_contract_summary=self.exogenous_contract_summary,
+            current_input_outcome_space=self.current_input_outcome_space,
+            current_output_outcome_space=self.current_output_outcome_space,
+            current_negotiation_details=dict(),
+            sales=dict(),
+            supplies=dict(),
+            needed_sales=0,
+            needed_supplies=0,
+            bankrupt_agents=[_ for _ in all_agents if self.is_bankrupt(_)],
+            reports_of_agents=dict(
+                zip(
+                    all_agents,
+                    [self.reports_of_agent(_) for _ in all_agents],
+                )
+            ),
+            running_negotiations=dict(),
         )
 
     @property
@@ -428,7 +475,17 @@ class AWIHelper:
         return issues
 
     @property
-    def penalties_scale(self) -> str:
+    def current_input_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+        return make_os(self.current_input_issues) if self.current_input_issues else None
+
+    @property
+    def current_output_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+        return (
+            make_os(self.current_output_issues) if self.current_output_issues else None
+        )
+
+    @property
+    def penalties_scale(self) -> Literal["trading", "catalog", "input", "none"]:
         return "unit"
 
     # Public Information

@@ -115,7 +115,8 @@ class GreedyOneShotAgent(OneShotAgent):
         offer[UNIT_PRICE] = self._find_good_price(self.get_nmi(negotiator_id), state)
         return tuple(offer)
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state):
+        offer = state.current_offer
         # find the quantity I still need and end negotiation if I need nothing more
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:

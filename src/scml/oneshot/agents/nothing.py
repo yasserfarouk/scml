@@ -18,5 +18,5 @@ class OneshotDoNothingAgent(OneShotAgent):
     def propose(self, negotiator_id, state):
         return None
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state):
         return ResponseType.END_NEGOTIATION

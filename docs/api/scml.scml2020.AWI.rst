@@ -42,6 +42,7 @@ AWI
       ~AWI.profile
       ~AWI.relative_time
       ~AWI.requested_negotiations
+      ~AWI.running_mechanism_dicts
       ~AWI.running_negotiations
       ~AWI.settings
       ~AWI.state
@@ -116,6 +117,7 @@ AWI
    .. autoattribute:: profile
    .. autoattribute:: relative_time
    .. autoattribute:: requested_negotiations
+   .. autoattribute:: running_mechanism_dicts
    .. autoattribute:: running_negotiations
    .. autoattribute:: settings
    .. autoattribute:: state

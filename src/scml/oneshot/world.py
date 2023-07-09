@@ -11,6 +11,7 @@ import logging
 import math
 import random
 import sys
+import warnings
 from collections import defaultdict
 from typing import Any, Callable, Collection, Iterable
 
@@ -26,6 +27,7 @@ from negmas import (
     ContiguousIssue,
     Contract,
     Operations,
+    SAOResponse,
     TimeInAgreementMixin,
     World,
     make_issue,
@@ -50,7 +52,7 @@ from ..scml2020.common import (
 )
 from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
-from .common import OneShotExogenousContract, OneShotProfile
+from .common import NegotiationDetails, OneShotExogenousContract, OneShotProfile
 from .sysagents import DefaultOneShotAdapter, _SystemAgent
 
 __all__ = [
@@ -125,6 +127,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_step_time_limit=60,
         negotiation_speed=0,
         shuffle_negotiations=False,
+        one_offer_per_step=False,
         # public information
         publish_exogenous_summary=True,
         publish_trading_prices=True,
@@ -146,6 +149,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         inventory_valuation_trading=0,
         **kwargs,
     ):
+        # neg_n_steps is ALWAYS the number of rounds. We multiply it by 2 if mechanisms are stepped one offer at a time
+        if one_offer_per_step and neg_n_steps is not None:
+            neg_n_steps *= 2
+
         self._profits: dict[str, list[float]] = defaultdict(list)
         self._breach_levels: dict[str, list[float]] = defaultdict(list)
         self._breaches_of: dict[str, list[bool]] = defaultdict(list)
@@ -196,6 +203,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                         cast_offers=True,
                         hidden_time_limit=neg_hidden_time_limit,
                         sync_calls=sync_calls,
+                        one_offer_per_step=one_offer_per_step,
                     ),
                 )
             },
@@ -615,6 +623,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.info.update(dict(agent_processes=to_lists(self.agent_processes)))
         self.info.update(dict(agent_initial_balances=self.initial_balances))
         self._update_exogenous(0)
+        self._current_negotiations: list[NegotiationDetails] = []
+        self._agent_negotiations: dict[
+            str, dict[str, dict[str, NegotiationDetails]]
+        ] = dict()
 
     @classmethod
     def generate(
@@ -684,7 +696,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             profit_basis: The statistic used when controlling catalog prices by profit arguments. It can be np.mean,
                           np.median, np.min, np.max or any Callable[[list[float]], float] and is used to summarize
                           production costs at every level.
-            horizon: The horizon used for revealing external supply/sales as a fraction of n_steps
             equal_exogenous_supply: If true, external supply will be distributed equally among all agents in the first
                                    layer
             equal_exogenous_sales: If true, external sales will be distributed equally among all agents in the last
@@ -715,7 +726,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             penalties_scale: What are `disposal_cost` and `shortfall_penalty` relative to.
                             There are four options: `trading`, `catalog` mean trading
                             and catalog prices of the product. `unit` means the unit
-                            price in the contract and `non` means the `storage-cost`
+                            price in the contract and `none` means the `storage-cost`
                             and `shortfall_penalty` are absolute values (in money unit).
                             If not given will be read through the AWI
             method: the generation method. This is only for compatibility with SCML2020World and is not used.
@@ -743,7 +754,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         if agent_processes is not None and random_agent_types:
             raise ValueError(
                 "You cannot pass `agent_processes` and use `random_agent_types`. The first is only "
-                "used when you want to fix the assignment of all agents to specific processes which is compatible with randomizing agnet types"
+                "used when you want to fix the assignment of all agents to specific processes"
             )
         if agent_processes is not None and len(agent_processes) != len(agent_types):
             raise ValueError(
@@ -1284,6 +1295,42 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         if self.exogenous_dynamic:
             raise NotImplementedError("Exogenous-dynamic is not yet implemented")
 
+    def step_with(self, actions: dict[str, dict[str, SAOResponse]], init=False) -> bool:
+        """
+        Runs a simulation step for the agents given in keys passing the corresponding values as counter offers.
+
+        Returns:
+            False if this is the last negotiation.
+
+        Remarks:
+            - You must call this with `init=True` once at the beginning of every simulation to
+              make sure that `init()` and other initialization code is called correctly.
+            - Every step advances all negotiations one step.
+            - Negotiators belonging to the given agents are never called as long as a corresponding
+              action (response) is given in the agents dict.
+            - The world MUST be created with `one_offer_per_step` passed as `True` (default is `False`).
+        """
+        from scml.oneshot.awi import OneShotAWI
+
+        actions = dict()
+        for agent, responses in actions.items():
+            awi: OneShotAWI = self.agents[agent].awi  # type: ignore
+            negotiations = awi.current_negotiation_details["buy"].copy()
+            negotiations.update(awi.current_negotiation_details["sell"])
+            for partner, neg in negotiations.items():
+                neg: NegotiationDetails
+                mynegs = [
+                    _ for _ in neg.nmi.mechanism.negotiators if _.owner.id == agent
+                ]
+                assert len(mynegs) == 0
+                assert neg.nmi.mechanism.one_offer_per_step  # type: ignore
+                response = responses.get(partner, None)
+                if response is not None:
+                    actions[neg.nmi.mechanism.id] = {mynegs[0]: response}
+                else:
+                    warnings.warn(f"{agent=} has no response for partner {partner}")
+        return self.step(n_neg_steps=int(not init), actions=actions)
+
     def simulation_step(self, stage):
         s = self.current_step
 
@@ -1434,6 +1481,16 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 if is_system_agent(agent.id):
                     continue
                 self.add_financial_report(agent, reports_agent, reports_time)
+
+        # Clean negotiation details
+        # -------------------------
+        self._current_negotiations = []
+        self._agent_negotiations = dict(
+            zip(
+                [_ for _ in self.agents.keys()],
+                [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
+            )
+        )
 
     def _breach_record(
         self,
@@ -1883,6 +1940,28 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             req_id=req_id,
             annotation=annotation,
         )
+        if result:
+            seller = [_ for _ in partners if _ != agent.id][0]
+            buyer = agent.id
+            assert result.mechanism is not None
+            self._current_negotiations = NegotiationDetails(
+                seller=seller,
+                buyer=buyer,
+                nmi=result.mechanism.nmi,  # type: ignore
+                product=product,
+            )
+            self._agent_negotiations[seller]["sell"][buyer] = NegotiationDetails(
+                seller=seller,
+                buyer=buyer,
+                nmi=result.mechanism.nmi,  # type: ignore
+                product=product,
+            )
+            self._agent_negotiations[buyer]["buy"][seller] = NegotiationDetails(
+                seller=seller,
+                buyer=buyer,
+                nmi=result.mechanism.nmi,  # type: ignore
+                product=product,
+            )
         # if result:
         #     self._registered_negs.add(tuple(sorted([partner, agent_id])))
         return result
@@ -1949,6 +2028,15 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 continue
             controllers[aid] = a.adapted_object
             a.adapted_object.make_ufun(add_exogenous=True)
+
+        # initialize negotiation details
+        self._current_negotiations = []
+        self._agent_negotiations = dict(
+            zip(
+                [_ for _ in self.agents.keys()],
+                [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
+            )
+        )
 
         for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)

@@ -51,7 +51,7 @@ class RandomOneShotAgent(OneShotAgent):
     def propose(self, negotiator_id: str, state: MechanismState) -> Outcome | None:
         return self._random_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, offer, source=""):
+    def respond(self, negotiator_id, state, source=""):
         if random.random() < PROB_END:
             return ResponseType.END_NEGOTIATION
         if random.random() < PROB_ACCEPTANCE:

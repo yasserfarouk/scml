@@ -52,12 +52,15 @@ std_types = scml.scml2020.builtin_agent_types(as_str=False)
 
 
 class MyOneShotAgent(RandomOneShotAgent):
-    def respond(self, negotiator_id, state, offer, source=""):
+    def respond(self, negotiator_id, state, source=""):
+        offer = state.current_offer
+        if offer is None:
+            return ResponseType.REJECT_OFFER
         assert (
             negotiator_id in self.awi.my_consumers
             or negotiator_id in self.awi.my_suppliers
         ), (self.id, self.name, negotiator_id)
-        return super().respond(negotiator_id, state, offer, source)
+        return super().respond(negotiator_id, state, source)
 
     def propose(self, negotiator_id, state):
         assert (
@@ -1035,7 +1038,7 @@ class MyOneShotDoNothing(OneShotAgent):
     def propose(self, negotiator_id, state):
         return None
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state):
         return ResponseType.END_NEGOTIATION
 
 
@@ -1060,7 +1063,8 @@ class PricePumpingAgent(OneShotAgent):
     def propose(self, negotiator_id, state):
         return self.top_outcome(negotiator_id)
 
-    def respond(self, negotiator_id, state, offer):
+    def respond(self, negotiator_id, state):
+        offer = state.current_offer
         return (
             ResponseType.ACCEPT_OFFER
             if self.top_outcome(negotiator_id) == offer
@@ -1174,7 +1178,8 @@ def test_price_pumping_bankrupts_random_agents():
 #     def accept_if(self, x):
 #         return ResponseType.ACCEPT_OFFER if x else ResponseType.REJECT_OFFER
 #
-#     def respond(self, negotiator_id, state, offer):
+#     def respond(self, negotiator_id, state):
+#         offer = state.current_offer
 #         if self.awi.is_first_level:
 #             return self.accept_if(self.ufun.ok_to_sell_at(offer[UNIT_PRICE]))
 #         if self.awi.is_last_level:

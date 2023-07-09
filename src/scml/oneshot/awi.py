@@ -4,14 +4,16 @@ Implements the one shot version of the Agent-World Interface.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from collections import defaultdict
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 from negmas import AgentWorldInterface
-from negmas.outcomes import Issue
+from negmas.outcomes import DiscreteCartesianOutcomeSpace, Issue, make_os
+from negmas.sao import SAOState
 
 from ..scml2020 import FinancialReport, is_system_agent
-from .common import OneShotProfile, OneShotState
+from .common import NegotiationDetails, OneShotProfile, OneShotState
 
 __all__ = ["OneShotAWI"]
 
@@ -95,12 +97,21 @@ class OneShotAWI(AgentWorldInterface):
             See `FinancialReport` for details.
 
         C. Current Negotiations Information:
+          - *current_input_outcome_space*: The current outcome-space for all negotiations to buy
+            the input product of the agent. If the agent is at level zero, this will have no issues.
+          - *current_output_outcome_space*: The current outcome-space for all negotiations to buy
+            the output product of the agent. If the agent
+            is at level n_products - 1, this will have no issues.
           - *current_input_issues*: The current issues for all negotiations to buy
             the input product of the agent. If the agent
             is at level zero, this will be empty.
+            This is exactly the same as current_input_outcome_space.issues
           - *current_output_issues*: The current issues for all negotiations to buy
             the output product of the agent. If the agent
             is at level n_products - 1, this will be empty.
+            This is exactly the same as current_output_outcome_space.issues
+          - *current_negotiation_details*: Details on all current negotiations separated into "buy"
+            and "sell" dictionaries.
 
         D. Agent Information:
           - *current_exogenous_input_quantity*: The total quantity the agent have
@@ -117,6 +128,15 @@ class OneShotAWI(AgentWorldInterface):
             step.
           - *current_balance*: The current balance of the agent
 
+        E. Sales and Supplies (quantities) for today:
+          - *sales*: Today's sales per customer so far.
+          - *supplies*: Today's supplies per supplier so far.
+          - *total_sales*: Today's total sales so far.
+          - *total_supplies*: Today's total supplies so far.
+          - *needed_sales*: Today's needed sales as of now (exogenous input + total supplies - exogenous output - total sales so far).
+          - *needed_supplies*: Today's needed supplies  as of now (exogenous output + total sales - exogenous input - total supplies so far).
+
+
     Services (All inherited from `negmas.situated.AgentWorldInterface`):
       - *logdebug/loginfo/logwarning/logerror*: Logs to the world log at the given log level.
       - *logdebug_agent/loginf_agnet/...*: Logs to the agent specific log at the given log level.
@@ -124,6 +144,11 @@ class OneShotAWI(AgentWorldInterface):
       - *bb_read*: Read a section of the bulletin-board.
 
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sales: dict[str, int] = defaultdict(int)
+        self._supplies: dict[str, int] = defaultdict(int)
 
     # ================================================================
     # Static World Information (does not change during the simulation)
@@ -183,7 +208,7 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.catalog_prices
 
     @property
-    def price_multiplier(self):
+    def price_multiplier(self) -> float:
         """
         Controls the minimum and maximum prices in the negotiation agendas
 
@@ -295,14 +320,17 @@ class OneShotAWI(AgentWorldInterface):
         return self.all_consumers[self.level + 1]
 
     @property
-    def penalties_scale(self) -> str:
+    def penalties_scale(self) -> Literal["trading", "catalog", "unit", "none"]:
         return self._world.penalties_scale
 
     # =========================================================
     # Dynamic Agent Information (changes during the simulation)
     # =========================================================
+    def default_encoded_state(
+        self, mechanism_states: dict[str, SAOState]
+    ) -> OneShotState:
+        all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
 
-    def state(self) -> Any:
         return OneShotState(
             exogenous_input_quantity=self.current_exogenous_input_quantity,
             exogenous_input_price=self.current_exogenous_input_price,
@@ -311,6 +339,99 @@ class OneShotAWI(AgentWorldInterface):
             disposal_cost=self.current_disposal_cost,
             shortfall_penalty=self.current_shortfall_penalty,
             current_balance=self.current_balance,
+            total_sales=self.total_sales,
+            total_supplies=self.total_supplies,
+            n_products=self.n_products,
+            n_processes=self.n_processes,
+            n_competitors=self.n_competitors,
+            all_suppliers=self.all_suppliers,
+            all_consumers=self.all_consumers,
+            catalog_prices=self.catalog_prices.tolist(),
+            price_multiplier=self.price_multiplier,
+            is_exogenous_forced=self.is_exogenous_forced,
+            current_step=self.current_step,
+            n_steps=self.n_steps,
+            relative_simulation_time=self.relative_time,
+            profile=self.profile,
+            n_lines=self.n_lines,
+            is_first_level=self.is_first_level,
+            is_last_level=self.is_last_level,
+            is_middle_level=self.is_middle_level,
+            my_input_product=self.my_input_product,
+            my_output_product=self.my_output_product,
+            level=self.level,
+            my_suppliers=self.my_suppliers,
+            my_consumers=self.my_consumers,
+            penalties_scale=self.penalties_scale,
+            n_input_negotiations=self.n_input_negotiations,
+            n_output_negotiations=self.n_output_negotiations,
+            trading_prices=self.trading_prices.tolist(),
+            exogenous_contract_summary=self.exogenous_contract_summary,
+            current_input_outcome_space=self.current_input_outcome_space,
+            current_output_outcome_space=self.current_output_outcome_space,
+            current_negotiation_details=self.current_negotiation_details,
+            sales=self.sales,
+            supplies=self.supplies,
+            needed_sales=self.needed_sales,
+            needed_supplies=self.needed_supplies,
+            bankrupt_agents=[_ for _ in all_agents if self.is_bankrupt(_)],
+            reports_of_agents=dict(
+                zip(all_agents, [self.reports_of_agent(_) for _ in all_agents])
+            ),
+            running_negotiations=mechanism_states,
+        )
+
+    def state(self) -> Any:
+        all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
+
+        return OneShotState(
+            exogenous_input_quantity=self.current_exogenous_input_quantity,
+            exogenous_input_price=self.current_exogenous_input_price,
+            exogenous_output_quantity=self.current_exogenous_output_quantity,
+            exogenous_output_price=self.current_exogenous_output_price,
+            disposal_cost=self.current_disposal_cost,
+            shortfall_penalty=self.current_shortfall_penalty,
+            current_balance=self.current_balance,
+            total_sales=self.total_sales,
+            total_supplies=self.total_supplies,
+            n_products=self.n_products,
+            n_processes=self.n_processes,
+            n_competitors=self.n_competitors,
+            all_suppliers=self.all_suppliers,
+            all_consumers=self.all_consumers,
+            catalog_prices=self.catalog_prices.tolist(),
+            price_multiplier=self.price_multiplier,
+            is_exogenous_forced=self.is_exogenous_forced,
+            current_step=self.current_step,
+            n_steps=self.n_steps,
+            relative_simulation_time=self.relative_time,
+            profile=self.profile,
+            n_lines=self.n_lines,
+            is_first_level=self.is_first_level,
+            is_last_level=self.is_last_level,
+            is_middle_level=self.is_middle_level,
+            my_input_product=self.my_input_product,
+            my_output_product=self.my_output_product,
+            level=self.level,
+            my_suppliers=self.my_suppliers,
+            my_consumers=self.my_consumers,
+            penalties_scale=self.penalties_scale,
+            n_input_negotiations=self.n_input_negotiations,
+            n_output_negotiations=self.n_output_negotiations,
+            trading_prices=self.trading_prices.tolist(),
+            exogenous_contract_summary=self.exogenous_contract_summary,
+            current_input_outcome_space=self.current_input_outcome_space,
+            current_output_outcome_space=self.current_output_outcome_space,
+            current_negotiation_details=self.current_negotiation_details,
+            sales=self.sales,
+            supplies=self.supplies,
+            needed_sales=self.needed_sales,
+            needed_supplies=self.needed_supplies,
+            bankrupt_agents=[_ for _ in all_agents if self.is_bankrupt(_)],
+            reports_of_agents=dict(
+                zip(all_agents, [self.reports_of_agent(_) for _ in all_agents])
+            ),
+            running_negotiations=dict(),
         )
 
     @property
@@ -433,7 +554,7 @@ class OneShotAWI(AgentWorldInterface):
         steps = sorted(
             int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()
         )
-        for (s, prev) in zip(steps[1:], steps[:-1]):
+        for s, prev in zip(steps[1:], steps[:-1]):
             if s > step:
                 return self.bb_read("reports_time", prev)
         return self.bb_read("reports_time", str(steps[-1]))
@@ -448,3 +569,77 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def current_output_issues(self) -> list[Issue]:
         return self._world._current_issues[self.my_output_product]
+
+    @property
+    def current_input_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+        return make_os(self._world._current_issues[self.my_input_product])
+
+    @property
+    def current_output_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+        return make_os(self._world._current_issues[self.my_output_product])
+
+    @property
+    def current_negotiation_details(self) -> dict[str, dict[str, NegotiationDetails]]:
+        """
+        Details of current negotiations separated as two dicts for buying and selling.
+
+        Remarks:
+            - current_negotiation_details["buy"] gives details on all negotiations for buying
+            - current_negotiation_details["sell"] gives details on all negotiations for selling
+        """
+        return self._world._agent_negotiations.get(
+            self.agent.id, dict(buy=dict(), sell=dict())
+        )
+
+    # Sales and supplies
+
+    @property
+    def sales(self) -> dict[str, int]:
+        """Sales per customer so far (this day)"""
+        return self._sales
+
+    @property
+    def supplies(self) -> dict[str, int]:
+        """Supplies per supplier so far (this day)"""
+        return self._supplies
+
+    @property
+    def total_sales(self) -> int:
+        """Total sales so far (this day)"""
+        return sum(self._sales.values())
+
+    @property
+    def total_supplies(self) -> int:
+        """Total supplies so far (this day)"""
+        return sum(self._supplies.values())
+
+    @property
+    def needed_sales(self) -> int:
+        """Sales that need to be secured (exogenous input + total supplies - exogenous output - total sales so far)"""
+        return (
+            self.current_exogenous_input_quantity
+            + self.total_supplies
+            - self.total_sales
+            - self.current_exogenous_output_quantity
+        )
+
+    @property
+    def needed_supplies(self) -> int:
+        """Supplies that need to be secured (exogenous output + total sales - exogenous input - total supplies so far)"""
+        return (
+            self.current_exogenous_output_quantity
+            + sum(self._sales.values())
+            - self.current_exogenous_input_quantity
+            - self.total_supplies
+        )
+
+    # helper operations (sales and supplies) -- you do not need to call these.
+    def _register_sale(self, customer: str, value: int) -> None:
+        self._sales[customer] += value
+
+    def _register_supply(self, supplier: str, value: int) -> None:
+        self._supplies[supplier] += value
+
+    def _reset_sales_and_supplies(self) -> None:
+        self._sales = defaultdict(int)
+        self._supplies = defaultdict(int)

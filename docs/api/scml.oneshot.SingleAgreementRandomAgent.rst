@@ -40,6 +40,7 @@ SingleAgreementRandomAgent
       ~SingleAgreementRandomAgent.add_negotiator
       ~SingleAgreementRandomAgent.after_join
       ~SingleAgreementRandomAgent.before_join
+      ~SingleAgreementRandomAgent.before_step
       ~SingleAgreementRandomAgent.best_offer
       ~SingleAgreementRandomAgent.best_outcome
       ~SingleAgreementRandomAgent.call
@@ -122,6 +123,7 @@ SingleAgreementRandomAgent
    .. automethod:: add_negotiator
    .. automethod:: after_join
    .. automethod:: before_join
+   .. automethod:: before_step
    .. automethod:: best_offer
    .. automethod:: best_outcome
    .. automethod:: call

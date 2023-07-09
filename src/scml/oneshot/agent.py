@@ -100,6 +100,7 @@ class OneShotAgent(SAOController, Entity, ABC):
 
             A list of negotiation information objects (`RunningNegotiationInfo`)
         """
+        assert self._owner is not None
         return self._owner.running_negotiations
 
     @property
@@ -107,6 +108,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         """
         All contracts that are not yet signed.
         """
+        assert self._owner is not None
         return self._owner.unsigned_contracts
 
     def init(self):
@@ -131,11 +133,22 @@ class OneShotAgent(SAOController, Entity, ABC):
               You will not need to directly use this method in most cases.
 
         """
+        assert self._owner is not None
         return self._owner.make_ufun(add_exogenous)
+
+    def before_step(self):
+        """
+        Called at the beginning of every step.
+
+        Remarks:
+            - Use this for any proactive code  that needs to be done every
+              simulation step.
+        """
+        pass
 
     def step(self):
         """
-        Called every step.
+        Called at the end of every step.
 
         Remarks:
             - Use this for any proactive code  that needs to be done every
@@ -168,16 +181,13 @@ class OneShotAgent(SAOController, Entity, ABC):
             an outcome to offer.
         """
 
-    def respond(
-        self, negotiator_id: str, state: MechanismState, offer: Outcome
-    ) -> ResponseType:
+    def respond(self, negotiator_id: str, state: SAOState) -> ResponseType:
         """
         Responds to an offer from one of the partners.
 
         Args:
             negotiator_id: ID of the negotiator (and partner)
             state: Mechanism state including current step
-            offer: The offer received.
 
         Returns:
             A response type which can either be reject, accept, or end negotiation.
@@ -188,6 +198,7 @@ class OneShotAgent(SAOController, Entity, ABC):
             proposed in the given state and reject otherwise
 
         """
+        offer = state.current_offer
         myoffer = self.propose(negotiator_id, state)
         if myoffer == offer:
             return ResponseType.ACCEPT_OFFER
@@ -414,7 +425,7 @@ class EndingNegotiator(SAONegotiator):
     def propose(self, state):
         return None
 
-    def respond(self, state, offer):
+    def respond(self, state):
         return ResponseType.END_NEGOTIATION
 
 
@@ -538,7 +549,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
                 if partner_id in self.awi.my_suppliers
                 else self.awi.current_output_issues
             )
-            mn, mx = self._urange(u, issues)
+            mn, mx = self._urange(u, tuple(issues))
             if self._normalize:
                 u = self._unorm(u, mn, mx)
                 if u is None:
@@ -567,7 +578,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
     def make_negotiator(
         self,
         negotiator_type=None,
-        name: str = None,
+        name: str = None,  # type: ignore
         **kwargs,
     ):
         """

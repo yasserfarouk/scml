@@ -48,6 +48,8 @@ OneShotUFun
       ~OneShotUFun.from_contracts
       ~OneShotUFun.from_dict
       ~OneShotUFun.from_genius
+      ~OneShotUFun.from_geniusweb
+      ~OneShotUFun.from_geniusweb_json_str
       ~OneShotUFun.from_offers
       ~OneShotUFun.from_xml_str
       ~OneShotUFun.generate_bilateral
@@ -134,6 +136,8 @@ OneShotUFun
    .. automethod:: from_contracts
    .. automethod:: from_dict
    .. automethod:: from_genius
+   .. automethod:: from_geniusweb
+   .. automethod:: from_geniusweb_json_str
    .. automethod:: from_offers
    .. automethod:: from_xml_str
    .. automethod:: generate_bilateral

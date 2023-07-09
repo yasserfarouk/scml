@@ -412,7 +412,15 @@ def anac_config_generator(
 
 
 anac_config_generator_std = anac_config_generator
-anac_config_generator_oneshot = anac_config_generator
+
+
+def anac_config_generator_oneshot(*args, **kwargs):
+    if len(args) >= 5:
+        args = tuple(list(args[:4]) + [DefaultAgentsOneShot2023] + list(args[5:]))
+    else:
+        kwargs["non_competitors"] = DefaultAgentsOneShot2023
+    kwargs["oneshot_world"] = True
+    return anac_config_generator(*args, **kwargs)
 
 
 def anac_config_generator_collusion(
@@ -577,7 +585,8 @@ def anac_assigner_std(
                         f"Cannot guarantee fair assignment: n. competitors {len(assignable_factories)}, at least"
                         f" {n_min} runs are needed for fair assignment"
                     )
-                max_n_worlds = n_rounds * n_min
+                max_n_worlds = n_rounds * n_min if n_rounds > 0 else max_n_worlds
+                n_rounds = max(n_rounds, 1)
                 k = 0
                 for _ in range(n_rounds):
                     shuffle(permutation)
@@ -776,7 +785,7 @@ def anac_world_generator(*, year: int, **kwargs):
         )
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
-    kwargs["world_params"]["random_agent_typea"] = False
+    kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.scml2020.world.SCML{int(year)}World")
     cnfg2 = cls.generate(**kwargs["world_params"])  # type: ignore
     for k in ("agent_types", "agent_params"):
@@ -810,7 +819,7 @@ def anac_oneshot_world_generator(*, year, **kwargs):
     #     del kwargs["world_params"][k]
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
-    kwargs["world_params"]["random_agent_typea"] = False
+    kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.oneshot.world.SCML{int(year)}OneShotWorld")
     cnfg2 = cls.generate(**kwargs["world_params"])
     for k in ("agent_types", "agent_params", "name"):
@@ -825,6 +834,7 @@ def anac_oneshot_world_generator(*, year, **kwargs):
 anac2021_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2021)
 anac2022_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2022)
 anac2023_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2023)
+anac2024_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2024)
 
 
 def balance_calculator(
@@ -955,6 +965,7 @@ balance_calculator2020 = partial(balance_calculator, consolidated=False)
 balance_calculator2021 = partial(balance_calculator, consolidated=False)
 balance_calculator2022 = partial(balance_calculator, consolidated=True)
 balance_calculator2023 = partial(balance_calculator, consolidated=True)
+
 
 def balance_calculator_collusion(
     worlds: list[SCML2020World],

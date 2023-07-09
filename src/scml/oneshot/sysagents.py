@@ -15,6 +15,8 @@ from negmas import (
 )
 from negmas.sao import ControlledSAONegotiator
 
+from scml.scml2019.common import QUANTITY
+
 from .agent import OneShotAgent
 from .awi import OneShotAWI
 from .helper import AWIHelper
@@ -40,7 +42,19 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
 
-    def on_negotiation_success(self, contract, mechanism):
+    def on_negotiation_success(self, contract: Contract, mechanism):
+        if contract.annotation["buyer"] == self.id:
+            self.awi._register_supply(
+                contract.annotation["seller"], contract.agreement["quantity"]
+            )
+        elif contract.annotation["seller"] == self.id:
+            self.awi._register_sale(
+                contract.annotation["buyer"], contract.agreement["quantity"]
+            )
+        else:
+            raise ValueError(
+                f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"
+            )
         return self._obj.on_negotiation_success(contract, mechanism)
 
     def on_contract_executed(self, contract: Contract) -> None:
@@ -69,6 +83,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             self._obj.reset()
 
     def before_step(self):
+        self.awi._reset_sales_and_supplies()
         if hasattr(self._obj, "before_step"):
             self._obj.before_step()
 

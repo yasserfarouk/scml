@@ -40,6 +40,7 @@ RandomOneShotAgent
       ~RandomOneShotAgent.add_negotiator
       ~RandomOneShotAgent.after_join
       ~RandomOneShotAgent.before_join
+      ~RandomOneShotAgent.before_step
       ~RandomOneShotAgent.call
       ~RandomOneShotAgent.checkpoint
       ~RandomOneShotAgent.checkpoint_info
@@ -113,6 +114,7 @@ RandomOneShotAgent
    .. automethod:: add_negotiator
    .. automethod:: after_join
    .. automethod:: before_join
+   .. automethod:: before_step
    .. automethod:: call
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
