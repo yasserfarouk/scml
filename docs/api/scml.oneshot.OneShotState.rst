@@ -48,7 +48,6 @@ OneShotState
       ~OneShotState.profile
       ~OneShotState.relative_simulation_time
       ~OneShotState.reports_of_agents
-      ~OneShotState.running_negotiations
       ~OneShotState.sales
       ~OneShotState.shortfall_penalty
       ~OneShotState.supplies
@@ -96,7 +95,6 @@ OneShotState
    .. autoattribute:: profile
    .. autoattribute:: relative_simulation_time
    .. autoattribute:: reports_of_agents
-   .. autoattribute:: running_negotiations
    .. autoattribute:: sales
    .. autoattribute:: shortfall_penalty
    .. autoattribute:: supplies

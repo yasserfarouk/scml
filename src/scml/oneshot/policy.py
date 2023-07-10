@@ -1,3 +1,5 @@
+import random
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -5,6 +7,8 @@ from negmas.gb.common import ResponseType
 from negmas.helpers.strings import itertools
 from negmas.outcomes import Outcome
 from negmas.sao.common import SAOResponse, SAOState
+
+from scml.scml2019.common import QUANTITY, UNIT_PRICE
 
 from .agent import OneShotSyncAgent
 
@@ -16,39 +20,47 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """
         Called to generate a state to be passed to the act() method. The default is all of `awi.state` of type `OneShotState`
         """
-        return self.awi.default_encoded_state(mechanism_states)
+        return self.awi.state
 
     @abstractmethod
     def act(self, state: Any) -> Any:
         """
         The main policy. Generates an action given a state
         """
-        offers = dict()
-        for supplier in state.my_suppliers:
-            offers[supplier] = SAOResponse(
-                ResponseType.REJECT_OFFER,
-                self.awi.current_input_outcome_space.random_outcome(),
-            )
-        for consumer in state.my_consumers:
-            offers[consumer] = SAOResponse(
-                ResponseType.REJECT_OFFER,
-                self.awi.current_output_outcome_space.random_outcome(),
-            )
+        offers = []
+        for partner in itertools.chain(state.my_suppliers, state.my_consumers):
+            # End the negotiation if it is already ended or randomly with some small probability
+            if (
+                random.random() < 0.025
+                or partner not in state.mechanism_states.keys()
+                or state.mechanism_states[partner].ended
+            ):
+                offers[partner] = (0, 0)
+                continue
+            outcome = self.awi.current_input_outcome_space.random_outcome()
+            offers.append((outcome[QUANTITY], outcome[UNIT_PRICE]))
         return offers
 
-    def decode_action(self, action: Any) -> dict[str, SAOResponse]:
+    def decode_action(self, action: dict[str, SAOResponse]) -> dict[str, SAOResponse]:
         """
         Generates offers to all partners from an encoded action. Default is to return the action as it is assuming it is a `dict[str, SAOResponse]`
         """
-        assert (
-            isinstance(action, dict)
-            and all(isinstance(_, str) for _ in action.keys())
-            and all(isinstance(_, SAOResponse) for _ in action.values())
-        )
         return action
 
+    def encode_action(
+        self, responses: dict[str, SAOResponse]
+    ) -> dict[str, SAOResponse]:
+        """
+        Receives offers for all partners and generates the corresponding action. Used mostly for debugging and testing.
+        """
+        return responses
+
+    def __call__(self, state):
+        """A policy is a callable that receives a state and generates an action"""
+        return self.act(state)
+
     def counter_all(
-        self, offers: dict[str, Outcome], states: dict[str, SAOState]
+        self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
     ) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).
@@ -85,10 +97,19 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         partners = [_ for _ in self.awi.my_suppliers if not self.awi.is_system(_)]
         partners += [_ for _ in self.awi.my_consumers if not self.awi.is_system(_)]
 
-        def _state():
+        def _state() -> SAOState:
             return SAOState(started=True, n_negotiators=2)
 
-        return self.counter_all(
+        responses = self.counter_all(
             offers=dict(zip(partners, itertools.repeat(None))),
             states=dict(zip(partners, itertools.repeat(_state()))),
+        )
+        return dict(
+            zip(
+                responses.keys(),
+                [
+                    None if k == ResponseType.END_NEGOTIATION else v.outcome
+                    for k, v in responses.items()
+                ],
+            )
         )

@@ -47,6 +47,8 @@ class OneShotAWI(AgentWorldInterface):
           - *relative_time*: fraction of the simulation completed (inherited from `negmas.situated.AgentWorldInterface`).
           - *state*: The full state of the agent ( `OneShotState` ).
           - *settings* The system settings (inherited from `negmas.situated.AgentWorldInterface` ).
+          - *quantity_range* The maximum quantity in all negotiation agendas (new in 0.6.1)
+          - *price_range* The maximum number of different prices in any negotiation agenda (new in 0.6.1)
 
         B. Agent Information:
           - *profile*: Gives the agent profile including its production cost, number
@@ -156,6 +158,20 @@ class OneShotAWI(AgentWorldInterface):
 
     # Market information
     # ------------------
+    @property
+    def max_n_lines(self) -> int:
+        """Maximum number of lines in the whole system"""
+        return self._world._max_n_lines
+
+    @property
+    def quantity_range(self) -> int:
+        """The maximum cardinality of the quantity issue in all negotiations"""
+        return self.max_n_lines
+
+    @property
+    def price_range(self) -> int:
+        """The maximum cardinality of the quantity issue in all negotiations"""
+        return 2
 
     @property
     def n_products(self) -> int:
@@ -320,15 +336,19 @@ class OneShotAWI(AgentWorldInterface):
         return self.all_consumers[self.level + 1]
 
     @property
+    def my_partners(self) -> list[str]:
+        """Returns a list of IDs for all of the agent's partners starting with suppliers"""
+        return self.my_suppliers + self.my_consumers
+
+    @property
     def penalties_scale(self) -> Literal["trading", "catalog", "unit", "none"]:
         return self._world.penalties_scale
 
     # =========================================================
     # Dynamic Agent Information (changes during the simulation)
     # =========================================================
-    def default_encoded_state(
-        self, mechanism_states: dict[str, SAOState]
-    ) -> OneShotState:
+    @property
+    def state(self) -> OneShotState:
         all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
 
         return OneShotState(
@@ -378,60 +398,7 @@ class OneShotAWI(AgentWorldInterface):
             reports_of_agents=dict(
                 zip(all_agents, [self.reports_of_agent(_) for _ in all_agents])
             ),
-            running_negotiations=mechanism_states,
-        )
-
-    def state(self) -> Any:
-        all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
-
-        return OneShotState(
-            exogenous_input_quantity=self.current_exogenous_input_quantity,
-            exogenous_input_price=self.current_exogenous_input_price,
-            exogenous_output_quantity=self.current_exogenous_output_quantity,
-            exogenous_output_price=self.current_exogenous_output_price,
-            disposal_cost=self.current_disposal_cost,
-            shortfall_penalty=self.current_shortfall_penalty,
-            current_balance=self.current_balance,
-            total_sales=self.total_sales,
-            total_supplies=self.total_supplies,
-            n_products=self.n_products,
-            n_processes=self.n_processes,
-            n_competitors=self.n_competitors,
-            all_suppliers=self.all_suppliers,
-            all_consumers=self.all_consumers,
-            catalog_prices=self.catalog_prices.tolist(),
-            price_multiplier=self.price_multiplier,
-            is_exogenous_forced=self.is_exogenous_forced,
-            current_step=self.current_step,
-            n_steps=self.n_steps,
-            relative_simulation_time=self.relative_time,
-            profile=self.profile,
-            n_lines=self.n_lines,
-            is_first_level=self.is_first_level,
-            is_last_level=self.is_last_level,
-            is_middle_level=self.is_middle_level,
-            my_input_product=self.my_input_product,
-            my_output_product=self.my_output_product,
-            level=self.level,
-            my_suppliers=self.my_suppliers,
-            my_consumers=self.my_consumers,
-            penalties_scale=self.penalties_scale,
-            n_input_negotiations=self.n_input_negotiations,
-            n_output_negotiations=self.n_output_negotiations,
-            trading_prices=self.trading_prices.tolist(),
-            exogenous_contract_summary=self.exogenous_contract_summary,
-            current_input_outcome_space=self.current_input_outcome_space,
-            current_output_outcome_space=self.current_output_outcome_space,
-            current_negotiation_details=self.current_negotiation_details,
-            sales=self.sales,
-            supplies=self.supplies,
-            needed_sales=self.needed_sales,
-            needed_supplies=self.needed_supplies,
-            bankrupt_agents=[_ for _ in all_agents if self.is_bankrupt(_)],
-            reports_of_agents=dict(
-                zip(all_agents, [self.reports_of_agent(_) for _ in all_agents])
-            ),
-            running_negotiations=dict(),
+            # running_negotiations=dict(),
         )
 
     @property

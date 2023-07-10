@@ -191,5 +191,5 @@ class OneShotState:
     """Today's needed sales as of now (exogenous input - exogenous output - total sales so far)."""
     needed_supplies: int
     """Today's needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
-    running_negotiations: dict[str, SAOState]
-    """Maps partner ID to the state of the running negotiation with it (if any)"""
+    # running_negotiations: dict[str, SAOState]
+    # """Maps partner ID to the state of the running negotiation with it (if any)"""

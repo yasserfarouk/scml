@@ -32,5 +32,5 @@ __all__ = (
     + policy.__all__
     + agents.__all__
     + awi.__all__
-    + ["builtin_agent_types"]
+    + ["builtin_agent_types", "rl"]
 )

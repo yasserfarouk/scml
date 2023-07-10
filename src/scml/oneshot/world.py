@@ -34,6 +34,7 @@ from negmas import (
 )
 from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
 from negmas.sao import ControlledSAONegotiator, SAOController, SAONegotiator
+from negmas.situated import NegotiationInfo
 
 from ..common import (
     distribute_quantities,
@@ -739,9 +740,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         Remarks:
 
             - There are two general ways to use this generator:
-                1. Pass `random_agent_types = True`, and pass `agent_types`, `agent_processes` to control placement of each
+                1. Pass `random_agent_types = False`, and pass `agent_types`, `agent_processes` to control placement of each
                    agent in each level of the production graph.
-                2. Pass `random_agent_types = False` and pass `agent_types`, `n_agents_per_process` to make the system randomly
+                2. Pass `random_agent_types = True` and pass `agent_types`, `n_agents_per_process` to make the system randomly
                    place the specified number of agents in each production level
             - Most parameters (i.e. `process_inputs` , `process_outputs` , `n_agents_per_process` , `costs` ) can
               take a single value, a tuple of two values, or a list of values.
@@ -1312,7 +1313,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         """
         from scml.oneshot.awi import OneShotAWI
 
-        actions = dict()
+        neg_actions = dict()
+        existing = {
+            _.mechanism.id
+            for _ in self._negotiations.values()
+            if _ is not None and _.mechanism is not None
+        }
         for agent, responses in actions.items():
             awi: OneShotAWI = self.agents[agent].awi  # type: ignore
             negotiations = awi.current_negotiation_details["buy"].copy()
@@ -1322,14 +1328,20 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 mynegs = [
                     _ for _ in neg.nmi.mechanism.negotiators if _.owner.id == agent
                 ]
-                assert len(mynegs) == 0
-                assert neg.nmi.mechanism.one_offer_per_step  # type: ignore
+                assert len(mynegs) == 1
+                assert neg.nmi.mechanism._one_offer_per_step  # type: ignore
                 response = responses.get(partner, None)
+                mid = neg.nmi.mechanism.id
+                if mid not in existing:
+                    continue
+                # assert (
+                #     mid in existing
+                # ), f"{mid} mechanism (with {partner}) does not exist for {agent}"
                 if response is not None:
-                    actions[neg.nmi.mechanism.id] = {mynegs[0]: response}
+                    neg_actions[mid] = {mynegs[0].id: response}
                 else:
                     warnings.warn(f"{agent=} has no response for partner {partner}")
-        return self.step(n_neg_steps=int(not init), actions=actions)
+        return self.step(n_neg_steps=int(not init), neg_actions=neg_actions)
 
     def simulation_step(self, stage):
         s = self.current_step
@@ -1868,7 +1880,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         negotiator: SAONegotiator,
         extra: dict[str, Any] | None = None,
         consumer_starts: bool = True,
-    ) -> bool:
+    ) -> NegotiationInfo:
         """
         Requests a negotiation
 
@@ -1962,8 +1974,6 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 nmi=result.mechanism.nmi,  # type: ignore
                 product=product,
             )
-        # if result:
-        #     self._registered_negs.add(tuple(sorted([partner, agent_id])))
         return result
 
     def _make_issues(

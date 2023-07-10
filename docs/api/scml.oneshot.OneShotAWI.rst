@@ -36,9 +36,11 @@ OneShotAWI
       ~OneShotAWI.is_last_level
       ~OneShotAWI.is_middle_level
       ~OneShotAWI.level
+      ~OneShotAWI.max_n_lines
       ~OneShotAWI.my_consumers
       ~OneShotAWI.my_input_product
       ~OneShotAWI.my_output_product
+      ~OneShotAWI.my_partners
       ~OneShotAWI.my_suppliers
       ~OneShotAWI.n_competitors
       ~OneShotAWI.n_input_negotiations
@@ -53,13 +55,16 @@ OneShotAWI
       ~OneShotAWI.params
       ~OneShotAWI.penalties_scale
       ~OneShotAWI.price_multiplier
+      ~OneShotAWI.price_range
       ~OneShotAWI.profile
+      ~OneShotAWI.quantity_range
       ~OneShotAWI.relative_time
       ~OneShotAWI.requested_negotiations
       ~OneShotAWI.running_mechanism_dicts
       ~OneShotAWI.running_negotiations
       ~OneShotAWI.sales
       ~OneShotAWI.settings
+      ~OneShotAWI.state
       ~OneShotAWI.supplies
       ~OneShotAWI.total_sales
       ~OneShotAWI.total_supplies
@@ -74,7 +79,6 @@ OneShotAWI
       ~OneShotAWI.bb_read
       ~OneShotAWI.bb_record
       ~OneShotAWI.bb_remove
-      ~OneShotAWI.default_encoded_state
       ~OneShotAWI.execute
       ~OneShotAWI.is_bankrupt
       ~OneShotAWI.is_system
@@ -92,7 +96,6 @@ OneShotAWI
       ~OneShotAWI.request_negotiation_about
       ~OneShotAWI.run_negotiation
       ~OneShotAWI.run_negotiations
-      ~OneShotAWI.state
 
    .. rubric:: Attributes Documentation
 
@@ -122,9 +125,11 @@ OneShotAWI
    .. autoattribute:: is_last_level
    .. autoattribute:: is_middle_level
    .. autoattribute:: level
+   .. autoattribute:: max_n_lines
    .. autoattribute:: my_consumers
    .. autoattribute:: my_input_product
    .. autoattribute:: my_output_product
+   .. autoattribute:: my_partners
    .. autoattribute:: my_suppliers
    .. autoattribute:: n_competitors
    .. autoattribute:: n_input_negotiations
@@ -139,13 +144,16 @@ OneShotAWI
    .. autoattribute:: params
    .. autoattribute:: penalties_scale
    .. autoattribute:: price_multiplier
+   .. autoattribute:: price_range
    .. autoattribute:: profile
+   .. autoattribute:: quantity_range
    .. autoattribute:: relative_time
    .. autoattribute:: requested_negotiations
    .. autoattribute:: running_mechanism_dicts
    .. autoattribute:: running_negotiations
    .. autoattribute:: sales
    .. autoattribute:: settings
+   .. autoattribute:: state
    .. autoattribute:: supplies
    .. autoattribute:: total_sales
    .. autoattribute:: total_supplies
@@ -158,7 +166,6 @@ OneShotAWI
    .. automethod:: bb_read
    .. automethod:: bb_record
    .. automethod:: bb_remove
-   .. automethod:: default_encoded_state
    .. automethod:: execute
    .. automethod:: is_bankrupt
    .. automethod:: is_system
@@ -176,4 +183,3 @@ OneShotAWI
    .. automethod:: request_negotiation_about
    .. automethod:: run_negotiation
    .. automethod:: run_negotiations
-   .. automethod:: state

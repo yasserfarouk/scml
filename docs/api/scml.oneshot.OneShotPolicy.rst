@@ -37,6 +37,7 @@ OneShotPolicy
 
    .. autosummary::
 
+      ~OneShotPolicy.__call__
       ~OneShotPolicy.act
       ~OneShotPolicy.add_negotiator
       ~OneShotPolicy.after_join
@@ -51,6 +52,7 @@ OneShotPolicy
       ~OneShotPolicy.create
       ~OneShotPolicy.create_negotiator
       ~OneShotPolicy.decode_action
+      ~OneShotPolicy.encode_action
       ~OneShotPolicy.encode_state
       ~OneShotPolicy.first_offer
       ~OneShotPolicy.first_proposals
@@ -117,6 +119,7 @@ OneShotPolicy
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: act
    .. automethod:: add_negotiator
    .. automethod:: after_join
@@ -131,6 +134,7 @@ OneShotPolicy
    .. automethod:: create
    .. automethod:: create_negotiator
    .. automethod:: decode_action
+   .. automethod:: encode_action
    .. automethod:: encode_state
    .. automethod:: first_offer
    .. automethod:: first_proposals

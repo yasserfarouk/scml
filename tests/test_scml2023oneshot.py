@@ -116,7 +116,7 @@ def test_equal_exogenous_supply_stepping_with_random_action():
     def make_actions():
         actions = dict()
         for agent in agents:
-            responses = dict()
+            negotiator, responses = None, dict()
             for t in ["buy", "sell"]:
                 for partner, neg in agent.awi.current_negotiation_details[t].items():  # type: ignore
                     assert agent.id in (neg.buyer, neg.seller)
@@ -127,7 +127,12 @@ def test_equal_exogenous_supply_stepping_with_random_action():
                         for _ in neg.nmi.mechanism.negotiators
                         if _.owner.id == agent.id
                     ][0]
-                    responses[partner] = {
+                    partner = [
+                        _.id
+                        for _ in neg.nmi.mechanism.negotiators
+                        if _.owner.id != agent.id
+                    ][0]
+                    responses[neg.nmi.mechanism.id] = {
                         negotiator: SAOResponse(
                             ResponseType.REJECT_OFFER, neg.nmi.random_outcome()
                         )

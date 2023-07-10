@@ -40,7 +40,12 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return super().make_ufun(add_exogenous, in_adapter=False)
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
-        return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
+        result = self._obj.on_negotiation_failure(
+            partners, annotation, mechanism, state
+        )
+        # for k in ("sell", "buy"):
+        #     self.awi._world._agent_negotiations[self._obj.id][k].pop(mechanism.id, None)
+        return result
 
     def on_negotiation_success(self, contract: Contract, mechanism):
         if contract.annotation["buyer"] == self.id:
@@ -55,7 +60,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             raise ValueError(
                 f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"
             )
-        return self._obj.on_negotiation_success(contract, mechanism)
+        result = self._obj.on_negotiation_success(contract, mechanism)
+        # for k in ("sell", "buy"):
+        #     self.awi._world._agent_negotiations[self._obj.id][k].pop(mechanism.id, None)
+        return result
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
