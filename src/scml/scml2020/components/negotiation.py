@@ -20,7 +20,7 @@ from negmas import (
 from negmas.helpers import get_class, instantiate
 from negmas.outcomes.issue_ops import enumerate_issues
 
-from scml.scml2020 import AWI
+from scml.scml2020.awi import AWI
 from scml.scml2020.common import TIME
 from scml.scml2020.components.prediction import MeanERPStrategy
 from scml.scml2020.services.controllers import StepController, SyncController
@@ -455,7 +455,6 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         annotation: Dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
-
         # find negotiation parameters
         is_seller = annotation["seller"] == self.id
         tmin, tmax = issues[TIME].min_value, issues[TIME].max_value + 1

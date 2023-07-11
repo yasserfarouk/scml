@@ -20,9 +20,9 @@ Levels of control
 There are four levels of control for world generation:
 
 1. The tournament level: In this case you use ``negmas.tournament`` or —
-   more conveniently — ``scml.scml2020.utils.anac2022_*`` functions to
-   run a tournament. You can adjust the parameters used to create worlds
-   in this simulation using almost all the same parameters that are
+   more conveniently — ``scml.utils.anac2022_*`` functions to run a
+   tournament. You can adjust the parameters used to create worlds in
+   this simulation using almost all the same parameters that are
    received by ``SCML2020OneShotWorld.generate()`` method (next level of
    control below). It is harder in this case to control the number of
    simulations and factory assignment.
@@ -588,7 +588,7 @@ Let’s try to do it for the ``SCML2023World`` first:
 .. code:: ipython3
 
     import numpy as np
-    from scml.scml2020 import FactoryProfile
+    from scml.scml2020.common import FactoryProfile
     from scml.scml2020.common import INFINITE_COST, ExogenousContract
 
     types = [DecentralizingAgent] * 3

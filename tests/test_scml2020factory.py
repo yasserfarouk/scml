@@ -7,8 +7,9 @@ import pytest
 from hypothesis import example, given
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
 
-from scml.scml2020 import NO_COMMAND, Factory, FactoryProfile, FactoryState
+from scml.scml2020.common import NO_COMMAND, FactoryProfile, FactoryState
 from scml.scml2020.components.simulation import FactorySimulator
+from scml.scml2020.factory import Factory
 
 PROCESSES = 5
 LINES = 10

@@ -15,20 +15,33 @@ from scml.oneshot.world import (
     SCML2022OneShotWorld,
     SCML2023OneShotWorld,
 )
-from scml.scml2020.utils import (
-    DefaultAgentsOneShot2023,
-    anac_assigner_oneshot,
-    anac_config_generator_oneshot,
-    anac_oneshot_world_generator,
-)
 
+from ..agents import (
+    GreedyOneShotAgent,
+    SingleAgreementAspirationAgent,
+    SyncRandomOneShotAgent,
+)
 from .common import WorldFactory, isin
+
+# from scml.utils import (
+#     anac_assigner_oneshot,
+#     anac_config_generator_oneshot,
+#     anac_oneshot_world_generator,
+# )
+
 
 __all__ = [
     "OneShotWorldFactory",
-    "ANACOneShotFactory",
+    # "ANACOneShotFactory",
     "FixedPartnerNumbersOneShotFactory",
     "LimitedPartnerNumbersOneShotFactory",
+]
+
+
+DefaultAgentsOneShot2023 = [
+    GreedyOneShotAgent,
+    SingleAgreementAspirationAgent,
+    SyncRandomOneShotAgent,
 ]
 
 
@@ -61,40 +74,40 @@ class OneShotWorldFactory(WorldFactory, ABC):
         raise RuntimeError(f"Cannot find a world of type {expected_type}")
 
 
-@define(frozen=True)
-class ANACOneShotFactory(OneShotWorldFactory):
-    """Generates a oneshot world compatible with the settings of a given year in the ANAC competition"""
-
-    year: int = 2023
-
-    def make(self) -> SCML2023OneShotWorld:
-        """Generates a world"""
-        agent_type = self.agent_type
-        configs = anac_config_generator_oneshot(
-            self.year,
-            n_competitors=1,
-            n_agents_per_competitor=1,
-            one_offer_per_step=True,
-        )
-        assigned = anac_assigner_oneshot(
-            configs, 1, competitors=(agent_type,), params=None, fair=False  # type: ignore
-        )
-        assigned = assigned[0][0]
-        return anac_oneshot_world_generator(year=self.year, **assigned)
-
-    def is_valid_world(self, world: SCML2023OneShotWorld) -> bool:
-        """Checks that the given world could have been generated from this generator"""
-        warnings.warn(f"N. processes must be 2")
-        return world.n_processes == 2
-
-    def contains_factory(self, generator: WorldFactory) -> bool:
-        """Checks that the any world generated from the given `generator` could have been generated from this generator"""
-        if not isinstance(generator, ANACOneShotFactory):
-            warnings.warn(
-                f"factories of type: {generator.__class__} are incompatible with this factory of type {self.__class__}"
-            )
-            return False
-        return self == generator
+# @define(frozen=True)
+# class ANACOneShotFactory(OneShotWorldFactory):
+#     """Generates a oneshot world compatible with the settings of a given year in the ANAC competition"""
+#
+#     year: int = 2023
+#
+#     def make(self) -> SCML2023OneShotWorld:
+#         """Generates a world"""
+#         agent_type = self.agent_type
+#         configs = anac_config_generator_oneshot(
+#             self.year,
+#             n_competitors=1,
+#             n_agents_per_competitor=1,
+#             one_offer_per_step=True,
+#         )
+#         assigned = anac_assigner_oneshot(
+#             configs, 1, competitors=(agent_type,), params=None, fair=False  # type: ignore
+#         )
+#         assigned = assigned[0][0]
+#         return anac_oneshot_world_generator(year=self.year, **assigned)
+#
+#     def is_valid_world(self, world: SCML2023OneShotWorld) -> bool:
+#         """Checks that the given world could have been generated from this generator"""
+#         warnings.warn(f"N. processes must be 2")
+#         return world.n_processes == 2
+#
+#     def contains_factory(self, generator: WorldFactory) -> bool:
+#         """Checks that the any world generated from the given `generator` could have been generated from this generator"""
+#         if not isinstance(generator, ANACOneShotFactory):
+#             warnings.warn(
+#                 f"factories of type: {generator.__class__} are incompatible with this factory of type {self.__class__}"
+#             )
+#             return False
+#         return self == generator
 
 
 @define(frozen=True)

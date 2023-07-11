@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from scml.scml2020.agents import DoNothingAgent
-from scml.scml2020.utils import (
+from scml.utils import (
     anac2020_collusion,
     anac2020_std,
     anac2021_collusion,

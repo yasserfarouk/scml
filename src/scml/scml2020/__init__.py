@@ -6,15 +6,13 @@ The detailed description of this world simulation can be found here_.
 
 """
 
-from .common import *
-from .factory import *
-from .awi import *
-from .world import *
 from .agent import *
-from .components import *
 from .agents import *
-from . import utils
-from .utils import *
+from .awi import *
+from .common import *
+from .components import *
+from .factory import *
+from .world import *
 
 
 def builtin_agent_types(as_str=False):
@@ -41,5 +39,4 @@ __all__ = (
     + factory.__all__
     + awi.__all__
     + agent.__all__
-    + ["utils"]
 )

@@ -44,16 +44,18 @@ from ..common import (
     realin,
     strin,
 )
-from ..scml2020 import FinancialReport
-from ..scml2020.common import (
+from .adapter import OneShotSCML2020Adapter
+from .agent import OneShotAgent
+from .common import (
     INFINITE_COST,
     SYSTEM_BUYER_ID,
     SYSTEM_SELLER_ID,
+    FinancialReport,
+    NegotiationDetails,
+    OneShotExogenousContract,
+    OneShotProfile,
     is_system_agent,
 )
-from .adapter import OneShotSCML2020Adapter
-from .agent import OneShotAgent
-from .common import NegotiationDetails, OneShotExogenousContract, OneShotProfile
 from .sysagents import DefaultOneShotAdapter, _SystemAgent
 
 __all__ = [

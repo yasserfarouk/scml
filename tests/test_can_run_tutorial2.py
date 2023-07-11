@@ -19,7 +19,7 @@ from negmas.preferences.value_fun import AffineFun, IdentityFun
 
 from scml.oneshot import *
 from scml.oneshot import OneShotIndNegotiatorsAgent
-from scml.scml2020 import is_system_agent
+from scml.scml2020.common import is_system_agent
 
 from .switches import *
 

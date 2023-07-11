@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from scml.scml2020 import ANY_LINE, ANY_STEP, NO_COMMAND, FactoryProfile
+from scml.scml2020.common import ANY_LINE, ANY_STEP, NO_COMMAND, FactoryProfile
 
 __all__ = ["FactorySimulator", "transaction", "temporary_transaction"]
 

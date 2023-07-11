@@ -1435,7 +1435,7 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    from scml.scml2020.utils import anac2023_std
+    from scml.utils import anac2023_std
     pd.options.display.float_format = '{:,.2f}'.format
     def shorten_names(results):
         # just make agent types more readable
@@ -1837,7 +1837,7 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    from scml.scml2020.utils import anac2023_oneshot
+    from scml.utils import anac2023_oneshot
 
 .. code:: ipython3
 

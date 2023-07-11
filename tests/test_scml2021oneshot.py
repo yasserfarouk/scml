@@ -29,9 +29,8 @@ from scml.oneshot.agent import (
 )
 from scml.oneshot.agents import GreedySyncAgent, RandomOneShotAgent
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
+from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE, is_system_agent
 from scml.oneshot.ufun import OneShotUFun
-from scml.scml2020 import is_system_agent
 
 from .switches import SCML_ON_GITHUB
 

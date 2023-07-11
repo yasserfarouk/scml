@@ -13,8 +13,13 @@ from negmas import AgentWorldInterface
 from negmas.outcomes import DiscreteCartesianOutcomeSpace, Issue, make_os
 from negmas.sao import SAOState
 
-from ..scml2020 import FinancialReport, is_system_agent
-from .common import NegotiationDetails, OneShotProfile, OneShotState
+from .common import (
+    FinancialReport,
+    NegotiationDetails,
+    OneShotProfile,
+    OneShotState,
+    is_system_agent,
+)
 
 __all__ = ["OneShotAWI"]
 

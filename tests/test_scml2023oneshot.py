@@ -10,7 +10,7 @@ from scml.oneshot.agents import (
     RandomOneShotAgent,
 )
 from scml.oneshot.world import SCML2023OneShotWorld
-from scml.scml2020.utils import (
+from scml.utils import (
     anac2023_oneshot_world_generator,
     anac_assigner_oneshot,
     anac_config_generator_oneshot,

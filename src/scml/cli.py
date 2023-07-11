@@ -33,8 +33,10 @@ from scml.scml2019.utils import (
     anac2019_sabotage,
     anac2019_std,
 )
-from scml.scml2020 import SCML2020Agent, is_system_agent
-from scml.scml2020.utils import (
+from scml.scml2020.agent import SCML2020Agent
+from scml.scml2020.common import is_system_agent
+from scml.scml2020.world import SCML2020World, SCML2021World, SCML2023World
+from scml.utils import (
     anac2020_collusion,
     anac2020_std,
     anac2021_collusion,
@@ -44,7 +46,6 @@ from scml.scml2020.utils import (
     anac2023_oneshot,
     anac2023_std,
 )
-from scml.scml2020.world import SCML2020World, SCML2021World, SCML2023World
 
 try:
     from scml.vendor.quick.quick import gui_option
@@ -696,7 +697,7 @@ def tournament2020(
                 non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = scml.scml2020.utils.DefaultAgents
+        non_competitors = scml.utils.DefaultAgents
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
@@ -2620,7 +2621,7 @@ def tournament2020(
                 non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = scml.scml2020.utils.DefaultAgents
+        non_competitors = scml.utils.DefaultAgents
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)

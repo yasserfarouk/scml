@@ -1,12 +1,12 @@
 from typing import List, Union
 
-from scml.scml2020 import SCML2020Agent
+from scml.scml2020.agent import SCML2020Agent
 from scml.scml2020.agents import (
     BuyCheapSellExpensiveAgent,
     DecentralizingAgent,
     RandomAgent,
 )
-from scml.scml2020.utils import (
+from scml.utils import (
     anac2020_world_generator,
     anac_assigner_std,
     anac_config_generator_std,

@@ -16,7 +16,9 @@ from negmas import (
 )
 from negmas.sao import SAONMI, SAONegotiator, SAOState
 
-from scml.scml2020 import AWI, NO_COMMAND, QUANTITY, TIME, UNIT_PRICE, SCML2020Agent
+from scml.scml2020.agent import SCML2020Agent
+from scml.scml2020.awi import AWI
+from scml.scml2020.common import NO_COMMAND, QUANTITY, TIME, UNIT_PRICE
 
 __all__ = ["SatisficerAgent"]
 

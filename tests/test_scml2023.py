@@ -7,7 +7,7 @@ from negmas import ResponseType
 from negmas.sao import SAOResponse
 
 from scml.oneshot import *
-from scml.scml2020 import is_system_agent
+from scml.scml2020.common import is_system_agent
 
 
 def try_agent(agent_type, n_processes=2, **kwargs):

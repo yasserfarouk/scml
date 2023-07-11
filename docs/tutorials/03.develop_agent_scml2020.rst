@@ -607,7 +607,7 @@ This is a straight forward implementation of this idea
 
 .. code:: ipython3
 
-    from scml.scml2020 import TIME, QUANTITY, UNIT_PRICE
+    from scml.scml2020.common import TIME, QUANTITY, UNIT_PRICE
     from negmas import ResponseType, outcome_is_valid, UtilityFunction
     from negmas.sao import SAOResponse
     from typing import List, Dict, Optional, Tuple, Any
@@ -997,7 +997,7 @@ average prices they get from their negotiations.
 
 .. code:: ipython3
 
-    from scml.scml2020 import is_system_agent
+    from scml.scml2020.common import is_system_agent
 
     def analyze_unit_price(world, agent_type):
         """Returns the average price relative to the negotiation issues"""
@@ -1488,7 +1488,7 @@ The main idea behind this agent is very simple:
 .. code:: ipython3
 
     from negmas import MappingUtilityFunction, AspirationNegotiator
-    from scml.scml2020 import NO_COMMAND
+    from scml.scml2020.common import NO_COMMAND
 
     class FromScratchAgent(SCML2020Agent):
         def init(self):
@@ -1738,7 +1738,7 @@ module). To run a tournament you will need this code snippet:
 
 .. code:: python
 
-   from scml.scml2020.utils import anac2023_std
+   from scml.utils import anac2023_std
    import seaborn as sns
 
    tournament_types = [

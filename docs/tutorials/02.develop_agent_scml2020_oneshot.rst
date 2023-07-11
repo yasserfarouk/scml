@@ -18,7 +18,7 @@ this brief introduction in the remainder of this tutorial.
     import random
     from negmas import ResponseType
     from scml.oneshot import *
-    from scml.scml2020 import is_system_agent
+    from scml.scml2020.common import is_system_agent
     from pprint import pprint
 
     def try_agent(agent_type, n_processes=2, **kwargs):

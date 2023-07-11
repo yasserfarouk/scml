@@ -32,7 +32,7 @@ from scml.scml2019.utils import (
     anac2019_world_generator,
     sabotage_effectiveness,
 )
-from scml.scml2020.utils import (
+from scml.utils import (
     anac2020_world_generator,
     anac_assigner_std,
     anac_config_generator_std,
@@ -741,7 +741,7 @@ def create(
         )
     elif ttype.lower() == "anac2020std":
         if non_competitors is None:
-            non_competitors = scml.scml2020.utils.DefaultAgents
+            non_competitors = scml.utils.DefaultAgents
             non_competitor_params = tuple({} for _ in range(len(non_competitors)))
         print(f"Tournament will be run between {len(all_competitors)} agents: ")
         pprint(all_competitors)
@@ -764,7 +764,7 @@ def create(
             world_generator=anac2020_world_generator,
             config_generator=anac_config_generator_std,
             config_assigner=anac_assigner_std,
-            score_calculator=scml.scml2020.utils.balance_calculator2020,
+            score_calculator=scml.utils.balance_calculator2020,
             min_factories_per_level=factories[0],
             max_factories_per_level=factories[1],
             compact=compact,
@@ -811,7 +811,7 @@ def create(
         )
     elif ttype.lower() in ("anac2020collusion", "anac2020"):
         if non_competitors is None:
-            non_competitors = scml.scml2020.utils.DefaultAgents
+            non_competitors = scml.utils.DefaultAgents
             non_competitor_params = tuple({} for _ in range(len(non_competitors)))
         print(f"Tournament will be run between {len(all_competitors)} agents: ")
         pprint(all_competitors)
@@ -834,7 +834,7 @@ def create(
             world_generator=anac2019_world_generator,
             config_generator=anac2019_config_generator,
             config_assigner=anac2019_assigner,
-            score_calculator=scml.scml2020.utils.balance_calculator2020,
+            score_calculator=scml.utils.balance_calculator2020,
             min_factories_per_level=factories[0],
             max_factories_per_level=factories[1],
             compact=compact,

@@ -27,7 +27,7 @@ from scml.scml2020 import (
     is_system_agent,
 )
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
-from scml.scml2020.utils import anac2021_collusion
+from scml.utils import anac2021_collusion
 
 from .switches import SCML_ON_GITHUB, SCML_RUN2021_STD
 

@@ -10,7 +10,8 @@ from negmas import (
     NegotiatorMechanismInterface,
 )
 
-from scml.scml2020 import Failure, SCML2020Agent
+from scml.scml2020.agent import SCML2020Agent
+from scml.scml2020.common import Failure
 
 __all__ = ["DoNothingAgent"]
 

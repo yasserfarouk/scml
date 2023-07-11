@@ -166,12 +166,12 @@ You can use the `utils` submodule of `scml.scml2020` to generate worlds with the
 competition for all tracks. Here is some example script to run `1` such world using three built-in agents::
 
     from typing import List, Union
-    from scml.scml2020.utils import (
+    from scml.utils import (
         anac2020_config_generator,
         anac2020_world_generator,
         anac2020_assigner,
     )
-    from scml.scml2020 import SCML2020Agent
+    from scml.scml2020.agent import SCML2020Agent
     from scml.scml2020.agents import (
         DecentralizingAgent, BuyCheapSellExpensiveAgent, RandomAgent
     )
