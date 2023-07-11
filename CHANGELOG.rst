@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.6.1 (2023.7.9)
+----------------
+
+* Moving scml.scml2020.utils to scml.utils (to avoid a circular import in rl/factory)
+* This is an initial effort to have RL work for scml. Currently we are disabling the extra checks on observation and
+  world construction because they lead to failures. This needs to be rectified later.
+* Added the concept of a WorldFactory to generate worlds with predefined characteristics from the point of view of the learning agent.
+* Now environments, action managers, and observation managers all receive WorldFactory objects and automatically check for compatibility.
+
 0.6.0 (2023.7.9)
 ----------------
 
