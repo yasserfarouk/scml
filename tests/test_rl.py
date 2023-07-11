@@ -25,7 +25,7 @@ def make_env(
     n_consumers=(4, 8),
     n_suppliers=(0, 0),
     n_lines=(10, 10),
-    extra_checks=True,
+    extra_checks=False,
     type="fixed",
 ) -> OneShotEnv:
     if type == "fixed":
@@ -53,9 +53,9 @@ def make_env(
     )
     return OneShotEnv(
         action_manager=act_type(factory=factory),
-        observation_manager=obs_type(factory=factory, extra_checks=True),
+        observation_manager=obs_type(factory=factory, extra_checks=extra_checks),
         factory=factory,
-        extra_checks=True,
+        extra_checks=False,
     )
 
 

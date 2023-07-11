@@ -80,8 +80,8 @@ class FixedPartnerNumbersObservationManager(ObservationManager):
                     )
                 )
                 + [self.max_quantity + 1] * 2
-                + [self.n_suppliers + 1]
-                + [self.n_consumers + 1]
+                # + [self.n_suppliers + 1]
+                # + [self.n_consumers + 1]
                 + [self.n_lines]
                 + [self.n_bins + 1] * 6
             ).flatten()
@@ -141,8 +141,8 @@ class FixedPartnerNumbersObservationManager(ObservationManager):
         extra = [
             max(0, state.needed_sales),
             max(0, state.needed_supplies),
-            state.n_input_negotiations,
-            state.n_output_negotiations,
+            # state.n_input_negotiations,
+            # state.n_output_negotiations,
             state.n_lines - 1,
             int(self.n_bins * (state.level / state.n_processes) + 0.5),
             int(neg_relative_time * self.n_bins + 0.5),
@@ -189,7 +189,7 @@ class FixedPartnerNumbersObservationManager(ObservationManager):
             ), f"{len(v)=}, {len(extra)=}, {len(offers)=}, {exp=}, {self.n_partners=}\n{state.current_negotiation_details=}"
             assert all(
                 -1 < a < b for a, b in zip(v, space.nvec)  # type: ignore
-            ), f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.current_exogenous_input_quantity , state.total_supplies , state.total_sales , state.current_exogenous_output_quantity) }"  # type: ignore
+            ), f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"  # type: ignore
 
         return v
 
