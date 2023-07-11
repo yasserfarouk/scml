@@ -73,10 +73,11 @@ setup(
         "jupyter",
         "gif",
         "mip",
+        "gymnasium[extra]",
+        "stable-baselines3",
     ],
     extras_require={
         "gui": ["pyqt5"],
-        "rl": ["gymnasium"],
     },
     setup_requires=["pytest-runner"],
     entry_points={

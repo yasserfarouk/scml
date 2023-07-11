@@ -161,6 +161,8 @@ class OneShotState:
     """A list of IDs for all suppliers to the agent (i.e. agents that can sell the input product of the agent)."""
     my_consumers: list[str]
     """A list of IDs for all consumers to the agent (i.e. agents that can buy the output product of the agent)."""
+    my_partners: list[str]
+    """A list of IDs for all negotiation partners of the agent (in the order suppliers then consumers)."""
     penalties_scale: Literal["trading", "catalog", "unit", "none"]
     """The scale at which to calculate disposal cost/delivery penalties.
     "trading" and "catalog" mean trading and catalog prices. "unit" means the

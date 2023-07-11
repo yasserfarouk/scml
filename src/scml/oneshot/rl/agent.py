@@ -10,10 +10,10 @@ from ..policy import OneShotPolicy
 
 MyState = Any
 
-__all__ = ["OneShotRLAgent"]
+__all__ = ["OneShotDummyAgent"]
 
 
-class OneShotRLAgent(OneShotPolicy):
+class OneShotDummyAgent(OneShotPolicy):
     def act(self, state: Any) -> Any:
         raise RuntimeError(f"This agent is not supposed to ever be called")
 

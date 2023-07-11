@@ -4,8 +4,9 @@ Implements the one shot version of the Agent-World Interface.
 """
 from __future__ import annotations
 
+import itertools
 from collections import defaultdict
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal
 
 import numpy as np
 from negmas import AgentWorldInterface
@@ -338,7 +339,11 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def my_partners(self) -> list[str]:
         """Returns a list of IDs for all of the agent's partners starting with suppliers"""
-        return self.my_suppliers + self.my_consumers
+        return [
+            _
+            for _ in itertools.chain(self.my_suppliers, self.my_consumers)
+            if not self.is_system(_)
+        ]
 
     @property
     def penalties_scale(self) -> Literal["trading", "catalog", "unit", "none"]:
@@ -366,6 +371,7 @@ class OneShotAWI(AgentWorldInterface):
             n_competitors=self.n_competitors,
             all_suppliers=self.all_suppliers,
             all_consumers=self.all_consumers,
+            my_partners=self.my_partners,
             catalog_prices=self.catalog_prices.tolist(),
             price_multiplier=self.price_multiplier,
             is_exogenous_forced=self.is_exogenous_forced,

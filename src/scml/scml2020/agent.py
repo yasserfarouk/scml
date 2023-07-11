@@ -384,6 +384,7 @@ class AWIHelper:
             level=self.level,
             my_suppliers=self.my_suppliers,
             my_consumers=self.my_consumers,
+            my_partners=self.my_partners,
             penalties_scale=self.penalties_scale,
             n_input_negotiations=self.n_input_negotiations,
             n_output_negotiations=self.n_output_negotiations,
