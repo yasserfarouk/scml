@@ -33,6 +33,7 @@ OneShotState
       ~OneShotState.my_consumers
       ~OneShotState.my_input_product
       ~OneShotState.my_output_product
+      ~OneShotState.my_partners
       ~OneShotState.my_suppliers
       ~OneShotState.n_competitors
       ~OneShotState.n_input_negotiations
@@ -80,6 +81,7 @@ OneShotState
    .. autoattribute:: my_consumers
    .. autoattribute:: my_input_product
    .. autoattribute:: my_output_product
+   .. autoattribute:: my_partners
    .. autoattribute:: my_suppliers
    .. autoattribute:: n_competitors
    .. autoattribute:: n_input_negotiations
