@@ -4,7 +4,10 @@ from scml.common import intin
 from scml.oneshot.rl.action import (
     FixedPartnerNumbersActionManager,
     LimitedPartnerNumbersActionManager,
+    UnconstrainedActionManager,
 )
+from scml.oneshot.rl.agent import OneShotRLAgent
+from scml.oneshot.rl.common import RLModel, model_wrapper
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.factory import (
     FixedPartnerNumbersOneShotFactory,
@@ -16,8 +19,8 @@ from scml.oneshot.rl.observation import (
 )
 
 
-def random_policy(env, obs):
-    return env.action_space.sample()
+def random_policy(env):
+    return lambda _: env.action_space.sample()
 
 
 def make_env(
@@ -43,8 +46,12 @@ def make_env(
             LimitedPartnerNumbersObservationManager,
             LimitedPartnerNumbersActionManager,
         ),
+        unlimited=(
+            LimitedPartnerNumbersOneShotFactory,
+            LimitedPartnerNumbersObservationManager,
+            UnconstrainedActionManager,
+        ),
     )[type]
-    n_quantities = n_lines
     factory = factory_type(
         n_suppliers=n_suppliers,  # type: ignore
         n_consumers=n_consumers,  # type: ignore
@@ -59,22 +66,21 @@ def make_env(
     )
 
 
-@mark.parametrize("type_", ["fixed", "limited"])
+@mark.parametrize("type_", ["unlimited", "fixed", "limited"])
 def test_env_runs(type_):
     env = make_env(type=type_)
 
     obs, info = env.reset()
     for _ in range(500):
-        action = random_policy(env, obs)
+        action = random_policy(env)(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         if terminated or truncated:
             obs, info = env.reset()
     env.close()
 
 
-@mark.parametrize("type_", ["fixed", "limited"])
+@mark.parametrize("type_", ["unlimited", "fixed", "limited"])
 def test_training(type_):
-    import gymnasium as gym
     from stable_baselines3 import A2C
 
     env = make_env(extra_checks=False, type=type_)
@@ -89,3 +95,37 @@ def test_training(type_):
         action, _state = model.predict(obs, deterministic=True)  # type: ignore
         obs, reward, done, info = vec_env.step(action)
         # vec_env.render("human")
+        #
+        #
+
+
+def test_rl_agent_fallback():
+    factory = FixedPartnerNumbersOneShotFactory(agent_type=OneShotRLAgent)
+    action, obs = (
+        FixedPartnerNumbersActionManager(factory),
+        FixedPartnerNumbersObservationManager(factory),
+    )
+    world, agent = factory()
+    assert isinstance(agent._obj, OneShotRLAgent), agent.type_name  # type: ignore
+    world.run()
+
+
+def test_rl_agent_with_a_trained_model():
+    from stable_baselines3 import A2C
+
+    env = make_env(extra_checks=False, type="unlimited")
+
+    model = A2C("MlpPolicy", env, verbose=1)
+    model.learn(total_timesteps=10)
+
+    factory = LimitedPartnerNumbersOneShotFactory()
+    obs = LimitedPartnerNumbersObservationManager(factory)
+    factory = LimitedPartnerNumbersOneShotFactory(
+        agent_type=OneShotRLAgent,
+        agent_params=dict(models=[model_wrapper(model)], observation_managers=[obs]),
+    )
+    world, agent = factory()
+    assert isinstance(agent._obj, OneShotRLAgent), agent.type_name  # type: ignore
+    world.step()
+    assert agent._valid_index == 0  # type: ignore
+    world.run()

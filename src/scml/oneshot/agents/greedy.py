@@ -117,6 +117,7 @@ class GreedyOneShotAgent(OneShotAgent):
 
     def respond(self, negotiator_id, state):
         offer = state.current_offer
+        assert offer is not None
         # find the quantity I still need and end negotiation if I need nothing more
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:

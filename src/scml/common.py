@@ -42,6 +42,7 @@ def integer_cut(
     l: int,
     l_m: int | list[int],
     l_x: int | list[int] | None = None,
+    randomize: bool = True,
 ) -> list[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
@@ -50,6 +51,7 @@ def integer_cut(
         l: number of levels
         l_m: minimum per level
         l_x: maximum per level
+        randomize: If true, the integers resulting are randomized otherwise they will always be in the same order
 
     Returns:
 
@@ -70,11 +72,19 @@ def integer_cut(
             f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {sum(l_x)}"  # type: ignore
         )
     valid = [i for i, s in enumerate(sizes) if l_x[i] > s]  # type: ignore
+    k = 0
     while sizes.sum() < n:
-        j = random.choice(valid)
+        if randomize:
+            j, k = k, k + 1
+            if k >= len(valid):
+                k = 0
+        else:
+            j = random.choice(valid)
         sizes[j] += 1
         if sizes[j] >= l_x[j]:  # type: ignore
             valid.remove(j)
+            if not randomize:
+                k = max(k - 1, 0)
     return sizes.tolist()
 
 

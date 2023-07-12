@@ -4,8 +4,8 @@ from typing import Literal
 
 from attr import define
 from negmas import SAONMI
-from negmas.common import define
-from negmas.outcomes import DiscreteCartesianOutcomeSpace
+from negmas.common import NegotiatorMechanismInterface
+from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome
 from negmas.sao.common import SAOState
 
 __all__ = [
@@ -261,7 +261,8 @@ class OneShotState:
     trading_prices: list[float]
     """The trading prices of all products. This information is only available if `publish_trading_prices` is set in the world."""
     exogenous_contract_summary: list[tuple[int, int]]
-    """A list of n_products lists each giving the total quantity and average price of exogenous contracts for a product. This information is only available if `publish_exogenous_summary` is set in the world."""
+    """A list of n_products lists each giving the total quantity and average price of exogenous
+    contracts for a product. This information is only available if `publish_exogenous_summary` is set in the world."""
     reports_of_agents: dict[str, dict[int, FinancialReport]]
     """Gives all past financial reports of a given agent. See `FinancialReport` for details."""
     current_input_outcome_space: DiscreteCartesianOutcomeSpace
@@ -275,10 +276,79 @@ class OneShotState:
     sales: dict[str, int]
     """Today's sales per customer so far."""
     supplies: dict[str, int]
-    """Today's supplies per supplier so far."""
+    """Today supplies per supplier so far."""
     needed_sales: int
     """Today's needed sales as of now (exogenous input - exogenous output - total sales so far)."""
     needed_supplies: int
-    """Today's needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
-    # running_negotiations: dict[str, SAOState]
-    # """Maps partner ID to the state of the running negotiation with it (if any)"""
+    """Today needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
+
+    @property
+    def running_buy_states(self) -> dict[str, SAOState]:
+        """All running buy negotiations as a mapping from partner ID to current negotiation state"""
+        return {  # type: ignore
+            partner: info.nmi.state
+            for partner, info in self.current_negotiation_details["buy"].items()
+        }
+
+    @property
+    def running_sell_states(self) -> dict[str, SAOState]:
+        """All running sell negotiations as a mapping from partner ID to current negotiation state"""
+        return {  # type: ignore
+            partner: info.nmi.state
+            for partner, info in self.current_negotiation_details["sell"].items()
+        }
+
+    @property
+    def running_buy_nmis(self) -> dict[str, NegotiatorMechanismInterface]:
+        """All running buy negotiations as a mapping from partner ID to current negotiation nmi"""
+        return {  # type: ignore
+            partner: info.nmi
+            for partner, info in self.current_negotiation_details["buy"].items()
+        }
+
+    @property
+    def running_sell_nmis(self) -> dict[str, NegotiatorMechanismInterface]:
+        """All running sell negotiations as a mapping from partner ID to current negotiation nmi"""
+        return {  # type: ignore
+            partner: info.nmi
+            for partner, info in self.current_negotiation_details["sell"].items()
+        }
+
+    @property
+    def running_nmis(self) -> dict[str, NegotiatorMechanismInterface]:
+        """All running negotiations as a mapping from partner ID to current negotiation state"""
+        d = self.running_buy_nmis
+        d.update(self.running_sell_nmis)
+        return d
+
+    @property
+    def running_states(self) -> dict[str, SAOState]:
+        """All running negotiations as a mapping from partner ID to current negotiation state"""
+        d = self.running_buy_states
+        d.update(self.running_sell_states)
+        return d
+
+    @property
+    def current_buy_offers(self) -> dict[str, Outcome]:
+        """All current buy negotiations as a mapping from partner ID to current offer"""
+        return {  # type: ignore
+            partner: info.nmi.state.current_offer  # type: ignore
+            for partner, info in self.current_negotiation_details["buy"].items()
+            if info.nmi.state.running and info.nmi.state.started
+        }
+
+    @property
+    def current_sell_offers(self) -> dict[str, Outcome]:
+        """All current sell negotiations as a mapping from partner ID to current offer"""
+        return {  # type: ignore
+            partner: info.nmi.state.current_offer  # type: ignore
+            for partner, info in self.current_negotiation_details["sell"].items()
+            if info.nmi.state.running and info.nmi.state.started
+        }
+
+    @property
+    def current_offers(self) -> dict[str, Outcome]:
+        """All current negotiations as a mapping from partner ID to current offer"""
+        d = self.current_buy_offers
+        d.update(self.current_sell_offers)
+        return d

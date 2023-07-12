@@ -19,7 +19,11 @@ def builtin_agent_types(as_str=False):
     """
     from negmas.helpers import get_class
 
-    types = [f"scml.oneshot.agents.{_}" for _ in agents.__all__]
+    types = [
+        f"scml.oneshot.agents.{_}"
+        for _ in agents.__all__
+        if _ not in ("OneShotDummyAgent",)
+    ]
     if as_str:
         return types
     return [get_class(_) for _ in types]
