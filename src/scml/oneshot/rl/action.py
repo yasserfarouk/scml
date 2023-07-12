@@ -119,7 +119,7 @@ class FixedPartnerNumbersActionManager(ActionManager):
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[0],
+                    response[1],
                 )
 
             responses[partner] = SAOResponse(rtype, outcome)
@@ -270,7 +270,7 @@ class LimitedPartnerNumbersActionManager(ActionManager):
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[0],
+                    response[1],
                 )
 
             responses[partner] = SAOResponse(rtype, outcome)
@@ -460,12 +460,14 @@ class UnconstrainedActionManager(ActionManager):
         ), f"{len(action)=} but {len(partners)=} even after adjustment"
         # scale quantities and prices in action to match the current issues
         scaled = []
-        for partner, (q, p) in zip(partners, action):
+        for partner, (q, p) in zip(partners, action, strict=True):
             nmi = nmis.get(partner, None)
             if not nmi:
                 warnings.warn(
-                    f"Did not find {partner} in the list of partners\n{partners=}\n{awi.my_partners=}\n{action=}"
+                    f"Did not find {partner} in the list of partners"
+                    f"\n{partners=}\n{awi.my_partners=}\n{action=}"
                 )
+                scaled.append((0, 0))
                 continue
             qscale = nmi.issues[QUANTITY].max_value / (self.max_quantity - 1)
             pscale = (nmi.issues[UNIT_PRICE].max_value + 1) / self.n_prices
@@ -475,7 +477,7 @@ class UnconstrainedActionManager(ActionManager):
                     min(self.n_prices - 1, int(p * pscale + 0.5)),
                 )
             )
-        action = np.asarray(scaled)
+        action = np.asarray(scaled, dtype=int)
         responses = dict()
         # assert (
         #     n_partners == self.n_partners
@@ -506,7 +508,7 @@ class UnconstrainedActionManager(ActionManager):
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[0],
+                    response[1],
                 )
 
             responses[partner] = SAOResponse(rtype, outcome)
