@@ -21,23 +21,40 @@ def isin(x: int | tuple[int, int], y: tuple[int, int] | int):
 class WorldFactory(ABC):
     """Generates worlds satisfying predefined conditions and tests for them"""
 
-    def __call__(self) -> tuple[World, Agent]:
-        """Generates a world with one agent to be controlled externally and returns both"""
+    def __call__(
+        self,
+        types: tuple[type[Agent], ...] = tuple(),
+        params: tuple[dict[str, Any], ...] | None = None,
+    ) -> tuple[World, tuple[Agent]]:
+        """
+        Generates a world with one or more agents to be controlled externally and returns both
+
+        Args:
+            agent_types: The types of a list of agents to be guaranteed to exist in the world
+            agent_params: The parameters to pass to the constructors of these agents. None means no parameters for any agents
+
+        Returns:
+            The constructed world and a tuple of the agents created corresponding (in order) to the given agent types/params
+        """
         ...
 
     @abstractmethod
-    def is_valid_world(self, world: World) -> bool:
-        """Checks that the given world could have been generated from this generator"""
+    def is_valid_world(
+        self,
+        world: World,
+        types: tuple[type[Agent], ...] = tuple(),
+    ) -> bool:
+        """Checks that the given world could have been generated from this factory"""
         ...
 
     @abstractmethod
     def is_valid_awi(self, awi: AgentWorldInterface) -> bool:
-        """Checks that the given AWI is connected to a world that could have been generated from this generator"""
+        """Checks that the given AWI is connected to a world that could have been generated from this factory"""
         ...
 
     @abstractmethod
-    def contains_factory(self, generator: "WorldFactory") -> bool:
-        """Checks that the any world generated from the given `generator` could have been generated from this generator"""
+    def contains_factory(self, factory: "WorldFactory") -> bool:
+        """Checks that the any world generated from the given `factory` could have been generated from this factory"""
         ...
 
     def __contains__(

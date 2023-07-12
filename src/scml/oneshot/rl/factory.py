@@ -11,6 +11,7 @@ from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import OneShotDummyAgent
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.world import (
+    SCML2020OneShotWorld,
     SCML2021OneShotWorld,
     SCML2022OneShotWorld,
     SCML2023OneShotWorld,
@@ -50,32 +51,40 @@ DefaultAgentsOneShot2023 = [
 class OneShotWorldFactory(WorldFactory, ABC):
     """A factory that generates oneshot worlds with a single agent of type `agent_type` with predetermined structure and settings"""
 
-    agent_type: type[OneShotAgent] = OneShotDummyAgent
-    agent_params: dict[str, Any] | None = None
-
     @abstractmethod
-    def make(self) -> SCML2023OneShotWorld:
+    def make(
+        self,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+        params: tuple[dict[str, Any], ...] | None = None,
+    ) -> SCML2020OneShotWorld:
         """Generates the oneshot world and assigns an agent of type `agent_type` to it"""
         ...
 
-    def __call__(self) -> tuple[SCML2023OneShotWorld, OneShotAgent]:
+    def __call__(
+        self,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+        params: tuple[dict[str, Any], ...] | None = None,
+    ) -> tuple[SCML2020OneShotWorld, tuple[OneShotAgent]]:
         """Generates the world and assigns an agent to it"""
-        agent_type = self.agent_type
-        world = self.make()  # type: ignore
-        world: SCML2023OneShotWorld
-        expected_type = agent_type._type_name()
-        agents = [
-            i
-            for i, type_ in enumerate(world.agent_types)
-            if type_.split(":")[-1] == expected_type
-        ]
-        assert (
-            len(agents) == 1
-        ), f"Found the following agent of type {agent_type}: {agents}"
-        for a in world.agents.values():
-            if a.type_name.split(":")[-1] == expected_type:
-                return world, a  # type: ignore
-        raise RuntimeError(f"Cannot find a world of type {expected_type}")
+        world = self.make(types, params)
+        agents = []
+        if types:
+            expected_types = [type._type_name() for type in types]
+            expected_set = set(expected_types)
+            agents = [
+                i
+                for i, type_ in enumerate(world.agent_types)
+                if type_.split(":")[-1] in expected_set
+            ]
+            assert len(agents) == len(
+                types
+            ), f"Found the following agent of type {types=}: {agents=}"
+            agents = []
+            for expected_type in expected_types:
+                for a in world.agents.values():
+                    if a.type_name.split(":")[-1] == expected_type:
+                        agents.append(a)
+        return world, tuple(agents)
 
 
 # @define(frozen=True)
@@ -146,9 +155,14 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             )
             assert self.level == -1 or self.level < self.n_processes
 
-    def make(self) -> SCML2023OneShotWorld:
+    def make(
+        self,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+        params: tuple[dict[str, Any], ...] | None = None,
+    ) -> SCML2020OneShotWorld:
         """Generates a world"""
-        agent_type = self.agent_type
+        if types and params is None:
+            params = tuple(dict() for _ in types)
         n_processes = intin(self.n_processes)
         n_lines = intin(self.n_lines)
         # find my level
@@ -166,13 +180,16 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
         else:
             n_agents_per_process[my_level + 1] = self.n_consumers
             n_agents_per_process[my_level - 1] = self.n_suppliers
+
         n_competitors = intin(self.n_competitors) + 1
-        n_agents_per_process[my_level] = n_competitors
+        n_agents_per_process[my_level] = max(
+            len(types), n_agents_per_process[my_level], n_competitors
+        )
 
         n_agents = sum(n_agents_per_process)
         agent_types = list(random.choices(self.non_competitors, k=n_agents))
         agent_params = None
-        if self.agent_params:
+        if params:
             agent_params: list[dict[str, Any]] | None = [dict() for _ in agent_types]
         agent_processes = np.zeros(n_agents, dtype=int)
         nxt, indx = 0, -1
@@ -180,16 +197,19 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             last = nxt + n_agents_per_process[level]
             agent_processes[nxt:last] = level
             if level == my_level:
-                indx = random.randint(nxt, last)
-                agent_types[indx] = agent_type  # type: ignore
-                if self.agent_params:
-                    agent_params[indx]["controller_params"] = self.agent_params  # type: ignore
+                indices = random.sample(range(nxt, last), k=len(types))
+                assert params is not None and agent_params is not None
+                for indx, agent_type, p in zip(indices, types, params):
+                    agent_types[indx] = agent_type
+                    if params:
+                        agent_params[indx]["controller_params"] = p
             nxt += n_agents_per_process[level]
         assert indx >= 0
         type_ = {
             2023: SCML2023OneShotWorld,
             2022: SCML2022OneShotWorld,
             2021: SCML2021OneShotWorld,
+            2020: SCML2020OneShotWorld,
         }[self.year]
         return type_(
             **type_.generate(
@@ -203,34 +223,40 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             one_offer_per_step=True,
         )
 
-    def is_valid_world(self, world: SCML2023OneShotWorld) -> bool:
+    def is_valid_world(
+        self,
+        world: SCML2020OneShotWorld,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+    ) -> bool:
         """Checks that the given world could have been generated from this factory"""
-        agent_type = self.agent_type
-        expected_type = agent_type._type_name()
-        agents = [
-            i
-            for i, type_ in enumerate(world.agent_types)
-            if type_.split(":")[-1] == expected_type
-        ]
-        assert (
-            len(agents) == 1
-        ), f"Found the following agent of type {agent_type}: {agents}"
-        agent: OneShotAgent = None  # type: ignore
-        for a in world.agents.values():
-            if a.type_name.split(":")[-1] == expected_type:
-                agent = a  # type: ignore
-                break
-        else:
-            warnings.warn(f"cannot find any agent of type {expected_type}")
-            return False
-        if not isin(world.n_processes, self.n_processes):
-            warnings.warn(
-                f"Invalid n_processes: {world.n_processes=} != {self.n_processes=}"
-            )
-            return False
-        if not isin(agent.awi.n_lines, self.n_lines):
-            warnings.warn(f"Invalid n_lines: {agent.awi.n_lines=} != {self.n_lines=}")
-            return False
+        for agent_type in types:
+            expected_type = agent_type._type_name()
+            agents = [
+                i
+                for i, type_ in enumerate(world.agent_types)
+                if type_.split(":")[-1] == expected_type
+            ]
+            assert (
+                len(agents) == 1
+            ), f"Found the following agent of type {agent_type}: {agents}"
+            agent: OneShotAgent = None  # type: ignore
+            for a in world.agents.values():
+                if a.type_name.split(":")[-1] == expected_type:
+                    agent = a  # type: ignore
+                    break
+            else:
+                warnings.warn(f"cannot find any agent of type {expected_type}")
+                return False
+            if not isin(world.n_processes, self.n_processes):
+                warnings.warn(
+                    f"Invalid n_processes: {world.n_processes=} != {self.n_processes=}"
+                )
+                return False
+            if not isin(agent.awi.n_lines, self.n_lines):
+                warnings.warn(
+                    f"Invalid n_lines: {agent.awi.n_lines=} != {self.n_lines=}"
+                )
+                return False
         # TODO: check non-competitor types
         return self.is_valid_awi(agent.awi)  # type: ignore
 
@@ -300,9 +326,7 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             return False
         if not isin(factory.n_lines, self.n_lines):
             return False
-        if set(factory.non_competitors).difference(
-            list(self.non_competitors) + [self.agent_type]
-        ):
+        if set(factory.non_competitors).difference(list(self.non_competitors)):
             return False
         return True
 
@@ -330,9 +354,14 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
         )
         assert self.level == -1 or self.level < self.n_processes[-1]
 
-    def make(self) -> SCML2023OneShotWorld:
+    def make(
+        self,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+        params: tuple[dict[str, Any], ...] | None = None,
+    ) -> SCML2020OneShotWorld:
         """Generates a world"""
-        agent_type = self.agent_type
+        if types and params is None:
+            params = tuple(dict() for _ in types)
         n_processes = intin(self.n_processes)
         n_lines = intin(self.n_lines)
         # find my level
@@ -354,12 +383,14 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             n_agents_per_process[my_level + 1] = n_consumers
             n_agents_per_process[my_level - 1] = n_suppliers
         n_competitors = intin(n_competitors) + 1
-        n_agents_per_process[my_level] = n_competitors
+        n_agents_per_process[my_level] = max(
+            len(types), n_agents_per_process[my_level], n_competitors
+        )
 
         n_agents = sum(n_agents_per_process)
         agent_types = list(random.choices(self.non_competitors, k=n_agents))
         agent_params = None
-        if self.agent_params:
+        if params:
             agent_params: list[dict[str, Any]] | None = [dict() for _ in agent_types]
         agent_processes = np.zeros(n_agents, dtype=int)
         nxt, indx = 0, -1
@@ -367,10 +398,12 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             last = nxt + n_agents_per_process[level]
             agent_processes[nxt:last] = level
             if level == my_level:
-                indx = random.randint(nxt, last)
-                agent_types[indx] = agent_type  # type: ignore
-                if self.agent_params:
-                    agent_params[indx]["controller_params"] = self.agent_params  # type: ignore
+                indices = random.sample(range(nxt, last), k=len(types))
+                assert params is not None and agent_params is not None
+                for indx, agent_type, p in zip(indices, types, params):
+                    agent_types[indx] = agent_type
+                    if params:
+                        agent_params[indx]["controller_params"] = p
             nxt += n_agents_per_process[level]
         assert indx >= 0
         type_ = {
@@ -390,35 +423,41 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             one_offer_per_step=True,
         )
 
-    def is_valid_world(self, world: SCML2023OneShotWorld) -> bool:
+    def is_valid_world(
+        self,
+        world: SCML2020OneShotWorld,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+    ) -> bool:
         """Checks that the given world could have been generated from this factory"""
-        agent_type = self.agent_type
-        expected_type = agent_type._type_name()
-        agents = [
-            i
-            for i, type_ in enumerate(world.agent_types)
-            if type_.split(":")[-1] == expected_type
-        ]
-        assert (
-            len(agents) == 1
-        ), f"Found the following agent of type {agent_type}: {agents}"
-        agent: OneShotAgent = None  # type: ignore
-        for a in world.agents.values():
-            if a.type_name.split(":")[-1] == expected_type:
-                agent = a  # type: ignore
-                break
-        else:
-            warnings.warn(f"cannot find any agent of type {expected_type}")
-            return False
-        if not isin(world.n_processes, self.n_processes):
-            warnings.warn(
-                f"Invalid n_processes: {world.n_processes=} != {self.n_processes=}"
-            )
-            return False
-        if not isin(agent.awi.n_lines, self.n_lines):
-            warnings.warn(f"Invalid n_lines: {agent.awi.n_lines=} != {self.n_lines=}")
-            return False
-        # TODO: check non-competitor types
+        for agent_type in types:
+            expected_type = agent_type._type_name()
+            agents = [
+                i
+                for i, type_ in enumerate(world.agent_types)
+                if type_.split(":")[-1] == expected_type
+            ]
+            assert (
+                len(agents) == 1
+            ), f"Found the following agent of type {agent_type}: {agents}"
+            agent: OneShotAgent = None  # type: ignore
+            for a in world.agents.values():
+                if a.type_name.split(":")[-1] == expected_type:
+                    agent = a  # type: ignore
+                    break
+            else:
+                warnings.warn(f"cannot find any agent of type {expected_type}")
+                return False
+            if not isin(world.n_processes, self.n_processes):
+                warnings.warn(
+                    f"Invalid n_processes: {world.n_processes=} != {self.n_processes=}"
+                )
+                return False
+            if not isin(agent.awi.n_lines, self.n_lines):
+                warnings.warn(
+                    f"Invalid n_lines: {agent.awi.n_lines=} != {self.n_lines=}"
+                )
+                return False
+            # TODO: check non-competitor types
         return self.is_valid_awi(agent.awi)  # type: ignore
 
     def is_valid_awi(self, awi: OneShotAWI) -> bool:
@@ -491,9 +530,7 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
             return False
         if not isin(factory.n_lines, self.n_lines):
             return False
-        if set(factory.non_competitors).difference(
-            list(self.non_competitors) + [self.agent_type]
-        ):
+        if set(factory.non_competitors).difference(list(self.non_competitors)):
             return False
         return True
 
@@ -504,7 +541,11 @@ class ANACOneShotFactory(OneShotWorldFactory):
 
     year: int = 2023
 
-    def make(self) -> SCML2023OneShotWorld:
+    def make(
+        self,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+        params: tuple[dict[str, Any], ...] | None = None,
+    ) -> SCML2020OneShotWorld:
         """Generates a world"""
         type_ = {
             2023: SCML2023OneShotWorld,
@@ -512,39 +553,45 @@ class ANACOneShotFactory(OneShotWorldFactory):
             2021: SCML2021OneShotWorld,
         }[self.year]
         d = type_.generate()
-        n = len(d["agent_types"])
-        i = random.randint(0, n - 1)
-        d["agent_params"][i].update(
-            dict(
-                controller_type=self.agent_type,
-                controller_params=self.agent_params
-                if self.agent_params is not None
-                else dict(),
-            )
-        )
+        if types:
+            if params is None:
+                params = tuple(dict() for _ in types)
+            n = len(d["agent_types"])
+            indices = random.sample(range(n), k=len(types))
+            for i, agent_type, p in zip(indices, types, params):
+                d["agent_params"][i].update(
+                    dict(
+                        controller_type=agent_type,
+                        controller_params=p,
+                    )
+                )
 
         return type_(**d, one_offer_per_step=True)
 
-    def is_valid_world(self, world: SCML2023OneShotWorld) -> bool:
+    def is_valid_world(
+        self,
+        world: SCML2020OneShotWorld,
+        types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
+    ) -> bool:
         """Checks that the given world could have been generated from this factory"""
-        agent_type = self.agent_type
-        expected_type = agent_type._type_name()
-        agents = [
-            i
-            for i, type_ in enumerate(world.agent_types)
-            if type_.split(":")[-1] == expected_type
-        ]
-        assert (
-            len(agents) == 1
-        ), f"Found the following agent of type {agent_type}: {agents}"
-        agent: OneShotAgent = None  # type: ignore
-        for a in world.agents.values():
-            if a.type_name.split(":")[-1] == expected_type:
-                agent = a  # type: ignore
-                break
-        else:
-            warnings.warn(f"cannot find any agent of type {expected_type}")
-            return False
+        for agent_type in types:
+            expected_type = agent_type._type_name()
+            agents = [
+                i
+                for i, type_ in enumerate(world.agent_types)
+                if type_.split(":")[-1] == expected_type
+            ]
+            assert (
+                len(agents) == 1
+            ), f"Found the following agent of type {agent_type}: {agents}"
+            agent: OneShotAgent = None  # type: ignore
+            for a in world.agents.values():
+                if a.type_name.split(":")[-1] == expected_type:
+                    agent = a  # type: ignore
+                    break
+            else:
+                warnings.warn(f"cannot find any agent of type {expected_type}")
+                return False
         return self.is_valid_awi(agent.awi)  # type: ignore
 
     def is_valid_awi(self, awi: OneShotAWI) -> bool:

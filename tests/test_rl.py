@@ -1,13 +1,20 @@
+import random
+
+import numpy as np
+from negmas.gb.common import ResponseType
+from negmas.sao.common import SAOResponse
 from pytest import mark
 
 from scml.common import intin
+from scml.oneshot.common import QUANTITY
 from scml.oneshot.rl.action import (
+    ActionManager,
     FixedPartnerNumbersActionManager,
     LimitedPartnerNumbersActionManager,
     UnconstrainedActionManager,
 )
 from scml.oneshot.rl.agent import OneShotRLAgent
-from scml.oneshot.rl.common import RLModel, model_wrapper
+from scml.oneshot.rl.common import model_wrapper
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.factory import (
     FixedPartnerNumbersOneShotFactory,
@@ -100,13 +107,14 @@ def test_training(type_):
 
 
 def test_rl_agent_fallback():
-    factory = FixedPartnerNumbersOneShotFactory(agent_type=OneShotRLAgent)
+    factory = FixedPartnerNumbersOneShotFactory()
     action, obs = (
         FixedPartnerNumbersActionManager(factory),
         FixedPartnerNumbersObservationManager(factory),
     )
-    world, agent = factory()
-    assert isinstance(agent._obj, OneShotRLAgent), agent.type_name  # type: ignore
+    world, agents = factory(types=(OneShotRLAgent,))
+    assert len(agents) == 1
+    assert isinstance(agents[0]._obj, OneShotRLAgent), agent.type_name  # type: ignore
     world.run()
 
 
@@ -120,12 +128,53 @@ def test_rl_agent_with_a_trained_model():
 
     factory = LimitedPartnerNumbersOneShotFactory()
     obs = LimitedPartnerNumbersObservationManager(factory)
-    factory = LimitedPartnerNumbersOneShotFactory(
-        agent_type=OneShotRLAgent,
-        agent_params=dict(models=[model_wrapper(model)], observation_managers=[obs]),
+    world, agent = factory(
+        types=(OneShotRLAgent,),
+        params=(dict(models=[model_wrapper(model)], observation_managers=[obs]),),
     )
-    world, agent = factory()
     assert isinstance(agent._obj, OneShotRLAgent), agent.type_name  # type: ignore
     world.step()
     assert agent._valid_index == 0  # type: ignore
     world.run()
+
+
+# @mark.parametrize(
+#     "type_",
+#     [
+#         LimitedPartnerNumbersActionManager,
+#         FixedPartnerNumbersActionManager,
+#         UnconstrainedActionManager,
+#     ],
+# )
+# def test_action_manager(type_: type[ActionManager]):
+#     factory = FixedPartnerNumbersOneShotFactory()
+#     manager = type_(factory)
+#     space = manager.make_space()
+#     world, agents = factory()
+#     for _ in range(100):
+#         agent = agents[0]
+#         # action = space.sample()
+#         responses = dict()
+#         awi = agent.awi
+#         for aid, nmi in awi.state.running_sell_nmis.items():
+#             mine_indx = [i for i, x in enumerate(nmi.agent_ids) if x == agent.id][0]
+#             partner_indx = [i for i, x in enumerate(nmi.agent_ids) if x != agent.id][0]
+#             partner = [x for i, x in enumerate(nmi.agent_ids) if x != agent.id][0]
+#             resp = random.choice(
+#                 [
+#                     ResponseType.REJECT_OFFER,
+#                     ResponseType.END_NEGOTIATION,
+#                     ResponseType.ACCEPT_OFFER,
+#                 ]
+#             )
+#             responses[partner] = SAOResponse(
+#                 resp,
+#                 awi.current_output_outcome_space.random_outcome()
+#                 if resp != ResponseType.END_NEGOTIATION
+#                 else None,
+#             )
+#         world.step(1, neg_actions={agent.id: responses})
+#         action = manager.encode(awi, responses)
+#         decoded = manager.decode(awi, action)
+#         encoded = manager.encode(awi, decoded)
+#         assert np.all(np.isclose(action, encoded)), f"{action=}\n{decoded=}\n{encoded=}"

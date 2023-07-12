@@ -1,19 +1,17 @@
 from typing import Any
 
 import gymnasium as gym
-import numpy as np
 from gymnasium.envs.registration import register
 
-from scml.common import intin, make_array
 from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.awi import OneShotAWI
+from scml.oneshot.agents import OneShotDummyAgent
 from scml.oneshot.rl.action import ActionManager
 from scml.oneshot.rl.factory import (
     FixedPartnerNumbersOneShotFactory,
     OneShotWorldFactory,
 )
 from scml.oneshot.rl.observation import ObservationManager
-from scml.oneshot.world import SCML2023OneShotWorld
+from scml.oneshot.world import SCML2020OneShotWorld
 
 __all__ = ["OneShotEnv"]
 
@@ -25,6 +23,8 @@ class OneShotEnv(gym.Env):
         observation_manager: ObservationManager,
         render_mode=None,
         factory: OneShotWorldFactory = FixedPartnerNumbersOneShotFactory(),
+        agent_type: type[OneShotAgent] = OneShotDummyAgent,
+        agent_params: dict[str, Any] | None = None,
         extra_checks: bool = True,
     ):
         assert action_manager.factory in factory, (
@@ -40,9 +40,9 @@ class OneShotEnv(gym.Env):
         )
         self._extra_checks = extra_checks
 
-        agent_type = factory.agent_type
-        self._world: SCML2023OneShotWorld = None  # type: ignore
+        self._world: SCML2020OneShotWorld = None  # type: ignore
         self._agent_type = agent_type
+        self._agent_params = agent_params if agent_params is not None else dict()
         self._agent_id: str = ""
         self._agent: OneShotAgent = None  # type: ignore
         self._obs_manager = observation_manager
@@ -81,7 +81,11 @@ class OneShotEnv(gym.Env):
         import random
 
         random.seed(seed)
-        self._world, self._agent = self._factory()
+        self._world, agents = self._factory(
+            types=(self._agent_type,), params=(self._agent_params,)
+        )
+        assert len(agents) == 1
+        self._agent = agents[0]
         if self._extra_checks:
             assert self._world in self._factory
         self._agent_id = self._agent.id
