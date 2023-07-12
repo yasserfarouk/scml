@@ -75,7 +75,7 @@ def integer_cut(
     k = 0
     while sizes.sum() < n:
         if randomize:
-            j, k = k, k + 1
+            j, k = valid[k], k + 1
             if k >= len(valid):
                 k = 0
         else:

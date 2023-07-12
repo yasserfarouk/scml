@@ -463,7 +463,10 @@ class UnconstrainedActionManager(ActionManager):
         for partner, (q, p) in zip(partners, action):
             nmi = nmis.get(partner, None)
             if not nmi:
-                raise AssertionError(f"Did not find {partner} in the list of partners")
+                warnings.warn(
+                    f"Did not find {partner} in the list of partners\n{partners=}\n{awi.my_partners=}\n{action=}"
+                )
+                continue
             qscale = nmi.issues[QUANTITY].max_value / (self.max_quantity - 1)
             pscale = (nmi.issues[UNIT_PRICE].max_value + 1) / self.n_prices
             scaled.append(
