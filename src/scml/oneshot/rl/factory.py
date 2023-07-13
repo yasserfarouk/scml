@@ -66,6 +66,10 @@ class OneShotWorldFactory(WorldFactory, ABC):
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> tuple[SCML2020OneShotWorld, tuple[OneShotAgent]]:
         """Generates the world and assigns an agent to it"""
+        if isinstance(types, OneShotAgent):
+            types = (types,)  # type: ignore
+        if isinstance(params, dict):
+            params = (params,)
         world = self.make(types, params)
         agents = []
         if types:
@@ -229,6 +233,8 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
         types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
     ) -> bool:
         """Checks that the given world could have been generated from this factory"""
+        if isinstance(types, OneShotAgent):
+            types = (types,)  # type: ignore
         for agent_type in types:
             expected_type = agent_type._type_name()
             agents = [
@@ -429,6 +435,8 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
         types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
     ) -> bool:
         """Checks that the given world could have been generated from this factory"""
+        if isinstance(types, OneShotAgent):
+            types = (types,)  # type: ignore
         for agent_type in types:
             expected_type = agent_type._type_name()
             agents = [
@@ -547,6 +555,10 @@ class ANACOneShotFactory(OneShotWorldFactory):
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> SCML2020OneShotWorld:
         """Generates a world"""
+        if isinstance(types, OneShotAgent):
+            types = (types,)  # type: ignore
+        if isinstance(params, dict):
+            params = (params,)
         type_ = {
             2023: SCML2023OneShotWorld,
             2022: SCML2022OneShotWorld,
@@ -574,6 +586,8 @@ class ANACOneShotFactory(OneShotWorldFactory):
         types: tuple[type[OneShotAgent], ...] = (OneShotDummyAgent,),
     ) -> bool:
         """Checks that the given world could have been generated from this factory"""
+        if isinstance(types, OneShotAgent):
+            types = (types,)  # type: ignore
         for agent_type in types:
             expected_type = agent_type._type_name()
             agents = [

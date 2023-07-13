@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-from negmas import AgentWorldInterface
-from negmas.outcomes import DiscreteCartesianOutcomeSpace, Issue, make_os
-from negmas.sao import SAOState
+from negmas import ContiguousIssue
+from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome, make_os
+from negmas.sao import SAONMI, SAOState
+from negmas.situated import AgentWorldInterface
 
 from .common import (
     FinancialReport,
@@ -20,6 +21,10 @@ from .common import (
     OneShotState,
     is_system_agent,
 )
+
+if TYPE_CHECKING:
+    from .agent import OneShotAgent
+    from .world import SCML2020OneShotWorld
 
 __all__ = ["OneShotAWI"]
 
@@ -110,6 +115,11 @@ class OneShotAWI(AgentWorldInterface):
           - *current_output_outcome_space*: The current outcome-space for all negotiations to buy
             the output product of the agent. If the agent
             is at level n_products - 1, this will have no issues.
+          - *current_negotiation_details*: Details on all current negotiations separated into "buy"
+            and "sell" dictionaries.
+
+          Useful helpers about current negotiations:
+
           - *current_input_issues*: The current issues for all negotiations to buy
             the input product of the agent. If the agent
             is at level zero, this will be empty.
@@ -118,8 +128,16 @@ class OneShotAWI(AgentWorldInterface):
             the output product of the agent. If the agent
             is at level n_products - 1, this will be empty.
             This is exactly the same as current_output_outcome_space.issues
-          - *current_negotiation_details*: Details on all current negotiations separated into "buy"
-            and "sell" dictionaries.
+          - *current_buy_nmis*: All NMIs for running buy negotiations.
+          - *current_sell_nmis*: All NMIs for running sell negotiations.
+          - *current_nmis*: All states for running negotiations.
+          - *current_buy_states*: All states for running buy negotiations.
+          - *current_sell_states*: All states for running sell negotiations.
+          - *current_states*: All states for running negotiations.
+          - *current_offers*: All offers for running negotiations.
+          - *current_buy_offers*: All offers for running buy negotiations.
+          - *current_sell_offers*: All offers for running sell negotiations.
+          - *current_offers*: All offers for running negotiations.
 
         D. Agent Information:
           - *current_exogenous_input_quantity*: The total quantity the agent have
@@ -153,8 +171,10 @@ class OneShotAWI(AgentWorldInterface):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, world: SCML2020OneShotWorld, agent: OneShotAgent):
+        super().__init__(world, agent)  # type: ignore
+        self._world = world
+        self.agent = agent
         self._sales: dict[str, int] = defaultdict(int)
         self._supplies: dict[str, int] = defaultdict(int)
 
@@ -252,7 +272,7 @@ class OneShotAWI(AgentWorldInterface):
         Are exogenous contracts forced in the sense that the agent cannot decide
         not to sign them?
         """
-        return self.bb_read("settings", "force_signing") or self.bb_read(
+        return self.bb_read("settings", "force_signing") or self.bb_read(  # type: ignore
             "settings", "force_exogenous"
         )
 
@@ -352,7 +372,7 @@ class OneShotAWI(AgentWorldInterface):
 
     @property
     def penalties_scale(self) -> Literal["trading", "catalog", "unit", "none"]:
-        return self._world.penalties_scale
+        return self._world.penalties_scale  # type: ignore
 
     # =========================================================
     # Dynamic Agent Information (changes during the simulation)
@@ -496,7 +516,9 @@ class OneShotAWI(AgentWorldInterface):
     def trading_prices(self) -> np.ndarray:
         """Returns the current trading prices of all products"""
         return (
-            self._world.trading_prices if self._world.publish_trading_prices else None
+            self._world.trading_prices
+            if self._world.publish_trading_prices
+            else self.catalog_prices
         )
 
     @property
@@ -509,7 +531,7 @@ class OneShotAWI(AgentWorldInterface):
             all revealed exogenous contracts of all products at the current
             step.
         """
-        return (
+        return (  # type: ignore
             self._world.exogenous_contracts_summary
             if self._world.publish_exogenous_summary
             else None
@@ -521,7 +543,7 @@ class OneShotAWI(AgentWorldInterface):
     def reports_of_agent(self, aid: str) -> dict[int, FinancialReport]:
         """Returns a dictionary mapping time-steps to financial reports of
         the given agent"""
-        return self.bb_read("reports_agent", aid)
+        return self.bb_read("reports_agent", aid)  # type: ignore
 
     def reports_at_step(self, step: int) -> dict[str, FinancialReport]:
         """Returns a dictionary mapping agent ID to its financial report for
@@ -530,31 +552,31 @@ class OneShotAWI(AgentWorldInterface):
         if result is not None:
             return result
         steps = sorted(
-            int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()
+            int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()  # type: ignore
         )
         for s, prev in zip(steps[1:], steps[:-1]):
             if s > step:
-                return self.bb_read("reports_time", prev)
-        return self.bb_read("reports_time", str(steps[-1]))
+                return self.bb_read("reports_time", prev)  # type: ignore
+        return self.bb_read("reports_time", str(steps[-1]))  # type: ignore
 
     # Negotiation set information
     # ---------------------------
 
     @property
-    def current_input_issues(self) -> list[Issue]:
+    def current_input_issues(self) -> list[ContiguousIssue]:
         return self._world._current_issues[self.my_input_product]
 
     @property
-    def current_output_issues(self) -> list[Issue]:
+    def current_output_issues(self) -> list[ContiguousIssue]:
         return self._world._current_issues[self.my_output_product]
 
     @property
     def current_input_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
-        return make_os(self._world._current_issues[self.my_input_product])
+        return make_os(self._world._current_issues[self.my_input_product])  # type: ignore
 
     @property
     def current_output_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
-        return make_os(self._world._current_issues[self.my_output_product])
+        return make_os(self._world._current_issues[self.my_output_product])  # type: ignore
 
     @property
     def current_negotiation_details(self) -> dict[str, dict[str, NegotiationDetails]]:
@@ -568,6 +590,84 @@ class OneShotAWI(AgentWorldInterface):
         return self._world._agent_negotiations.get(
             self.agent.id, dict(buy=dict(), sell=dict())
         )
+
+    @property
+    def current_buy_states(self) -> dict[str, SAOState]:
+        """All running buy negotiations as a mapping from partner ID to current negotiation state"""
+        return {  # type: ignore
+            partner: info.nmi.state
+            for partner, info in self.current_negotiation_details["buy"].items()
+        }
+
+    @property
+    def current_sell_states(self) -> dict[str, SAOState]:
+        """All running sell negotiations as a mapping from partner ID to current negotiation state"""
+        return {  # type: ignore
+            partner: info.nmi.state
+            for partner, info in self.current_negotiation_details["sell"].items()
+        }
+
+    @property
+    def current_buy_nmis(self) -> dict[str, SAONMI]:
+        """All running buy negotiations as a mapping from partner ID to current negotiation nmi"""
+        return {  # type: ignore
+            partner: info.nmi
+            for partner, info in self.current_negotiation_details["buy"].items()
+        }
+
+    @property
+    def current_nmis(self) -> dict[str, SAONMI]:
+        """All running negotiations as a mapping from partner ID to current negotiation nmi"""
+        d = self.current_buy_nmis
+        d.update(self.current_sell_nmis)
+        return d
+
+    @property
+    def running_sell_nmis(self) -> dict[str, SAONMI]:
+        """All running sell negotiations as a mapping from partner ID to current negotiation nmi"""
+        return {  # type: ignore
+            partner: info.nmi
+            for partner, info in self.current_negotiation_details["sell"].items()
+        }
+
+    @property
+    def current_sell_nmis(self) -> dict[str, SAONMI]:
+        """All running negotiations as a mapping from partner ID to current negotiation state"""
+        d = self.current_buy_nmis
+        d.update(self.running_sell_nmis)
+        return d
+
+    @property
+    def current_states(self) -> dict[str, SAOState]:
+        """All running negotiations as a mapping from partner ID to current negotiation state"""
+        d = self.current_buy_states
+        d.update(self.current_sell_states)
+        return d
+
+    @property
+    def current_buy_offers(self) -> dict[str, Outcome]:
+        """All current buy negotiations as a mapping from partner ID to current offer"""
+        return {  # type: ignore
+            partner: info.nmi.state.current_offer  # type: ignore
+            for partner, info in self.current_negotiation_details["buy"].items()
+            if info.nmi.state.running and info.nmi.state.started
+        }
+
+    @property
+    def current_sell_offers(self) -> dict[str, Outcome]:
+        """All current sell negotiations as a mapping from partner ID to current offer"""
+        return {  # type: ignore
+            partner: info.nmi.state.current_offer  # type: ignore
+            for partner, info in self.current_negotiation_details["sell"].items()
+            if info.nmi.state.running and info.nmi.state.started
+        }
+
+    @property
+    def current_offers(self) -> dict[str, Outcome]:
+        """All current negotiations as a mapping from partner ID to current offer"""
+        d = self.current_buy_offers
+        d.update(self.current_sell_offers)
+        return d
 
     # Sales and supplies
 

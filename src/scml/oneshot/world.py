@@ -13,7 +13,7 @@ import random
 import sys
 import warnings
 from collections import defaultdict
-from typing import Any, Callable, Collection, Iterable
+from typing import Any, Callable, Collection, Iterable, Literal
 
 import networkx as nx
 import numpy as np
@@ -110,7 +110,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         financial_report_period=5,
         bankruptcy_limit=0.0,
         penalize_bankrupt_for_future_contracts=True,
-        penalties_scale="trading",
+        penalties_scale: Literal["trading", "catalog", "unit", "none"] = "trading",
         # external contracts parameters
         exogenous_contracts: Collection[OneShotExogenousContract] = tuple(),
         exogenous_dynamic: bool = False,

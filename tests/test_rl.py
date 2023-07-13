@@ -128,10 +128,12 @@ def test_rl_agent_with_a_trained_model():
 
     factory = LimitedPartnerNumbersOneShotFactory()
     obs = LimitedPartnerNumbersObservationManager(factory)
-    world, agent = factory(
+    world, agents = factory(
         types=(OneShotRLAgent,),
         params=(dict(models=[model_wrapper(model)], observation_managers=[obs]),),
     )
+    assert len(agents) == 1
+    agent = agents[0]
     assert isinstance(agent._obj, OneShotRLAgent), agent.type_name  # type: ignore
     world.step()
     assert agent._valid_index == 0  # type: ignore

@@ -437,7 +437,7 @@ class SatisficerAgent(SCML2020Agent):
 
     def do_production(self) -> int:
         # Produce everything I can
-        awi: AWI = self.awi
+        awi: AWI = self.awi  # type: ignore
         commands = NO_COMMAND * np.ones(awi.n_lines, dtype=int)
 
         # find how much input material do we have

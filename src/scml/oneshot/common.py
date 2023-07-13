@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from typing import Literal
 
 from attr import define
-from negmas import SAONMI
-from negmas.common import NegotiatorMechanismInterface
+from negmas.common import define
 from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome
+from negmas.sao import SAONMI
 from negmas.sao.common import SAOState
 
 __all__ = [
@@ -291,7 +291,7 @@ class OneShotState:
         }
 
     @property
-    def running_sell_states(self) -> dict[str, SAOState]:
+    def current_sell_states(self) -> dict[str, SAOState]:
         """All running sell negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
             partner: info.nmi.state
@@ -299,7 +299,14 @@ class OneShotState:
         }
 
     @property
-    def running_buy_nmis(self) -> dict[str, NegotiatorMechanismInterface]:
+    def current_states(self) -> dict[str, SAOState]:
+        """All running negotiations as a mapping from partner ID to current negotiation state"""
+        d = self.running_buy_states
+        d.update(self.current_sell_states)
+        return d
+
+    @property
+    def current_buy_nmis(self) -> dict[str, SAONMI]:
         """All running buy negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
             partner: info.nmi
@@ -307,7 +314,7 @@ class OneShotState:
         }
 
     @property
-    def running_sell_nmis(self) -> dict[str, NegotiatorMechanismInterface]:
+    def current_sell_nmis(self) -> dict[str, SAONMI]:
         """All running sell negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
             partner: info.nmi
@@ -315,17 +322,10 @@ class OneShotState:
         }
 
     @property
-    def running_nmis(self) -> dict[str, NegotiatorMechanismInterface]:
+    def running_nmis(self) -> dict[str, SAONMI]:
         """All running negotiations as a mapping from partner ID to current negotiation state"""
-        d = self.running_buy_nmis
-        d.update(self.running_sell_nmis)
-        return d
-
-    @property
-    def running_states(self) -> dict[str, SAOState]:
-        """All running negotiations as a mapping from partner ID to current negotiation state"""
-        d = self.running_buy_states
-        d.update(self.running_sell_states)
+        d = self.current_buy_nmis
+        d.update(self.current_sell_nmis)
         return d
 
     @property

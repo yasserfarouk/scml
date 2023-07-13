@@ -6,7 +6,6 @@ from __future__ import annotations
 import random
 import warnings
 from abc import ABC, abstractmethod
-from typing import Protocol
 
 import numpy as np
 from attr import define, field
@@ -51,7 +50,7 @@ class ActionManager(ABC):
         ...
 
     def encode(self, awi: OneShotAWI, responses: dict[str, SAOResponse]) -> np.ndarray:
-        """Encodes an action as an array"""
+        """Encodes an action as an array. This is only used for testing so it is optional"""
         ...
 
 
@@ -91,13 +90,12 @@ class FixedPartnerNumbersActionManager(ActionManager):
         assert (
             len(partners) == self.n_partners
         ), f"{len(partners)=} while {self.n_partners=}:\n{partners=}"
+        nmis = awi.current_nmis
         for partner, response in zip(partners, action, strict=True):
-            neg = awi.current_negotiation_details["buy"].get(partner, None)
-            if not neg:
-                neg = awi.current_negotiation_details["sell"].get(partner, None)
-            if not neg:
+            nmi = nmis.get(partner, None)
+            if not nmi:
                 continue
-            partner_offer = neg.nmi.state.current_offer  # type: ignore
+            partner_offer = nmi.state.current_offer  # type: ignore
             if partner_offer is None:
                 rtype = ResponseType.REJECT_OFFER
                 outcome = (
@@ -132,18 +130,17 @@ class FixedPartnerNumbersActionManager(ActionManager):
         action = []
         partners = awi.my_partners
         assert len(partners) == len(responses)
+        nmis = awi.current_nmis
         for partner in partners:
             response = responses[partner]
-            neg = awi.current_negotiation_details["buy"].get(partner, None)
-            if not neg:
-                neg = awi.current_negotiation_details["sell"].get(partner, None)
-            if not neg:
+            nmi = nmis.get(partner, None)
+            if not nmi:
                 warnings.warn(
                     f"Cannot encode an action with a response for {partner} because no such partner currently exist. Will ignore it."
                 )
                 action.append([0, 0])
                 continue
-            current_offer = neg.nmi.state.current_offer  # type: ignore
+            current_offer = nmi.state.current_offer  # type: ignore
             if response.response == ResponseType.END_NEGOTIATION:
                 action.append([0, 0])
             elif response.response == ResponseType.ACCEPT_OFFER:
@@ -384,8 +381,7 @@ class UnconstrainedActionManager(ActionManager):
               values in the second column must be greater than n_prices.
             - The second output must lave length n_partners and specifies the partners with which not to end the negotiation necessarily.
         """
-        state = awi.state
-        partner_offers = state.current_offers
+        partner_offers = awi.current_offers
         n_partners, n_action = len(partners), len(action)
         if n_partners == n_action:
             return action, partners
@@ -451,7 +447,7 @@ class UnconstrainedActionManager(ActionManager):
         assert (
             QUANTITY == 0 and UNIT_PRICE == 2
         ), f"We assume that quantity and price has indices 0, 2. If not, you need to modify the tuples below to put them in the correct index"
-        nmis = awi.state.running_nmis
+        nmis = awi.current_nmis
         partners = awi.my_partners
         action, partners = self.adjust_reponses_to_partners(awi, action, partners)
         n_partners = len(partners)
@@ -524,7 +520,7 @@ class UnconstrainedActionManager(ActionManager):
         """
         action = []
         partners = awi.my_partners
-        nmis = awi.state.running_nmis
+        nmis = awi.current_nmis
 
         for partner in partners:
             response = responses.get(partner, None)
