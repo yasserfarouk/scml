@@ -11,6 +11,7 @@ from scml.oneshot.rl.factory import (
     OneShotWorldFactory,
 )
 from scml.oneshot.rl.observation import ObservationManager
+from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
 from scml.oneshot.world import SCML2020OneShotWorld
 
 __all__ = ["OneShotEnv"]
@@ -21,6 +22,7 @@ class OneShotEnv(gym.Env):
         self,
         action_manager: ActionManager,
         observation_manager: ObservationManager,
+        reward_function: RewardFunction = DefaultRewardFunction(),
         render_mode=None,
         factory: OneShotWorldFactory = FixedPartnerNumbersOneShotFactory(),
         agent_type: type[OneShotAgent] = OneShotDummyAgent,
@@ -39,6 +41,7 @@ class OneShotEnv(gym.Env):
             f" correctly by this observation manager"
         )
         self._extra_checks = extra_checks
+        self._reward_function = reward_function
 
         self._world: SCML2020OneShotWorld = None  # type: ignore
         self._agent_type = agent_type
@@ -99,13 +102,15 @@ class OneShotEnv(gym.Env):
         return observation, info
 
     def step(self, action):
+        reward_info = self._reward_function.before_action(self._agent.awi)
         score_before = self._world.scores()[self._agent_id]
+        decoded_action = self._action_manager.decode(self._agent.awi, action)
         terminated = not self._world.step_with(
-            {self._agent_id: self._action_manager.decode(self._agent.awi, action)}  # type: ignore
+            {self._agent_id: decoded_action}  # type: ignore
         )
         if self._world.current_step >= self._world.n_steps - 1:
             terminated = 1
-        reward = self._world.scores()[self._agent_id] - score_before
+        reward = self._reward_function(self._agent.awi, decoded_action, reward_info)
         observation = self._get_obs()
         info = self._get_info()
 

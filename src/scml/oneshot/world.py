@@ -1640,7 +1640,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         )
 
     def scores(self, assets_multiplier: float = 0.0) -> dict[str, float]:
-        """Scores of all agents given the asset multiplier.
+        """
+        Scores of all agents given the asset multiplier.
 
         Args:
             assets_multiplier: A multiplier to multiply the assets with.

@@ -153,6 +153,7 @@ class OneShotAWI(AgentWorldInterface):
           - *current_shortfall_penalty*: The shortfall penalty per unit item in the current
             step.
           - *current_balance*: The current balance of the agent
+          - *current_score*: The current score (balance / initial balance) of the agent
 
         E. Sales and Supplies (quantities) for today:
           - *sales*: Today's sales per customer so far.
@@ -435,6 +436,11 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def current_balance(self):
         return self._world.current_balance(self.agent.id)
+
+    @property
+    def current_score(self) -> float:
+        """Returns the current score (profit) of the agent"""
+        return self._world.scores()[self.agent.id]
 
     @property
     def current_inventory(self):
