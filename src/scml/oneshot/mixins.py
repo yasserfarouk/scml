@@ -44,6 +44,8 @@ class OneShotUFunCreatorMixin:
             force_exogenous=awi.is_exogenous_forced,
             n_lines=awi.n_lines,
             current_balance=awi.current_balance,
+            suppliers=set(awi.my_suppliers),
+            consumers=set(awi.my_consumers),
         )
         if hasattr(self, "_obj") and not in_adapter:
             self._obj.ufun = self.ufun  # type: ignore

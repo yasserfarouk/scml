@@ -2,17 +2,18 @@ from pprint import pformat
 
 import pytest
 from negmas import ResponseType
+from negmas.gb.components.selectors import warnings
 from negmas.helpers import single_thread
 from negmas.sao import SAOResponse
 
 from scml.oneshot import OneShotSyncAgent, SCML2020OneShotWorld
 from scml.oneshot.agents import RandomOneShotAgent
+from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
 
 class MyExogAgent(OneShotSyncAgent):
     def step(self):
-
         super().step()
         assert self.awi.current_exogenous_input_quantity == self.ufun.ex_qin
         assert abs(self.awi.current_exogenous_input_price - self.ufun.ex_pin) < 1e-3
@@ -109,3 +110,264 @@ def test_underfullfilment_is_irrational():
         )
         with single_thread():
             world.run()
+
+
+def test_uses_registered_sales_and_supplies():
+    u = OneShotUFun(
+        ex_pin=10 * 10,
+        ex_qin=10,
+        ex_pout=15 * 5,
+        ex_qout=5,
+        input_product=0,
+        input_agent=True,
+        output_agent=False,
+        production_cost=2,
+        disposal_cost=0.1,
+        shortfall_penalty=0.3,
+        input_penalty_scale=None,
+        output_penalty_scale=None,
+        n_input_negs=4,
+        n_output_negs=5,
+        current_step=6,
+        input_qrange=(1, 10),
+        input_prange=(11, 12),
+        output_qrange=(1, 10),
+        output_prange=(14, 15),
+        suppliers={"a", "b", "c"},
+        consumers={"d", "e", "f"},
+    )
+    _, p = u.from_offers(
+        tuple(), tuple(), return_producible=True, ignore_signed_contracts=True
+    )
+    # assert correct production amount (what can and needs to be produced)
+    assert p == 5
+    # assert correct estimate for no agreements
+    nosale = 15 * 5 - 10 * 10 - 5 * 2 - 0.1 * 5 * 10
+    assert (
+        u.from_offers(
+            tuple(), tuple(), return_producible=False, ignore_signed_contracts=True
+        )
+        == nosale
+    )
+    # assert best possible agreement
+    optim = u.from_offers(
+        ((5, 6, 15),),
+        (True,),
+        return_producible=False,
+        ignore_signed_contracts=True,
+    )
+    assert optim == (15 * 10 - 10 * 10 - 10 * 2)
+    # ignoring signed contracts changes nothing when there are no signed contracts
+    assert optim == u.from_offers(
+        ((5, 6, 15),),
+        # (True,),
+        return_producible=False,
+        ignore_signed_contracts=False,
+    )
+    # distributing agreements changes nothing
+    for ignore in (True, False):
+        assert optim == u.from_offers(
+            (
+                (2, 6, 14),
+                (2, 6, 16),
+                (1, 6, 15),
+            ),
+            # (True, True, True),
+            return_producible=False,
+            ignore_signed_contracts=ignore,
+        )
+    expected = 15 * 5 + 14 * 2 - 10 * 10 - 7 * 2 - 0.1 * 3 * 10
+    for ignore in (True, False):
+        assert expected == u.from_offers(
+            ((2, 6, 14),),
+            # (True,),
+            return_producible=False,
+            ignore_signed_contracts=ignore,
+        )
+    u.register_sale(2, 14)
+    assert u._signed_is_output[0] == True
+    assert u._signed_agreements[0] == (2, 6, 14)
+    assert len(u._signed_agreements) == len(u._signed_is_output) == 1
+    assert (
+        u.from_offers(
+            tuple(), tuple(), return_producible=False, ignore_signed_contracts=False
+        )
+        == expected
+    )
+    assert (
+        u.from_offers(
+            tuple(), tuple(), return_producible=False, ignore_signed_contracts=True
+        )
+        == nosale
+    )
+
+    assert optim == u.from_offers(
+        (
+            (2, 6, 16),
+            (1, 6, 15),
+        ),
+        # (True, True),
+        return_producible=False,
+        ignore_signed_contracts=False,
+    )
+
+    expected = 15 * 5 + 16 * 2 + 1 * 15 - 10 * 10 - 8 * 2 - 0.1 * 2 * 10
+    assert expected == u.from_offers(
+        (
+            (2, 6, 16),
+            (1, 6, 15),
+        ),
+        # (True, True),
+        return_producible=False,
+        ignore_signed_contracts=True,
+    )
+    u.register_supply(2, 8)
+    assert u._signed_is_output[1] == False
+    assert u._signed_agreements[1] == (2, 6, 8)
+    assert len(u._signed_agreements) == len(u._signed_is_output) == 2
+    assert expected == u.from_offers(
+        (
+            (2, 6, 16),
+            (1, 6, 15),
+        ),
+        # (True, True),
+        return_producible=False,
+        ignore_signed_contracts=True,
+    )
+    u.n_lines = 12
+    expected = 15 * 10 + 13 * 2 - 10 * 10 - 2 * 8 - 12 * 2
+    assert expected == u.from_offers(
+        (
+            (2, 6, 16),
+            (1, 6, 15),
+            (2, 6, 13),
+        ),
+        # (True, True, True),
+        return_producible=False,
+        ignore_signed_contracts=False,
+    )
+    # remove last supply contract
+    u._signed_is_output = u._signed_is_output[:1]
+    u._signed_agreements = u._signed_agreements[:1]
+    assert expected == u.from_offers(
+        (
+            (2, 6, 16),
+            (1, 6, 15),
+            (2, 6, 13),
+            (2, 6, 8),
+        ),
+        (True, True, True, False),
+        return_producible=False,
+        ignore_signed_contracts=False,
+    )
+
+    assert expected == u.from_offers(
+        dict(
+            d=(2, 6, 16),
+            e=(1, 6, 15),
+            f=(2, 6, 13),
+            a=(2, 6, 8),
+        ),
+        return_producible=False,
+        ignore_signed_contracts=False,
+    )
+
+
+def test_find_limit():
+    u = OneShotUFun(
+        ex_pin=10 * 10,
+        ex_qin=10,
+        ex_pout=0,
+        ex_qout=0,
+        input_product=0,
+        input_agent=True,
+        output_agent=False,
+        production_cost=2,
+        disposal_cost=0.1,
+        shortfall_penalty=0.3,
+        input_penalty_scale=None,
+        output_penalty_scale=None,
+        n_input_negs=0,
+        n_output_negs=5,
+        current_step=6,
+        input_qrange=(1, 10),
+        input_prange=(11, 12),
+        output_qrange=(1, 10),
+        output_prange=(14, 15),
+        consumers={"d", "e", "f", "g", "h"},
+    )
+    u.find_limit(True, ignore_signed_contracts=True)
+    u.find_limit(False, ignore_signed_contracts=True)
+    assert u.max_utility == (10 * 15 - 10 * 12)
+    assert int(u.min_utility) == -148
+    assert u.best.input_price == 11
+    assert u.best.input_quantity == 0
+    assert u.best.output_quantity == 10
+    assert u.best.output_price == 15
+    assert u.worst.input_price == 12
+    assert u.worst.input_quantity == 0
+    assert u.worst.output_quantity == 50
+    assert u.worst.output_price == 14
+
+    u.register_sale_failure("d")
+    u.find_limit(True, ignore_signed_contracts=True)
+    u.find_limit(False, ignore_signed_contracts=True)
+    assert u.max_utility == (10 * 15 - 10 * 12)
+    assert int(u.min_utility) == -148
+    assert u.best.input_price == 11
+    assert u.best.input_quantity == 0
+    assert u.best.output_quantity == 10
+    assert u.best.output_price == 15
+    assert u.worst.input_price == 12
+    assert u.worst.input_quantity == 0
+    assert u.worst.output_quantity == 50
+    assert u.worst.output_price == 14
+
+    u.find_limit(True, ignore_signed_contracts=False)
+    u.find_limit(False, ignore_signed_contracts=False)
+    assert u.max_utility == (10 * 15 - 10 * 12)
+    assert int(u.min_utility) == -110
+    assert u.best.input_price == 11
+    assert u.best.input_quantity == 0
+    assert u.best.output_quantity == 10
+    assert u.best.output_price == 15
+    assert u.worst.input_price == 12
+    assert u.worst.input_quantity == 0
+    assert u.worst.output_quantity == 0
+    assert u.worst.output_price == 14
+
+    assert u.from_offers(
+        tuple(), tuple(), ignore_signed_contracts=False
+    ) < u.from_offers(((40, 5, 14),), (True,), ignore_signed_contracts=False)
+
+    u.register_sale(3, 14)
+    u.register_sale(1, 14)
+    u.find_limit(True, ignore_signed_contracts=True)
+    u.find_limit(False, ignore_signed_contracts=True)
+    assert u.max_utility == (10 * 15 - 10 * 12)
+    assert int(u.min_utility) == -148
+    assert u.best.input_price == 11
+    assert u.best.input_quantity == 0
+    assert u.best.output_quantity == 10
+    assert u.best.output_price == 15
+    assert u.worst.input_price == 12
+    assert u.worst.input_quantity == 0
+    assert u.worst.output_quantity == 50
+    assert u.worst.output_price == 14
+
+    u.find_limit(True, ignore_signed_contracts=False)
+    u.find_limit(False, ignore_signed_contracts=False)
+    assert u.max_utility == (6 * 15 + 4 * 14 - 10 * 12)
+    assert int(u.min_utility) == -58
+    assert u.best.input_price == 11
+    assert u.best.input_quantity == 0
+    assert u.best.output_quantity == 6
+    assert u.best.output_price == 15
+    assert u.worst.input_price == 12
+    assert u.worst.input_quantity == 0
+    assert u.worst.output_quantity == 0
+    assert u.worst.output_price == 14
+
+    assert u.from_offers(
+        tuple(), tuple(), ignore_signed_contracts=False
+    ) < u.from_offers(((20, 5, 14),), (True,), ignore_signed_contracts=False)

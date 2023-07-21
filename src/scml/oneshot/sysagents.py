@@ -40,6 +40,16 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return super().make_ufun(add_exogenous, in_adapter=False)
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
+        if annotation["buyer"] == self.id:
+            if self.ufun is not None:
+                self.ufun.register_supply_failure(annotation["seller"])
+        elif annotation["seller"] == self.id:
+            if self.ufun is not None:
+                self.ufun.register_sale_failure(annotation["buyer"])
+        else:
+            raise ValueError(
+                f"{self.id} received a  negotiation failure for which it is not a buyer nor a seller: {contract=}"
+            )
         result = self._obj.on_negotiation_failure(
             partners, annotation, mechanism, state
         )
@@ -52,10 +62,22 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             self.awi._register_supply(
                 contract.annotation["seller"], contract.agreement["quantity"]
             )
+            if self.ufun is not None:
+                self.ufun.register_supply(
+                    contract.agreement["quantity"],
+                    contract.agreement["unit_price"],
+                    contract.agreement["time"],
+                )
         elif contract.annotation["seller"] == self.id:
             self.awi._register_sale(
                 contract.annotation["buyer"], contract.agreement["quantity"]
             )
+            if self.ufun is not None:
+                self.ufun.register_sale(
+                    contract.agreement["quantity"],
+                    contract.agreement["unit_price"],
+                    contract.agreement["time"],
+                )
         else:
             raise ValueError(
                 f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"

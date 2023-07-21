@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from copy import copy
-from functools import lru_cache
-from typing import Iterable, List, Literal, Optional, Tuple, Union, overload
+from functools import cache
+from typing import Iterable, Literal, overload
 
 from negmas import Contract
 from negmas.outcomes import Issue, Outcome, OutcomeSpace, make_issue, make_os
@@ -106,9 +105,13 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         n_lines: int = 10,
         normalized: bool = False,
         current_balance: int | float = float("inf"),
+        suppliers: set[str] = set(),
+        consumers: set[str] = set(),
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.suppliers = suppliers
+        self.consumers = consumers
         self.current_balance = current_balance
         self.normalized = normalized
         self.input_penalty_scale = input_penalty_scale
@@ -171,6 +174,30 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             ]
         # slightly bias toward agreements
         self.reserved_value = self.from_contracts([], ignore_exogenous=False) - 1e-3
+        self._signed_agreements: list[tuple[int, int, int]] = []
+        self._signed_is_output: list[bool] = []
+        self._registered_sale_failures: set[str] = set()
+        self._registered_supply_failures: set[str] = set()
+
+    def register_supply_failure(self, supplier_id: str):
+        self.find_limit_brute_force.cache_clear()
+        self._registered_supply_failures.add(supplier_id)
+
+    def register_sale_failure(self, consumer_id: str):
+        self.find_limit_brute_force.cache_clear()
+        self._registered_sale_failures.add(consumer_id)
+
+    def register_sale(self, q: int, p: int, t: int = -1):
+        """Registers a sale to be considered when calculating utilities"""
+        self.find_limit_brute_force.cache_clear()
+        self._signed_agreements.append((q, t if t >= 0 else self.current_step, p))
+        self._signed_is_output.append(True)
+
+    def register_supply(self, q: int, p: int, t: int = -1):
+        """Registers a supply to be considered when calculating utilities"""
+        self.find_limit_brute_force.cache_clear()
+        self._signed_agreements.append((q, t if t >= 0 else self.current_step, p))
+        self._signed_is_output.append(False)
 
     def xml(self, issues) -> str:
         raise NotImplementedError("Cannot convert the ufun to xml")
@@ -233,27 +260,29 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
     @overload
     def from_offers(
         self,
-        offers: tuple[tuple[int, int, int], ...],
-        outputs: tuple[bool],
+        offers: tuple[tuple[int, int, int], ...] | dict[str, tuple[int, int, int]],
+        outputs: tuple[bool, ...] | None = None,
         return_producible: Literal[False] = False,
+        ignore_signed_contracts: bool = True,
     ) -> float:
         ...
 
     @overload
     def from_offers(
         self,
-        offers: tuple[tuple[int, int, int], ...],
-        outputs: tuple[bool],
+        offers: tuple[tuple[int, int, int], ...] | dict[str, tuple[int, int, int]],
+        outputs: tuple[bool, ...] | None,
         return_producible: Literal[True],
-    ) -> tuple[float, float]:
+        ignore_signed_contracts: bool = True,
+    ) -> tuple[float, int]:
         ...
 
-    @lru_cache
     def from_offers(
         self,
-        offers: tuple[tuple[int, int, int], ...],
-        outputs: tuple[bool],
-        return_producible=False,
+        offers: tuple[tuple[int, int, int], ...] | dict[str, tuple[int, int, int]],
+        outputs: tuple[bool, ...] | None = None,
+        return_producible: bool = False,
+        ignore_signed_contracts: bool = True,
     ) -> float | tuple[float, int]:
         """
         Calculates the utility value given a list of offers and whether each
@@ -267,10 +296,41 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
                      specifying for each offer whether it is an offer for buying
                      the agent's output product.
             return_producible: If true, the producible quantity will be returned
+            ignore_signed_contracts: If true, ignores the registered signed contracts.
+                                     This means that only exogenous contracts and offers
+                                     will be used in evaluating the utility.
         Remarks:
             - This method takes into account the exogenous contract information
               passed when constructing the ufun.
+            - You can pass a dictionary mapping partner ID to an offer and the system
+              will use the correct value for the corresponding outputs array.
         """
+        if isinstance(offers, dict):
+            partners: list[str] = list(offers.keys())
+            offers = tuple(offers.values())
+            outputs = tuple(p in self.consumers for p in partners)
+            # assert all(
+            #     (p in self.consumers and not p in self.suppliers)
+            #     or (p in self.suppliers and not p in self.consumers)
+            #     for p in partners
+            # )
+            return self.from_offers(
+                offers,
+                outputs,
+                return_producible=return_producible,  # type: ignore
+                ignore_signed_contracts=ignore_signed_contracts,
+            )
+        # copy inputs because we are going to modify them.
+        offers = list(offers)  # type: ignore
+        if outputs is None:
+            if self.input_agent:
+                outputs = [True] * len(offers)
+            elif self.output_agent:
+                outputs = [False] * len(offers)
+            else:
+                raise RuntimeError(
+                    f"You cannot pass outputs=None if the agent is neither a first or last level agent"
+                )
 
         def order(x):
             """A helper function to order contracts in the following fashion:
@@ -284,16 +344,20 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             return -offer[UNIT_PRICE] if is_output else offer[UNIT_PRICE]
 
         # copy inputs because we are going to modify them.
-        offers, outputs = list(offers), list(outputs)
+        outputs = list(outputs)  # type: ignore
+        # add registered sales and supplies if needed
+        if not ignore_signed_contracts and self._signed_agreements:
+            offers += self._signed_agreements  # type: ignore
+            outputs += self._signed_is_output  # type: ignore
         # indicate that all inputs are not exogenous and that we are adding two
         # exogenous contracts after them.
         exogenous = [False] * len(offers) + [True, True]
         # add exogenous contracts as offers one for input and another for output
-        offers += [
+        offers += [  # type: ignore
             (self.ex_qin, 0, self.ex_pin / self.ex_qin if self.ex_qin else 0),
             (self.ex_qout, 0, self.ex_pout / self.ex_qout if self.ex_qout else 0),
         ]
-        outputs += [False, True]
+        outputs += [False, True]  # type: ignore
         # initialize some variables
         qin, qout, pin, pout = 0, 0, 0, 0
         qin_bar, going_bankrupt = 0, self.current_balance < 0
@@ -302,7 +366,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         output_offers = []
         # sort contracts in the optimal order of execution: from cheapest when
         # buying and from the most expensive when selling. See `order` above.
-        sorted_offers = sorted(zip(offers, outputs, exogenous), key=order)
+        sorted_offers = sorted(zip(offers, outputs, exogenous, strict=True), key=order)
 
         # we calculate the total quantity we are are required to pay for `qin` and
         # the associated amount of money we are going to pay `pin`. Moreover,
@@ -390,6 +454,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             return u, producible
         return u
 
+    @cache
     def from_aggregates(
         self,
         qin: int,
@@ -592,6 +657,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         secured_input_unit_price=0.0,
         secured_output_quantity=0,
         secured_output_unit_price=0.0,
+        ignore_signed_contracts: bool = True,
     ) -> UFunLimit:
         """
         Finds either the maximum or the minimum of the ufun.
@@ -606,6 +672,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
              secured_output_quantity: A quantity that MUST be sold.
              secured_output_unit_price: The (average) unit price of the quantity
                                         that MUST be sold.
+             ignore_signed_contracts: If True all signed contracts will be ignored.
+                                      Use secured_* to pass this information if you need
+                                      to in this case.
         Remarks:
             - You can use the `secured_*` arguments and control over the number
               of negotiations to consider to find the utility limits **given**
@@ -628,6 +697,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             secured_input_unit_price,
             secured_output_quantity,
             secured_output_unit_price,
+            ignore_signed_contracts=ignore_signed_contracts,
         )
         actual_util = self.from_offers(
             (
@@ -635,17 +705,18 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
                 (result.input_quantity, 0, result.input_price),
             ),
             (True, False),
+            ignore_signed_contracts=ignore_signed_contracts,
         )
         assert (
             abs(result.utility - actual_util) < 1e-2
-        ), f"UFunLimit with utility {result.utility} != actual utility {actual_util} of the outcome in it!!"
+        ), f"UFunLimit with utility {result.utility} != actual utility {actual_util} of the outcome in it!!\n{result}"
         if set_best:
             self.best = result
         elif set_worst:
             self.worst = result
         return result
 
-    @lru_cache
+    @cache
     def find_limit_brute_force(
         self,
         best,
@@ -655,6 +726,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         secured_input_unit_price=0.0,
         secured_output_quantity=0,
         secured_output_unit_price=0.0,
+        ignore_signed_contracts=True,
     ) -> UFunLimit:
         """
         Finds either the maximum and the minimum of the ufun.
@@ -673,6 +745,10 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             - You can use the `secured_*` arguments and control over the number
               of negotiations to consider to find the utility limits **given**
               some already concluded and signed contracts
+            - Note that this function CANNOT take into account the sales or supplies
+              already signed (and registered via `register_sale` and/or `register_supply`).
+              You MUST pass the quantities and prices for signed contracts through the secured_*
+              parameters.
 
         Returns:
             worst and best outcome information in the form of `UFunLimit` tuple.
@@ -680,8 +756,35 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         """
         if n_input_negs is None:
             n_input_negs = self.n_input_negs
+            if not ignore_signed_contracts:
+                n_input_negs -= sum(int(_) for _ in self._signed_is_output if not _)
+                n_input_negs -= len(self._registered_supply_failures)
+                assert n_input_negs >= 0, f"{n_input_negs=} cannot be negative"
+
         if n_output_negs is None:
             n_output_negs = self.n_output_negs
+            if not ignore_signed_contracts:
+                n_output_negs -= sum(int(_) for _ in self._signed_is_output if _)
+                n_output_negs -= len(self._registered_sale_failures)
+                assert n_output_negs >= 0, f"{n_output_negs=} cannot be negative"
+
+        if not ignore_signed_contracts:
+            sales = [
+                c for c, o in zip(self._signed_agreements, self._signed_is_output) if o
+            ]
+            supplies = [
+                c
+                for c, o in zip(self._signed_agreements, self._signed_is_output)
+                if not o
+            ]
+            secured_input_quantity = sum(_[0] for _ in supplies)
+            secured_input_unit_price = sum(_[-1] * _[0] for _ in supplies) / (
+                secured_input_quantity if secured_input_quantity else 1
+            )
+            secured_output_quantity = sum(_[0] for _ in sales)
+            secured_output_unit_price = sum(_[-1] * _[0] for _ in sales) / (
+                secured_output_quantity if secured_output_quantity else 1
+            )
         imax = n_input_negs * self.input_qrange[1] + 1
         omax = n_output_negs * self.output_qrange[1] + 1
 
@@ -693,9 +796,15 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         for i in range(imax):
             for o in range(omax):
                 u, p = self.from_offers(
-                    ((i, 0, ip), (o, 0, op)),
-                    (False, True),
+                    (
+                        (i, 0, ip),
+                        (o, 0, op),
+                        (secured_input_quantity, 0, secured_input_unit_price),
+                        (secured_output_quantity, 0, secured_output_unit_price),
+                    ),
+                    (False, True, False, True),
                     return_producible=True,
+                    ignore_signed_contracts=True,
                 )
                 if (best and u >= limit_u) or (not best and u <= limit_u):
                     limit_io, limit_u, limit_p = (

@@ -74,7 +74,7 @@ def integer_cut(
     valid = [i for i, s in enumerate(sizes) if l_x[i] > s]  # type: ignore
     k = 0
     while sizes.sum() < n:
-        if randomize:
+        if not randomize:
             j, k = valid[k], k + 1
             if k >= len(valid):
                 k = 0
