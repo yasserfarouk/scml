@@ -128,7 +128,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         neg_time_limit=None,
         neg_hidden_time_limit=3 * 60,
         neg_step_time_limit=60,
-        negotiation_speed=0,
+        negotiation_speed=None,
         shuffle_negotiations=False,
         one_offer_per_step=False,
         # public information
@@ -150,8 +150,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # evaluation paramters (for compatibility with SCML2020World)
         inventory_valuation_catalog=0,
         inventory_valuation_trading=0,
+        # set to True to add more assertions during debuging
         **kwargs,
     ):
+        self._debug = False
         # neg_n_steps is ALWAYS the number of rounds. We multiply it by 2 if mechanisms are stepped one offer at a time
         if one_offer_per_step and neg_n_steps is not None:
             neg_n_steps *= 2
@@ -186,8 +188,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             kwargs["save_negotiations"] = True
 
         self.compact = compact
-        if negotiation_speed == 0:
-            negotiation_speed = neg_n_steps + 1
+        # if negotiation_speed == 0:
+        #     negotiation_speed = neg_n_steps + 1
         mechanisms = kwargs.pop("mechanisms", {})
         super().__init__(
             bulletin_board=None,
@@ -596,7 +598,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 make_issue(values(time), name="time"),
                 make_issue(values(unit_price), name="unit_price"),
             ]
-            assert all(isinstance(_, ContiguousIssue) for _ in _issues)
+            if self._debug:
+                assert all(isinstance(_, ContiguousIssue) for _ in _issues)
             self._current_issues.append(_issues)
 
         def to_lists(d):
@@ -1333,9 +1336,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 mid = neg.nmi.mechanism.id
                 # if mid not in existing:
                 #     continue
-                assert (
-                    mid in existing
-                ), f"{mid} mechanism (with {partner}) does not exist for {agent}"
+
+                if self._debug:
+                    assert (
+                        mid in existing
+                    ), f"{mid} mechanism (with {partner}) does not exist for {agent}"
                 if response is not None:
                     neg_actions[mid] = {mynegs[0].id: response}
                 else:
@@ -1867,6 +1872,15 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         # for p, r in zip(partners, results):
         #     if r:
         #         self._world._registered_negs.add(tuple(sorted([P, self.agent.id])))
+        if self._debug and not all(results):
+            failed = set()
+            for r, p in zip(results, partners):
+                if not r:
+                    failed.add(p)
+            assert failed
+            raise AssertionError(
+                f"Partners {failed} failed to accept negotiation request from {agent_id}"
+            )
         return all(results)
 
     def _request_negotiation(
@@ -1963,9 +1977,14 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 nmi=result.mechanism.nmi,  # type: ignore
                 product=product,
             )
-            assert result.mechanism is not None
-            assert buyer in self.agents[seller].awi.my_consumers, f"{seller=}, {buyer=}"
-            assert seller in self.agents[buyer].awi.my_suppliers, f"{seller=}, {buyer=}"
+            if self._debug:
+                assert result.mechanism is not None
+                assert (
+                    buyer in self.agents[seller].awi.my_consumers
+                ), f"{seller=}, {buyer=}"
+                assert (
+                    seller in self.agents[buyer].awi.my_suppliers
+                ), f"{seller=}, {buyer=}"
             # self._current_negotiations.append(info)
             self._agent_negotiations[seller]["sell"][buyer] = info
             self._agent_negotiations[buyer]["buy"][seller] = info
@@ -2019,7 +2038,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         return unit_price, time, quantity
 
     def _make_negotiations(self):
-        consumer_starts = random.random() > 0.5
+        # consumer_starts = random.random() > 0.5
+        consumer_starts = True
 
         def values(x: int | tuple[int, int]):
             if not isinstance(x, Iterable):
@@ -2043,7 +2063,20 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             )
         )
 
+        expected_negs = set()
+        if self._debug:
+            assert (
+                len(self._negotiations) == 0
+            ), f"Found unexpected negotiations at step {self.current_step}\n{self._negotiations}"
         for product in range(1, self.n_products):
+            if self._debug:
+                for c in self.consumers[product]:
+                    if is_system_agent(c) or self.is_bankrupt[c]:
+                        continue
+                    for s in self.suppliers[product]:
+                        if is_system_agent(s) or self.is_bankrupt[s]:
+                            continue
+                        expected_negs.add(tuple(sorted((c, s))))
             unit_price, time, quantity = self._make_issues(product)
             self._current_issues[product] = [
                 make_issue(values(quantity), name="quantity"),
@@ -2069,10 +2102,17 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     extra=None,
                     consumer_starts=consumer_starts,
                 )
-            # if not success:
-            #     raise ValueError(
-            #         f"Failed to start negotiations for product " f"{product}"
-            #     )
+        if self._debug:
+            found_negs = set()
+            for n in self._negotiations.values():
+                found_negs.add(tuple(sorted(_.id for _ in n.partners)))
+            assert (
+                found_negs == expected_negs
+            ), f"{expected_negs=}\n{found_negs=}\n{found_negs.difference(expected_negs)=}\n{expected_negs.difference(found_negs)=}"
+        # if not success:
+        #     raise ValueError(
+        #         f"Failed to start negotiations for product " f"{product}"
+        #     )
 
     def order_contracts_for_execution(
         self, contracts: Collection[Contract]

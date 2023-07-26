@@ -1,7 +1,8 @@
 """
 Implements the one shot version of SCML
 """
-from typing import Any, Dict, List, Optional
+import warnings
+from typing import Any, Optional
 
 from negmas import (
     Adapter,
@@ -40,10 +41,31 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return super().make_ufun(add_exogenous, in_adapter=False)
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
+        if self.awi._world._debug:
+            assert (
+                not tuple(sorted(partners)) in self._negs_done.keys()
+            ), f"{partners=} found in completed negs for {self.id} at step: {self.awi.current_step} with info {self._negs_done[tuple(sorted(partners))]} on mechanism {mechanism.id}\n{self._negs_done}\n{mechanism.annotation=}"
+            self._negs_done[tuple(sorted(partners))] = (
+                "failed",
+                self.awi.current_step,
+                mechanism.id,
+                mechanism.annotation,
+            )
         if annotation["buyer"] == self.id:
             if self.ufun is not None:
                 self.ufun.register_supply_failure(annotation["seller"])
-            self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+            try:
+                self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+            except Exception as e:
+                if self.awi._world._debug:
+                    raise AssertionError(
+                        f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
+                else:
+                    warnings.warn(
+                        f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
+
         elif annotation["seller"] == self.id:
             if self.ufun is not None:
                 self.ufun.register_sale_failure(annotation["buyer"])
@@ -54,10 +76,20 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                 is None
             ):
                 pass
-            self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
+            try:
+                self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
+            except Exception as e:
+                if self.awi._world._debug:
+                    raise AssertionError(
+                        f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
+                else:
+                    warnings.warn(
+                        f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
         else:
             raise ValueError(
-                f"{self.id} received a  negotiation failure for which it is not a buyer nor a seller: {contract=}"
+                f"{self.id} received a  negotiation failure for which it is not a buyer nor a seller"
             )
         result = self._obj.on_negotiation_failure(
             partners, annotation, mechanism, state
@@ -67,6 +99,17 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return result
 
     def on_negotiation_success(self, contract: Contract, mechanism):
+        if self.awi._world._debug:
+            partners = contract.partners
+            assert (
+                not tuple(sorted(partners)) in self._negs_done.keys()
+            ), f"{partners=} found in completed negs for {self.id} at step: {self.awi.current_step} with info {self._negs_done[tuple(sorted(partners))]} on mechanism {mechanism.id}\n{self._negs_done}\n{contract.annotation=}"
+            self._negs_done[tuple(sorted(partners))] = (
+                "failed",
+                self.awi.current_step,
+                mechanism.id,
+                mechanism.annotation,
+            )
         annotation, agreement = contract.annotation, contract.agreement
         if annotation["buyer"] == self.id:
             self.awi._register_supply(annotation["seller"], agreement["quantity"])
@@ -76,7 +119,17 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     agreement["unit_price"],
                     agreement["time"],
                 )
-            self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+            try:
+                self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+            except Exception as e:
+                if self.awi._world._debug:
+                    raise AssertionError(
+                        f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
+                else:
+                    warnings.warn(
+                        f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
         elif annotation["seller"] == self.id:
             self.awi._register_sale(annotation["buyer"], agreement["quantity"])
             if self.ufun is not None:
@@ -85,7 +138,17 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     agreement["unit_price"],
                     agreement["time"],
                 )
-            self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
+            try:
+                self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
+            except Exception as e:
+                if self.awi._world._debug:
+                    raise AssertionError(
+                        f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
+                else:
+                    warnings.warn(
+                        f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                    )
         else:
             raise ValueError(
                 f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"
@@ -99,7 +162,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         pass
 
     def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+        self, contract: Contract, breaches: list[Breach], resolution: Optional[Contract]
     ) -> None:
         pass
 
@@ -121,9 +184,16 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             self._obj.reset()
 
     def before_step(self):
+        if self.awi._world._debug:
+            self._negs_done = dict()
         self.awi._reset_sales_and_supplies()
         if hasattr(self._obj, "before_step"):
             self._obj.before_step()
+
+    def step(self):
+        if self.awi._world._debug:
+            self._negs_done = dict()
+        self._obj.step()
 
     def to_dict(self):
         return {
@@ -137,9 +207,9 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
     def _respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         role: Optional[str],
         req_id: Optional[str],
@@ -153,16 +223,16 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return neg
 
     def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
+        self, contract: Contract, breaches: list[Breach]
     ) -> Optional[RenegotiationRequest]:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
     ) -> Optional[Negotiator]:
         return None
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: Optional[list[str]]):
         pass
 
     def on_neg_request_accepted(
@@ -200,8 +270,8 @@ class _SystemAgent(DefaultOneShotAdapter):
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
     ) -> Optional[Negotiator]:
         pass
@@ -217,8 +287,8 @@ class _SystemAgent(DefaultOneShotAdapter):
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
@@ -229,6 +299,6 @@ class _SystemAgent(DefaultOneShotAdapter):
     ) -> None:
         pass
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[Optional[str]]:
         """Signs all contracts"""
         return [self.id] * len(contracts)

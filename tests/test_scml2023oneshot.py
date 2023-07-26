@@ -17,7 +17,7 @@ from scml.utils import (
     anac_config_generator_oneshot,
 )
 
-# log_params = dict(
+# LOG_PARAMS = dict(
 #     no_logs=False,
 #     log_stats_every=1,
 #     log_file_level=logging.DEBUG,
@@ -28,7 +28,7 @@ from scml.utils import (
 #     save_resolved_breaches=True,
 #     save_unresolved_breaches=True,
 # )
-log_params = dict(no_logs=True)
+LOG_PARAMAS = dict(no_logs=True)
 
 
 def test_equal_exogenous_supply():
@@ -49,7 +49,7 @@ def test_equal_exogenous_supply():
             equal_exogenous_sales=True,
             equal_exogenous_supply=True,
         ),
-        **log_params,
+        **LOG_PARAMAS,
     )
     world.run()
 
@@ -73,7 +73,7 @@ def test_equal_exogenous_supply_stepping():
             equal_exogenous_supply=True,
             one_offer_per_step=True,
         ),
-        **log_params,
+        **LOG_PARAMAS,
     )
     while world.step():
         pass
@@ -99,7 +99,7 @@ def test_equal_exogenous_supply_stepping_with_no_action():
             equal_exogenous_supply=True,
             one_offer_per_step=True,
         ),
-        **log_params,
+        **LOG_PARAMAS,
     )
     world.step_with(actions=dict(), init=True)
     while world.step_with(actions=dict()):
@@ -126,7 +126,7 @@ def test_equal_exogenous_supply_stepping_with_random_action():
             equal_exogenous_supply=True,
             one_offer_per_step=True,
         ),
-        **log_params,
+        **LOG_PARAMAS,
     )
     agents = list(random.choices(list(world.agents.values()), k=1))
     world.step_with(actions=dict(), init=True)

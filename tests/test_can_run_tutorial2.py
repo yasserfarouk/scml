@@ -29,7 +29,7 @@ def try_agent(agent_type, n_processes=2):
     return try_agents([RandomOneShotAgent, agent_type], n_processes)
 
 
-def try_agents(agent_types, n_processes=2, n_trials=1, agent_params=None):
+def try_agents(agent_types, n_processes=2, n_trials=1, agent_params=None, debug=True):
     """
     Runs a simulation with the given agent_types, and n_processes n_trial times.
     Optionally also draws a graph showing what happened
@@ -53,6 +53,7 @@ def try_agents(agent_types, n_processes=2, n_trials=1, agent_params=None):
                 random_agent_types=True,
             ),
             construct_graphs=True,
+            debug=debug,
         )
         world.run()
 
@@ -533,6 +534,10 @@ class GeniusIndNeg(GreedyIndNeg):
 )
 def test_examples(agent_type):
     try_agent(agent_type)
+
+
+def test_example_sync_agent():
+    try_agent(SyncAgent)
 
 
 @pytest.mark.skipif(

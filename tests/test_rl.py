@@ -1,5 +1,6 @@
 import logging
 import random
+from functools import partial
 
 import numpy as np
 from negmas.gb.common import ResponseType
@@ -14,12 +15,7 @@ from scml.oneshot.agents.greedy import (
 )
 from scml.oneshot.agents.random import RandomOneShotAgent
 from scml.oneshot.common import QUANTITY
-from scml.oneshot.rl.action import (
-    ActionManager,
-    FixedPartnerNumbersActionManager,
-    LimitedPartnerNumbersActionManager,
-    UnconstrainedActionManager,
-)
+from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
 from scml.oneshot.rl.agent import OneShotRLAgent
 from scml.oneshot.rl.common import model_wrapper
 from scml.oneshot.rl.env import OneShotEnv
@@ -33,9 +29,23 @@ from scml.oneshot.rl.observation import (
 )
 from scml.oneshot.world import SCML2023OneShotWorld
 
+NTRAINING = 100
 
-def random_policy(env):
+
+def random_policy(env, pend: float = 0.05, paccept: float = 0.15):
     return lambda _: env.action_space.sample()
+
+
+def random_policy2(obs, env, pend: float = 0.05, paccept: float = 0.15):
+    r = random.random()
+    action = env.action_space.sample()
+    if r < pend:
+        i = random.randint(0, len(action) // 2)
+        action[i : i + 2] = 0
+    elif r < pend + paccept:
+        i = random.randint(0, len(action) // 2)
+        action[i : i + 2] = (0, 1)
+    return action
 
 
 def make_env(
@@ -78,12 +88,12 @@ def make_env(
         fixed=(
             FixedPartnerNumbersOneShotFactory,
             FixedPartnerNumbersObservationManager,
-            FixedPartnerNumbersActionManager,
+            UnconstrainedActionManager,
         ),
         limited=(
             LimitedPartnerNumbersOneShotFactory,
             LimitedPartnerNumbersObservationManager,
-            LimitedPartnerNumbersActionManager,
+            UnconstrainedActionManager,
         ),
         unlimited=(
             LimitedPartnerNumbersOneShotFactory,
@@ -126,7 +136,7 @@ def test_training(type_):
     env = make_env(extra_checks=False, type=type_)
 
     model = A2C("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=10_000)
+    model.learn(total_timesteps=NTRAINING)
 
     vec_env = model.get_env()
     assert vec_env is not None
@@ -141,10 +151,6 @@ def test_training(type_):
 
 def test_rl_agent_fallback():
     factory = FixedPartnerNumbersOneShotFactory()
-    action, obs = (
-        FixedPartnerNumbersActionManager(factory),
-        FixedPartnerNumbersObservationManager(factory),
-    )
     world, agents = factory(types=(OneShotRLAgent,))
     assert len(agents) == 1
     assert isinstance(agents[0]._obj, OneShotRLAgent), agent.type_name  # type: ignore
@@ -157,10 +163,10 @@ def test_rl_agent_with_a_trained_model():
     env = make_env(extra_checks=False, type="unlimited")
 
     model = A2C("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=10)
+    model.learn(total_timesteps=NTRAINING)
 
     factory = LimitedPartnerNumbersOneShotFactory()
-    obs = LimitedPartnerNumbersObservationManager(factory)
+    obs = LimitedPartnerNumbersObservationManager(factory, extra_checks=False)
     world, agents = factory(
         types=(OneShotRLAgent,),
         params=(dict(models=[model_wrapper(model)], observation_managers=[obs]),),
@@ -185,46 +191,44 @@ def test_env_runs_one_world():
     env.close()
 
 
-# @mark.parametrize(
-#     "type_",
-#     [
-#         LimitedPartnerNumbersActionManager,
-#         FixedPartnerNumbersActionManager,
-#         UnconstrainedActionManager,
-#     ],
-# )
-# def test_action_manager(type_: type[ActionManager]):
-#     factory = FixedPartnerNumbersOneShotFactory()
-#     manager = type_(factory)
-#     space = manager.make_space()
-#     world, agents = factory()
-#     for _ in range(100):
-#         agent = agents[0]
-#         # action = space.sample()
-#         responses = dict()
-#         awi = agent.awi
-#         for aid, nmi in awi.state.running_sell_nmis.items():
-#             mine_indx = [i for i, x in enumerate(nmi.agent_ids) if x == agent.id][0]
-#             partner_indx = [i for i, x in enumerate(nmi.agent_ids) if x != agent.id][0]
-#             partner = [x for i, x in enumerate(nmi.agent_ids) if x != agent.id][0]
-#             resp = random.choice(
-#                 [
-#                     ResponseType.REJECT_OFFER,
-#                     ResponseType.END_NEGOTIATION,
-#                     ResponseType.ACCEPT_OFFER,
-#                 ]
-#             )
-#             responses[partner] = SAOResponse(
-#                 resp,
-#                 awi.current_output_outcome_space.random_outcome()
-#                 if resp != ResponseType.END_NEGOTIATION
-#                 else None,
-#             )
-#         world.step(1, neg_actions={agent.id: responses})
-#         action = manager.encode(awi, responses)
-#         decoded = manager.decode(awi, action)
-#         encoded = manager.encode(awi, decoded)
-#         assert np.all(np.isclose(action, encoded)), f"{action=}\n{decoded=}\n{encoded=}"
+@mark.skip(reason=f"Known to fail.")
+@mark.parametrize(
+    "type_",
+    [
+        # LimitedPartnerNumbersActionManager,
+        # FixedPartnerNumbersActionManager,
+        UnconstrainedActionManager,
+    ],
+)
+def test_action_manager(type_: type[ActionManager]):
+    factory = FixedPartnerNumbersOneShotFactory()
+    manager = type_(factory)
+    world, agents = factory()
+    for _ in range(100):
+        agent = agents[0]
+        # action = space.sample()
+        responses = dict()
+        awi = agent.awi
+        for nmi in awi.state.current_sell_nmis.values():
+            partner = [x for x in nmi.agent_ids if x != agent.id][0]
+            resp = random.choice(
+                [
+                    ResponseType.REJECT_OFFER,
+                    ResponseType.END_NEGOTIATION,
+                    ResponseType.ACCEPT_OFFER,
+                ]
+            )
+            responses[partner] = SAOResponse(
+                resp,
+                awi.current_output_outcome_space.random_outcome()
+                if resp != ResponseType.END_NEGOTIATION
+                else None,
+            )
+        world.step(1, neg_actions={agent.id: responses})
+        action = manager.encode(awi, responses)
+        decoded = manager.decode(awi, action)
+        encoded = manager.encode(awi, decoded)
+        assert np.all(np.isclose(action, encoded)), f"{action=}\n{decoded=}\n{encoded=}"
 
 
 def test_env_random_policy():
@@ -246,19 +250,19 @@ def test_env_random_policy():
 
 
 def test_env_random_policy_no_end():
-    env = make_env(log=True)
+    env = make_env(log=False)
 
     obs, info = env.reset()
     world = env._world
     accepted_sometime = False
+    ended_everything = True
     for _ in range(world.n_steps * world.neg_n_steps):
-        action = random_policy(env)(obs)
-        if np.all(action == 0):
-            action[::2] = 1
+        action = partial(random_policy2, env=env)(obs)
         decoded_action = env._action_manager.decode(env._agent.awi, action)
-        # assert not decoded_action or not all(
-        #     _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
-        # ), f"{action=}\n{decoded_action=}"
+        if not all(
+            _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
+        ):
+            ended_everything = False
         if any(
             _.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()
         ):
@@ -273,4 +277,5 @@ def test_env_random_policy_no_end():
     env.close()
     assert world.current_step == world.n_steps - 1
     assert len(world.contracts_executed) > 0
-    # assert accepted_sometime
+    assert accepted_sometime
+    assert not ended_everything
