@@ -82,9 +82,10 @@ class UnconstrainedActionManager(ActionManager):
 
     """
 
-    n_prices = 10
-    max_quantity = 10
-    n_partners = 8
+    n_prices: int = 10
+    max_quantity: int = 10
+    n_partners: int = 8
+    extra_checks: bool = False
 
     def make_space(self) -> Space:
         """Creates the action space"""
@@ -193,11 +194,12 @@ class UnconstrainedActionManager(ActionManager):
                 scaled.append((0, 0))
                 continue
             qscale = nmi.issues[QUANTITY].max_value / (self.max_quantity - 1)
-            pscale = (nmi.issues[UNIT_PRICE].max_value + 1) / self.n_prices
+            prange = nmi.issues[UNIT_PRICE].max_value - nmi.issues[UNIT_PRICE].min_value
+            pscale = (prange + 1) / self.n_prices
             scaled.append(
                 (
                     min(self.max_quantity, int(q * qscale + 0.5)),
-                    min(self.n_prices - 1, int(p * pscale + 0.5)),
+                    min(prange, int(p * pscale + 0.5)),
                 )
             )
         action = np.asarray(scaled, dtype=int)
@@ -211,14 +213,14 @@ class UnconstrainedActionManager(ActionManager):
                 continue
             minprice = nmi.issues[UNIT_PRICE].min_value
             partner_offer = nmi.state.current_offer  # type: ignore
-            if partner_offer is None and not (response[0] == 0 and response[1] == 0):
+            if partner_offer is None and response[0] > 0:
                 rtype = ResponseType.REJECT_OFFER
                 outcome = (
                     response[0],
                     awi.current_step,
                     response[1] + minprice,
                 )
-            elif partner_offer is None and (response[0] == 0 and response[1] == 0):
+            elif partner_offer is None:
                 rtype = ResponseType.END_NEGOTIATION
                 outcome = None
             elif response[0] <= 0 and response[1] <= 0:
@@ -239,7 +241,12 @@ class UnconstrainedActionManager(ActionManager):
                     response[1] + minprice,
                 )
 
+            if self.extra_checks:
+                assert outcome is None or nmi.outcome_space.is_valid(
+                    outcome
+                ), f"{response=}, {outcome=} is not valid for OS: {nmi.outcome_space}"
             responses[partner] = SAOResponse(rtype, outcome)
+
         # end negotiation with anyone ignored
         ignored_partners = {_ for _ in awi.my_partners if _ not in set(partners)}
         for p in ignored_partners:

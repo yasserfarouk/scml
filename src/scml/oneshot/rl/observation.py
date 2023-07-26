@@ -54,7 +54,7 @@ class ObservationManager(ABC):
 class FixedPartnerNumbersObservationManager(ObservationManager):
     n_bins: int = 10
     n_sigmas: int = 2
-    extra_checks: bool = True
+    extra_checks: bool = False
     n_prices: int = 2
     n_partners: int = field(init=False)
     n_suppliers: int = field(init=False)
@@ -167,7 +167,7 @@ class FixedPartnerNumbersObservationManager(ObservationManager):
             ),
             int(
                 self.n_bins
-                * max(
+                * min(
                     1,
                     (
                         state.trading_prices[state.my_output_product]
@@ -348,7 +348,7 @@ class LimitedPartnerNumbersObservationManager(ObservationManager):
             ),
             int(
                 self.n_bins
-                * max(
+                * min(
                     1,
                     (
                         state.trading_prices[state.my_output_product]
