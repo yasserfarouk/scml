@@ -42,7 +42,6 @@ class OneShotEnv(gym.Env):
         )
         self._extra_checks = extra_checks
         self._reward_function = reward_function
-
         self._world: SCML2020OneShotWorld = None  # type: ignore
         self._agent_type = agent_type
         self._agent_params = agent_params if agent_params is not None else dict()
@@ -85,7 +84,8 @@ class OneShotEnv(gym.Env):
 
         random.seed(seed)
         self._world, agents = self._factory(
-            types=(self._agent_type,), params=(self._agent_params,)
+            types=(self._agent_type,),
+            params=(self._agent_params,),
         )
         assert len(agents) == 1
         self._agent = agents[0]
@@ -103,7 +103,7 @@ class OneShotEnv(gym.Env):
 
     def step(self, action):
         reward_info = self._reward_function.before_action(self._agent.awi)
-        score_before = self._world.scores()[self._agent_id]
+        # score_before = self._world.scores()[self._agent_id]
         decoded_action = self._action_manager.decode(self._agent.awi, action)
         terminated = not self._world.step_with(
             {self._agent_id: decoded_action}  # type: ignore

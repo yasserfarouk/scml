@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
-from attr import define
+from attr import define, field
 
 from scml.common import intin, make_array
 from scml.oneshot.agent import OneShotAgent
@@ -50,6 +50,8 @@ DefaultAgentsOneShot2023 = [
 @define(frozen=True)
 class OneShotWorldFactory(WorldFactory, ABC):
     """A factory that generates oneshot worlds with a single agent of type `agent_type` with predetermined structure and settings"""
+
+    world_params: dict[str, Any] = field(factory=dict)
 
     @abstractmethod
     def make(
@@ -225,6 +227,7 @@ class FixedPartnerNumbersOneShotFactory(OneShotWorldFactory):
                 random_agent_types=False,
             ),
             one_offer_per_step=True,
+            **self.world_params,
         )
 
     def is_valid_world(
@@ -427,6 +430,7 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
                 random_agent_types=False,
             ),
             one_offer_per_step=True,
+            **self.world_params,
         )
 
     def is_valid_world(
@@ -564,7 +568,8 @@ class ANACOneShotFactory(OneShotWorldFactory):
             2022: SCML2022OneShotWorld,
             2021: SCML2021OneShotWorld,
         }[self.year]
-        d = type_.generate()
+        d = self.world_params
+        d.update(type_.generate())
         if types:
             if params is None:
                 params = tuple(dict() for _ in types)

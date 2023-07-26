@@ -1,3 +1,4 @@
+import logging
 import random
 
 import pytest
@@ -15,6 +16,19 @@ from scml.utils import (
     anac_assigner_oneshot,
     anac_config_generator_oneshot,
 )
+
+# log_params = dict(
+#     no_logs=False,
+#     log_stats_every=1,
+#     log_file_level=logging.DEBUG,
+#     log_screen_level=logging.ERROR,
+#     save_signed_contracts=True,
+#     save_cancelled_contracts=True,
+#     save_negotiations=True,
+#     save_resolved_breaches=True,
+#     save_unresolved_breaches=True,
+# )
+log_params = dict(no_logs=True)
 
 
 def test_equal_exogenous_supply():
@@ -34,7 +48,8 @@ def test_equal_exogenous_supply():
             exogenous_price_dev=0.0,
             equal_exogenous_sales=True,
             equal_exogenous_supply=True,
-        )
+        ),
+        **log_params,
     )
     world.run()
 
@@ -57,7 +72,8 @@ def test_equal_exogenous_supply_stepping():
             equal_exogenous_sales=True,
             equal_exogenous_supply=True,
             one_offer_per_step=True,
-        )
+        ),
+        **log_params,
     )
     while world.step():
         pass
@@ -82,7 +98,8 @@ def test_equal_exogenous_supply_stepping_with_no_action():
             equal_exogenous_sales=True,
             equal_exogenous_supply=True,
             one_offer_per_step=True,
-        )
+        ),
+        **log_params,
     )
     world.step_with(actions=dict(), init=True)
     while world.step_with(actions=dict()):
@@ -108,7 +125,8 @@ def test_equal_exogenous_supply_stepping_with_random_action():
             equal_exogenous_sales=True,
             equal_exogenous_supply=True,
             one_offer_per_step=True,
-        )
+        ),
+        **log_params,
     )
     agents = list(random.choices(list(world.agents.values()), k=1))
     world.step_with(actions=dict(), init=True)
@@ -132,11 +150,22 @@ def test_equal_exogenous_supply_stepping_with_random_action():
                         for _ in neg.nmi.mechanism.negotiators
                         if _.owner.id != agent.id
                     ][0]
-                    responses[neg.nmi.mechanism.id] = {
-                        negotiator: SAOResponse(
-                            ResponseType.REJECT_OFFER, neg.nmi.random_outcome()
-                        )
-                    }
+                    if random.random() > 0.5:
+                        responses[neg.nmi.mechanism.id] = {
+                            negotiator: SAOResponse(
+                                ResponseType.REJECT_OFFER, neg.nmi.random_outcome()
+                            )
+                        }
+                    elif random.random() < 0.1:
+                        responses[neg.nmi.mechanism.id] = {
+                            negotiator: SAOResponse(ResponseType.END_NEGOTIATION, None)
+                        }
+                    else:
+                        responses[neg.nmi.mechanism.id] = {
+                            negotiator: SAOResponse(
+                                ResponseType.ACCEPT_OFFER, neg.nmi.state.current_offer
+                            )
+                        }
 
             actions[agent.id] = responses
         return actions

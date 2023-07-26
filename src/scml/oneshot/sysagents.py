@@ -43,9 +43,18 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if annotation["buyer"] == self.id:
             if self.ufun is not None:
                 self.ufun.register_supply_failure(annotation["seller"])
+            self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
         elif annotation["seller"] == self.id:
             if self.ufun is not None:
                 self.ufun.register_sale_failure(annotation["buyer"])
+            if (
+                self.awi.current_negotiation_details["sell"].get(
+                    annotation["buyer"], None
+                )
+                is None
+            ):
+                pass
+            self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
         else:
             raise ValueError(
                 f"{self.id} received a  negotiation failure for which it is not a buyer nor a seller: {contract=}"
@@ -58,26 +67,25 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return result
 
     def on_negotiation_success(self, contract: Contract, mechanism):
-        if contract.annotation["buyer"] == self.id:
-            self.awi._register_supply(
-                contract.annotation["seller"], contract.agreement["quantity"]
-            )
+        annotation, agreement = contract.annotation, contract.agreement
+        if annotation["buyer"] == self.id:
+            self.awi._register_supply(annotation["seller"], agreement["quantity"])
             if self.ufun is not None:
                 self.ufun.register_supply(
-                    contract.agreement["quantity"],
-                    contract.agreement["unit_price"],
-                    contract.agreement["time"],
+                    agreement["quantity"],
+                    agreement["unit_price"],
+                    agreement["time"],
                 )
-        elif contract.annotation["seller"] == self.id:
-            self.awi._register_sale(
-                contract.annotation["buyer"], contract.agreement["quantity"]
-            )
+            self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+        elif annotation["seller"] == self.id:
+            self.awi._register_sale(annotation["buyer"], agreement["quantity"])
             if self.ufun is not None:
                 self.ufun.register_sale(
-                    contract.agreement["quantity"],
-                    contract.agreement["unit_price"],
-                    contract.agreement["time"],
+                    agreement["quantity"],
+                    agreement["unit_price"],
+                    agreement["time"],
                 )
+            self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
         else:
             raise ValueError(
                 f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"

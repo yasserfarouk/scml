@@ -96,19 +96,20 @@ class FixedPartnerNumbersActionManager(ActionManager):
             if not nmi:
                 continue
             partner_offer = nmi.state.current_offer  # type: ignore
+            minprice = nmi.issues[UNIT_PRICE].min_value
             if partner_offer is None:
                 rtype = ResponseType.REJECT_OFFER
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[1],
+                    response[1] + minprice,
                 )
             elif response[0] <= 0:
                 rtype = ResponseType.END_NEGOTIATION
                 outcome = None
             elif (
                 response[0] == partner_offer[QUANTITY]
-                and response[1] == partner_offer[UNIT_PRICE]
+                and response[1] + minprice == partner_offer[UNIT_PRICE]
             ):
                 rtype = ResponseType.ACCEPT_OFFER
                 outcome = partner_offer
@@ -117,7 +118,7 @@ class FixedPartnerNumbersActionManager(ActionManager):
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[1],
+                    response[1] + minprice,
                 )
 
             responses[partner] = SAOResponse(rtype, outcome)
@@ -246,19 +247,20 @@ class LimitedPartnerNumbersActionManager(ActionManager):
             if not neg:
                 continue
             partner_offer = neg.nmi.state.current_offer  # type: ignore
+            minprice = neg.nmi.issues[UNIT_PRICE].min_value
             if partner_offer is None:
                 rtype = ResponseType.REJECT_OFFER
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[1],
+                    response[1] + minprice,
                 )
             elif response[0] <= 0:
                 rtype = ResponseType.END_NEGOTIATION
                 outcome = None
             elif (
                 response[0] == partner_offer[QUANTITY]
-                and response[1] == partner_offer[UNIT_PRICE]
+                and response[1] + minprice == partner_offer[UNIT_PRICE]
             ):
                 rtype = ResponseType.ACCEPT_OFFER
                 outcome = partner_offer
@@ -267,7 +269,7 @@ class LimitedPartnerNumbersActionManager(ActionManager):
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[1],
+                    response[1] + minprice,
                 )
 
             responses[partner] = SAOResponse(rtype, outcome)
@@ -482,21 +484,26 @@ class UnconstrainedActionManager(ActionManager):
             nmi = nmis.get(partner, None)
             if not nmi:
                 continue
+            minprice = nmi.issues[UNIT_PRICE].min_value
             partner_offer = nmi.state.current_offer  # type: ignore
-            if partner_offer is None:
+            if partner_offer is None and not (response[0] == 0 and response[1] == 0):
                 rtype = ResponseType.REJECT_OFFER
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[1],
+                    response[1] + minprice,
                 )
-            elif response[0] <= 0:
+            elif partner_offer is None and (response[0] == 0 and response[1] == 0):
+                rtype = ResponseType.END_NEGOTIATION
+                outcome = None
+            elif response[0] <= 0 and response[1] <= 0:
                 rtype = ResponseType.END_NEGOTIATION
                 outcome = None
             elif (
                 response[0] == partner_offer[QUANTITY]
-                and response[1] == partner_offer[UNIT_PRICE]
-            ):
+                and response[1] + minprice == partner_offer[UNIT_PRICE]
+            ) or (response[0] <= 0 and response[1] > 0):
+                # acceptance is encoded as either returning same offer as the partner's or 0 quantity and nonzero price
                 rtype = ResponseType.ACCEPT_OFFER
                 outcome = partner_offer
             else:
@@ -504,7 +511,7 @@ class UnconstrainedActionManager(ActionManager):
                 outcome = (
                     response[0],
                     awi.current_step,
-                    response[1],
+                    response[1] + minprice,
                 )
 
             responses[partner] = SAOResponse(rtype, outcome)

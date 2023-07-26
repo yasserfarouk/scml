@@ -1,3 +1,4 @@
+import logging
 import random
 
 import numpy as np
@@ -6,6 +7,12 @@ from negmas.sao.common import SAOResponse
 from pytest import mark
 
 from scml.common import intin
+from scml.oneshot.agents.greedy import (
+    GreedyOneShotAgent,
+    GreedySingleAgreementAgent,
+    GreedySyncAgent,
+)
+from scml.oneshot.agents.random import RandomOneShotAgent
 from scml.oneshot.common import QUANTITY
 from scml.oneshot.rl.action import (
     ActionManager,
@@ -24,6 +31,7 @@ from scml.oneshot.rl.observation import (
     FixedPartnerNumbersObservationManager,
     LimitedPartnerNumbersObservationManager,
 )
+from scml.oneshot.world import SCML2023OneShotWorld
 
 
 def random_policy(env):
@@ -37,7 +45,31 @@ def make_env(
     n_lines=(10, 10),
     extra_checks=False,
     type="fixed",
+    log=False,
 ) -> OneShotEnv:
+    log_params = (
+        dict(
+            no_logs=False,
+            log_stats_every=1,
+            log_file_level=logging.DEBUG,
+            log_screen_level=logging.ERROR,
+            save_signed_contracts=True,
+            save_cancelled_contracts=True,
+            save_negotiations=True,
+            save_resolved_breaches=True,
+            save_unresolved_breaches=True,
+        )
+        if log
+        else dict()
+    )
+    log_params.update(
+        dict(
+            ignore_agent_exceptions=False,
+            ignore_negotiation_exceptions=False,
+            ignore_contract_execution_exceptions=False,
+            ignore_simulation_exceptions=False,
+        )
+    )
     if type == "fixed":
         n_consumers = intin(n_consumers)
         n_suppliers = intin(n_suppliers)
@@ -64,6 +96,7 @@ def make_env(
         n_consumers=n_consumers,  # type: ignore
         level=level,
         n_lines=n_lines,
+        world_params=log_params,
     )
     return OneShotEnv(
         action_manager=act_type(factory=factory),
@@ -140,6 +173,18 @@ def test_rl_agent_with_a_trained_model():
     world.run()
 
 
+def test_env_runs_one_world():
+    env = make_env(type="unlimited")
+
+    obs, info = env.reset()
+    for _ in range(env._world.n_steps):
+        action = random_policy(env)(obs)
+        obs, reward, terminated, truncated, info = env.step(action)
+        if terminated or truncated:
+            obs, info = env.reset()
+    env.close()
+
+
 # @mark.parametrize(
 #     "type_",
 #     [
@@ -180,3 +225,52 @@ def test_rl_agent_with_a_trained_model():
 #         decoded = manager.decode(awi, action)
 #         encoded = manager.encode(awi, decoded)
 #         assert np.all(np.isclose(action, encoded)), f"{action=}\n{decoded=}\n{encoded=}"
+
+
+def test_env_random_policy():
+    env = make_env(log=True)
+
+    obs, info = env.reset()
+    world = env._world
+    for _ in range(world.n_steps * world.neg_n_steps):
+        action = random_policy(env)(obs)
+        assert env.action_space.contains(
+            action
+        ), "f{action} not contained in the action space"
+        obs, reward, terminated, truncated, info = env.step(action)
+        if terminated or truncated:
+            break
+    env.close()
+    assert world.current_step == world.n_steps - 1
+    assert len(world.contracts_executed) > 0
+
+
+def test_env_random_policy_no_end():
+    env = make_env(log=True)
+
+    obs, info = env.reset()
+    world = env._world
+    accepted_sometime = False
+    for _ in range(world.n_steps * world.neg_n_steps):
+        action = random_policy(env)(obs)
+        if np.all(action == 0):
+            action[::2] = 1
+        decoded_action = env._action_manager.decode(env._agent.awi, action)
+        # assert not decoded_action or not all(
+        #     _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
+        # ), f"{action=}\n{decoded_action=}"
+        if any(
+            _.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()
+        ):
+            accepted_sometime = True
+
+        assert env.action_space.contains(
+            action
+        ), "f{action} not contained in the action space"
+        obs, reward, terminated, truncated, info = env.step(action)
+        if terminated or truncated:
+            break
+    env.close()
+    assert world.current_step == world.n_steps - 1
+    assert len(world.contracts_executed) > 0
+    # assert accepted_sometime

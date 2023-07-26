@@ -626,7 +626,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.info.update(dict(agent_processes=to_lists(self.agent_processes)))
         self.info.update(dict(agent_initial_balances=self.initial_balances))
         self._update_exogenous(0)
-        self._current_negotiations: list[NegotiationDetails] = []
+        # self._current_negotiations: list[NegotiationDetails] = []
         self._agent_negotiations: dict[
             str, dict[str, dict[str, NegotiationDetails]]
         ] = dict()
@@ -1316,11 +1316,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         from scml.oneshot.awi import OneShotAWI
 
         neg_actions = dict()
-        existing = {
-            _.mechanism.id
-            for _ in self._negotiations.values()
-            if _ is not None and _.mechanism is not None
-        }
+        existing = set(self._negotiations.keys())
+        # existing = set(_.nmi.id for _ in self._current_negotiations)
         for agent, responses in actions.items():
             awi: OneShotAWI = self.agents[agent].awi  # type: ignore
             negotiations = awi.current_negotiation_details["buy"].copy()
@@ -1334,11 +1331,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 assert neg.nmi.mechanism._one_offer_per_step  # type: ignore
                 response = responses.get(partner, None)
                 mid = neg.nmi.mechanism.id
-                if mid not in existing:
-                    continue
-                # assert (
-                #     mid in existing
-                # ), f"{mid} mechanism (with {partner}) does not exist for {agent}"
+                # if mid not in existing:
+                #     continue
+                assert (
+                    mid in existing
+                ), f"{mid} mechanism (with {partner}) does not exist for {agent}"
                 if response is not None:
                     neg_actions[mid] = {mynegs[0].id: response}
                 else:
@@ -1498,7 +1495,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
 
         # Clean negotiation details
         # -------------------------
-        self._current_negotiations = []
+        # self._current_negotiations = []
         self._agent_negotiations = dict(
             zip(
                 [_ for _ in self.agents.keys()],
@@ -1956,27 +1953,22 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             annotation=annotation,
         )
         if result:
-            seller = [_ for _ in partners if _ != agent.id][0]
-            buyer = agent.id
+            if is_buy:
+                buyer, seller = agent.id, [_ for _ in partners if _ != agent.id][0]
+            else:
+                seller, buyer = agent.id, [_ for _ in partners if _ != agent.id][0]
+            info = NegotiationDetails(
+                seller=seller,
+                buyer=buyer,
+                nmi=result.mechanism.nmi,  # type: ignore
+                product=product,
+            )
             assert result.mechanism is not None
-            self._current_negotiations = NegotiationDetails(
-                seller=seller,
-                buyer=buyer,
-                nmi=result.mechanism.nmi,  # type: ignore
-                product=product,
-            )
-            self._agent_negotiations[seller]["sell"][buyer] = NegotiationDetails(
-                seller=seller,
-                buyer=buyer,
-                nmi=result.mechanism.nmi,  # type: ignore
-                product=product,
-            )
-            self._agent_negotiations[buyer]["buy"][seller] = NegotiationDetails(
-                seller=seller,
-                buyer=buyer,
-                nmi=result.mechanism.nmi,  # type: ignore
-                product=product,
-            )
+            assert buyer in self.agents[seller].awi.my_consumers, f"{seller=}, {buyer=}"
+            assert seller in self.agents[buyer].awi.my_suppliers, f"{seller=}, {buyer=}"
+            # self._current_negotiations.append(info)
+            self._agent_negotiations[seller]["sell"][buyer] = info
+            self._agent_negotiations[buyer]["buy"][seller] = info
         return result
 
     def _make_issues(
@@ -2043,7 +2035,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             a.adapted_object.make_ufun(add_exogenous=True)
 
         # initialize negotiation details
-        self._current_negotiations = []
+        # self._current_negotiations = []
         self._agent_negotiations = dict(
             zip(
                 [_ for _ in self.agents.keys()],
