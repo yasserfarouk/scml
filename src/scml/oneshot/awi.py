@@ -700,28 +700,50 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def needed_sales(self) -> int:
         """Sales that need to be secured (exogenous input + total supplies - exogenous output - total sales so far)"""
-        return (
-            self.current_exogenous_input_quantity
-            + self.total_supplies
-            - self.total_sales
-            - self.current_exogenous_output_quantity
+        if self.is_last_level:
+            return 0
+        return min(
+            self.n_lines,
+            max(
+                0,
+                (
+                    self.current_exogenous_input_quantity
+                    + self.total_supplies
+                    - self.total_sales
+                    - self.current_exogenous_output_quantity
+                ),
+            ),
         )
 
     @property
     def needed_supplies(self) -> int:
         """Supplies that need to be secured (exogenous output + total sales - exogenous input - total supplies so far)"""
-        return (
-            self.current_exogenous_output_quantity
-            + sum(self._sales.values())
-            - self.current_exogenous_input_quantity
-            - self.total_supplies
+        if self.is_first_level:
+            return 0
+        return min(
+            self.n_lines,
+            max(
+                0,
+                (
+                    self.current_exogenous_output_quantity
+                    + self.total_sales
+                    - self.total_supplies
+                    - self.current_exogenous_input_quantity
+                ),
+            ),
         )
 
     # helper operations (sales and supplies) -- you do not need to call these.
     def _register_sale(self, customer: str, value: int) -> None:
+        assert (
+            value == 0 or self._sales[customer] == 0
+        ), f"{self.agent.id} Cannot have more than one sale to {customer} ({self._sales[customer]=}, {value=})"
         self._sales[customer] += value
 
     def _register_supply(self, supplier: str, value: int) -> None:
+        assert (
+            value == 0 or self._supplies[supplier] == 0
+        ), f"{self.agent.id} Cannot have more than one supply to {supplier} ({self._supplies[supplier]=}, {value=})"
         self._supplies[supplier] += value
 
     def _reset_sales_and_supplies(self) -> None:

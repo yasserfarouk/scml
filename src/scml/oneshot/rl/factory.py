@@ -352,7 +352,7 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
     n_suppliers: tuple[int, int] = (0, 0)
     n_competitors: tuple[int, int] = (3, 7)
     n_agents_per_level: tuple[int, int] = (4, 8)
-    n_lines: tuple[int, int] | int = (10, 10)
+    n_lines: tuple[int, int] = (10, 10)
     non_competitors: list[str | type[OneShotAgent]] = DefaultAgentsOneShot2023
 
     def __attrs_post_init__(self):

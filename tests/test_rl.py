@@ -1,6 +1,7 @@
 import logging
 import random
 from functools import partial
+from typing import Any
 
 import numpy as np
 from negmas.gb.common import ResponseType
@@ -8,13 +9,6 @@ from negmas.sao.common import SAOResponse
 from pytest import mark
 
 from scml.common import intin
-from scml.oneshot.agents.greedy import (
-    GreedyOneShotAgent,
-    GreedySingleAgreementAgent,
-    GreedySyncAgent,
-)
-from scml.oneshot.agents.random import RandomOneShotAgent
-from scml.oneshot.common import QUANTITY
 from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
 from scml.oneshot.rl.agent import OneShotRLAgent
 from scml.oneshot.rl.common import model_wrapper
@@ -27,25 +21,10 @@ from scml.oneshot.rl.observation import (
     FixedPartnerNumbersObservationManager,
     LimitedPartnerNumbersObservationManager,
 )
-from scml.oneshot.world import SCML2023OneShotWorld
+from scml.oneshot.rl.policies import greedy_policy, random_action, random_policy
+from scml.oneshot.rl.reward import RewardFunction
 
 NTRAINING = 100
-
-
-def random_policy(env, pend: float = 0.05, paccept: float = 0.15):
-    return lambda _: env.action_space.sample()
-
-
-def random_policy2(obs, env, pend: float = 0.05, paccept: float = 0.15):
-    r = random.random()
-    action = env.action_space.sample()
-    if r < pend:
-        i = random.randint(0, len(action) // 2)
-        action[i : i + 2] = 0
-    elif r < pend + paccept:
-        i = random.randint(0, len(action) // 2)
-        action[i : i + 2] = (0, 1)
-    return action
 
 
 def make_env(
@@ -57,7 +36,7 @@ def make_env(
     type="fixed",
     log=False,
 ) -> OneShotEnv:
-    log_params = (
+    log_params: dict[str, Any] = (
         dict(
             no_logs=False,
             log_stats_every=1,
@@ -68,9 +47,10 @@ def make_env(
             save_negotiations=True,
             save_resolved_breaches=True,
             save_unresolved_breaches=True,
+            debug=True,
         )
         if log
-        else dict()
+        else dict(debug=True)
     )
     log_params.update(
         dict(
@@ -122,7 +102,7 @@ def test_env_runs(type_):
 
     obs, info = env.reset()
     for _ in range(500):
-        action = random_policy(env)(obs)
+        action = partial(random_action, env=env)(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         if terminated or truncated:
             obs, info = env.reset()
@@ -133,7 +113,7 @@ def test_env_runs(type_):
 def test_training(type_):
     from stable_baselines3 import A2C
 
-    env = make_env(extra_checks=False, type=type_)
+    env = make_env(extra_checks=True, type=type_)
 
     model = A2C("MlpPolicy", env, verbose=1)
     model.learn(total_timesteps=NTRAINING)
@@ -143,10 +123,9 @@ def test_training(type_):
     obs = vec_env.reset()
     for i in range(1000):
         action, _state = model.predict(obs, deterministic=True)  # type: ignore
-        obs, reward, done, info = vec_env.step(action)
-        # vec_env.render("human")
-        #
-        #
+        obs, reward, terminated, truncated, info = env.step(action)
+        if terminated or truncated:
+            obs, info = env.reset()
 
 
 def test_rl_agent_fallback():
@@ -184,7 +163,7 @@ def test_env_runs_one_world():
 
     obs, info = env.reset()
     for _ in range(env._world.n_steps):
-        action = random_policy(env)(obs)
+        action = partial(random_action, env=env)(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         if terminated or truncated:
             obs, info = env.reset()
@@ -237,7 +216,7 @@ def test_env_random_policy():
     obs, info = env.reset()
     world = env._world
     for _ in range(world.n_steps * world.neg_n_steps):
-        action = random_policy(env)(obs)
+        action = partial(random_action, env=env)(obs)
         assert env.action_space.contains(
             action
         ), "f{action} not contained in the action space"
@@ -246,7 +225,48 @@ def test_env_random_policy():
             break
     env.close()
     assert world.current_step == world.n_steps - 1
-    assert len(world.contracts_executed) > 0
+    assert len(world.saved_contracts) > 0
+
+
+def test_env_greedy_policy_no_end():
+    env = make_env(log=True)
+
+    obs, _ = env.reset()
+    world = env._world
+    accepted_sometime = False
+    ended_everything = True
+    greedy = partial(
+        greedy_policy,
+        action_manager=env._action_manager,
+        obs_manager=env._obs_manager,
+        awi=env._agent.awi,
+        debug=True,
+    )
+    for _ in range(world.n_steps * world.neg_n_steps):  # type: ignore
+        # decoded_action = greedy(obs)
+        # action = env._action_manager.encode(env._agent.awi, decoded_action)
+        action = greedy(obs)
+        decoded_action = env._action_manager.decode(env._agent.awi, action)  # type: ignore
+        if not all(
+            _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
+        ):
+            ended_everything = False
+        if any(
+            _.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()
+        ):
+            accepted_sometime = True
+
+        # assert env.action_space.contains(
+        #     action
+        # ), f"{action} not contained in the action space"
+        obs, reward, terminated, truncated, info = env.step(action)
+        if terminated or truncated:
+            break
+    env.close()
+    assert world.current_step == world.n_steps - 1
+    assert len(world.saved_contracts) > 0
+    assert accepted_sometime
+    assert not ended_everything
 
 
 def test_env_random_policy_no_end():
@@ -257,7 +277,7 @@ def test_env_random_policy_no_end():
     accepted_sometime = False
     ended_everything = True
     for _ in range(world.n_steps * world.neg_n_steps):
-        action = partial(random_policy2, env=env)(obs)
+        action = partial(random_policy, env=env)(obs)
         decoded_action = env._action_manager.decode(env._agent.awi, action)
         if not all(
             _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
@@ -276,6 +296,98 @@ def test_env_random_policy_no_end():
             break
     env.close()
     assert world.current_step == world.n_steps - 1
-    assert len(world.contracts_executed) > 0
+    assert len(world.saved_contracts) > 0
     assert accepted_sometime
     assert not ended_everything
+
+
+class TestReducingNeedsReward(RewardFunction):
+    def before_action(self, awi):
+        needs = awi.state.needed_sales if awi.level == 0 else awi.state.needed_supplies
+        return needs
+
+    def __call__(self, awi, action, info):
+        current_needs = (
+            awi.state.needed_sales if awi.level == 0 else awi.state.needed_supplies
+        )
+        return info - current_needs
+
+
+def test_reward_reception():
+    from scml.oneshot.rl.action import UnconstrainedActionManager
+    from scml.oneshot.rl.env import OneShotEnv
+    from scml.oneshot.rl.factory import FixedPartnerNumbersOneShotFactory
+    from scml.oneshot.rl.observation import FixedPartnerNumbersObservationManager
+
+    factory = FixedPartnerNumbersOneShotFactory(
+        n_suppliers=0,
+        n_consumers=4,
+        level=0,
+    )
+
+    env = OneShotEnv(
+        action_manager=UnconstrainedActionManager(factory=factory),
+        observation_manager=FixedPartnerNumbersObservationManager(
+            factory=factory, n_bins=20, extra_checks=False
+        ),
+        factory=factory,
+        reward_function=TestReducingNeedsReward(),
+    )
+
+    obs, _ = env.reset()
+
+    results = []
+    for _ in range(100):
+        action = obs[:8]
+        obs, reward, terminated, truncated, _ = env.step(action)
+        results.append([obs[-5], obs[-4], reward])
+        if terminated or truncated:
+            obs, _ = env.reset()
+    assert len(env._world.saved_contracts) > 0
+    assert (
+        len([c for c in env._world.saved_contracts if env._agent_id in c["signatures"]])
+        > 0
+    )
+    results = np.asarray(results)
+    # check that not all rewards are received at the beginning of a new step
+    assert np.sum(results[:, 0] * results[:, -1]) > 0
+    # assert False, f"{results}"
+
+
+def test_relative_times_make_sense():
+    from scml.oneshot.rl.env import OneShotEnv
+    from scml.oneshot.rl.factory import FixedPartnerNumbersOneShotFactory
+    from scml.oneshot.rl.observation import FixedPartnerNumbersObservationManager
+
+    factory = FixedPartnerNumbersOneShotFactory(
+        n_suppliers=0,
+        n_consumers=4,
+        level=0,
+    )
+
+    env = OneShotEnv(
+        action_manager=UnconstrainedActionManager(factory=factory, extra_checks=True),
+        observation_manager=FixedPartnerNumbersObservationManager(
+            factory=factory, n_bins=20
+        ),
+        factory=factory,
+    )
+
+    obs, _ = env.reset()
+
+    results = []
+    policy = partial(
+        greedy_policy,
+        action_manager=env._action_manager,
+        obs_manager=env._obs_manager,
+        awi=env._agent.awi,
+        debug=True,
+    )
+    for _ in range(60):
+        results.append([obs[-5], obs[-4]])
+        action = policy(obs)
+        decoded = env._action_manager.decode(env._agent.awi, action)
+        obs, _, terminated, truncated, _ = env.step(action)
+        if terminated or truncated:
+            obs, _ = env.reset()
+    assert results[-1][-1] > 0, f"{results}"

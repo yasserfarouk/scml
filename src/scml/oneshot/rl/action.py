@@ -257,43 +257,50 @@ class UnconstrainedActionManager(ActionManager):
         """
         Receives offers for all partners and generates the corresponding action. Used mostly for debugging and testing.
         """
-        action = []
+        action = np.zeros((self.n_partners, 2), dtype=int)
         partners = awi.my_partners
         nmis = awi.current_nmis
 
-        for partner in partners:
+        for i, partner in enumerate(partners):
+            # if too many responses are given, just add the responses together in a round-robin fashion
+            j = i % self.n_partners
             response = responses.get(partner, None)
             if not response:
-                action.append([0, 0])
+                action[j] = 0
                 continue
             nmi = nmis.get(partner, None)
             if not nmi:
                 warnings.warn(
                     f"Cannot encode an action with a response for {partner} because no such partner currently exist. Will ignore it."
                 )
-                action.append([0, 0])
+                action[j] = 0
                 continue
             current_offer = nmi.state.current_offer  # type: ignore
+            minprice = nmi.issues[UNIT_PRICE].min_value
             if response.response == ResponseType.END_NEGOTIATION:
-                action.append([0, 0])
+                action[j] = 0
             elif response.response == ResponseType.ACCEPT_OFFER:
                 assert (
                     current_offer == response.outcome
                 ), f"Accepting an outcome different from the current offer!! {current_offer=}, {response.outcome=}"
-                action.append([current_offer[QUANTITY], current_offer[UNIT_PRICE]])
+                action[j] = [
+                    current_offer[QUANTITY],
+                    current_offer[UNIT_PRICE] - minprice,
+                ]
             elif response.response == ResponseType.REJECT_OFFER:
                 if response.outcome is None:
-                    action.append([0, 0])
+                    action[j] = 0
                 else:
-                    action.append(
-                        [
-                            response.outcome[QUANTITY],
-                            response.outcome[UNIT_PRICE],
-                        ]
-                    )
+                    # saturate at maximum allowed quantity
+                    newq = response.outcome[QUANTITY] + action[j][0]
+                    max_allowed = min(nmi.issues[QUANTITY].max_value, newq)
+                    action[j] = [
+                        max_allowed,
+                        response.outcome[UNIT_PRICE] - minprice,
+                    ]
             else:
                 raise ValueError(f"Unacceptable response type {response}")
-        return np.asarray(action).flatten()
+        return action.flatten()
 
 
 DefaultActionManager = UnconstrainedActionManager
