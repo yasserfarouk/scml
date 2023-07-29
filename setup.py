@@ -73,7 +73,7 @@ setup(
         "gif",
         "mip",
         "gymnasium",
-        "stable-baselines3>=2.1",
+        "stable-baselines3>=2.0.0",
     ],
     extras_require={
         "gui": ["pyqt5"],
