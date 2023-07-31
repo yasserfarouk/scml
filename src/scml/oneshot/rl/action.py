@@ -187,10 +187,10 @@ class UnconstrainedActionManager(ActionManager):
         for partner, (q, p) in zip(partners, action, strict=True):
             nmi = nmis.get(partner, None)
             if not nmi:
-                warnings.warn(
-                    f"Did not find {partner} in the list of partners"
-                    f"\n{partners=}\n{awi.my_partners=}\n{action=}"
-                )
+                # warnings.warn(
+                #     f"Did not find {partner} in the list of partners"
+                #     f"\n{partners=}\n{awi.my_partners=}\n{action=}"
+                # )
                 scaled.append((0, 0))
                 continue
             qscale = nmi.issues[QUANTITY].max_value / (self.max_quantity - 1)
