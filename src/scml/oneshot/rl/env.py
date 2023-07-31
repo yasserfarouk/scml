@@ -133,6 +133,6 @@ class OneShotEnv(gym.Env):
 
 register(
     id="scml/OneShot-v0",
-    entry_point="scml.oneshot.rl.env:GridWorldEnv",
+    entry_point="scml.oneshot.rl.env:OneShotEnv",
     max_episode_steps=None,
 )
