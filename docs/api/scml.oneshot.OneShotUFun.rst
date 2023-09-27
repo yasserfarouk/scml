@@ -76,6 +76,10 @@ OneShotUFun
       ~OneShotUFun.outcome_as_tuple
       ~OneShotUFun.rank
       ~OneShotUFun.rank_with_weights
+      ~OneShotUFun.register_sale
+      ~OneShotUFun.register_sale_failure
+      ~OneShotUFun.register_supply
+      ~OneShotUFun.register_supply_failure
       ~OneShotUFun.reset_changes
       ~OneShotUFun.sample_outcome_with_utility
       ~OneShotUFun.scale_by
@@ -164,6 +168,10 @@ OneShotUFun
    .. automethod:: outcome_as_tuple
    .. automethod:: rank
    .. automethod:: rank_with_weights
+   .. automethod:: register_sale
+   .. automethod:: register_sale_failure
+   .. automethod:: register_supply
+   .. automethod:: register_supply_failure
    .. automethod:: reset_changes
    .. automethod:: sample_outcome_with_utility
    .. automethod:: scale_by

@@ -10,7 +10,6 @@ LimitedPartnerNumbersOneShotFactory
 
    .. autosummary::
 
-      ~LimitedPartnerNumbersOneShotFactory.agent_type
       ~LimitedPartnerNumbersOneShotFactory.level
       ~LimitedPartnerNumbersOneShotFactory.n_agents_per_level
       ~LimitedPartnerNumbersOneShotFactory.n_competitors
@@ -19,6 +18,7 @@ LimitedPartnerNumbersOneShotFactory
       ~LimitedPartnerNumbersOneShotFactory.n_processes
       ~LimitedPartnerNumbersOneShotFactory.n_suppliers
       ~LimitedPartnerNumbersOneShotFactory.non_competitors
+      ~LimitedPartnerNumbersOneShotFactory.world_params
       ~LimitedPartnerNumbersOneShotFactory.year
 
    .. rubric:: Methods Summary
@@ -27,12 +27,12 @@ LimitedPartnerNumbersOneShotFactory
 
       ~LimitedPartnerNumbersOneShotFactory.__call__
       ~LimitedPartnerNumbersOneShotFactory.contains_factory
+      ~LimitedPartnerNumbersOneShotFactory.is_valid_awi
       ~LimitedPartnerNumbersOneShotFactory.is_valid_world
       ~LimitedPartnerNumbersOneShotFactory.make
 
    .. rubric:: Attributes Documentation
 
-   .. autoattribute:: agent_type
    .. autoattribute:: level
    .. autoattribute:: n_agents_per_level
    .. autoattribute:: n_competitors
@@ -41,11 +41,13 @@ LimitedPartnerNumbersOneShotFactory
    .. autoattribute:: n_processes
    .. autoattribute:: n_suppliers
    .. autoattribute:: non_competitors
+   .. autoattribute:: world_params
    .. autoattribute:: year
 
    .. rubric:: Methods Documentation
 
    .. automethod:: __call__
    .. automethod:: contains_factory
+   .. automethod:: is_valid_awi
    .. automethod:: is_valid_world
    .. automethod:: make

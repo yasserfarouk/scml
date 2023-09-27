@@ -26,6 +26,7 @@ FixedPartnerNumbersObservationManager
    .. autosummary::
 
       ~FixedPartnerNumbersObservationManager.encode
+      ~FixedPartnerNumbersObservationManager.get_offers
       ~FixedPartnerNumbersObservationManager.is_valid
       ~FixedPartnerNumbersObservationManager.make_first_observation
       ~FixedPartnerNumbersObservationManager.make_space
@@ -46,6 +47,7 @@ FixedPartnerNumbersObservationManager
    .. rubric:: Methods Documentation
 
    .. automethod:: encode
+   .. automethod:: get_offers
    .. automethod:: is_valid
    .. automethod:: make_first_observation
    .. automethod:: make_space

@@ -15,6 +15,9 @@ OneShotAWI
       ~OneShotAWI.all_suppliers
       ~OneShotAWI.catalog_prices
       ~OneShotAWI.current_balance
+      ~OneShotAWI.current_buy_nmis
+      ~OneShotAWI.current_buy_offers
+      ~OneShotAWI.current_buy_states
       ~OneShotAWI.current_disposal_cost
       ~OneShotAWI.current_exogenous_input_price
       ~OneShotAWI.current_exogenous_input_quantity
@@ -24,9 +27,16 @@ OneShotAWI
       ~OneShotAWI.current_input_outcome_space
       ~OneShotAWI.current_inventory
       ~OneShotAWI.current_negotiation_details
+      ~OneShotAWI.current_nmis
+      ~OneShotAWI.current_offers
       ~OneShotAWI.current_output_issues
       ~OneShotAWI.current_output_outcome_space
+      ~OneShotAWI.current_score
+      ~OneShotAWI.current_sell_nmis
+      ~OneShotAWI.current_sell_offers
+      ~OneShotAWI.current_sell_states
       ~OneShotAWI.current_shortfall_penalty
+      ~OneShotAWI.current_states
       ~OneShotAWI.current_step
       ~OneShotAWI.default_signing_delay
       ~OneShotAWI.exogenous_contract_summary
@@ -62,6 +72,7 @@ OneShotAWI
       ~OneShotAWI.requested_negotiations
       ~OneShotAWI.running_mechanism_dicts
       ~OneShotAWI.running_negotiations
+      ~OneShotAWI.running_sell_nmis
       ~OneShotAWI.sales
       ~OneShotAWI.settings
       ~OneShotAWI.state
@@ -104,6 +115,9 @@ OneShotAWI
    .. autoattribute:: all_suppliers
    .. autoattribute:: catalog_prices
    .. autoattribute:: current_balance
+   .. autoattribute:: current_buy_nmis
+   .. autoattribute:: current_buy_offers
+   .. autoattribute:: current_buy_states
    .. autoattribute:: current_disposal_cost
    .. autoattribute:: current_exogenous_input_price
    .. autoattribute:: current_exogenous_input_quantity
@@ -113,9 +127,16 @@ OneShotAWI
    .. autoattribute:: current_input_outcome_space
    .. autoattribute:: current_inventory
    .. autoattribute:: current_negotiation_details
+   .. autoattribute:: current_nmis
+   .. autoattribute:: current_offers
    .. autoattribute:: current_output_issues
    .. autoattribute:: current_output_outcome_space
+   .. autoattribute:: current_score
+   .. autoattribute:: current_sell_nmis
+   .. autoattribute:: current_sell_offers
+   .. autoattribute:: current_sell_states
    .. autoattribute:: current_shortfall_penalty
+   .. autoattribute:: current_states
    .. autoattribute:: current_step
    .. autoattribute:: default_signing_delay
    .. autoattribute:: exogenous_contract_summary
@@ -151,6 +172,7 @@ OneShotAWI
    .. autoattribute:: requested_negotiations
    .. autoattribute:: running_mechanism_dicts
    .. autoattribute:: running_negotiations
+   .. autoattribute:: running_sell_nmis
    .. autoattribute:: sales
    .. autoattribute:: settings
    .. autoattribute:: state

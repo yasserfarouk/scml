@@ -1,30 +1,32 @@
-OneShotWorldFactory
-===================
+ANACOneShotFactory
+==================
 
 .. currentmodule:: scml.oneshot.rl
 
-.. autoclass:: OneShotWorldFactory
+.. autoclass:: ANACOneShotFactory
    :show-inheritance:
 
    .. rubric:: Attributes Summary
 
    .. autosummary::
 
-      ~OneShotWorldFactory.world_params
+      ~ANACOneShotFactory.world_params
+      ~ANACOneShotFactory.year
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~OneShotWorldFactory.__call__
-      ~OneShotWorldFactory.contains_factory
-      ~OneShotWorldFactory.is_valid_awi
-      ~OneShotWorldFactory.is_valid_world
-      ~OneShotWorldFactory.make
+      ~ANACOneShotFactory.__call__
+      ~ANACOneShotFactory.contains_factory
+      ~ANACOneShotFactory.is_valid_awi
+      ~ANACOneShotFactory.is_valid_world
+      ~ANACOneShotFactory.make
 
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: world_params
+   .. autoattribute:: year
 
    .. rubric:: Methods Documentation
 

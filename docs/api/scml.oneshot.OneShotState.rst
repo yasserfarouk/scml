@@ -15,9 +15,16 @@ OneShotState
       ~OneShotState.bankrupt_agents
       ~OneShotState.catalog_prices
       ~OneShotState.current_balance
+      ~OneShotState.current_buy_nmis
+      ~OneShotState.current_buy_offers
       ~OneShotState.current_input_outcome_space
       ~OneShotState.current_negotiation_details
+      ~OneShotState.current_offers
       ~OneShotState.current_output_outcome_space
+      ~OneShotState.current_sell_nmis
+      ~OneShotState.current_sell_offers
+      ~OneShotState.current_sell_states
+      ~OneShotState.current_states
       ~OneShotState.current_step
       ~OneShotState.disposal_cost
       ~OneShotState.exogenous_contract_summary
@@ -49,6 +56,8 @@ OneShotState
       ~OneShotState.profile
       ~OneShotState.relative_simulation_time
       ~OneShotState.reports_of_agents
+      ~OneShotState.running_buy_states
+      ~OneShotState.running_nmis
       ~OneShotState.sales
       ~OneShotState.shortfall_penalty
       ~OneShotState.supplies
@@ -63,9 +72,16 @@ OneShotState
    .. autoattribute:: bankrupt_agents
    .. autoattribute:: catalog_prices
    .. autoattribute:: current_balance
+   .. autoattribute:: current_buy_nmis
+   .. autoattribute:: current_buy_offers
    .. autoattribute:: current_input_outcome_space
    .. autoattribute:: current_negotiation_details
+   .. autoattribute:: current_offers
    .. autoattribute:: current_output_outcome_space
+   .. autoattribute:: current_sell_nmis
+   .. autoattribute:: current_sell_offers
+   .. autoattribute:: current_sell_states
+   .. autoattribute:: current_states
    .. autoattribute:: current_step
    .. autoattribute:: disposal_cost
    .. autoattribute:: exogenous_contract_summary
@@ -97,6 +113,8 @@ OneShotState
    .. autoattribute:: profile
    .. autoattribute:: relative_simulation_time
    .. autoattribute:: reports_of_agents
+   .. autoattribute:: running_buy_states
+   .. autoattribute:: running_nmis
    .. autoattribute:: sales
    .. autoattribute:: shortfall_penalty
    .. autoattribute:: supplies

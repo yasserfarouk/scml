@@ -20,12 +20,14 @@ LimitedPartnerNumbersObservationManager
       ~LimitedPartnerNumbersObservationManager.n_prices
       ~LimitedPartnerNumbersObservationManager.n_sigmas
       ~LimitedPartnerNumbersObservationManager.n_suppliers
+      ~LimitedPartnerNumbersObservationManager.sub_manager
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
       ~LimitedPartnerNumbersObservationManager.encode
+      ~LimitedPartnerNumbersObservationManager.get_offers
       ~LimitedPartnerNumbersObservationManager.is_valid
       ~LimitedPartnerNumbersObservationManager.make_first_observation
       ~LimitedPartnerNumbersObservationManager.make_space
@@ -42,10 +44,12 @@ LimitedPartnerNumbersObservationManager
    .. autoattribute:: n_prices
    .. autoattribute:: n_sigmas
    .. autoattribute:: n_suppliers
+   .. autoattribute:: sub_manager
 
    .. rubric:: Methods Documentation
 
    .. automethod:: encode
+   .. automethod:: get_offers
    .. automethod:: is_valid
    .. automethod:: make_first_observation
    .. automethod:: make_space

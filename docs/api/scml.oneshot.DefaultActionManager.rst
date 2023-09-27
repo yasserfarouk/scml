@@ -10,32 +10,32 @@ DefaultActionManager
 
    .. autosummary::
 
+      ~DefaultActionManager.extra_checks
       ~DefaultActionManager.factory
       ~DefaultActionManager.max_quantity
-      ~DefaultActionManager.n_consumers
       ~DefaultActionManager.n_partners
       ~DefaultActionManager.n_prices
-      ~DefaultActionManager.n_suppliers
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
+      ~DefaultActionManager.adjust_reponses_to_partners
       ~DefaultActionManager.decode
       ~DefaultActionManager.encode
       ~DefaultActionManager.make_space
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: extra_checks
    .. autoattribute:: factory
    .. autoattribute:: max_quantity
-   .. autoattribute:: n_consumers
    .. autoattribute:: n_partners
    .. autoattribute:: n_prices
-   .. autoattribute:: n_suppliers
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: adjust_reponses_to_partners
    .. automethod:: decode
    .. automethod:: encode
    .. automethod:: make_space

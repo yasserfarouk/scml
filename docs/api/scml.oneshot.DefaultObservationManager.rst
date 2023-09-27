@@ -26,6 +26,7 @@ DefaultObservationManager
    .. autosummary::
 
       ~DefaultObservationManager.encode
+      ~DefaultObservationManager.get_offers
       ~DefaultObservationManager.is_valid
       ~DefaultObservationManager.make_first_observation
       ~DefaultObservationManager.make_space
@@ -46,6 +47,7 @@ DefaultObservationManager
    .. rubric:: Methods Documentation
 
    .. automethod:: encode
+   .. automethod:: get_offers
    .. automethod:: is_valid
    .. automethod:: make_first_observation
    .. automethod:: make_space
