@@ -18,7 +18,8 @@ import pandas as pd
 import progressbar
 import yaml
 from negmas import save_stats
-from negmas.helpers import humanize_time, load, unique_name
+from negmas.helpers.inout import load
+from negmas.helpers.strings import humanize_time, unique_name
 from negmas.tournaments import create_tournament, evaluate_tournament, run_tournament
 from tabulate import tabulate
 

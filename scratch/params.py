@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 import tqdm
 import typer
-from negmas.helpers import add_records
+from negmas.helpers.inout import add_records
 
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot.agents import GreedyOneShotAgent, RandomOneShotAgent

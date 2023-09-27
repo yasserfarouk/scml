@@ -533,7 +533,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
 
     def _get_ufuns(self):
         """
-        Internam method that makes sure the reservation value is set to a
+        Internal method that makes sure the reservation value is set to a
         meaningful value and that the ufun is normalized if needed
         """
         ufuns = self.generate_ufuns()
