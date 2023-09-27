@@ -543,7 +543,7 @@ class AWI(AgentWorldInterface):
         steps = sorted(
             int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()
         )
-        for (s, prev) in zip(steps[1:], steps[:-1]):
+        for s, prev in zip(steps[1:], steps[:-1]):
             if s > step:
                 return self.bb_read("reports_time", prev)
         return self.bb_read("reports_time", str(steps[-1]))
