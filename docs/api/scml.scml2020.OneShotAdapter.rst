@@ -50,6 +50,7 @@ OneShotAdapter
       ~OneShotAdapter.from_checkpoint
       ~OneShotAdapter.from_config
       ~OneShotAdapter.get_current_balance
+      ~OneShotAdapter.get_current_stock
       ~OneShotAdapter.get_disposal_cost
       ~OneShotAdapter.get_disposal_cost_dev
       ~OneShotAdapter.get_disposal_cost_mean
@@ -59,6 +60,9 @@ OneShotAdapter
       ~OneShotAdapter.get_shortfall_penalty
       ~OneShotAdapter.get_shortfall_penalty_dev
       ~OneShotAdapter.get_shortfall_penalty_mean
+      ~OneShotAdapter.get_storage_cost
+      ~OneShotAdapter.get_storage_cost_dev
+      ~OneShotAdapter.get_storage_cost_mean
       ~OneShotAdapter.init
       ~OneShotAdapter.init_
       ~OneShotAdapter.make_ufun
@@ -141,6 +145,7 @@ OneShotAdapter
    .. automethod:: from_checkpoint
    .. automethod:: from_config
    .. automethod:: get_current_balance
+   .. automethod:: get_current_stock
    .. automethod:: get_disposal_cost
    .. automethod:: get_disposal_cost_dev
    .. automethod:: get_disposal_cost_mean
@@ -150,6 +155,9 @@ OneShotAdapter
    .. automethod:: get_shortfall_penalty
    .. automethod:: get_shortfall_penalty_dev
    .. automethod:: get_shortfall_penalty_mean
+   .. automethod:: get_storage_cost
+   .. automethod:: get_storage_cost_dev
+   .. automethod:: get_storage_cost_mean
    .. automethod:: init
    .. automethod:: init_
    .. automethod:: make_ufun

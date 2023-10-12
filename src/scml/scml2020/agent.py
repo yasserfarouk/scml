@@ -361,6 +361,7 @@ class AWIHelper:
             disposal_cost=self._owner.get_disposal_cost(),
             shortfall_penalty=self._owner.get_shortfall_penalty(),
             current_balance=self._owner.get_current_balance(),
+            current_stock=self._owner.get_current_stock(),
             total_sales=0,
             total_supplies=0,
             n_products=self.n_products,
@@ -443,6 +444,19 @@ class AWIHelper:
     def current_disposal_cost(self) -> float:
         """Cost of storing one unit (penalizes buying too much/ selling too little)"""
         return self._owner.get_disposal_cost()
+
+    @property
+    def is_disposing(self) -> bool:
+        return False
+
+    @property
+    def current_stock(self) -> int:
+        return 0
+
+    @property
+    def current_storage_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return self._owner.get_storage_cost()
 
     @property
     def current_shortfall_penalty(self) -> float:
@@ -669,16 +683,26 @@ class OneShotAdapter(
         # penalty for buying too much
         return 0.0
 
+    def get_storage_cost(self) -> float:
+        # penalty for buying too much
+        return 0.0
+
     def get_shortfall_penalty_mean(self):
         return self.get_shortfall_penalty()
 
     def get_disposal_cost_mean(self):
         return self.get_disposal_cost()
 
+    def get_storage_cost_mean(self):
+        return self.get_storage_cost()
+
     def get_shortfall_penalty_dev(self):
         return 0.0
 
     def get_disposal_cost_dev(self):
+        return 0.0
+
+    def get_storage_cost_dev(self):
         return 0.0
 
     def get_profile(self):
@@ -688,12 +712,17 @@ class OneShotAdapter(
             input_product=self.awi.my_input_product,
             shortfall_penalty_mean=self.get_shortfall_penalty_mean(),
             disposal_cost_mean=self.get_disposal_cost_mean(),
+            storage_cost_mean=self.get_storage_cost_mean(),
             shortfall_penalty_dev=self.get_shortfall_penalty_dev(),
             disposal_cost_dev=self.get_disposal_cost_dev(),
+            storage_cost_dev=self.get_storage_cost_dev(),
         )
 
     def get_shortfall_penalty(self):
         return self.awi.trading_prices[self.awi.my_output_product]
+
+    def get_current_stock(self):
+        return self.awi.current_stock
 
     def get_current_balance(self):
         return self.awi.current_balance

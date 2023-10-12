@@ -85,7 +85,7 @@ def make_env(
         n_suppliers=n_suppliers,  # type: ignore
         n_consumers=n_consumers,  # type: ignore
         level=level,
-        n_lines=n_lines,
+        n_lines=n_lines,  # type: ignore
         world_params=log_params,
     )
     return OneShotEnv(
@@ -100,12 +100,13 @@ def make_env(
 def test_env_runs(type_):
     env = make_env(type=type_)
 
-    obs, info = env.reset()
+    obs, _ = env.reset()
     for _ in range(500):
         action = partial(random_action, env=env)(obs)
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
-            obs, info = env.reset()
+            obs, _ = env.reset()
+
     env.close()
 
 
@@ -121,11 +122,11 @@ def test_training(type_):
     vec_env = model.get_env()
     assert vec_env is not None
     obs = vec_env.reset()
-    for i in range(1000):
-        action, _state = model.predict(obs, deterministic=True)  # type: ignore
-        obs, reward, terminated, truncated, info = env.step(action)
+    for _ in range(1000):
+        action, _ = model.predict(obs, deterministic=True)  # type: ignore
+        obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
-            obs, info = env.reset()
+            obs, _ = env.reset()
 
 
 def test_rl_agent_fallback():
@@ -161,12 +162,12 @@ def test_rl_agent_with_a_trained_model():
 def test_env_runs_one_world():
     env = make_env(type="unlimited")
 
-    obs, info = env.reset()
+    obs, _ = env.reset()
     for _ in range(env._world.n_steps):
         action = partial(random_action, env=env)(obs)
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
-            obs, info = env.reset()
+            obs, _ = env.reset()
     env.close()
 
 
@@ -213,14 +214,14 @@ def test_action_manager(type_: type[ActionManager]):
 def test_env_random_policy():
     env = make_env(log=True)
 
-    obs, info = env.reset()
+    obs, _ = env.reset()
     world = env._world
-    for _ in range(world.n_steps * world.neg_n_steps):
+    for _ in range(world.n_steps * world.neg_n_steps):  # type: ignore
         action = partial(random_action, env=env)(obs)
         assert env.action_space.contains(
             action
         ), "f{action} not contained in the action space"
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             break
     env.close()
@@ -259,7 +260,7 @@ def test_env_greedy_policy_no_end():
         # assert env.action_space.contains(
         #     action
         # ), f"{action} not contained in the action space"
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             break
     env.close()
@@ -272,11 +273,11 @@ def test_env_greedy_policy_no_end():
 def test_env_random_policy_no_end():
     env = make_env(log=False)
 
-    obs, info = env.reset()
+    obs, _ = env.reset()
     world = env._world
     accepted_sometime = False
     ended_everything = True
-    for _ in range(world.n_steps * world.neg_n_steps):
+    for _ in range(world.n_steps * world.neg_n_steps):  # type: ignore
         action = partial(random_policy, env=env)(obs)
         decoded_action = env._action_manager.decode(env._agent.awi, action)
         if not all(
@@ -291,7 +292,7 @@ def test_env_random_policy_no_end():
         assert env.action_space.contains(
             action
         ), "f{action} not contained in the action space"
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             break
     env.close()
@@ -307,6 +308,7 @@ class TestReducingNeedsReward(RewardFunction):
         return needs
 
     def __call__(self, awi, action, info):
+        _ = action
         current_needs = (
             awi.state.needed_sales if awi.level == 0 else awi.state.needed_supplies
         )
@@ -386,7 +388,7 @@ def test_relative_times_make_sense():
     for _ in range(60):
         results.append([obs[-5], obs[-4]])
         action = policy(obs)
-        decoded = env._action_manager.decode(env._agent.awi, action)
+        # env._action_manager.decode(env._agent.awi, action)  # type: ignore
         obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             obs, _ = env.reset()

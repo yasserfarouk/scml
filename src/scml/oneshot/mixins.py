@@ -46,6 +46,9 @@ class OneShotUFunCreatorMixin:
             current_balance=awi.current_balance,
             suppliers=set(awi.my_suppliers),
             consumers=set(awi.my_consumers),
+            storage_cost=awi.current_storage_cost,
+            dispose_extra=awi.is_disposing,
+            current_stock=awi.current_stock,
         )
         if hasattr(self, "_obj") and not in_adapter:
             self._obj.ufun = self.ufun  # type: ignore

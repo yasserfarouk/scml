@@ -157,6 +157,10 @@ class FactoryProfile:
     """An n_lines * n_processes array giving the cost of executing any process (INVALID_COST indicates infinity)"""
 
     @property
+    def cost(self):
+        return self.costs[0]
+
+    @property
     def n_lines(self):
         return self.costs.shape[0]
 

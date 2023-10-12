@@ -154,7 +154,11 @@ class OneShotProfile:
     shortfall_penalty_dev: float
     """A positive number specifying the std. dev.  of penalty for selling too much."""
     disposal_cost_dev: float
-    """A positive number specifying the std. dev. penalty buying too much."""
+    """A positive number specifying the std. dev. penalty for buying too much."""
+    storage_cost_mean: float = 0
+    """A positive number specifying the average cost of storing one item for one day."""
+    storage_cost_dev: float = 0
+    """A positive number specifying the std dev. of the cost of storing one item for one day."""
 
     @property
     def level(self):
@@ -281,6 +285,10 @@ class OneShotState:
     """Today's needed sales as of now (exogenous input - exogenous output - total sales so far)."""
     needed_supplies: int
     """Today needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
+    current_stock: int = 0
+    """Current quantity in the agent's inventory"""
+    storage_cost: float = 0
+    """Storage cost"""
 
     @property
     def running_buy_states(self) -> dict[str, SAOState]:
@@ -334,7 +342,7 @@ class OneShotState:
         return {  # type: ignore
             partner: info.nmi.state.current_offer  # type: ignore
             for partner, info in self.current_negotiation_details["buy"].items()
-            if info.nmi.state.running and info.nmi.state.started
+            if not info.nmi.state.ended
         }
 
     @property

@@ -38,9 +38,12 @@ OneShotAWI
       ~OneShotAWI.current_shortfall_penalty
       ~OneShotAWI.current_states
       ~OneShotAWI.current_step
+      ~OneShotAWI.current_stock
+      ~OneShotAWI.current_storage_cost
       ~OneShotAWI.default_signing_delay
       ~OneShotAWI.exogenous_contract_summary
       ~OneShotAWI.initialized
+      ~OneShotAWI.is_disposing
       ~OneShotAWI.is_exogenous_forced
       ~OneShotAWI.is_first_level
       ~OneShotAWI.is_last_level
@@ -138,9 +141,12 @@ OneShotAWI
    .. autoattribute:: current_shortfall_penalty
    .. autoattribute:: current_states
    .. autoattribute:: current_step
+   .. autoattribute:: current_stock
+   .. autoattribute:: current_storage_cost
    .. autoattribute:: default_signing_delay
    .. autoattribute:: exogenous_contract_summary
    .. autoattribute:: initialized
+   .. autoattribute:: is_disposing
    .. autoattribute:: is_exogenous_forced
    .. autoattribute:: is_first_level
    .. autoattribute:: is_last_level

@@ -52,18 +52,19 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """
         The main policy. Generates an action given a state
         """
-        offers = []
-        for partner in itertools.chain(state.my_suppliers, state.my_consumers):
+        offers = dict()
+        for partner, offer in state.current_offers.items():
             # End the negotiation if it is already ended or randomly with some small probability
-            if (
-                random.random() < 0.025
-                or partner not in state.mechanism_states.keys()
-                or state.mechanism_states[partner].ended
-            ):
-                offers[partner] = (0, 0)
+            if random.random() < 0.02:
+                offers[partner] = SAOResponse(ResponseType.END_NEGOTIATION, None)
+                continue
+            if random.random() < 0.05 and offer is not None:
+                offers[partner] = SAOResponse(ResponseType.ACCEPT_OFFER, offer)
                 continue
             outcome = self.awi.current_input_outcome_space.random_outcome()
-            offers.append((outcome[QUANTITY], outcome[UNIT_PRICE]))
+            offers[partner] = SAOResponse(
+                ResponseType.REJECT_OFFER, (outcome[QUANTITY], outcome[UNIT_PRICE])
+            )
         return offers
 
     def decode_action(self, action: dict[str, SAOResponse]) -> dict[str, SAOResponse]:

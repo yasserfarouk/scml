@@ -63,6 +63,7 @@ __all__ = [
     "SCML2021OneShotWorld",
     "SCML2022OneShotWorld",
     "SCML2023OneShotWorld",
+    "SCML2024OneShotWorld",
 ]
 
 
@@ -117,6 +118,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         exogenous_force_max: bool = False,
         # factory parameters
         initial_balance: np.ndarray | tuple[int, int] | int = 1000,
+        # disposal everyday
+        dispose_every: int = 1,
         # General SCML2020World Parameters
         compact=False,
         no_logs=False,
@@ -159,6 +162,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             neg_n_steps *= 2
 
         self._profits: dict[str, list[float]] = defaultdict(list)
+        self._inventory: dict[str, int] = defaultdict(int)
         self._breach_levels: dict[str, list[float]] = defaultdict(list)
         self._breaches_of: dict[str, list[bool]] = defaultdict(list)
         self.trading_price_discount = trading_price_discount
@@ -167,10 +171,12 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.price_multiplier = price_multiplier
         self.wide_price_range = wide_price_range
         self.publish_trading_prices = publish_trading_prices
+        self.dispose_every = dispose_every
         self.penalize_bankrupt_for_future_contracts = (
             penalize_bankrupt_for_future_contracts
         )
         self.agent_disposal_cost: dict[str, list[float]] = dict()
+        self.agent_storage_cost: dict[str, list[float]] = dict()
         self.agent_shortfall_penalty: dict[str, list[float]] = dict()
         kwargs["log_to_file"] = not no_logs
         if compact:
@@ -249,6 +255,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         self.bulletin_board.record(
             "settings", financial_report_period, "financial_report_period"
         )
+        self.bulletin_board.record("settings", dispose_every, "dispose_every")
         self.bulletin_board.record(
             "settings",
             penalize_bankrupt_for_future_contracts,
@@ -419,6 +426,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 shortfall_penalty_mean=0.0,
                 disposal_cost_dev=0.0,
                 shortfall_penalty_dev=0.0,
+                storage_cost_mean=0.0,
+                storage_cost_dev=0.0,
             )
         )
         profiles.append(
@@ -430,6 +439,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 shortfall_penalty_mean=0.0,
                 disposal_cost_dev=0.0,
                 shortfall_penalty_dev=0.0,
+                storage_cost_mean=0.0,
+                storage_cost_dev=0.0,
             )
         )
         initial_balance = initial_balance.tolist() + [
@@ -500,6 +511,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             self.agent_disposal_cost[aid] = np.abs(
                 np.random.randn(self.n_steps) * profile.disposal_cost_dev
                 + profile.disposal_cost_mean
+            )
+            self.agent_storage_cost[aid] = np.abs(
+                np.random.randn(self.n_steps) * profile.storage_cost_dev
+                + profile.storage_cost_mean
             )
             self.agent_shortfall_penalty[aid] = np.abs(
                 np.random.randn(self.n_steps) * profile.shortfall_penalty_dev
@@ -661,8 +676,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         force_signing=True,
         profit_basis=np.max,
         disposal_cost: np.ndarray | tuple[float, float] | float = (0.0, 0.2),
+        storage_cost: np.ndarray | tuple[float, float] | float = (0.0, 0.0),
         shortfall_penalty: np.ndarray | tuple[float, float] | float = (0.2, 1.0),
         disposal_cost_dev: np.ndarray | tuple[float, float] | float = (0.0, 0.02),
+        storage_cost_dev: np.ndarray | tuple[float, float] | float = (0.0, 0.0),
         shortfall_penalty_dev: np.ndarray
         | tuple[float, float]
         | float = (
@@ -722,14 +739,16 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
                                force_signing is False and use_exogenous_contracts is True
             disposal_cost: A range to sample mean-disposal costs for all factories from
+            storage_cost: A range to sample mean-storage costs for all factories from
             shortfall_penalty: A range to sample mean-shortfall penalty for all factories from
             disposal_cost_dev: A range to sample std. dev of disposal costs for all factories from
+            storage_cost_dev: A range to sample std. dev of storage costs for all factories from
             shortfall_penalty_dev: A range to sample std. dev of shortfall penalty for all factories from
             exogenous_price_dev: The standard deviation of exogenous contract prices relative to the mean price
             price_multiplier: A value to multiply with trading/catalog price to get the upper limit on prices for all negotiations
             random_agent_types: If True, the final agent types used by the generato wil always be sampled from the given types.
                                 If False, this random sampling will only happin if len(agent_types) != n_agents.
-            penalties_scale: What are `disposal_cost` and `shortfall_penalty` relative to.
+            penalties_scale: What are `disposal_cost`, `storage_cost` and `shortfall_penalty` relative to.
                             There are four options: `trading`, `catalog` mean trading
                             and catalog prices of the product. `unit` means the unit
                             price in the contract and `none` means the `storage-cost`
@@ -1056,6 +1075,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                     esale_prices[:, -1] = sale_prices[a, :]
                 dp = realin(shortfall_penalty)
                 sc = realin(disposal_cost)
+                ss = realin(storage_cost)
                 profile_info.append(
                     (
                         OneShotProfile(
@@ -1063,8 +1083,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                             input_product=l,
                             n_lines=n_lines,
                             disposal_cost_mean=sc,
+                            storage_cost_mean=ss,
                             shortfall_penalty_mean=dp,
                             disposal_cost_dev=realin(disposal_cost_dev) * sc,
+                            storage_cost_dev=realin(disposal_cost_dev) * ss,
                             shortfall_penalty_dev=realin(shortfall_penalty_dev) * dp,
                         ),
                         esales,
@@ -1227,6 +1249,9 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
     def current_balance(self, agent_id: str):
         return sum(self._profits[agent_id]) + self.initial_balances[agent_id]
 
+    def current_inventory(self, agent_id: str):
+        return self._inventory[agent_id]
+
     def add_financial_report(
         self, agent: DefaultOneShotAdapter, reports_agent, reports_time
     ) -> None:
@@ -1250,7 +1275,8 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             agent_id=agent.id,
             step=self.current_step,
             cash=current_balance,
-            assets=0,
+            assets=self._inventory.get(agent.id, 0)
+            * self.trading_prices[agent.awi.my_output_product],
             breach_prob=len([_ for _ in self._breaches_of[agent.id] if _])
             / len(self._breaches_of[agent.id]),
             breach_level=sum(self._breach_levels[agent.id])
@@ -1461,8 +1487,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 self._output_price[aid],
             )
             ufun = agent.ufun
-            ucon = ufun.from_contracts(self.__contracts[aid])
+            ucon, _, inventory = ufun.from_contracts(
+                self.__contracts[aid], return_producible=True
+            )
             self._profits[aid].append(ucon)
+            self._inventory[aid] = inventory
             self._breach_levels[aid].append(
                 ufun.breach_level(
                     qin,
@@ -2146,3 +2175,7 @@ class SCML2023OneShotWorld(SCML2020OneShotWorld):
         kwargs["price_multiplier"] = 0.0
         kwargs["wide_price_range"] = False
         super().__init__(*args, **kwargs)
+
+
+class SCML2024OneShotWorld(SCML2023OneShotWorld):
+    pass

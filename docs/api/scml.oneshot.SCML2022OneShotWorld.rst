@@ -84,6 +84,7 @@ SCML2022OneShotWorld
       ~SCML2022OneShotWorld.contract_size
       ~SCML2022OneShotWorld.create
       ~SCML2022OneShotWorld.current_balance
+      ~SCML2022OneShotWorld.current_inventory
       ~SCML2022OneShotWorld.delete_executed_contracts
       ~SCML2022OneShotWorld.draw
       ~SCML2022OneShotWorld.executable_contracts
@@ -220,6 +221,7 @@ SCML2022OneShotWorld
    .. automethod:: contract_size
    .. automethod:: create
    .. automethod:: current_balance
+   .. automethod:: current_inventory
    .. automethod:: delete_executed_contracts
    .. automethod:: draw
    .. automethod:: executable_contracts

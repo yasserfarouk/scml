@@ -26,6 +26,7 @@ OneShotState
       ~OneShotState.current_sell_states
       ~OneShotState.current_states
       ~OneShotState.current_step
+      ~OneShotState.current_stock
       ~OneShotState.disposal_cost
       ~OneShotState.exogenous_contract_summary
       ~OneShotState.exogenous_input_price
@@ -60,6 +61,7 @@ OneShotState
       ~OneShotState.running_nmis
       ~OneShotState.sales
       ~OneShotState.shortfall_penalty
+      ~OneShotState.storage_cost
       ~OneShotState.supplies
       ~OneShotState.total_sales
       ~OneShotState.total_supplies
@@ -83,6 +85,7 @@ OneShotState
    .. autoattribute:: current_sell_states
    .. autoattribute:: current_states
    .. autoattribute:: current_step
+   .. autoattribute:: current_stock
    .. autoattribute:: disposal_cost
    .. autoattribute:: exogenous_contract_summary
    .. autoattribute:: exogenous_input_price
@@ -117,6 +120,7 @@ OneShotState
    .. autoattribute:: running_nmis
    .. autoattribute:: sales
    .. autoattribute:: shortfall_penalty
+   .. autoattribute:: storage_cost
    .. autoattribute:: supplies
    .. autoattribute:: total_sales
    .. autoattribute:: total_supplies

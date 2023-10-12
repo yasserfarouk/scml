@@ -136,7 +136,7 @@ def test_uses_registered_sales_and_supplies():
         suppliers={"a", "b", "c"},
         consumers={"d", "e", "f"},
     )
-    _, p = u.from_offers(
+    _, p, _ = u.from_offers(
         tuple(), tuple(), return_producible=True, ignore_signed_contracts=True
     )
     # assert correct production amount (what can and needs to be produced)

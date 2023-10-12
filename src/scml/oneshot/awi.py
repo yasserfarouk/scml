@@ -150,10 +150,13 @@ class OneShotAWI(AgentWorldInterface):
             output exogenous contract.
           - *current_disposal_cost*: The disposal cost per unit item in the current
             step.
+          - *current_storage_cost*: The storage cost per unit item in the current
+            step.
           - *current_shortfall_penalty*: The shortfall penalty per unit item in the current
             step.
           - *current_balance*: The current balance of the agent
           - *current_score*: The current score (balance / initial balance) of the agent
+          - *current_stock*: The current quantity in the inventory (always zero for OneShot)
 
         E. Sales and Supplies (quantities) for today:
           - *sales*: Today's sales per customer so far.
@@ -389,7 +392,9 @@ class OneShotAWI(AgentWorldInterface):
             exogenous_output_price=self.current_exogenous_output_price,
             disposal_cost=self.current_disposal_cost,
             shortfall_penalty=self.current_shortfall_penalty,
+            storage_cost=self.current_storage_cost,
             current_balance=self.current_balance,
+            current_stock=self.current_stock,
             total_sales=self.total_sales,
             total_supplies=self.total_supplies,
             n_products=self.n_products,
@@ -438,13 +443,28 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.current_balance(self.agent.id)
 
     @property
+    def current_stock(self):
+        return self._world._inventory.get(self.agent.id, 0)
+
+    @property
     def current_score(self) -> float:
         """Returns the current score (profit) of the agent"""
         return self._world.scores()[self.agent.id]
 
     @property
+    def is_disposing(self) -> bool:
+        """Returns the current score (profit) of the agent"""
+        if self._world.dispose_every > self.current_step:
+            return False
+        if self._world.dispose_every <= 1:
+            return True
+        return (self.current_step + 1) % self._world.dispose_every == 0
+
+    @property
     def current_inventory(self):
-        return np.zeros(self.n_products)
+        inv = np.zeros(self.n_products)
+        inv[self.my_output_product] = self.current_stock
+        return inv
 
     @property
     def current_exogenous_input_quantity(self) -> int:
@@ -503,6 +523,11 @@ class OneShotAWI(AgentWorldInterface):
     def current_disposal_cost(self) -> float:
         """Cost of storing one unit (penalizes buying too much/ selling too little)"""
         return self._world.agent_disposal_cost[self.agent.id][self._world.current_step]
+
+    @property
+    def current_storage_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return self._world.agent_storage_cost[self.agent.id][self._world.current_step]
 
     @property
     def current_shortfall_penalty(self) -> float:

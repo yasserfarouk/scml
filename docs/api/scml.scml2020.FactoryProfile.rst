@@ -10,6 +10,7 @@ FactoryProfile
 
    .. autosummary::
 
+      ~FactoryProfile.cost
       ~FactoryProfile.costs
       ~FactoryProfile.input_products
       ~FactoryProfile.n_lines
@@ -20,6 +21,7 @@ FactoryProfile
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: cost
    .. autoattribute:: costs
    .. autoattribute:: input_products
    .. autoattribute:: n_lines
