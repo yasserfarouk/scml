@@ -160,7 +160,7 @@ def test_uses_registered_sales_and_supplies():
     # ignoring signed contracts changes nothing when there are no signed contracts
     assert optim == u.from_offers(
         ((5, 6, 15),),
-        # (True,),
+        (True,),
         return_producible=False,
         ignore_signed_contracts=False,
     )
@@ -172,7 +172,7 @@ def test_uses_registered_sales_and_supplies():
                 (2, 6, 16),
                 (1, 6, 15),
             ),
-            # (True, True, True),
+            (True, True, True),
             return_producible=False,
             ignore_signed_contracts=ignore,
         )
@@ -180,7 +180,7 @@ def test_uses_registered_sales_and_supplies():
     for ignore in (True, False):
         assert expected == u.from_offers(
             ((2, 6, 14),),
-            # (True,),
+            (True,),
             return_producible=False,
             ignore_signed_contracts=ignore,
         )
@@ -206,7 +206,7 @@ def test_uses_registered_sales_and_supplies():
             (2, 6, 16),
             (1, 6, 15),
         ),
-        # (True, True),
+        (True, True),
         return_producible=False,
         ignore_signed_contracts=False,
     )
@@ -217,7 +217,7 @@ def test_uses_registered_sales_and_supplies():
             (2, 6, 16),
             (1, 6, 15),
         ),
-        # (True, True),
+        (True, True),
         return_producible=False,
         ignore_signed_contracts=True,
     )
@@ -230,7 +230,7 @@ def test_uses_registered_sales_and_supplies():
             (2, 6, 16),
             (1, 6, 15),
         ),
-        # (True, True),
+        (True, True),
         return_producible=False,
         ignore_signed_contracts=True,
     )
@@ -242,7 +242,7 @@ def test_uses_registered_sales_and_supplies():
             (1, 6, 15),
             (2, 6, 13),
         ),
-        # (True, True, True),
+        (True, True, True),
         return_producible=False,
         ignore_signed_contracts=False,
     )
