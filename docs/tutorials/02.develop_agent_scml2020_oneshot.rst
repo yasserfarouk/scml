@@ -128,17 +128,17 @@ Let’s check the scores of different agents to confirm:
 .. parsed-literal::
 
     Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.5419496768168798
-    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.8429593858196377
+    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.8833295470777902
     Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.5779058592822465
-    Agent 03Ra@0 of type RandomOneShotAgent has a final score of 1.07404322825529
-    Agent 04Ra@0 of type RandomOneShotAgent has a final score of 0.9613665223429178
+    Agent 03Ra@0 of type RandomOneShotAgent has a final score of 1.05654613556619
+    Agent 04Ra@0 of type RandomOneShotAgent has a final score of 0.9290892804333534
     Agent 05MDN@0 of type MyOneShotDoNothing has a final score of 0.5278984195503129
     Agent 06MDN@0 of type MyOneShotDoNothing has a final score of 0.48263427095216405
     Agent 07MDN@0 of type MyOneShotDoNothing has a final score of 0.49452087770114345
-    Agent 08Ra@1 of type RandomOneShotAgent has a final score of 0.908545992618144
+    Agent 08Ra@1 of type RandomOneShotAgent has a final score of 0.9017540343883679
     Agent 09MDN@1 of type MyOneShotDoNothing has a final score of 0.6957672799890143
     Agent 10MDN@1 of type MyOneShotDoNothing has a final score of 0.7505249202460941
-    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8557839236180342
+    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8887949232772625
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -153,7 +153,7 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.9285398105308047),
+    [('RandomOneShotAgent', 0.9319027841485928),
      ('MyOneShotDoNothing', 0.5816001863625507)]
 
 
@@ -205,35 +205,35 @@ market.
         <tr>
           <th rowspan="2" valign="top">01Ra@0</th>
           <th>08Ra@1</th>
-          <td>6.333333</td>
-          <td>16.444444</td>
+          <td>5.222222</td>
+          <td>16.333333</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>5.200000</td>
-          <td>16.200000</td>
+          <td>5.700000</td>
+          <td>16.500000</td>
         </tr>
         <tr>
           <th rowspan="2" valign="top">03Ra@0</th>
           <th>08Ra@1</th>
-          <td>6.555556</td>
-          <td>16.666667</td>
+          <td>6.100000</td>
+          <td>16.700000</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>5.100000</td>
-          <td>16.600000</td>
+          <td>6.000000</td>
+          <td>16.750000</td>
         </tr>
         <tr>
           <th rowspan="2" valign="top">04Ra@0</th>
           <th>08Ra@1</th>
-          <td>5.000000</td>
-          <td>16.444444</td>
+          <td>5.100000</td>
+          <td>16.700000</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>6.200000</td>
-          <td>16.600000</td>
+          <td>5.222222</td>
+          <td>16.333333</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
@@ -555,23 +555,11 @@ using the same base class.
 
     world, ascores, tscores = try_agent(SimpleAgent)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_12_0.png
-
-
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('SimpleAgent', 0.8591494720767391),
-     ('RandomOneShotAgent', 0.6848959598289409)]
-
 
 This simple agent is better than the random agent. Let’s understand how
 it works:
@@ -763,23 +751,11 @@ We will try to remedie both of these issues in the following agent:
 
     world, ascores, tscores = try_agent(BetterAgent)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_17_0.png
-
-
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('BetterAgent', 0.8380852890935055),
-     ('RandomOneShotAgent', 0.6406130091227857)]
-
 
 It seems that ``BetterAgent`` is getting a score that is not any better
 than ``SimpleAgent``. Let’s dive into the agent and analyze how it
@@ -839,11 +815,6 @@ different concession exponents:
         plt.plot(x, y, label=f"Concession Exponent: {e}")
         plt.xlabel("Step (Of 20)"); plt.ylabel("Threshold $th$")
         plt.legend()
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_21_0.png
-
 
 You can see that the smaller the exponent the more *hard-headed* will
 the agent be. Setting the concession exponent to :math:`0` will recover
@@ -950,11 +921,6 @@ of price and quantity independently.
     plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed)")
     plt.title("Difference in profit between matching at worst price and mismatch at best price [2023]");
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_25_0.png
-
-
 As the figure above shows, being able to match supply to demand through
 negotiation is **orders of magnitude** more important than being able to
 buy at a low price or sell at a high price. This is a new feature of the
@@ -999,11 +965,6 @@ settings of SCML 2022:
     plt.plot(data[data.columns[0]], [0]*len(data))
     plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed) [2022]")
     plt.title("Difference in profit between matching at worst price and mismatch at best price [2022]");
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_27_0.png
-
 
 We can see that in the settings of SCML OneShot 2022, price had a much
 more pronounced importance (from the fact that a much larger fraction of
@@ -1050,23 +1011,11 @@ concessions. The following agent implements this idea
 
     world, ascores, tscores = try_agent(AdaptiveAgent)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_29_0.png
-
-
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('AdaptiveAgent', 0.8291915955389123),
-     ('RandomOneShotAgent', 0.6759746798687081)]
-
 
 Almost as good as ``SimpleAgent``, at least in this simulation (we will
 make a more rigorous comparison later). One possiblity here is that the
@@ -1201,21 +1150,9 @@ demand.**.
 
     world, ascores, tscores = try_agent(LearningAgent)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_34_0.png
-
-
 .. code:: ipython3
 
     print_type_scores(tscores)
-
-
-.. parsed-literal::
-
-    [('LearningAgent', 0.8679079753967904),
-     ('RandomOneShotAgent', 0.7075611174041524)]
-
 
 The main idea of this agent is to limit the minimum price (for selling)
 and/or maximum price (for buying) based on events not only in this day
@@ -1343,11 +1280,6 @@ do-nothing agent in this form:
 
     world, ascores, tscores = try_agent(MySyncOneShotDoNothing)
 
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_39_0.png
-
-
 As you can see, in this case, we need to override ``counter_all`` to
 counter offers received from *all* the partners and ``first_proposals``
 to decide a first offer for *each* partner. Notice that this is a
@@ -1444,99 +1376,6 @@ greedy agent using this approach.
             return responses
 
     world, ascores, tscores = try_agent(NaiveSyncAgent)
-
-
-::
-
-
-    ---------------------------------------------------------------------------
-
-    AttributeError                            Traceback (most recent call last)
-
-    Cell In[28], line 63
-         60                 responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
-         61         return responses
-    ---> 63 world, ascores, tscores = try_agent(NaiveSyncAgent)
-
-
-    Cell In[3], line 10, in try_agent(agent_type, n_processes, **kwargs)
-          8 def try_agent(agent_type, n_processes=2, **kwargs):
-          9     """Runs an agent in a world simulation against a randomly behaving agent"""
-    ---> 10     return try_agents([RandomOneShotAgent, agent_type], n_processes,**kwargs)
-
-
-    Cell In[3], line 26, in try_agents(agent_types, n_processes, n_trials, draw, agent_params, year)
-         22 cls = {2022:SCML2022OneShotWorld, 2023: SCML2023OneShotWorld}[year]
-         23 world = cls(
-         24 **cls.generate(agent_types, agent_params=agent_params, n_steps=10,
-         25                n_processes=p, random_agent_types=True), construct_graphs=True,)
-    ---> 26 world.run()
-         28 all_scores = world.scores()
-         29 for aid, agent in world.agents.items():
-
-
-    File ~/code/projects/negmas/negmas/situated/world.py:2180, in World.run(self)
-       2178 if self.time >= self.time_limit:
-       2179     break
-    -> 2180 if not self.step():
-       2181     break
-
-
-    File ~/code/projects/negmas/negmas/situated/world.py:1775, in World.step(self, n_neg_steps, n_mechanisms, actions, neg_actions)
-       1773     return True
-       1774 assert self.__next_operation_index == 0
-    -> 1775 if not self._step_to_negotiations(cross_step_boundary):
-       1776     return False
-       1777 self.__stepped_mechanisms = set()
-
-
-    File ~/code/projects/negmas/negmas/situated/world.py:2087, in World._step_to_negotiations(self, cross_step_boundary)
-       2085     self.__next_operation_index = i
-       2086     break
-    -> 2087 operation_map[operation]()
-       2088 if self.time >= self.time_limit:
-       2089     self.__next_operation_index = i
-
-
-    File ~/code/projects/negmas/negmas/situated/world.py:1875, in World._step_to_negotiations.<locals>._simulation_step()
-       1873     self.simulation_exceptions[self._current_step].append(exception2str())
-       1874     if not self.ignore_simulation_exceptions:
-    -> 1875         raise (e)
-       1876 self.__stage += 1
-
-
-    File ~/code/projects/negmas/negmas/situated/world.py:1869, in World._step_to_negotiations.<locals>._simulation_step()
-       1867 def _simulation_step():
-       1868     try:
-    -> 1869         self.simulation_step(self.__stage)
-       1870         if self.time >= self.time_limit:
-       1871             return
-
-
-    File ~/code/projects/scml/src/scml/oneshot/world.py:1350, in SCML2020OneShotWorld.simulation_step(self, stage)
-       1348     for aid, a in self.agents.items():
-       1349         if hasattr(a, "before_step"):
-    -> 1350             a.before_step()
-       1352     return
-       1354 # update trading price information
-       1355 # --------------------------------
-
-
-    File ~/code/projects/scml/src/scml/oneshot/sysagents.py:88, in DefaultOneShotAdapter.before_step(self)
-         86 self.awi._reset_sales_and_supplies()
-         87 if hasattr(self._obj, "before_step"):
-    ---> 88     self._obj.before_step()
-
-
-    Cell In[28], line 9, in NaiveSyncAgent.before_step(self)
-          8 def before_step(self):
-    ----> 9     super().before_step()
-         10     self.ufun.find_limit(True)
-         11     self.ufun.find_limit(False)
-
-
-    AttributeError: 'super' object has no attribute 'before_step'
-
 
 This agent shows a case of parameterizing your agent so that it can be
 tested with different hyper-parameters. You do that by passing whatever
@@ -2428,9 +2267,6 @@ in this tutorial (with some modifications):
 
     import scml.oneshot.agents as agents
     pprint([ _ for _ in agents.__dir__() if _.endswith("Agent")])
-
-
-
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.
