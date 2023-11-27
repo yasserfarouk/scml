@@ -492,7 +492,9 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
                 )
                 return False
             if len(awi.my_suppliers) != 1:
-                warnings.warn(f"Invalid n_suppliers: {len(awi.my_suppliers)=} != 1")
+                warnings.warn(
+                    f"Invalid n_suppliers for {awi.agent.name} (at level {my_level} [of {n_processes} processes]): {len(awi.my_suppliers)=} != 1\nAll Suppliers: {awi.all_suppliers}"
+                )
                 return False
         elif my_level == n_processes - 1:
             if not isin(len(awi.my_suppliers), self.n_suppliers):
@@ -506,7 +508,7 @@ class LimitedPartnerNumbersOneShotFactory(OneShotWorldFactory):
         else:
             if not isin(len(awi.my_suppliers), self.n_suppliers):
                 warnings.warn(
-                    f"Invalid n_suppliers: {len(awi.my_suppliers)=} != {self.n_suppliers=}"
+                    f"Invalid n_suppliers: {len(awi.my_suppliers)=} not in {self.n_suppliers=}"
                 )
                 return False
             if not isin(len(awi.my_consumers), self.n_consumers):

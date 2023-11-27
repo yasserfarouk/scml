@@ -24,9 +24,10 @@ class OneShotRLAgent(OneShotPolicy):
     def __init__(
         self,
         *args,
-        models: list[RLModel] = [],
-        observation_managers: list[ObservationManager] = [],
-        action_managers: list[ActionManager] | None = None,
+        models: list[RLModel] | tuple[RLModel] = tuple(),
+        observation_managers: list[ObservationManager]
+        | tuple[ObservationManager] = tuple(),
+        action_managers: list[ActionManager] | tuple[ActionManager] | None = None,
         fallback_type: type[OneShotAgent] = GreedyOneShotAgent,
         fallback_params: dict[str, Any] | None = None,
         **kwargs,

@@ -72,6 +72,7 @@ __all__ = [
     "SCML2021World",
     "SCML2022World",
     "SCML2023World",
+    "SCML2024World",
     "Failure",
     "AWI",
 ]
@@ -2992,4 +2993,8 @@ class SCML2022World(SCML2021World):
 
 
 class SCML2023World(SCML2022World):
+    pass
+
+
+class SCML2024World(SCML2022World):
     pass

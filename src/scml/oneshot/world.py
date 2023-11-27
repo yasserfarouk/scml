@@ -2146,3 +2146,7 @@ class SCML2023OneShotWorld(SCML2020OneShotWorld):
         kwargs["price_multiplier"] = 0.0
         kwargs["wide_price_range"] = False
         super().__init__(*args, **kwargs)
+
+
+class SCML2024OneShotWorld(SCML2023OneShotWorld):
+    pass

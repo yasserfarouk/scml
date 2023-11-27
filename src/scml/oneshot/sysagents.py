@@ -61,10 +61,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     raise AssertionError(
                         f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
                     )
-                else:
-                    warnings.warn(
-                        f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
-                    )
+                # else:
+                # warnings.warn(
+                #     f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
+                # )
 
         elif annotation["seller"] == self.id:
             if self.ufun is not None:
@@ -83,10 +83,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     raise AssertionError(
                         f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
                     )
-                else:
-                    warnings.warn(
-                        f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
-                    )
+                # else:
+                #     warnings.warn(
+                #         f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}\n{contract}'
+                #     )
         else:
             raise ValueError(
                 f"{self.id} received a  negotiation failure for which it is not a buyer nor a seller"
@@ -126,10 +126,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     raise AssertionError(
                         f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
                     )
-                else:
-                    warnings.warn(
-                        f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
-                    )
+                # else:
+                #     warnings.warn(
+                #         f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}\n{contract}'
+                #     )
         elif annotation["seller"] == self.id:
             self.awi._register_sale(annotation["buyer"], agreement["quantity"])
             if self.ufun is not None:
@@ -145,10 +145,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     raise AssertionError(
                         f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
                     )
-                else:
-                    warnings.warn(
-                        f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}'
-                    )
+                # else:
+                #     warnings.warn(
+                #         f'Partners: {list(self.awi.current_negotiation_details["sell"].keys())} {annotation["buyer"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}\n{contract}'
+                #     )
         else:
             raise ValueError(
                 f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"
