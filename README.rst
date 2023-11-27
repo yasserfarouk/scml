@@ -16,7 +16,7 @@ Overview
     * - Gitter
       - | General |gitter| Standard |std| Collusion |collusion| OneShot |oneshot|
 .. |docs| image:: https://readthedocs.org/projects/scml/badge/?style=flat
-    :target: http://www.yasserm.com/scml/scml2020docs
+    :target: https://scml.readthedocs.io/en/latest
     :alt: Documentation Status
 
 .. |codecov| image:: https://codecov.io/gh/yasserfarouk/scml/branch/master/graph/badge.svg
