@@ -206,7 +206,7 @@ competition for all tracks. Here is some example script to run `1` such world us
 Notice that `generate_worlds` will not generate a single world but a set of them putting the `COMPETITORS`
 in all possible assignments of factories. The detailed process of world generation is described in the appendices of the
 `description
-<http://www.yasserm.com/scml/scml2022.pdf>`_ .
+<https://scml.readthedocs.io/en/latest/gc/scml2022.pdf>`_ .
 
 You can change the competitors by just changing the `COMPETITORS` list. Setting the third parameter of `generate_worlds`
 to `1` generates a standard league world and setting it to a random number between 2 and 4 generates a collusion

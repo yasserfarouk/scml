@@ -555,11 +555,23 @@ using the same base class.
 
     world, ascores, tscores = try_agent(SimpleAgent)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_12_0.png
+
+
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('SimpleAgent', 1.1530532176692672),
+     ('RandomOneShotAgent', 0.5702122629824699)]
+
 
 This simple agent is better than the random agent. Let’s understand how
 it works:
@@ -751,11 +763,23 @@ We will try to remedie both of these issues in the following agent:
 
     world, ascores, tscores = try_agent(BetterAgent)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_17_0.png
+
+
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('BetterAgent', 1.1081770211788013),
+     ('RandomOneShotAgent', 0.4544590995817126)]
+
 
 It seems that ``BetterAgent`` is getting a score that is not any better
 than ``SimpleAgent``. Let’s dive into the agent and analyze how it
@@ -815,6 +839,11 @@ different concession exponents:
         plt.plot(x, y, label=f"Concession Exponent: {e}")
         plt.xlabel("Step (Of 20)"); plt.ylabel("Threshold $th$")
         plt.legend()
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_21_0.png
+
 
 You can see that the smaller the exponent the more *hard-headed* will
 the agent be. Setting the concession exponent to :math:`0` will recover
@@ -921,6 +950,11 @@ of price and quantity independently.
     plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed)")
     plt.title("Difference in profit between matching at worst price and mismatch at best price [2023]");
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_25_0.png
+
+
 As the figure above shows, being able to match supply to demand through
 negotiation is **orders of magnitude** more important than being able to
 buy at a low price or sell at a high price. This is a new feature of the
@@ -965,6 +999,11 @@ settings of SCML 2022:
     plt.plot(data[data.columns[0]], [0]*len(data))
     plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed) [2022]")
     plt.title("Difference in profit between matching at worst price and mismatch at best price [2022]");
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_27_0.png
+
 
 We can see that in the settings of SCML OneShot 2022, price had a much
 more pronounced importance (from the fact that a much larger fraction of
@@ -1011,11 +1050,23 @@ concessions. The following agent implements this idea
 
     world, ascores, tscores = try_agent(AdaptiveAgent)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_29_0.png
+
+
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('AdaptiveAgent', 1.103214145454832),
+     ('RandomOneShotAgent', 0.6044719928797151)]
+
 
 Almost as good as ``SimpleAgent``, at least in this simulation (we will
 make a more rigorous comparison later). One possiblity here is that the
@@ -1150,9 +1201,21 @@ demand.**.
 
     world, ascores, tscores = try_agent(LearningAgent)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_34_0.png
+
+
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('LearningAgent', 1.0767123341704785),
+     ('RandomOneShotAgent', 0.43112511854756047)]
+
 
 The main idea of this agent is to limit the minimum price (for selling)
 and/or maximum price (for buying) based on events not only in this day
@@ -1280,6 +1343,11 @@ do-nothing agent in this form:
 
     world, ascores, tscores = try_agent(MySyncOneShotDoNothing)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_39_0.png
+
+
 As you can see, in this case, we need to override ``counter_all`` to
 counter offers received from *all* the partners and ``first_proposals``
 to decide a first offer for *each* partner. Notice that this is a
@@ -1376,6 +1444,11 @@ greedy agent using this approach.
             return responses
 
     world, ascores, tscores = try_agent(NaiveSyncAgent)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_42_0.png
+
 
 This agent shows a case of parameterizing your agent so that it can be
 tested with different hyper-parameters. You do that by passing whatever
@@ -1501,6 +1574,13 @@ Let’s see how did it do:
 
     print_type_scores(tscores)
 
+
+.. parsed-literal::
+
+    [('NaiveSyncAgent', 1.011428678611989),
+     ('RandomOneShotAgent', 0.4575266979964106)]
+
+
 This base-class simplifies the job of the agent developer by providing a
 single function (``counter_all``) in which to handle all offers it
 receive (most of the time, remember that sometimes you will receive a
@@ -1537,6 +1617,15 @@ Here are few examples of how it would distribute :math:`10` units over
 .. code:: ipython3
 
     [distribute(10, 4) for _ in range(5)]
+
+
+
+
+.. parsed-literal::
+
+    [[3, 1, 4, 2], [3, 2, 3, 2], [3, 1, 2, 4], [2, 4, 3, 1], [3, 2, 4, 1]]
+
+
 
 We will also need a helper function to find all subsets of a given set
 (powerset):
@@ -1660,9 +1749,21 @@ We will also need a helper function to find all subsets of a given set
 
     world, ascores, tscores = try_agent(SyncRandomAgent)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_52_0.png
+
+
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('SyncRandomAgent', 1.0853351857983407),
+     ('RandomOneShotAgent', 0.450209032945824)]
+
 
 This is the highest score we got so far even though that agent is not
 that intelligent in its decision making. Let’s check it in details:
@@ -1954,9 +2055,21 @@ Here is the full agent
 
     world, ascors, tscores = try_agent(SimpleSingleAgreementAgent)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_56_0.png
+
+
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('SimpleSingleAgreementAgent', 0.7302654874310335),
+     ('RandomOneShotAgent', 0.7292633785419493)]
+
 
 Using Independent Negotiators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1994,6 +2107,17 @@ This is an example agent that uses this approach:
             return defaultdict(lambda: self.ufun)
     world, ascors, tscores = try_agent(AssumeOthersFailIndNeg)
     print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_59_0.png
+
+
+.. parsed-literal::
+
+    [('RandomOneShotAgent', 0.23024652727223588),
+     ('AssumeOthersFailIndNeg', -0.13024519656176622)]
+
 
 This agent simply uses its **central** ufun for each negotiator. This is
 not a very good strategy because each negotiator is now assuming that
@@ -2050,6 +2174,17 @@ because the agent may over-contract.
     world, ascors, tscores = try_agent(GreedyIndNeg)
 
     print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_61_0.png
+
+
+.. parsed-literal::
+
+    [('RandomOneShotAgent', 0.18930576625467466),
+     ('GreedyIndNeg', -0.12353428551290244)]
+
 
 Using A Negotiator from the Genius Platform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2116,6 +2251,17 @@ will work correctly. Here is an example
 
     world, ascors, tscores = try_agent(GeniusIndNeg)
     print_type_scores(tscores)
+
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_63_0.png
+
+
+.. parsed-literal::
+
+    [('RandomOneShotAgent', 0.15156573389757846),
+     ('GeniusIndNeg', -0.12763536829277555)]
+
 
 More General Simple Agent (advanced)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2204,6 +2350,11 @@ agent in a deep world simulation
 
     world, ascores, tscores = try_agents([SyncRandomAgent, DeepSimpleAgent], n_processes=3)
 
+
+
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_67_0.png
+
+
 Examining the graph above, you can see that ``DeepSimple`` agents could
 get contracts when they were in the middle of the production chain. The
 ``Simple`` agent on the other hand cannot do so.
@@ -2217,6 +2368,13 @@ We can check the results now:
 .. code:: ipython3
 
     print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('SyncRandomAgent', 0.8783549200387427),
+     ('DeepSimpleAgent', 0.4640105057306638)]
+
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
 in the middle, it seems that it did worse than ``BetterAgent`` in terms
@@ -2248,6 +2406,21 @@ tutorial (we will ignore the do-nothing agents)
     )
     print_type_scores(tscores)
 
+
+.. parsed-literal::
+
+    [('SimpleAgent', 1.0744636487713797),
+     ('SyncRandomAgent', 1.0453321354156015),
+     ('BetterAgent', 1.0265674109180165),
+     ('NaiveSyncAgent', 0.9706482328717337),
+     ('LearningAgent', 0.9361909748744561),
+     ('AdaptiveAgent', 0.8681670815462654),
+     ('SimpleSingleAgreementAgent', 0.6715463572520167),
+     ('GeniusIndNeg', 0.47748396338730154),
+     ('GreedyIndNeg', 0.33230326060462134),
+     ('DeepSimpleAgent', 0.2449453075888478)]
+
+
 The way we just compared these agents is not unbiased because not all
 agents are allowed to control the same factories in the same simulation
 envoironment. The best way to compare these agents is to run a
@@ -2267,6 +2440,20 @@ in this tutorial (with some modifications):
 
     import scml.oneshot.agents as agents
     pprint([ _ for _ in agents.__dir__() if _.endswith("Agent")])
+
+
+.. parsed-literal::
+
+    ['RandomOneShotAgent',
+     'SyncRandomOneShotAgent',
+     'SingleAgreementRandomAgent',
+     'SingleAgreementAspirationAgent',
+     'GreedyOneShotAgent',
+     'GreedySyncAgent',
+     'GreedySingleAgreementAgent',
+     'OneshotDoNothingAgent',
+     'OneShotDummyAgent']
+
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.

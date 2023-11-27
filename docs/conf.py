@@ -20,16 +20,13 @@
 
 import os
 
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-if on_rtd:
-    import sphinx_rtd_theme
+import sphinx_rtd_theme
 
-    THEME_NAME = "sphinx_rtd_theme"
-    THEME_PATH = None
-else:
-    import sphinx_rtd_theme
+on_rtd = os.environ.get("READTHEDOCS", None)
 
-    THEME_NAME = "sphinx_rtd_theme"
+THEME_NAME = "sphinx_rtd_theme"
+THEME_PATH = None
+if not on_rtd:
     THEME_PATH = [sphinx_rtd_theme.get_html_theme_path()]
 
 # -- General configuration ---------------------------------------------
@@ -47,6 +44,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
+    "sphinx.ext.inheritance_diagram",
     "sphinx.ext.autosummary",
     "sphinx_automodapi.automodapi",
     "sphinx.ext.intersphinx",
@@ -124,22 +122,22 @@ todo_include_todos = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-if on_rtd:  # only set the theme if we're building docs locally
+if not on_rtd:  # only set the theme if we're building docs locally
     html_context = {
         "css_files": [
             "_static/theme_overrides.css"
         ]  # override wide tables in RTD theme
     }
-    # theme options for sphinx_rtd_theme
-    html_theme_options = {
-        "collapse_navigation": False,
-        "sticky_navigation": True,
-        "navigation_depth": 4,
-        "includehidden": True,
-        "display_version": True,
-        "prev_next_buttons_location": "bottom",
-        "titles_only": False,
-    }
+# theme options for sphinx_rtd_theme
+html_theme_options = {
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+    "navigation_depth": 4,
+    "includehidden": True,
+    "display_version": True,
+    "prev_next_buttons_location": "bottom",
+    "titles_only": False,
+}
 html_theme = THEME_NAME
 if THEME_PATH:
     html_theme_path = THEME_PATH

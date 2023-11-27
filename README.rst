@@ -103,7 +103,7 @@ Documentation
 =============
 
 
-http://www.yasserm.com/scml/scml2020docs/
+https://scml.readthedocs.io
 
 
 Development

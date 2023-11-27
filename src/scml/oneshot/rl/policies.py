@@ -1,30 +1,25 @@
 import itertools
 import random
+import sys
 from typing import Callable
 
 import numpy as np
-from negmas import SAONMI, ResponseType, SAOState
-from negmas.outcomes import Outcome
+from negmas import ResponseType
 from negmas.sao import SAOResponse
-from papermill.iorw import sys
 
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
-from scml.oneshot.rl.action import (
-    ActionManager,
-    DefaultActionManager,
-    UnconstrainedActionManager,
-)
+from scml.oneshot.common import QUANTITY, UNIT_PRICE
+from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.factory import ANACOneShotFactory
 from scml.oneshot.rl.observation import ObservationManager
-from scml.oneshot.ufun import OneShotUFun
 
 __all__ = ["random_action", "random_policy", "greedy_policy"]
 
 
 def random_action(obs: np.ndarray, env: OneShotEnv) -> np.ndarray:
     """Samples a random action from the action space of the"""
+    _ = obs
     return env.action_space.sample()
 
 
@@ -34,6 +29,7 @@ def random_policy(
     """
     Ends the negotiation or accepts with a predefined probability or samples a random response.
     """
+    _ = obs
     r = random.random()
     action = env.action_space.sample()
     if r < pend:
