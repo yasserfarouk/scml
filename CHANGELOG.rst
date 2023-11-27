@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.6.2 (2023.11.27)
+------------------
+
+* upgrading CI to python 3.12
+* importing observations
+* dropping support for python < 3.10
+* Completing first draft of the RL environment
+
 0.6.1 (2023.7.9)
 ----------------
 
