@@ -384,9 +384,9 @@ Controlling other aspects of the simulation
 
 You can control other aspects of the simulation by passing specific
 paramters to the
-`generate() <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html?scml.oneshot.SCML2020OneShotWorld.generate#scml.oneshot.SCML2020OneShotWorld.generate>`__
+`generate() <https://scml.readthedocs.io/en/latest/api/scml.oneshot.SCML2020OneShotWorld.html?scml.oneshot.SCML2020OneShotWorld.generate#scml.oneshot.SCML2020OneShotWorld.generate>`__
 method or the `World
-constructor <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html?>`__
+constructor <https://scml.readthedocs.io/en/latest/api/scml.oneshot.SCML2020OneShotWorld.html?>`__
 directly.
 
 Here is an example in which we use ``generate()`` and fix the inital
@@ -512,7 +512,7 @@ of directly calling the world constructore. Why? The main reason is that
 our settings so that it is possible — in principly — to make money in
 the generated world. Moreover, this is controllable by its parameters
 (see ``profit_*`` parameters
-`here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html?scml.oneshot.SCML2020OneShotWorld.generate#scml.oneshot.SCML2020OneShotWorld.generate>`__).
+`here <https://scml.readthedocs.io/en/latest/api/scml.oneshot.SCML2020OneShotWorld.html?scml.oneshot.SCML2020OneShotWorld.generate#scml.oneshot.SCML2020OneShotWorld.generate>`__).
 We can push things a little further by controlling the profile of each
 agent independently (which in this case is just its production cost). We
 will generate a world in which agents have costs from :math:`1` to
@@ -702,7 +702,7 @@ You can confirm for yourself that this is exactly what we expected.
 Let’s first discuss the profile. In ``SCML2021World``, an agent’s
 profile consists of the production cost **per line per product**. You
 can see the full definition
-`here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.FactoryProfile.html>`__.
+`here <https://scml.readthedocs.io/en/latest/api/scml.scml2020.FactoryProfile.html>`__.
 That is why we needed to create a 2D array of costs.
 
 Exogenous contract structure is self explanatory. You have to specify

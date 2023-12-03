@@ -1457,7 +1457,7 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
     help="Whether to ignore agent exceptions",
 )
 @click.option(
-    "--oneshot/--multishot",
+    "--oneshot/--std",
     default=False,
     help="Whether to run a one-shot game or a standard game",
 )
@@ -1528,7 +1528,7 @@ def run2024(
 
     world_name = (
         unique_name(
-            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
+            base=f"scml2024{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
         )
         if not name
         else name

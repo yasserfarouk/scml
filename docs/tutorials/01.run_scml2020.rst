@@ -15,16 +15,17 @@ Automated Negotiating Agents Competition
 (`ANAC <http://web.tuat.ac.jp/~katfuji/ANAC2021/>`__) since 2019. SCML
 runs in the SCM world.
 
-The league is built using `NegMAS <http://www.yasserm.com/negmas>`__
-which provides tools for building multiagent systems in which
-negotiations are embedded within world simulations.
+The league is built using
+`NegMAS <https://negmas.readthedocs.io/en/latest>`__ which provides
+tools for building multiagent systems in which negotiations are embedded
+within world simulations.
 
 There are two different yet related games in SCML each represented by a
-`NegMAS <http://www.yasserm.com/negmas>`__
-`World <http://www.yasserm.com/negmas/api/negmas.situated.World.html>`__
+`NegMAS <https://negmas.readthedocs.io/en/latest>`__
+`World <https://negmas.readthedocs.io/en/latest/api/negmas.situated.World.html>`__
 class:
 
--  `SCML2023World <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.SCML2021World.html>`__
+-  `SCML2023World <https://scml.readthedocs.io/en/latest/api/scml.scml2020.SCML2021World.html>`__
    A world representing the *complete* SCML game described
    `here <http://www.yasserm.com/scml/scml2021.pdf>`__ in which the
    agent is responsible of defining its own utility function, with who
@@ -33,7 +34,7 @@ class:
    trading with a combination of long-term planning, negotiation, and
    production scheduling.
 
--  `SCML2023OneShotWorld <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.SCML2020OneShotWorld.html>`__
+-  `SCML2023OneShotWorld <https://scml.readthedocs.io/en/latest/api/scml.oneshot.SCML2020OneShotWorld.html>`__
    A simpler form of the SCM world in which agents do not need to
    consider long-term planning or production scheduling described
    `here <http://www.yasserm.com/scml/scml2021oneshot.pdf>`__. This form
@@ -85,11 +86,11 @@ A (not very) brief introduction to NegMAS
 -----------------------------------------
 
 The SCM world is built using
-`NegMAS <http://www.yasserm.com/negmas/>`__. This section provides a
-very short introduction of it to help you understand the terms used in
-this document. Please refer to `NegMAS
-documetnation <http://www.yasserm.com/negmas/>`__ for full description
-and details as well as tutorials and other goodies.
+`NegMAS <https://negmas.readthedocs.io/en/latest/>`__. This section
+provides a very short introduction of it to help you understand the
+terms used in this document. Please refer to `NegMAS
+documetnation <https://negmas.readthedocs.io/en/latest/>`__ for full
+description and details as well as tutorials and other goodies.
 
 This image shows the main components of a simulation in a NegMAS world:
 |NegMAS world|
@@ -102,7 +103,7 @@ environment, takes care of running negotiations and keeps track of
 agreement signing and the resulting **Contract**\ s. The **World**
 object also controls logging, event management, serialization,
 visualization, etc. Refer to the
-`World <http://www.yasserm.com/negmas/api/negmas.situated.World.html>`__
+`World <https://negmas.readthedocs.io/en/latest/api/negmas.situated.World.html>`__
 documentation for more details (you need to do that only if you are
 implementing new world simulations).
 
@@ -119,13 +120,13 @@ specific world inherited from NegMAS’s **Agent** class. For SCML, this
 base class is called **OneShotAgent** for the OneShot game (to go with
 the SCML2020OneShotWorld), and **SCML2020Agent** for the full game (to
 go with the SCML2020World and SCML20201World). Refer to the
-`Agent <http://www.yasserm.com/negmas/api/negmas.situated.Agent.html>`__
+`Agent <https://negmas.readthedocs.io/en/latest/api/negmas.situated.Agent.html>`__
 documentation for more details about general NegMAS agents. Full
 information about the **OneShotAgent** and **SCML2020Agent** classes can
 be found
-`here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.SCML2020Agent.html>`__
+`here <https://scml.readthedocs.io/en/latest/api/scml.scml2020.SCML2020Agent.html>`__
 and
-`here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotAgent.html>`__
+`here <https://scml.readthedocs.io/en/latest/api/scml.oneshot.OneShotAgent.html>`__
 respectively.
 
 As a participant in SCML, you only need to develop an Agent class
@@ -152,7 +153,7 @@ The world designer usually defines an AWI for its world that inherits
 NegMAS’s **AgentWorldInterface** class and provides any special services
 for agents interacting in this world. You can find all the services
 available to your agent through the AgentWorldInterface
-`here <http://www.yasserm.com/negmas/api/negmas.situated.AgentWorldInterface.html>`__.
+`here <https://negmas.readthedocs.io/en/latest/api/negmas.situated.AgentWorldInterface.html>`__.
 These methods and properties are still available for your agent in SCML.
 Nevertheless, in many cases, more convenient ways to access some of the
 information (e.g. the bulletin board) is provided in the specific AWIs
@@ -165,9 +166,9 @@ called **OneShotAWI** and is defined in *scml.scml2020* to go with
 earlier version is also defined in *scml.scml2019* which is a
 *discontinued* form of the game used in ANAC 2019 competition. You can
 find all the services provided by these AWIs
-`here <http://www.yasserm.com/scml/scml2020docs/api/scml.oneshot.OneShotAWI.html>`__
+`here <https://scml.readthedocs.io/en/latest/api/scml.oneshot.OneShotAWI.html>`__
 for the OneShot game (OneShot track) and
-`here <http://www.yasserm.com/scml/scml2020docs/api/scml.scml2020.AWI.html>`__
+`here <https://scml.readthedocs.io/en/latest/api/scml.scml2020.AWI.html>`__
 for the full game (Standard and Collusion tracks).
 
 Now that we know how worlds and agents work and interact, we can look at
@@ -191,27 +192,27 @@ objects call methods in **Negotiator** objects directly but
 **Mechanism** object through a **NegotiatorMechanismInterface** (AMI).
 Note that it is an AMI not a NMI (for historical reasons). You can find
 more details about the general NegMAS AMI
-`here <http://www.yasserm.com/negmas/api/negmas.common.NegotiatorMechanismInterface.html>`__.
+`here <https://negmas.readthedocs.io/en/latest/api/negmas.common.NegotiatorMechanismInterface.html>`__.
 
 Each specific **Mechanism** defines a corresponding specific
 **NegotiatorMechanismInterface** class (in the same way that **World**
 classes define their own AWI). The **SAOMechanism** used in SCML defines
 **SAONMI** for this purpose (Details are
-`here <http://www.yasserm.com/negmas/api/negmas.sao.SAONMI.html?highlight=saoami#negmas.sao.SAONMI>`__).
+`here <https://negmas.readthedocs.io/en/latest/api/negmas.sao.SAONMI.html?highlight=saoami#negmas.sao.SAONMI>`__).
 
 To negotiate effectively, negotiators employ a **UtilityFunction** to
 represent their preferences over different possible **Outcome**\ s of
 the negotiation (where an outcome is a full assignment of values to all
 negotiated **Issue**\ s). NegMAS provides an extensive set of utility
 function, and issue types. Please refer to NegMAS
-`overview <http://www.yasserm.com/negmas/overview.html>`__ and
-`tutorials <http://www.yasserm.com/negmas/tutorials.html>`__ for more
-details. NegMAS also provides some basic **SAONegotiator**\ s for the
-**SAOMechanism** (Check the class diagram
-`here <http://www.yasserm.com/negmas/modules/sao.html>`__). Moreover,
-you can access almost all `Genius <http://ii.tudelft.nl/genius/>`__
-using NegMAS’s
-`GeniusNegotiator <http://www.yasserm.com/negmas/api/negmas.genius.GeniusNegotiator.html>`__
+`overview <https://negmas.readthedocs.io/en/latest/overview.html>`__ and
+`tutorials <https://negmas.readthedocs.io/en/latest/tutorials.html>`__
+for more details. NegMAS also provides some basic **SAONegotiator**\ s
+for the **SAOMechanism** (Check the class diagram
+`here <https://negmas.readthedocs.io/en/latest/modules/sao.html>`__).
+Moreover, you can access almost all
+`Genius <http://ii.tudelft.nl/genius/>`__ using NegMAS’s
+`GeniusNegotiator <https://negmas.readthedocs.io/en/latest/api/negmas.genius.GeniusNegotiator.html>`__
 including all finalists and winners of all past ANAC competitions.
 
 Now we understand how agents interact with worlds through AWIs and

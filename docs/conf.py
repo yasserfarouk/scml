@@ -187,11 +187,13 @@ latex_documents = [
 # -- Options for graphviz used in inheritence diagrams -----------------
 
 graphviz_output_format = "svg"
+if on_rtd:
+    graphviz_output_format = "png"
 inheritance_graph_attrs = dict(
-    randkir="TB", fontsize=11, size='""'
+    randkir="TB", fontsize=10, size='""', ratio="compress"
 )  # , size='"16.0, 20.0"')
 
-inheritance_node_attrs = dict(fontsize=11)
+inheritance_node_attrs = dict(fontsize=10)
 # , size='"16.0, 20.0"')
 # inheritance_node_attrs = dict(
 
