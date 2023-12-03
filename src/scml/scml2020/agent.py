@@ -404,7 +404,7 @@ class AWIHelper:
                     [self.reports_of_agent(_) for _ in all_agents],
                 )
             ),
-            running_negotiations=dict(),
+            # running_negotiations=dict(),
         )
 
     @property
