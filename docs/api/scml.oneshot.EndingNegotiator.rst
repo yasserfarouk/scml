@@ -11,6 +11,7 @@ EndingNegotiator
    .. autosummary::
 
       ~EndingNegotiator.ami
+      ~EndingNegotiator.annotation
       ~EndingNegotiator.capabilities
       ~EndingNegotiator.crisp_ufun
       ~EndingNegotiator.has_cardinal_preferences
@@ -72,6 +73,7 @@ EndingNegotiator
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: ami
+   .. autoattribute:: annotation
    .. autoattribute:: capabilities
    .. autoattribute:: crisp_ufun
    .. autoattribute:: has_cardinal_preferences

@@ -962,7 +962,7 @@ game in SCML 2023 due to the small range of prices available (only two
 values).
 
 The following properties can be gleaned from this figure (and they are
-robust for all world simulations in SCML OneShot 2023):
+robust for all world simulations in SCML OneShot 2023 or 2024):
 
 1. The more mismatch between the supply and demand (i.e. the quantity
    needed and the quantity secured), the less important price becomes.
@@ -983,9 +983,9 @@ robust for all world simulations in SCML OneShot 2023):
 
 .. container::
 
-   As a result, agents developed for SCML OneShot 2023 should focus on
-   matching demand and supply through concurrent negotiation rather than
-   focusing on price negotiation
+   As a result, agents developed for SCML OneShot 2023 or 2024 should
+   focus on matching demand and supply through concurrent negotiation
+   rather than focusing on price negotiation
 
 Just for comparison, let’s see how this would have worked out in the
 settings of SCML 2022:
@@ -1643,17 +1643,10 @@ We will also need a helper function to find all subsets of a given set
     class SyncRandomAgent(OneShotSyncAgent):
         """An agent that distributes its needs over its partners randomly."""
 
-        def __init__(self, *args, threshold=1, **kwargs):
+        def __init__(self, *args, threshold=0, timelimit=0.85, **kwargs):
             super().__init__(*args, **kwargs)
-            self._threshold = threshold
+            self._threshold, self._timelimit = threshold, timelimit
 
-        def before_step(self):
-            # keeps track of the total quantity secured
-            self.secured = 0
-
-        def on_negotiation_success(self, contract, mechanism):
-            # record the quantity secured in this contract
-            self.secured += contract.agreement["quantity"]
 
         def distribute_needs(self) -> dict[str, int]:
             """Distributes my needs randomly over all my partners"""
@@ -1696,8 +1689,8 @@ We will also need a helper function to find all subsets of a given set
             # (i.e. total quantity nearest to my needs)
             plist = list(powerset(partners))
             best_diff, best_indx = float("inf"), -1
-            for i, partner_ids in enumerate(plist):
 
+            for i, partner_ids in enumerate(plist):
                 others = partners.difference(partner_ids)
                 offered = sum(offers[p][QUANTITY] for p in partner_ids)
                 diff = abs(offered - needs)
@@ -1708,7 +1701,11 @@ We will also need a helper function to find all subsets of a given set
 
             # If the best combination of offers is good enough, accept them and end all
             # other negotiations
-            if best_diff <= self._threshold:
+            if states:
+                relative_time = max(s.relative_time for s in states.values())
+            else:
+                relative_time = 0.0
+            if best_diff <= self._threshold or relative_time >= self._timelimit:
                 partner_ids = plist[best_indx]
                 others = list(partners.difference(partner_ids))
                 return {
@@ -1728,10 +1725,9 @@ We will also need a helper function to find all subsets of a given set
         def _needs(self):
             """How many items do I need?"""
             if self.awi.is_first_level:
-                total = self.awi.current_exogenous_input_quantity
-            else:
-                total = self.awi.current_exogenous_output_quantity
-            return total - self.secured
+                return self.awi.needed_sales
+            return self.awi.needed_supplies
+
 
         def _step_and_price(self, best_price=False):
             """Returns current step and a random (or max) price"""
@@ -1761,8 +1757,8 @@ We will also need a helper function to find all subsets of a given set
 
 .. parsed-literal::
 
-    [('SyncRandomAgent', 1.0853351857983407),
-     ('RandomOneShotAgent', 0.450209032945824)]
+    [('SyncRandomAgent', 1.0851458183785867),
+     ('RandomOneShotAgent', 0.42928080054982604)]
 
 
 This is the highest score we got so far even though that agent is not
@@ -1773,19 +1769,7 @@ give us all the quantity we need (to buy/sell). Moreover, we accept a
 set of offers if the total quantity they provide is within some small
 margin from the quantity we need.
 
-The agent keeps track of its needs by saving the amount it will sell/buy
-whenever an agreement is reached:
-
-.. code:: python
-
-   def before_step(self):
-       self.secured = 0
-
-
-   def on_negotiation_success(self, contract, mechanism):
-       self.secured += contract.agreement["quantity"]
-
-We have a helper method to calcualate the quantity we need at any time
+We have a helper method to calculate the quantity we need at any time
 which simply subtracts the secured quantity from our total exogenous
 contract quantities:
 
@@ -1793,10 +1777,8 @@ contract quantities:
 
    def _needs(self):
        if self.awi.is_first_level:
-           total = self.awi.current_exogenous_input_quantity
-       else:
-           total = self.awi.current_exogenous_output_quantity
-       return total - self.secured
+           return self.awi.needed_sales
+       return self.awi.needed_supplies
 
 Another helper function (``_step_and_price``) is defined to return the
 current step and one of the two prices in the agenda:
@@ -2067,8 +2049,8 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('SimpleSingleAgreementAgent', 0.7302654874310335),
-     ('RandomOneShotAgent', 0.7292633785419493)]
+    [('RandomOneShotAgent', 0.722522024093111),
+     ('SimpleSingleAgreementAgent', 0.7200691935492209)]
 
 
 Using Independent Negotiators
@@ -2115,8 +2097,8 @@ This is an example agent that uses this approach:
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.23024652727223588),
-     ('AssumeOthersFailIndNeg', -0.13024519656176622)]
+    [('RandomOneShotAgent', 0.2566272118427171),
+     ('AssumeOthersFailIndNeg', 0.085204738797534)]
 
 
 This agent simply uses its **central** ufun for each negotiator. This is
@@ -2182,8 +2164,8 @@ because the agent may over-contract.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.18930576625467466),
-     ('GreedyIndNeg', -0.12353428551290244)]
+    [('RandomOneShotAgent', -0.010883393027604426),
+     ('GreedyIndNeg', -0.016054870717640866)]
 
 
 Using A Negotiator from the Genius Platform
@@ -2259,8 +2241,8 @@ will work correctly. Here is an example
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.15156573389757846),
-     ('GeniusIndNeg', -0.12763536829277555)]
+    [('RandomOneShotAgent', 0.16321734463231483),
+     ('GeniusIndNeg', 0.01949078462532807)]
 
 
 More General Simple Agent (advanced)
@@ -2372,8 +2354,8 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('SyncRandomAgent', 0.8783549200387427),
-     ('DeepSimpleAgent', 0.4640105057306638)]
+    [('SyncRandomAgent', 0.8776705380093004),
+     ('DeepSimpleAgent', 0.5753166391841517)]
 
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
@@ -2409,16 +2391,16 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.0744636487713797),
-     ('SyncRandomAgent', 1.0453321354156015),
-     ('BetterAgent', 1.0265674109180165),
-     ('NaiveSyncAgent', 0.9706482328717337),
-     ('LearningAgent', 0.9361909748744561),
-     ('AdaptiveAgent', 0.8681670815462654),
-     ('SimpleSingleAgreementAgent', 0.6715463572520167),
-     ('GeniusIndNeg', 0.47748396338730154),
-     ('GreedyIndNeg', 0.33230326060462134),
-     ('DeepSimpleAgent', 0.2449453075888478)]
+    [('SimpleAgent', 1.0653484907200392),
+     ('SyncRandomAgent', 1.0178931059063354),
+     ('BetterAgent', 1.0080199931169058),
+     ('NaiveSyncAgent', 0.9788922028735115),
+     ('AdaptiveAgent', 0.9569234268624955),
+     ('LearningAgent', 0.9475927112517355),
+     ('SimpleSingleAgreementAgent', 0.7523796112761708),
+     ('GreedyIndNeg', 0.627085822700412),
+     ('GeniusIndNeg', 0.41842480612224797),
+     ('DeepSimpleAgent', 0.2654059947491325)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -2453,6 +2435,7 @@ in this tutorial (with some modifications):
      'GreedySingleAgreementAgent',
      'OneshotDoNothingAgent',
      'OneShotDummyAgent']
+
 
 
 
