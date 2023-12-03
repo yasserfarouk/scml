@@ -4,18 +4,15 @@ from collections import defaultdict
 
 from negmas import ResponseType, SAOResponse
 
-from scml.oneshot.agent import (
-    OneShotAgent,
-    OneShotSingleAgreementAgent,
-    OneShotSyncAgent,
-)
 from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
+from scml.std.agent import StdAgent, StdSingleAgreementAgent, StdSyncAgent
+from scml.std.ufun import StdUFun
 
-__all__ = ["GreedyOneShotAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"]
+__all__ = ["GreedyStdAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"]
 
 
-class GreedyOneShotAgent(OneShotAgent):
+class GreedyStdAgent(StdAgent):
     """
     A greedy agent based on OneShotAgent
 
@@ -260,18 +257,20 @@ class GreedyOneShotAgent(OneShotAgent):
         return ((n_steps - step - 1) / (n_steps - 1)) ** self._e
 
 
-class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
+class GreedySyncAgent(StdSyncAgent, GreedyStdAgent):
     """A greedy agent based on OneShotSyncAgent"""
 
     def __init__(self, *args, threshold=None, **kwargs):
         super().__init__(*args, **kwargs)
         if threshold is None:
             threshold = random.random() * 0.2 + 0.2
+
         self._threshold = threshold
-        self.ufun: OneShotUFun
+        self.ufun: StdUFun
 
     def before_step(self):
         super().before_step()
+
         self.ufun.find_limit(True)
         self.ufun.find_limit(False)
 
@@ -360,8 +359,8 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):
         return self.awi.current_exogenous_output_quantity - self._supplies, 0
 
 
-class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
-    """A greedy agent based on `OneShotSingleAgreementAgent`"""
+class GreedySingleAgreementAgent(StdSingleAgreementAgent):
+    """A greedy agent based on `StdSingleAgreementAgent`"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

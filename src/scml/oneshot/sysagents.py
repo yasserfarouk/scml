@@ -23,7 +23,7 @@ from .awi import OneShotAWI
 from .helper import AWIHelper
 from .mixins import OneShotUFunCreatorMixin
 
-__all__ = ["DefaultOneShotAdapter", "_SystemAgent"]
+__all__ = ["DefaultOneShotAdapter", "_StdSystemAgent"]
 
 
 class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
@@ -250,7 +250,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         self._awi = awi
 
 
-class _SystemAgent(DefaultOneShotAdapter):
+class _StdSystemAgent(DefaultOneShotAdapter):
     """Implements an agent for handling system operations"""
 
     def __init__(self, *args, role, **kwargs):

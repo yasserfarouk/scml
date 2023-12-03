@@ -3,29 +3,26 @@ from typing import Any
 import gymnasium as gym
 from gymnasium.envs.registration import register
 
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agents import OneShotDummyAgent
-from scml.oneshot.rl.action import ActionManager
-from scml.oneshot.rl.factory import (
-    FixedPartnerNumbersOneShotFactory,
-    OneShotWorldFactory,
-)
-from scml.oneshot.rl.observation import ObservationManager
-from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
-from scml.oneshot.world import SCML2020OneShotWorld
+from scml.std.agent import StdAgent
+from scml.std.agents import StdDummyAgent
+from scml.std.rl.action import ActionManager
+from scml.std.rl.factory import FixedPartnerNumbersStdFactory, StdWorldFactory
+from scml.std.rl.observation import ObservationManager
+from scml.std.rl.reward import DefaultRewardFunction, RewardFunction
+from scml.std.world import SCML2024StdWorld
 
-__all__ = ["OneShotEnv"]
+__all__ = ["StdEnv"]
 
 
-class OneShotEnv(gym.Env):
+class StdEnv(gym.Env):
     def __init__(
         self,
         action_manager: ActionManager,
         observation_manager: ObservationManager,
         reward_function: RewardFunction = DefaultRewardFunction(),
         render_mode=None,
-        factory: OneShotWorldFactory = FixedPartnerNumbersOneShotFactory(),
-        agent_type: type[OneShotAgent] = OneShotDummyAgent,
+        factory: StdWorldFactory = FixedPartnerNumbersStdFactory(),
+        agent_type: type[StdAgent] = StdDummyAgent,
         agent_params: dict[str, Any] | None = None,
         extra_checks: bool = True,
         skip_after_negotiations: bool = True,
@@ -44,11 +41,11 @@ class OneShotEnv(gym.Env):
         self._skip_after_negotiations = skip_after_negotiations
         self._extra_checks = extra_checks
         self._reward_function = reward_function
-        self._world: SCML2020OneShotWorld = None  # type: ignore
+        self._world: SCML2024StdWorld = None  # type: ignore
         self._agent_type = agent_type
         self._agent_params = agent_params if agent_params is not None else dict()
         self._agent_id: str = ""
-        self._agent: OneShotAgent = None  # type: ignore
+        self._agent: StdAgent = None  # type: ignore
         self._obs_manager = observation_manager
         self._action_manager = action_manager
         self._factory = factory
@@ -132,7 +129,7 @@ class OneShotEnv(gym.Env):
 
 
 register(
-    id="scml/OneShot-v0",
-    entry_point="scml.oneshot.rl.env:OneShotEnv",
+    id="scml/Std-v0",
+    entry_point="scml.std.rl.env:StdEnv",
     max_episode_steps=None,
 )

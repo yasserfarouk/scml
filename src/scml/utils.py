@@ -15,13 +15,15 @@ from negmas.helpers.numeric import truncated_mean
 from negmas.serialization import deserialize, serialize
 from negmas.tournaments import TournamentResults, WorldRunResults, tournament
 
+from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import (
     GreedyOneShotAgent,
     GreedySyncAgent,
     SingleAgreementAspirationAgent,
     SyncRandomOneShotAgent,
 )
-from scml.oneshot.sysagents import _SystemAgent as OneShotSysAgent
+from scml.oneshot.sysagents import _StdSystemAgent as OneShotSysAgent
+from scml.oneshot.world import SCML2024OneShotWorld
 from scml.scml2020.agent import _SystemAgent as StdSysAgent
 from scml.scml2020.agents import (
     BuyCheapSellExpensiveAgent,
@@ -30,6 +32,8 @@ from scml.scml2020.agents import (
     SatisficerAgent,
 )
 from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
+from scml.std.agent import StdAgent
+from scml.std.world import SCML2024StdWorld
 
 __all__ = [
     "anac_config_generator_oneshot",
@@ -2903,13 +2907,13 @@ def anac2023_oneshot(
 
 
 def anac2024_std(
-    competitors: Sequence[str | type[SCML2020Agent]],
+    competitors: Sequence[str | type[StdAgent]],
     competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
     max_worlds_per_config: int | None = None,
     n_runs_per_world: int = 1,
-    min_factories_per_level: int = 2,
+    min_factories_per_level: int = 4,
     tournament_path: str | None = None,
     total_timeout: int | None = None,
     parallelism="parallel",
@@ -2917,12 +2921,12 @@ def anac2024_std(
     scheduler_port: str | None = None,
     tournament_progress_callback: Callable[[WorldRunResults | None], None]
     | None = None,
-    world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
-    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    world_progress_callback: Callable[[SCML2024StdWorld | None], None] | None = None,
+    non_competitors: Sequence[str | type[StdAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
-    exclude_competitors_from_reassignment: bool = True,
+    exclude_competitors_from_reassignment: bool = False,
     name: str | None = None,
     verbose: bool = False,
     configs_only=False,
@@ -2983,15 +2987,22 @@ def anac2024_std(
         processing
 
     """
+    # if competitor_params is None:
+    #     competitor_params = [dict() for _ in range(len(competitors))]
+    # for t, p in zip(competitors, competitor_params):
+    #     p["controller_type"] = get_full_type_name(t)
+    # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
         n_competitors_per_world = kwargs.get(
             "n_competitors_per_world", randint(2, min(4, len(competitors)))
         )
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
-        non_competitors = DefaultAgents2023
+        non_competitors = DefaultAgentsOneShot
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
+    kwargs["oneshot_world"] = True
+    kwargs["n_processes"] = 2
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -3012,10 +3023,10 @@ def anac2024_std(
         verbose=verbose,
         configs_only=configs_only,
         n_agents_per_competitor=1,
-        world_generator=anac2023_world_generator,
-        config_generator=anac2023_config_generator_std,
-        config_assigner=anac_assigner_std,
-        score_calculator=balance_calculator2023,
+        world_generator=anac2023_oneshot_world_generator,
+        config_generator=anac2023_config_generator_oneshot,
+        config_assigner=anac_assigner_oneshot,
+        score_calculator=balance_calculator_oneshot,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
@@ -3032,7 +3043,7 @@ def anac2024_std(
 
 
 def anac2024_oneshot(
-    competitors: Sequence[str | type[SCML2020Agent]],
+    competitors: Sequence[str | type[OneShotAgent]],
     competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
@@ -3046,8 +3057,9 @@ def anac2024_oneshot(
     scheduler_port: str | None = None,
     tournament_progress_callback: Callable[[WorldRunResults | None], None]
     | None = None,
-    world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
-    non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
+    world_progress_callback: Callable[[SCML2024OneShotWorld | None], None]
+    | None = None,
+    non_competitors: Sequence[str | type[OneShotAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,

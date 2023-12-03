@@ -56,7 +56,7 @@ from .common import (
     OneShotProfile,
     is_system_agent,
 )
-from .sysagents import DefaultOneShotAdapter, _SystemAgent
+from .sysagents import DefaultOneShotAdapter, _StdSystemAgent
 
 __all__ = [
     "SCML2020OneShotWorld",
@@ -66,7 +66,7 @@ __all__ = [
 ]
 
 
-class SCML2020OneShotWorld(TimeInAgreementMixin, World):
+class OneShotWorld(TimeInAgreementMixin, World):
     """Implements the SCML-OneShot variant of the SCM world.
 
     Args:
@@ -405,7 +405,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
                 for i, (ns, ps) in enumerate(zip(default_names, agent_params)):
                     agent_params[i] = dict(**ps)
                     agent_params[i]["name"] = ns
-        agent_types += [_SystemAgent, _SystemAgent]  # type: ignore
+        agent_types += [_StdSystemAgent, _StdSystemAgent]  # type: ignore
         agent_params += [
             {"role": SYSTEM_SELLER_ID, "obj": None},
             {"role": SYSTEM_BUYER_ID, "obj": None},
@@ -1614,6 +1614,11 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
             self._stats[f"score_{aid}"].append(scores[aid])
             self._stats[f"balance_{aid}"].append(self.current_balance(aid))
             self._stats[f"bankrupt_{aid}"].append(self.is_bankrupt.get(aid, False))
+            self._stats[f"productivity_{aid}"].append(1.0)
+            self._stats[f"spot_market_quantity_{aid}"].append(0)
+            self._stats[f"spot_market_loss_{aid}"].append(0)
+            self._stats[f"inventory_{aid}_input"].append(0)
+            self._stats[f"inventory_{aid}_output"].append(0)
 
     def pre_step_stats(self):
         pass
@@ -1733,7 +1738,7 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         return contracts
 
     @property
-    def system_agents(self) -> list[_SystemAgent]:
+    def system_agents(self) -> list[_StdSystemAgent]:
         """Returns the two system agents"""
         return [_ for _ in self.agents.values() if is_system_agent(_.id)]
 
@@ -2128,6 +2133,10 @@ class SCML2020OneShotWorld(TimeInAgreementMixin, World):
         record = super()._contract_record(contract)
         record["executed_at"] = self.current_step
         return record
+
+
+class SCML2020OneShotWorld(OneShotWorld):
+    pass
 
 
 class SCML2021OneShotWorld(SCML2020OneShotWorld):
