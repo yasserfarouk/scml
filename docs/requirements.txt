@@ -124,7 +124,6 @@ sphinx-automodapi
 sphinxcontrib-fulltoc
 sphinxcontrib-napoleon
 sphinxcontrib-websupport
-sphinxtesters
 stringcase
 tabulate
 tblib
