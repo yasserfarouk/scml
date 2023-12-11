@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.6.3 (2023.12.11)
+------------------
+
+* typing update
+* removing unnecessary sphinxtesters
+* requiring latest stable_baselines
+* doc update
+* bugfix in scml2020 adapter to run oneshot
+* Adding skeleton for the new std simulation
+* Adding 2024 utility functions and worlds
+* Switching docs to scml.readthedocs.io
+
 0.6.2 (2023.11.27)
 ------------------
 
