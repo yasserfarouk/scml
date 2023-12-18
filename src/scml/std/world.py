@@ -1,6 +1,6 @@
 from typing import Any
 
-from scml.oneshot.world import OneShotWorld, SCML2024OneShotWorld
+from scml.oneshot.world import OneShotWorld, SCML2023OneShotWorld
 
 __all__ = [
     "StdWorld",
@@ -26,7 +26,7 @@ STD_DEFAULT_PARAMS = dict(
 STD_DEFAULT_PARAMS2024 = STD_DEFAULT_PARAMS
 
 
-class StdWorld(SCML2024OneShotWorld):
+class StdWorld(SCML2023OneShotWorld):
     """A Std World based on the OneShotWorld simulation"""
 
     def __init__(

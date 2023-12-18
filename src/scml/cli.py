@@ -1580,8 +1580,8 @@ def run2024(
             else:
                 all_competitors[i] = "scml.std.agents." + cp
     all_competitors_params = [dict() for _ in all_competitors]
-    world = world_type(
-        **world_type.generate(
+    kwargs.update(
+        dict(
             time_limit=time,
             compact=compact,
             log_ufuns=log_ufuns,
@@ -1595,9 +1595,13 @@ def run2024(
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
-            **kwargs,
         )
     )
+    if oneshot:
+        kwargs.update(dict(storage_cost=0, storage_cost_dev=0, perishable=True))
+    else:
+        kwargs.update(dict(disposal_cost=0, disposal_cost_dev=0, perishable=False))
+    world = world_type(**world_type.generate(**kwargs))
     failed = False
     strt = perf_counter()
     try:
@@ -3600,6 +3604,11 @@ def tournament2024(
     prog_callback = print_world_progress if verbosity > 1 else None
     start = perf_counter()
     kwargs["round_robin"] = True
+
+    if oneshot:
+        kwargs.update(dict(storage_cost=0, storage_cost_dev=0, perishable=True))
+    else:
+        kwargs.update(dict(disposal_cost=0, disposal_cost_dev=0, perishable=False))
     results = runner(
         competitors=all_competitors,
         competitor_params=all_competitors_params,

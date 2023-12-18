@@ -276,6 +276,51 @@ class AWIHelper:
         self._owner = owner
         self._world = owner.awi._world
 
+    @property
+    def sales(self) -> dict[str, int]:
+        """Sales per customer so far (this day)"""
+        return defaultdict(int)
+
+    @property
+    def supplies(self) -> dict[str, int]:
+        """Supplies per supplier so far (this day)"""
+        return defaultdict(int)
+
+    @property
+    def total_sales(self) -> int:
+        """Total sales so far (this day)"""
+        return 0
+
+    @property
+    def total_supplies(self) -> int:
+        """Total supplies so far (this day)"""
+        return 0
+
+    @property
+    def needed_sales(self) -> int:
+        """Sales that need to be secured (exogenous input + total supplies - exogenous output - total sales so far)"""
+        return 0
+
+    @property
+    def needed_supplies(self) -> int:
+        """Supplies that need to be secured (exogenous output + total sales - exogenous input - total supplies so far)"""
+        return 0
+
+    @property
+    def current_inventory(self) -> tuple[int, int]:
+        """Current input and output inventory quantity"""
+        return (0, 0)
+
+    @property
+    def current_inventory_input(self) -> int:
+        """Current input inventory quantity"""
+        return 0
+
+    @property
+    def current_inventory_output(self) -> int:
+        """Current output inventory quantity"""
+        return 0
+
     # private information
     # ===================
     def penalty_multiplier(self, is_input: bool, unit_price: float) -> float:
@@ -354,6 +399,7 @@ class AWIHelper:
         # TODO add missing components
         all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
         return OneShotState(
+            perishable=True,
             exogenous_input_quantity=q,
             exogenous_input_price=p,
             exogenous_output_quantity=qo,
@@ -406,6 +452,16 @@ class AWIHelper:
             ),
             # running_negotiations=dict(),
         )
+
+    @property
+    def is_perishable(self) -> bool:
+        """Are all products perishable (original design of OneShot)"""
+        return False
+
+    @property
+    def current_storage_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return 0.0
 
     @property
     def price_multiplier(self):
@@ -681,6 +737,12 @@ class OneShotAdapter(
     def get_disposal_cost_dev(self):
         return 0.0
 
+    def get_storage_cost_mean(self):
+        return 0.0
+
+    def get_storage_cost_dev(self):
+        return 0.0
+
     def get_profile(self):
         return OneShotProfile(
             cost=float(self.awi.profile.costs[:, self.awi.my_input_product].mean()),
@@ -690,6 +752,8 @@ class OneShotAdapter(
             disposal_cost_mean=self.get_disposal_cost_mean(),
             shortfall_penalty_dev=self.get_shortfall_penalty_dev(),
             disposal_cost_dev=self.get_disposal_cost_dev(),
+            storage_cost_mean=self.get_storage_cost_mean(),
+            storage_cost_dev=self.get_storage_cost_dev(),
         )
 
     def get_shortfall_penalty(self):
@@ -704,3 +768,23 @@ class OneShotAdapter(
 
     def get_exogenous_input(self) -> Tuple[int, int]:
         return 0, 0
+
+    @property
+    def is_perishable(self) -> bool:
+        """Are all products perishable (original design of OneShot)"""
+        return False
+
+    @property
+    def current_disposal_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return 0.0
+
+    @property
+    def current_storage_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return 0.0
+
+    @property
+    def current_shortfall_penalty(self) -> float:
+        """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
+        return 0.0

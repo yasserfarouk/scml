@@ -387,6 +387,7 @@ class OneShotAWI(AgentWorldInterface):
         all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
 
         return OneShotState(
+            perishable=self.is_perishable,
             exogenous_input_quantity=self.current_exogenous_input_quantity,
             exogenous_input_price=self.current_exogenous_input_price,
             exogenous_output_quantity=self.current_exogenous_output_quantity,
@@ -731,36 +732,36 @@ class OneShotAWI(AgentWorldInterface):
         """Sales that need to be secured (exogenous input + total supplies - exogenous output - total sales so far)"""
         if self.is_last_level:
             return 0
-        return min(
-            self.n_lines,
-            max(
-                0,
-                (
-                    self.current_exogenous_input_quantity
-                    + self.total_supplies
-                    - self.total_sales
-                    - self.current_exogenous_output_quantity
-                ),
+        x = max(
+            0,
+            (
+                self.current_exogenous_input_quantity
+                + self.current_inventory_input
+                + self.total_supplies
+                - self.total_sales
+                - self.current_exogenous_output_quantity
+                - self.current_inventory_output
             ),
         )
+        return min(self.n_lines, x) if self.is_perishable else x
 
     @property
     def needed_supplies(self) -> int:
         """Supplies that need to be secured (exogenous output + total sales - exogenous input - total supplies so far)"""
         if self.is_first_level:
             return 0
-        return min(
-            self.n_lines,
-            max(
-                0,
-                (
-                    self.current_exogenous_output_quantity
-                    + self.total_sales
-                    - self.total_supplies
-                    - self.current_exogenous_input_quantity
-                ),
+        x = max(
+            0,
+            (
+                self.current_exogenous_output_quantity
+                + self.current_inventory_output
+                + self.total_sales
+                - self.total_supplies
+                - self.current_exogenous_input_quantity
+                - self.current_inventory_input
             ),
         )
+        return min(self.n_lines, x) if self.is_perishable else x
 
     # helper operations (sales and supplies) -- you do not need to call these.
     def _register_sale(self, customer: str, value: int) -> None:

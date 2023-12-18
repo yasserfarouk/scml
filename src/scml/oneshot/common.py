@@ -285,6 +285,8 @@ class OneShotState:
     """Today's needed sales as of now (exogenous input - exogenous output - total sales so far)."""
     needed_supplies: int
     """Today needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
+    perishable: bool = True
+    """Is this a perishable domain (oneshot) of not (std) """
     storage_cost: float = 0.0
     """Current unit storage cost. Only used in standard worlds where products are not perishable"""
 

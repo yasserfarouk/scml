@@ -727,8 +727,8 @@ class OneShotWorld(TimeInAgreementMixin, World):
         shortfall_penalty_dev: tuple[float, float] | float = (0.0, 0.1),
         disposal_cost: tuple[float, float] | float = (0.0, 0.2),
         disposal_cost_dev: tuple[float, float] | float = (0.0, 0.02),
-        storage_cost: tuple[float, float] | float = (0.0, 0.0),
-        storage_cost_dev: tuple[float, float] | float = (0.0, 0.0),
+        storage_cost: tuple[float, float] | float = (0.0, 0.02),
+        storage_cost_dev: tuple[float, float] | float = 0,
         exogenous_price_dev: tuple[float, float] | float = (0.1, 0.2),
         price_multiplier: np.ndarray | tuple[float, float] | float = (1.5, 2.0),
         cost_increases_with_level=True,
@@ -828,7 +828,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
 
         """
         if perishable is not None:
-            if perishable == True:
+            if perishable:
                 storage_cost = storage_cost_dev = 0
             else:
                 disposal_cost = disposal_cost_dev = 0
@@ -842,6 +842,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 f"Length of `agent_processes` ({len(agent_processes)}) must equal the length of `agent_types` ({len(agent_types)})"
             )
         info = dict(
+            perishable=perishable,
             n_steps=n_steps,
             n_processes=n_processes,
             n_lines=n_lines,
@@ -1298,6 +1299,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             # process_outputs=process_outputs,
             catalog_prices=catalog_prices,
             profiles=[_[0] for _ in profile_info],
+            perishable=perishable,
             exogenous_contracts=exogenous,
             agent_types=agent_types,
             agent_params=agent_params,

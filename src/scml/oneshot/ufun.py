@@ -209,11 +209,13 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         self._registered_sale_failures: set[str] = set()
         self._registered_supply_failures: set[str] = set()
         if perishable:
-            assert self.storage_cost == 0, f"Perishable ufun but {self.storage_cost=}"
+            assert (
+                self.storage_cost == 0
+            ), f"Perishable ufun but {self.storage_cost=} ({self.disposal_cost})"
         else:
             assert (
                 self.disposal_cost == 0
-            ), f"Non-perishable ufun but {self.disposal_cost=}"
+            ), f"Non-perishable ufun but {self.disposal_cost=} ({self.storage_cost})"
 
     @property
     def best_option(self) -> UFunLimit:
