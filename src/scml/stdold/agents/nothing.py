@@ -1,12 +1,12 @@
 from negmas import ResponseType
 
-from ..agent import OneShotAgent
-from ..policy import OneShotPolicy
+from ..agent import StdAgent
+from ..policy import StdPolicy
 
-__all__ = ["OneshotDoNothingAgent", "OneShotDummyAgent"]
+__all__ = ["StdDoNothingAgent", "StdDummyAgent"]
 
 
-class OneshotDoNothingAgent(OneShotAgent):
+class StdDoNothingAgent(StdAgent):
     """An agent that does nothing.
 
     Remarks:
@@ -19,11 +19,11 @@ class OneshotDoNothingAgent(OneShotAgent):
     def propose(self, negotiator_id, state):
         return None
 
-    def respond(self, negotiator_id, state, source=None):
+    def respond(self, negotiator_id, state):
         return ResponseType.END_NEGOTIATION
 
 
-class OneShotDummyAgent(OneShotPolicy):
+class StdDummyAgent(StdPolicy):
     """An agent that always raises an exception if called to negotiate. It is useful as a placeholder (for example for RL and MARL exposition)"""
 
     def act(self, state):

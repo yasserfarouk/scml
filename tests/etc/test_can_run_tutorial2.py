@@ -21,7 +21,7 @@ from scml.oneshot import *
 from scml.oneshot import OneShotIndNegotiatorsAgent
 from scml.scml2020.common import is_system_agent
 
-from .switches import *
+from ..switches import *
 
 
 def try_agent(agent_type, n_processes=2):

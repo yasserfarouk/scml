@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from negmas import (
+    ConstUtilityFunction,
     Contract,
     ControlledSAONegotiator,
     Entity,
@@ -52,7 +53,6 @@ __all__ = [
 
 class OneShotAgent(SAOController, Entity, ABC):
     """
-
     Base class for all agents in the One-Shot game.
 
     Args:
@@ -169,7 +169,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         self.utility_function = owner.ufun
 
     @abstractmethod
-    def propose(self, negotiator_id: str, state: MechanismState) -> Outcome:
+    def propose(self, negotiator_id: str, state: MechanismState) -> Outcome | None:
         """
         Proposes an offer to one of the partners.
 
@@ -181,7 +181,9 @@ class OneShotAgent(SAOController, Entity, ABC):
             an outcome to offer.
         """
 
-    def respond(self, negotiator_id: str, state: SAOState) -> ResponseType:
+    def respond(
+        self, negotiator_id: str, state: MechanismState, source=None
+    ) -> ResponseType:
         """
         Responds to an offer from one of the partners.
 
@@ -198,7 +200,7 @@ class OneShotAgent(SAOController, Entity, ABC):
             proposed in the given state and reject otherwise
 
         """
-        offer = state.current_offer
+        offer = state.current_offer  # type: ignore
         myoffer = self.propose(negotiator_id, state)
         if myoffer == offer:
             return ResponseType.ACCEPT_OFFER
@@ -282,7 +284,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         return self.negotiators[partner_id][0].nmi
 
 
-class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
+class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):  # type: ignore
     """
     An agent that automatically accumulate offers from opponents and allows
     you to control all negotiations centrally in the `counter_all` method.
@@ -325,7 +327,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
         """
 
     @abstractmethod
-    def first_proposals(self) -> dict[str, Outcome]:
+    def first_proposals(self) -> dict[str, Outcome | None]:
         """
         Gets a set of proposals to use for initializing the negotiation.
 
@@ -342,7 +344,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):
         return [self.id] * len(contracts)
 
 
-class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent):
+class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent):  # type: ignore
     """
     A synchronized agent that tries to get no more than one agreement.
 
@@ -407,7 +409,9 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         """
 
     @abstractmethod
-    def is_better(self, a: Outcome, b: Outcome, negotiator: str, state: SAOState):
+    def is_better(
+        self, a: Outcome | None, b: Outcome | None, negotiator: str, state: SAOState
+    ) -> bool:
         """Compares two outcomes of the same negotiation
 
         Args:
@@ -425,7 +429,7 @@ class EndingNegotiator(SAONegotiator):
     def propose(self, state):
         return None
 
-    def respond(self, state):
+    def respond(self, state, source=None):
         return ResponseType.END_NEGOTIATION
 
 
@@ -564,7 +568,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
                 u.reserved_value = mn - 1e-5
             u.reserved_value = u.reserved_value / mx
             if u.reserved_value > mx:
-                ufuns[partner_id] = None
+                ufuns[partner_id] = ConstUtilityFunction(0.0, reserved_value=0.0)
         return ufuns
 
     def init(self):
@@ -578,7 +582,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
     def make_negotiator(
         self,
         negotiator_type=None,
-        name: str = None,  # type: ignore
+        name: str | None = None,
         **kwargs,
     ):
         """
@@ -599,6 +603,8 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
             is to be thrown.
 
         """
+        if name is None:
+            return EndingNegotiator()
         ufun = self._ufuns[name]
         if ufun is None:
             return EndingNegotiator()

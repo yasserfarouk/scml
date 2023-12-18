@@ -37,7 +37,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
           the SCML2020OneShotAgent.
     """
 
-    def make_ufun(self, add_exogenous: bool):
+    def make_ufun(self, add_exogenous: bool, in_adapter=False):
         return super().make_ufun(add_exogenous, in_adapter=False)
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):

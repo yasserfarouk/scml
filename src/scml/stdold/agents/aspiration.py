@@ -6,12 +6,12 @@ from negmas import Outcome, PolyAspiration, ResponseType
 from negmas.outcomes.issue_ops import enumerate_issues
 from negmas.sao import SAOResponse
 
-from ..agent import OneShotSyncAgent
+from ..agent import StdSyncAgent
 
-__all__ = ["SingleAgreementAspirationAgent"]
+__all__ = ["SAAStdAgent"]
 
 
-class SingleAgreementAspirationAgent(OneShotSyncAgent):
+class SAAStdAgent(StdSyncAgent):
     """
     Uses a time-based strategy to accept a single agreement from the set
     it is considering.
@@ -20,13 +20,14 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
     def before_step(self):
         from scml.oneshot.ufun import OneShotUFun
 
-        self.ufun: OneShotUFun  # type: ignore
-
         self.__endall = not self.awi.is_first_level and not self.awi.is_last_level
         if self.__endall:
             return
         # we assume that we are either in the first or the latest layer
         # and calculate our ufun limits and reserved value
+        if self.ufun is None:
+            return
+        self.ufun: OneShotUFun
         self.ufun.reserved_value = self.ufun.from_contracts([])
         self._reserved_value = self.ufun.reserved_value
         self._asp = PolyAspiration(
@@ -63,9 +64,7 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
             zip(
                 (
                     (
-                        self.ufun.from_offers(
-                            (_,), (self.awi.is_first_level,)  # type: ignore
-                        )
+                        self.ufun.from_offers((_,), (self.awi.is_first_level,))
                         - self._reserved_value
                     )
                     / (self._urange)

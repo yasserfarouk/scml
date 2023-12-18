@@ -102,6 +102,7 @@ class OneShotAWI(AgentWorldInterface):
             information is only available if
             `publish_exogenous_summary` is set in
             the world.
+          - *is_perishable*: Are all products perishable?
 
         B. Other Agents' Information:
           - *reports_of_agent*: Gives all past financial reports of a given agent.
@@ -154,6 +155,9 @@ class OneShotAWI(AgentWorldInterface):
             step.
           - *current_balance*: The current balance of the agent
           - *current_score*: The current score (balance / initial balance) of the agent
+          - *current_inventory_input*: The total quantity remaining in the inventory of the input product
+          - *current_inventory_output*: The total quantity remaining in the inventory of the output product
+          - *current_inventory*: The total quantity remaining in the inventory of the input and output product
 
         E. Sales and Supplies (quantities) for today:
           - *sales*: Today's sales per customer so far.
@@ -388,6 +392,7 @@ class OneShotAWI(AgentWorldInterface):
             exogenous_output_quantity=self.current_exogenous_output_quantity,
             exogenous_output_price=self.current_exogenous_output_price,
             disposal_cost=self.current_disposal_cost,
+            storage_cost=self.current_storage_cost,
             shortfall_penalty=self.current_shortfall_penalty,
             current_balance=self.current_balance,
             total_sales=self.total_sales,
@@ -443,8 +448,22 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.scores()[self.agent.id]
 
     @property
-    def current_inventory(self):
-        return np.zeros(self.n_products)
+    def current_inventory(self) -> tuple[int, int]:
+        """Current input and output inventory quantity"""
+        return (
+            self._world._inventory_input[self.agent.id],
+            self._world._inventory_output[self.agent.id],
+        )
+
+    @property
+    def current_inventory_input(self) -> int:
+        """Current input inventory quantity"""
+        return self._world._inventory_input[self.agent.id]
+
+    @property
+    def current_inventory_output(self) -> int:
+        """Current output inventory quantity"""
+        return self._world._inventory_output[self.agent.id]
 
     @property
     def current_exogenous_input_quantity(self) -> int:
@@ -500,9 +519,19 @@ class OneShotAWI(AgentWorldInterface):
         return unit_price
 
     @property
+    def is_perishable(self) -> bool:
+        """Are all products perishable (original design of OneShot)"""
+        return self._world.perishable
+
+    @property
     def current_disposal_cost(self) -> float:
         """Cost of storing one unit (penalizes buying too much/ selling too little)"""
         return self._world.agent_disposal_cost[self.agent.id][self._world.current_step]
+
+    @property
+    def current_storage_cost(self) -> float:
+        """Cost of storing one unit (penalizes buying too much/ selling too little)"""
+        return self._world.agent_storage_cost[self.agent.id][self._world.current_step]
 
     @property
     def current_shortfall_penalty(self) -> float:
@@ -736,13 +765,17 @@ class OneShotAWI(AgentWorldInterface):
     # helper operations (sales and supplies) -- you do not need to call these.
     def _register_sale(self, customer: str, value: int) -> None:
         assert (
-            value == 0 or self._sales[customer] == 0
+            value == 0
+            or self._sales[customer] == 0
+            or (self._world.one_time_per_negotiation and self._world.horizon)
         ), f"{self.agent.id} Cannot have more than one sale to {customer} ({self._sales[customer]=}, {value=})"
         self._sales[customer] += value
 
     def _register_supply(self, supplier: str, value: int) -> None:
         assert (
-            value == 0 or self._supplies[supplier] == 0
+            value == 0
+            or self._supplies[supplier] == 0
+            or (self._world.one_time_per_negotiation and self._world.horizon)
         ), f"{self.agent.id} Cannot have more than one supply to {supplier} ({self._supplies[supplier]=}, {value=})"
         self._supplies[supplier] += value
 

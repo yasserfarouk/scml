@@ -1,8 +1,6 @@
-import os
 import sys
 import time
 from contextlib import contextmanager
-from typing import Dict, Tuple
 
 import pytest
 from negmas import ResponseType
@@ -20,7 +18,7 @@ class MySyncAgent(OneShotSyncAgent):
 
     def __init__(self, use_sleep=False, check_negs=False, **kwargs):
         super().__init__(**kwargs)
-        self.offers: Dict[str, Tuple[int]] = {}
+        self.offers: dict[str, tuple[int, ...]] = {}
         self._delay_using_sleep = use_sleep
         self._check_negs = check_negs
         self._countering_set = set()
@@ -35,6 +33,7 @@ class MySyncAgent(OneShotSyncAgent):
                 a *= i
 
     def counter_all(self, offers, states):
+        _ = states
         s = {self.get_nmi(_) for _ in offers.keys()}
         if self.in_counter_all and (
             not self._check_negs
@@ -55,7 +54,7 @@ class MySyncAgent(OneShotSyncAgent):
             for k, v in self.first_proposals().items()
         }
 
-    def first_proposals(self):
+    def first_proposals(self) -> dict:
         return dict(
             zip(
                 self.negotiators.keys(),
@@ -101,6 +100,7 @@ class NotSleepingNotChecking(MySyncAgent):
 
 @contextmanager
 def does_not_raise(err):
+    _ = err
     yield None
 
 
@@ -155,7 +155,7 @@ CONDITIONS = (
 
 
 if pytest in sys.modules:
-    from .switches import *
+    from ..switches import *
 
     @mark.parametrize(
         ["use_sleep", "check_negs", "single_thread", "raise_expected"],

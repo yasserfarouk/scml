@@ -101,9 +101,9 @@ def realin(rng: tuple[float, float] | float) -> float:
     """
     if isinstance(rng, float) or isinstance(rng, int):
         return float(rng)
-    if abs(rng[1] - rng[0]) < 1e-8:
+    if abs(rng[-1] - rng[0]) < 1e-8:
         return rng[0]
-    return rng[0] + random.random() * (rng[1] - rng[0])
+    return rng[0] + random.random() * (rng[-1] - rng[0])
 
 
 def strin(lst: list[str] | str) -> str:

@@ -8,7 +8,7 @@ from negmas.helpers.strings import itertools
 from negmas.outcomes import Outcome
 from negmas.sao.common import SAOResponse, SAOState
 
-from scml.scml2019.common import QUANTITY, UNIT_PRICE
+from .common import QUANTITY, UNIT_PRICE
 
 from .agent import OneShotSyncAgent
 

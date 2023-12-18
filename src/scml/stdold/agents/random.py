@@ -7,19 +7,13 @@ from negmas.outcomes import Outcome
 from negmas.sao import SAOResponse, SAOState
 from numpy.random import choice
 
-from scml.oneshot.agents.random import (
-    RandomOneShotAgent,
-    SingleAgreementRandomAgent,
-    SyncRandomOneShotAgent,
-)
-from scml.oneshot.common import QUANTITY, UNIT_PRICE
-from scml.std.agent import OneShotSyncAgent
+from scml.std.agent import StdAgent, StdSingleAgreementAgent, StdSyncAgent
+from scml.std.common import QUANTITY, UNIT_PRICE
 
 __all__ = [
-    "RandomOneShotAgent",
+    "RandomSyncAgent",
     "SyncRandomStdAgent",
-    "SyncRandomOneShotAgent",
-    "SingleAgreementRandomAgent",
+    "SAAStdRandomAgent",
 ]
 
 PROB_ACCEPTANCE = 0.1
@@ -43,12 +37,38 @@ def powerset(iterable):
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
-class SyncRandomStdAgent(OneShotSyncAgent):
+class RandomSyncAgent(StdAgent):
+    def _random_offer(self, negotiator_id: str):
+        nmi = self.get_nmi(negotiator_id)
+        if not nmi:
+            return None
+        return nmi.random_outcome()
+
+    def propose(self, negotiator_id: str, state: MechanismState) -> Outcome | None:
+        return self._random_offer(negotiator_id)
+
+    def respond(self, negotiator_id, state, source=""):
+        if random.random() < PROB_END:
+            return ResponseType.END_NEGOTIATION
+        if random.random() < PROB_ACCEPTANCE:
+            return ResponseType.ACCEPT_OFFER
+        return ResponseType.REJECT_OFFER
+
+
+class SyncRandomStdAgent(StdSyncAgent):
     """An agent that distributes its needs over its partners randomly."""
 
     def __init__(self, *args, threshold=1, **kwargs):
         super().__init__(*args, **kwargs)
         self._threshold = threshold
+
+    def before_step(self):
+        # keeps track of the total quantity secured
+        self.secured = 0
+
+    def on_negotiation_success(self, contract, mechanism):
+        # record the quantity secured in this contract
+        self.secured += contract.agreement["quantity"]
 
     def distribute_needs(self) -> dict[str, int]:
         """Distributes my needs randomly over all my partners"""
@@ -120,7 +140,11 @@ class SyncRandomStdAgent(OneShotSyncAgent):
 
     def _needs(self):
         """How many items do I need?"""
-        return self.awi.needed_sales + self.awi.needed_supplies
+        if self.awi.is_first_level:
+            total = self.awi.current_exogenous_input_quantity
+        else:
+            total = self.awi.current_exogenous_output_quantity
+        return total - self.secured
 
     def _step_and_price(self, best_price=False):
         """Returns current step and a random (or max) price"""
@@ -134,3 +158,20 @@ class SyncRandomStdAgent(OneShotSyncAgent):
         if best_price:
             return s, pmax if seller else pmin
         return s, random.randint(pmin, pmax)
+
+
+class SAAStdRandomAgent(StdSingleAgreementAgent):
+    """A controller that agrees randomly to one offer"""
+
+    def __init__(self, *args, p_accept: float = PROB_ACCEPTANCE, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._p_accept = p_accept
+
+    def is_acceptable(self, offer: "Outcome", source: str, state: SAOState) -> bool:
+        return random.random() < self._p_accept
+
+    def best_offer(self, offers: Dict[str, "Outcome"]) -> Optional[str]:
+        return random.choice(list(offers.keys()))
+
+    def is_better(self, a: "Outcome", b: "Outcome", negotiator: str, state: SAOState):
+        return random.random() < 0.5

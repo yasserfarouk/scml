@@ -17,7 +17,7 @@ from scml.scml2019.common import NO_PRODUCTION
 from scml.scml2019.simulators import FastFactorySimulator, SlowFactorySimulator
 from scml.scml2019.world import Factory
 
-from .switches import *
+from ..switches import *
 
 n_lines = 5
 n_levels = 4

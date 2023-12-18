@@ -1,9 +1,4 @@
-__all__ = [
-    "ProductionStrategy",
-    "SupplyDrivenProductionStrategy",
-    "DemandDrivenProductionStrategy",
-    "TradeDrivenProductionStrategy",
-]
+from __future__ import annotations
 
 from typing import Dict, List, Tuple
 
@@ -11,6 +6,13 @@ import numpy as np
 from negmas import Contract
 
 from scml.scml2020.common import NO_COMMAND
+
+__all__ = [
+    "ProductionStrategy",
+    "SupplyDrivenProductionStrategy",
+    "DemandDrivenProductionStrategy",
+    "TradeDrivenProductionStrategy",
+]
 
 
 class ProductionStrategy:
@@ -47,7 +49,7 @@ class ProductionStrategy:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.schedule_range: Dict[str, Tuple[int, int, bool]] = dict()
+        self.schedule_range: dict[str, tuple[int, int, bool]] = dict()
         """Gives the range of steps at which the production needed for a given contract are scheduled"""
 
     def can_be_produced(self, contract_id: str):
@@ -112,10 +114,10 @@ class SupplyDrivenProductionStrategy(ProductionStrategy):
         self.awi.set_commands(commands)
 
     def on_contracts_finalized(
-        self: "SCML2020Agent",
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
+        self: SCML2020Agent,
+        signed: list[Contract],
+        cancelled: list[Contract],
+        rejectors: list[list[str]],
     ) -> None:
         super().on_contracts_finalized(signed, cancelled, rejectors)
         latest = self.awi.n_steps - 2
@@ -169,10 +171,10 @@ class DemandDrivenProductionStrategy(ProductionStrategy):
     """
 
     def on_contracts_finalized(
-        self: "SCML2020Agent",
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
+        self: SCML2020Agent,
+        signed: list[Contract],
+        cancelled: list[Contract],
+        rejectors: list[list[str]],
     ) -> None:
         super().on_contracts_finalized(signed, cancelled, rejectors)
         for contract in signed:
@@ -226,10 +228,10 @@ class TradeDrivenProductionStrategy(ProductionStrategy):
     """
 
     def on_contracts_finalized(
-        self: "SCML2020Agent",
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
+        self: SCML2020Agent,
+        signed: list[Contract],
+        cancelled: list[Contract],
+        rejectors: list[list[str]],
     ) -> None:
         super().on_contracts_finalized(signed, cancelled, rejectors)
         for contract in signed:

@@ -2,20 +2,17 @@ import itertools
 import random
 from collections import defaultdict
 
-from negmas import Outcome, ResponseType, SAOResponse
+from negmas import ResponseType, SAOResponse
 
-from scml.oneshot.agent import (
-    OneShotAgent,
-    OneShotSingleAgreementAgent,
-    OneShotSyncAgent,
-)
-from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
 from scml.oneshot.ufun import OneShotUFun
+from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
+from scml.std.agent import StdAgent, StdSingleAgreementAgent, StdSyncAgent
+from scml.std.ufun import StdUFun
 
-__all__ = ["GreedyOneShotAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"]
+__all__ = ["GreedyStdAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"]
 
 
-class GreedyOneShotAgent(OneShotAgent):
+class GreedyStdAgent(StdAgent):
     """
     A greedy agent based on OneShotAgent
 
@@ -102,7 +99,7 @@ class GreedyOneShotAgent(OneShotAgent):
                 up, self._best_opp_acc_buying[partner]
             )
 
-    def propose(self, negotiator_id: str, state, source=None) -> Outcome | None:
+    def propose(self, negotiator_id: str, state):
         # find the absolute best offer for me. This will most likely has an
         # unrealistic price
         offer = self.best_offer(negotiator_id)
@@ -116,8 +113,8 @@ class GreedyOneShotAgent(OneShotAgent):
         offer[UNIT_PRICE] = self._find_good_price(self.get_nmi(negotiator_id), state)
         return tuple(offer)
 
-    def respond(self, negotiator_id, state, source=None) -> ResponseType:
-        offer = state.current_offer  # type: ignore
+    def respond(self, negotiator_id, state):
+        offer = state.current_offer
         assert offer is not None
         # find the quantity I still need and end negotiation if I need nothing more
         my_needs = self._needed(negotiator_id)
@@ -260,18 +257,20 @@ class GreedyOneShotAgent(OneShotAgent):
         return ((n_steps - step - 1) / (n_steps - 1)) ** self._e
 
 
-class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
+class GreedySyncAgent(StdSyncAgent, GreedyStdAgent):
     """A greedy agent based on OneShotSyncAgent"""
 
     def __init__(self, *args, threshold=None, **kwargs):
         super().__init__(*args, **kwargs)
         if threshold is None:
             threshold = random.random() * 0.2 + 0.2
+
         self._threshold = threshold
-        self.ufun: OneShotUFun  # type: ignore
+        self.ufun: StdUFun
 
     def before_step(self):
         super().before_step()
+
         self.ufun.find_limit(True)
         self.ufun.find_limit(False)
 
@@ -285,7 +284,7 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
             )
         )
 
-    def counter_all(self, offers, states) -> dict:
+    def counter_all(self, offers, states):
         """Respond to a set of offers given the negotiation state of each."""
 
         if self.ufun.max_utility < 0:
@@ -360,12 +359,12 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
         return self.awi.current_exogenous_output_quantity - self._supplies, 0
 
 
-class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
-    """A greedy agent based on `OneShotSingleAgreementAgent`"""
+class GreedySingleAgreementAgent(StdSingleAgreementAgent):
+    """A greedy agent based on `StdSingleAgreementAgent`"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ufun: OneShotUFun  # type: ignore
+        self.ufun: OneShotUFun
 
     def before_step(self):
         self.ufun.find_limit(True)

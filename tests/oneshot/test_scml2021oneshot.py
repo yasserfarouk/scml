@@ -10,6 +10,7 @@ from negmas import ResponseType, save_stats
 from negmas.genius.bridge import genius_bridge_is_running
 from negmas.genius.gnegotiators import NiceTitForTat
 from negmas.helpers import unique_name
+from negmas.outcomes import Outcome
 from negmas.preferences import LinearAdditiveUtilityFunction
 from negmas.preferences.value_fun import AffineFun, ConstFun, IdentityFun, LinearFun
 from negmas.sao import SAOResponse
@@ -30,9 +31,10 @@ from scml.oneshot.agent import (
 from scml.oneshot.agents import GreedySyncAgent, RandomOneShotAgent
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE, is_system_agent
+from scml.oneshot.sysagents import DefaultOneShotAdapter
 from scml.oneshot.ufun import OneShotUFun
 
-from .switches import SCML_ON_GITHUB
+from ..switches import SCML_ON_GITHUB
 
 random.seed(0)
 
@@ -310,9 +312,10 @@ def test_ufun_min_max_in_world():
             no_logs=True,
         )
         world.step()
-        for aid, agent in world.agents.items():
+        for aid, agent in world.agents.items():  # type: ignore
             if is_system_agent(aid):
                 continue
+            agent: DefaultOneShotAdapter
             ufun = agent.make_ufun(add_exogenous=True)
             ufun.find_limit(True)
             ufun.find_limit(False)
@@ -336,6 +339,7 @@ def test_ufun_min_max_in_world():
     output_penalty_scale=st.floats(0.1, 4),
     inegs=st.integers(0, 3),
     onegs=st.integers(0, 3),
+    perishable=st.booleans(),
 )
 @settings(deadline=None)
 def test_ufun_limits(
@@ -354,7 +358,13 @@ def test_ufun_limits(
     output_penalty_scale,
     inegs,
     onegs,
+    perishable,
 ):
+
+    if perishable:
+        storage_cost = 0
+    else:
+        storage_cost, disposal_cost = disposal_cost / 10, 0
     # these cases do not happen in 2020. May be we still need to test them
     if inegs < 1 and onegs < 1:
         return
@@ -378,6 +388,8 @@ def test_ufun_limits(
         output_penalty_scale,
         inegs,
         onegs,
+        storage_cost,
+        perishable,
     )
 
 
@@ -397,6 +409,8 @@ def _ufun_unit2(
     output_penalty_scale,
     inegs,
     onegs,
+    storage_cost=0,
+    perishable=True,
 ):
     if level == 0:
         input_agent, output_agent = True, False
@@ -406,12 +420,14 @@ def _ufun_unit2(
         input_agent, output_agent = False, True
 
     ufun = OneShotUFun(
+        perishable=perishable,
         ex_qin=ex_qin,
         ex_qout=ex_qout,
         ex_pin=ex_pin,
         ex_pout=ex_pout,
         production_cost=production_cost,
         disposal_cost=disposal_cost,
+        storage_cost=storage_cost,
         shortfall_penalty=shortfall_penalty,
         input_agent=input_agent,
         output_agent=output_agent,
@@ -427,6 +443,7 @@ def _ufun_unit2(
         current_step=0,
         input_penalty_scale=input_penalty_scale,
         output_penalty_scale=output_penalty_scale,
+        storage_penalty_scale=input_penalty_scale,
         current_balance=balance,
     )
     worst_gt, best_gt = ufun.find_limit_brute_force(False), ufun.find_limit_brute_force(
@@ -477,6 +494,7 @@ def test_ufun_limits_example():
     production_cost=st.integers(1, 5),
     disposal_cost=st.floats(0.5, 1.5),
     shortfall_penalty=st.floats(1.5, 2.5),
+    perishable=st.booleans(),
     level=st.integers(0, 2),
     force_exogenous=st.booleans(),
     qin=st.integers(0, 10),
@@ -503,7 +521,13 @@ def test_ufun_unit(
     pout,
     lines,
     balance,
+    perishable,
 ):
+    if perishable:
+        storage_cost = 0
+    else:
+        storage_cost, disposal_cost = disposal_cost / 10, 0
+
     _ufun_unit(
         ex_qin,
         ex_qout,
@@ -520,6 +544,8 @@ def test_ufun_unit(
         pout,
         lines,
         balance,
+        storage_cost=storage_cost,
+        perishable=perishable,
     )
 
 
@@ -539,6 +565,8 @@ def _ufun_unit(
     pout,
     lines,
     balance,
+    storage_cost,
+    perishable,
 ):
     if level == 0:
         input_agent, output_agent = True, False
@@ -554,6 +582,8 @@ def _ufun_unit(
         ex_pout=ex_pout,
         production_cost=production_cost,
         disposal_cost=disposal_cost,
+        storage_cost=storage_cost,
+        perishable=perishable,
         shortfall_penalty=shortfall_penalty,
         input_agent=input_agent,
         output_agent=output_agent,
@@ -569,6 +599,7 @@ def _ufun_unit(
         current_step=0,
         input_penalty_scale=1,
         output_penalty_scale=3,
+        storage_penalty_scale=1,
         current_balance=balance,
     )
     # if force_exogenous:
@@ -583,9 +614,9 @@ def _ufun_unit(
     #     assert (v and b >= a) or (
     #         not v and b <= a
     #     ), f"Failed for {v} Greedy gave {a}\nOptimal gave {b}"
-    ufun.best = ufun.find_limit(True)
-    ufun.worst = ufun.find_limit(False)
-
+    # ufun.best = ufun.find_limit(True)
+    # ufun.worst = ufun.find_limit(False)
+    #
     mn, mx = ufun.min_utility, ufun.max_utility
     if mx is None:
         mx = float("inf")
@@ -618,6 +649,8 @@ def test_ufun_unit_example():
         pout=2,
         lines=10,
         balance=float("inf"),
+        perishable=True,
+        storage_cost=0.0,
     )
 
 
@@ -638,6 +671,8 @@ def test_ufun_example():
         pout=4,
         lines=10,
         balance=float("inf"),
+        perishable=True,
+        storage_cost=0.0,
     )
 
 
@@ -695,7 +730,7 @@ def test_adapter(atype):
 
 
 class MyIndNeg(OneShotIndNegotiatorsAgent):
-    def generate_ufuns(self):
+    def generate_ufuns(self) -> dict:
         return defaultdict(lambda: self.ufun)
 
 
@@ -833,29 +868,27 @@ def test_ufun_penalty_scales_are_correct(penalties_scale):
         old_trading = world.trading_prices.copy()
         world.step()
         for _, a in world.agents.items():
+            awi = a.awi  # type: ignore
+            awi: OneShotAWI
             if is_system_agent(a.id):
                 continue
-            u: OneShotUFun = a.ufun
+            u: OneShotUFun = a.ufun  # type: ignore
             if penalties_scale == "trading":
                 assert (
                     u.output_penalty_scale
-                    # == a.awi.trading_prices[a.awi.my_output_product]
-                    == old_trading[a.awi.my_output_product]
+                    # == awi.trading_prices[awi.my_output_product]
+                    == old_trading[awi.my_output_product]
                 )
                 assert (
                     u.input_penalty_scale
-                    # == a.awi.trading_prices[a.awi.my_input_product]
-                    == old_trading[a.awi.my_input_product]
+                    # == awi.trading_prices[awi.my_input_product]
+                    == old_trading[awi.my_input_product]
                 )
             else:
                 assert (
-                    u.output_penalty_scale
-                    == a.awi.catalog_prices[a.awi.my_output_product]
+                    u.output_penalty_scale == awi.catalog_prices[awi.my_output_product]
                 )
-                assert (
-                    u.input_penalty_scale
-                    == a.awi.catalog_prices[a.awi.my_input_product]
-                )
+                assert u.input_penalty_scale == awi.catalog_prices[awi.my_input_product]
 
 
 class MySyncAgent(OneShotSyncAgent):
@@ -887,7 +920,7 @@ class MySyncAgent(OneShotSyncAgent):
         offer[UNIT_PRICE] = unit_price_issue.max_value
         return offer
 
-    def first_proposals(self):
+    def first_proposals(self) -> dict:
         """Decide a first proposal on every negotiation.
         Returning None for a negotiation means ending it."""
         self.new_step = False
@@ -1016,7 +1049,7 @@ def test_trading_prices_updated(n_agents, n_processes, n_steps):
 
     # we start at catlaog prices
     for aid, agent in world.agents.items():
-        assert np.abs(agent.awi.trading_prices - catalog_prices).max() < eps
+        assert np.abs(agent.awi.trading_prices - catalog_prices).max() < eps  # type: ignore
 
     force_single_thread(True)
     for _ in range(n_steps):
@@ -1025,7 +1058,7 @@ def test_trading_prices_updated(n_agents, n_processes, n_steps):
         for aid, agent in world.agents.items():
             if is_system_agent(aid):
                 continue
-            trading_prices = agent.awi.trading_prices.copy()
+            trading_prices = agent.awi.trading_prices.copy()  # type: ignore
             break
         diffs = np.maximum(diffs, np.abs(trading_prices - catalog_prices))
 
@@ -1034,10 +1067,10 @@ def test_trading_prices_updated(n_agents, n_processes, n_steps):
 
 
 class MyOneShotDoNothing(OneShotAgent):
-    def propose(self, negotiator_id, state):
+    def propose(self, negotiator_id, state) -> Outcome | None:
         return None
 
-    def respond(self, negotiator_id, state):
+    def respond(self, negotiator_id, state, source=None):
         return ResponseType.END_NEGOTIATION
 
 
@@ -1049,8 +1082,8 @@ def test_do_nothing_goes_bankrupt():
             continue
         assert world.is_bankrupt[
             aid
-        ], f"Agent {aid} is not bankrupt with balance {world.current_balance(aid)} and initial_balance of {world.initial_balances[aid]}"
-        assert agent.awi.is_bankrupt()
+        ], f"Agent {aid} is not bankrupt with balance {world.current_balance(aid)} and initial_balance of {world.initial_balances[aid]}"  # type: ignore
+        assert agent.awi.is_bankrupt()  # type: ignore
 
 
 class PricePumpingAgent(OneShotAgent):
@@ -1062,8 +1095,8 @@ class PricePumpingAgent(OneShotAgent):
     def propose(self, negotiator_id, state):
         return self.top_outcome(negotiator_id)
 
-    def respond(self, negotiator_id, state):
-        offer = state.current_offer
+    def respond(self, negotiator_id, state, source=None):
+        offer = state.current_offer  # type: ignore
         return (
             ResponseType.ACCEPT_OFFER
             if self.top_outcome(negotiator_id) == offer

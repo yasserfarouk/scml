@@ -4,13 +4,12 @@ from collections import namedtuple
 from functools import cache
 from typing import Iterable, Literal, overload
 
+from attr import define
 from negmas import Contract
 from negmas.outcomes import Issue, Outcome, OutcomeSpace, make_issue, make_os
 from negmas.preferences import StationaryMixin, UtilityFunction
 
-from scml.scml2020.common import is_system_agent
-
-from .common import QUANTITY, TIME, UNIT_PRICE
+from .common import QUANTITY, TIME, UNIT_PRICE, is_system_agent
 
 __all__ = ["OneShotUFun", "UFunLimit"]
 
@@ -26,13 +25,28 @@ UFunLimit = namedtuple(
         "exogenous_input_price",
         "exogenous_output_quantity",
         "exogenous_output_price",
+        "inventory_input",
+        "inventory_output",
         "producible",
     ],
 )
 """Information about one utility limit (either highest or lowest). See `OnShotUFun.find_limit` for details."""
 
 
-class OneShotUFun(StationaryMixin, UtilityFunction):
+@define
+class UtilityInfo:
+    producible: int
+    total_input: int
+    total_output: int
+    shortfall_quantity: int
+    shortfall_penalty: float
+    remaining_quantity: int
+    disposal_cost: float
+    storage_cost: float
+    utility: float
+
+
+class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
     """
     Calculates the utility function of a list of contracts or offers.
 
@@ -91,12 +105,16 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         output_agent: bool,
         production_cost: float,
         disposal_cost: float,
+        storage_cost: float,
         shortfall_penalty: float,
         input_penalty_scale: float | None,
         output_penalty_scale: float | None,
+        storage_penalty_scale: float | None,
         n_input_negs: int,
         n_output_negs: int,
         current_step: int,
+        inventory_in: int = 0,
+        inventory_out: int = 0,
         input_qrange: tuple[int, int] = (0, 0),
         input_prange: tuple[int, int] = (0, 0),
         output_qrange: tuple[int, int] = (0, 0),
@@ -107,25 +125,37 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         current_balance: int | float = float("inf"),
         suppliers: set[str] = set(),
         consumers: set[str] = set(),
+        perishable=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self._best, self._worst = None, None
         self.suppliers = suppliers
         self.consumers = consumers
         self.current_balance = current_balance
         self.normalized = normalized
         self.input_penalty_scale = input_penalty_scale
+        self.storage_penalty_scale = storage_penalty_scale
         self.output_penalty_scale = output_penalty_scale
         self.current_step = current_step
         self.ex_pin, self.ex_pout = ex_pin, ex_pout
         self.ex_qin, self.ex_qout = ex_qin, ex_qout
+        self.inventory_in = inventory_in
+        self.inventory_out = inventory_out
         self.n_input_negs = n_input_negs
+        self.perishable = perishable
         self.n_output_negs = n_output_negs
         self.input_qrange, self.input_prange = input_qrange, input_prange
         self.output_qrange, self.output_prange = output_qrange, output_prange
-        self.production_cost, self.disposal_cost, self.shortfall_penalty = (
+        (
+            self.production_cost,
+            self.disposal_cost,
+            self.storage_cost,
+            self.shortfall_penalty,
+        ) = (
             production_cost,
             disposal_cost,
+            storage_cost,
             shortfall_penalty,
         )
         self.input_agent, self.output_agent = input_agent, output_agent
@@ -141,11 +171,11 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         else:
             self.output_product = None
         if self.normalized:
-            self.best = self.find_limit(True, None, None)
-            self.worst = self.find_limit(False, None, None)
+            self._best = self.find_limit(True, None, None)
+            self._worst = self.find_limit(False, None, None)
         else:
-            self.best = UFunLimit(*tuple([None] * 10))
-            self.worst = UFunLimit(*tuple([None] * 10))
+            self._best = UFunLimit(*tuple([None] * 12))
+            self._worst = UFunLimit(*tuple([None] * 12))
         if self.input_agent or self.output_agent:
             # if this is an edge agent, all negotiations will be on the same product so we can define its outcome-space
             qrange = self.input_qrange if self.output_agent else self.output_qrange
@@ -178,6 +208,26 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         self._signed_is_output: list[bool] = []
         self._registered_sale_failures: set[str] = set()
         self._registered_supply_failures: set[str] = set()
+        if perishable:
+            assert self.storage_cost == 0, f"Perishable ufun but {self.storage_cost=}"
+        else:
+            assert (
+                self.disposal_cost == 0
+            ), f"Non-perishable ufun but {self.disposal_cost=}"
+
+    @property
+    def best_option(self) -> UFunLimit:
+        """Best possible options"""
+        if self._best is None:
+            self._best = self.find_limit(True)
+        return self._best
+
+    @property
+    def worst_option(self) -> UFunLimit:
+        """Best possible options"""
+        if self._worst is None:
+            self._worst = self.find_limit(False)
+        return self._worst
 
     def register_supply_failure(self, supplier_id: str):
         self.find_limit_brute_force.cache_clear()
@@ -200,9 +250,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         self._signed_is_output.append(False)
 
     def xml(self, issues) -> str:
-        raise NotImplementedError("Cannot convert the ufun to xml")
+        raise NotImplementedError(f"Cannot convert the ufun to xml: {issues}")
 
-    def eval(self, offer) -> float:
+    def eval(self, offer: tuple[int, int, int] | None) -> float:  # type: ignore
         """
         Calculates the utility function given a single contract.
 
@@ -212,11 +262,34 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         """
         if not self.input_agent and not self.output_agent:
             return float("-inf")
-        return self.from_offers((tuple(offer) if offer else None,), (self.input_agent,))
+        if offer is not None:
+            offer = tuple(offer)  # type: ignore
+        return self.from_offers((offer if offer else None,), (self.input_agent,))
+
+    @overload
+    def from_contracts(
+        self,
+        contracts: Iterable[Contract],
+        return_info: Literal[False] = False,
+        ignore_exogenous=True,
+    ) -> float:
+        ...
+
+    @overload
+    def from_contracts(
+        self,
+        contracts: Iterable[Contract],
+        return_info: Literal[True],
+        ignore_exogenous=True,
+    ) -> UtilityInfo:
+        ...
 
     def from_contracts(
-        self, contracts: Iterable[Contract], ignore_exogenous=True
-    ) -> float:
+        self,
+        contracts: Iterable[Contract],
+        return_info: bool = False,
+        ignore_exogenous=True,
+    ) -> float | UtilityInfo:
         """
         Calculates the utility function given a list of contracts
 
@@ -245,7 +318,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             is_output = product == output_product
             outputs.append(is_output)
             offers.append(self.outcome_as_tuple(c.agreement))
-        return self.from_offers(tuple(offers), tuple(outputs))
+        return self.from_offers(  # type: ignore
+            tuple(offers), tuple(outputs), return_info=return_info  # type: ignore
+        )
 
     @staticmethod
     def outcome_as_tuple(offer):
@@ -260,9 +335,10 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
     @overload
     def from_offers(
         self,
-        offers: tuple[tuple[int, int, int], ...] | dict[str, tuple[int, int, int]],
+        offers: tuple[tuple[int, int, int | float] | None, ...]
+        | dict[str, tuple[int, int, int] | None],
         outputs: tuple[bool, ...] | None = None,
-        return_producible: Literal[False] = False,
+        return_info: Literal[False] = False,
         ignore_signed_contracts: bool = True,
     ) -> float:
         ...
@@ -270,20 +346,22 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
     @overload
     def from_offers(
         self,
-        offers: tuple[tuple[int, int, int], ...] | dict[str, tuple[int, int, int]],
+        offers: tuple[tuple[int, int, int | float] | None, ...]
+        | dict[str, tuple[int, int, int] | None],
         outputs: tuple[bool, ...] | None,
-        return_producible: Literal[True],
+        return_info: Literal[True],
         ignore_signed_contracts: bool = True,
-    ) -> tuple[float, int]:
+    ) -> UtilityInfo:
         ...
 
     def from_offers(
         self,
-        offers: tuple[tuple[int, int, int], ...] | dict[str, tuple[int, int, int]],
+        offers: tuple[tuple[int, int, int | float] | None, ...]
+        | dict[str, tuple[int, int, int] | None],
         outputs: tuple[bool, ...] | None = None,
-        return_producible: bool = False,
+        return_info: bool = False,
         ignore_signed_contracts: bool = True,
-    ) -> float | tuple[float, int]:
+    ) -> float | UtilityInfo:
         """
         Calculates the utility value given a list of offers and whether each
         offer is for output or not (= input).
@@ -295,7 +373,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             outputs: An iterable of the same length as offers of booleans
                      specifying for each offer whether it is an offer for buying
                      the agent's output product.
-            return_producible: If true, the producible quantity will be returned
+            return_info: If true, detailed utility information is returned as Utility Info
             ignore_signed_contracts: If true, ignores the registered signed contracts.
                                      This means that only exogenous contracts and offers
                                      will be used in evaluating the utility.
@@ -317,16 +395,16 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             return self.from_offers(
                 offers,
                 outputs,
-                return_producible=return_producible,  # type: ignore
+                return_info=return_info,  # type: ignore
                 ignore_signed_contracts=ignore_signed_contracts,
             )
         # copy inputs because we are going to modify them.
         offers = list(offers)  # type: ignore
         if outputs is None:
             if self.input_agent:
-                outputs = [True] * len(offers)
+                outputs = tuple([True] * len(offers))
             elif self.output_agent:
-                outputs = [False] * len(offers)
+                outputs = tuple([False] * len(offers))
             else:
                 raise RuntimeError(
                     f"You cannot pass outputs=None if the agent is neither a first or last level agent"
@@ -338,7 +416,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             2. output contracts are ordered from highest price to cheapest.
             3. The relative order of input and output contracts is indeterminate.
             """
-            offer, is_output, is_exogenous = x
+            offer, is_output, _ = x
             # if is_exogenous and self.force_exogenous:
             #     return float("-inf")
             return -offer[UNIT_PRICE] if is_output else offer[UNIT_PRICE]
@@ -353,9 +431,19 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         # exogenous contracts after them.
         exogenous = [False] * len(offers) + [True, True]
         # add exogenous contracts as offers one for input and another for output
+        invin = self.ex_qin + self.inventory_in
+        invout = self.ex_qout + self.inventory_out
         offers += [  # type: ignore
-            (self.ex_qin, 0, self.ex_pin / self.ex_qin if self.ex_qin else 0),
-            (self.ex_qout, 0, self.ex_pout / self.ex_qout if self.ex_qout else 0),
+            (
+                invin,
+                self.current_step,
+                self.ex_pin / invin if invin else 0,
+            ),
+            (
+                invout,
+                self.current_step,
+                self.ex_pout / invout if invout else 0,
+            ),
         ]
         outputs += [False, True]  # type: ignore
         # initialize some variables
@@ -366,7 +454,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         output_offers = []
         # sort contracts in the optimal order of execution: from cheapest when
         # buying and from the most expensive when selling. See `order` above.
-        sorted_offers = sorted(zip(offers, outputs, exogenous, strict=True), key=order)
+        sorted_offers = sorted(  # type: ignore
+            list(zip(offers, outputs, exogenous, strict=True)), key=order  # type: ignore
+        )
 
         # we calculate the total quantity we are are required to pay for `qin` and
         # the associated amount of money we are going to pay `pin`. Moreover,
@@ -374,6 +464,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         # money balance (`qin_bar`).
         for offer, is_output, is_exogenous in sorted_offers:
             if not offer:
+                continue
+            # ignore any offers that are not about this time
+            if offer[TIME] != self.current_step:
                 continue
             offer: tuple[int, int, int]
             if is_output:
@@ -399,10 +492,10 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         n_lines = self.n_lines
         producible = min(qin_bar, n_lines)
 
-        # No need to this test now because we test for the ability to produce with
+        # No need to do this test now because we test for the ability to produce with
         # the ability to buy items. The factory buys cheaper items and produces them
         # before attempting more expensive ones. This may or may not be optimal but
-        # who cars. It is consistent that it is all that matters.
+        # who cares. It is consistent and that is all that matters.
         # # if we do not have enough money to pay for production in full, we limit
         # # the producible quantity to what we can actually produce
         # if (
@@ -438,20 +531,43 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         output_penalty = self.output_penalty_scale
         if output_penalty is None:
             output_penalty = pout / qout if qout else 0
-        output_penalty *= self.shortfall_penalty * max(0, qout - producible)
+        shortfall = max(0, qout - producible)
+        output_penalty *= self.shortfall_penalty * shortfall
         input_penalty = self.input_penalty_scale
         if input_penalty is None:
             input_penalty = pin / qin if qin else 0
         input_penalty *= self.disposal_cost * max(0, qin - producible)
+        storage_penalty = self.storage_penalty_scale
+        if storage_penalty is None:
+            storage_penalty = pin / qin if qin else 0
+        remainingq = max(0, qin - qout)
+        storage_penalty *= self.storage_cost * remainingq
 
         # call a helper method giving it the total quantity and money in and out.
         u = self.from_aggregates(
-            qin, qout, producible, pin, pout_bar, input_penalty, output_penalty
+            qin,
+            qout,
+            producible,
+            pin,
+            pout_bar,
+            input_penalty,
+            output_penalty,
+            storage_penalty,
         )
-        if return_producible:
+        if return_info:
             # the real producible quantity is the minimum of what we can produce
             # given supplies and production capacity and what we can sell.
-            return u, producible
+            return UtilityInfo(
+                utility=u,
+                remaining_quantity=remainingq,
+                storage_cost=storage_penalty,
+                disposal_cost=output_penalty,
+                producible=producible,
+                total_input=qin,
+                total_output=qout,
+                shortfall_penalty=output_penalty,
+                shortfall_quantity=shortfall,
+            )
         return u
 
     @cache
@@ -462,8 +578,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         qout_sold: int,
         pin: int,
         pout: int,
-        input_penalty,
-        output_penalty,
+        input_penalty: float,
+        output_penalty: float,
+        storage_penalty: float,
     ) -> float:
         """
         Calculates the utility from aggregates of input/output quantity/prices
@@ -478,6 +595,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             pout: Output total price (i.e. unit price * qin).
             input_penalty: total disposal cost
             output_penalty: total shortfall penalty
+            storage_penalty: total storage penalty
 
         Remarks:
             - Most likely, you do not need to directly call this method. Consider
@@ -510,11 +628,14 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         #    did not. The only reason you cannot sell something is if you cannot
         #    produce it. That is why the shortfall penalty is multiplied by the
         #    difference between what you should have sold and the produced amount.
+        # 3. You pay storage penalty for anything that remains in your storage at the end.
+        # You can either have disposal penalty or storage penalty not both
         u = (
             pout
             - pin
             - self.production_cost * produced
             - input_penalty
+            - storage_penalty
             - output_penalty
         )
         if not self.normalized:
@@ -527,34 +648,34 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
 
     def breach_level(self, qin: int = 0, qout: int = 0):
         """Calculates the breach level that would result from a given quantities"""
-        qin += self.ex_qin
+        qin += self.ex_qin + self.inventory_in
         qin = min(qin, self.n_lines)
-        qout += self.ex_qout
+        qout += self.ex_qout + self.inventory_out
         return 0 if qin >= qout else (qout - qin) / qout
 
     def is_breach(self, qin: int = 0, qout: int = 0):
         """Whether the given quantities would lead to a breach."""
-        qin += self.ex_qin
-        qout += self.ex_qout
+        qin += self.ex_qin + self.inventory_in
+        qout += self.ex_qout + self.inventory_out
         return qout > min(qin, self.n_lines)
 
     @property
     def max_utility(self):
         """The maximum possible utility value"""
-        if self.best is None:
-            self.best = self.find_limit(True)
-        return self.best.utility
+        if self._best is None:
+            self._best = self.find_limit(True)
+        return self._best.utility
 
     @property
     def min_utility(self):
         """The minimum possible utility value"""
-        if self.worst is None:
-            self.worst = self.find_limit(False)
-        return self.worst.utility
+        if self._worst is None:
+            self._worst = self.find_limit(False)
+        return self._worst.utility
 
     def minmax(self, *args, **kwargs) -> tuple[float, float]:
         worst, best = self.extreme_outcomes(*args, **kwargs)
-        return self(worst), self(best)
+        return (self(worst), self(best))
 
     def extreme_outcomes(
         self,
@@ -563,6 +684,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         outcomes: Iterable[Outcome] | None = None,
         max_cardinality=1000,
     ) -> tuple[Outcome, Outcome]:
+        assert outcome_space is None and issues is None and outcomes is None
+        _ = max_cardinality
         product = (
             self.output_product
             if self.input_agent
@@ -597,8 +720,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
     def utility_range(
         self,
         outcome_space: OutcomeSpace | None = None,
-        issues: list[Issue] = None,
-        outcomes: list[Outcome] = None,
+        issues: list[Issue] | None = None,
+        outcomes: list[Outcome] | None = None,
         return_outcomes=False,
         max_n_outcomes=1000,
     ) -> tuple[float, float] | tuple[float, float, Outcome, Outcome]:
@@ -701,8 +824,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         )
         actual_util = self.from_offers(
             (
-                (result.output_quantity, 0, result.output_price),
-                (result.input_quantity, 0, result.input_price),
+                (result.output_quantity, self.current_step, result.output_price),
+                (result.input_quantity, self.current_step, result.input_price),
             ),
             (True, False),
             ignore_signed_contracts=ignore_signed_contracts,
@@ -711,10 +834,48 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             abs(result.utility - actual_util) < 1e-2
         ), f"UFunLimit with utility {result.utility} != actual utility {actual_util} of the outcome in it!!\n{result}"
         if set_best:
-            self.best = result
+            self._best = result
         elif set_worst:
-            self.worst = result
+            self._worst = result
         return result
+
+    def best(self) -> Outcome:
+        if self._best is None:
+            self._best = self.find_limit(True)
+        if not self._best.output_quantity:
+            return (
+                self._best.input_quantity,
+                self.current_step,
+                self._best.input_price,
+            )
+        if not self._best.input_quantity:
+            return (
+                self._best.output_quantity,
+                self.current_step,
+                self._best.output_price,
+            )
+        raise ValueError(
+            f"We need to buy and sell which means there is single contract that makes sense {self._best=}."
+        )
+
+    def worst(self) -> Outcome:
+        if self._worst is None:
+            self._worst = self.find_limit(False)
+        if not self._worst.output_quantity:
+            return (
+                self._worst.input_quantity,
+                self.current_step,
+                self._worst.input_price,
+            )
+        if not self._worst.input_quantity:
+            return (
+                self._worst.output_quantity,
+                self.current_step,
+                self._worst.output_price,
+            )
+        raise ValueError(
+            f"We need to buy and sell which means there is single contract that makes sense {self._worst=}."
+        )
 
     @cache
     def find_limit_brute_force(
@@ -795,17 +956,26 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
         limit_p, limit_p = 0, 0
         for i in range(imax):
             for o in range(omax):
-                u, p = self.from_offers(
+                info = self.from_offers(
                     (
-                        (i, 0, ip),
-                        (o, 0, op),
-                        (secured_input_quantity, 0, secured_input_unit_price),
-                        (secured_output_quantity, 0, secured_output_unit_price),
+                        (i, self.current_step, ip),
+                        (o, self.current_step, op),
+                        (
+                            secured_input_quantity,
+                            self.current_step,
+                            secured_input_unit_price,
+                        ),
+                        (
+                            secured_output_quantity,
+                            self.current_step,
+                            secured_output_unit_price,
+                        ),
                     ),
                     (False, True, False, True),
-                    return_producible=True,
+                    return_info=True,
                     ignore_signed_contracts=True,
                 )
+                u, p = info.utility, info.producible
                 if (best and u >= limit_u) or (not best and u <= limit_u):
                     limit_io, limit_u, limit_p = (
                         (i, ip, o, op),
@@ -814,6 +984,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
                     )
         # this method cannot find the exogenous quantities at the limit found
         # if force_exogenous was false and will return None for them.
+        assert limit_io is not None
         return UFunLimit(
             utility=limit_u,
             input_quantity=limit_io[0],
@@ -824,6 +995,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
             exogenous_output_price=self.ex_pout / self.ex_qout if self.ex_qout else 0,
             exogenous_input_quantity=self.ex_qin if self.force_exogenous else None,
             exogenous_output_quantity=self.ex_qout if self.force_exogenous else None,
+            inventory_input=self.inventory_in,
+            inventory_output=self.inventory_out,
             producible=limit_p,
         )
 
@@ -845,16 +1018,21 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
               always return `True` because in these cases we do not know what the
               the unit price for the output so there is nothing to compare with.
         """
+        if not self.perishable:
+            return True
+        assert self.inventory_in <= 0, f"A perishable case but {self.inventory_in=}"
+        assert self.inventory_out <= 0, f"A perishable case but {self.inventory_out=}"
         # can reject a price only if we know the output unit price
         # (i.e. we have an output agent)
         if not self.output_agent:
             return True
+        total_out = self.ex_qout
         # If we are not selling, we should not buy
-        if self.ex_qout < 1:
+        if total_out < 1:
             return False
         # do not buy at this price if it is **guaranteed** to lead to a loss
         return (
-            unit_price + self.production_cost - self.ex_pout // self.ex_qout
+            unit_price + self.production_cost - self.ex_pout // total_out
         ) < self.shortfall_penalty
 
     def ok_to_sell_at(self, unit_price: float) -> bool:
@@ -881,6 +1059,10 @@ class OneShotUFun(StationaryMixin, UtilityFunction):
               always return `True` because in these cases we do not know what the
               the unit price for the input so there is nothing to compare with.
         """
+        if not self.perishable:
+            return True
+        assert self.inventory_in <= 0, f"A perishable case but {self.inventory_in=}"
+        assert self.inventory_out <= 0, f"A perishable case but {self.inventory_out=}"
         # can reject a price only if we know the input unit price
         # (i.e. we have an input agent)
         if not self.input_agent:

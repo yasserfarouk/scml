@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
 import math
+from rich import print
 import os
 import sys
 import traceback
@@ -13,6 +14,7 @@ from typing import List
 
 import click
 import click_config_file
+from scml.std.world import SCML2024StdWorld
 import negmas
 import numpy as np
 import pandas as pd
@@ -467,6 +469,8 @@ def tournament2019(
         log_negotiations=log_negs,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     end_time = humanize_time(perf_counter() - start)
@@ -743,6 +747,8 @@ def tournament2020(
         log_negotiations=log_negs,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     end_time = humanize_time(perf_counter() - start)
@@ -766,6 +772,9 @@ def display_results(results, metric, file_name=None):
         if metric == "median" and "median" not in results.score_stats.columns
         else metric
     ]
+    if results is None or results.score_stats is None or len(results.score_stats) == 0:
+        print("[red]No results found[/red]")
+        return
     strs = results.score_stats["agent_type"].values.tolist()
     short_names = shortest_unique_names(strs)
     mapping = dict(zip(strs, short_names))
@@ -784,18 +793,25 @@ def display_results(results, metric, file_name=None):
         results.kstest["b"] = [mapping[_] for _ in results.kstest["b"]]
         print_and_save(tabulate(results.kstest, headers="keys", tablefmt="psql"))
 
-    agg_stats = results.agg_stats.loc[
-        :,
-        [
-            "n_negotiations_sum",
-            "n_contracts_concluded_sum",
-            "n_contracts_signed_sum",
-            "n_contracts_executed_sum",
-            "activity_level_sum",
-        ],
-    ]
-    agg_stats.columns = ["negotiated", "concluded", "signed", "executed", "business"]
-    print_and_save(tabulate(agg_stats.describe(), headers="keys", tablefmt="psql"))
+    if results.agg_stats is not None and len(results.agg_stats) > 0:
+        agg_stats = results.agg_stats.loc[
+            :,
+            [
+                "n_negotiations_sum",
+                "n_contracts_concluded_sum",
+                "n_contracts_signed_sum",
+                "n_contracts_executed_sum",
+                "activity_level_sum",
+            ],
+        ]
+        agg_stats.columns = [
+            "negotiated",
+            "concluded",
+            "signed",
+            "executed",
+            "business",
+        ]
+        print_and_save(tabulate(agg_stats.describe(), headers="keys", tablefmt="psql"))
     if file:
         file.close()
 
@@ -945,6 +961,8 @@ def run2019(
         name=world_name,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     failed = False
@@ -1213,6 +1231,8 @@ def run2020(
             name=world_name,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            ignore_simulation_exceptions=not raise_exceptions,
+            ignore_negotiation_exceptions=not raise_exceptions,
             **kwargs,
         )
     )
@@ -1395,7 +1415,7 @@ def run2020(
         save_run_info(world.name, log_dir, "world")
 
 
-DEFAULT_STD = "RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent"
+DEFAULT_STD_OLD = "RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent"
 DEFAULT_STD_2021 = (
     "MarketAwareDecentralizingAgent;RandomAgent;SatisficerAgent;DecentralizingAgent"
 )
@@ -1406,11 +1426,17 @@ DEFAULT_2021_NONCOMPETITORS = [
 # DEFAULT_STD_2021 = (
 #     "MarketAwareDecentralizingAgent;BuyCheapSellExpensiveAgent;DecentralizingAgent"
 # )
-DEFAULT_ONESHOT = "GreedySyncAgent;SyncRandomOneShotAgent;SingleAgreementAspirationAgent;RandomOneShotAgent"
+DEFAULT_ONESHOT = "GreedySyncAgent;SyncRandomOneShotAgent"
+DEFAULT_STD = "GreedySyncAgent;SyncRandomStdAgent;SyncRandomOneShotAgent"
 DEFAULT_ONESHOT_NONCOMPETITORS = [
-    "scml.oneshot.agents.RandomOneShotAgent",
+    "scml.oneshot.agents.GreedySyncAgent",
     "scml.oneshot.agents.SyncRandomOneShotAgent",
-    "scml.oneshot.agents.SingleAgreementAspirationAgent",
+]
+
+DEFAULT_STD_NONCOMPETITORS = [
+    "scml.std.agents.GreedySyncAgent",
+    "scml.std.agents.SyncRandomStdAgent",
+    "scml.std.agents.SyncRandomOneShotAgent",
 ]
 
 
@@ -1419,7 +1445,7 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
 @click.option(
     "--competitors",
     default=None,
-    help="A semicolon (;) separated list of agent types to use for the competition.",
+    help="A semicolon (;) separated list of agent types to use for the simulation.",
 )
 @click.option(
     "--log",
@@ -1506,9 +1532,9 @@ def run2024(
         competitors = (
             (DEFAULT_ONESHOT + ";" + ";".join(DEFAULT_ONESHOT_NONCOMPETITORS))
             if oneshot
-            else (DEFAULT_STD_2021 + ";" + ";".join(DEFAULT_2021_NONCOMPETITORS))
+            else (DEFAULT_STD + ";" + ";".join(DEFAULT_STD_NONCOMPETITORS))
         )
-    world_type = SCML2024OneShotWorld if oneshot else SCML2024World
+    world_type = SCML2024OneShotWorld if oneshot else SCML2024StdWorld
     if time <= 0:
         time = None
     kwargs = {"n_steps": steps}
@@ -1528,7 +1554,9 @@ def run2024(
 
     world_name = (
         unique_name(
-            base=f"scml2024{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
+            base=f"scml2024{'oneshot' if oneshot else 'std'}",
+            add_time=True,
+            rand_digits=0,
         )
         if not name
         else name
@@ -1540,7 +1568,7 @@ def run2024(
     exception = None
 
     def _no_default(s):
-        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
+        return (not oneshot and not (s.startswith("scml.std.agents."))) or (
             oneshot and not (s.startswith("scml.oneshot.agents."))
         )
 
@@ -1550,7 +1578,7 @@ def run2024(
             if oneshot:
                 all_competitors[i] = "scml.oneshot.agents." + cp
             else:
-                all_competitors[i] = "scml.scml2020.agents." + cp
+                all_competitors[i] = "scml.std.agents." + cp
     all_competitors_params = [dict() for _ in all_competitors]
     world = world_type(
         **world_type.generate(
@@ -1564,6 +1592,8 @@ def run2024(
             name=world_name,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            ignore_simulation_exceptions=not raise_exceptions,
+            ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
             **kwargs,
         )
@@ -1892,6 +1922,8 @@ def run2023(
             name=world_name,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            ignore_simulation_exceptions=not raise_exceptions,
+            ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
             **kwargs,
         )
@@ -2220,6 +2252,8 @@ def run2022(
             name=world_name,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            ignore_simulation_exceptions=not raise_exceptions,
+            ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
             **kwargs,
         )
@@ -2548,6 +2582,8 @@ def run2021(
             name=world_name,
             ignore_agent_exceptions=not raise_exceptions,
             ignore_contract_execution_exceptions=not raise_exceptions,
+            ignore_simulation_exceptions=not raise_exceptions,
+            ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
             **kwargs,
         )
@@ -2995,6 +3031,8 @@ def tournament2020(
         log_negotiations=log_negs,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     end_time = humanize_time(perf_counter() - start)
@@ -3291,6 +3329,8 @@ def tournament2021(
         log_negotiations=log_negs,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     end_time = humanize_time(perf_counter() - start)
@@ -3445,8 +3485,8 @@ def tournament2024(
 ):
     oneshot = ttype == "oneshot"
     if not competitors:
-        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
-    world_type = SCML2024OneShotWorld if oneshot else SCML2024World
+        competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD
+    world_type = SCML2024OneShotWorld if oneshot else SCML2024StdWorld
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3485,7 +3525,7 @@ def tournament2024(
             if oneshot:
                 all_competitors[i] = ("scml.oneshot.agents.") + cp
             else:
-                all_competitors[i] = ("scml.scml2020.agents.") + cp
+                all_competitors[i] = ("scml.std.agents.") + cp
     all_competitors_params = [dict() for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors)
@@ -3542,13 +3582,13 @@ def tournament2024(
                 if oneshot:
                     non_competitors[i] = ("scml.oneshot.agents.") + cp
                 else:
-                    non_competitors[i] = ("scml.scml2020.agents.") + cp
+                    non_competitors[i] = ("scml.std.agents.") + cp
 
     if non_competitors is None:
         non_competitors = (
             DEFAULT_ONESHOT_NONCOMPETITORS
             if ttype == "oneshot"
-            else DEFAULT_2021_NONCOMPETITORS
+            else DEFAULT_STD_NONCOMPETITORS
         )
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
@@ -3582,6 +3622,8 @@ def tournament2024(
         log_negotiations=log_negs,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     end_time = humanize_time(perf_counter() - start)
@@ -3879,6 +3921,8 @@ def tournament2023(
         log_negotiations=log_negs,
         ignore_agent_exceptions=not raise_exceptions,
         ignore_contract_execution_exceptions=not raise_exceptions,
+        ignore_simulation_exceptions=not raise_exceptions,
+        ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
     end_time = humanize_time(perf_counter() - start)

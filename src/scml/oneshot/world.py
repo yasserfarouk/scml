@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from negmas.outcomes.cardinal_issue import DiscreteCardinalIssue
 
+from scml.oneshot.ufun import OneShotUFun
+
 """
 Implements the one shot version of SCML
 """
@@ -136,6 +138,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         publish_trading_prices=True,
         # negotiation params,
         price_multiplier=0.0,
+        price_range_fraction=0.0,
         wide_price_range=False,
         # trading price parameters
         trading_price_discount=0.9,
@@ -150,17 +153,42 @@ class OneShotWorld(TimeInAgreementMixin, World):
         # evaluation paramters (for compatibility with SCML2020World)
         inventory_valuation_catalog=0,
         inventory_valuation_trading=0,
+        # parameters for the geenarilzed std version of oneshot
+        perishable=True,
+        horizon=0,
+        one_time_per_negotiation=True,
+        quantity_multiplier: float = 1.0,
+        nullify_bankrupt_contracts: bool = False,
         # set to True to add more assertions during debuging
         **kwargs,
     ):
+        if horizon == 0:
+            one_time_per_negotiation = True
         self._debug = False
         # neg_n_steps is ALWAYS the number of rounds. We multiply it by 2 if mechanisms are stepped one offer at a time
         if one_offer_per_step and neg_n_steps is not None:
             neg_n_steps *= 2
 
+        self.perishable = perishable
+        self.horizon = horizon
+        self.price_range_fraction = price_range_fraction
+        self.nullify_bankrupt_contracts = nullify_bankrupt_contracts
+        self.inventory_valuation_catalog = inventory_valuation_catalog
+        self.inventory_valuation_trading = inventory_valuation_trading
         self._profits: dict[str, list[float]] = defaultdict(list)
         self._breach_levels: dict[str, list[float]] = defaultdict(list)
         self._breaches_of: dict[str, list[bool]] = defaultdict(list)
+        self._inventory_input: dict[str, int] = defaultdict(int)
+        self._inventory_output: dict[str, int] = defaultdict(int)
+        self._productivity: dict[str, float] = defaultdict(float)
+        self._shortfall_quantity: dict[str, int] = defaultdict(int)
+        self._shortfall_penalty: dict[str, float] = defaultdict(float)
+        self._storage_cost: dict[str, float] = defaultdict(float)
+        self._disposal_cost: dict[str, float] = defaultdict(float)
+        self._penalized_quantity: dict[str, int] = defaultdict(int)
+        self._n_nullified: int = 0
+        self._nullified_quantity: int = 0
+        self._nullified_price: float = 0
         self.trading_price_discount = trading_price_discount
         self.catalog_quantities = catalog_quantities
         self.publish_exogenous_summary = publish_exogenous_summary
@@ -171,6 +199,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             penalize_bankrupt_for_future_contracts
         )
         self.agent_disposal_cost: dict[str, list[float]] = dict()
+        self.agent_storage_cost: dict[str, list[float]] = dict()
         self.agent_shortfall_penalty: dict[str, list[float]] = dict()
         kwargs["log_to_file"] = not no_logs
         if compact:
@@ -221,8 +250,8 @@ class OneShotWorld(TimeInAgreementMixin, World):
             neg_step_time_limit=neg_step_time_limit,
             force_signing=force_signing,
             batch_signing=batch_signing,
-            negotiation_quota_per_step=float("inf"),
-            negotiation_quota_per_simulation=float("inf"),
+            negotiation_quota_per_step=float("inf"),  # type: ignore
+            negotiation_quota_per_simulation=float("inf"),  # type: ignore
             no_logs=no_logs,
             operations=(
                 Operations.StatsUpdate,
@@ -239,7 +268,22 @@ class OneShotWorld(TimeInAgreementMixin, World):
         )
         if not self.bulletin_board:
             raise ValueError(f"Cannot find the bulletin-board")
-        self.bulletin_board.record("settings", 1, "horizon")
+        self.bulletin_board.record("settings", self.horizon, "horizon")
+        self.quantity_multiplier = quantity_multiplier
+        self.one_time_per_negotiation = one_time_per_negotiation
+        self.bulletin_board.record(
+            "settings", self.one_time_per_negotiation, "one_time_per_negotiation"
+        )
+        self.bulletin_board.record(
+            "settings", self.quantity_multiplier, "quantity_multiplier"
+        )
+        self.bulletin_board.record("settings", self.perishable, "perishable")
+        self.bulletin_board.record(
+            "settings", self.nullify_bankrupt_contracts, "nullify_bankrupt_contracts"
+        )
+        self.bulletin_board.record(
+            "settings", self.price_range_fraction, "price_range_fraction"
+        )
         self.bulletin_board.record(
             "settings", publish_trading_prices, "public_trading_prices"
         )
@@ -256,6 +300,12 @@ class OneShotWorld(TimeInAgreementMixin, World):
         )
         self.bulletin_board.record(
             "settings", exogenous_force_max, "exogenous_force_max"
+        )
+        self.bulletin_board.record(
+            "settings", self.inventory_valuation_trading, "inventory_valuation_trading"
+        )
+        self.bulletin_board.record(
+            "settings", self.inventory_valuation_catalog, "inventory_valuation_catalog"
         )
         # self.bulletin_board.record("settings", disposal_cost, "ufun_disposal_cost")
         # self.bulletin_board.record(
@@ -301,7 +351,9 @@ class OneShotWorld(TimeInAgreementMixin, World):
             initial_balance_final=initial_balance,
             penalties_scale_final=penalties_scale,
             penalize_bankrupt_for_future_contracts=penalize_bankrupt_for_future_contracts,
+            perishable=perishable,
             bankruptcy_limit=bankruptcy_limit,
+            price_range_fraction=self.price_range_fraction,
             financial_report_period=financial_report_period,
             exogenous_force_max=exogenous_force_max,
             compact=compact,
@@ -322,6 +374,12 @@ class OneShotWorld(TimeInAgreementMixin, World):
             publish_trading_prices=publish_trading_prices,
             selected_price_multiplier=price_multiplier,
             wide_price_range=wide_price_range,
+            nullify_bankrupt_contracts=nullify_bankrupt_contracts,
+            horizon=horizon,
+            one_time_per_negotiation=one_time_per_negotiation,
+            quantity_multiplier=quantity_multiplier,
+            inventory_valuation_catalog=inventory_valuation_catalog,
+            inventory_valuation_trading=inventory_valuation_trading,
         )
 
         if not isinstance(agent_types, Iterable):
@@ -385,7 +443,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             for i, l in enumerate(agent_levels):
                 default_names[i] += f"@{l:01}"
         if agent_params is None:
-            agent_params = [dict(name=name) for i, name in enumerate(default_names)]
+            agent_params = [dict(name=name) for name in default_names]
         elif isinstance(agent_params, dict):
             a = copy.copy(agent_params)
             agent_params = []
@@ -416,8 +474,10 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 input_product=-1,
                 n_lines=0,
                 disposal_cost_mean=0.0,
+                storage_cost_mean=0.0,
                 shortfall_penalty_mean=0.0,
                 disposal_cost_dev=0.0,
+                storage_cost_dev=0.0,
                 shortfall_penalty_dev=0.0,
             )
         )
@@ -427,8 +487,10 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 input_product=n_processes,
                 n_lines=0,
                 disposal_cost_mean=0.0,
+                storage_cost_mean=0.0,
                 shortfall_penalty_mean=0.0,
                 disposal_cost_dev=0.0,
+                storage_cost_dev=0.0,
                 shortfall_penalty_dev=0.0,
             )
         )
@@ -468,7 +530,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         self.agent_outputs: dict[str, list[int]] = defaultdict(list)
         self.agent_consumers: dict[str, list[str]] = defaultdict(list)
         self.agent_suppliers: dict[str, list[str]] = defaultdict(list)
-        self.agent_profiles: dict[str, OneShotProfile] = defaultdict(list)
+        self.agent_profiles: dict[str, OneShotProfile] = dict()
 
         self.consumers[n_products - 1].append(SYSTEM_BUYER_ID)
         self.agent_processes[SYSTEM_BUYER_ID] = []
@@ -500,6 +562,10 @@ class OneShotWorld(TimeInAgreementMixin, World):
             self.agent_disposal_cost[aid] = np.abs(
                 np.random.randn(self.n_steps) * profile.disposal_cost_dev
                 + profile.disposal_cost_mean
+            )
+            self.agent_storage_cost[aid] = np.abs(
+                np.random.randn(self.n_steps) * profile.storage_cost_dev
+                + profile.storage_cost_mean
             )
             self.agent_shortfall_penalty[aid] = np.abs(
                 np.random.randn(self.n_steps) * profile.shortfall_penalty_dev
@@ -619,6 +685,8 @@ class OneShotWorld(TimeInAgreementMixin, World):
                         shortfall_penalty_dev=v.shortfall_penalty_dev,
                         disposal_cost_mean=v.disposal_cost_mean,
                         disposal_cost_dev=v.disposal_cost_dev,
+                        storage_cost_mean=v.storage_cost_mean,
+                        storage_cost_dev=v.storage_cost_dev,
                     )
                     for k, v in self.agent_profiles.items()
                 }
@@ -637,7 +705,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
     @classmethod
     def generate(
         cls,
-        agent_types: list[str | type[OneShotAgent]],
+        agent_types: list[str | type[OneShotAgent]] | type[OneShotAgent] | str,
         agent_params: list[dict[str, Any]] | None = None,
         agent_processes: list[int] | None = None,
         n_steps: tuple[int, int] | int = (50, 200),
@@ -651,30 +719,28 @@ class OneShotWorld(TimeInAgreementMixin, World):
         profit_stddevs: np.ndarray | tuple[float, float] | float = 0.05,
         max_productivity: np.ndarray | tuple[float, float] | float = (0.8, 1.0),
         initial_balance: np.ndarray | tuple[int, int] | int | None = None,
-        cost_increases_with_level=True,
-        equal_exogenous_supply=False,
-        equal_exogenous_sales=False,
         exogenous_supply_predictability: tuple[float, float] | float = (0.6, 0.9),
         exogenous_sales_predictability: tuple[float, float] | float = (0.6, 0.9),
         exogenous_control: tuple[float, float] | float = -1,
         cash_availability: tuple[float, float] | float = (1.5, 2.5),
+        shortfall_penalty: tuple[float, float] | float = (0.2, 1.0),
+        shortfall_penalty_dev: tuple[float, float] | float = (0.0, 0.1),
+        disposal_cost: tuple[float, float] | float = (0.0, 0.2),
+        disposal_cost_dev: tuple[float, float] | float = (0.0, 0.02),
+        storage_cost: tuple[float, float] | float = (0.0, 0.0),
+        storage_cost_dev: tuple[float, float] | float = (0.0, 0.0),
+        exogenous_price_dev: tuple[float, float] | float = (0.1, 0.2),
+        price_multiplier: np.ndarray | tuple[float, float] | float = (1.5, 2.0),
+        cost_increases_with_level=True,
+        equal_exogenous_supply=False,
+        equal_exogenous_sales=False,
         force_signing=True,
         profit_basis=np.max,
-        disposal_cost: np.ndarray | tuple[float, float] | float = (0.0, 0.2),
-        shortfall_penalty: np.ndarray | tuple[float, float] | float = (0.2, 1.0),
-        disposal_cost_dev: np.ndarray | tuple[float, float] | float = (0.0, 0.02),
-        shortfall_penalty_dev: np.ndarray
-        | tuple[float, float]
-        | float = (
-            0.0,
-            0.1,
-        ),
-        exogenous_price_dev: np.ndarray | tuple[float, float] | float = (0.1, 0.2),
-        price_multiplier: np.ndarray | tuple[float, float] | float = (1.5, 2.0),
         random_agent_types: bool = False,
         penalties_scale: str | list[str] = "trading",
         cap_exogenous_quantities: bool = True,
         method="profitable",
+        perishable: bool | None = True,
         **kwargs,
     ) -> dict[str, Any]:
         """
@@ -721,10 +787,12 @@ class OneShotWorld(TimeInAgreementMixin, World):
                                to `None` .
             exogenous_control: How much control does the agent have over exogenous contract signing. Only effective if
                                force_signing is False and use_exogenous_contracts is True
-            disposal_cost: A range to sample mean-disposal costs for all factories from
+            disposal_cost: A range to sample mean-disposal costs for all factories from (only used if perishable is True)
             shortfall_penalty: A range to sample mean-shortfall penalty for all factories from
+            storage_cost: A range to sample mean-storage costs fro all factories from (only used if perishable is False)
             disposal_cost_dev: A range to sample std. dev of disposal costs for all factories from
             shortfall_penalty_dev: A range to sample std. dev of shortfall penalty for all factories from
+            storage_cost_dev: The standard deviation of storage cost relative to the mean price
             exogenous_price_dev: The standard deviation of exogenous contract prices relative to the mean price
             price_multiplier: A value to multiply with trading/catalog price to get the upper limit on prices for all negotiations
             random_agent_types: If True, the final agent types used by the generato wil always be sampled from the given types.
@@ -736,11 +804,13 @@ class OneShotWorld(TimeInAgreementMixin, World):
                             and `shortfall_penalty` are absolute values (in money unit).
                             If not given will be read through the AWI
             method: the generation method. This is only for compatibility with SCML2020World and is not used.
+            perishable: If True, storage_cost is set to zero as there is no storage and if False,
+                        disposal_cost is set to zero as there is no disposal. If None, neither is overridden.
             **kwargs:
 
         Returns:
 
-            world configuration as a Dict[str, Any]. A world can be generated from this dict by calling SCML2020World(**d)
+            world configuration as a Dict[str, Any]. A world can be generated from this dict by calling OneShotWorld(**d)
 
         Remarks:
 
@@ -757,6 +827,11 @@ class OneShotWorld(TimeInAgreementMixin, World):
               it is otherwise, it is used to sample values for each process.
 
         """
+        if perishable is not None:
+            if perishable == True:
+                storage_cost = storage_cost_dev = 0
+            else:
+                disposal_cost = disposal_cost_dev = 0
         if agent_processes is not None and random_agent_types:
             raise ValueError(
                 "You cannot pass `agent_processes` and use `random_agent_types`. The first is only "
@@ -1056,6 +1131,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
                     esale_prices[:, -1] = sale_prices[a, :]
                 dp = realin(shortfall_penalty)
                 sc = realin(disposal_cost)
+                storagec = realin(storage_cost)
                 profile_info.append(
                     (
                         OneShotProfile(
@@ -1064,8 +1140,10 @@ class OneShotWorld(TimeInAgreementMixin, World):
                             n_lines=n_lines,
                             disposal_cost_mean=sc,
                             shortfall_penalty_mean=dp,
+                            storage_cost_mean=storagec,
                             disposal_cost_dev=realin(disposal_cost_dev) * sc,
                             shortfall_penalty_dev=realin(shortfall_penalty_dev) * dp,
+                            storage_cost_dev=realin(storage_cost_dev) * storagec,
                         ),
                         esales,
                         esale_prices,
@@ -1074,6 +1152,16 @@ class OneShotWorld(TimeInAgreementMixin, World):
                     )
                 )
                 nxt += 1
+        for p in profile_info:
+            p = p[0]
+            if perishable:
+                assert (
+                    p.storage_cost_dev == p.storage_cost_mean == 0
+                ), f"{storage_cost=}, {storage_cost_dev=}"
+            else:
+                assert (
+                    p.disposal_cost_dev == p.disposal_cost_mean == 0
+                ), f"{disposal_cost=}, {disposal_cost_dev=}"
         max_income = (
             output_quantity * catalog_prices[1:].reshape((n_processes, 1)) - total_costs
         )
@@ -1267,18 +1355,12 @@ class OneShotWorld(TimeInAgreementMixin, World):
             reports_time[str(self.current_step)] = {}
         reports_time[str(self.current_step)][agent.id] = report
 
-    def complete_contract_execution(self, *args, **kwargs):
-        pass
-
-    def start_contract_execution(self, contract: Contract) -> set[Breach] | None:
-        return set()
-
     def _update_exogenous(self, s):
         self.exogenous_qout = defaultdict(int)
         self.exogenous_qin = defaultdict(int)
         self.exogenous_pout = defaultdict(int)
         self.exogenous_pin = defaultdict(int)
-        self.__contracts = defaultdict(list)
+        # self.__contracts = defaultdict(list)
         # Register exogenous contracts as concluded
         # -----------------------------------------
         for contract in self.exogenous_contracts[s]:
@@ -1347,7 +1429,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
                     warnings.warn(f"{agent=} has no response for partner {partner}")
         return self.step(n_neg_steps=int(not init), neg_actions=neg_actions)
 
-    def simulation_step(self, stage):
+    def simulation_step(self, stage=0):
         s = self.current_step
 
         if stage == 0:
@@ -1359,7 +1441,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 self.bulletin_board.record(
                     "trading_prices",
                     value=self.trading_prices,
-                    key=self.current_step,
+                    key=str(self.current_step),
                 )
             if self.publish_exogenous_summary:
                 q, p = np.zeros(self.n_products), np.zeros(self.n_products)
@@ -1375,7 +1457,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 self.bulletin_board.record(
                     "exogenous_contracts_summary",
                     value=self.exogenous_contracts_summary,
-                    key=self.current_step,
+                    key=str(self.current_step),
                 )
 
             # make agent ufuns
@@ -1383,7 +1465,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             for aid, a in self.agents.items():
                 if is_system_agent(aid):
                     continue
-                a.make_ufun(add_exogenous=True)
+                a.make_ufun(add_exogenous=True)  # type: ignore
 
             # zero quantities and prices
             # ==========================
@@ -1391,12 +1473,15 @@ class OneShotWorld(TimeInAgreementMixin, World):
             self._input_price = defaultdict(int)
             self._output_quantity = defaultdict(int)
             self._output_price = defaultdict(int)
+            self._n_nullified = 0
+            self._nullified_price = 0
+            self._nullified_quantity = 0
 
             # Reset all agents
             # ================
             for aid, a in self.agents.items():
                 if hasattr(a, "reset"):
-                    a.reset()
+                    a.reset()  # type: ignore
 
             # request all negotiations
             # ========================
@@ -1406,7 +1491,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             # ===================================
             for aid, a in self.agents.items():
                 if hasattr(a, "before_step"):
-                    a.before_step()
+                    a.before_step()  # type: ignore
 
             return
 
@@ -1461,24 +1546,43 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 self._output_price[aid],
             )
             ufun = agent.ufun
-            ucon = ufun.from_contracts(self.__contracts[aid])
+            assert isinstance(ufun, OneShotUFun)
+            info = ufun.from_contracts(
+                [
+                    _
+                    for _ in self.__contracts[aid]
+                    if _.agreement["time"] == self.current_step
+                ],
+                return_info=True,
+            )
+            ucon, producible = info.utility, info.producible
+            if not self.perishable:
+                remaining_in = max(0, self._input_quantity[aid] - producible)
+                remaining_out = max(0, producible - self._output_quantity[aid])
+                self._inventory_input[aid] += remaining_in
+                self._inventory_output[aid] += remaining_out
+            else:
+                assert (
+                    self._inventory_input.get(aid, 0)
+                    == self._inventory_output.get(aid, 0)
+                    == 0
+                ), f"Perishable but with inventory remaining: {self._inventory_input[aid]=}, {self._inventory_output[aid]=}, {producible=}, {qin=}, {qout=}"
+            self._productivity[aid] = producible / self.agent_profiles[aid].n_lines
+            self._shortfall_penalty[aid] = info.shortfall_penalty
+            self._shortfall_quantity[aid] = info.shortfall_quantity
+            self._storage_cost[aid] = info.storage_cost
+            self._disposal_cost[aid] = info.disposal_cost
+            self._penalized_quantity[aid] = info.remaining_quantity
             self._profits[aid].append(ucon)
-            self._breach_levels[aid].append(
-                ufun.breach_level(
-                    qin,
-                    qout,
-                )
-            )
-            self._breaches_of[aid].append(
-                ufun.is_breach(
-                    qin,
-                    qout,
-                )
-            )
+            self._breach_levels[aid].append(ufun.breach_level(qin, qout))
+            self._breaches_of[aid].append(ufun.is_breach(qin, qout))
             current_balance = self.current_balance(aid)
             self.is_bankrupt[aid] = (
                 current_balance < self.bankruptcy_limit or self.is_bankrupt[aid]
             )
+            # TODO nullify all contracts of the bankrupt agent
+            if self.is_bankrupt[aid]:
+                pass
             if self._breaches_of[aid][-1]:
                 self.bulletin_board.record(
                     section="breaches",
@@ -1496,7 +1600,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             for aid, agent in self.agents.items():
                 if is_system_agent(agent.id):
                     continue
-                self.add_financial_report(agent, reports_agent, reports_time)
+                self.add_financial_report(agent, reports_agent, reports_time)  # type: ignore
 
         # Clean negotiation details
         # -------------------------
@@ -1530,24 +1634,6 @@ class OneShotWorld(TimeInAgreementMixin, World):
 
     def on_contract_signed(self, contract: Contract) -> bool:
         contract = self._adjust_contract_types(contract)
-
-        product = contract.annotation["product"]
-        bought = contract.agreement["quantity"]
-        total_price = bought * contract.agreement["unit_price"]
-        oldq = self._sold_quantity[product, self.current_step + 1]
-        oldp = self._real_price[product, self.current_step + 1]
-        totalp = 0.0
-        if oldq > 0:
-            totalp = oldp * oldq
-        self._sold_quantity[product, self.current_step + 1] += bought
-        self._real_price[product, self.current_step + 1] = (totalp + total_price) / (
-            oldq + bought
-        )
-        self._input_quantity[contract.annotation["buyer"]] += bought
-        self._input_price[contract.annotation["buyer"]] += total_price
-        self._output_quantity[contract.annotation["seller"]] += bought
-        self._output_price[contract.annotation["seller"]] += total_price
-        contract.executed_at = self.current_step
         self.__contracts[contract.annotation["buyer"]].append(contract)
         self.__contracts[contract.annotation["seller"]].append(contract)
         return super().on_contract_signed(contract)
@@ -1596,7 +1682,9 @@ class OneShotWorld(TimeInAgreementMixin, World):
         pass
 
     def post_step_stats(self):
-        self._stats["n_contracts_nullified_now"].append(0)
+        self._stats["n_contracts_nullified_now"].append(self._n_nullified)
+        self._stats["n_contracts_nullified_quantity"].append(self._nullified_quantity)
+        self._stats["n_contracts_nullified_price"].append(self._nullified_price)
         scores = self.scores()
         for p in range(self.n_products):
             self._stats[f"trading_price_{p}"].append(
@@ -1614,14 +1702,23 @@ class OneShotWorld(TimeInAgreementMixin, World):
             self._stats[f"score_{aid}"].append(scores[aid])
             self._stats[f"balance_{aid}"].append(self.current_balance(aid))
             self._stats[f"bankrupt_{aid}"].append(self.is_bankrupt.get(aid, False))
-            self._stats[f"productivity_{aid}"].append(1.0)
-            self._stats[f"spot_market_quantity_{aid}"].append(0)
-            self._stats[f"spot_market_loss_{aid}"].append(0)
-            self._stats[f"inventory_{aid}_input"].append(0)
-            self._stats[f"inventory_{aid}_output"].append(0)
+            self._stats[f"productivity_{aid}"].append(self._productivity[aid])
+            self._stats[f"shortfall_quantity_{aid}"].append(
+                self._shortfall_quantity[aid]
+            )
+            self._stats[f"shortfall_penalty_{aid}"].append(self._shortfall_penalty[aid])
+            self._stats[f"storage_cost_{aid}"].append(self._storage_cost[aid])
+            self._stats[f"disposal_cost_{aid}"].append(self._disposal_cost[aid])
+            self._stats[f"inventory_penalized_{aid}"].append(
+                self._penalized_quantity[aid]
+            )
+            self._stats[f"inventory_{aid}_input"].append(self._inventory_input[aid])
+            self._stats[f"inventory_{aid}_output"].append(self._inventory_output[aid])
 
     def pre_step_stats(self):
-        pass
+        self._n_nullified = 0
+        self._nullified_price = 0
+        self._nullified_quantity = 0
 
     def welfare(self, include_bankrupt: bool = False) -> float:
         """Total welfare of all agents"""
@@ -1899,7 +1996,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         negotiator: SAONegotiator,
         extra: dict[str, Any] | None = None,
         consumer_starts: bool = True,
-    ) -> NegotiationInfo:
+    ) -> NegotiationInfo | None:
         """
         Requests a negotiation
 
@@ -2023,7 +2120,14 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 p = 0
         else:
             p = price_of_product
-        if self.price_multiplier > 1e-6:
+        if self.price_range_fraction > 1e-6:
+            unit_price = (
+                max(1, int(p * (1.0 - self.price_range_fraction))),
+                int((1.0 + self.price_range_fraction) * price_of_product),
+            )
+            if unit_price[1] < unit_price[0]:
+                unit_price = (unit_price[1], unit_price[0])
+        elif self.price_multiplier > 1e-6:
             unit_price = (
                 max(
                     1,
@@ -2038,8 +2142,12 @@ class OneShotWorld(TimeInAgreementMixin, World):
                 max(1, ceil),
             )
             assert unit_price[0] + 1 == unit_price[1] or unit_price[1] == 1
-        time = (self.current_step, self.current_step)
-        quantity = (1, self._max_n_lines)
+        time = (
+            self.current_step,
+            self.current_step
+            + (self.horizon if not self.one_time_per_negotiation else 0),
+        )
+        quantity = (1, max(1, int(self._max_n_lines * self.quantity_multiplier + 0.5)))
         return unit_price, time, quantity
 
     def _make_negotiations(self):
@@ -2056,8 +2164,8 @@ class OneShotWorld(TimeInAgreementMixin, World):
         for aid, a in self.agents.items():
             if is_system_agent(aid) or isinstance(a, OneShotSCML2020Adapter):
                 continue
-            controllers[aid] = a.adapted_object
-            a.adapted_object.make_ufun(add_exogenous=True)
+            controllers[aid] = a.adapted_object  # type: ignore
+            a.adapted_object.make_ufun(add_exogenous=True)  # type: ignore
 
         # initialize negotiation details
         # self._current_negotiations = []
@@ -2083,7 +2191,11 @@ class OneShotWorld(TimeInAgreementMixin, World):
                             continue
                         expected_negs.add(tuple(sorted((c, s))))
             unit_price, time, quantity = self._make_issues(product)
-            self._current_issues[product] = [
+            assert (
+                not self.one_time_per_negotiation
+                or time[0] == time[1] == self.current_step
+            ), f"{time=}, {self.current_step=} but {self.one_time_per_negotiation=}"
+            self._current_issues[product] = [  # type: ignore
                 make_issue(values(quantity), name="quantity"),
                 make_issue(values(time), name="time"),
                 make_issue(values(unit_price), name="unit_price"),
@@ -2107,6 +2219,25 @@ class OneShotWorld(TimeInAgreementMixin, World):
                     extra=None,
                     consumer_starts=consumer_starts,
                 )
+                # request negotiations about the future if needed
+                if self.one_time_per_negotiation and self.horizon:
+                    for _ in range(self.horizon):
+                        t = time[0] + 1
+                        if t >= self.n_steps:
+                            continue
+                        time = (t, t)
+                        self._request_negotiations(
+                            agent_id=aid,
+                            product=product,
+                            time=time,
+                            quantity=quantity,
+                            unit_price=unit_price,
+                            controller=controllers[aid],
+                            negotiators=None,
+                            extra=None,
+                            consumer_starts=consumer_starts,
+                        )
+
         if self._debug:
             found_negs = set()
             for n in self._negotiations.values():
@@ -2122,8 +2253,8 @@ class OneShotWorld(TimeInAgreementMixin, World):
     def order_contracts_for_execution(
         self, contracts: Collection[Contract]
     ) -> Collection[Contract]:
-        for contract in contracts:
-            contract.executed_at = self.current_step
+        # for contract in contracts:
+        #     contract.executed_at = self.current_step
         return contracts
 
     def get_private_state(self, agent: Agent) -> dict:
@@ -2131,8 +2262,54 @@ class OneShotWorld(TimeInAgreementMixin, World):
 
     def _contract_record(self, contract):
         record = super()._contract_record(contract)
-        record["executed_at"] = self.current_step
+        # record["executed_at"] = self.current_step
         return record
+
+    def start_contract_execution(self, contract: Contract) -> set[Breach] | None:
+        # print(f"Started executing {contract.agreement} on {self.current_step} signed on {contract.signed_at}")
+        breaches = super().start_contract_execution(contract)
+        # do not process if the partner is bankrupt
+        if (
+            self.nullify_bankrupt_contracts
+            and any(self.is_bankrupt.get(a, False) for a in contract.partners)
+            and contract.nullified_at < 0
+        ):
+            self._n_nullified += 1
+            q = contract.agreement["quantity"]
+            self._nullified_quantity += q
+            self._nullified_price += contract.agreement["price"] * q
+            contract.nullified_at = self.current_step
+            self.loginfo(
+                f"Nullified contract because a partner was bankrupt: {contract}"
+            )
+        if contract.nullified_at >= 0:
+            return breaches
+        assert (
+            contract.agreement["time"] == self.current_step
+        ), f"{contract.agreement=} executed on {self.current_step} signed on {contract.signed_at}"
+        contract.executed_at = self.current_step
+        product = contract.annotation["product"]
+        bought = contract.agreement["quantity"]
+        total_price = bought * contract.agreement["unit_price"]
+        oldq = self._sold_quantity[product, self.current_step + 1]
+        oldp = self._real_price[product, self.current_step + 1]
+        totalp = 0.0
+        if oldq > 0:
+            totalp = oldp * oldq
+        self._sold_quantity[product, self.current_step + 1] += bought
+        self._real_price[product, self.current_step + 1] = (totalp + total_price) / (
+            oldq + bought
+        )
+        self._input_quantity[contract.annotation["buyer"]] += bought
+        self._input_price[contract.annotation["buyer"]] += total_price
+        self._output_quantity[contract.annotation["seller"]] += bought
+        self._output_price[contract.annotation["seller"]] += total_price
+        return breaches
+
+    def complete_contract_execution(
+        self, contract: Contract, breaches: list[Breach], resolution: Contract
+    ) -> None:
+        super().complete_contract_execution(contract, breaches, resolution)
 
 
 class SCML2020OneShotWorld(OneShotWorld):
@@ -2158,4 +2335,6 @@ class SCML2023OneShotWorld(SCML2020OneShotWorld):
 
 
 class SCML2024OneShotWorld(SCML2023OneShotWorld):
-    pass
+    def __init__(self, *args, **kwargs):
+        kwargs["perishable"] = True
+        super().__init__(*args, **kwargs)

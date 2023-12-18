@@ -10,7 +10,7 @@ from scml.scml2019 import (
 )
 from scml.scml2019.utils import anac2019_sabotage
 
-from .switches import (
+from ..switches import (
     SCML_RUN2019,
     SCML_RUN_COLLUSION_TOURNAMENTS,
     SCML_RUN_SABOTAGE_TOURNAMENTS,

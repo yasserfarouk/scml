@@ -57,14 +57,6 @@ class SCML2020Agent(Agent):
             "levels": self.awi.my_input_products if self.awi else None,
         }
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
-        pass
-
-    def on_contract_executed(self, contract: Contract) -> None:
-        pass
-
     def _respond_to_negotiation_request(
         self,
         initiator: str,
@@ -80,6 +72,14 @@ class SCML2020Agent(Agent):
         return self.respond_to_negotiation_request(
             initiator, issues, annotation, mechanism
         )
+
+    def on_contract_breached(
+        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+    ) -> None:
+        pass
+
+    def on_contract_executed(self, contract: Contract) -> None:
+        pass
 
     def set_renegotiation_agenda(
         self, contract: Contract, breaches: List[Breach]

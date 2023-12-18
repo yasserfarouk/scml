@@ -29,7 +29,7 @@ from scml.scml2020 import (
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
 from scml.utils import anac2021_collusion
 
-from .switches import SCML_ON_GITHUB, SCML_RUN2021_STD
+from ..switches import SCML_ON_GITHUB, SCML_RUN2021_STD
 
 random.seed(0)
 

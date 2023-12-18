@@ -155,6 +155,10 @@ class OneShotProfile:
     """A positive number specifying the std. dev.  of penalty for selling too much."""
     disposal_cost_dev: float
     """A positive number specifying the std. dev. penalty buying too much."""
+    storage_cost_mean: float
+    """A positive number specifying the average cost for keeping inventory for one step. This is only used if the products are not `perishable`."""
+    storage_cost_dev: float
+    """A positive number specifying the std. dev.  cost for keeping inventory for one step. This is only used if the products are not `perishable`."""
 
     @property
     def level(self):
@@ -281,6 +285,8 @@ class OneShotState:
     """Today's needed sales as of now (exogenous input - exogenous output - total sales so far)."""
     needed_supplies: int
     """Today needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
+    storage_cost: float = 0.0
+    """Current unit storage cost. Only used in standard worlds where products are not perishable"""
 
     @property
     def running_buy_states(self) -> dict[str, SAOState]:

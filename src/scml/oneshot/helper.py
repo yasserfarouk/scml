@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from negmas import Negotiator
 from negmas.sao import SAOController, SAONegotiator
 
 from ..scml2020.common import (
@@ -39,9 +38,9 @@ class AWIHelper:
         unit_price: int | tuple[int, int],
         time: int | tuple[int, int],
         controller: SAOController | None = None,
-        negotiators: list[Negotiator] = None,
-        partners: list[str] = None,
-        extra: dict[str, Any] = None,
+        negotiators: list[SAONegotiator] | None = None,
+        partners: list[str] | None = None,
+        extra: dict[str, Any] | None = None,
         copy_partner_id=True,
     ) -> bool:
         if not is_buy:
@@ -78,7 +77,7 @@ class AWIHelper:
         time: int | tuple[int, int],
         partner: str,
         negotiator: SAONegotiator,
-        extra: dict[str, Any] = None,
+        extra: dict[str, Any] | None = None,
     ) -> bool:
         if not is_buy:
             return False
@@ -94,15 +93,18 @@ class AWIHelper:
             )
             return False
         unit_price, time, quantity = self._world._make_issues(product)
-        return self._world._request_negotiation(
-            self._owner.id,
-            product,
-            quantity,
-            unit_price,
-            time,
-            partner,
-            negotiator,
-            extra,
+        return (
+            self._world._request_negotiation(
+                self._owner.id,
+                product,
+                quantity,
+                unit_price,
+                time,
+                partner,
+                negotiator,
+                extra,
+            )
+            is not None
         )
 
     def schedule_production(
@@ -115,7 +117,7 @@ class AWIHelper:
         method: str = "latest",
         partial_ok: bool = False,
     ) -> tuple[np.ndarray, np.ndarray]:
-        return [[], []]
+        return (np.asarray([]), np.asarray([]))
 
     def order_production(
         self, process: int, steps: np.ndarray, lines: np.ndarray
@@ -130,23 +132,23 @@ class AWIHelper:
         override: bool = True,
         method: str = "latest",
     ) -> tuple[np.ndarray, np.ndarray]:
-        return [
+        return (
             np.asarray([self._world.current_step] * self._owner.awi.n_lines),
             np.arange(self._owner.awi.n_lines),
-        ]
+        )
 
     def set_commands(self, commands: np.ndarray, step: int = -1) -> None:
         return None
 
     def cancel_production(self, step: int, line: int) -> bool:
-        return None
+        return False
 
     # ---------------------
     # Information Gathering
     # ---------------------
 
     @property
-    def trading_prices(self) -> np.ndarray:
+    def trading_prices(self) -> np.ndarray | None:
         """Returns the current trading prices of all products"""
         return (
             self._world.trading_prices if self._world.publish_trading_prices else None
@@ -161,6 +163,8 @@ class AWIHelper:
         if not self._world.publish_exogenous_summary:
             return None
         summary = self._world.exogenous_contracts_summary
+        if summary is None:
+            return None
         exogenous = np.zeros((self.n_products, self.n_steps, 2))
         step = self._world.current_step
         for product in range(exogenous.shape[0]):
@@ -184,12 +188,12 @@ class AWIHelper:
     @property
     def my_input_products(self) -> np.ndarray:
         """Returns a list of products that are inputs to at least one process the agent can run"""
-        return [self._owner.awi.my_input_product]
+        return np.asarray([self._owner.awi.my_input_product])
 
     @property
     def my_output_products(self) -> np.ndarray:
         """Returns a list of products that are outputs to at least one process the agent can run"""
-        return [self._owner.awi.my_output_product]
+        return np.asarray([self._owner.awi.my_output_product])
 
     def is_system(self, aid: str) -> bool:
         """
@@ -211,8 +215,8 @@ class AWIHelper:
             inventory=np.zeros(self.n_products, dtype=int),
             commands=NO_COMMAND * np.ones((self.n_steps, self.n_lines), dtype=int),
             inventory_changes=np.zeros(self.n_products, dtype=int),
-            balance_change=bchanges,
-            balance=self._world.scores()[self._owner.id],
+            balance_change=bchanges[-1],
+            balance=int(self._world.scores()[self._owner.id]),
             contracts=[],
         )
 

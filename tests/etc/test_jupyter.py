@@ -3,7 +3,7 @@ from pathlib import Path
 import papermill as pm
 import pytest
 
-from .switches import SCML_RUN_NOTEBOOKS
+from ..switches import SCML_RUN_NOTEBOOKS
 
 
 def notebooks():
