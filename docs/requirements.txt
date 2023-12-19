@@ -24,7 +24,6 @@ nbsphinx
 networkx
 pandoc
 pandocfilters
-pathtools
 sphinx
 sphinx-autodoc-annotation
 sphinx-autodoc-typehints
