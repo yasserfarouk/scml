@@ -1,6 +1,6 @@
 from typing import Any
 
-from scml.oneshot.world import OneShotWorld, SCML2023OneShotWorld
+from scml.oneshot.world import SCML2023OneShotWorld
 
 __all__ = [
     "StdWorld",

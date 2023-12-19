@@ -65,6 +65,7 @@ __all__ = [
     "SCML2021OneShotWorld",
     "SCML2022OneShotWorld",
     "SCML2023OneShotWorld",
+    "SCML2024OneShotWorld",
 ]
 
 
@@ -1584,7 +1585,16 @@ class OneShotWorld(TimeInAgreementMixin, World):
             )
             # TODO nullify all contracts of the bankrupt agent
             if self.is_bankrupt[aid]:
-                pass
+                for partner in self.agents.keys():
+                    for contract in self.__contracts.get(partner, []):
+                        if not (
+                            aid in contract.partners
+                            and contract.executed_at < 0
+                            and contract.agreement["time"] >= self.current_step
+                        ):
+                            continue
+                        contract.nullified_at = self.current_step
+
             if self._breaches_of[aid][-1]:
                 self.bulletin_board.record(
                     section="breaches",
@@ -1662,6 +1672,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             "issues": contract.issues if not self.compact else None,
             "seller": contract.annotation["seller"],
             "buyer": contract.annotation["buyer"],
+            "partners": contract.partners,
             "product_name": "p" + str(contract.annotation["product"]),
         }
         if not self.compact:
@@ -1681,7 +1692,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         }
 
     def execute_action(self, action, agent, callback: Callable = None) -> bool:
-        pass
+        return True
 
     def post_step_stats(self):
         self._stats["n_contracts_nullified_now"].append(self._n_nullified)

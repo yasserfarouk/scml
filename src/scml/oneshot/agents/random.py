@@ -28,6 +28,11 @@ def distribute(q: int, n: int) -> list[int]:
 
     from numpy.random import choice
 
+    if q < n:
+        lst = [0] * (n - q) + [1] * q
+        random.shuffle(lst)
+        return lst
+
     if q == n:
         return [1] * n
     r = Counter(choice(n, q - n))
@@ -73,7 +78,7 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
     def distribute_needs(self) -> dict[str, int]:
         """Distributes my needs randomly over all my partners"""
 
-        response = dict()
+        dist = dict()
         for needs, all_partners in [
             (self.awi.needed_supplies, self.awi.my_suppliers),
             (self.awi.needed_sales, self.awi.my_consumers),
@@ -84,25 +89,19 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
 
             # if I need nothing, end all negotiations
             if needs <= 0:
-                return dict(zip(partner_ids, [0] * partners))
-
-            # If my needs are small, end some of the negotiations
-            response = dict()
-            if needs < partners:
-                to_end = random.sample(partner_ids, (partners - needs))
-                response = dict(zip(to_end, [0] * len(to_end)))
-                partner_ids = [_ for _ in partner_ids if _ not in to_end]
-                partners = len(partner_ids)
+                dist.update(dict(zip(partner_ids, [0] * partners)))
+                continue
 
             # distribute my needs over my (remaining) partners.
-            response.update(dict(zip(partner_ids, distribute(needs, partners))))
-        return response
+            dist.update(dict(zip(partner_ids, distribute(needs, partners))))
+        return dist
 
     def first_proposals(self):
         # just randomly distribute my needs over my partners (with best price for me).
         s, p = self._step_and_price(best_price=True)
         distribution = self.distribute_needs()
-        return {k: (q, s, p) if q > 0 else None for k, q in distribution.items()}
+        d = {k: (q, s, p) if q > 0 else None for k, q in distribution.items()}
+        return d
 
     def counter_all(self, offers, states):
         response = dict()
@@ -116,7 +115,7 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
             (
                 self.awi.needed_sales,
                 self.awi.my_consumers,
-                self.awi.current_input_issues,
+                self.awi.current_output_issues,
             ),
         ]:
             # get a random price
@@ -142,9 +141,17 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
             if best_diff <= self._threshold:
                 partner_ids = plist[best_indx]
                 others = list(partners.difference(partner_ids))
-                return {
-                    k: SAOResponse(ResponseType.ACCEPT_OFFER, None) for k in partner_ids
-                } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others}
+                response.update(
+                    {
+                        k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k])
+                        for k in partner_ids
+                    }
+                    | {
+                        k: SAOResponse(ResponseType.END_NEGOTIATION, None)
+                        for k in others
+                    }
+                )
+                continue
 
             # If I still do not have a good enough offer, distribute my current needs
             # randomly over my partners.
