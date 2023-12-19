@@ -50,13 +50,13 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx_automodapi.automodapi",
     "sphinx.ext.intersphinx",
-    "sphinx_automodapi.smart_resolver",
-    # "nb2plots",
     "sphinx.ext.mathjax",
+    "sphinx_automodapi.smart_resolver",
     "sphinx_autodoc_typehints",
     "sphinx_autodoc_annotation",
-    # "sphinxcontrib.fulltoc",
     "nbsphinx",
+    # "nb2plots",
+    # "sphinxcontrib.fulltoc",
 ]
 
 intersphinx_mapping = {

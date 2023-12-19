@@ -17,10 +17,8 @@ jupyter-nbextensions-configurator
 kiwisolver
 lxml
 more-itertools
-nb2plots
 nbconvert
 nbformat
-nbsphinx
 networkx
 pandoc
 pandocfilters
@@ -29,6 +27,7 @@ sphinx-autodoc-annotation
 sphinx-autodoc-typehints
 sphinx-automodapi
 sphinx-rtd-theme
+nbsphinx
 stringcase
 sphinxcontrib-fulltoc
 sphinxcontrib-napoleon
