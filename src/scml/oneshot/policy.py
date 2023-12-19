@@ -1,5 +1,4 @@
 import random
-import warnings
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -8,9 +7,8 @@ from negmas.helpers.strings import itertools
 from negmas.outcomes import Outcome
 from negmas.sao.common import SAOResponse, SAOState
 
-from .common import QUANTITY, UNIT_PRICE
-
 from .agent import OneShotSyncAgent
+from .common import QUANTITY, UNIT_PRICE
 
 __all__ = ["OneShotPolicy"]
 
@@ -84,7 +82,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """A policy is a callable that receives a state and generates an action"""
         return self.act(state)
 
-    def counter_all(
+    def counter_all(  # type: ignore
         self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
     ) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
@@ -109,7 +107,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """
         return self.decode_action(self.act(self.encode_state(states)))
 
-    def first_proposals(self) -> dict[str, Outcome]:
+    def first_proposals(self) -> dict[str, Outcome | None]:
         """
         Gets a set of proposals to use for initializing the negotiation.
 
