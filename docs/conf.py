@@ -22,6 +22,8 @@ import os
 
 import sphinx_rtd_theme
 
+import scml
+
 on_rtd = os.environ.get("READTHEDOCS", None)
 
 THEME_NAME = "sphinx_rtd_theme"
