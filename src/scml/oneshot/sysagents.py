@@ -99,6 +99,9 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return result
 
     def on_negotiation_success(self, contract: Contract, mechanism):
+        from scml.oneshot.ufun import OneShotUFun
+
+        self.ufun: OneShotUFun  # type: ignore
         if self.awi._world._debug:
             partners = contract.partners
             assert (
@@ -112,7 +115,12 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             )
         annotation, agreement = contract.annotation, contract.agreement
         if annotation["buyer"] == self.id:
-            self.awi._register_supply(annotation["seller"], agreement["quantity"])
+            self.awi._register_supply(
+                annotation["seller"],
+                agreement["quantity"],
+                agreement["unit_price"],
+                agreement["time"],
+            )
             if self.ufun is not None:
                 self.ufun.register_supply(
                     agreement["quantity"],
@@ -131,7 +139,12 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                 #         f'Partners: {list(self.awi.current_negotiation_details["buy"].keys())} {annotation["seller"]} not found\n{self.awi.my_suppliers=}\n{self.awi.my_consumers=}\n{e}\n{contract}'
                 #     )
         elif annotation["seller"] == self.id:
-            self.awi._register_sale(annotation["buyer"], agreement["quantity"])
+            self.awi._register_sale(
+                annotation["buyer"],
+                agreement["quantity"],
+                agreement["unit_price"],
+                agreement["time"],
+            )
             if self.ufun is not None:
                 self.ufun.register_sale(
                     agreement["quantity"],

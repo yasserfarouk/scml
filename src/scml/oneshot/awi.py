@@ -166,6 +166,10 @@ class OneShotAWI(AgentWorldInterface):
           - *total_supplies*: Today's total supplies so far.
           - *needed_sales*: Today's needed sales as of now (exogenous input + total supplies - exogenous output - total sales so far).
           - *needed_supplies*: Today's needed supplies  as of now (exogenous output + total sales - exogenous input - total supplies so far).
+          - *future_sales*: Future quantity of the output product in standing contracts not executed nor nullified.
+          - *future_supplies*: Future quantity of the input product in standing contracts not executed nor nullified.
+          - *future_sales_cost*: Future total_cost of the output product in standing contracts not executed nor nullified.
+          - *future_supplies_cost*: Future total cost of the input product in standing contracts not executed nor nullified.
 
 
     Services (All inherited from `negmas.situated.AgentWorldInterface`):
@@ -180,8 +184,18 @@ class OneShotAWI(AgentWorldInterface):
         super().__init__(world, agent)  # type: ignore
         self._world = world
         self.agent = agent
-        self._sales: dict[str, int] = defaultdict(int)
-        self._supplies: dict[str, int] = defaultdict(int)
+        self._future_sales: dict[int, dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        self._future_supplies: dict[int, dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        self._future_sales_cost: dict[int, dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        self._future_supplies_cost: dict[int, dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
 
     # ================================================================
     # Static World Information (does not change during the simulation)
@@ -515,7 +529,7 @@ class OneShotAWI(AgentWorldInterface):
             ]
         if unit_price is None:
             raise ValueError(
-                f"Must pass unit price to the penalty multiplier if the scale does not start with n, t or c"
+                "Must pass unit price to the penalty multiplier if the scale does not start with n, t or c"
             )
         return unit_price
 
@@ -709,23 +723,53 @@ class OneShotAWI(AgentWorldInterface):
 
     @property
     def sales(self) -> dict[str, int]:
-        """Sales per customer so far (this day)"""
-        return self._sales
+        """Sales (quantity) per customer so far (this day)"""
+        return self._future_sales.get(self.current_step, dict())
 
     @property
     def supplies(self) -> dict[str, int]:
-        """Supplies per supplier so far (this day)"""
-        return self._supplies
+        """Supplies (quantity) per supplier so far (this day)"""
+        return self._future_supplies.get(self.current_step, dict())
+
+    @property
+    def sales_cost(self) -> dict[str, int]:
+        """Sales (total price) per customer so far (this day)"""
+        return self._future_sales_cost.get(self.current_step, dict())
+
+    @property
+    def supplies_cost(self) -> dict[str, int]:
+        """Supplies (total price) per supplier so far (this day)"""
+        return self._future_supplies_cost.get(self.current_step, dict())
+
+    @property
+    def future_sales(self) -> dict[int, dict[str, int]]:
+        """Future sales (quantity) per customer so far (this day)"""
+        return self._future_sales
+
+    @property
+    def future_supplies(self) -> dict[int, dict[str, int]]:
+        """Future supplies (quantity) per supplier so far (this day)"""
+        return self._future_supplies
+
+    @property
+    def future_sales_cost(self) -> dict[int, dict[str, int]]:
+        """Future sales (total price) per customer so far (this day)"""
+        return self._future_sales_cost
+
+    @property
+    def future_supplies_cost(self) -> dict[int, dict[str, int]]:
+        """Future supplies (total price) per supplier so far (this day)"""
+        return self._future_supplies_cost
 
     @property
     def total_sales(self) -> int:
         """Total sales so far (this day)"""
-        return sum(self._sales.values())
+        return sum(self.sales.values())
 
     @property
     def total_supplies(self) -> int:
         """Total supplies so far (this day)"""
-        return sum(self._supplies.values())
+        return sum(self.supplies.values())
 
     @property
     def needed_sales(self) -> int:
@@ -764,22 +808,44 @@ class OneShotAWI(AgentWorldInterface):
         return min(self.n_lines, x) if self.is_perishable else x
 
     # helper operations (sales and supplies) -- you do not need to call these.
-    def _register_sale(self, customer: str, value: int) -> None:
+    def _register_sale(
+        self, customer: str, quantity: int, unit_price: int, step: int
+    ) -> None:
         assert (
-            value == 0
-            or self._sales[customer] == 0
+            quantity == 0
+            or step != self.current_step
+            or self._future_sales[step][customer] == 0
             or (self._world.one_time_per_negotiation and self._world.horizon)
-        ), f"{self.agent.id} Cannot have more than one sale to {customer} ({self._sales[customer]=}, {value=})"
-        self._sales[customer] += value
+        ), f"{self.agent.id} Cannot have more than one sale to {customer} ({self.sales[customer]=}, {quantity=})"
+        self._future_sales[step][customer] += quantity
+        self._future_sales_cost[step][customer] += quantity * unit_price
 
-    def _register_supply(self, supplier: str, value: int) -> None:
+    def _register_supply(
+        self, supplier: str, quantity: int, unit_price: int, step: int
+    ) -> None:
         assert (
-            value == 0
-            or self._supplies[supplier] == 0
+            quantity == 0
+            or step != self.current_step
+            or self._future_supplies[step][supplier] == 0
             or (self._world.one_time_per_negotiation and self._world.horizon)
-        ), f"{self.agent.id} Cannot have more than one supply to {supplier} ({self._supplies[supplier]=}, {value=})"
-        self._supplies[supplier] += value
+        ), f"{self.agent.id} Cannot have more than one supply to {supplier} ({self.supplies[supplier]=}, {quantity=})"
+        self._future_supplies[step][supplier] += quantity
+        self._future_supplies_cost[step][supplier] += quantity * unit_price
 
     def _reset_sales_and_supplies(self) -> None:
-        self._sales = defaultdict(int)
-        self._supplies = defaultdict(int)
+        for d in (
+            self._future_supplies,
+            self._future_supplies_cost,
+            self._future_sales,
+            self._future_sales_cost,
+        ):
+            to_remove = []
+            for t in d.keys():
+                if t < self.current_step:
+                    to_remove.append(t)
+            for t in to_remove:
+                del d[t]
+        # self.sales = defaultdict(int)
+        # self.supplies = defaultdict(int)
+        # self.sales_cost = defaultdict(int)
+        # self.supplies_cost = defaultdict(int)

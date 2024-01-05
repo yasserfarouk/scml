@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Literal
 
 from attr import define
-from negmas.common import define
 from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome
 from negmas.sao import SAONMI
 from negmas.sao.common import SAOState

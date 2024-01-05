@@ -239,14 +239,18 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         self.find_limit_brute_force.cache_clear()
         self._registered_sale_failures.add(consumer_id)
 
-    def register_sale(self, q: int, p: int, t: int = -1):
+    def register_sale(self, q: int, p: int, t: int):
         """Registers a sale to be considered when calculating utilities"""
+        if t != self.current_step:
+            return
         self.find_limit_brute_force.cache_clear()
         self._signed_agreements.append((q, t if t >= 0 else self.current_step, p))
         self._signed_is_output.append(True)
 
-    def register_supply(self, q: int, p: int, t: int = -1):
+    def register_supply(self, q: int, p: int, t: int):
         """Registers a supply to be considered when calculating utilities"""
+        if t != self.current_step:
+            return
         self.find_limit_brute_force.cache_clear()
         self._signed_agreements.append((q, t if t >= 0 else self.current_step, p))
         self._signed_is_output.append(False)
@@ -313,6 +317,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         output_product = self.output_product
         for c in contracts:
             if c.signed_at < 0:
+                continue
+            if c.nullified_at >= 0:
                 continue
             if ignore_exogenous and any(is_system_agent(_) for _ in c.partners):
                 continue

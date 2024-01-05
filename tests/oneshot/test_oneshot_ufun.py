@@ -185,7 +185,7 @@ def test_uses_registered_sales_and_supplies():
             return_info=False,
             ignore_signed_contracts=ignore,
         )
-    u.register_sale(2, 14)
+    u.register_sale(2, 14, u.current_step)
     assert u._signed_is_output[0] == True
     assert u._signed_agreements[0] == (2, 6, 14)
     assert len(u._signed_agreements) == len(u._signed_is_output) == 1
@@ -220,7 +220,7 @@ def test_uses_registered_sales_and_supplies():
         return_info=False,
         ignore_signed_contracts=True,
     )
-    u.register_supply(2, 8)
+    u.register_supply(2, 8, u.current_step)
     assert u._signed_is_output[1] == False
     assert u._signed_agreements[1] == (2, 6, 8)
     assert len(u._signed_agreements) == len(u._signed_is_output) == 2
@@ -343,8 +343,8 @@ def test_find_limit():
         tuple(), tuple(), ignore_signed_contracts=False
     ) <= u.from_offers(((40, 5, 14),), (True,), ignore_signed_contracts=False)
 
-    u.register_sale(3, 14)
-    u.register_sale(1, 14)
+    u.register_sale(3, 14, u.current_step)
+    u.register_sale(1, 14, u.current_step)
     u.find_limit(True, ignore_signed_contracts=True)
     u.find_limit(False, ignore_signed_contracts=True)
     assert u.max_utility == (10 * 15 - 10 * 12)

@@ -2333,6 +2333,7 @@ class SCML2021OneShotWorld(SCML2020OneShotWorld):
     def __init__(self, *args, **kwargs):
         kwargs["price_multiplier"] = 2.0
         kwargs["wide_price_range"] = True
+        kwargs["perishable"] = True
         super().__init__(*args, **kwargs)
 
 
@@ -2344,6 +2345,7 @@ class SCML2023OneShotWorld(SCML2020OneShotWorld):
     def __init__(self, *args, **kwargs):
         kwargs["price_multiplier"] = 0.0
         kwargs["wide_price_range"] = False
+        kwargs["perishable"] = True
         super().__init__(*args, **kwargs)
 
 
