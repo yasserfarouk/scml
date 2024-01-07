@@ -14,7 +14,7 @@ from negmas.sao.common import SAOResponse
 
 from scml.common import integer_cut
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.rl.factory import OneShotWorldFactory
+from scml.oneshot.rl.context import Context
 from scml.scml2019.common import QUANTITY, UNIT_PRICE
 
 __all__ = [
@@ -29,7 +29,7 @@ class ActionManager(ABC):
     Manges actions of an agent in an RL environment.
     """
 
-    factory: OneShotWorldFactory
+    context: Context
 
     @abstractmethod
     def make_space(self) -> Space:
@@ -49,7 +49,7 @@ class ActionManager(ABC):
 @define(frozen=True)
 class UnconstrainedActionManager(ActionManager):
     """
-    An action manager that matches any factory.
+    An action manager that matches any context.
 
     Args:
         n_prices: Number of distinct prices allowed in the action.

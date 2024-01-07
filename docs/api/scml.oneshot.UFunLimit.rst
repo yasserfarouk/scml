@@ -16,6 +16,8 @@ UFunLimit
       ~UFunLimit.exogenous_output_quantity
       ~UFunLimit.input_price
       ~UFunLimit.input_quantity
+      ~UFunLimit.inventory_input
+      ~UFunLimit.inventory_output
       ~UFunLimit.output_price
       ~UFunLimit.output_quantity
       ~UFunLimit.producible
@@ -36,6 +38,8 @@ UFunLimit
    .. autoattribute:: exogenous_output_quantity
    .. autoattribute:: input_price
    .. autoattribute:: input_quantity
+   .. autoattribute:: inventory_input
+   .. autoattribute:: inventory_output
    .. autoattribute:: output_price
    .. autoattribute:: output_quantity
    .. autoattribute:: producible

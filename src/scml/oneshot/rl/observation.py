@@ -15,10 +15,10 @@ from negmas.helpers.strings import itertools
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import NegotiationDetails, OneShotState
 from scml.oneshot.rl.common import isin
-from scml.oneshot.rl.factory import (
-    FixedPartnerNumbersOneShotFactory,
-    LimitedPartnerNumbersOneShotFactory,
-    OneShotWorldFactory,
+from scml.oneshot.rl.context import (
+    Context,
+    FixedPartnerNumbersOneShotContext,
+    LimitedPartnerNumbersOneShotContext,
 )
 from scml.scml2019.common import QUANTITY, UNIT_PRICE
 
@@ -30,8 +30,11 @@ __all__ = [
 ]
 
 
+@define(frozen=True)
 class ObservationManager(Protocol):
     """Manages the observations of an agent in an RL environment"""
+
+    context: Context
 
     def make_space(self) -> spaces.Space:
         """Creates the observation space"""
@@ -54,9 +57,9 @@ class ObservationManager(Protocol):
 
 @define(frozen=True)
 class BaseObservationManager(ABC):
-    """Base class for all observation managers that use a factory"""
+    """Base class for all observation managers that use a context"""
 
-    factory: OneShotWorldFactory
+    context: Context
 
     @abstractmethod
     def make_space(self) -> spaces.Space:
@@ -93,11 +96,11 @@ class FixedPartnerNumbersObservationManager(BaseObservationManager):
     n_lines: int = field(init=False)
 
     def __attrs_post_init__(self):
-        assert isinstance(self.factory, FixedPartnerNumbersOneShotFactory)
-        object.__setattr__(self, "n_suppliers", self.factory.n_suppliers)
-        object.__setattr__(self, "n_consumers", self.factory.n_consumers)
-        object.__setattr__(self, "max_quantity", self.factory.n_lines)
-        object.__setattr__(self, "n_lines", self.factory.n_lines)
+        assert isinstance(self.context, FixedPartnerNumbersOneShotContext)
+        object.__setattr__(self, "n_suppliers", self.context.n_suppliers)
+        object.__setattr__(self, "n_consumers", self.context.n_consumers)
+        object.__setattr__(self, "max_quantity", self.context.n_lines)
+        object.__setattr__(self, "n_lines", self.context.n_lines)
         object.__setattr__(self, "n_partners", self.n_suppliers + self.n_consumers)
 
     def make_space(self) -> spaces.Space:
@@ -290,31 +293,31 @@ class LimitedPartnerNumbersObservationManager(BaseObservationManager):
     sub_manager: FixedPartnerNumbersObservationManager = field(init=False)
 
     def __attrs_post_init__(self):
-        if isinstance(self.factory, LimitedPartnerNumbersOneShotFactory):
-            object.__setattr__(self, "n_suppliers", self.factory.n_suppliers)
-            object.__setattr__(self, "n_consumers", self.factory.n_consumers)
-            object.__setattr__(self, "max_quantity", self.factory.n_lines)
-            object.__setattr__(self, "n_lines", self.factory.n_lines)
-        elif isinstance(self.factory, FixedPartnerNumbersOneShotFactory):
+        if isinstance(self.context, LimitedPartnerNumbersOneShotContext):
+            object.__setattr__(self, "n_suppliers", self.context.n_suppliers)
+            object.__setattr__(self, "n_consumers", self.context.n_consumers)
+            object.__setattr__(self, "max_quantity", self.context.n_lines)
+            object.__setattr__(self, "n_lines", self.context.n_lines)
+        elif isinstance(self.context, FixedPartnerNumbersOneShotContext):
             object.__setattr__(
                 self,
                 "n_suppliers",
-                (self.factory.n_suppliers, self.factory.n_suppliers),
+                (self.context.n_suppliers, self.context.n_suppliers),
             )
             object.__setattr__(
                 self,
                 "n_consumers",
-                (self.factory.n_consumers, self.factory.n_consumers),
+                (self.context.n_consumers, self.context.n_consumers),
             )
             object.__setattr__(
-                self, "max_quantity", (self.factory.n_lines, self.factory.n_lines)
+                self, "max_quantity", (self.context.n_lines, self.context.n_lines)
             )
             object.__setattr__(
-                self, "n_lines", (self.factory.n_lines, self.factory.n_lines)
+                self, "n_lines", (self.context.n_lines, self.context.n_lines)
             )
         else:
             raise AssertionError(
-                f"{self.__class__} does not support factories of type {self.factory.__class__}"
+                f"{self.__class__} does not support factories of type {self.context.__class__}"
             )
         object.__setattr__(
             self,
@@ -328,26 +331,26 @@ class LimitedPartnerNumbersObservationManager(BaseObservationManager):
             self,
             "sub_manager",
             FixedPartnerNumbersObservationManager(
-                factory=FixedPartnerNumbersOneShotFactory(
-                    year=self.factory.year,
-                    level=self.factory.level,
-                    n_processes=self.factory.n_processes[-1]
-                    if isinstance(self.factory.n_processes, tuple)
-                    else self.factory.n_processes,
-                    n_consumers=self.factory.n_consumers[0]
-                    if isinstance(self.factory.n_consumers, tuple)
-                    else self.factory.n_consumers,
-                    n_suppliers=self.factory.n_suppliers[0]
-                    if isinstance(self.factory.n_suppliers, tuple)
-                    else self.factory.n_suppliers,
-                    n_competitors=self.factory.n_competitors[0]
-                    if isinstance(self.factory.n_competitors, tuple)
-                    else self.factory.n_competitors,
-                    n_agents_per_level=self.factory.n_agents_per_level,
-                    n_lines=self.factory.n_lines[0]
-                    if isinstance(self.factory.n_lines, tuple)
-                    else self.factory.n_lines,
-                    non_competitors=self.factory.non_competitors,
+                context=FixedPartnerNumbersOneShotContext(
+                    year=self.context.year,
+                    level=self.context.level,
+                    n_processes=self.context.n_processes[-1]
+                    if isinstance(self.context.n_processes, tuple)
+                    else self.context.n_processes,
+                    n_consumers=self.context.n_consumers[0]
+                    if isinstance(self.context.n_consumers, tuple)
+                    else self.context.n_consumers,
+                    n_suppliers=self.context.n_suppliers[0]
+                    if isinstance(self.context.n_suppliers, tuple)
+                    else self.context.n_suppliers,
+                    n_competitors=self.context.n_competitors[0]
+                    if isinstance(self.context.n_competitors, tuple)
+                    else self.context.n_competitors,
+                    n_agents_per_level=self.context.n_agents_per_level,
+                    n_lines=self.context.n_lines[0]
+                    if isinstance(self.context.n_lines, tuple)
+                    else self.context.n_lines,
+                    non_competitors=self.context.non_competitors,
                 ),
                 n_bins=self.n_bins,
                 n_sigmas=self.n_sigmas,

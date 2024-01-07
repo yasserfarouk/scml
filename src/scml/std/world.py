@@ -10,13 +10,13 @@ __all__ = [
 ]
 
 STD_DEFAULT_PARAMS = dict(
+    perishable=False,
     horizon=10,
     n_processes=2,
     disposal_cost=0,
     disposal_cost_dev=0,
     storage_cost=(0.01, 0.05),
     storage_cost_dev=0,
-    perishable=False,
     price_range_fraction=0.1,
     price_multiplier=0.0,
     wide_price_range=False,

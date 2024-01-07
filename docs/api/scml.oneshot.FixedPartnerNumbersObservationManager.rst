@@ -10,8 +10,8 @@ FixedPartnerNumbersObservationManager
 
    .. autosummary::
 
+      ~FixedPartnerNumbersObservationManager.context
       ~FixedPartnerNumbersObservationManager.extra_checks
-      ~FixedPartnerNumbersObservationManager.factory
       ~FixedPartnerNumbersObservationManager.max_quantity
       ~FixedPartnerNumbersObservationManager.n_bins
       ~FixedPartnerNumbersObservationManager.n_consumers
@@ -33,8 +33,8 @@ FixedPartnerNumbersObservationManager
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: context
    .. autoattribute:: extra_checks
-   .. autoattribute:: factory
    .. autoattribute:: max_quantity
    .. autoattribute:: n_bins
    .. autoattribute:: n_consumers

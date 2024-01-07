@@ -190,6 +190,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         self._n_nullified: int = 0
         self._nullified_quantity: int = 0
         self._nullified_price: float = 0
+        self._activity = 0
         self.trading_price_discount = trading_price_discount
         self.catalog_quantities = catalog_quantities
         self.publish_exogenous_summary = publish_exogenous_summary
@@ -706,8 +707,11 @@ class OneShotWorld(TimeInAgreementMixin, World):
     @classmethod
     def generate(
         cls,
-        agent_types: list[str | type[OneShotAgent]] | type[OneShotAgent] | str,
-        agent_params: list[dict[str, Any]] | None = None,
+        agent_types: tuple[str | type[OneShotAgent], ...]
+        | list[str | type[OneShotAgent]]
+        | type[OneShotAgent]
+        | str,
+        agent_params: list[dict[str, Any]] | tuple[dict[str, Any], ...] | None = None,
         agent_processes: list[int] | None = None,
         n_steps: tuple[int, int] | int = (50, 200),
         n_processes: tuple[int, int] | int = 2,
@@ -1479,6 +1483,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
             self._n_nullified = 0
             self._nullified_price = 0
             self._nullified_quantity = 0
+            self._activity = 0
 
             # Reset all agents
             # ================
@@ -1694,6 +1699,11 @@ class OneShotWorld(TimeInAgreementMixin, World):
     def execute_action(self, action, agent, callback: Callable = None) -> bool:
         return True
 
+    def contract_size(self, contract: Contract) -> float:
+        if contract.nullified_at >= 0:
+            return 0
+        return contract.agreement["quantity"] * contract.agreement["unit_price"]
+
     def post_step_stats(self):
         self._stats["n_contracts_nullified_now"].append(self._n_nullified)
         self._stats["n_contracts_nullified_quantity"].append(self._nullified_quantity)
@@ -1732,6 +1742,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         self._n_nullified = 0
         self._nullified_price = 0
         self._nullified_quantity = 0
+        self._activity = 0
 
     def welfare(self, include_bankrupt: bool = False) -> float:
         """Total welfare of all agents"""
@@ -2289,6 +2300,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         ):
             self._n_nullified += 1
             q = contract.agreement["quantity"]
+            self._activity += 0
             self._nullified_quantity += q
             self._nullified_price += contract.agreement["price"] * q
             contract.nullified_at = self.current_step
@@ -2317,6 +2329,7 @@ class OneShotWorld(TimeInAgreementMixin, World):
         self._input_price[contract.annotation["buyer"]] += total_price
         self._output_quantity[contract.annotation["seller"]] += bought
         self._output_price[contract.annotation["seller"]] += total_price
+        self._activity += total_price
         return breaches
 
     def complete_contract_execution(
@@ -2345,7 +2358,6 @@ class SCML2023OneShotWorld(SCML2020OneShotWorld):
     def __init__(self, *args, **kwargs):
         kwargs["price_multiplier"] = 0.0
         kwargs["wide_price_range"] = False
-        kwargs["perishable"] = True
         super().__init__(*args, **kwargs)
 
 

@@ -64,7 +64,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
             offers.append((outcome[QUANTITY], outcome[UNIT_PRICE]))
         return offers
 
-    def decode_action(self, action: dict[str, SAOResponse]) -> dict[str, SAOResponse]:
+    def decode_action(self, action: Any) -> dict[str, SAOResponse]:
         """
         Generates offers to all partners from an encoded action. Default is to return the action as it is assuming it is a `dict[str, SAOResponse]`
         """

@@ -20,9 +20,11 @@ EndingNegotiator
       ~EndingNegotiator.id
       ~EndingNegotiator.name
       ~EndingNegotiator.nmi
+      ~EndingNegotiator.opponent_ufun
       ~EndingNegotiator.owner
       ~EndingNegotiator.parent
       ~EndingNegotiator.preferences
+      ~EndingNegotiator.private_info
       ~EndingNegotiator.prob_ufun
       ~EndingNegotiator.reserved_outcome
       ~EndingNegotiator.reserved_value
@@ -82,9 +84,11 @@ EndingNegotiator
    .. autoattribute:: id
    .. autoattribute:: name
    .. autoattribute:: nmi
+   .. autoattribute:: opponent_ufun
    .. autoattribute:: owner
    .. autoattribute:: parent
    .. autoattribute:: preferences
+   .. autoattribute:: private_info
    .. autoattribute:: prob_ufun
    .. autoattribute:: reserved_outcome
    .. autoattribute:: reserved_value

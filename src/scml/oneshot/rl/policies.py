@@ -10,8 +10,8 @@ from negmas.sao import SAOResponse
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, UNIT_PRICE
 from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
+from scml.oneshot.rl.context import ANACOneShotContext
 from scml.oneshot.rl.env import OneShotEnv
-from scml.oneshot.rl.factory import ANACOneShotFactory
 from scml.oneshot.rl.observation import ObservationManager
 
 __all__ = ["random_action", "random_policy", "greedy_policy"]
@@ -66,7 +66,7 @@ def greedy_policy(
     obs: np.ndarray,
     awi: OneShotAWI,
     obs_manager: ObservationManager,
-    action_manager: ActionManager = UnconstrainedActionManager(ANACOneShotFactory()),
+    action_manager: ActionManager = UnconstrainedActionManager(ANACOneShotContext()),
     debug=False,
     distributor: Callable[[int, int], list[int]] = all_but_concentrated,
     return_decoded: bool = False,

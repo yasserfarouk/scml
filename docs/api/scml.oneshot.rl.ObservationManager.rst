@@ -6,6 +6,12 @@ ObservationManager
 .. autoclass:: ObservationManager
    :show-inheritance:
 
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~ObservationManager.context
+
    .. rubric:: Methods Summary
 
    .. autosummary::
@@ -14,6 +20,10 @@ ObservationManager
       ~ObservationManager.get_offers
       ~ObservationManager.make_first_observation
       ~ObservationManager.make_space
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: context
 
    .. rubric:: Methods Documentation
 

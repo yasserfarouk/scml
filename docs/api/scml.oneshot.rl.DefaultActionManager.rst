@@ -10,8 +10,8 @@ DefaultActionManager
 
    .. autosummary::
 
+      ~DefaultActionManager.context
       ~DefaultActionManager.extra_checks
-      ~DefaultActionManager.factory
       ~DefaultActionManager.max_quantity
       ~DefaultActionManager.n_partners
       ~DefaultActionManager.n_prices
@@ -27,8 +27,8 @@ DefaultActionManager
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: context
    .. autoattribute:: extra_checks
-   .. autoattribute:: factory
    .. autoattribute:: max_quantity
    .. autoattribute:: n_partners
    .. autoattribute:: n_prices

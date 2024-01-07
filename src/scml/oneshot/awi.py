@@ -845,7 +845,3 @@ class OneShotAWI(AgentWorldInterface):
                     to_remove.append(t)
             for t in to_remove:
                 del d[t]
-        # self.sales = defaultdict(int)
-        # self.supplies = defaultdict(int)
-        # self.sales_cost = defaultdict(int)
-        # self.supplies_cost = defaultdict(int)

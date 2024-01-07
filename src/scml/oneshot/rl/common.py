@@ -4,7 +4,7 @@ from typing import Any, Callable, Union
 import numpy as np
 from negmas import Agent, AgentWorldInterface, World
 
-__all__ = ["isin", "WorldFactory", "RLState", "RLAction", "RLModel", "model_wrapper"]
+__all__ = ["isin", "Context", "RLState", "RLAction", "RLModel", "model_wrapper"]
 
 
 def isin(x: int | tuple[int, int], y: tuple[int, int] | int):
@@ -18,10 +18,11 @@ def isin(x: int | tuple[int, int], y: tuple[int, int] | int):
     return x == y
 
 
-class WorldFactory(ABC):
-    """Generates worlds satisfying predefined conditions and tests for them"""
+class Context(ABC):
+    """A context used for generating worlds satisfying predefined conditions and testing for them"""
 
-    def __call__(
+    @abstractmethod
+    def generate(
         self,
         types: tuple[type[Agent], ...] = tuple(),
         params: tuple[dict[str, Any], ...] | None = None,
@@ -44,24 +45,22 @@ class WorldFactory(ABC):
         world: World,
         types: tuple[type[Agent], ...] = tuple(),
     ) -> bool:
-        """Checks that the given world could have been generated from this factory"""
+        """Checks that the given world could have been generated from this context"""
         ...
 
     @abstractmethod
     def is_valid_awi(self, awi: AgentWorldInterface) -> bool:
-        """Checks that the given AWI is connected to a world that could have been generated from this factory"""
+        """Checks that the given AWI is connected to a world that could have been generated from this context"""
         ...
 
     @abstractmethod
-    def contains_factory(self, factory: "WorldFactory") -> bool:
-        """Checks that the any world generated from the given `factory` could have been generated from this factory"""
+    def contains_context(self, context: "Context") -> bool:
+        """Checks that the any world generated from the given `context` could have been generated from this context"""
         ...
 
-    def __contains__(
-        self, other: "Union[World, AgentWorldInterface, WorldFactory]"
-    ) -> bool:
-        if isinstance(other, WorldFactory):
-            return self.contains_factory(other)
+    def __contains__(self, other: "Union[World, AgentWorldInterface, Context]") -> bool:
+        if isinstance(other, Context):
+            return self.contains_context(other)
         if isinstance(other, AgentWorldInterface):
             return self.is_valid_awi(other)
         return self.is_valid_world(other)

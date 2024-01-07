@@ -7,8 +7,8 @@ from negmas.sao.common import SAOResponse, SAOState
 
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import GreedyOneShotAgent
-from scml.oneshot.rl.common import WorldFactory
-from scml.oneshot.rl.factory import ANACOneShotFactory
+from scml.oneshot.rl.common import Context
+from scml.oneshot.rl.context import ANACOneShotContext
 
 from ..policy import OneShotPolicy
 from .action import ActionManager, UnconstrainedActionManager
@@ -24,10 +24,10 @@ class OneShotRLAgent(OneShotPolicy):
     def __init__(
         self,
         *args,
-        models: list[RLModel] | tuple[RLModel] = tuple(),
+        models: list[RLModel] | tuple[RLModel, ...] = tuple(),
         observation_managers: list[ObservationManager]
-        | tuple[ObservationManager] = tuple(),
-        action_managers: list[ActionManager] | tuple[ActionManager] | None = None,
+        | tuple[ObservationManager, ...] = tuple(),
+        action_managers: list[ActionManager] | tuple[ActionManager, ...] | None = None,
         fallback_type: type[OneShotAgent] = GreedyOneShotAgent,
         fallback_params: dict[str, Any] | None = None,
         **kwargs,
@@ -36,7 +36,7 @@ class OneShotRLAgent(OneShotPolicy):
         self._models = models
         if action_managers is None:
             action_managers = [
-                UnconstrainedActionManager(ANACOneShotFactory())
+                UnconstrainedActionManager(ANACOneShotContext())
                 for _ in observation_managers
             ]
         self._action_managers = action_managers
@@ -45,7 +45,7 @@ class OneShotRLAgent(OneShotPolicy):
         self._fallback_params = (
             fallback_params if fallback_params is not None else dict()
         )
-        self._valid_factory: WorldFactory = None  # type: ignore
+        self._valid_context: Context = None  # type: ignore
         self._valid_action_manager: ActionManager = None  # type: ignore
         self._valid_obs_manager: ObservationManager = None  # type: ignore
         self._valid_index: int = -1
@@ -60,7 +60,7 @@ class OneShotRLAgent(OneShotPolicy):
                 self._obs_managers,
             )
         ):
-            if self.awi in a.factory and self.awi in o.factory:
+            if self.awi in a.context and self.awi in o.context:
                 self._valid_index = i
                 break
         if self._valid_index < 0:

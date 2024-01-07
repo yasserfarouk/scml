@@ -11,7 +11,7 @@ from negmas.preferences import StationaryMixin, UtilityFunction
 
 from .common import QUANTITY, TIME, UNIT_PRICE, is_system_agent
 
-__all__ = ["OneShotUFun", "UFunLimit"]
+__all__ = ["OneShotUFun", "UFunLimit", "UtilityInfo"]
 
 UFunLimit = namedtuple(
     "UFunLimit",

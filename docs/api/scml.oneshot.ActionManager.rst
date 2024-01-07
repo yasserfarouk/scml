@@ -10,7 +10,7 @@ ActionManager
 
    .. autosummary::
 
-      ~ActionManager.factory
+      ~ActionManager.context
 
    .. rubric:: Methods Summary
 
@@ -22,7 +22,7 @@ ActionManager
 
    .. rubric:: Attributes Documentation
 
-   .. autoattribute:: factory
+   .. autoattribute:: context
 
    .. rubric:: Methods Documentation
 

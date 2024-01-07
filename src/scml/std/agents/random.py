@@ -1,26 +1,13 @@
 import random
 from itertools import chain, combinations
-from typing import Dict, Optional
 
-from negmas import MechanismState, ResponseType
-from negmas.outcomes import Outcome
-from negmas.sao import SAOResponse, SAOState
-from numpy.random import choice
+from negmas import ResponseType
+from negmas.sao import SAOResponse
 
-from scml.oneshot.agents.random import (
-    RandomOneShotAgent,
-    SingleAgreementRandomAgent,
-    SyncRandomOneShotAgent,
-)
 from scml.oneshot.common import QUANTITY, UNIT_PRICE
 from scml.std.agent import OneShotSyncAgent
 
-__all__ = [
-    "RandomOneShotAgent",
-    "SyncRandomStdAgent",
-    "SyncRandomOneShotAgent",
-    "SingleAgreementRandomAgent",
-]
+__all__ = ["SyncRandomStdAgent"]
 
 PROB_ACCEPTANCE = 0.1
 PROB_END = 0.005
@@ -81,6 +68,7 @@ class SyncRandomStdAgent(OneShotSyncAgent):
         return {k: (q, s, p) if q > 0 else None for k, q in distribution.items()}
 
     def counter_all(self, offers, states):
+        _ = states
         # get current step, some valid price, the quantity I need, and my partners
         s, p = self._step_and_price()
         needs = self._needs()

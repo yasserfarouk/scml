@@ -1,4 +1,4 @@
-Developing an agent for SCML2023 (OneShot)
+Developing an agent for SCML2024 (OneShot)
 ------------------------------------------
 
 In 2021, we introduced a new track called SCML-OneShot which implements
@@ -16,16 +16,16 @@ this brief introduction in the remainder of this tutorial.
 
     from collections import defaultdict
     import random
-    from negmas import ResponseType
+    from negmas import ResponseType, SAOResponse
     from scml.oneshot import *
-    from scml.scml2020.common import is_system_agent
+    from scml.oneshot.common import is_system_agent
     from pprint import pprint
 
     def try_agent(agent_type, n_processes=2, **kwargs):
         """Runs an agent in a world simulation against a randomly behaving agent"""
         return try_agents([RandomOneShotAgent, agent_type], n_processes,**kwargs)
 
-    def try_agents(agent_types, n_processes=2, n_trials=5, draw=True, agent_params=None, year=2023):
+    def try_agents(agent_types, n_processes=2, n_trials=5, draw=True, agent_params=None, year=2024):
         """
         Runs a simulation with the given agent_types, and n_processes n_trial times.
         Optionally also draws a graph showing what happened
@@ -35,7 +35,7 @@ this brief introduction in the remainder of this tutorial.
         agent_scores = dict()
         for _ in range(n_trials):
             p = n_processes if isinstance(n_processes, int) else random.randint(*n_processes)
-            cls = {2022:SCML2022OneShotWorld, 2023: SCML2023OneShotWorld}[year]
+            cls = {2022:SCML2022OneShotWorld, 2023: SCML2023OneShotWorld, 2024: SCML2024OneShotWorld}[year]
             world = cls(
             **cls.generate(agent_types, agent_params=agent_params, n_steps=10,
                            n_processes=p, random_agent_types=True), construct_graphs=True,)
@@ -92,12 +92,11 @@ Now we are ready to develop a do-nothing agent:
 
 .. code:: ipython3
 
-    class MyOneShotDoNothing(OneShotAgent):
+    class MyOneShotDoNothing(OneShotPolicy):
         """My Agent that does nothing"""
-        def propose(self, negotiator_id, state):
-            return None
-        def respond(self, negotiator_id, state, source = ''):
-            return ResponseType.END_NEGOTIATION
+        def act(self, state):
+            return { partner: SAOResponse(ResponseType.END_NEGOTIATION, None)
+                    for partner in state.my_suppliers + state.my_consumers}
 
     world, ascores, tscores = try_agent(MyOneShotDoNothing, n_trials=1)
 
@@ -128,17 +127,17 @@ Let’s check the scores of different agents to confirm:
 .. parsed-literal::
 
     Agent 00MDN@0 of type MyOneShotDoNothing has a final score of 0.5419496768168798
-    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.8833295470777902
-    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.5779058592822465
-    Agent 03Ra@0 of type RandomOneShotAgent has a final score of 1.05654613556619
-    Agent 04Ra@0 of type RandomOneShotAgent has a final score of 0.9290892804333534
-    Agent 05MDN@0 of type MyOneShotDoNothing has a final score of 0.5278984195503129
-    Agent 06MDN@0 of type MyOneShotDoNothing has a final score of 0.48263427095216405
-    Agent 07MDN@0 of type MyOneShotDoNothing has a final score of 0.49452087770114345
-    Agent 08Ra@1 of type RandomOneShotAgent has a final score of 0.9017540343883679
-    Agent 09MDN@1 of type MyOneShotDoNothing has a final score of 0.6957672799890143
-    Agent 10MDN@1 of type MyOneShotDoNothing has a final score of 0.7505249202460941
-    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8887949232772625
+    Agent 01Ra@0 of type RandomOneShotAgent has a final score of 0.9471478764498039
+    Agent 02MDN@0 of type MyOneShotDoNothing has a final score of 0.5778982506826138
+    Agent 03Ra@0 of type RandomOneShotAgent has a final score of 1.0545440614068775
+    Agent 04Ra@0 of type RandomOneShotAgent has a final score of 0.8390807884404016
+    Agent 05MDN@0 of type MyOneShotDoNothing has a final score of 0.5278715766199907
+    Agent 06MDN@0 of type MyOneShotDoNothing has a final score of 0.48259535577742857
+    Agent 07MDN@0 of type MyOneShotDoNothing has a final score of 0.4945364105217286
+    Agent 08Ra@1 of type RandomOneShotAgent has a final score of 0.9073447671991914
+    Agent 09MDN@1 of type MyOneShotDoNothing has a final score of 0.6915817964386329
+    Agent 10MDN@1 of type MyOneShotDoNothing has a final score of 0.7542666410351582
+    Agent 11Ra@1 of type RandomOneShotAgent has a final score of 0.8520380532201278
 
 
 Notice that our do-nothing agent always loses money. That is because it
@@ -153,8 +152,8 @@ shortfall penalty.
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.9319027841485928),
-     ('MyOneShotDoNothing', 0.5816001863625507)]
+    [('RandomOneShotAgent', 0.9200311093432804),
+     ('MyOneShotDoNothing', 0.581528529698919)]
 
 
 Notice how the do-nothing agent is even worse than acting randomly. This
@@ -205,35 +204,35 @@ market.
         <tr>
           <th rowspan="2" valign="top">01Ra@0</th>
           <th>08Ra@1</th>
-          <td>5.222222</td>
-          <td>16.333333</td>
+          <td>4.700000</td>
+          <td>16.400000</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>5.700000</td>
-          <td>16.500000</td>
+          <td>6.111111</td>
+          <td>16.555556</td>
         </tr>
         <tr>
           <th rowspan="2" valign="top">03Ra@0</th>
           <th>08Ra@1</th>
-          <td>6.100000</td>
-          <td>16.700000</td>
+          <td>6.700000</td>
+          <td>16.400000</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>6.000000</td>
-          <td>16.750000</td>
+          <td>4.900000</td>
+          <td>16.300000</td>
         </tr>
         <tr>
           <th rowspan="2" valign="top">04Ra@0</th>
           <th>08Ra@1</th>
-          <td>5.100000</td>
-          <td>16.700000</td>
+          <td>4.800000</td>
+          <td>16.300000</td>
         </tr>
         <tr>
           <th>11Ra@1</th>
-          <td>5.222222</td>
-          <td>16.333333</td>
+          <td>7.000000</td>
+          <td>16.555556</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
@@ -322,7 +321,7 @@ Building your own agent
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 A one-shot agent needs only to do negotiation. The simplest possible
-version (``MyOneShotRandom`` above) just responded to offers from its
+version (``MyDoNothingAgent`` above) just responded to offers from its
 partners and proposed new offers to them.
 
 Looking at the graph for the world simulation, we can see immediately
@@ -569,8 +568,7 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.1530532176692672),
-     ('RandomOneShotAgent', 0.5702122629824699)]
+    [('SimpleAgent', 1.0761466604648855), ('RandomOneShotAgent', 0.53049443973494)]
 
 
 This simple agent is better than the random agent. Let’s understand how
@@ -777,8 +775,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('BetterAgent', 1.1081770211788013),
-     ('RandomOneShotAgent', 0.4544590995817126)]
+    [('BetterAgent', 1.0685830741689808),
+     ('RandomOneShotAgent', 0.4487381604583958)]
 
 
 It seems that ``BetterAgent`` is getting a score that is not any better
@@ -900,117 +898,6 @@ range is limited to only two consecutive values (e.g. (9, 10)) which
 increases the relative importance of avoiding penalties by matching
 demand and supply.
 
-Effect of price (new in 2023)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Let’s see how much is the price affecting our utility value. We will do
-that by comparing the utility we get for different offers as a function
-of price and quantity independently.
-
-.. code:: ipython3
-
-    class UfunTester(SimpleAgent):
-        def step(self):
-            super().step()
-            # find the quantity needed (needs), and price/quantity ranges
-            seller = self.awi.is_first_level
-            npartners = len(self.awi.my_consumers) if seller else len(self.awi.my_suppliers)
-            issues = (
-                self.awi.current_output_issues if seller else self.awi.current_input_issues
-            )
-            needs = (
-                self.awi.current_exogenous_input_quantity
-                if seller
-                else self.awi.current_exogenous_output_quantity
-            )
-            pmin, pmax = issues[UNIT_PRICE].min_value, issues[UNIT_PRICE].max_value
-            qmin, qmax = issues[QUANTITY].min_value, issues[QUANTITY].max_value
-            pbest, pworst = (pmax, pmin) if seller else (pmin, pmax)
-            # we can get maximum quantity from each partner
-            qrange = (0, (qmax * npartners) + 1)
-
-            s = self.awi.current_step
-            for q in range(*qrange):
-                # difference between matching our needs exactly at the worst possible price and
-                # a (q - needs) mismatch at the best possible price
-                diff = self.ufun((needs, s, pworst)) - self.ufun((q, s, pbest))
-                quantity_value.append({
-                    "Mismatch (items)":q-needs,
-                    "Profit Difference (dollars)": diff
-                })
-
-    quantity_value = []
-    try_agents([UfunTester], draw=False, n_trials=10)
-    data = pd.DataFrame(quantity_value)
-
-.. code:: ipython3
-
-    sns.lineplot(data=data, x=data.columns[0], y=data.columns[1])
-    plt.plot(data[data.columns[0]], [0]*len(data))
-    plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed)")
-    plt.title("Difference in profit between matching at worst price and mismatch at best price [2023]");
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_25_0.png
-
-
-As the figure above shows, being able to match supply to demand through
-negotiation is **orders of magnitude** more important than being able to
-buy at a low price or sell at a high price. This is a new feature of the
-game in SCML 2023 due to the small range of prices available (only two
-values).
-
-The following properties can be gleaned from this figure (and they are
-robust for all world simulations in SCML OneShot 2023 or 2024):
-
-1. The more mismatch between the supply and demand (i.e. the quantity
-   needed and the quantity secured), the less important price becomes.
-2. Buying/selling less than what we need is as dangerous as
-   buying/selling more (from the fact that the slope of the curve for
-   negative mismatch (buying less than needs) is almost the same as for
-   positive mismatch (buying more than needs).
-3. A random agent, will be at a higher risk of buying/selling more than
-   what it needs because it has multiple partners. The worst case
-   scenario for buying/selling too much is zero which corresponds of a
-   maximum mismatch of 10 items (because exogenous contracts never
-   exceed 10 units) while the worst case scenario for buying/selling too
-   little is 10 multiplied by the number of partners.
-4. The only case in which price is slightly more important than quantity
-   (i.e. negative y value in the figure), is when the agent is almost
-   exactly matching supply and demand (i.e. at an x value of 0 in the
-   figure).
-
-.. container::
-
-   As a result, agents developed for SCML OneShot 2023 or 2024 should
-   focus on matching demand and supply through concurrent negotiation
-   rather than focusing on price negotiation
-
-Just for comparison, let’s see how this would have worked out in the
-settings of SCML 2022:
-
-.. code:: ipython3
-
-    quantity_value = []
-    try_agents([UfunTester], draw=False, n_trials=10, year=2022)
-    data = pd.DataFrame(quantity_value)
-    sns.lineplot(data=data, x=data.columns[0], y=data.columns[1])
-    plt.plot(data[data.columns[0]], [0]*len(data))
-    plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed) [2022]")
-    plt.title("Difference in profit between matching at worst price and mismatch at best price [2022]");
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_27_0.png
-
-
-We can see that in the settings of SCML OneShot 2022, price had a much
-more pronounced importance (from the fact that a much larger fraction of
-profit differences is negative) and it can be even two orders of
-magnitude more important than quantity very near to the exact matching
-point (i.e. x value of 0 in the figure).
-
 Thinking about other negotiations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1052,7 +939,7 @@ concessions. The following agent implements this idea
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_29_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_24_0.png
 
 
 Let’s see how well did this agent behave:
@@ -1064,8 +951,8 @@ Let’s see how well did this agent behave:
 
 .. parsed-literal::
 
-    [('AdaptiveAgent', 1.103214145454832),
-     ('RandomOneShotAgent', 0.6044719928797151)]
+    [('AdaptiveAgent', 1.0255745166979922),
+     ('RandomOneShotAgent', 0.6497361622176351)]
 
 
 Almost as good as ``SimpleAgent``, at least in this simulation (we will
@@ -1087,10 +974,12 @@ simulation time. The following agent tries to do that in a *simplistic*
 manner by changing the limits of the price it is willing to accept based
 on accomulated statistics per agent.
 
-**Note that this agent is not effective in 2023 because the price range
-is too small that it really does not matter much which price is agreed
-upon relative to the ability to avoid penalties by matching supply to
-demand.**.
+.. container:: alert alert-warning
+
+   Note that this agent is not effective in 2024 because the price range
+   is too small that it really does not matter much which price is
+   agreed upon relative to the ability to avoid penalties by matching
+   supply to demand.
 
 .. code:: ipython3
 
@@ -1203,7 +1092,7 @@ demand.**.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_34_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_29_0.png
 
 
 .. code:: ipython3
@@ -1213,8 +1102,8 @@ demand.**.
 
 .. parsed-literal::
 
-    [('LearningAgent', 1.0767123341704785),
-     ('RandomOneShotAgent', 0.43112511854756047)]
+    [('LearningAgent', 1.0750856198166672),
+     ('RandomOneShotAgent', 0.48337948922149543)]
 
 
 The main idea of this agent is to limit the minimum price (for selling)
@@ -1289,10 +1178,6 @@ by the ``range_slack`` value). Finally we make sure that this is not too
 high by taking the **minimum** of this value and the maximum price of
 the current negotiation.
 
-You can now start developing your own agent for SCML-OneShot (A startup
-skeleton project is available here). The rest of this tutorial will
-introduce two other optional alternatives
-
 Given that the utility function of the agent is defined in terms of a
 *complete set of contracts*, it is not trivial to define a utility
 function for each negotiation independent from the others (which is why
@@ -1345,21 +1230,12 @@ do-nothing agent in this form:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_39_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_34_0.png
 
 
 As you can see, in this case, we need to override ``counter_all`` to
 counter offers received from *all* the partners and ``first_proposals``
-to decide a first offer for *each* partner. Notice that this is a
-many-to-many negotiation scenario. This means that if multiple agents at
-every level are using sync variants, loops may happen with the
-possiblity of a deadlock.
-
-For that reason the system will randomly break such loops when they
-happen which implies that **``counter_all`` may receive a subset of the
-offers from partners not all of them**. In the worst case,
-``counter_all`` may receive just one offer each time from one of the
-partners losing all synchronity between responses.
+to decide a first offer for *each* partner.
 
 Other than these two negotiation related callbacks, the agent receives
 an ``init`` call just after it joins the simulatin and a ``step`` call
@@ -1447,7 +1323,7 @@ greedy agent using this approach.
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_42_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_37_0.png
 
 
 This agent shows a case of parameterizing your agent so that it can be
@@ -1577,8 +1453,8 @@ Let’s see how did it do:
 
 .. parsed-literal::
 
-    [('NaiveSyncAgent', 1.011428678611989),
-     ('RandomOneShotAgent', 0.4575266979964106)]
+    [('NaiveSyncAgent', 1.075252446966605),
+     ('RandomOneShotAgent', 0.2875971480566533)]
 
 
 This base-class simplifies the job of the agent developer by providing a
@@ -1594,8 +1470,8 @@ made even less effective by the fact that in SCML 2023, price does not
 matter that much. In the following section, we design a very simple
 alternative that tries to resolve this issue
 
-A better SyncAgent (new in 2023)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A better SyncAgent
+~~~~~~~~~~~~~~~~~~
 
 We start by defining a simple helper function that distributes a given
 quantity :math:`q` over :math:`n` partners.
@@ -1606,6 +1482,11 @@ quantity :math:`q` over :math:`n` partners.
         """Distributes n values over m bins with at least one item per bin assuming q > n"""
         from numpy.random import choice
         from collections import Counter
+        if q < n:
+            lst = [0] * (n - q) + [1] * q
+            random.shuffle(lst)
+            return lst
+
         if q == n:
             return [1] * n
         r = Counter(choice(n, q - n))
@@ -1623,7 +1504,20 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[3, 1, 4, 2], [3, 2, 3, 2], [3, 1, 2, 4], [2, 4, 3, 1], [3, 2, 4, 1]]
+    [[3, 1, 1, 5], [2, 3, 3, 2], [1, 3, 4, 2], [2, 3, 2, 3], [2, 4, 1, 3]]
+
+
+
+.. code:: ipython3
+
+    [distribute(2, 4) for _ in range(5)]
+
+
+
+
+.. parsed-literal::
+
+    [[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 1, 0], [0, 0, 1, 1], [1, 0, 1, 0]]
 
 
 
@@ -1643,91 +1537,95 @@ We will also need a helper function to find all subsets of a given set
     class SyncRandomAgent(OneShotSyncAgent):
         """An agent that distributes its needs over its partners randomly."""
 
-        def __init__(self, *args, threshold=0, timelimit=0.85, **kwargs):
+        def __init__(self, *args, threshold=0.95, **kwargs):
             super().__init__(*args, **kwargs)
-            self._threshold, self._timelimit = threshold, timelimit
-
+            self._threshold = threshold
 
         def distribute_needs(self) -> dict[str, int]:
             """Distributes my needs randomly over all my partners"""
 
-            # find my partners and the quantity I need
-            partner_ids = list(self.negotiators.keys())
-            partners = len(partner_ids)
-            needs = self._needs()
-
-            # if I need nothing, end all negotiations
-            if needs <= 0:
-                return dict(zip(partner_ids, [0] * partners))
-
-            # If my needs are small, end some of the negotiations
-            response = dict()
-            if needs < partners:
-                to_end = random.sample(partner_ids, (partners - needs))
-                response = dict(zip(to_end, [0] * len(to_end)))
-                partner_ids = [_ for _ in partner_ids if _ not in to_end]
+            dist = dict()
+            for needs, all_partners in [
+                (self.awi.needed_supplies, self.awi.my_suppliers),
+                (self.awi.needed_sales, self.awi.my_consumers),
+            ]:
+                # find suppliers and consumers still negotiating with me
+                partner_ids = [_ for _ in all_partners if _ in self.negotiators.keys()]
                 partners = len(partner_ids)
 
-            # distribute my needs over my (remaining) partners.
-            response.update(dict(zip(partner_ids, distribute(needs, partners))))
-            return response
+                # if I need nothing, end all negotiations
+                if needs <= 0:
+                    dist.update(dict(zip(partner_ids, [0] * partners)))
+                    continue
+
+                # distribute my needs over my (remaining) partners.
+                dist.update(dict(zip(partner_ids, distribute(needs, partners))))
+            return dist
 
         def first_proposals(self):
             # just randomly distribute my needs over my partners (with best price for me).
             s, p = self._step_and_price(best_price=True)
             distribution = self.distribute_needs()
-            return dict((k, (q, s, p) if q > 0 else None) for k, q in distribution.items())
+            d = {k: (q, s, p) if q > 0 else None for k, q in distribution.items()}
+            return d
 
         def counter_all(self, offers, states):
+            response = dict()
+            # process for sales and supplies independently
+            for needs, all_partners, issues in [
+                (
+                    self.awi.needed_supplies,
+                    self.awi.my_suppliers,
+                    self.awi.current_input_issues,
+                ),
+                (
+                    self.awi.needed_sales,
+                    self.awi.my_consumers,
+                    self.awi.current_output_issues,
+                ),
+            ]:
+                # get a random price
+                price = issues[UNIT_PRICE].rand()
+                # find active partners
+                partners = {_ for _ in all_partners if _ in offers.keys()}
 
-            # get current step, some valid price, the quantity I need, and my partners
-            s, p = self._step_and_price()
-            needs = self._needs()
-            partners = set(offers.keys())
+                # find the set of partners that gave me the best offer set
+                # (i.e. total quantity nearest to my needs)
+                plist = list(powerset(partners))
+                best_diff, best_indx = float("inf"), -1
+                for i, partner_ids in enumerate(plist):
+                    others = partners.difference(partner_ids)
+                    offered = sum(offers[p][QUANTITY] for p in partner_ids)
+                    diff = abs(offered - needs)
+                    if diff < best_diff:
+                        best_diff, best_indx = diff, i
+                    if diff == 0:
+                        break
 
-            # find the set of partners that gave me the best offer set
-            # (i.e. total quantity nearest to my needs)
-            plist = list(powerset(partners))
-            best_diff, best_indx = float("inf"), -1
+                # If the best combination of offers is good enough, accept them and end all
+                # other negotiations
+                if best_diff <= self._threshold:
+                    partner_ids = plist[best_indx]
+                    others = list(partners.difference(partner_ids))
+                    response.update({
+                        k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k]) for k in partner_ids
+                    } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others})
+                    continue
 
-            for i, partner_ids in enumerate(plist):
-                others = partners.difference(partner_ids)
-                offered = sum(offers[p][QUANTITY] for p in partner_ids)
-                diff = abs(offered - needs)
-                if diff < best_diff:
-                    best_diff, best_indx = diff, i
-                if diff == 0:
-                    break
-
-            # If the best combination of offers is good enough, accept them and end all
-            # other negotiations
-            if states:
-                relative_time = max(s.relative_time for s in states.values())
-            else:
-                relative_time = 0.0
-            if best_diff <= self._threshold or relative_time >= self._timelimit:
-                partner_ids = plist[best_indx]
-                others = list(partners.difference(partner_ids))
-                return {
-                    k: SAOResponse(ResponseType.ACCEPT_OFFER, None) for k in partner_ids
-                } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others}
-
-            # If I still do not have a good enough offer, distribute my current needs
-            # randomly over my partners.
-            distribution = self.distribute_needs()
-            return {
-                k: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                if q == 0
-                else SAOResponse(ResponseType.REJECT_OFFER, (q, s, p))
-                for k, q in distribution.items()
-            }
-
-        def _needs(self):
-            """How many items do I need?"""
-            if self.awi.is_first_level:
-                return self.awi.needed_sales
-            return self.awi.needed_supplies
-
+                # If I still do not have a good enough offer, distribute my current needs
+                # randomly over my partners.
+                distribution = self.distribute_needs()
+                response.update(
+                    {
+                        k: SAOResponse(ResponseType.END_NEGOTIATION, None)
+                        if q == 0
+                        else SAOResponse(
+                            ResponseType.REJECT_OFFER, (q, self.awi.current_step, price)
+                        )
+                        for k, q in distribution.items()
+                    }
+                )
+            return response
 
         def _step_and_price(self, best_price=False):
             """Returns current step and a random (or max) price"""
@@ -1741,13 +1639,11 @@ We will also need a helper function to find all subsets of a given set
             if best_price:
                 return s, pmax if seller else pmin
             return s, random.randint(pmin, pmax)
-
-
     world, ascores, tscores = try_agent(SyncRandomAgent)
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_52_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_48_0.png
 
 
 .. code:: ipython3
@@ -1757,8 +1653,19 @@ We will also need a helper function to find all subsets of a given set
 
 .. parsed-literal::
 
-    [('SyncRandomAgent', 1.0851458183785867),
-     ('RandomOneShotAgent', 0.42928080054982604)]
+    [('SyncRandomAgent', 1.0945592875509857),
+     ('RandomOneShotAgent', 0.5643232918237227)]
+
+
+.. code:: ipython3
+
+    print_type_scores(tscores)
+
+
+.. parsed-literal::
+
+    [('RandomOneShotAgent', 0.05332647086021907),
+     ('GreedyIndNeg', -0.008145148883562593)]
 
 
 This is the highest score we got so far even though that agent is not
@@ -2039,7 +1946,7 @@ Here is the full agent
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_56_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_53_0.png
 
 
 .. code:: ipython3
@@ -2049,8 +1956,8 @@ Here is the full agent
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.722522024093111),
-     ('SimpleSingleAgreementAgent', 0.7200691935492209)]
+    [('RandomOneShotAgent', 0.7899296347826158),
+     ('SimpleSingleAgreementAgent', 0.7056717314251947)]
 
 
 Using Independent Negotiators
@@ -2092,13 +1999,13 @@ This is an example agent that uses this approach:
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_59_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_56_0.png
 
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.2566272118427171),
-     ('AssumeOthersFailIndNeg', 0.085204738797534)]
+    [('RandomOneShotAgent', 0.17524125661888604),
+     ('AssumeOthersFailIndNeg', 0.08550234926740448)]
 
 
 This agent simply uses its **central** ufun for each negotiator. This is
@@ -2119,35 +2026,12 @@ because the agent may over-contract.
         def generate_ufuns(self):
             d = dict()
             # generate ufuns that prefer higher prices when selling
-            for partner_id in self.awi.my_consumers:
+            for partner_id in itertools.chain(self.awi.my_consumers, self.awi.my_suppliers):
                 issues = self.awi.current_output_issues
                 if self.awi.is_system(partner_id):
                     continue
                 d[partner_id] = LinearUtilityFunction(
-                    weights=dict(
-                        quantity=0.1,
-                        time=0.0,
-                        unit_price=0.9,
-                    ),
-                    issues=issues,
-                    reserved_value=0.0,
-                )
-            # generate ufuns that prefer lower prices when selling
-            for partner_id in self.awi.my_suppliers:
-                issues = self.awi.current_input_issues
-                if self.awi.is_system(partner_id):
-                    continue
-                d[partner_id] = LinearAdditiveUtilityFunction(
-                    dict(
-                        quantity=IdentityFun(),
-                        time=IdentityFun(),
-                        unit_price=AffineFun(slope=-1, bias=issues[UNIT_PRICE].max_value),
-                    ),
-                    weights=dict(
-                        quantity=0.1,
-                        time=0.0,
-                        unit_price=0.9,
-                    ),
+                    weights=dict(quantity=1.0, time=0.0, unit_price=0.0),
                     issues=issues,
                     reserved_value=0.0,
                 )
@@ -2156,17 +2040,6 @@ because the agent may over-contract.
     world, ascors, tscores = try_agent(GreedyIndNeg)
 
     print_type_scores(tscores)
-
-
-
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_61_0.png
-
-
-.. parsed-literal::
-
-    [('RandomOneShotAgent', -0.010883393027604426),
-     ('GreedyIndNeg', -0.016054870717640866)]
-
 
 Using A Negotiator from the Genius Platform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2236,13 +2109,13 @@ will work correctly. Here is an example
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_63_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_60_0.png
 
 
 .. parsed-literal::
 
-    [('RandomOneShotAgent', 0.16321734463231483),
-     ('GeniusIndNeg', 0.01949078462532807)]
+    [('RandomOneShotAgent', 0.09533631375133587),
+     ('GeniusIndNeg', -0.10992581797436847)]
 
 
 More General Simple Agent (advanced)
@@ -2334,7 +2207,7 @@ agent in a deep world simulation
 
 
 
-.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_67_0.png
+.. image:: 02.develop_agent_scml2020_oneshot_files/02.develop_agent_scml2020_oneshot_64_0.png
 
 
 Examining the graph above, you can see that ``DeepSimple`` agents could
@@ -2354,8 +2227,8 @@ We can check the results now:
 
 .. parsed-literal::
 
-    [('SyncRandomAgent', 0.8776705380093004),
-     ('DeepSimpleAgent', 0.5753166391841517)]
+    [('SyncRandomAgent', 0.8833205972505707),
+     ('DeepSimpleAgent', 0.5767819583162175)]
 
 
 Even though our new ``DeepSimpleAgent`` was able to get contracts which
@@ -2391,16 +2264,16 @@ tutorial (we will ignore the do-nothing agents)
 
 .. parsed-literal::
 
-    [('SimpleAgent', 1.0653484907200392),
-     ('SyncRandomAgent', 1.0178931059063354),
-     ('BetterAgent', 1.0080199931169058),
-     ('NaiveSyncAgent', 0.9788922028735115),
-     ('AdaptiveAgent', 0.9569234268624955),
-     ('LearningAgent', 0.9475927112517355),
-     ('SimpleSingleAgreementAgent', 0.7523796112761708),
-     ('GreedyIndNeg', 0.627085822700412),
-     ('GeniusIndNeg', 0.41842480612224797),
-     ('DeepSimpleAgent', 0.2654059947491325)]
+    [('SyncRandomAgent', 1.0801054691635688),
+     ('SimpleAgent', 1.0735880459235607),
+     ('NaiveSyncAgent', 1.0145589048097001),
+     ('BetterAgent', 0.9982222587245602),
+     ('LearningAgent', 0.9716700420497595),
+     ('AdaptiveAgent', 0.9114933697741728),
+     ('SimpleSingleAgreementAgent', 0.7221913284064561),
+     ('GeniusIndNeg', 0.6119835602257243),
+     ('GreedyIndNeg', 0.34999161656568106),
+     ('DeepSimpleAgent', 0.21447859714598402)]
 
 
 The way we just compared these agents is not unbiased because not all
@@ -2437,6 +2310,212 @@ in this tutorial (with some modifications):
      'OneShotDummyAgent']
 
 
+Effect of price (new in 2023)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let’s see how much is the price affecting our utility value. We will do
+that by comparing the utility we get for different offers as a function
+of price and quantity independently.
+
+.. code:: ipython3
+
+    class UfunTester(SimpleAgent):
+        def step(self):
+            super().step()
+            # find the quantity needed (needs), and price/quantity ranges
+            seller = self.awi.is_first_level
+            npartners = len(self.awi.my_consumers) if seller else len(self.awi.my_suppliers)
+            issues = (
+                self.awi.current_output_issues if seller else self.awi.current_input_issues
+            )
+            needs = (
+                self.awi.current_exogenous_input_quantity
+                if seller
+                else self.awi.current_exogenous_output_quantity
+            )
+            pmin, pmax = issues[UNIT_PRICE].min_value, issues[UNIT_PRICE].max_value
+            qmin, qmax = issues[QUANTITY].min_value, issues[QUANTITY].max_value
+            pbest, pworst = (pmax, pmin) if seller else (pmin, pmax)
+            # we can get maximum quantity from each partner
+            qrange = (0, (qmax * npartners) + 1)
+
+            s = self.awi.current_steps
+            for q in range(*qrange):
+                # difference between matching our needs exactly at the worst possible price and
+                # a (q - needs) mismatch at the best possible price
+                diff = self.ufun((needs, s, pworst)) - self.ufun((q, s, pbest))
+                quantity_value.append({
+                    "Mismatch (items)":q-needs,
+                    "Profit Difference (dollars)": diff
+                })
+
+    quantity_value = []
+    try_agents([UfunTester], draw=False, n_trials=10)
+    data = pd.DataFrame(quantity_value)
+
+
+::
+
+
+    ---------------------------------------------------------------------------
+
+    AttributeError                            Traceback (most recent call last)
+
+    Cell In[41], line 32
+         26             quantity_value.append({
+         27                 "Mismatch (items)":q-needs,
+         28                 "Profit Difference (dollars)": diff
+         29             })
+         31 quantity_value = []
+    ---> 32 try_agents([UfunTester], draw=False, n_trials=10)
+         33 data = pd.DataFrame(quantity_value)
+
+
+    Cell In[3], line 26, in try_agents(agent_types, n_processes, n_trials, draw, agent_params, year)
+         22 cls = {2022:SCML2022OneShotWorld, 2023: SCML2023OneShotWorld, 2024: SCML2024OneShotWorld}[year]
+         23 world = cls(
+         24 **cls.generate(agent_types, agent_params=agent_params, n_steps=10,
+         25                n_processes=p, random_agent_types=True), construct_graphs=True,)
+    ---> 26 world.run()
+         28 all_scores = world.scores()
+         29 for aid, agent in world.agents.items():
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:2222, in World.run(self)
+       2220 if self.time >= self.time_limit:
+       2221     break
+    -> 2222 if not self.step():
+       2223     break
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1829, in World.step(self, n_neg_steps, n_mechanisms, actions, neg_actions)
+       1827     if self.__next_operation_index >= len(self.operations):
+       1828         self.__next_operation_index = 0
+    -> 1829     if not self._step_to_negotiations(cross_step_boundary):
+       1830         return False
+       1831 return True
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:2129, in World._step_to_negotiations(self, cross_step_boundary)
+       2127     self.__next_operation_index = i
+       2128     break
+    -> 2129 operation_map[operation]()
+       2130 if self.time >= self.time_limit:
+       2131     self.__next_operation_index = i
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1902, in World._step_to_negotiations.<locals>._step_agents()
+       1899     tasks += [_ for _ in self._entities[priority]]
+       1901 for task in tasks:
+    -> 1902     self.call(task, task.step_)
+       1903     if self.time >= self.time_limit:
+       1904         break
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:859, in World.call(self, agent, method, *args, **kwargs)
+        857 self.on_exception(agent, e)
+        858 if not self.ignore_agent_exception:
+    --> 859     raise e
+        860 exc_type, exc_value, exc_traceback = sys.exc_info()
+        861 self.logerror(
+        862     f"Entity exception @{agent.id}: "
+        863     f"{traceback.format_tb(exc_traceback)}",
+        864     Event("entity-exception", dict(exception=e)),
+        865 )
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:847, in World.call(self, agent, method, *args, **kwargs)
+        845 _strt = time.perf_counter()
+        846 try:
+    --> 847     result = method(*args, **kwargs)
+        848     _end = time.perf_counter()
+        849     self.times[agent.id] = _end - _strt
+
+
+    File ~/code/projects/negmas/negmas/situated/entity.py:66, in Entity.step_(self)
+         64 if not self._initialized:
+         65     self.init_()
+    ---> 66 self.step()
+         67 self.__current_step += 1
+
+
+    File ~/code/projects/scml/src/scml/oneshot/sysagents.py:209, in DefaultOneShotAdapter.step(self)
+        207 if self.awi._world._debug:
+        208     self._negs_done = dict()
+    --> 209 self._obj.step()
+
+
+    Cell In[41], line 21, in UfunTester.step(self)
+         18 # we can get maximum quantity from each partner
+         19 qrange = (0, (qmax * npartners) + 1)
+    ---> 21 s = self.awi.current_steps
+         22 for q in range(*qrange):
+         23     # difference between matching our needs exactly at the worst possible price and
+         24     # a (q - needs) mismatch at the best possible price
+         25     diff = self.ufun((needs, s, pworst)) - self.ufun((q, s, pbest))
+
+
+    AttributeError: 'OneShotAWI' object has no attribute 'current_steps'
+
+
+.. code:: ipython3
+
+    sns.lineplot(data=data, x=data.columns[0], y=data.columns[1])
+    plt.plot(data[data.columns[0]], [0]*len(data))
+    plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed)")
+    plt.title("Difference in profit between matching at worst price and mismatch at best price [2023]");
+
+As the figure above shows, being able to match supply to demand through
+negotiation is **orders of magnitude** more important than being able to
+buy at a low price or sell at a high price. This is a new feature of the
+game in SCML 2023 due to the small range of prices available (only two
+values).
+
+The following properties can be gleaned from this figure (and they are
+robust for all world simulations in SCML OneShot 2023 or 2024):
+
+1. The more mismatch between the supply and demand (i.e. the quantity
+   needed and the quantity secured), the less important price becomes.
+2. Buying/selling less than what we need is as dangerous as
+   buying/selling more (from the fact that the slope of the curve for
+   negative mismatch (buying less than needs) is almost the same as for
+   positive mismatch (buying more than needs).
+3. A random agent, will be at a higher risk of buying/selling more than
+   what it needs because it has multiple partners. The worst case
+   scenario for buying/selling too much is zero which corresponds of a
+   maximum mismatch of 10 items (because exogenous contracts never
+   exceed 10 units) while the worst case scenario for buying/selling too
+   little is 10 multiplied by the number of partners.
+4. The only case in which price is slightly more important than quantity
+   (i.e. negative y value in the figure), is when the agent is almost
+   exactly matching supply and demand (i.e. at an x value of 0 in the
+   figure).
+
+.. container::
+
+   As a result, agents developed for SCML OneShot 2023 or 2024 should
+   focus on matching demand and supply through concurrent negotiation
+   rather than focusing on price negotiation
+
+Just for comparison, let’s see how this would have worked out in the
+settings of SCML 2022:
+
+
+.. code:: ipython3
+
+    quantity_value = []
+    try_agents([UfunTester], draw=False, n_trials=10, year=2022)
+    data = pd.DataFrame(quantity_value)
+    sns.lineplot(data=data, x=data.columns[0], y=data.columns[1])
+    plt.plot(data[data.columns[0]], [0]*len(data))
+    plt.xlabel("Supply-Demand Mismatch (quantity secured - quantity needed) [2022]")
+    plt.title("Difference in profit between matching at worst price and mismatch at best price [2022]");
+
+We can see that in the settings of SCML OneShot 2022, price had a much
+more pronounced importance (from the fact that a much larger fraction of
+profit differences is negative) and it can be even two orders of
+magnitude more important than quantity very near to the exact matching
+point (i.e. x value of 0 in the figure).
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2020_oneshot.ipynb>`.

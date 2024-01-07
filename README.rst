@@ -99,6 +99,10 @@ You can also install the in-development version with::
     pip install https://github.com/yasserfarouk/scml/archive/master.zip
 
 
+We only support python 3.10 and 3.11. The reason python 3.12 is not yet supported is that stable_baselines3 is
+not supporting it yet.
+
+
 Documentation
 =============
 

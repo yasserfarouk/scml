@@ -11,6 +11,7 @@ OneShotUFun
    .. autosummary::
 
       ~OneShotUFun.base_type
+      ~OneShotUFun.best_option
       ~OneShotUFun.id
       ~OneShotUFun.max_utility
       ~OneShotUFun.min_utility
@@ -21,6 +22,7 @@ OneShotUFun
       ~OneShotUFun.type
       ~OneShotUFun.type_name
       ~OneShotUFun.uuid
+      ~OneShotUFun.worst_option
 
    .. rubric:: Methods Summary
 
@@ -105,6 +107,7 @@ OneShotUFun
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: base_type
+   .. autoattribute:: best_option
    .. autoattribute:: id
    .. autoattribute:: max_utility
    .. autoattribute:: min_utility
@@ -115,6 +118,7 @@ OneShotUFun
    .. autoattribute:: type
    .. autoattribute:: type_name
    .. autoattribute:: uuid
+   .. autoattribute:: worst_option
 
    .. rubric:: Methods Documentation
 

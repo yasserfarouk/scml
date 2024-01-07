@@ -14,12 +14,16 @@ OneShotAdapter
       ~OneShotAdapter.adapted_object
       ~OneShotAdapter.awi
       ~OneShotAdapter.crisp_ufun
+      ~OneShotAdapter.current_disposal_cost
+      ~OneShotAdapter.current_shortfall_penalty
+      ~OneShotAdapter.current_storage_cost
       ~OneShotAdapter.has_cardinal_preferences
       ~OneShotAdapter.has_preferences
       ~OneShotAdapter.has_ufun
       ~OneShotAdapter.id
       ~OneShotAdapter.initialized
       ~OneShotAdapter.internal_state
+      ~OneShotAdapter.is_perishable
       ~OneShotAdapter.name
       ~OneShotAdapter.negotiation_requests
       ~OneShotAdapter.preferences
@@ -59,6 +63,8 @@ OneShotAdapter
       ~OneShotAdapter.get_shortfall_penalty
       ~OneShotAdapter.get_shortfall_penalty_dev
       ~OneShotAdapter.get_shortfall_penalty_mean
+      ~OneShotAdapter.get_storage_cost_dev
+      ~OneShotAdapter.get_storage_cost_mean
       ~OneShotAdapter.init
       ~OneShotAdapter.init_
       ~OneShotAdapter.make_ufun
@@ -107,12 +113,16 @@ OneShotAdapter
    .. autoattribute:: adapted_object
    .. autoattribute:: awi
    .. autoattribute:: crisp_ufun
+   .. autoattribute:: current_disposal_cost
+   .. autoattribute:: current_shortfall_penalty
+   .. autoattribute:: current_storage_cost
    .. autoattribute:: has_cardinal_preferences
    .. autoattribute:: has_preferences
    .. autoattribute:: has_ufun
    .. autoattribute:: id
    .. autoattribute:: initialized
    .. autoattribute:: internal_state
+   .. autoattribute:: is_perishable
    .. autoattribute:: name
    .. autoattribute:: negotiation_requests
    .. autoattribute:: preferences
@@ -150,6 +160,8 @@ OneShotAdapter
    .. automethod:: get_shortfall_penalty
    .. automethod:: get_shortfall_penalty_dev
    .. automethod:: get_shortfall_penalty_mean
+   .. automethod:: get_storage_cost_dev
+   .. automethod:: get_storage_cost_mean
    .. automethod:: init
    .. automethod:: init_
    .. automethod:: make_ufun

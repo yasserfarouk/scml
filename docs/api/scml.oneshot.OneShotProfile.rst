@@ -20,6 +20,8 @@ OneShotProfile
       ~OneShotProfile.process
       ~OneShotProfile.shortfall_penalty_dev
       ~OneShotProfile.shortfall_penalty_mean
+      ~OneShotProfile.storage_cost_dev
+      ~OneShotProfile.storage_cost_mean
 
    .. rubric:: Attributes Documentation
 
@@ -33,3 +35,5 @@ OneShotProfile
    .. autoattribute:: process
    .. autoattribute:: shortfall_penalty_dev
    .. autoattribute:: shortfall_penalty_mean
+   .. autoattribute:: storage_cost_dev
+   .. autoattribute:: storage_cost_mean

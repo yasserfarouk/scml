@@ -10,8 +10,8 @@ LimitedPartnerNumbersObservationManager
 
    .. autosummary::
 
+      ~LimitedPartnerNumbersObservationManager.context
       ~LimitedPartnerNumbersObservationManager.extra_checks
-      ~LimitedPartnerNumbersObservationManager.factory
       ~LimitedPartnerNumbersObservationManager.max_quantity
       ~LimitedPartnerNumbersObservationManager.n_bins
       ~LimitedPartnerNumbersObservationManager.n_consumers
@@ -34,8 +34,8 @@ LimitedPartnerNumbersObservationManager
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: context
    .. autoattribute:: extra_checks
-   .. autoattribute:: factory
    .. autoattribute:: max_quantity
    .. autoattribute:: n_bins
    .. autoattribute:: n_consumers

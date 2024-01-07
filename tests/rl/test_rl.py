@@ -7,22 +7,27 @@ import numpy as np
 from negmas.gb.common import ResponseType
 from negmas.sao.common import SAOResponse
 from pytest import mark
+from stable_baselines3 import A2C
 
 from scml.common import intin
 from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
 from scml.oneshot.rl.agent import OneShotRLAgent
 from scml.oneshot.rl.common import model_wrapper
-from scml.oneshot.rl.env import OneShotEnv
-from scml.oneshot.rl.factory import (
-    FixedPartnerNumbersOneShotFactory,
-    LimitedPartnerNumbersOneShotFactory,
+from scml.oneshot.rl.context import (
+    FixedPartnerNumbersOneShotContext,
+    LimitedPartnerNumbersOneShotContext,
 )
+from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.observation import (
     FixedPartnerNumbersObservationManager,
     LimitedPartnerNumbersObservationManager,
 )
 from scml.oneshot.rl.policies import greedy_policy, random_action, random_policy
 from scml.oneshot.rl.reward import RewardFunction
+from scml.std.rl.context import (
+    FixedPartnerNumbersStdContext,
+    LimitedPartnerNumbersStdContext,
+)
 
 NTRAINING = 100
 
@@ -35,6 +40,7 @@ def make_env(
     extra_checks=False,
     type="fixed",
     log=False,
+    oneshot=True,
 ) -> OneShotEnv:
     log_params: dict[str, Any] = (
         dict(
@@ -64,24 +70,43 @@ def make_env(
         n_consumers = intin(n_consumers)
         n_suppliers = intin(n_suppliers)
         n_lines = intin(n_lines)
-    factory_type, obs_type, act_type = dict(
-        fixed=(
-            FixedPartnerNumbersOneShotFactory,
-            FixedPartnerNumbersObservationManager,
-            UnconstrainedActionManager,
-        ),
-        limited=(
-            LimitedPartnerNumbersOneShotFactory,
-            LimitedPartnerNumbersObservationManager,
-            UnconstrainedActionManager,
-        ),
-        unlimited=(
-            LimitedPartnerNumbersOneShotFactory,
-            LimitedPartnerNumbersObservationManager,
-            UnconstrainedActionManager,
-        ),
-    )[type]
-    factory = factory_type(
+    if oneshot:
+        context_type, obs_type, act_type = dict(
+            fixed=(
+                FixedPartnerNumbersOneShotContext,
+                FixedPartnerNumbersObservationManager,
+                UnconstrainedActionManager,
+            ),
+            limited=(
+                LimitedPartnerNumbersOneShotContext,
+                LimitedPartnerNumbersObservationManager,
+                UnconstrainedActionManager,
+            ),
+            unlimited=(
+                LimitedPartnerNumbersOneShotContext,
+                LimitedPartnerNumbersObservationManager,
+                UnconstrainedActionManager,
+            ),
+        )[type]
+    else:
+        context_type, obs_type, act_type = dict(
+            fixed=(
+                FixedPartnerNumbersStdContext,
+                FixedPartnerNumbersObservationManager,
+                UnconstrainedActionManager,
+            ),
+            limited=(
+                LimitedPartnerNumbersStdContext,
+                LimitedPartnerNumbersObservationManager,
+                UnconstrainedActionManager,
+            ),
+            unlimited=(
+                LimitedPartnerNumbersStdContext,
+                LimitedPartnerNumbersObservationManager,
+                UnconstrainedActionManager,
+            ),
+        )[type]
+    context = context_type(
         n_suppliers=n_suppliers,  # type: ignore
         n_consumers=n_consumers,  # type: ignore
         level=level,
@@ -89,9 +114,9 @@ def make_env(
         world_params=log_params,
     )
     return OneShotEnv(
-        action_manager=act_type(factory=factory),
-        observation_manager=obs_type(factory=factory, extra_checks=extra_checks),
-        factory=factory,
+        action_manager=act_type(context=context),
+        observation_manager=obs_type(context=context, extra_checks=extra_checks),
+        context=context,
         extra_checks=False,
     )
 
@@ -111,8 +136,6 @@ def test_env_runs(type_):
 
 @mark.parametrize("type_", ["unlimited", "fixed", "limited"])
 def test_training(type_):
-    from stable_baselines3 import A2C
-
     env = make_env(extra_checks=True, type=type_)
 
     model = A2C("MlpPolicy", env, verbose=1)
@@ -129,24 +152,22 @@ def test_training(type_):
 
 
 def test_rl_agent_fallback():
-    factory = FixedPartnerNumbersOneShotFactory()
-    world, agents = factory(types=(OneShotRLAgent,))
+    context = FixedPartnerNumbersOneShotContext()
+    world, agents = context.generate(types=(OneShotRLAgent,))
     assert len(agents) == 1
     assert isinstance(agents[0]._obj, OneShotRLAgent), agent.type_name  # type: ignore
     world.run()
 
 
 def test_rl_agent_with_a_trained_model():
-    from stable_baselines3 import A2C
-
     env = make_env(extra_checks=False, type="unlimited")
 
     model = A2C("MlpPolicy", env, verbose=1)
     model.learn(total_timesteps=NTRAINING)
 
-    factory = LimitedPartnerNumbersOneShotFactory()
-    obs = LimitedPartnerNumbersObservationManager(factory, extra_checks=False)
-    world, agents = factory(
+    context = LimitedPartnerNumbersOneShotContext()
+    obs = LimitedPartnerNumbersObservationManager(context, extra_checks=False)
+    world, agents = context.generate(
         types=(OneShotRLAgent,),
         params=(dict(models=[model_wrapper(model)], observation_managers=[obs]),),
     )
@@ -180,9 +201,9 @@ def test_env_runs_one_world():
     ],
 )
 def test_action_manager(type_: type[ActionManager]):
-    factory = FixedPartnerNumbersOneShotFactory()
-    manager = type_(factory)
-    world, agents = factory()
+    context = FixedPartnerNumbersOneShotContext()
+    manager = type_(context)
+    world, agents = context.generate()
     for _ in range(100):
         agent = agents[0]
         # action = space.sample()
@@ -215,6 +236,7 @@ def test_env_random_policy():
 
     obs, info = env.reset()
     world = env._world
+    assert world.n_steps is not None and world.neg_n_steps is not None
     for _ in range(world.n_steps * world.neg_n_steps):
         action = partial(random_action, env=env)(obs)
         assert env.action_space.contains(
@@ -276,6 +298,7 @@ def test_env_random_policy_no_end():
     world = env._world
     accepted_sometime = False
     ended_everything = True
+    assert world.n_steps is not None and world.neg_n_steps is not None
     for _ in range(world.n_steps * world.neg_n_steps):
         action = partial(random_policy, env=env)(obs)
         decoded_action = env._action_manager.decode(env._agent.awi, action)
@@ -314,23 +337,18 @@ class TestReducingNeedsReward(RewardFunction):
 
 
 def test_reward_reception():
-    from scml.oneshot.rl.action import UnconstrainedActionManager
-    from scml.oneshot.rl.env import OneShotEnv
-    from scml.oneshot.rl.factory import FixedPartnerNumbersOneShotFactory
-    from scml.oneshot.rl.observation import FixedPartnerNumbersObservationManager
-
-    factory = FixedPartnerNumbersOneShotFactory(
+    context = FixedPartnerNumbersOneShotContext(
         n_suppliers=0,
         n_consumers=4,
         level=0,
     )
 
     env = OneShotEnv(
-        action_manager=UnconstrainedActionManager(factory=factory),
+        action_manager=UnconstrainedActionManager(context=context),
         observation_manager=FixedPartnerNumbersObservationManager(
-            factory=factory, n_bins=20, extra_checks=False
+            context=context, n_bins=20, extra_checks=False
         ),
-        factory=factory,
+        context=context,
         reward_function=TestReducingNeedsReward(),
     )
 
@@ -355,22 +373,18 @@ def test_reward_reception():
 
 
 def test_relative_times_make_sense():
-    from scml.oneshot.rl.env import OneShotEnv
-    from scml.oneshot.rl.factory import FixedPartnerNumbersOneShotFactory
-    from scml.oneshot.rl.observation import FixedPartnerNumbersObservationManager
-
-    factory = FixedPartnerNumbersOneShotFactory(
+    context = FixedPartnerNumbersOneShotContext(
         n_suppliers=0,
         n_consumers=4,
         level=0,
     )
 
     env = OneShotEnv(
-        action_manager=UnconstrainedActionManager(factory=factory, extra_checks=True),
+        action_manager=UnconstrainedActionManager(context=context, extra_checks=True),
         observation_manager=FixedPartnerNumbersObservationManager(
-            factory=factory, n_bins=20
+            context=context, n_bins=20
         ),
-        factory=factory,
+        context=context,
     )
 
     obs, _ = env.reset()

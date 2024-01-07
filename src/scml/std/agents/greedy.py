@@ -1,4 +1,9 @@
-import scml.oneshot.agents.greedy as greedy
-from scml.oneshot.agents.greedy import *
+from scml.oneshot.agents.greedy import (
+    GreedyOneShotAgent,
+    GreedySingleAgreementAgent,
+    GreedySyncAgent,
+)
 
-__all__ = greedy.__all__
+__all__ = ["GreedyStdAgent", "GreedySyncAgent", "GreedySingleAgreementAgent"]
+
+GreedyStdAgent = GreedyOneShotAgent

@@ -57,7 +57,7 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires=">=3.10",
+    python_requires=">=3.10, <3.12",
     install_requires=[
         # 'dataclasses; python_version < "3.7"',
         "click",

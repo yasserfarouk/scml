@@ -1,4 +1,5 @@
-import scml.oneshot.agents.nothing as nothing
-from scml.oneshot.agents.nothing import *
+from scml.oneshot.agents.nothing import OneshotDoNothingAgent, OneShotDummyAgent
 
-__all__ = nothing.__all__
+__all__ = ["StdDoNothingAgent", "StdDummyAgent"]
+StdDoNothingAgent = OneshotDoNothingAgent
+StdDummyAgent = OneShotDummyAgent

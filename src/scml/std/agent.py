@@ -1,4 +1,20 @@
-import scml.oneshot.agent as oneshotagent
-from scml.oneshot.agent import *
+from scml.oneshot.agent import (
+    EndingNegotiator,
+    OneShotAgent,
+    OneShotIndNegotiatorsAgent,
+    OneShotSingleAgreementAgent,
+    OneShotSyncAgent,
+)
 
-__all__ = oneshotagent.__all__
+__all__ = [
+    "StdAgent",
+    "StdSyncAgent",
+    "StdSingleAgreementAgent",
+    "StdIndNegotiatorsAgent",
+    "EndingNegotiator",
+]
+
+StdAgent = OneShotAgent
+StdIndNegotiatorsAgent = OneShotIndNegotiatorsAgent
+StdSingleAgreementAgent = OneShotSingleAgreementAgent
+StdSyncAgent = OneShotSyncAgent

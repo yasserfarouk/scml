@@ -10,8 +10,8 @@ DefaultObservationManager
 
    .. autosummary::
 
+      ~DefaultObservationManager.context
       ~DefaultObservationManager.extra_checks
-      ~DefaultObservationManager.factory
       ~DefaultObservationManager.max_quantity
       ~DefaultObservationManager.n_bins
       ~DefaultObservationManager.n_consumers
@@ -33,8 +33,8 @@ DefaultObservationManager
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: context
    .. autoattribute:: extra_checks
-   .. autoattribute:: factory
    .. autoattribute:: max_quantity
    .. autoattribute:: n_bins
    .. autoattribute:: n_consumers

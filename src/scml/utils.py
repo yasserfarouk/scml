@@ -33,13 +33,13 @@ from scml.scml2020.agents import (
     SatisficerAgent,
 )
 from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
+from scml.std.agent import StdAgent
 from scml.std.agents import (
-    GreedyOneShotAgent,
     GreedySyncAgent,
     SingleAgreementAspirationAgent,
-    SyncRandomOneShotAgent,
     SyncRandomStdAgent,
 )
+from scml.std.agents.greedy import GreedyStdAgent
 from scml.std.world import STD_DEFAULT_PARAMS, SCML2024StdWorld, StdWorld
 
 __all__ = [
@@ -141,7 +141,7 @@ DefaultAgentsOneShot2024 = [
 ]
 
 DefaultAgentsStd2024 = [
-    GreedyOneShotAgent,
+    GreedyStdAgent,
     SyncRandomStdAgent,
     SyncRandomOneShotAgent,
 ]
@@ -1376,7 +1376,7 @@ def anac2020_std(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -1505,7 +1505,7 @@ def anac2020_collusion(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors
         verbose: Verbosity
@@ -1720,7 +1720,7 @@ def anac2021_std(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -1851,7 +1851,7 @@ def anac2021_collusion(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors. This value will
                                  always be set to 1 in SCML2021
@@ -1978,7 +1978,7 @@ def anac2021_oneshot(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -2202,7 +2202,7 @@ def anac2022_std(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -2333,7 +2333,7 @@ def anac2022_collusion(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors. This value will
                                  always be set to 1 in SCML2022
@@ -2648,7 +2648,7 @@ def anac2023_collusion(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         n_competitors_per_world: Number of competitors in every simulation. If not given it will be a random number
                                  between 2 and min(2, n), where n is the number of competitors. This value will
                                  always be set to 1 in SCML2022
@@ -2775,7 +2775,7 @@ def anac2023_std(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -2904,7 +2904,7 @@ def anac2023_oneshot(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -2997,7 +2997,7 @@ def anac2024_oneshot(
     | None = None,
     non_competitors: Sequence[str | type[OneShotAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
-    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitors: list[type[OneShotAgent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = False,
     name: str | None = None,
@@ -3041,7 +3041,7 @@ def anac2024_oneshot(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint
@@ -3116,7 +3116,7 @@ def anac2024_oneshot(
 
 
 def anac2024_std(
-    competitors: Sequence[str | type[OneShotAgent]],
+    competitors: Sequence[str | type[StdAgent]],
     competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
@@ -3178,7 +3178,7 @@ def anac2024_std(
         dynamic_non_competitors: A list of non-competing agents that are assigned to the simulation dynamically during
                                  the creation of the final assignment instead when the configuration is created
         dynamic_non_competitor_params: paramters of dynamic non competitor agents
-        exclude_competitors_from_reassignment: If true, competitors are excluded from the dyanamic non-competitors
+        exclude_competitors_from_reassignment: If true, competitors are excluded from the dynamic non-competitors
         verbose: Verbosity
         configs_only: If true, a config file for each
         compact: If true, compact logs will be created and effort will be made to reduce the memory footprint

@@ -52,6 +52,7 @@ OneShotState
       ~OneShotState.needed_sales
       ~OneShotState.needed_supplies
       ~OneShotState.penalties_scale
+      ~OneShotState.perishable
       ~OneShotState.price_multiplier
       ~OneShotState.profile
       ~OneShotState.relative_simulation_time
@@ -60,6 +61,7 @@ OneShotState
       ~OneShotState.running_nmis
       ~OneShotState.sales
       ~OneShotState.shortfall_penalty
+      ~OneShotState.storage_cost
       ~OneShotState.supplies
       ~OneShotState.total_sales
       ~OneShotState.total_supplies
@@ -109,6 +111,7 @@ OneShotState
    .. autoattribute:: needed_sales
    .. autoattribute:: needed_supplies
    .. autoattribute:: penalties_scale
+   .. autoattribute:: perishable
    .. autoattribute:: price_multiplier
    .. autoattribute:: profile
    .. autoattribute:: relative_simulation_time
@@ -117,6 +120,7 @@ OneShotState
    .. autoattribute:: running_nmis
    .. autoattribute:: sales
    .. autoattribute:: shortfall_penalty
+   .. autoattribute:: storage_cost
    .. autoattribute:: supplies
    .. autoattribute:: total_sales
    .. autoattribute:: total_supplies

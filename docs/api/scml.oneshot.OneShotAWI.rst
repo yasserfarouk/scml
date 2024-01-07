@@ -26,6 +26,8 @@ OneShotAWI
       ~OneShotAWI.current_input_issues
       ~OneShotAWI.current_input_outcome_space
       ~OneShotAWI.current_inventory
+      ~OneShotAWI.current_inventory_input
+      ~OneShotAWI.current_inventory_output
       ~OneShotAWI.current_negotiation_details
       ~OneShotAWI.current_nmis
       ~OneShotAWI.current_offers
@@ -38,13 +40,19 @@ OneShotAWI
       ~OneShotAWI.current_shortfall_penalty
       ~OneShotAWI.current_states
       ~OneShotAWI.current_step
+      ~OneShotAWI.current_storage_cost
       ~OneShotAWI.default_signing_delay
       ~OneShotAWI.exogenous_contract_summary
+      ~OneShotAWI.future_sales
+      ~OneShotAWI.future_sales_cost
+      ~OneShotAWI.future_supplies
+      ~OneShotAWI.future_supplies_cost
       ~OneShotAWI.initialized
       ~OneShotAWI.is_exogenous_forced
       ~OneShotAWI.is_first_level
       ~OneShotAWI.is_last_level
       ~OneShotAWI.is_middle_level
+      ~OneShotAWI.is_perishable
       ~OneShotAWI.level
       ~OneShotAWI.max_n_lines
       ~OneShotAWI.my_consumers
@@ -74,9 +82,11 @@ OneShotAWI
       ~OneShotAWI.running_negotiations
       ~OneShotAWI.running_sell_nmis
       ~OneShotAWI.sales
+      ~OneShotAWI.sales_cost
       ~OneShotAWI.settings
       ~OneShotAWI.state
       ~OneShotAWI.supplies
+      ~OneShotAWI.supplies_cost
       ~OneShotAWI.total_sales
       ~OneShotAWI.total_supplies
       ~OneShotAWI.trading_prices
@@ -126,6 +136,8 @@ OneShotAWI
    .. autoattribute:: current_input_issues
    .. autoattribute:: current_input_outcome_space
    .. autoattribute:: current_inventory
+   .. autoattribute:: current_inventory_input
+   .. autoattribute:: current_inventory_output
    .. autoattribute:: current_negotiation_details
    .. autoattribute:: current_nmis
    .. autoattribute:: current_offers
@@ -138,13 +150,19 @@ OneShotAWI
    .. autoattribute:: current_shortfall_penalty
    .. autoattribute:: current_states
    .. autoattribute:: current_step
+   .. autoattribute:: current_storage_cost
    .. autoattribute:: default_signing_delay
    .. autoattribute:: exogenous_contract_summary
+   .. autoattribute:: future_sales
+   .. autoattribute:: future_sales_cost
+   .. autoattribute:: future_supplies
+   .. autoattribute:: future_supplies_cost
    .. autoattribute:: initialized
    .. autoattribute:: is_exogenous_forced
    .. autoattribute:: is_first_level
    .. autoattribute:: is_last_level
    .. autoattribute:: is_middle_level
+   .. autoattribute:: is_perishable
    .. autoattribute:: level
    .. autoattribute:: max_n_lines
    .. autoattribute:: my_consumers
@@ -174,9 +192,11 @@ OneShotAWI
    .. autoattribute:: running_negotiations
    .. autoattribute:: running_sell_nmis
    .. autoattribute:: sales
+   .. autoattribute:: sales_cost
    .. autoattribute:: settings
    .. autoattribute:: state
    .. autoattribute:: supplies
+   .. autoattribute:: supplies_cost
    .. autoattribute:: total_sales
    .. autoattribute:: total_supplies
    .. autoattribute:: trading_prices
