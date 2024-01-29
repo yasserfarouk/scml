@@ -1,3 +1,4 @@
+from random import shuffle
 from typing import Any
 
 from negmas.gb.common import ResponseType
@@ -19,7 +20,19 @@ __all__ = ["OneShotRLAgent"]
 
 
 class OneShotRLAgent(OneShotPolicy):
-    """A oneshot agent that can execute a trained RL policy in appropriate worlds. It falls back to the given agent type otherwise"""
+    """A oneshot agent that can execute  trained RL models in appropriate worlds. It falls back to the given agent type otherwise
+
+    Args:
+        models: List of models to choose from.
+        observation_managers: List of observation managers. Must be the same length as `models`
+        action_managers: List of action managers of the same length as `models` or `None` to use the default action manager.
+        fallback_type: A `OneShotAgent` type to use as a fall-back if the current world is not compatible with any observation/action managers
+        fallback_params: Parameters of the `fallback_type`
+        dynamic_context_switching: If `True`, the world is tested each step (instead of only at init) to find the appropriate model
+        randomize_test_order: If `True`, the order at which the observation/action managers are checked for compatibility with the current world
+                              is randomized.
+        **kwargs: Any other OneShotPolicy parameters
+    """
 
     def __init__(
         self,
@@ -30,6 +43,8 @@ class OneShotRLAgent(OneShotPolicy):
         action_managers: list[ActionManager] | tuple[ActionManager, ...] | None = None,
         fallback_type: type[OneShotAgent] = GreedyOneShotAgent,
         fallback_params: dict[str, Any] | None = None,
+        dynamic_context_switching: bool = False,
+        randomize_test_order: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -42,6 +57,8 @@ class OneShotRLAgent(OneShotPolicy):
         self._action_managers = action_managers
         self._obs_managers = observation_managers
         self._fallback_type = fallback_type
+        self._dynamic_context_switching = dynamic_context_switching
+        self._randomize_test_order = randomize_test_order
         self._fallback_params = (
             fallback_params if fallback_params is not None else dict()
         )
@@ -51,19 +68,18 @@ class OneShotRLAgent(OneShotPolicy):
         self._valid_index: int = -1
         self._fallback_agent: OneShotAget = None  # type: ignore
 
-    def init(self):
-        super().init()
-        self._valid_policy = None
-        for i, (a, o) in enumerate(
-            zip(
-                self._action_managers,
-                self._obs_managers,
-            )
-        ):
+    def context_switch(self):
+        aolist = zip(
+            self._action_managers, self._obs_managers, range(len(self._obs_managers))
+        )
+        if self._randomize_test_order:
+            aolist = list(aolist)
+            shuffle(aolist)
+        for a, o, i in aolist:
             if self.awi in a.context and self.awi in o.context:
                 self._valid_index = i
                 break
-        if self._valid_index < 0:
+        if self._valid_index < 0 and self._fallback_agent is None:
             self._fallback_agent = instantiate(
                 self._fallback_type, **self._fallback_params
             )
@@ -74,6 +90,10 @@ class OneShotRLAgent(OneShotPolicy):
             self._fallback_agent._owner = self._owner
             self._owner._obj = self._fallback_agent  # type: ignore
             self._fallback_agent.init()
+
+    def init(self):
+        super().init()
+        self.context_switch()
 
     def encode_state(self, mechanism_states: dict[str, SAOState]) -> RLState:
         _ = mechanism_states
@@ -125,6 +145,8 @@ class OneShotRLAgent(OneShotPolicy):
 
     def step(self):
         """Called at at the END of every production step (day)"""
+        if self._dynamic_context_switching:
+            self.context_switch()
         if self._valid_index >= 0:
             return super().step()
         return self._fallback_agent.step()

@@ -1,6 +1,6 @@
 from typing import Any
 
-from scml.oneshot.world import SCML2023OneShotWorld
+from scml.oneshot.world import SCMLBaseWorld
 
 __all__ = [
     "StdWorld",
@@ -26,8 +26,8 @@ STD_DEFAULT_PARAMS = dict(
 STD_DEFAULT_PARAMS2024 = STD_DEFAULT_PARAMS
 
 
-class StdWorld(SCML2023OneShotWorld):
-    """A Std World based on the OneShotWorld simulation"""
+class StdWorld(SCMLBaseWorld):
+    """The world representing the base standard simulation (starting SCML 2024)"""
 
     def __init__(
         self,
@@ -43,13 +43,13 @@ class StdWorld(SCML2023OneShotWorld):
     ):
         super().__init__(
             *args,
-            price_range_fraction=price_range_fraction,
-            horizon=horizon,
-            one_time_per_negotiation=one_time_per_negotiation,
-            perishable=perishable,
-            quantity_multiplier=quantity_multiplier,
-            price_multiplier=price_multiplier,
-            wide_price_range=wide_price_range,
+            price_range_fraction=price_range_fraction,  # type: ignore
+            horizon=horizon,  # type: ignore
+            one_time_per_negotiation=one_time_per_negotiation,  # type: ignore
+            perishable=perishable,  # type: ignore
+            quantity_multiplier=quantity_multiplier,  # type: ignore
+            price_multiplier=price_multiplier,  # type: ignore
+            wide_price_range=wide_price_range,  # type: ignore
             **kwargs
         )
 
@@ -85,4 +85,6 @@ class StdWorld(SCML2023OneShotWorld):
 
 
 class SCML2024StdWorld(StdWorld):
+    """The SCML-standard simulation as used in [SCML 2024](https://scml.cs.brown.edu)"""
+
     pass

@@ -61,6 +61,8 @@ from .common import (
 from .sysagents import DefaultOneShotAdapter, _StdSystemAgent
 
 __all__ = [
+    "SCMLBaseWorld",
+    "OneShotWorld",
     "SCML2020OneShotWorld",
     "SCML2021OneShotWorld",
     "SCML2022OneShotWorld",
@@ -69,8 +71,8 @@ __all__ = [
 ]
 
 
-class OneShotWorld(TimeInAgreementMixin, World):
-    """Implements the SCML-OneShot variant of the SCM world.
+class SCMLBaseWorld(TimeInAgreementMixin, World):
+    """Implements the a generalized form of SCML-OneShot game which supports both oneshot and standard simulations
 
     Args:
         catalog_prices: An n_products vector (i.e. n_processes+1 vector) giving the catalog price of all products
@@ -2338,11 +2340,21 @@ class OneShotWorld(TimeInAgreementMixin, World):
         super().complete_contract_execution(contract, breaches, resolution)
 
 
+class OneShotWorld(SCMLBaseWorld):
+    """Basic oneshot simulation"""
+
+    pass
+
+
 class SCML2020OneShotWorld(OneShotWorld):
+    """Oneshot simulation as used in SCML 2020 competition"""
+
     pass
 
 
 class SCML2021OneShotWorld(SCML2020OneShotWorld):
+    """Oneshot simulation as used in SCML 2021 competition"""
+
     def __init__(self, *args, **kwargs):
         kwargs["price_multiplier"] = 2.0
         kwargs["wide_price_range"] = True
@@ -2351,10 +2363,14 @@ class SCML2021OneShotWorld(SCML2020OneShotWorld):
 
 
 class SCML2022OneShotWorld(SCML2021OneShotWorld):
+    """Oneshot simulation as used in SCML 2022 competition"""
+
     pass
 
 
 class SCML2023OneShotWorld(SCML2020OneShotWorld):
+    """Oneshot simulation as used in SCML 2023 competition"""
+
     def __init__(self, *args, **kwargs):
         kwargs["price_multiplier"] = 0.0
         kwargs["wide_price_range"] = False
@@ -2362,6 +2378,8 @@ class SCML2023OneShotWorld(SCML2020OneShotWorld):
 
 
 class SCML2024OneShotWorld(SCML2023OneShotWorld):
+    """Oneshot simulation as used in SCML 2024 competition"""
+
     def __init__(self, *args, **kwargs):
         kwargs["perishable"] = True
         super().__init__(*args, **kwargs)

@@ -12,7 +12,7 @@ Contents
    faq
 
    modules/scmloneshot
-   modules/std
+   modules/scmlstd
    modules/scml2020
    modules/scml2019
 

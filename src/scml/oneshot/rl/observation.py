@@ -72,7 +72,6 @@ class BaseObservationManager(ABC):
         """Encodes an observation from the agent's state"""
         ...
 
-    @abstractmethod
     def get_offers(
         self, awi: OneShotAWI, encoded: np.ndarray
     ) -> dict[str, SAOResponse]:
