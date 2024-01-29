@@ -1434,9 +1434,8 @@ DEFAULT_ONESHOT_NONCOMPETITORS = [
 ]
 
 DEFAULT_STD_NONCOMPETITORS = [
-    "scml.std.agents.GreedySyncAgent",
     "scml.std.agents.SyncRandomStdAgent",
-    "scml.std.agents.SyncRandomOneShotAgent",
+    "scml.oneshot.agents.SyncRandomOneShotAgent",
 ]
 
 

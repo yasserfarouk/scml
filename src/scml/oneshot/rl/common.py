@@ -21,6 +21,9 @@ def isin(x: int | tuple[int, int], y: tuple[int, int] | int):
 class Context(ABC):
     """A context used for generating worlds satisfying predefined conditions and testing for them"""
 
+    def __call__(self, *args, **kwargs):
+        return self.generate(*args, **kwargs)
+
     @abstractmethod
     def generate(
         self,

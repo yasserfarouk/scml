@@ -305,7 +305,7 @@ class FixedPartnerNumbersContext(WorldContext):
 
 @define(frozen=True)
 class LimitedPartnerNumbersContext(WorldContext):
-    """Generates a oneshot world limiting the range of the agent level, production capacity
+    """Generates a world limiting the range of the agent level, production capacity
     and the number of suppliers, consumers, and optionally same-level competitors."""
 
     year: int = 2024
@@ -319,8 +319,8 @@ class LimitedPartnerNumbersContext(WorldContext):
     non_competitors: list[str | type[OneShotAgent]] = DefaultAgentsOneShot2023
 
     def __attrs_post_init__(self):
-        assert self.level != 0 or self.n_suppliers == (0, 0)
-        assert self.level != -1 or self.n_consumers == (0, 0)
+        assert self.level != 0 or max(self.n_suppliers) < 2
+        assert self.level != -1 or max(self.n_consumers) < 2
         assert not (self.level > 0 and self.level < self.n_processes[-1] - 1) or (
             self.n_suppliers[-1] > 0 and self.n_consumers[-1] > 0
         )

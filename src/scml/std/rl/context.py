@@ -1,12 +1,13 @@
 from typing import Any
 
-from attr import define
+from attr import define, field
 
 from scml.oneshot.rl.context import (
     ANACContext,
     Context,
     FixedPartnerNumbersContext,
     LimitedPartnerNumbersContext,
+    WorldContext,
 )
 from scml.std.agent import StdAgent
 from scml.std.agents.nothing import StdDummyAgent
@@ -20,6 +21,7 @@ __all__ = [
     "FixedPartnerNumbersStdContext",
     "LimitedPartnerNumbersStdContext",
     "ANACStdContext",
+    "WorldContext",
 ]
 
 
@@ -35,8 +37,12 @@ class FixedPartnerNumbersStdContext(FixedPartnerNumbersContext):
 
 @define(frozen=True)
 class LimitedPartnerNumbersStdContext(LimitedPartnerNumbersContext):
-    """Generates a oneshot world limiting the range of the agent level, production capacity
+    """Generates a standard world limiting the range of the agent level, production capacity
     and the number of suppliers, consumers, and optionally same-level competitors."""
+
+    submanager_context: type[FixedPartnerNumbersContext] = field(
+        init=False, default=FixedPartnerNumbersStdContext
+    )
 
     def make(
         self,
@@ -48,7 +54,7 @@ class LimitedPartnerNumbersStdContext(LimitedPartnerNumbersContext):
 
 @define(frozen=True)
 class ANACStdContext(ANACContext):
-    """Generates a oneshot world with no constraints except compatibility with a specific ANAC competition year."""
+    """Generates a standard world with no constraints except compatibility with a specific ANAC competition year."""
 
     def make(
         self,

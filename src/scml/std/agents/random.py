@@ -4,10 +4,11 @@ from itertools import chain, combinations
 from negmas import ResponseType
 from negmas.sao import SAOResponse
 
+from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.oneshot.common import QUANTITY, UNIT_PRICE
 from scml.std.agent import OneShotSyncAgent
 
-__all__ = ["SyncRandomStdAgent"]
+__all__ = ["SyncRandomStdAgent", "SyncRandomOneShotAgent"]
 
 PROB_ACCEPTANCE = 0.1
 PROB_END = 0.005

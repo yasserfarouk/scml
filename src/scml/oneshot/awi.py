@@ -602,7 +602,8 @@ class OneShotAWI(AgentWorldInterface):
         if result is not None:
             return result
         steps = sorted(
-            int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()  # type: ignore
+            int(i)
+            for i in self.bb_query("reports_time", None, query_keys=True).keys()  # type: ignore
         )
         for s, prev in zip(steps[1:], steps[:-1]):
             if s > step:
@@ -813,6 +814,7 @@ class OneShotAWI(AgentWorldInterface):
     ) -> None:
         assert (
             quantity == 0
+            or not self.is_perishable
             or step != self.current_step
             or self._future_sales[step][customer] == 0
             or (self._world.one_time_per_negotiation and self._world.horizon)
@@ -825,6 +827,7 @@ class OneShotAWI(AgentWorldInterface):
     ) -> None:
         assert (
             quantity == 0
+            or not self.is_perishable
             or step != self.current_step
             or self._future_supplies[step][supplier] == 0
             or (self._world.one_time_per_negotiation and self._world.horizon)
