@@ -71,7 +71,7 @@ setup(
         "joblib",
         "jupyter",
         "gif",
-        "mip",
+        # "mip",
         "gymnasium",
         "stable-baselines3",
     ],
