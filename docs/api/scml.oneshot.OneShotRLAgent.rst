@@ -48,6 +48,7 @@ OneShotRLAgent
       ~OneShotRLAgent.checkpoint_info
       ~OneShotRLAgent.connect_to_2021_adapter
       ~OneShotRLAgent.connect_to_oneshot_adapter
+      ~OneShotRLAgent.context_switch
       ~OneShotRLAgent.counter_all
       ~OneShotRLAgent.create
       ~OneShotRLAgent.create_negotiator
@@ -130,6 +131,7 @@ OneShotRLAgent
    .. automethod:: checkpoint_info
    .. automethod:: connect_to_2021_adapter
    .. automethod:: connect_to_oneshot_adapter
+   .. automethod:: context_switch
    .. automethod:: counter_all
    .. automethod:: create
    .. automethod:: create_negotiator
