@@ -10,6 +10,7 @@ Context
 
    .. autosummary::
 
+      ~Context.__call__
       ~Context.contains_context
       ~Context.generate
       ~Context.is_valid_awi
@@ -17,6 +18,7 @@ Context
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

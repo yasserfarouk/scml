@@ -17,6 +17,7 @@ ANACOneShotContext
 
    .. autosummary::
 
+      ~ANACOneShotContext.__call__
       ~ANACOneShotContext.contains_context
       ~ANACOneShotContext.generate
       ~ANACOneShotContext.is_valid_awi
@@ -31,6 +32,7 @@ ANACOneShotContext
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

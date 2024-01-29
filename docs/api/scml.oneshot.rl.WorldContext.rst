@@ -16,6 +16,7 @@ WorldContext
 
    .. autosummary::
 
+      ~WorldContext.__call__
       ~WorldContext.contains_context
       ~WorldContext.generate
       ~WorldContext.is_valid_awi
@@ -28,6 +29,7 @@ WorldContext
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

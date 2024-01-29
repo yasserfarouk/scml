@@ -20,12 +20,12 @@ class OneShotEnv(gym.Env):
         action_manager: ActionManager,
         observation_manager: ObservationManager,
         reward_function: RewardFunction = DefaultRewardFunction(),
-        render_mode=None,
         context: WorldContext = FixedPartnerNumbersOneShotContext(),
         agent_type: type[OneShotAgent] = OneShotDummyAgent,
         agent_params: dict[str, Any] | None = None,
         extra_checks: bool = True,
         skip_after_negotiations: bool = True,
+        render_mode=None,
     ):
         assert action_manager.context in context, (
             f"Action Manager is not compatible with the given environment.\n"

@@ -25,6 +25,7 @@ LimitedPartnerNumbersContext
 
    .. autosummary::
 
+      ~LimitedPartnerNumbersContext.__call__
       ~LimitedPartnerNumbersContext.contains_context
       ~LimitedPartnerNumbersContext.generate
       ~LimitedPartnerNumbersContext.is_valid_awi
@@ -47,6 +48,7 @@ LimitedPartnerNumbersContext
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

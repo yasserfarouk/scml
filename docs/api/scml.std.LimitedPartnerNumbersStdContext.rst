@@ -18,6 +18,7 @@ LimitedPartnerNumbersStdContext
       ~LimitedPartnerNumbersStdContext.n_processes
       ~LimitedPartnerNumbersStdContext.n_suppliers
       ~LimitedPartnerNumbersStdContext.non_competitors
+      ~LimitedPartnerNumbersStdContext.submanager_context
       ~LimitedPartnerNumbersStdContext.world_params
       ~LimitedPartnerNumbersStdContext.year
 
@@ -25,6 +26,7 @@ LimitedPartnerNumbersStdContext
 
    .. autosummary::
 
+      ~LimitedPartnerNumbersStdContext.__call__
       ~LimitedPartnerNumbersStdContext.contains_context
       ~LimitedPartnerNumbersStdContext.generate
       ~LimitedPartnerNumbersStdContext.is_valid_awi
@@ -42,11 +44,13 @@ LimitedPartnerNumbersStdContext
    .. autoattribute:: n_processes
    .. autoattribute:: n_suppliers
    .. autoattribute:: non_competitors
+   .. autoattribute:: submanager_context
    .. autoattribute:: world_params
    .. autoattribute:: year
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

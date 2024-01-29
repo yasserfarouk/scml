@@ -25,6 +25,7 @@ FixedPartnerNumbersOneShotContext
 
    .. autosummary::
 
+      ~FixedPartnerNumbersOneShotContext.__call__
       ~FixedPartnerNumbersOneShotContext.contains_context
       ~FixedPartnerNumbersOneShotContext.generate
       ~FixedPartnerNumbersOneShotContext.is_valid_awi
@@ -47,6 +48,7 @@ FixedPartnerNumbersOneShotContext
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

@@ -25,6 +25,7 @@ FixedPartnerNumbersStdContext
 
    .. autosummary::
 
+      ~FixedPartnerNumbersStdContext.__call__
       ~FixedPartnerNumbersStdContext.contains_context
       ~FixedPartnerNumbersStdContext.generate
       ~FixedPartnerNumbersStdContext.is_valid_awi
@@ -47,6 +48,7 @@ FixedPartnerNumbersStdContext
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

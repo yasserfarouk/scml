@@ -21,6 +21,7 @@ LimitedPartnerNumbersObservationManager
       ~LimitedPartnerNumbersObservationManager.n_sigmas
       ~LimitedPartnerNumbersObservationManager.n_suppliers
       ~LimitedPartnerNumbersObservationManager.sub_manager
+      ~LimitedPartnerNumbersObservationManager.submanager_context
 
    .. rubric:: Methods Summary
 
@@ -45,6 +46,7 @@ LimitedPartnerNumbersObservationManager
    .. autoattribute:: n_sigmas
    .. autoattribute:: n_suppliers
    .. autoattribute:: sub_manager
+   .. autoattribute:: submanager_context
 
    .. rubric:: Methods Documentation
 

@@ -17,6 +17,7 @@ ANACContext
 
    .. autosummary::
 
+      ~ANACContext.__call__
       ~ANACContext.contains_context
       ~ANACContext.generate
       ~ANACContext.is_valid_awi
@@ -31,6 +32,7 @@ ANACContext
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: generate
    .. automethod:: is_valid_awi
