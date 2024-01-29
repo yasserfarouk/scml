@@ -5,7 +5,7 @@ from negmas import ResponseType
 from negmas.sao import SAOResponse
 
 from scml.oneshot.agents import SyncRandomOneShotAgent
-from scml.oneshot.common import QUANTITY, UNIT_PRICE
+from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
 from scml.std.agent import OneShotSyncAgent
 
 __all__ = ["SyncRandomStdAgent", "SyncRandomOneShotAgent"]
@@ -64,24 +64,39 @@ class SyncRandomStdAgent(OneShotSyncAgent):
 
     def first_proposals(self):
         # just randomly distribute my needs over my partners (with best price for me).
-        s, p = self._step_and_price(best_price=True)
         distribution = self.distribute_needs()
-        return {k: (q, s, p) if q > 0 else None for k, q in distribution.items()}
+        return {
+            k: (
+                q,
+                *self._step_and_price(
+                    k in self.awi.my_suppliers, best_price=True, today=True
+                ),
+            )
+            if q > 0
+            else None
+            for k, q in distribution.items()
+        }
 
     def counter_all(self, offers, states):
         _ = states
         # get current step, some valid price, the quantity I need, and my partners
-        s, p = self._step_and_price()
         needs = self._needs()
-        partners = set(offers.keys())
+        all_partners = set(offers.keys())
+        today_partners = {
+            _ for _ in all_partners if offers[_][TIME] == self.awi.current_step
+        }
+        future_partners = all_partners.difference(today_partners)
 
         # find the set of partners that gave me the best offer set
         # (i.e. total quantity nearest to my needs)
-        plist = list(powerset(partners))
+        plist = list(powerset(today_partners))
         best_diff, best_indx = float("inf"), -1
         for i, partner_ids in enumerate(plist):
-            others = partners.difference(partner_ids)
-            offered = sum(offers[p][QUANTITY] for p in partner_ids)
+            offered = sum(
+                offers[p][QUANTITY]
+                for p in partner_ids
+                if offers[p][TIME] == self.awi.current_step
+            )
             diff = abs(offered - needs)
             if diff < best_diff:
                 best_diff, best_indx = diff, i
@@ -92,34 +107,65 @@ class SyncRandomStdAgent(OneShotSyncAgent):
         # other negotiations
         if best_diff <= self._threshold:
             partner_ids = plist[best_indx]
-            others = list(partners.difference(partner_ids))
-            return {
+            others = today_partners.difference(partner_ids)
+            accepted = {
                 k: SAOResponse(ResponseType.ACCEPT_OFFER, None) for k in partner_ids
-            } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others}
+            }
+            others = others.union(future_partners)
+
+            def sample_offer(partner_id):
+                nmi = self.get_ami(partner_id)
+                return nmi.random_outcome()
+
+            rejected = {
+                k: SAOResponse(ResponseType.REJECT_OFFER, sample_offer(k))
+                for k in others
+            }
+
+            return accepted | rejected
 
         # If I still do not have a good enough offer, distribute my current needs
         # randomly over my partners.
         distribution = self.distribute_needs()
-        return {
+        response = {
             k: SAOResponse(ResponseType.END_NEGOTIATION, None)
             if q == 0
-            else SAOResponse(ResponseType.REJECT_OFFER, (q, s, p))
+            else SAOResponse(
+                ResponseType.REJECT_OFFER,
+                (
+                    q,
+                    *self._step_and_price(k in self.awi.my_suppliers, today=True),
+                ),
+            )
             for k, q in distribution.items()
         }
+        return response
 
     def _needs(self):
         """How many items do I need?"""
+        if self.awi.is_middle_level:
+            return self.awi.n_lines
         return self.awi.needed_sales + self.awi.needed_supplies
 
-    def _step_and_price(self, best_price=False):
-        """Returns current step and a random (or max) price"""
-        s = self.awi.current_step
-        seller = self.awi.is_first_level
-        issues = (
-            self.awi.current_output_issues if seller else self.awi.current_input_issues
+    def _future_needs(self, negotiator_id, t):
+        return self.awi.n_lines - sum(
+            (
+                self.awi.future_sales
+                if negotiator_id in self.awi.my_consumers
+                else self.awi.future_supplies
+            )
+            .get(t, dict())
+            .values()
         )
-        pmin = issues[UNIT_PRICE].min_value
-        pmax = issues[UNIT_PRICE].max_value
+
+    def _step_and_price(self, selling: bool, best_price=False, today=False):
+        """Returns current step and a random (or max) price"""
+        issues = (
+            self.awi.current_output_issues if selling else self.awi.current_input_issues
+        )
+        s = issues[TIME].rand() if not today else self.awi.current_step
         if best_price:
-            return s, pmax if seller else pmin
-        return s, random.randint(pmin, pmax)
+            pmin = issues[UNIT_PRICE].min_value
+            pmax = issues[UNIT_PRICE].max_value
+            return s, pmax if selling else pmin
+        return s, issues[UNIT_PRICE].rand()
