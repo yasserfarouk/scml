@@ -9,12 +9,8 @@ from scml.oneshot.agent import (
 __all__ = [
     "StdAgent",
     "StdSyncAgent",
-    "StdSingleAgreementAgent",
-    "StdIndNegotiatorsAgent",
     "EndingNegotiator",
 ]
 
 StdAgent = OneShotAgent
-StdIndNegotiatorsAgent = OneShotIndNegotiatorsAgent
-StdSingleAgreementAgent = OneShotSingleAgreementAgent
 StdSyncAgent = OneShotSyncAgent

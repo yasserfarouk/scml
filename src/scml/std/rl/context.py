@@ -6,8 +6,8 @@ from scml.oneshot.rl.context import (
     ANACContext,
     Context,
     FixedPartnerNumbersContext,
+    GeneralContext,
     LimitedPartnerNumbersContext,
-    WorldContext,
 )
 from scml.std.agent import StdAgent
 from scml.std.agents.nothing import StdDummyAgent
@@ -21,7 +21,7 @@ __all__ = [
     "FixedPartnerNumbersStdContext",
     "LimitedPartnerNumbersStdContext",
     "ANACStdContext",
-    "WorldContext",
+    "GeneralContext",
 ]
 
 

@@ -114,7 +114,7 @@ class OneShotRLAgent(OneShotPolicy):
         if self._valid_index >= 0:
             return self._models[self._valid_index](state)
         raise RuntimeError(
-            f"This is an RL agent running in fallback mode and its decode_action should never be called"
+            f"This is an RL agent running in fallback mode and its act() method should never be called"
         )
 
     # =====================

@@ -6,7 +6,7 @@ from gymnasium.envs.registration import register
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import OneShotDummyAgent
 from scml.oneshot.rl.action import ActionManager
-from scml.oneshot.rl.context import FixedPartnerNumbersOneShotContext, WorldContext
+from scml.oneshot.rl.context import FixedPartnerNumbersOneShotContext, GeneralContext
 from scml.oneshot.rl.observation import ObservationManager
 from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
 from scml.oneshot.world import SCML2020OneShotWorld
@@ -20,7 +20,7 @@ class OneShotEnv(gym.Env):
         action_manager: ActionManager,
         observation_manager: ObservationManager,
         reward_function: RewardFunction = DefaultRewardFunction(),
-        context: WorldContext = FixedPartnerNumbersOneShotContext(),
+        context: GeneralContext = FixedPartnerNumbersOneShotContext(),
         agent_type: type[OneShotAgent] = OneShotDummyAgent,
         agent_params: dict[str, Any] | None = None,
         extra_checks: bool = True,

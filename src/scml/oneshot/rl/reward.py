@@ -1,4 +1,4 @@
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from negmas import SAOResponse
 
@@ -7,6 +7,7 @@ from scml.oneshot.awi import OneShotAWI
 __all__ = ["RewardFunction", "DefaultRewardFunction"]
 
 
+@runtime_checkable
 class RewardFunction(Protocol):
     """
     Represents a reward function.

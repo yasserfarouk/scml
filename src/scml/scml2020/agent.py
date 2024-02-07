@@ -409,6 +409,8 @@ class AWIHelper:
             current_balance=self._owner.get_current_balance(),
             total_sales=0,
             total_supplies=0,
+            total_future_sales=0,
+            total_future_supplies=0,
             n_products=self.n_products,
             n_processes=self.n_processes,
             n_competitors=self.n_competitors,

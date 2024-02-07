@@ -4,7 +4,7 @@ Defines ways to encode and decode observations.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import numpy as np
 from attr import define, field
@@ -31,11 +31,13 @@ __all__ = [
 ]
 
 
-@define(frozen=True)
+@runtime_checkable
 class ObservationManager(Protocol):
     """Manages the observations of an agent in an RL environment"""
 
-    context: Context
+    @property
+    def context(self):
+        ...
 
     def make_space(self) -> spaces.Space:
         """Creates the observation space"""
@@ -187,8 +189,8 @@ class FixedPartnerNumbersObservationManager(BaseObservationManager):
             return max(0, min(1, (x - mn) / (mx - mn)))
 
         extra = [
-            state.needed_sales,
-            state.needed_supplies,
+            max(0, state.needed_sales),
+            max(0, state.needed_supplies),
             # state.n_input_negotiations,
             # state.n_output_negotiations,
             state.n_lines - 1,
@@ -235,9 +237,14 @@ class FixedPartnerNumbersObservationManager(BaseObservationManager):
             assert (
                 len(v) == exp
             ), f"{len(v)=}, {len(extra)=}, {len(offers)=}, {exp=}, {self.n_partners=}\n{state.current_negotiation_details=}"
+            if not all(0 <= a < b for a, b in zip(v, space.nvec)):  # type: ignore
+                print(
+                    f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"
+                )
+                # breakpoint()
             assert all(
-                -1 < a < b for a, b in zip(v, space.nvec)  # type: ignore
-            ), f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"  # type: ignore
+                0 <= a < b for a, b in zip(v, space.nvec)  # type: ignore
+            ), f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"  # type: ignore
 
         return v
 
@@ -338,7 +345,7 @@ class LimitedPartnerNumbersObservationManager(BaseObservationManager):
             "sub_manager",
             FixedPartnerNumbersObservationManager(
                 context=self.submanager_context(
-                    year=self.context.year,
+                    # year=self.context.year,
                     level=self.context.level,
                     n_processes=self.context.n_processes[-1]
                     if isinstance(self.context.n_processes, tuple)
@@ -352,7 +359,7 @@ class LimitedPartnerNumbersObservationManager(BaseObservationManager):
                     n_competitors=self.context.n_competitors[0]
                     if isinstance(self.context.n_competitors, tuple)
                     else self.context.n_competitors,
-                    n_agents_per_level=self.context.n_agents_per_level,
+                    n_agents_per_process=self.context.n_agents_per_process,
                     n_lines=self.context.n_lines[0]
                     if isinstance(self.context.n_lines, tuple)
                     else self.context.n_lines,

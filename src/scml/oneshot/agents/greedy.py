@@ -359,6 +359,12 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
             return 0, self.awi.current_exogenous_input_quantity - self._sales
         return self.awi.current_exogenous_output_quantity - self._supplies, 0
 
+    def propose(self, negotiator_id, state):  # type: ignore
+        return OneShotSyncAgent.propose(self, negotiator_id, state)
+
+    def respond(self, negotiator_id, state, source=""):  # type: ignore
+        return OneShotSyncAgent.respond(self, negotiator_id, state, source)
+
 
 class GreedySingleAgreementAgent(OneShotSingleAgreementAgent):
     """A greedy agent based on `OneShotSingleAgreementAgent`"""

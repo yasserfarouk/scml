@@ -148,7 +148,7 @@ class OneShotAWI(AgentWorldInterface):
           - *current_exogenous_output_quantity*: The total quantity the agent have
             in its output exogenous contract.
           - *current_exogenous_output_price*: The total price of the agent's
-            output exogenous contract.
+            output exogenous contract
           - *current_disposal_cost*: The disposal cost per unit item in the current
             step.
           - *current_shortfall_penalty*: The shortfall penalty per unit item in the current
@@ -168,6 +168,14 @@ class OneShotAWI(AgentWorldInterface):
           - *needed_supplies*: Today's needed supplies  as of now (exogenous output + total sales - exogenous input - total supplies so far).
           - *future_sales*: Future quantity of the output product in standing contracts not executed nor nullified.
           - *future_supplies*: Future quantity of the input product in standing contracts not executed nor nullified.
+          - *total_future_sales*: Total future quantity of the output product in standing contracts not executed nor nullified.
+          - *total_future_supplies*: Total future quantity of the input product in standing contracts not executed nor nullified.
+          - *total_future_sales_between*: Total future sale quantities between the given two simulated days (non-exogenous).
+          - *total_future_supplies_between*: Total future supply quantities between the given two simulated days (non-exogenous).
+          - *total_future_sales_until*: Total future sale quantities between tomorrow and the given day (non-exogenous).
+          - *total_future_supplies_until*: Total future supply quantities between tomorrow and the given day (non-exogenous).
+          - *total_future_sales_at*: Total future sale quantities at the given day (non-exogenous).
+          - *total_future_supplies_at*: Total future supply quantities at the given day (non-exogenous).
           - *future_sales_cost*: Future total_cost of the output product in standing contracts not executed nor nullified.
           - *future_supplies_cost*: Future total cost of the input product in standing contracts not executed nor nullified.
 
@@ -412,6 +420,8 @@ class OneShotAWI(AgentWorldInterface):
             current_balance=self.current_balance,
             total_sales=self.total_sales,
             total_supplies=self.total_supplies,
+            total_future_sales=self.total_future_sales,
+            total_future_supplies=self.total_future_supplies,
             n_products=self.n_products,
             n_processes=self.n_processes,
             n_competitors=self.n_competitors,
@@ -744,23 +754,27 @@ class OneShotAWI(AgentWorldInterface):
 
     @property
     def future_sales(self) -> dict[int, dict[str, int]]:
-        """Future sales (quantity) per customer so far (this day)"""
-        return self._future_sales
+        """Future sales (quantity) per customer so far (excluding this day)"""
+        return {t: v for t, v in self._future_sales.items() if t > self.current_step}
 
     @property
     def future_supplies(self) -> dict[int, dict[str, int]]:
-        """Future supplies (quantity) per supplier so far (this day)"""
-        return self._future_supplies
+        """Future supplies (quantity) per supplier so far (excluding this day)"""
+        return {t: v for t, v in self._future_supplies.items() if t > self.current_step}
 
     @property
     def future_sales_cost(self) -> dict[int, dict[str, int]]:
-        """Future sales (total price) per customer so far (this day)"""
-        return self._future_sales_cost
+        """Future sales (total price) per customer so far (excluding this day)"""
+        return {
+            t: v for t, v in self._future_sales_cost.items() if t > self.current_step
+        }
 
     @property
     def future_supplies_cost(self) -> dict[int, dict[str, int]]:
-        """Future supplies (total price) per supplier so far (this day)"""
-        return self._future_supplies_cost
+        """Future supplies (total price) per supplier so far (excluding this day)"""
+        return {
+            t: v for t, v in self._future_supplies_cost.items() if t > self.current_step
+        }
 
     @property
     def total_sales(self) -> int:
@@ -773,20 +787,67 @@ class OneShotAWI(AgentWorldInterface):
         return sum(self.supplies.values())
 
     @property
+    def total_future_sales(self) -> int:
+        """Total sales so far (this day)"""
+        return sum(sum(_.values()) for _ in self.future_sales.values())
+
+    def total_sales_between(self, start: int, end: int) -> int:
+        """Total sales starting at start and ending at end (inclusive). Past days are ignored"""
+        return sum(
+            sum(_.values())
+            for i, _ in self._future_sales.items()
+            if max(start, self.current_step) <= i <= end
+        )
+
+    def total_supplies_between(self, start: int, end: int) -> int:
+        """Total supplies starting at start and ending at end (inclusive). Past days are ignored"""
+        return sum(
+            sum(_.values())
+            for i, _ in self._future_supplies.items()
+            if max(start, self.current_step) <= i <= end
+        )
+
+    def total_supplies_until(self, step: int) -> int:
+        """Total supplies starting today until the given step (inclusive). Past days are ignored"""
+        if step < self.current_step:
+            return 0
+        return self.total_supplies_between(self.current_step, step)
+
+    def total_sales_until(self, step: int) -> int:
+        """Total sales starting today until the given step (inclusive). Past days are ignored"""
+        if step < self.current_step:
+            return 0
+        return self.total_sales_between(self.current_step, step)
+
+    def total_sales_at(self, step: int) -> int:
+        """Total sales already signed at a future step"""
+        if step < self.current_step:
+            return 0
+        return sum(self._future_sales.get(step, dict()).values())
+
+    def total_supplies_at(self, step: int) -> int:
+        """Total supplies already signed at a future step"""
+        if step < self.current_step:
+            return 0
+        return sum(self._future_supplies.get(step, dict()).values())
+
+    @property
+    def total_future_supplies(self) -> int:
+        """Total supplies so far (this day)"""
+        return sum(sum(_.values()) for _ in self.future_supplies.values())
+
+    @property
     def needed_sales(self) -> int:
         """Sales that need to be secured (exogenous input + total supplies - exogenous output - total sales so far)"""
         if self.is_last_level:
             return 0
-        x = max(
-            0,
-            (
-                self.current_exogenous_input_quantity
-                + self.current_inventory_input
-                + self.total_supplies
-                - self.total_sales
-                - self.current_exogenous_output_quantity
-                - self.current_inventory_output
-            ),
+        x = (
+            self.current_exogenous_input_quantity
+            + self.current_inventory_input
+            + self.total_supplies
+            - self.total_sales
+            - self.current_exogenous_output_quantity
+            - self.current_inventory_output
         )
         return min(self.n_lines, x) if self.is_perishable else x
 
@@ -795,16 +856,13 @@ class OneShotAWI(AgentWorldInterface):
         """Supplies that need to be secured (exogenous output + total sales - exogenous input - total supplies so far)"""
         if self.is_first_level:
             return 0
-        x = max(
-            0,
-            (
-                self.current_exogenous_output_quantity
-                + self.current_inventory_output
-                + self.total_sales
-                - self.total_supplies
-                - self.current_exogenous_input_quantity
-                - self.current_inventory_input
-            ),
+        x = (
+            self.current_exogenous_output_quantity
+            + self.current_inventory_output
+            + self.total_sales
+            - self.total_supplies
+            - self.current_exogenous_input_quantity
+            - self.current_inventory_input
         )
         return min(self.n_lines, x) if self.is_perishable else x
 
@@ -812,26 +870,26 @@ class OneShotAWI(AgentWorldInterface):
     def _register_sale(
         self, customer: str, quantity: int, unit_price: int, step: int
     ) -> None:
-        assert (
-            quantity == 0
-            or not self.is_perishable
-            or step != self.current_step
-            or self._future_sales[step][customer] == 0
-            or (self._world.one_time_per_negotiation and self._world.horizon)
-        ), f"{self.agent.id} Cannot have more than one sale to {customer} ({self.sales[customer]=}, {quantity=})"
+        # assert (
+        #     quantity == 0
+        #     or not self.is_perishable
+        #     or step != self.current_step
+        #     or self._future_sales[step][customer] == 0
+        #     or (self._world.one_time_per_negotiation and self._world.horizon)
+        # ), f"{self.agent.id} Cannot have more than one sale to {customer} ({self.sales[customer]=}, {quantity=})"
         self._future_sales[step][customer] += quantity
         self._future_sales_cost[step][customer] += quantity * unit_price
 
     def _register_supply(
         self, supplier: str, quantity: int, unit_price: int, step: int
     ) -> None:
-        assert (
-            quantity == 0
-            or not self.is_perishable
-            or step != self.current_step
-            or self._future_supplies[step][supplier] == 0
-            or (self._world.one_time_per_negotiation and self._world.horizon)
-        ), f"{self.agent.id} Cannot have more than one supply to {supplier} ({self.supplies[supplier]=}, {quantity=})"
+        # assert (
+        #     quantity == 0
+        #     or not self.is_perishable
+        #     or step != self.current_step
+        #     or self._future_supplies[step][supplier] == 0
+        #     or (self._world.one_time_per_negotiation and self._world.horizon)
+        # ), f"{self.agent.id} Cannot have more than one supply to {supplier} ({self.supplies[supplier]=}, {quantity=})"
         self._future_supplies[step][supplier] += quantity
         self._future_supplies_cost[step][supplier] += quantity * unit_price
 

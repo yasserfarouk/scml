@@ -1,7 +1,7 @@
 from typing import Any
 
 from scml.oneshot.rl.action import ActionManager
-from scml.oneshot.rl.context import WorldContext
+from scml.oneshot.rl.context import GeneralContext
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.observation import ObservationManager
 from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
@@ -19,7 +19,7 @@ class StdEnv(OneShotEnv):
         observation_manager: ObservationManager,
         reward_function: RewardFunction = DefaultRewardFunction(),
         render_mode=None,
-        context: WorldContext = FixedPartnerNumbersStdContext(),
+        context: GeneralContext = FixedPartnerNumbersStdContext(),
         agent_type: type[StdAgent] = StdDummyAgent,
         agent_params: dict[str, Any] | None = None,
         extra_checks: bool = True,

@@ -290,11 +290,18 @@ def anac_config_generator(
     select_n_levels_first=True,
     oneshot_world: bool = False,
     std_world: bool = False,
+    context=None,
     **kwargs,
 ) -> list[dict[str, Any]]:
     if non_competitors is None:
         non_competitors = DefaultAgents
         non_competitor_params = tuple(dict() for _ in non_competitors)
+
+    if non_competitor_params and all(not _ for _ in non_competitor_params):
+        non_competitor_params = None
+    if not non_competitor_params:
+        non_competitor_params = tuple(dict() for _ in non_competitors)
+
     if isinstance(n_processes, Iterable):
         n_processes = tuple(n_processes)
     else:
@@ -422,7 +429,10 @@ def anac_config_generator(
         cls = get_class(f"scml.std.world.SCML{int(year)}StdWorld")
     else:
         cls = get_class(f"scml.scml2020.world.SCML{int(year)}World")
-    generated_world_params = cls.generate(**world_params)  # type: ignore
+    if context is None:
+        generated_world_params = cls.generate(**world_params)  # type: ignore
+    else:
+        generated_world_params = context.make_config(cls, params=world_params)  # type: ignore
     # world_params["agent_types"] = _agent_types
     # world_params["agent_params"] = _agent_params
     for k in ("agent_types", "agent_params"):
@@ -437,6 +447,8 @@ def anac_config_generator(
     world_params["__exact_params"] = serialize(
         generated_world_params, deep=True, ignore_lambda=True
     )
+    if context is not None:
+        world_params["__context"] = serialize(context, deep=True, ignore_lambda=True)
     config = {
         "world_params": world_params,
         "compact": compact,
@@ -837,6 +849,7 @@ def anac_world_generator(*, year: int, **kwargs):
             kwargs["world_params"]["agent_types"]
         )
     cnfg = kwargs["world_params"].pop("__exact_params")
+    kwargs["world_params"].pop("__context", None)
     cnfg = deserialize(cnfg)
     kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.scml2020.world.SCML{int(year)}World")
@@ -872,9 +885,13 @@ def anac_oneshot_world_generator(*, year, **kwargs):
     #     del kwargs["world_params"][k]
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
+    context = kwargs["world_params"].pop("__context", None)
     kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.oneshot.world.SCML{int(year)}OneShotWorld")
-    cnfg2 = cls.generate(**kwargs["world_params"])
+    if context is None:
+        cnfg2 = cls.generate(**kwargs["world_params"])
+    else:
+        cnfg2 = deserialize(context).generate(cls, params=kwargs["world_params"])
     for k in ("agent_types", "agent_params", "name"):
         cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
@@ -898,17 +915,16 @@ def anac_std_world_generator(*, year, **kwargs):
     #     del kwargs["world_params"][k]
     cnfg = kwargs["world_params"].pop("__exact_params")
     cnfg = deserialize(cnfg)
+    context = kwargs["world_params"].pop("__context", None)
     kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.std.world.SCML{int(year)}StdWorld")
     d = STD_DEFAULT_PARAMS
     d.update(kwargs["world_params"])
     kwargs["world_params"] = d
-    # kwargs["world_params"]["disposal_cost_mean"] = 0
-    # kwargs["world_params"]["disposal_cost_dev"] = 0
-    # kwargs["world_params"]["storage_cost_mean"] = (0.01, 0.05)
-    # kwargs["world_params"]["storage_cost_dev"] = 0
-    # kwargs["world_params"]["perishable"] = False
-    cnfg2 = cls.generate(**kwargs["world_params"])
+    if context is None:
+        cnfg2 = cls.generate(**kwargs["world_params"])
+    else:
+        cnfg2 = deserialize(context).generate(cls, params=kwargs["world_params"])
     for k in ("agent_types", "agent_params", "name"):
         cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
@@ -3006,6 +3022,7 @@ def anac2024_oneshot(
     compact=False,
     n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
+    context=None,
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
@@ -3076,6 +3093,8 @@ def anac2024_oneshot(
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
     kwargs["n_processes"] = 2
+    if context:
+        kwargs["context"] = context
     return tournament(
         competitors=competitors,
         competitor_params=competitor_params,
@@ -3143,6 +3162,7 @@ def anac2024_std(
     compact=False,
     n_competitors_per_world=None,
     forced_logs_fraction: float = FORCED_LOGS_FRACTION,
+    context=None,
     **kwargs,
 ) -> TournamentResults | PathLike:
     """
@@ -3212,6 +3232,8 @@ def anac2024_std(
         non_competitor_params = [dict() for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["std_world"] = True
+    if context:
+        kwargs["context"] = context
     # kwargs["n_processes"] = 2
     return tournament(
         competitors=competitors,

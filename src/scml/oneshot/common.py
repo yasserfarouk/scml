@@ -199,9 +199,13 @@ class OneShotState:
     current_balance: int
     """Current balance of the agent."""
     total_sales: int
-    """Total quantity registered as sales using `awi.register_sale`."""
+    """Total quantity registered as sales today using `awi.register_sale`."""
     total_supplies: int
-    """Total quantity registered as supplies using `awi.register_supply`."""
+    """Total quantity registered as supplies today using `awi.register_supply`."""
+    total_future_sales: int
+    """Total quantity registered as sales in the future using `awi.register_sale`."""
+    total_future_supplies: int
+    """Total quantity registered as supplies in the future using `awi.register_supply`."""
 
     n_products: int
     """ Number of products in the production chain."""

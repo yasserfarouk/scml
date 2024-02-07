@@ -42,9 +42,12 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         if self.awi._world._debug:
-            assert (
-                not tuple(sorted(partners)) in self._negs_done.keys()
-            ), f"{partners=} found in completed negs for {self.id} at step: {self.awi.current_step} with info {self._negs_done[tuple(sorted(partners))]} on mechanism {mechanism.id}\n{self._negs_done}\n{mechanism.annotation=}"
+            if tuple(sorted(partners)) in self._negs_done.keys():
+                warnings.warn(
+                    f"{partners=} found in completed negs for {self.id} at step: "
+                    f"{self.awi.current_step} with info {self._negs_done[tuple(sorted(partners))]}"
+                    f" on mechanism {mechanism.id}\n{self._negs_done}\n{mechanism.annotation=}"
+                )
             self._negs_done[tuple(sorted(partners))] = (
                 "failed",
                 self.awi.current_step,
@@ -104,9 +107,13 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         self.ufun: OneShotUFun  # type: ignore
         if self.awi._world._debug:
             partners = contract.partners
-            assert (
-                not tuple(sorted(partners)) in self._negs_done.keys()
-            ), f"{partners=} found in completed negs for {self.id} at step: {self.awi.current_step} with info {self._negs_done[tuple(sorted(partners))]} on mechanism {mechanism.id}\n{self._negs_done}\n{contract.annotation=}"
+            if tuple(sorted(partners)) in self._negs_done.keys():
+                warnings.warn(
+                    f"{partners=} found in completed negs for {self.id} "
+                    f"at step: {self.awi.current_step} with info "
+                    f"{self._negs_done[tuple(sorted(partners))]} on "
+                    f"mechanism {mechanism.id}\n{self._negs_done}\n{contract.annotation=}"
+                )
             self._negs_done[tuple(sorted(partners))] = (
                 "failed",
                 self.awi.current_step,

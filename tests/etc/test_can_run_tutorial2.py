@@ -1,13 +1,8 @@
 import random
 from collections import defaultdict
-from pprint import pprint
-from time import sleep
 
-import numpy as np
-import pandas as pd
 import pytest
 from negmas import ResponseType, SAOResponse
-from negmas.genius.bridge import genius_bridge_is_running
 
 # used to check whether or not the negmas-genius bridge
 # is running
@@ -443,20 +438,24 @@ class SimpleSingleAgreementAgent(OneShotSingleAgreementAgent):
     """A greedy agent based on OneShotSingleAgreementAgent"""
 
     def before_step(self):
+        assert self.ufun is not None
         self.ufun.find_limit(True)  # finds highest utility
         self.ufun.find_limit(False)  # finds lowest utility
 
     def is_acceptable(self, offer, source, state) -> bool:
+        assert self.ufun is not None
         mx, mn = self.ufun.max_utility, self.ufun.min_utility
         u = (self.ufun(offer) - mn) / (mx - mn)
         return u >= (1 - state.relative_time)
 
     def best_offer(self, offers):
+        assert self.ufun is not None
         ufuns = [(self.ufun(_), i) for i, _ in enumerate(offers.values())]
         keys = list(offers.keys())
         return keys[max(ufuns)[1]]
 
     def is_better(self, a, b, negotiator, state):
+        assert self.ufun is not None
         return self.ufun(a) > self.ufun(b)
 
 

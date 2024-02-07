@@ -4,19 +4,14 @@ from collections import defaultdict
 
 from negmas import Outcome, ResponseType, SAOResponse
 
-from scml.oneshot.agents.greedy import (
-    GreedyOneShotAgent,
-    GreedySingleAgreementAgent,
-    GreedySyncAgent,
-)
-from scml.std.agent import StdAgent
+from scml.oneshot.agents.greedy import GreedyOneShotAgent, GreedySyncAgent
+from scml.std.agent import StdAgent, StdSyncAgent
 from scml.std.common import QUANTITY, TIME, UNIT_PRICE
 from scml.std.ufun import OneShotUFun
 
 __all__ = [
     "GreedyStdAgent",
     "GreedySyncAgent",
-    "GreedySingleAgreementAgent",
     "GreedyOneShotAgent",
 ]
 

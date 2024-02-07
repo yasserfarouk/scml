@@ -68,7 +68,9 @@ __all__ = [
     "SCML2022OneShotWorld",
     "SCML2023OneShotWorld",
     "SCML2024OneShotWorld",
+    "DUMMY_AGENT_BEGINNING",
 ]
+DUMMY_AGENT_BEGINNING = "DUMMY"
 
 
 class SCMLBaseWorld(TimeInAgreementMixin, World):
@@ -163,6 +165,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         quantity_multiplier: float = 1.0,
         nullify_bankrupt_contracts: bool = False,
         # set to True to add more assertions during debuging
+        debug: bool = False,
         **kwargs,
     ):
         if horizon == 0:
@@ -224,26 +227,26 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         # if negotiation_speed == 0:
         #     negotiation_speed = neg_n_steps + 1
         mechanisms = kwargs.pop("mechanisms", {})
+        mech_params = dict(
+            end_on_no_response=not debug,
+            dynamic_entry=False,
+            max_wait=len(agent_types),
+            check_offers=True,
+            enforce_issue_types=True,
+            cast_offers=True,
+            hidden_time_limit=neg_hidden_time_limit,
+            sync_calls=sync_calls,
+            one_offer_per_step=one_offer_per_step,
+            ignore_negotiator_exceptions=False,
+        )
         super().__init__(
             bulletin_board=None,
             breach_processing=BreachProcessing.NONE,
             awi_type="scml.oneshot.OneShotAWI",
             shuffle_negotiations=shuffle_negotiations,
             mechanisms={
-                "negmas.sao.SAOMechanism": mechanisms.get(
-                    "negmas.sao.SAOMechanism",
-                    dict(
-                        end_on_no_response=True,
-                        dynamic_entry=False,
-                        max_wait=len(agent_types),
-                        check_offers=True,
-                        enforce_issue_types=True,
-                        cast_offers=True,
-                        hidden_time_limit=neg_hidden_time_limit,
-                        sync_calls=sync_calls,
-                        one_offer_per_step=one_offer_per_step,
-                    ),
-                )
+                "negmas.sao.SAOMechanism": mech_params
+                | mechanisms.get("negmas.sao.SAOMechanism", dict())
             },
             default_signing_delay=signing_delay,
             n_steps=n_steps,
@@ -268,6 +271,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 Operations.StatsUpdate,
             ),
             name=name,
+            debug=debug,
             **kwargs,
         )
         if not self.bulletin_board:
@@ -707,6 +711,44 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         ] = dict()
 
     @classmethod
+    def replace_agents(
+        cls,
+        config: dict,
+        old_types: tuple[str | type[OneShotAgent], ...],
+        types: tuple[str | type[OneShotAgent], ...],
+        params: list[dict[str, Any]] | tuple[dict[str, Any], ...] | None = None,
+    ):
+        """
+        Replaces all agents of a given type by agents of a new type
+        """
+        assert len(old_types) == len(types)
+        config = copy.deepcopy(config)
+        if not params:
+            params = [dict() for _ in types]
+        found_types = [_["controller_type"] for _ in config["agent_params"]]
+        found_type_names = [
+            get_full_type_name(_) if not isinstance(_, str) else _ for _ in found_types
+        ]
+        type_names = [
+            get_full_type_name(_) if not isinstance(_, str) else _ for _ in types
+        ]
+        old_type_names = [
+            get_full_type_name(_) if not isinstance(_, str) else _ for _ in old_types
+        ]
+        mapping = dict(zip(old_type_names, type_names, strict=True))
+        params_map = dict(zip(type_names, params, strict=True))
+        for i, found in enumerate(found_type_names):
+            if found not in mapping:
+                continue
+            t = mapping[found]
+            config["agent_params"][i] = dict()
+            config["agent_params"][i]["controller_type"] = t
+            p = params_map[t]
+            if p:
+                config["agent_params"][i]["controller_params"] = p
+        return config
+
+    @classmethod
     def generate(
         cls,
         agent_types: tuple[str | type[OneShotAgent], ...]
@@ -746,7 +788,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         random_agent_types: bool = False,
         penalties_scale: str | list[str] = "trading",
         cap_exogenous_quantities: bool = True,
-        method="profitable",
+        exogenous_generation_method="profitable",
         perishable: bool | None = True,
         **kwargs,
     ) -> dict[str, Any]:
@@ -810,7 +852,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                             price in the contract and `none` means the `storage-cost`
                             and `shortfall_penalty` are absolute values (in money unit).
                             If not given will be read through the AWI
-            method: the generation method. This is only for compatibility with SCML2020World and is not used.
+            exogenous_generation_method: the generation method. This is only for compatibility with SCML2020World and is not used.
             perishable: If True, storage_cost is set to zero as there is no storage and if False,
                         disposal_cost is set to zero as there is no disposal. If None, neither is overridden.
             **kwargs:
@@ -858,6 +900,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             n_agents_per_process=n_agents_per_process,
             process_inputs=process_inputs,
             process_outputs=process_outputs,
+            process_inputs_generator=process_inputs,
+            process_outputs_generator=process_outputs,
             production_costs=production_costs,
             profit_means=profit_means,
             profit_stddevs=profit_stddevs,
@@ -872,6 +916,16 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             price_multiplier=price_multiplier,
             exogenous_price_dev=exogenous_price_dev,
             penalties_scale=penalties_scale,
+            exogenous_control=exogenous_control,
+            shortfall_penalty=shortfall_penalty,
+            shortfall_penalty_dev=shortfall_penalty_dev,
+            disposal_cost=disposal_cost,
+            disposal_cost_dev=disposal_cost_dev,
+            storage_cost=storage_cost,
+            storage_cost_dev=storage_cost_dev,
+            cap_exogenous_quantities=cap_exogenous_quantities,
+            random_agent_types=random_agent_types,
+            exogenous_generation_method=exogenous_generation_method,
             profit_basis="min"
             if profit_basis == np.min
             else "mean"
@@ -932,16 +986,16 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             if agent_params is None:
                 agent_params = dict()
             if isinstance(agent_params, dict):
-                agent_params = [copy.copy(agent_params) for _ in range(n_agents)]
+                agent_params = [copy.deepcopy(agent_params) for _ in range(n_agents)]
             else:
                 assert len(agent_params) == 1
-                agent_params = [copy.copy(agent_params[0]) for _ in range(n_agents)]
+                agent_params = [copy.deepcopy(agent_params[0]) for _ in range(n_agents)]
         elif not fixed_assignment:
             if agent_params is None:
                 agent_params = [dict() for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
                 agent_params = [
-                    copy.copy(agent_params) for _ in range(len(agent_types))
+                    copy.deepcopy(agent_params) for _ in range(len(agent_types))
                 ]
             assert len(agent_types) == len(agent_params)
             tp = random.choices(list(range(len(agent_types))), k=n_agents)
@@ -952,7 +1006,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 agent_params = [dict() for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
                 agent_params = [
-                    copy.copy(agent_params) for _ in range(len(agent_types))
+                    copy.deepcopy(agent_params) for _ in range(len(agent_types))
                 ]
             agent_types = list(agent_types)
             agent_params = list(agent_params)
@@ -962,7 +1016,11 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             p["controller_type"] = t
         agent_types = [
             DefaultOneShotAdapter
-            if at and issubclass(get_class(at), OneShotAgent)
+            if at
+            and (
+                (isinstance(at, str) and at.startswith(DUMMY_AGENT_BEGINNING))
+                or issubclass(get_class(at), OneShotAgent)
+            )
             else OneShotSCML2020Adapter
             if at
             else None
@@ -1993,7 +2051,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 partner,
                 negotiator,
                 extra,
-                consumer_starts=consumer_starts,
+                is_buy=consumer_starts,
             )
             for partner, negotiator in zip(partners, negotiators)
         ]
@@ -2021,7 +2079,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         partner: str,
         negotiator: SAONegotiator,
         extra: dict[str, Any] | None = None,
-        consumer_starts: bool = True,
+        is_buy: bool = True,
     ) -> NegotiationInfo | None:
         """
         Requests a negotiation
@@ -2035,7 +2093,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             partner: ID of the partner to negotiate with.
             negotiator: The negotiator to use for this negotiation (if the partner accepted to negotiate)
             extra: Extra information accessible through the negotiation annotation to the caller
-            consumer_starts: whether the consumer starts the negotiation
+            is_buy: whether the consumer starts the negotiation
 
         Returns:
 
@@ -2043,7 +2101,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
         """
         agent = self.agents[agent_id]
-        is_buy = consumer_starts
         if extra is None:
             extra = dict()
         # if is_buy:
@@ -2204,9 +2261,11 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
         expected_negs = set()
         if self._debug:
-            assert (
-                len(self._negotiations) == 0
-            ), f"Found unexpected negotiations at step {self.current_step}\n{self._negotiations}"
+            if len(self._negotiations) != 0:
+                warnings.warn(
+                    f"Found unexpected negotiations at step {self.current_step}"
+                    f"\n{[(_.partners, _.mechanism.state if _.mechanism else None)  for _ in self._negotiations.values() ]}"
+                )
         for product in range(1, self.n_products):
             if self._debug:
                 for c in self.consumers[product]:

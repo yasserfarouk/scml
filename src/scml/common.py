@@ -5,6 +5,7 @@ import random
 from typing import Iterable
 
 import numpy as np
+from negmas.helpers import distribute_integer_randomly
 from numpy.typing import NDArray
 
 __all__ = [
@@ -142,17 +143,44 @@ def intin(rng: tuple[int, int] | int) -> int:
 
 
 def make_array(
-    x: np.ndarray | tuple[int | float, int | float] | int | float,
-    n,
+    x: np.ndarray | list[int] | tuple[int | float, int | float] | int | float,
+    n: int,
     dtype: type[float] | type[int] = int,
+    min_total: int = 0,
 ) -> np.ndarray:
     """Creates an array with the given choices"""
     if not isinstance(x, Iterable):
-        return np.ones(n, dtype=dtype) * x
+        assert (
+            x * n >= min_total
+        ), f"You are asking to make an array with {x} values that is at least {min_total} in length!!"
+        return np.ones(n, dtype=dtype) * int(x)
     if isinstance(x, tuple) and len(x) == 2:
+        assert (
+            min_total < 1 or n * x[-1] >= min_total
+        ), f"Cannot generate an array with choices{x=} and a minimum total of {min_total}"
         if dtype == int:
-            return np.random.randint(x[0], x[1] + 1, n, dtype=dtype)  # type: ignore
-        return x[0] + np.random.rand(n) * (x[1] - x[0])
+            lst = np.random.randint(x[0], x[1] + 1, n, dtype=dtype)  # type: ignore
+        else:
+            lst = x[0] + np.random.rand(n) * (x[1] - x[0])
+        n_total = lst.sum()
+        if n_total >= min_total:
+            return lst
+        missing = min_total - n_total
+        for _ in range(100):
+            lst = lst + np.asarray(
+                distribute_integer_randomly(missing, len(lst), min_per_bin=0)
+            )
+            if lst.max() <= x[-1]:
+                break
+            lst = np.asarray([min(_, x[-1]) for _ in lst])
+        else:
+            lst = np.asarray(
+                distribute_integer_randomly(
+                    min_total, n, min_per_bin=int(x[0]) if x[0] else 0
+                )
+            )
+        return lst
+    # we have a list. Return it as it is if it has the correct length else sample from it
     xlst = list(x)
     if len(xlst) == n:
         return np.array(xlst)
