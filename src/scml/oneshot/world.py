@@ -60,6 +60,9 @@ from .common import (
 )
 from .sysagents import DefaultOneShotAdapter, _StdSystemAgent
 
+# from rich import print
+
+
 __all__ = [
     "SCMLBaseWorld",
     "OneShotWorld",
@@ -1422,6 +1425,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             reports_time[str(self.current_step)] = {}
         reports_time[str(self.current_step)][agent.id] = report
 
+    @property
+    def agent_contracts(self):
+        return self.__contracts
+
     def _update_exogenous(self, s):
         self.exogenous_qout = defaultdict(int)
         self.exogenous_qin = defaultdict(int)
@@ -1795,8 +1802,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             self._stats[f"inventory_penalized_{aid}"].append(
                 self._penalized_quantity[aid]
             )
-            self._stats[f"inventory_{aid}_input"].append(self._inventory_input[aid])
-            self._stats[f"inventory_{aid}_output"].append(self._inventory_output[aid])
+            self._stats[f"inventory_input_{aid}"].append(self._inventory_input[aid])
+            self._stats[f"inventory_output_{aid}"].append(self._inventory_output[aid])
 
     def pre_step_stats(self):
         self._n_nullified = 0
@@ -1990,7 +1997,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         controller: SAOController | None = None,
         negotiators: list[SAONegotiator] | None = None,
         extra: dict[str, Any] | None = None,
-        consumer_starts: bool = True,
+        # consumer_starts: bool = True,
     ) -> bool:
         """
         Requests negotiations (used internally)
@@ -2006,7 +2013,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             negotiators: An optional list of negotiators to use for negotiating with the given partners (in the same
                          order).
             extra: Extra information accessible through the negotiation annotation to the caller
-            consumer_starts: Whether the consumer or supplier sends the first offer in the negotiation
+            # consumer_starts: Whether the consumer or supplier sends the first offer in the negotiation
 
         Returns:
 
@@ -2026,47 +2033,63 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         if extra is None:
             extra = dict()
 
-        responding_agents = (
-            self.suppliers[product] if consumer_starts else self.consumers[product]
-        )
-        partners = [
-            _
-            for _ in responding_agents
-            if not self.is_bankrupt[_] and not is_system_agent(_)
-        ]
-        if not partners:
-            return True
-        if negotiators is None:
-            negotiators = [
-                controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)
-                for _ in partners
+        # responding_agents = (
+        #     self.suppliers[product] if consumer_starts else self.consumers[product]
+        # )
+        results = []
+        for responding_agents, is_buying in (
+            (self.agent_suppliers[agent_id], True),
+            (self.agent_consumers[agent_id], False),
+        ):
+            responding_agents = [
+                _
+                for _ in responding_agents
+                if not is_system_agent(_) and not self.is_bankrupt[_]
             ]
-        results = [
-            self._request_negotiation(
-                agent_id,
-                product,
-                quantity,
-                unit_price,
-                time,
-                partner,
-                negotiator,
-                extra,
-                is_buy=consumer_starts,
-            )
-            for partner, negotiator in zip(partners, negotiators)
-        ]
-        # for p, r in zip(partners, results):
-        #     if r:
-        #         self._world._registered_negs.add(tuple(sorted([P, self.agent.id])))
-        if self._debug and not all(results):
-            failed = set()
-            for r, p in zip(results, partners):
-                if not r:
-                    failed.add(p)
-            assert failed
-            raise AssertionError(
-                f"Partners {failed} failed to accept negotiation request from {agent_id}"
-            )
+            if not responding_agents:
+                continue
+            # print(
+            #     f"{is_buying=}: {agent_id} requesting negotiations with {responding_agents} for product {product}"
+            # )
+            partners = [
+                _
+                for _ in responding_agents
+                if not self.is_bankrupt[_] and not is_system_agent(_)
+            ]
+            if not partners:
+                return True
+            if negotiators is None:
+                assert controller is not None
+                negotiators = [
+                    controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)
+                    for _ in partners
+                ]
+            results += [
+                self._request_negotiation(
+                    agent_id,
+                    product,
+                    quantity,
+                    unit_price,
+                    time,
+                    partner,
+                    negotiator,
+                    extra,
+                    is_buy=is_buying,
+                )
+                for partner, negotiator in zip(partners, negotiators)
+            ]
+            # for p, r in zip(partners, results):
+            #     if r:
+            #         self._world._registered_negs.add(tuple(sorted([P, self.agent.id])))
+            if self._debug and not all(results):
+                failed = set()
+                for r, p in zip(results, partners):
+                    if not r:
+                        failed.add(p)
+                assert failed
+                raise AssertionError(
+                    f"Partners {failed} failed to accept negotiation request from {agent_id}"
+                )
         return all(results)
 
     def _request_negotiation(
@@ -2235,7 +2258,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
     def _make_negotiations(self):
         # consumer_starts = random.random() > 0.5
-        consumer_starts = True
 
         def values(x: int | tuple[int, int]):
             if not isinstance(x, Iterable):
@@ -2266,15 +2288,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     f"Found unexpected negotiations at step {self.current_step}"
                     f"\n{[(_.partners, _.mechanism.state if _.mechanism else None)  for _ in self._negotiations.values() ]}"
                 )
-        for product in range(1, self.n_products):
-            if self._debug:
-                for c in self.consumers[product]:
-                    if is_system_agent(c) or self.is_bankrupt[c]:
-                        continue
-                    for s in self.suppliers[product]:
-                        if is_system_agent(s) or self.is_bankrupt[s]:
-                            continue
-                        expected_negs.add(tuple(sorted((c, s))))
+        for product in range(self.n_products - 1, -1, -2):
             unit_price, time, quantity = self._make_issues(product)
             assert (
                 not self.one_time_per_negotiation
@@ -2285,9 +2299,15 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 make_issue(values(time), name="time"),
                 make_issue(values(unit_price), name="unit_price"),
             ]
-            requesting_agents = (
-                self.consumers[product] if consumer_starts else self.suppliers[product]
-            )
+            requesting_agents = self.suppliers[product]
+            # print(f"{product=}: {requesting_agents=}")
+            requesting_agents = [
+                _
+                for _ in requesting_agents
+                if not is_system_agent(_) and not self.is_bankrupt[_]
+            ]
+            if not requesting_agents:
+                continue
             for aid in requesting_agents:
                 if is_system_agent(aid) or isinstance(
                     self.agents[aid], OneShotSCML2020Adapter
@@ -2302,7 +2322,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     controller=controllers[aid],
                     negotiators=None,
                     extra=None,
-                    consumer_starts=consumer_starts,
+                    # consumer_starts=consumer_starts,
                 )
                 # request negotiations about the future if needed
                 if self.one_time_per_negotiation and self.horizon:
@@ -2320,16 +2340,24 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                             controller=controllers[aid],
                             negotiators=None,
                             extra=None,
-                            consumer_starts=consumer_starts,
+                            # consumer_starts=consumer_starts,
                         )
 
         if self._debug:
+            for product in range(self.n_products):
+                for c in self.consumers[product]:
+                    if is_system_agent(c) or self.is_bankrupt[c]:
+                        continue
+                    for s in self.suppliers[product]:
+                        if is_system_agent(s) or self.is_bankrupt[s]:
+                            continue
+                        expected_negs.add(tuple(sorted((c, s))))
             found_negs = set()
             for n in self._negotiations.values():
                 found_negs.add(tuple(sorted(_.id for _ in n.partners)))
             assert (
                 found_negs == expected_negs
-            ), f"{expected_negs=}\n{found_negs=}\n{found_negs.difference(expected_negs)=}\n{expected_negs.difference(found_negs)=}"
+            ), f"{expected_negs=}\n\n{found_negs=}\n\n{found_negs.difference(expected_negs)=}\n\n{expected_negs.difference(found_negs)=}"
         # if not success:
         #     raise ValueError(
         #         f"Failed to start negotiations for product " f"{product}"
@@ -2397,6 +2425,160 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self, contract: Contract, breaches: list[Breach], resolution: Contract
     ) -> None:
         super().complete_contract_execution(contract, breaches, resolution)
+
+    def plot_stats(
+        self,
+        stats: str | tuple[str, ...] | None,
+        pertype=False,
+        use_sum=False,
+        makefig=False,
+        title=True,
+        legend=True,
+        figsize=None,
+    ):
+        """Plots statistics of the world in a single plot
+
+        Args:
+            stats: The statistics to plot. If `None`, some selected stats will be displayed
+            pertype: combine agent-statistics  per type
+            use_sum: plot sum for type statistics instead of mean
+            title: If given a title will be added to each subplot
+            legend: If given, a legend will be displayed
+            makefig: If given a new figure will be started
+            figsize: Size of the figure to host the plot
+        """
+        import matplotlib.pyplot as plt
+
+        if not stats:
+            if makefig:
+                fig = plt.figure(figsize=figsize)
+                axes = fig.subplots(3, 2)
+            else:
+                _, axes = plt.subplots(3, 2)
+            plt.sca(axes[0, 0])
+            self.plot_stats("shortfall_penalty", pertype=False)
+            plt.sca(axes[1, 0])
+            self.plot_stats(
+                "disposal_cost" if self.perishable else "storage_cost", pertype=False
+            )
+            plt.sca(axes[0, 1])
+            self.plot_stats("inventory_input", pertype=False)
+            plt.sca(axes[1, 1])
+            self.plot_stats("inventory_penalized", pertype=False)
+            plt.sca(axes[2, 0])
+            self.plot_stats("sold_quantity", pertype=False)
+            plt.sca(axes[2, 1])
+            self.plot_stats("trading_price", pertype=False)
+            return
+
+        if makefig:
+            plt.figure(figsize=figsize)
+        n_plots = 0
+        suffixes = tuple()
+        if isinstance(stats, str):
+            stats = (stats,)
+
+        styles = [
+            ("solid", "solid"),  # same as (0, ()) or '-'
+            ("dotted", "dotted"),  # same as (0, (1, 1)) or ':'
+            ("dashed", "dashed"),  # same as '--'
+            ("dashdot", "dashdot"),
+            ("loosely dotted", (0, (1, 10))),
+            ("dotted", (0, (1, 1))),
+            ("densely dotted", (0, (1, 1))),
+            ("long dash with offset", (5, (10, 3))),
+            ("loosely dashed", (0, (5, 10))),
+            ("dashed", (0, (5, 5))),
+            ("densely dashed", (0, (5, 1))),
+            ("loosely dashdotted", (0, (3, 10, 1, 10))),
+            ("dashdotted", (0, (3, 5, 1, 5))),
+            ("densely dashdotted", (0, (3, 1, 1, 1))),
+            ("dashdotdotted", (0, (3, 5, 1, 5, 1, 5))),
+            ("loosely dashdotdotted", (0, (3, 10, 1, 10, 1, 10))),
+            ("densely dashdotdotted", (0, (3, 1, 1, 1, 1, 1))),
+        ]
+        n_per_style = 5
+        for stat in stats:
+            suffix = (
+                stat.split("_")[-1] if any(stat.endswith(_) for _ in suffixes) else ""
+            )
+            prefix = (
+                "_".join(stat.split("_")[:-1])
+                if any(stat.endswith(_) for _ in suffixes)
+                else stat
+            )
+            world_stats = [
+                _
+                for _ in self.stats.keys()
+                if _.startswith(prefix) and (not suffix or _.endswith(suffix))
+            ]
+            if len(world_stats) == 0:
+                continue
+            if len(world_stats) == 1:
+                linestyle = styles[n_plots // n_per_style][1]
+                n_plots += 1
+                plt.plot(
+                    self.stats[world_stats[0]],
+                    label=world_stats[0],
+                    linestyle=linestyle,
+                )
+                if title:
+                    plt.title(stat)
+                continue
+            type_world_stats = defaultdict(list)
+            base = ""
+            for s in world_stats:
+                parts = s.split("_")
+                base, aid = "_".join(parts[:-1]), parts[-1]
+                if suffix:
+                    assert suffix == aid, f"{suffix=}, {aid=}, {s=}, {base=}, {stat=}"
+                    bparts = base.split("_")
+                    base = f"{'_'.join(bparts[:-1])}_{suffix}"
+                    aid = bparts[-1]
+                if pertype:
+                    type_ = self.agents[aid].type_name.split(":")[-1].split(".")[-1]
+                    type_world_stats[type_].append(self.stats[s])
+                    continue
+                n_plots += 1
+                linestyle = styles[n_plots // n_per_style][1]
+                plt.plot(self.stats[s], label=aid, linestyle=linestyle)
+            if not pertype:
+                if title:
+                    plt.title(base)
+                continue
+            for t, s in type_world_stats.items():
+                if not s:
+                    continue
+                n = len(s)
+                y = sum(np.asarray(_) for _ in s)
+                yerr = None
+                if n > 1 and not use_sum:
+                    y /= n
+                    s = np.asarray([list(_) for _ in s])
+                    yerr = np.std(s, axis=0) / np.sqrt(n)
+                    assert len(yerr) == len(y), f"{yerr=}\n{y=}\n{s=}"  # type: ignore
+                n_plots += 1
+                linestyle = styles[n_plots // n_per_style][1]
+                plt.errorbar(
+                    range(len(y)),  # type: ignore
+                    y,
+                    yerr,
+                    linestyle=linestyle,
+                    label=t if len(stats) == 1 else f"{t} ({base})",
+                )
+            if len(stats) == 1 and title:
+                plt.title(base)
+        if n_plots > 1 and legend:
+            if n_plots < 4:
+                plt.legend()
+            else:
+                plt.legend(
+                    loc="upper center",
+                    bbox_to_anchor=(0.5, 1.2),
+                    ncol=3,
+                    fancybox=True,
+                    shadow=True,
+                )
 
 
 class OneShotWorld(SCMLBaseWorld):
