@@ -2428,11 +2428,13 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
     def plot_stats(
         self,
-        stats: str | tuple[str, ...] | None,
+        stats: str | tuple[str, ...] | None = None,
         pertype=False,
         use_sum=False,
         makefig=False,
         title=True,
+        ylabel=False,
+        xlabel=False,
         legend=True,
         figsize=None,
     ):
@@ -2443,6 +2445,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             pertype: combine agent-statistics  per type
             use_sum: plot sum for type statistics instead of mean
             title: If given a title will be added to each subplot
+            ylabel: If given, the ylabel will be added to each subplot
+            xlabel: If given The xlabel will be added (Simulation Step)
             legend: If given, a legend will be displayed
             makefig: If given a new figure will be started
             figsize: Size of the figure to host the plot
@@ -2452,23 +2456,72 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         if not stats:
             if makefig:
                 fig = plt.figure(figsize=figsize)
-                axes = fig.subplots(3, 2)
+                axes = fig.subplots(4 - int(self.perishable), 2)
             else:
-                _, axes = plt.subplots(3, 2)
+                _, axes = plt.subplots(4 - int(self.perishable), 2)
             plt.sca(axes[0, 0])
-            self.plot_stats("shortfall_penalty", pertype=False)
+            self.plot_stats("shortfall_penalty", pertype=pertype, legend=True)
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
             plt.sca(axes[1, 0])
             self.plot_stats(
-                "disposal_cost" if self.perishable else "storage_cost", pertype=False
+                "disposal_cost" if self.perishable else "storage_cost",
+                pertype=pertype,
+                legend=False,
             )
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
             plt.sca(axes[0, 1])
-            self.plot_stats("inventory_input", pertype=False)
+            self.plot_stats("score", pertype=pertype, legend=False)
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
             plt.sca(axes[1, 1])
-            self.plot_stats("inventory_penalized", pertype=False)
-            plt.sca(axes[2, 0])
-            self.plot_stats("sold_quantity", pertype=False)
-            plt.sca(axes[2, 1])
-            self.plot_stats("trading_price", pertype=False)
+            self.plot_stats("productivity", pertype=pertype, legend=False)
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
+            if not self.perishable:
+                plt.sca(axes[2, 0])
+                self.plot_stats("inventory_penalized", pertype=pertype, legend=False)
+                plt.tick_params(
+                    axis="x",  # changes apply to the x-axis
+                    which="both",  # both major and minor ticks are affected
+                    bottom=False,  # ticks along the bottom edge are off
+                    top=False,  # ticks along the top edge are off
+                    labelbottom=False,
+                )  # labels along the bottom edge are off
+                plt.sca(axes[2, 1])
+                self.plot_stats("inventory_input", pertype=pertype, legend=False)
+                plt.tick_params(
+                    axis="x",  # changes apply to the x-axis
+                    which="both",  # both major and minor ticks are affected
+                    bottom=False,  # ticks along the bottom edge are off
+                    top=False,  # ticks along the top edge are off
+                    labelbottom=False,
+                )  # labels along the bottom edge are off
+            plt.sca(axes[3 - int(self.perishable), 0])
+            self.plot_stats("sold_quantity", pertype=False, xlabel=True)
+            plt.sca(axes[3 - int(self.perishable), 1])
+            self.plot_stats("trading_price", pertype=False, xlabel=True)
             return
 
         if makefig:
@@ -2524,6 +2577,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 )
                 if title:
                     plt.title(stat)
+                if ylabel:
+                    plt.ylabel(stat)
+                if xlabel:
+                    plt.xlabel("Simulation Step")
                 continue
             type_world_stats = defaultdict(list)
             base = ""
@@ -2545,6 +2602,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             if not pertype:
                 if title:
                     plt.title(base)
+                if ylabel:
+                    plt.ylabel(base)
+                if xlabel:
+                    plt.xlabel("Simulation Step")
                 continue
             for t, s in type_world_stats.items():
                 if not s:
@@ -2568,14 +2629,18 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 )
             if len(stats) == 1 and title:
                 plt.title(base)
+            if len(stats) == 1 and ylabel:
+                plt.ylabel(base)
+            if len(stats) == 1 and xlabel:
+                plt.xlabel("Simulation Step")
         if n_plots > 1 and legend:
             if n_plots < 4:
                 plt.legend()
             else:
                 plt.legend(
-                    loc="upper center",
-                    bbox_to_anchor=(0.5, 1.2),
-                    ncol=3,
+                    loc="upper left",
+                    bbox_to_anchor=(-0.02, 2.0),
+                    ncol=8,
                     fancybox=True,
                     shadow=True,
                 )
