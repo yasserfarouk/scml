@@ -2427,19 +2427,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     ) -> None:
         super().complete_contract_execution(contract, breaches, resolution)
 
-    @property
-    def stat_names(self, peragent: bool = False):
-        """Returns names of all stats available"""
-        names = sorted(list(self.stats.keys()))
-        if peragent:
-            return names
-        final = []
-        for name in names:
-            parts = name.split("_")
-            if any(parts[-1] == _ for _ in self.agents.keys()):
-                final.append("_".join(parts[:-1]))
-        return sorted(list(set(final)))
-
     def plot_stats(
         self,
         stats: str | tuple[str, ...] | None = None,
@@ -2589,127 +2576,18 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 ylabel=ylabel,
             )
             return
-
-        if makefig:
-            plt.figure(figsize=figsize)
-        n_plots = 0
-        suffixes = tuple()
-        if isinstance(stats, str):
-            stats = (stats,)
-
-        styles = [
-            ("solid", "solid"),  # same as (0, ()) or '-'
-            ("dotted", "dotted"),  # same as (0, (1, 1)) or ':'
-            ("dashed", "dashed"),  # same as '--'
-            ("dashdot", "dashdot"),
-            ("loosely dotted", (0, (1, 10))),
-            ("dotted", (0, (1, 1))),
-            ("densely dotted", (0, (1, 1))),
-            ("long dash with offset", (5, (10, 3))),
-            ("loosely dashed", (0, (5, 10))),
-            ("dashed", (0, (5, 5))),
-            ("densely dashed", (0, (5, 1))),
-            ("loosely dashdotted", (0, (3, 10, 1, 10))),
-            ("dashdotted", (0, (3, 5, 1, 5))),
-            ("densely dashdotted", (0, (3, 1, 1, 1))),
-            ("dashdotdotted", (0, (3, 5, 1, 5, 1, 5))),
-            ("loosely dashdotdotted", (0, (3, 10, 1, 10, 1, 10))),
-            ("densely dashdotdotted", (0, (3, 1, 1, 1, 1, 1))),
-        ]
-        n_per_style = 5
-        for stat in stats:
-            suffix = (
-                stat.split("_")[-1] if any(stat.endswith(_) for _ in suffixes) else ""
-            )
-            prefix = (
-                "_".join(stat.split("_")[:-1])
-                if any(stat.endswith(_) for _ in suffixes)
-                else stat
-            )
-            world_stats = [
-                _
-                for _ in self.stats.keys()
-                if _.startswith(prefix) and (not suffix or _.endswith(suffix))
-            ]
-            if len(world_stats) == 0:
-                continue
-            if len(world_stats) == 1:
-                linestyle = styles[n_plots // n_per_style][1]
-                n_plots += 1
-                plt.plot(
-                    self.stats[world_stats[0]],
-                    label=world_stats[0],
-                    linestyle=linestyle,
-                )
-                if title:
-                    plt.title(stat)
-                if ylabel:
-                    plt.ylabel(stat)
-                if xlabel:
-                    plt.xlabel("Simulation Step")
-                continue
-            type_world_stats = defaultdict(list)
-            base = ""
-            for s in world_stats:
-                parts = s.split("_")
-                base, aid = "_".join(parts[:-1]), parts[-1]
-                if suffix:
-                    assert suffix == aid, f"{suffix=}, {aid=}, {s=}, {base=}, {stat=}"
-                    bparts = base.split("_")
-                    base = f"{'_'.join(bparts[:-1])}_{suffix}"
-                    aid = bparts[-1]
-                if pertype:
-                    type_ = self.agents[aid].type_name.split(":")[-1].split(".")[-1]
-                    type_world_stats[type_].append(self.stats[s])
-                    continue
-                n_plots += 1
-                linestyle = styles[n_plots // n_per_style][1]
-                plt.plot(self.stats[s], label=aid, linestyle=linestyle)
-            if not pertype:
-                if title:
-                    plt.title(base)
-                if ylabel:
-                    plt.ylabel(base)
-                if xlabel:
-                    plt.xlabel("Simulation Step")
-                continue
-            for t, s in type_world_stats.items():
-                if not s:
-                    continue
-                n = len(s)
-                y = sum(np.asarray(_) for _ in s)
-                yerr = None
-                if n > 1 and not use_sum:
-                    y /= n
-                    s = np.asarray([list(_) for _ in s])
-                    yerr = np.std(s, axis=0) / np.sqrt(n)
-                    assert len(yerr) == len(y), f"{yerr=}\n{y=}\n{s=}"  # type: ignore
-                n_plots += 1
-                linestyle = styles[n_plots // n_per_style][1]
-                plt.errorbar(
-                    range(len(y)),  # type: ignore
-                    y,
-                    yerr,
-                    linestyle=linestyle,
-                    label=t if len(stats) == 1 else f"{t} ({base})",
-                )
-            if len(stats) == 1 and title:
-                plt.title(base)
-            if len(stats) == 1 and ylabel:
-                plt.ylabel(base)
-            if len(stats) == 1 and xlabel:
-                plt.xlabel("Simulation Step")
-        if n_plots > 1 and legend:
-            if n_plots < 4:
-                plt.legend()
-            else:
-                plt.legend(
-                    loc="upper left",
-                    bbox_to_anchor=(-0.02, ylegend),
-                    ncol=8,
-                    fancybox=True,
-                    shadow=True,
-                )
+        return super().plot_stats(
+            stats=stats,
+            pertype=pertype,
+            use_sum=use_sum,
+            makefig=makefig,
+            title=title,
+            ylabel=ylabel,
+            xlabel=xlabel,
+            legend=legend,
+            figsize=figsize,
+            ylegend=ylegend,
+        )
 
 
 class OneShotWorld(SCMLBaseWorld):
