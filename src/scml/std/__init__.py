@@ -2,6 +2,7 @@ from .agent import *
 from .agents import *
 from .awi import *
 from .common import *
+from .context import *
 from .policy import *
 from .rl import *
 from .sysagents import *
@@ -36,6 +37,7 @@ __all__ = (
     + agent.__all__
     + policy.__all__
     + agents.__all__
+    + context.__all__
     + awi.__all__
     + rl.__all__
     + ["builtin_agent_types"]

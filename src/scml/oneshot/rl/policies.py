@@ -10,7 +10,7 @@ from negmas.sao import SAOResponse
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, UNIT_PRICE
 from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
-from scml.oneshot.rl.context import ANACOneShotContext
+from scml.oneshot.context import ANACOneShotContext
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.observation import ObservationManager
 

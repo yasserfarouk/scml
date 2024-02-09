@@ -14,7 +14,7 @@ from negmas.sao.common import SAOResponse
 
 from scml.common import integer_cut
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.rl.context import Context
+from scml.oneshot.context import Context
 from scml.scml2019.common import QUANTITY, UNIT_PRICE
 
 __all__ = [

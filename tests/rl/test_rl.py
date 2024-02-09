@@ -13,7 +13,7 @@ from scml.common import intin
 from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
 from scml.oneshot.rl.agent import OneShotRLAgent
 from scml.oneshot.rl.common import model_wrapper
-from scml.oneshot.rl.context import (
+from scml.oneshot.context import (
     FixedPartnerNumbersOneShotContext,
     LimitedPartnerNumbersOneShotContext,
 )
@@ -24,7 +24,7 @@ from scml.oneshot.rl.observation import (
 )
 from scml.oneshot.rl.policies import greedy_policy, random_action, random_policy
 from scml.oneshot.rl.reward import RewardFunction
-from scml.std.rl.context import (
+from scml.std.context import (
     FixedPartnerNumbersStdContext,
     LimitedPartnerNumbersStdContext,
 )

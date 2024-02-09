@@ -1,7 +1,6 @@
 import sys
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import List
 
 import numpy as np
 
@@ -213,7 +212,7 @@ class FactoryState:
     """Changes in the inventory in the last step"""
     balance_change: int
     """Change in the balance in the last step"""
-    contracts: List[List[ContractInfo]]
+    contracts: list[list[ContractInfo]]
     """The An n_steps list of lists containing the contracts of this agent by time-step"""
 
     @property

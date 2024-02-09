@@ -15,7 +15,7 @@ from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
 from scml.oneshot import *
 from scml.oneshot import OneShotAgent, OneShotSyncAgent
-from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
+from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
 
 DEFAULT_SEED = 1
 

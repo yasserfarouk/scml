@@ -6,7 +6,7 @@ from gymnasium.envs.registration import register
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import OneShotDummyAgent
 from scml.oneshot.rl.action import ActionManager
-from scml.oneshot.rl.context import FixedPartnerNumbersOneShotContext, GeneralContext
+from scml.oneshot.context import FixedPartnerNumbersOneShotContext, GeneralContext
 from scml.oneshot.rl.observation import ObservationManager
 from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
 from scml.oneshot.world import SCML2020OneShotWorld

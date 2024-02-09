@@ -1,13 +1,13 @@
 from typing import Any
 
 from scml.oneshot.rl.action import ActionManager
-from scml.oneshot.rl.context import GeneralContext
+from scml.oneshot.context import GeneralContext
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.observation import ObservationManager
 from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
 from scml.std.agent import StdAgent
 from scml.std.agents.nothing import StdDummyAgent
-from scml.std.rl.context import FixedPartnerNumbersStdContext
+from scml.std.context import FixedPartnerNumbersStdContext
 
 __all__ = ["StdEnv"]
 

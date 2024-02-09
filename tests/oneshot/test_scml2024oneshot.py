@@ -5,7 +5,7 @@ from scml.oneshot.agents.greedy import (
     GreedySingleAgreementAgent,
     GreedySyncAgent,
 )
-from scml.oneshot.agents.random import RandomOneShotAgent, SyncRandomOneShotAgent
+from scml.oneshot.agents.rand import RandomOneShotAgent, SyncRandomOneShotAgent
 from scml.oneshot.common import is_system_agent
 from scml.oneshot.world import SCML2024OneShotWorld
 

@@ -8,8 +8,7 @@ from negmas.sao.common import SAOResponse, SAOState
 
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import GreedyOneShotAgent
-from scml.oneshot.rl.common import Context
-from scml.oneshot.rl.context import ANACOneShotContext
+from scml.oneshot.context import ANACOneShotContext, Context
 
 from ..policy import OneShotPolicy
 from .action import ActionManager, UnconstrainedActionManager

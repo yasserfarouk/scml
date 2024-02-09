@@ -131,12 +131,14 @@ def test_uses_registered_sales_and_supplies():
         n_input_negs=4,
         n_output_negs=5,
         current_step=6,
+        time_range=(0, 0),
         input_qrange=(1, 10),
         input_prange=(11, 12),
         output_qrange=(1, 10),
         output_prange=(14, 15),
         suppliers={"a", "b", "c"},
         consumers={"d", "e", "f"},
+        agent_id="",
     )
     info = u.from_offers(
         tuple(), tuple(), return_info=True, ignore_signed_contracts=True
@@ -291,11 +293,13 @@ def test_find_limit():
         n_input_negs=0,
         n_output_negs=5,
         current_step=6,
+        time_range=(0, 0),
         input_qrange=(1, 10),
         input_prange=(11, 12),
         output_qrange=(1, 10),
         output_prange=(14, 15),
         consumers={"d", "e", "f", "g", "h"},
+        agent_id="",
     )
     u.find_limit(True, ignore_signed_contracts=True)
     u.find_limit(False, ignore_signed_contracts=True)

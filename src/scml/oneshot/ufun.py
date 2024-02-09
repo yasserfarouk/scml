@@ -113,6 +113,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         n_input_negs: int,
         n_output_negs: int,
         current_step: int,
+        agent_id: str | None,
+        time_range: tuple[int, int],
         inventory_in: int = 0,
         inventory_out: int = 0,
         input_qrange: tuple[int, int] = (0, 0),
@@ -129,6 +131,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.agent_id = agent_id
+        self.time_range = time_range
         self._best, self._worst = None, None
         self.suppliers = suppliers
         self.consumers = consumers
@@ -183,7 +187,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             self.outcome_space = make_os(
                 [
                     make_issue(qrange, name="quantity"),
-                    make_issue((self.current_step, self.current_step), name="time"),
+                    make_issue(time_range, name="time"),
                     make_issue(prange, name="unit_price"),
                 ]
             )
@@ -193,7 +197,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
                 make_os(
                     [
                         make_issue(qrange, name="quantity"),
-                        make_issue((self.current_step, self.current_step), name="time"),
+                        make_issue(time_range, name="time"),
                         make_issue(prange, name="unit_price"),
                     ]
                 )
@@ -324,6 +328,16 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
                 continue
             product = c.annotation["product"]
             is_output = product == output_product
+            assert (
+                c.annotation["buyer"] != c.annotation["seller"]
+            ), f"{self.agent_id=}: Buyer == Seller == {c.annotation['buyer']}"
+            assert (is_output and c.annotation["buyer"] != self.agent_id) or (
+                not is_output and c.annotation["seller"] != self.agent_id
+            ), (
+                f"{self.agent_id=}: Got contract in which I am either buying "
+                f"my output product or selling my input product: {self.input_product=}"
+                f", {self.output_product=}\n{c}"
+            )
             outputs.append(is_output)
             offers.append(self.outcome_as_tuple(c.agreement))
         return self.from_offers(  # type: ignore
@@ -518,7 +532,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         for offer, is_exogenous in output_offers:
             if not done_selling:
                 if qout + offer[QUANTITY] >= producible:
-                    assert producible >= qout, f"producible {producible}, qout {qout}"
+                    assert producible >= qout, f"{producible=}, {qout=}"
                     can_sell = producible - qout
                     done_selling = True
                 else:
@@ -541,15 +555,15 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             output_penalty = pout / qout if qout else 0
         shortfall = max(0, qout - producible)
         output_penalty *= self.shortfall_penalty * shortfall
-        input_penalty = self.input_penalty_scale
-        if input_penalty is None:
-            input_penalty = pin / qin if qin else 0
-        input_penalty *= self.disposal_cost * max(0, qin - producible)
-        storage_penalty = self.storage_penalty_scale
-        if storage_penalty is None:
-            storage_penalty = pin / qin if qin else 0
-        remainingq = max(0, qin - qout)
-        storage_penalty *= self.storage_cost * remainingq
+        disposal_cost = self.input_penalty_scale
+        if disposal_cost is None:
+            disposal_cost = pin / qin if qin else 0
+        disposal_cost *= self.disposal_cost * max(0, qin - producible)
+        storage_cost = self.storage_penalty_scale
+        if storage_cost is None:
+            storage_cost = pin / qin if qin else 0
+        remainingq = max(0, qin - producible)
+        storage_cost *= self.storage_cost * remainingq
 
         # call a helper method giving it the total quantity and money in and out.
         u = self.from_aggregates(
@@ -558,9 +572,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             producible,
             pin,
             pout_bar,
-            input_penalty,
+            disposal_cost,
             output_penalty,
-            storage_penalty,
+            storage_cost,
         )
         if return_info:
             # the real producible quantity is the minimum of what we can produce
@@ -568,8 +582,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             return UtilityInfo(
                 utility=u,
                 remaining_quantity=remainingq,
-                storage_cost=storage_penalty,
-                disposal_cost=output_penalty,
+                storage_cost=storage_cost,
+                disposal_cost=disposal_cost,
                 producible=producible,
                 total_input=qin,
                 total_output=qout,

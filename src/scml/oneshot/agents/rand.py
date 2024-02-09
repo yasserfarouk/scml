@@ -45,6 +45,8 @@ def powerset(iterable):
 
 
 class RandomOneShotAgent(OneShotAgent):
+    """An agent that randomly leaves the negotiation, accepts or counters with random outcomes"""
+
     def __init__(
         self, owner=None, ufun=None, name=None, p_accept=PROB_ACCEPTANCE, p_end=PROB_END
     ):
@@ -54,13 +56,13 @@ class RandomOneShotAgent(OneShotAgent):
     def _random_offer(self, negotiator_id: str):
         nmi = self.get_nmi(negotiator_id)
         if not nmi:
-            return None
+            return None  # will end the negotiation
         return nmi.random_outcome()
 
-    def propose(self, negotiator_id: str, state: MechanismState) -> Outcome | None:
+    def propose(self, negotiator_id, state) -> Outcome | None:
         return self._random_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, source=None):
+    def respond(self, negotiator_id, state, source=None) -> ResponseType:
         if random.random() < self.p_end:
             return ResponseType.END_NEGOTIATION
         if random.random() < self.p_accept:
@@ -70,10 +72,6 @@ class RandomOneShotAgent(OneShotAgent):
 
 class SyncRandomOneShotAgent(OneShotSyncAgent):
     """An agent that distributes its needs over its partners randomly."""
-
-    def __init__(self, *args, threshold=0.95, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._threshold = threshold
 
     def distribute_needs(self) -> dict[str, int]:
         """Distributes my needs randomly over all my partners"""
@@ -138,19 +136,14 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
 
             # If the best combination of offers is good enough, accept them and end all
             # other negotiations
-            if best_diff <= self._threshold:
+            th = self._current_threshold(min(_.relative_time for _ in states.values()))
+            if best_diff <= th:
                 partner_ids = plist[best_indx]
                 others = list(partners.difference(partner_ids))
-                response.update(
-                    {
-                        k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k])
-                        for k in partner_ids
-                    }
-                    | {
-                        k: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                        for k in others
-                    }
-                )
+                response |= {
+                    k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k])
+                    for k in partner_ids
+                } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others}
                 continue
 
             # If I still do not have a good enough offer, distribute my current needs
@@ -167,6 +160,10 @@ class SyncRandomOneShotAgent(OneShotSyncAgent):
                 }
             )
         return response
+
+    def _current_threshold(self, r: float):
+        mn, mx = 0, self.awi.n_lines // 2
+        return mn + (mx - mn) * (r**4.0)
 
     def _step_and_price(self, best_price=False):
         """Returns current step and a random (or max) price"""

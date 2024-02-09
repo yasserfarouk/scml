@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .common import QUANTITY, UNIT_PRICE
+from .common import QUANTITY, TIME, UNIT_PRICE
 from .ufun import OneShotUFun
 
 if TYPE_CHECKING:
@@ -14,6 +14,7 @@ __all__ = ["OneShotUFunCreatorMixin"]
 class OneShotUFunCreatorMixin:
     def make_ufun(self: OneShotAgent, add_exogenous, in_adapter):  # type: ignore
         awi = self._obj.awi if in_adapter else self.awi  # type: ignore
+        it = awi.current_input_issues[TIME] if awi.current_input_issues else None
 
         iq = awi.current_input_issues[QUANTITY] if awi.current_input_issues else None
         ip = awi.current_input_issues[UNIT_PRICE] if awi.current_input_issues else None
@@ -22,6 +23,7 @@ class OneShotUFunCreatorMixin:
             awi.current_output_issues[UNIT_PRICE] if awi.current_output_issues else None
         )
         self.ufun = OneShotUFun(
+            agent_id=awi.agent.id,
             perishable=awi.is_perishable,
             ex_qin=awi.current_exogenous_input_quantity if add_exogenous else 0,
             ex_pin=awi.current_exogenous_input_price if add_exogenous else 0,
@@ -40,6 +42,9 @@ class OneShotUFunCreatorMixin:
             n_input_negs=awi.n_input_negotiations,
             n_output_negs=awi.n_output_negotiations,
             current_step=awi.current_step,
+            time_range=(it.min_value, it.max_value)
+            if it
+            else (awi.current_step, awi.current_step),
             input_qrange=(iq.min_value, iq.max_value) if iq else (0, 0),
             input_prange=(ip.min_value, ip.max_value) if ip else (0, 0),
             output_qrange=(oq.min_value, oq.max_value) if oq else (0, 0),

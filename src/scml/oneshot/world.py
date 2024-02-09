@@ -1,12 +1,5 @@
 from __future__ import annotations
 
-from negmas.outcomes.cardinal_issue import DiscreteCardinalIssue
-
-from scml.oneshot.ufun import OneShotUFun
-
-"""
-Implements the one shot version of SCML
-"""
 import copy
 import itertools
 import logging
@@ -37,6 +30,9 @@ from negmas import (
 from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
 from negmas.sao import ControlledSAONegotiator, SAOController, SAONegotiator
 from negmas.situated import NegotiationInfo
+from rich import print
+
+from scml.oneshot.ufun import OneShotUFun
 
 from ..common import (
     distribute_quantities,
@@ -50,8 +46,11 @@ from .adapter import OneShotSCML2020Adapter
 from .agent import OneShotAgent
 from .common import (
     INFINITE_COST,
+    QUANTITY,
     SYSTEM_BUYER_ID,
     SYSTEM_SELLER_ID,
+    TIME,
+    UNIT_PRICE,
     FinancialReport,
     NegotiationDetails,
     OneShotExogenousContract,
@@ -59,6 +58,11 @@ from .common import (
     is_system_agent,
 )
 from .sysagents import DefaultOneShotAdapter, _StdSystemAgent
+
+"""
+Implements the one shot version of SCML
+"""
+
 
 # from rich import print
 
@@ -1631,6 +1635,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 return_info=True,
             )
             ucon, producible = info.utility, info.producible
+            # print(f"{aid}: {info}")
             if not self.perishable:
                 remaining_in = max(0, self._input_quantity[aid] - producible)
                 remaining_out = max(0, producible - self._output_quantity[aid])
@@ -1990,10 +1995,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     def _request_negotiations(
         self,
         agent_id: str,
-        product: int,
-        quantity: int | tuple[int, int],
-        unit_price: int | tuple[int, int],
-        time: int | tuple[int, int],
+        # quantity: int | tuple[int, int],
+        # unit_price: int | tuple[int, int],
+        # time: int | tuple[int, int],
         controller: SAOController | None = None,
         negotiators: list[SAONegotiator] | None = None,
         extra: dict[str, Any] | None = None,
@@ -2037,9 +2041,17 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         #     self.suppliers[product] if consumer_starts else self.consumers[product]
         # )
         results = []
-        for responding_agents, is_buying in (
-            (self.agent_suppliers[agent_id], True),
-            (self.agent_consumers[agent_id], False),
+        for responding_agents, is_buying, product in (
+            (
+                self.agent_suppliers[agent_id],
+                True,
+                self.agent_profiles[agent_id].input_product,
+            ),
+            (
+                self.agent_consumers[agent_id],
+                False,
+                self.agent_profiles[agent_id].output_product,
+            ),
         ):
             responding_agents = [
                 _
@@ -2066,14 +2078,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 ]
             results += [
                 self._request_negotiation(
-                    agent_id,
-                    product,
-                    quantity,
-                    unit_price,
-                    time,
-                    partner,
-                    negotiator,
-                    extra,
+                    agent_id=agent_id,
+                    product=product,
+                    # quantity=quantity,
+                    # unit_price=unit_price,
+                    # time=time,
+                    partner=partner,
+                    negotiator=negotiator,
+                    extra=extra,
                     is_buy=is_buying,
                 )
                 for partner, negotiator in zip(partners, negotiators)
@@ -2096,9 +2108,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self,
         agent_id: str,
         product: int,
-        quantity: int | tuple[int, int],
-        unit_price: int | tuple[int, int],
-        time: int | tuple[int, int],
+        # quantity: int | tuple[int, int],
+        # unit_price: int | tuple[int, int],
+        # time: int | tuple[int, int],
         partner: str,
         negotiator: SAONegotiator,
         extra: dict[str, Any] | None = None,
@@ -2123,32 +2135,25 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             `True` if the partner accepted and the negotiation is ready to start
 
         """
+        if is_buy:
+            assert (
+                self.agent_profiles[agent_id].input_product == product
+            ), f"{agent_id=}: Buying {product=} but my input product is {self.agent_profiles[agent_id].input_product}"
+        else:
+            assert (
+                self.agent_profiles[agent_id].output_product == product
+            ), f"{agent_id=}: Selling {product=} but my output product is {self.agent_profiles[agent_id].output_product}"
         agent = self.agents[agent_id]
         if extra is None:
             extra = dict()
-        # if is_buy:
-        #     buyer, seller = agent, self.agents[partner]
-        # else:
-        #     seller, buyer = agent, self.agents[partner]
-        # if product != self.agent_profiles[buyer.id].input_product:
-        #     self.logerror(
-        #         f"Buyer {buyer.id} wants to buy {product} but its input is different"
-        #     )
-        # if product != self.agent_profiles[seller.id].output_product:
-        #     self.logerror(
-        #         f"Seller {seller.id} wants to sell {product} but its output is different"
-        #     )
-        # if (
-        #     self.agent_profiles[buyer.id].input_product
-        #     == self.agent_profiles[seller.id].input_product
-        # ):
-        #     self.logerror(
-        #         f"Seller {seller.id} and buyer {buyer.id} are in the same level ({self.agent_profiles[buyer.id].input_product})"
-        #     )
-        self.logdebug(
-            f"{agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
-            f" q: {quantity}, u: {unit_price}, t: {time}"
-        )
+        if self._debug:
+            quantity = self._current_issues[product][QUANTITY]
+            time = self._current_issues[product][TIME]
+            unit_price = self._current_issues[product][UNIT_PRICE]
+            self.logdebug(
+                f"{agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
+                f" q: {quantity}, u: {unit_price}, t: {time}"
+            )
 
         annotation = {
             "product": product,
@@ -2288,19 +2293,19 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     f"Found unexpected negotiations at step {self.current_step}"
                     f"\n{[(_.partners, _.mechanism.state if _.mechanism else None)  for _ in self._negotiations.values() ]}"
                 )
-        for product in range(self.n_products - 1, -1, -2):
+        for product in range(1, self.n_products):
             unit_price, time, quantity = self._make_issues(product)
-            assert (
-                not self.one_time_per_negotiation
-                or time[0] == time[1] == self.current_step
-            ), f"{time=}, {self.current_step=} but {self.one_time_per_negotiation=}"
             self._current_issues[product] = [  # type: ignore
                 make_issue(values(quantity), name="quantity"),
                 make_issue(values(time), name="time"),
                 make_issue(values(unit_price), name="unit_price"),
             ]
-            requesting_agents = self.suppliers[product]
-            # print(f"{product=}: {requesting_agents=}")
+            assert (
+                not self.one_time_per_negotiation
+                or time[0] == time[1] == self.current_step
+            ), f"{time=}, {self.current_step=} but {self.one_time_per_negotiation=}"
+        for level in range(self.n_products - 1, -1, -2):
+            requesting_agents = self.suppliers[level]
             requesting_agents = [
                 _
                 for _ in requesting_agents
@@ -2315,10 +2320,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     continue
                 self._request_negotiations(
                     agent_id=aid,
-                    product=product,
-                    time=time,
-                    quantity=quantity,
-                    unit_price=unit_price,
                     controller=controllers[aid],
                     negotiators=None,
                     extra=None,
@@ -2333,7 +2334,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                         time = (t, t)
                         self._request_negotiations(
                             agent_id=aid,
-                            product=product,
+                            product=level,
                             time=time,
                             quantity=quantity,
                             unit_price=unit_price,
@@ -2344,11 +2345,11 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                         )
 
         if self._debug:
-            for product in range(self.n_products):
-                for c in self.consumers[product]:
+            for level in range(self.n_products):
+                for c in self.consumers[level]:
                     if is_system_agent(c) or self.is_bankrupt[c]:
                         continue
-                    for s in self.suppliers[product]:
+                    for s in self.suppliers[level]:
                         if is_system_agent(s) or self.is_bankrupt[s]:
                             continue
                         expected_negs.add(tuple(sorted((c, s))))
@@ -2426,6 +2427,19 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     ) -> None:
         super().complete_contract_execution(contract, breaches, resolution)
 
+    @property
+    def stat_names(self, peragent: bool = False):
+        """Returns names of all stats available"""
+        names = sorted(list(self.stats.keys()))
+        if peragent:
+            return names
+        final = []
+        for name in names:
+            parts = name.split("_")
+            if any(parts[-1] == _ for _ in self.agents.keys()):
+                final.append("_".join(parts[:-1]))
+        return sorted(list(set(final)))
+
     def plot_stats(
         self,
         stats: str | tuple[str, ...] | None = None,
@@ -2437,6 +2451,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         xlabel=False,
         legend=True,
         figsize=None,
+        ylegend=2.0,
     ):
         """Plots statistics of the world in a single plot
 
@@ -2450,6 +2465,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             legend: If given, a legend will be displayed
             makefig: If given a new figure will be started
             figsize: Size of the figure to host the plot
+            ylegend: y-axis of legend for cases with large number of labels
         """
         import matplotlib.pyplot as plt
 
@@ -2460,7 +2476,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             else:
                 _, axes = plt.subplots(4 - int(self.perishable), 2)
             plt.sca(axes[0, 0])
-            self.plot_stats("shortfall_penalty", pertype=pertype, legend=True)
+            self.plot_stats(
+                "shortfall_penalty",
+                pertype=pertype,
+                legend=legend,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+            )
             plt.tick_params(
                 axis="x",  # changes apply to the x-axis
                 which="both",  # both major and minor ticks are affected
@@ -2473,6 +2496,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 "disposal_cost" if self.perishable else "storage_cost",
                 pertype=pertype,
                 legend=False,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
             )
             plt.tick_params(
                 axis="x",  # changes apply to the x-axis
@@ -2482,7 +2508,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 labelbottom=False,
             )  # labels along the bottom edge are off
             plt.sca(axes[0, 1])
-            self.plot_stats("score", pertype=pertype, legend=False)
+            self.plot_stats(
+                "score",
+                pertype=pertype,
+                legend=False,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+            )
             plt.tick_params(
                 axis="x",  # changes apply to the x-axis
                 which="both",  # both major and minor ticks are affected
@@ -2491,7 +2524,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 labelbottom=False,
             )  # labels along the bottom edge are off
             plt.sca(axes[1, 1])
-            self.plot_stats("productivity", pertype=pertype, legend=False)
+            self.plot_stats(
+                "productivity",
+                pertype=pertype,
+                legend=False,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+            )
             plt.tick_params(
                 axis="x",  # changes apply to the x-axis
                 which="both",  # both major and minor ticks are affected
@@ -2501,7 +2541,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             )  # labels along the bottom edge are off
             if not self.perishable:
                 plt.sca(axes[2, 0])
-                self.plot_stats("inventory_penalized", pertype=pertype, legend=False)
+                self.plot_stats(
+                    "inventory_penalized",
+                    pertype=pertype,
+                    legend=False,
+                    xlabel=False,
+                    title=title,
+                    ylabel=ylabel,
+                )
                 plt.tick_params(
                     axis="x",  # changes apply to the x-axis
                     which="both",  # both major and minor ticks are affected
@@ -2510,7 +2557,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     labelbottom=False,
                 )  # labels along the bottom edge are off
                 plt.sca(axes[2, 1])
-                self.plot_stats("inventory_input", pertype=pertype, legend=False)
+                self.plot_stats(
+                    "inventory_input",
+                    pertype=pertype,
+                    legend=False,
+                    xlabel=False,
+                    title=title,
+                    ylabel=ylabel,
+                )
                 plt.tick_params(
                     axis="x",  # changes apply to the x-axis
                     which="both",  # both major and minor ticks are affected
@@ -2519,9 +2573,21 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     labelbottom=False,
                 )  # labels along the bottom edge are off
             plt.sca(axes[3 - int(self.perishable), 0])
-            self.plot_stats("sold_quantity", pertype=False, xlabel=True)
+            self.plot_stats(
+                "sold_quantity",
+                pertype=False,
+                xlabel=True,
+                title=title,
+                ylabel=ylabel,
+            )
             plt.sca(axes[3 - int(self.perishable), 1])
-            self.plot_stats("trading_price", pertype=False, xlabel=True)
+            self.plot_stats(
+                "trading_price",
+                pertype=False,
+                xlabel=True,
+                title=title,
+                ylabel=ylabel,
+            )
             return
 
         if makefig:
@@ -2639,7 +2705,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             else:
                 plt.legend(
                     loc="upper left",
-                    bbox_to_anchor=(-0.02, 2.0),
+                    bbox_to_anchor=(-0.02, ylegend),
                     ncol=8,
                     fancybox=True,
                     shadow=True,

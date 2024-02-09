@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import random
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
-from negmas.helpers import distribute_integer_randomly
+from negmas.helpers import distribute_integer_randomly, get_class
 from numpy.typing import NDArray
 
 __all__ = [
@@ -14,9 +14,111 @@ __all__ = [
     "intin",
     "realin",
     "strin",
+    "isin",
+    "isinfloat",
+    "isinclass",
+    "isinobject",
     "make_array",
     "distribute_quantities",
+    "IterableOrInt",
+    "IterableOrFloat",
+    "IterableOrClass",
+    "IterableOrObject",
+    "EPSILON",
 ]
+
+
+IterableOrInt = tuple[int, int] | set[int] | list[int] | int | np.ndarray
+IterableOrFloat = tuple[float, float] | set[float] | list[float] | float | np.ndarray
+IterableOrClass = Iterable[str | type] | type | str
+IterableOrObject = Iterable[str | Any] | Any
+EPSILON = 1e-5
+
+
+def isinobject(x: IterableOrClass, y: IterableOrClass):
+    return isinclass(
+        type(x) if not isinstance(x, Iterable) else [type(_) for _ in x], y
+    )
+
+
+def isinclass(x: IterableOrClass, y: IterableOrClass):
+    """Checks that x is within the range specified by y. Ugly but works"""
+    if not isinstance(x, Iterable) and not isinstance(y, Iterable):
+        return issubclass(get_class(x), get_class(y))
+    if not isinstance(x, Iterable):
+        x = [x]
+    if not isinstance(y, Iterable):
+        y = [y]
+    x = [get_class(_) for _ in x]
+    y = [get_class(_) for _ in y]
+    for a in x:
+        for b in y:
+            if issubclass(a, b):  # type: ignore
+                break
+        else:
+            return False
+    return True
+
+
+def isin(x: IterableOrInt, y: IterableOrInt):
+    """Checks that x is within the range specified by y. Ugly but works"""
+    if not isinstance(x, Iterable) and not isinstance(y, Iterable):
+        return x == y
+    if isinstance(x, np.ndarray):
+        x = x.tolist()
+    if isinstance(y, np.ndarray):
+        y = y.tolist()
+    if isinstance(x, list):
+        x = {_ for _ in x}
+    if isinstance(y, list):
+        y = {_ for _ in y}
+    if isinstance(x, tuple):
+        if isinstance(y, tuple):
+            return y[0] <= x[0] <= y[-1]
+        if not isinstance(y, Iterable):
+            return x[0] == y == x[-1]
+        x = set(list(range(x[0], x[-1])))
+    if isinstance(y, tuple):
+        if not isinstance(x, Iterable):
+            return y[0] <= x <= y[-1]
+        y = set(list(range(y[0], y[-1])))
+    if not isinstance(x, Iterable):
+        x = {x}
+    if not isinstance(y, Iterable):
+        y = {y}
+    assert isinstance(x, set) and isinstance(
+        y, set
+    ), f"{x=} ({type(x)=}), {y=} ({type(y)})"
+    return not x.difference(y)
+
+
+def isinfloat(x: IterableOrFloat, y: IterableOrFloat):
+    """Checks that x is within the range specified by y. Ugly but works"""
+    if not isinstance(x, Iterable) and not isinstance(y, Iterable):
+        return abs(x - y) < EPSILON
+    if isinstance(x, np.ndarray):
+        x = x.tolist()
+    if isinstance(y, np.ndarray):
+        y = y.tolist()
+    if isinstance(x, tuple):
+        if isinstance(y, tuple):
+            return y[0] - EPSILON <= x[0] <= y[-1] + EPSILON
+        if not isinstance(y, Iterable):
+            return abs(x[0] - y) < EPSILON and abs(y - x[-1]) < EPSILON
+    if isinstance(y, tuple):
+        if not isinstance(x, Iterable):
+            return y[0] - EPSILON <= x <= y[-1] + EPSILON
+    if not isinstance(x, Iterable):
+        x = [x]
+    if not isinstance(y, Iterable):
+        y = [y]
+    for a in x:
+        for b in y:
+            if abs(a - b) < EPSILON:
+                break
+        else:
+            return False
+    return True
 
 
 def fraction_cut(n: int, p: np.ndarray) -> np.ndarray:

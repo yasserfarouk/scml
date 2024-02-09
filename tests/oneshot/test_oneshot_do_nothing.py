@@ -2,7 +2,7 @@ import pytest
 from negmas import ResponseType
 
 from scml import OneShotAgent, SCML2020OneShotWorld
-from scml.oneshot.agents.random import RandomOneShotAgent
+from scml.oneshot.agents.rand import RandomOneShotAgent
 
 
 def run_simulation(agent_types):

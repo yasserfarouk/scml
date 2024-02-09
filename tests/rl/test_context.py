@@ -3,8 +3,8 @@ from negmas import ResponseType, SAOResponse
 from negmas.negotiators.modular import itertools
 
 from scml.oneshot.agents.nothing import OneShotDummyAgent
-from scml.oneshot.rl.common import isinclass, isinobject
-from scml.oneshot.rl.context import (
+from scml.common import isinclass, isinobject
+from scml.oneshot.context import (
     DEFAULT_DUMMY_AGENT_TYPES,
     ANACContext,
     ANACOneShotContext,

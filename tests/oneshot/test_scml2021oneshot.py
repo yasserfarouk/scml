@@ -360,7 +360,6 @@ def test_ufun_limits(
     onegs,
     perishable,
 ):
-
     if perishable:
         storage_cost = 0
     else:
@@ -420,6 +419,7 @@ def _ufun_unit2(
         input_agent, output_agent = False, True
 
     ufun = OneShotUFun(
+        agent_id="",
         perishable=perishable,
         ex_qin=ex_qin,
         ex_qout=ex_qout,
@@ -434,6 +434,7 @@ def _ufun_unit2(
         n_lines=lines,
         force_exogenous=force_exogenous,
         input_product=0 if input_agent else 2,
+        time_range=(0, 0),
         input_qrange=(1, 15),
         input_prange=(1, 15),
         output_qrange=(1, 15),
@@ -576,6 +577,7 @@ def _ufun_unit(
         input_agent, output_agent = False, True
 
     ufun = OneShotUFun(
+        agent_id="",
         ex_qin=ex_qin,
         ex_qout=ex_qout,
         ex_pin=ex_pin,
@@ -590,6 +592,7 @@ def _ufun_unit(
         n_lines=lines,
         force_exogenous=force_exogenous,
         input_product=0 if input_agent else 2,
+        time_range=(0, 0),
         input_qrange=(1, 15),
         input_prange=(1, 15),
         output_qrange=(1, 15),

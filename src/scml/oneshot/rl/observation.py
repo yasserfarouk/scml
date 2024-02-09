@@ -12,10 +12,10 @@ from gymnasium import spaces
 from negmas import ResponseType, SAOResponse
 from negmas.helpers.strings import itertools
 
+from scml.common import isin
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import NegotiationDetails, OneShotState
-from scml.oneshot.rl.common import isin
-from scml.oneshot.rl.context import (
+from scml.oneshot.context import (
     Context,
     FixedPartnerNumbersContext,
     FixedPartnerNumbersOneShotContext,
@@ -36,7 +36,7 @@ class ObservationManager(Protocol):
     """Manages the observations of an agent in an RL environment"""
 
     @property
-    def context(self):
+    def context(self) -> Context:
         ...
 
     def make_space(self) -> spaces.Space:
