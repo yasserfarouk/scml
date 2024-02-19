@@ -92,7 +92,7 @@ all of this together.
 is the base environment class. It instantiates ``OneShotWorld``\ s based
 on the given ``Context``. The agent is represented within this
 environment with a
-`OneShotDummyAgent <https://scml.readthedocs.io/en/latest/api/scml.oneshot.OneShotDummyAgent.html#oneshotdummyagent>`__
+`Placeholder <https://scml.readthedocs.io/en/latest/api/scml.oneshot.Placeholder.html#oneshotdummyagent>`__
 which just acts as a placeholder for the RL agent interacting with this
 environment. You do not need to modify this placeholder agent or touch
 the environment (but you can if you wish to change how the interaction
@@ -209,7 +209,7 @@ There are two RL-related agent types in SCML:
 1. `OneShotRLAgent <https://scml.readthedocs.io/en/latest/api/scml.oneshot.OneShotRLAgent.html>`__
    is the main class responsible for implementing RL agents that can run
    in the OneShotWorld and compete in the scml-oneshot track.
-2. `OneShotDummyAgent <https://scml.readthedocs.io/en/latest/api/scml.oneshot.OneShotDummyAgent.html#oneshotdummyagent>`__
+2. `Placeholder <https://scml.readthedocs.io/en/latest/api/scml.oneshot.Placeholder.html#placeholder>`__
    which is used internally by the environment as a place-holder for the
    RL agent controlled by the ``OneShotRLAgent``. You should not need to
    care about this agent type.

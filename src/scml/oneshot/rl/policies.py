@@ -9,8 +9,8 @@ from negmas.sao import SAOResponse
 
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, UNIT_PRICE
-from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
 from scml.oneshot.context import ANACOneShotContext
+from scml.oneshot.rl.action import ActionManager, FlexibleActionManager
 from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.observation import ObservationManager
 
@@ -66,11 +66,11 @@ def greedy_policy(
     obs: np.ndarray,
     awi: OneShotAWI,
     obs_manager: ObservationManager,
-    action_manager: ActionManager = UnconstrainedActionManager(ANACOneShotContext()),
+    action_manager: ActionManager = FlexibleActionManager(ANACOneShotContext()),
     debug=False,
     distributor: Callable[[int, int], list[int]] = all_but_concentrated,
     return_decoded: bool = False,
-):
+) -> np.ndarray | dict[str, SAOResponse]:
     """
     A simple greedy policy.
 
@@ -94,20 +94,14 @@ def greedy_policy(
     offers = obs_manager.get_offers(awi, obs)
 
     if debug:
-        received_offers = {
-            k: v
-            for k, v in offers.items()
-            if v.response != ResponseType.END_NEGOTIATION
-        }
+        received_offers = {k: o for k, o in offers.items() if o is not None}
         assert isinstance(awi, OneShotAWI)
         awi_offers = awi.current_offers
         assert set(awi_offers.keys()) == set(
             received_offers.keys()
         ), f"{awi_offers=}\n{offers=}\n{received_offers=}"
         for k, v in received_offers.items():
-            assert (
-                awi_offers[k] == v.outcome
-            ), f"{awi_offers[k]=} != {offers[k].outcome}"
+            assert awi_offers[k] == v, f"{awi_offers[k]=} != {offers[k]}"
     needed = awi.needed_supplies if not awi.is_first_level else awi.needed_sales
     all_offers = list(offers.values())
     all_partners = list(offers.keys())
@@ -154,17 +148,18 @@ def greedy_policy(
         # we should accept the indices in best
         best = set(best)
         quantities = distributor(diff, n_partners - len(best))
-        j, response = 0, dict(
-            zip(
-                all_partners,
-                itertools.repeat(SAOResponse(ResponseType.END_NEGOTIATION, None)),
-            )
+        j, response = (
+            0,
+            dict(
+                zip(
+                    all_partners,
+                    itertools.repeat(SAOResponse(ResponseType.END_NEGOTIATION, None)),
+                )
+            ),
         )
         for i, p in enumerate(all_partners):
             if i in best:
-                response[p] = SAOResponse(
-                    ResponseType.ACCEPT_OFFER, all_offers[i].outcome
-                )
+                response[p] = SAOResponse(ResponseType.ACCEPT_OFFER, all_offers[i])
                 continue
             if debug:
                 assert quantities[j] >= 0

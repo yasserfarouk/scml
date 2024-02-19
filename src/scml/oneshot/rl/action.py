@@ -5,16 +5,18 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
+from typing import Iterable
 
 import numpy as np
 from attr import define
 from gymnasium import Space, spaces
-from negmas.gb.common import ResponseType
+from negmas.gb.common import ResponseType, field
 from negmas.sao.common import SAOResponse
 
 from scml.common import integer_cut
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.context import Context
+from scml.oneshot.common import is_system_agent
+from scml.oneshot.context import BaseContext, extract_context_params
 from scml.scml2019.common import QUANTITY, UNIT_PRICE
 
 __all__ = [
@@ -29,7 +31,7 @@ class ActionManager(ABC):
     Manges actions of an agent in an RL environment.
     """
 
-    context: Context
+    context: BaseContext
 
     @abstractmethod
     def make_space(self) -> Space:
@@ -46,8 +48,14 @@ class ActionManager(ABC):
         ...
 
 
+def safemin(x: Iterable | int | float | str):
+    if isinstance(x, Iterable):
+        return min(x)
+    return x
+
+
 @define(frozen=True)
-class UnconstrainedActionManager(ActionManager):
+class FlexibleActionManager(ActionManager):
     """
     An action manager that matches any context.
 
@@ -82,17 +90,35 @@ class UnconstrainedActionManager(ActionManager):
 
     """
 
-    n_prices: int = 10
-    max_quantity: int = 10
-    n_partners: int = 8
+    capacity_multiplier: int = 1
+    n_prices: int = 4
+    max_group_size: int = 2
+    reduce_space_size: bool = True
+    continuous: bool = False
     extra_checks: bool = False
+    n_quantities: int = field(init=False, default=11)
+    n_partners: int = field(init=False, default=8)
 
-    def make_space(self) -> Space:
+    def __attrs_post_init__(self):
+        p = extract_context_params(
+            self.context, self.reduce_space_size, raise_on_failure=False
+        )
+        if p.nlines:
+            object.__setattr__(
+                self, "n_quantities", self.capacity_multiplier * p.nlines + 1
+            )
+            object.__setattr__(self, "n_partners", p.nsuppliers + p.nconsumers)
+
+    def make_space(self) -> spaces.MultiDiscrete | spaces.Box:
         """Creates the action space"""
-        return spaces.MultiDiscrete(
-            np.asarray(
-                [self.max_quantity + 1, self.n_prices] * self.n_partners
-            ).flatten()
+        return (
+            spaces.MultiDiscrete(
+                np.asarray(
+                    [self.n_quantities, self.n_prices] * self.n_partners
+                ).flatten()
+            )
+            if not self.continuous
+            else spaces.Box(0.0, 1.0, shape=(self.n_partners * 2,))
         )
 
     def adjust_reponses_to_partners(
@@ -138,7 +164,7 @@ class UnconstrainedActionManager(ActionManager):
             ):
                 continue
             # quantities cannot exceed the maximum quantity allowed
-            q = self.max_quantity - my_offer[0]
+            q = self.n_quantities - 1 - my_offer[0]
             if q <= 0:
                 continue
             available_partners.append(i)
@@ -169,14 +195,11 @@ class UnconstrainedActionManager(ActionManager):
         Generates offers to all partners from an encoded action. Default is to return the action as it is assuming it is a `dict[str, SAOResponse]`
         """
         action = action.reshape((action.size // 2, 2))
-        # assert (
-        #     len(action) == self.n_partners
-        # ), f"{len(action)=} while {self.n_partners=}"
         assert (
             QUANTITY == 0 and UNIT_PRICE == 2
-        ), f"We assume that quantity and price has indices 0, 2. If not, you need to modify the tuples below to put them in the correct index"
+        ), "We assume that quantity and price has indices 0, 2. If not, you need to modify the tuples below to put them in the correct index"
         nmis = awi.current_nmis
-        partners = awi.my_partners
+        partners = [_ for _ in awi.my_partners if not is_system_agent(_)]
         action, partners = self.adjust_reponses_to_partners(awi, action, partners)
         n_partners = len(partners)
         assert (
@@ -187,26 +210,19 @@ class UnconstrainedActionManager(ActionManager):
         for partner, (q, p) in zip(partners, action, strict=True):
             nmi = nmis.get(partner, None)
             if not nmi:
-                # warnings.warn(
-                #     f"Did not find {partner} in the list of partners"
-                #     f"\n{partners=}\n{awi.my_partners=}\n{action=}"
-                # )
                 scaled.append((0, 0))
                 continue
-            qscale = nmi.issues[QUANTITY].max_value / (self.max_quantity - 1)
+            qscale = nmi.issues[QUANTITY].max_value / (self.n_quantities)
             prange = nmi.issues[UNIT_PRICE].max_value - nmi.issues[UNIT_PRICE].min_value
             pscale = (prange + 1) / self.n_prices
             scaled.append(
                 (
-                    min(self.max_quantity, int(q * qscale + 0.5)),
+                    min(self.n_quantities - 1, int(q * qscale + 0.5)),
                     min(prange, int(p * pscale + 0.5)),
                 )
             )
         action = np.asarray(scaled, dtype=int)
         responses = dict()
-        # assert (
-        #     n_partners == self.n_partners
-        # ), f"{len(awi.my_partners)=} while {self.n_partners=}:\n{awi.my_partners=}"
         for partner, response in zip(partners, action, strict=True):
             nmi = nmis.get(partner, None)
             if not nmi:
@@ -248,7 +264,11 @@ class UnconstrainedActionManager(ActionManager):
             responses[partner] = SAOResponse(rtype, outcome)
 
         # end negotiation with anyone ignored
-        ignored_partners = {_ for _ in awi.my_partners if _ not in set(partners)}
+        ignored_partners = {
+            _
+            for _ in awi.my_partners
+            if _ not in set(partners) and not is_system_agent(_)
+        }
         for p in ignored_partners:
             responses[p] = SAOResponse(ResponseType.END_NEGOTIATION, None)
         return responses
@@ -303,5 +323,5 @@ class UnconstrainedActionManager(ActionManager):
         return action.flatten()
 
 
-DefaultActionManager = UnconstrainedActionManager
+DefaultActionManager = FlexibleActionManager
 """The default action manager"""

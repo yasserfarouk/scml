@@ -16,7 +16,6 @@ from negmas import (
 )
 from negmas.sao import ControlledSAONegotiator
 
-from scml.scml2019.common import QUANTITY
 
 from .agent import OneShotAgent
 from .awi import OneShotAWI
@@ -268,6 +267,13 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
     def awi(self, awi: OneShotAWI):
         """Sets the Agent-world interface. Should only be called by the world."""
         self._awi = awi
+
+    @property
+    def short_type_name(self):
+        name = self.type_name.split(":")[-1].split(".")[-1]
+        if name:
+            return name
+        return super().short_type_name
 
 
 class _StdSystemAgent(DefaultOneShotAdapter):

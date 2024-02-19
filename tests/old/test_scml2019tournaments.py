@@ -2,13 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from scml.scml2019 import (
-    DoNothingFactoryManager,
-    GreedyFactoryManager,
-    anac2019_collusion,
-    anac2019_std,
-)
-from scml.scml2019.utils import anac2019_sabotage
+from scml.scml2019 import DoNothingFactoryManager, GreedyFactoryManager
+from scml.scml2019.utils19 import anac2019_collusion, anac2019_sabotage, anac2019_std
 
 from ..switches import (
     SCML_RUN2019,

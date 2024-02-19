@@ -1,15 +1,15 @@
 from pprint import pformat
 
-import pytest
 from negmas import ResponseType
-from negmas.gb.components.selectors import warnings
 from negmas.helpers import single_thread
 from negmas.sao import SAOResponse
 
-from scml.oneshot import OneShotSyncAgent, SCML2020OneShotWorld
+from scml.oneshot import OneShotSyncAgent
 from scml.oneshot.agents import RandomOneShotAgent
 from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
+
+from ..switches import DefaultOneShotWorld
 
 
 class MyExogAgent(OneShotSyncAgent):
@@ -99,8 +99,8 @@ class MyExogAgent(OneShotSyncAgent):
 def test_underfullfilment_is_irrational():
     agent_types = [RandomOneShotAgent, MyExogAgent] * 2
     for _ in range(10):
-        world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(
+        world = DefaultOneShotWorld(
+            **DefaultOneShotWorld.generate(
                 agent_types,
                 n_steps=100,
                 n_processes=2,

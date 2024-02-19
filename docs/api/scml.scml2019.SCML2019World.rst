@@ -48,6 +48,7 @@ SCML2019World
       ~SCML2019World.saved_negotiations
       ~SCML2019World.short_type_name
       ~SCML2019World.signed_contracts
+      ~SCML2019World.stat_names
       ~SCML2019World.stats
       ~SCML2019World.time
       ~SCML2019World.total_time
@@ -72,6 +73,7 @@ SCML2019World
       ~SCML2019World.checkpoint_info
       ~SCML2019World.checkpoint_init
       ~SCML2019World.checkpoint_on_step_started
+      ~SCML2019World.combine_stats
       ~SCML2019World.complete_contract_execution
       ~SCML2019World.contract_record
       ~SCML2019World.contract_size
@@ -110,6 +112,8 @@ SCML2019World
       ~SCML2019World.on_event
       ~SCML2019World.on_exception
       ~SCML2019World.order_contracts_for_execution
+      ~SCML2019World.plot_combined_stats
+      ~SCML2019World.plot_stats
       ~SCML2019World.post_step_stats
       ~SCML2019World.pre_step_stats
       ~SCML2019World.random
@@ -184,6 +188,7 @@ SCML2019World
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: time
    .. autoattribute:: total_time
@@ -206,6 +211,7 @@ SCML2019World
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
@@ -244,6 +250,8 @@ SCML2019World
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: random

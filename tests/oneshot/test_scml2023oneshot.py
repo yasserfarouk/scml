@@ -1,4 +1,3 @@
-import logging
 import random
 
 import pytest
@@ -10,12 +9,13 @@ from scml.oneshot.agents import (
     GreedySyncAgent,
     RandomOneShotAgent,
 )
-from scml.oneshot.world import SCML2023OneShotWorld
 from scml.utils import (
     anac2023_oneshot_world_generator,
     anac_assigner_oneshot,
     anac_config_generator_oneshot,
 )
+
+from ..switches import DefaultOneShotWorld
 
 # LOG_PARAMS = dict(
 #     no_logs=False,
@@ -32,8 +32,8 @@ LOG_PARAMAS = dict(no_logs=True)
 
 
 def test_equal_exogenous_supply():
-    world = SCML2023OneShotWorld(
-        **SCML2023OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=[
                 GreedySyncAgent,
                 GreedyOneShotAgent,
@@ -55,8 +55,8 @@ def test_equal_exogenous_supply():
 
 
 def test_equal_exogenous_supply_stepping():
-    world = SCML2023OneShotWorld(
-        **SCML2023OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=[
                 GreedySyncAgent,
                 GreedyOneShotAgent,
@@ -81,8 +81,8 @@ def test_equal_exogenous_supply_stepping():
 
 
 def test_equal_exogenous_supply_stepping_with_no_action():
-    world = SCML2023OneShotWorld(
-        **SCML2023OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=[
                 GreedySyncAgent,
                 GreedyOneShotAgent,
@@ -108,8 +108,8 @@ def test_equal_exogenous_supply_stepping_with_no_action():
 
 
 def test_equal_exogenous_supply_stepping_with_random_action():
-    world = SCML2023OneShotWorld(
-        **SCML2023OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=[
                 GreedySyncAgent,
                 GreedyOneShotAgent,

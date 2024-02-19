@@ -12,6 +12,7 @@ OneShotState
 
       ~OneShotState.all_consumers
       ~OneShotState.all_suppliers
+      ~OneShotState.allow_zero_quantity
       ~OneShotState.bankrupt_agents
       ~OneShotState.catalog_prices
       ~OneShotState.current_balance
@@ -19,6 +20,7 @@ OneShotState
       ~OneShotState.current_buy_offers
       ~OneShotState.current_input_outcome_space
       ~OneShotState.current_negotiation_details
+      ~OneShotState.current_nmis
       ~OneShotState.current_offers
       ~OneShotState.current_output_outcome_space
       ~OneShotState.current_sell_nmis
@@ -58,19 +60,27 @@ OneShotState
       ~OneShotState.relative_simulation_time
       ~OneShotState.reports_of_agents
       ~OneShotState.running_buy_states
-      ~OneShotState.running_nmis
       ~OneShotState.sales
       ~OneShotState.shortfall_penalty
       ~OneShotState.storage_cost
       ~OneShotState.supplies
+      ~OneShotState.total_future_sales
+      ~OneShotState.total_future_supplies
       ~OneShotState.total_sales
       ~OneShotState.total_supplies
       ~OneShotState.trading_prices
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~OneShotState.random
 
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
+   .. autoattribute:: allow_zero_quantity
    .. autoattribute:: bankrupt_agents
    .. autoattribute:: catalog_prices
    .. autoattribute:: current_balance
@@ -78,6 +88,7 @@ OneShotState
    .. autoattribute:: current_buy_offers
    .. autoattribute:: current_input_outcome_space
    .. autoattribute:: current_negotiation_details
+   .. autoattribute:: current_nmis
    .. autoattribute:: current_offers
    .. autoattribute:: current_output_outcome_space
    .. autoattribute:: current_sell_nmis
@@ -117,11 +128,16 @@ OneShotState
    .. autoattribute:: relative_simulation_time
    .. autoattribute:: reports_of_agents
    .. autoattribute:: running_buy_states
-   .. autoattribute:: running_nmis
    .. autoattribute:: sales
    .. autoattribute:: shortfall_penalty
    .. autoattribute:: storage_cost
    .. autoattribute:: supplies
+   .. autoattribute:: total_future_sales
+   .. autoattribute:: total_future_supplies
    .. autoattribute:: total_sales
    .. autoattribute:: total_supplies
    .. autoattribute:: trading_prices
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: random

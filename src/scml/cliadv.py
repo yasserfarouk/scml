@@ -25,7 +25,7 @@ from tabulate import tabulate
 
 import scml
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
-from scml.scml2019.utils import (
+from scml.scml2019.utils19 import (
     anac2019_assigner,
     anac2019_config_generator,
     anac2019_sabotage_assigner,
@@ -36,7 +36,7 @@ from scml.scml2019.utils import (
 from scml.utils import (
     anac2020_world_generator,
     anac_assigner_std,
-    anac_config_generator_std,
+    anac_config_generator_std_old,
 )
 
 try:
@@ -763,7 +763,7 @@ def create(
             verbose=verbosity > 0,
             n_agents_per_competitor=1,
             world_generator=anac2020_world_generator,
-            config_generator=anac_config_generator_std,
+            config_generator=anac_config_generator_std_old,
             config_assigner=anac_assigner_std,
             score_calculator=scml.utils.balance_calculator2020,
             min_factories_per_level=factories[0],

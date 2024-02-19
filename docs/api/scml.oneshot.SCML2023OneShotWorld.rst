@@ -10,6 +10,7 @@ SCML2023OneShotWorld
 
    .. autosummary::
 
+      ~SCML2023OneShotWorld.agent_contracts
       ~SCML2023OneShotWorld.agreement_fraction
       ~SCML2023OneShotWorld.agreement_rate
       ~SCML2023OneShotWorld.breach_fraction
@@ -52,6 +53,7 @@ SCML2023OneShotWorld
       ~SCML2023OneShotWorld.saved_negotiations
       ~SCML2023OneShotWorld.short_type_name
       ~SCML2023OneShotWorld.signed_contracts
+      ~SCML2023OneShotWorld.stat_names
       ~SCML2023OneShotWorld.stats
       ~SCML2023OneShotWorld.stats_df
       ~SCML2023OneShotWorld.system_agent_ids
@@ -79,6 +81,7 @@ SCML2023OneShotWorld
       ~SCML2023OneShotWorld.checkpoint_info
       ~SCML2023OneShotWorld.checkpoint_init
       ~SCML2023OneShotWorld.checkpoint_on_step_started
+      ~SCML2023OneShotWorld.combine_stats
       ~SCML2023OneShotWorld.complete_contract_execution
       ~SCML2023OneShotWorld.contract_record
       ~SCML2023OneShotWorld.contract_size
@@ -117,6 +120,8 @@ SCML2023OneShotWorld
       ~SCML2023OneShotWorld.on_event
       ~SCML2023OneShotWorld.on_exception
       ~SCML2023OneShotWorld.order_contracts_for_execution
+      ~SCML2023OneShotWorld.plot_combined_stats
+      ~SCML2023OneShotWorld.plot_stats
       ~SCML2023OneShotWorld.post_step_stats
       ~SCML2023OneShotWorld.pre_step_stats
       ~SCML2023OneShotWorld.read_config
@@ -125,6 +130,7 @@ SCML2023OneShotWorld
       ~SCML2023OneShotWorld.register_stats_monitor
       ~SCML2023OneShotWorld.register_world_monitor
       ~SCML2023OneShotWorld.relative_welfare
+      ~SCML2023OneShotWorld.replace_agents
       ~SCML2023OneShotWorld.request_negotiation_about
       ~SCML2023OneShotWorld.run
       ~SCML2023OneShotWorld.run_negotiation
@@ -148,6 +154,7 @@ SCML2023OneShotWorld
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agent_contracts
    .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
    .. autoattribute:: breach_fraction
@@ -190,6 +197,7 @@ SCML2023OneShotWorld
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: stats_df
    .. autoattribute:: system_agent_ids
@@ -215,6 +223,7 @@ SCML2023OneShotWorld
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
@@ -253,6 +262,8 @@ SCML2023OneShotWorld
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: read_config
@@ -261,6 +272,7 @@ SCML2023OneShotWorld
    .. automethod:: register_stats_monitor
    .. automethod:: register_world_monitor
    .. automethod:: relative_welfare
+   .. automethod:: replace_agents
    .. automethod:: request_negotiation_about
    .. automethod:: run
    .. automethod:: run_negotiation

@@ -1,4 +1,5 @@
 """Common functions used in all modules"""
+
 from __future__ import annotations
 
 import random
@@ -24,6 +25,7 @@ __all__ = [
     "IterableOrFloat",
     "IterableOrClass",
     "IterableOrObject",
+    "distribute",
     "EPSILON",
 ]
 
@@ -35,7 +37,7 @@ IterableOrObject = Iterable[str | Any] | Any
 EPSILON = 1e-5
 
 
-def isinobject(x: IterableOrClass, y: IterableOrClass):
+def isinobject(x: IterableOrObject, y: IterableOrClass):
     return isinclass(
         type(x) if not isinstance(x, Iterable) else [type(_) for _ in x], y
     )
@@ -312,11 +314,11 @@ def distribute_quantities(
         sum[s, :] ~= q[s]. The error can be up to 2*a per step
 
     """
-    q = np.asarray(q)
+    q = np.asarray(q).flatten()
     if limit is not None and not isinstance(limit, Iterable):
         limit = [limit] * a  # type: ignore
     # if we do not distribute anything just return all zeros
-    if sum(q) == 0:
+    if q.sum() == 0:
         return [np.asarray([0] * a, dtype=int) for _ in range(n_steps)]
     # if all quantities are to be distributed equally, just do that directly
     # ensuring each agent gets at least one item.
@@ -333,8 +335,8 @@ def distribute_quantities(
             assert sum(values[-1]) == q[s]
         return values
     values = []
-    assert all(_ >= 0 for _ in q), f"We have some negative quantities! {q}"
-    qz = int(0.5 + sum(q) / len(q))
+    assert np.all(q >= 0), f"We have some negative quantities! {q}"
+    qz = int(0.5 + q.sum() / len(q))
     base_cut = integer_cut(qz, a, 0, limit)
     limit_sum = sum(limit) if limit is not None else float("inf")
     if limit is not None:
@@ -383,7 +385,9 @@ def distribute_quantities(
                         errs -= diffs[j]
         return v
 
-    for s in range(0, n_steps):
+    q = q.flatten().tolist()
+    assert len(q) == n_steps
+    for s in range(n_steps):
         assert (
             limit is None or sum(limit) >= q[s]
         ), f"Sum of limits is {limit_sum} but we need to distribute {q[s]} at step {s}"
@@ -391,7 +395,7 @@ def distribute_quantities(
             values.append([0] * a)
             continue
 
-        v = [int(0.5 + _ * q[s] / qz) for _ in base_cut]
+        v = [int(0.5 + _ * float(q[s] / qz)) for _ in base_cut]
         n_changes = max(0, min(q[s], int(0.5 + (1.0 - predictability) * q[s])))
         if limit is not None:
             n_changes = min(n_changes, sum(l - x for l, x in zip(limit, v)))
@@ -420,3 +424,64 @@ def distribute_quantities(
         ), f"Failed to distribute: expected {q[s]} but got {sum(v)}: {values[-1]}"
         assert min(v) >= 0, f"Negative  value {min(v)} in quantities!\n{v}"
     return values
+
+
+def distribute(
+    q: int,
+    n: int,
+    *,
+    mx: int | None = None,
+    equal=False,
+    concentrated=False,
+    allow_zero=False,
+) -> list[int]:
+    """Distributes q values over n bins.
+
+    Args:
+        q: Quantity to distribute
+        n: number of bins to distribute q over
+        mx: Maximum allowed per bin. `None` for no limit
+        equal: Try to make the values in each bins as equal as possible
+        concentrated: If true, will try to concentrate offers in few bins. `mx` must be passed in this case
+        allow_zero: Allow some bins to be zero even if that is not necessary
+    """
+    from collections import Counter
+
+    from numpy.random import choice
+
+    q, n = int(q), int(n)
+
+    if mx is not None and q > mx * n:
+        q = mx * n
+
+    if concentrated:
+        assert mx is not None
+        lst = [0] * n
+        if not allow_zero:
+            for i in range(min(q, n)):
+                lst[i] = 1
+        q -= sum(lst)
+        if q == 0:
+            random.shuffle(lst)
+            return lst
+        for i in range(n):
+            q += lst[i]
+            lst[i] = min(mx, q)
+            q -= lst[i]
+        random.shuffle(lst)
+        return lst
+
+    if q < n:
+        lst = [0] * (n - q) + [1] * q
+        random.shuffle(lst)
+        return lst
+
+    if q == n:
+        return [1] * n
+    if allow_zero:
+        per = 0
+    else:
+        per = (q // n) if equal else 1
+    q -= per * n
+    r = Counter(choice(n, q))
+    return [r.get(_, 0) + per for _ in range(n)]

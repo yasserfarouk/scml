@@ -10,6 +10,7 @@ SCMLBaseWorld
 
    .. autosummary::
 
+      ~SCMLBaseWorld.agent_contracts
       ~SCMLBaseWorld.agreement_fraction
       ~SCMLBaseWorld.agreement_rate
       ~SCMLBaseWorld.breach_fraction
@@ -52,6 +53,7 @@ SCMLBaseWorld
       ~SCMLBaseWorld.saved_negotiations
       ~SCMLBaseWorld.short_type_name
       ~SCMLBaseWorld.signed_contracts
+      ~SCMLBaseWorld.stat_names
       ~SCMLBaseWorld.stats
       ~SCMLBaseWorld.stats_df
       ~SCMLBaseWorld.system_agent_ids
@@ -79,6 +81,7 @@ SCMLBaseWorld
       ~SCMLBaseWorld.checkpoint_info
       ~SCMLBaseWorld.checkpoint_init
       ~SCMLBaseWorld.checkpoint_on_step_started
+      ~SCMLBaseWorld.combine_stats
       ~SCMLBaseWorld.complete_contract_execution
       ~SCMLBaseWorld.contract_record
       ~SCMLBaseWorld.contract_size
@@ -117,6 +120,8 @@ SCMLBaseWorld
       ~SCMLBaseWorld.on_event
       ~SCMLBaseWorld.on_exception
       ~SCMLBaseWorld.order_contracts_for_execution
+      ~SCMLBaseWorld.plot_combined_stats
+      ~SCMLBaseWorld.plot_stats
       ~SCMLBaseWorld.post_step_stats
       ~SCMLBaseWorld.pre_step_stats
       ~SCMLBaseWorld.read_config
@@ -125,6 +130,7 @@ SCMLBaseWorld
       ~SCMLBaseWorld.register_stats_monitor
       ~SCMLBaseWorld.register_world_monitor
       ~SCMLBaseWorld.relative_welfare
+      ~SCMLBaseWorld.replace_agents
       ~SCMLBaseWorld.request_negotiation_about
       ~SCMLBaseWorld.run
       ~SCMLBaseWorld.run_negotiation
@@ -148,6 +154,7 @@ SCMLBaseWorld
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agent_contracts
    .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
    .. autoattribute:: breach_fraction
@@ -190,6 +197,7 @@ SCMLBaseWorld
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: stats_df
    .. autoattribute:: system_agent_ids
@@ -215,6 +223,7 @@ SCMLBaseWorld
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
@@ -253,6 +262,8 @@ SCMLBaseWorld
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: read_config
@@ -261,6 +272,7 @@ SCMLBaseWorld
    .. automethod:: register_stats_monitor
    .. automethod:: register_world_monitor
    .. automethod:: relative_welfare
+   .. automethod:: replace_agents
    .. automethod:: request_negotiation_about
    .. automethod:: run
    .. automethod:: run_negotiation

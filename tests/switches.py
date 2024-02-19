@@ -1,5 +1,8 @@
 import os
 
+from scml.oneshot.world import SCML2024OneShotWorld
+from scml.std.world import SCML2024StdWorld
+
 __all__ = [
     "SCML_RUNALL_TESTS",
     "SCML_FASTRUN",
@@ -9,6 +12,11 @@ __all__ = [
     "SCML_RUN2021_ONESHOT",
     "SCML_RUN2021_ONESHOT_SYNC",
     "SCML_RUN2021_STD",
+    "SCML_TRY2020",
+    "SCML_TRY2021",
+    "SCML_TRY2022",
+    "SCML_TRY2023",
+    "SCML_TRY2024",
     "SCML_RUN_TUTORIAL2",
     "SCML_RUN_GENIUS",
     "SCML_RUN_TOURNAMENTS",
@@ -16,6 +24,8 @@ __all__ = [
     "SCML_RUN_COLLUSION_TOURNAMENTS",
     "SCML_RUN_SABOTAGE_TOURNAMENTS",
     "SCML_RUN_TEMP_FAILING",
+    "DefaultOneShotWorld",
+    "DefaultStdWorld",
 ]
 
 
@@ -45,3 +55,12 @@ SCML_RUN2020 = is_enabled("SCML_RUN2020")
 SCML_RUN_TUTORIAL2 = isnot_disabled("SCML_RUN_TUTORIAL2")
 SCML_RUN_NOTEBOOKS = isnot_disabled("SCML_RUN_NOTEBOOKS")
 SCML_RUN_SCHEDULER = is_enabled("SCML_RUN_SCHEDULER")
+
+SCML_TRY2020 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2021 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2022 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2023 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2024 = True
+
+DefaultOneShotWorld = SCML2024OneShotWorld
+DefaultStdWorld = SCML2024StdWorld

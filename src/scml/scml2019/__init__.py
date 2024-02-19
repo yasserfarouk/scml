@@ -86,21 +86,21 @@ Remarks about ANAC 2019 SCML League:
 
 
 """
-from .common import *
-from .schedulers import *
-from .awi import *
+
+from . import helpers, utils19
 from .agent import *
+from .awi import *
 from .bank import *
-from .insurance import *
-from .world import *
-from .factory_managers import *
+from .common import *
 from .consumers import *
-from .miners import *
-from . import utils
-from . import helpers
-from .utils import *
+from .factory_managers import *
 from .helpers import *
+from .insurance import *
+from .miners import *
+from .schedulers import *
 from .simulators import *
+from .utils19 import *
+from .world import *
 
 
 def builtin_agent_types(as_str=False):
@@ -127,11 +127,11 @@ __all__ = (
     + insurance.__all__
     + agent.__all__
     + simulators.__all__
-    + utils.__all__
+    + utils19.__all__
     + helpers.__all__
     + schedulers.__all__
     + world.__all__
     + consumers.__all__
     + miners.__all__
-    + ["utils", "helpers"]
+    + ["utils19", "helpers"]
 )

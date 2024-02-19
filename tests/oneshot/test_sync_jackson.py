@@ -10,12 +10,14 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 from hypothesis import given, settings
-from negmas import Outcome, ResponseType, SAOResponse
+from negmas import Outcome, ResponseType, SAOResponse, SAOState
 from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
 from scml.oneshot import *
 from scml.oneshot import OneShotAgent, OneShotSyncAgent
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
+
+from ..switches import DefaultOneShotWorld
 
 DEFAULT_SEED = 1
 
@@ -32,7 +34,7 @@ class SimpleAgent(OneShotAgent):
     def propose(self, negotiator_id: str, state) -> Outcome | None:
         return self.best_offer(negotiator_id)
 
-    def respond(self, negotiator_id, state, source=None):
+    def respond(self, negotiator_id, state: SAOState, source=None):  # type: ignore
         offer = state.current_offer
         if offer is None:
             return ResponseType.REJECT_OFFER
@@ -99,6 +101,7 @@ class BetterAgent(SimpleAgent):
         if response != ResponseType.ACCEPT_OFFER:
             return response
         nmi = self.get_nmi(negotiator_id)
+        assert offer is not None
         return (
             response
             if self._is_good_price(nmi, state, offer[UNIT_PRICE])
@@ -283,20 +286,32 @@ def run_experiment(
     enable_time_limit=True,
     shuffle_negotiations=False,
 ):
-    suppliers = ([ReporterAgent] if supplier_reporter else []) + [SyncAgent] * n_sync_suppliers + [BetterAgent] * (2 - n_sync_suppliers)  # type: ignore
-    consumers = ([ReporterAgent] if consumer_reporter else []) + [SyncAgent] * n_sync_consumers + [BetterAgent] * (2 - n_sync_consumers)  # type: ignore
+    suppliers = (
+        ([ReporterAgent] if supplier_reporter else [])
+        + [SyncAgent] * n_sync_suppliers
+        + [BetterAgent] * (2 - n_sync_suppliers)
+    )  # type: ignore
+    consumers = (
+        ([ReporterAgent] if consumer_reporter else [])
+        + [SyncAgent] * n_sync_consumers
+        + [BetterAgent] * (2 - n_sync_consumers)
+    )  # type: ignore
     max_round_diff = (
         len(suppliers) * n_sync_consumers + len(consumers) * n_sync_suppliers + 1
     )
     supplier_params = [
-        dict(controller_params=dict(max_round_diff=max_round_diff))
-        if supplier_reporter
-        else dict()
+        (
+            dict(controller_params=dict(max_round_diff=max_round_diff))
+            if supplier_reporter
+            else dict()
+        )
     ] + [dict() for _ in range(len(suppliers) - 1)]
     consumer_params = [
-        dict(controller_params=dict(max_round_diff=max_round_diff))
-        if consumer_reporter
-        else dict()
+        (
+            dict(controller_params=dict(max_round_diff=max_round_diff))
+            if consumer_reporter
+            else dict()
+        )
     ] + [dict() for _ in range(len(consumers) - 1)]
     types = suppliers + consumers
     params = supplier_params + consumer_params
@@ -316,8 +331,8 @@ def run_experiment(
         }
     )
 
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=types,
             agent_params=params,
             n_agents_per_process=len(consumers) + len(suppliers),

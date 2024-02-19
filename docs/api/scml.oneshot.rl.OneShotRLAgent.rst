@@ -61,6 +61,7 @@ OneShotRLAgent
       ~OneShotRLAgent.get_ami
       ~OneShotRLAgent.get_negotiator
       ~OneShotRLAgent.get_nmi
+      ~OneShotRLAgent.has_no_valid_model
       ~OneShotRLAgent.init
       ~OneShotRLAgent.init_
       ~OneShotRLAgent.join
@@ -87,6 +88,7 @@ OneShotRLAgent
       ~OneShotRLAgent.reset
       ~OneShotRLAgent.respond
       ~OneShotRLAgent.set_preferences
+      ~OneShotRLAgent.setup_fallback
       ~OneShotRLAgent.sign_all_contracts
       ~OneShotRLAgent.spawn
       ~OneShotRLAgent.spawn_object
@@ -144,6 +146,7 @@ OneShotRLAgent
    .. automethod:: get_ami
    .. automethod:: get_negotiator
    .. automethod:: get_nmi
+   .. automethod:: has_no_valid_model
    .. automethod:: init
    .. automethod:: init_
    .. automethod:: join
@@ -170,6 +173,7 @@ OneShotRLAgent
    .. automethod:: reset
    .. automethod:: respond
    .. automethod:: set_preferences
+   .. automethod:: setup_fallback
    .. automethod:: sign_all_contracts
    .. automethod:: spawn
    .. automethod:: spawn_object

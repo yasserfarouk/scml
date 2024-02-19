@@ -56,6 +56,7 @@ SCML2023World
       ~SCML2023World.saved_negotiations
       ~SCML2023World.short_type_name
       ~SCML2023World.signed_contracts
+      ~SCML2023World.stat_names
       ~SCML2023World.stats
       ~SCML2023World.stats_df
       ~SCML2023World.system_agent_ids
@@ -84,6 +85,7 @@ SCML2023World
       ~SCML2023World.checkpoint_info
       ~SCML2023World.checkpoint_init
       ~SCML2023World.checkpoint_on_step_started
+      ~SCML2023World.combine_stats
       ~SCML2023World.compensate
       ~SCML2023World.complete_contract_execution
       ~SCML2023World.contract_record
@@ -127,6 +129,8 @@ SCML2023World
       ~SCML2023World.on_event
       ~SCML2023World.on_exception
       ~SCML2023World.order_contracts_for_execution
+      ~SCML2023World.plot_combined_stats
+      ~SCML2023World.plot_stats
       ~SCML2023World.post_step_stats
       ~SCML2023World.pre_step_stats
       ~SCML2023World.read_config
@@ -204,6 +208,7 @@ SCML2023World
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: stats_df
    .. autoattribute:: system_agent_ids
@@ -230,6 +235,7 @@ SCML2023World
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: compensate
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
@@ -273,6 +279,8 @@ SCML2023World
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: read_config

@@ -10,6 +10,7 @@ OneShotWorld
 
    .. autosummary::
 
+      ~OneShotWorld.agent_contracts
       ~OneShotWorld.agreement_fraction
       ~OneShotWorld.agreement_rate
       ~OneShotWorld.breach_fraction
@@ -52,6 +53,7 @@ OneShotWorld
       ~OneShotWorld.saved_negotiations
       ~OneShotWorld.short_type_name
       ~OneShotWorld.signed_contracts
+      ~OneShotWorld.stat_names
       ~OneShotWorld.stats
       ~OneShotWorld.stats_df
       ~OneShotWorld.system_agent_ids
@@ -79,6 +81,7 @@ OneShotWorld
       ~OneShotWorld.checkpoint_info
       ~OneShotWorld.checkpoint_init
       ~OneShotWorld.checkpoint_on_step_started
+      ~OneShotWorld.combine_stats
       ~OneShotWorld.complete_contract_execution
       ~OneShotWorld.contract_record
       ~OneShotWorld.contract_size
@@ -117,6 +120,8 @@ OneShotWorld
       ~OneShotWorld.on_event
       ~OneShotWorld.on_exception
       ~OneShotWorld.order_contracts_for_execution
+      ~OneShotWorld.plot_combined_stats
+      ~OneShotWorld.plot_stats
       ~OneShotWorld.post_step_stats
       ~OneShotWorld.pre_step_stats
       ~OneShotWorld.read_config
@@ -125,6 +130,7 @@ OneShotWorld
       ~OneShotWorld.register_stats_monitor
       ~OneShotWorld.register_world_monitor
       ~OneShotWorld.relative_welfare
+      ~OneShotWorld.replace_agents
       ~OneShotWorld.request_negotiation_about
       ~OneShotWorld.run
       ~OneShotWorld.run_negotiation
@@ -148,6 +154,7 @@ OneShotWorld
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agent_contracts
    .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
    .. autoattribute:: breach_fraction
@@ -190,6 +197,7 @@ OneShotWorld
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: stats_df
    .. autoattribute:: system_agent_ids
@@ -215,6 +223,7 @@ OneShotWorld
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
@@ -253,6 +262,8 @@ OneShotWorld
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: read_config
@@ -261,6 +272,7 @@ OneShotWorld
    .. automethod:: register_stats_monitor
    .. automethod:: register_world_monitor
    .. automethod:: relative_welfare
+   .. automethod:: replace_agents
    .. automethod:: request_negotiation_about
    .. automethod:: run
    .. automethod:: run_negotiation

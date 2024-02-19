@@ -23,6 +23,12 @@ OneShotProfile
       ~OneShotProfile.storage_cost_dev
       ~OneShotProfile.storage_cost_mean
 
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~OneShotProfile.random
+
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: cost
@@ -37,3 +43,7 @@ OneShotProfile
    .. autoattribute:: shortfall_penalty_mean
    .. autoattribute:: storage_cost_dev
    .. autoattribute:: storage_cost_mean
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: random

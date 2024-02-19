@@ -107,7 +107,7 @@ def does_not_raise(err):
 def sync_counter_all_reenters_as_expected(
     use_sleep, check_negs, single_thread, raise_expected
 ):
-    from scml.oneshot import SCML2020OneShotWorld
+    from ..switches import DefaultOneShotWorld
 
     _strt = time.perf_counter()
     print(
@@ -125,8 +125,8 @@ def sync_counter_all_reenters_as_expected(
 
     n_steps = 5
 
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             [types[(use_sleep, check_negs)], RandomOneShotAgent],
             n_agents_per_process=2,
             n_processes=2,

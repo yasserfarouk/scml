@@ -1,34 +1,36 @@
 """
 Defines ways to encode and decode observations.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Iterable, Protocol, runtime_checkable
 
 import numpy as np
 from attr import define, field
 from gymnasium import spaces
-from negmas import ResponseType, SAOResponse
+from negmas import DiscreteCartesianOutcomeSpace
 from negmas.helpers.strings import itertools
+from negmas.outcomes import Outcome
 
-from scml.common import isin
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.common import NegotiationDetails, OneShotState
-from scml.oneshot.context import (
-    Context,
-    FixedPartnerNumbersContext,
-    FixedPartnerNumbersOneShotContext,
-    LimitedPartnerNumbersContext,
-)
+from scml.oneshot.common import OneShotState
+from scml.oneshot.context import BaseContext, extract_context_params
+from scml.oneshot.rl.common import group_partners
 from scml.scml2019.common import QUANTITY, UNIT_PRICE
 
 __all__ = [
     "ObservationManager",
-    "FixedPartnerNumbersObservationManager",
-    "LimitedPartnerNumbersObservationManager",
+    "FlexibleObservationManager",
     "DefaultObservationManager",
 ]
+
+
+def astuple(x: Iterable | int | float | str) -> tuple:
+    if not isinstance(x, Iterable):
+        return (x, x)
+    return tuple(x)
 
 
 @runtime_checkable
@@ -36,7 +38,7 @@ class ObservationManager(Protocol):
     """Manages the observations of an agent in an RL environment"""
 
     @property
-    def context(self) -> Context:
+    def context(self) -> BaseContext:
         ...
 
     def make_space(self) -> spaces.Space:
@@ -53,16 +55,16 @@ class ObservationManager(Protocol):
 
     def get_offers(
         self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, SAOResponse]:
+    ) -> dict[str, Outcome | None]:
         """Gets the offers from an encoded state"""
         ...
 
 
-@define(frozen=True)
+@define
 class BaseObservationManager(ABC):
     """Base class for all observation managers that use a context"""
 
-    context: Context
+    context: BaseContext
 
     @abstractmethod
     def make_space(self) -> spaces.Space:
@@ -74,9 +76,10 @@ class BaseObservationManager(ABC):
         """Encodes an observation from the agent's state"""
         ...
 
+    @abstractmethod
     def get_offers(
         self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, SAOResponse]:
+    ) -> dict[str, Outcome | None]:
         """Gets the offers from an encoded state"""
         ...
 
@@ -85,42 +88,68 @@ class BaseObservationManager(ABC):
         return self.encode(awi.state)
 
 
-@define(frozen=True)
-class FixedPartnerNumbersObservationManager(BaseObservationManager):
+@define
+class FlexibleObservationManager(BaseObservationManager):
     n_bins: int = 40
     n_sigmas: int = 2
-    extra_checks: bool = False
     n_prices: int = 2
-    n_partners: int = field(init=False)
-    n_suppliers: int = field(init=False)
-    n_consumers: int = field(init=False)
-    max_quantity: int = field(init=False)
-    n_lines: int = field(init=False)
+    max_production_cost: int = 10
+    max_group_size: int = 2
+    reduce_space_size: bool = True
+    n_partners: int = field(init=False, default=16)
+    n_suppliers: int = field(init=False, default=8)
+    n_consumers: int = field(init=False, default=8)
+    max_quantity: int = field(init=False, default=10)
+    n_lines: int = field(init=False, default=10)
+    extra_checks: bool = False
+    _chosen_partner_indices: list[int] | None = field(init=False, default=None)
+    _previous_offers: list[int] | None = field(init=False, default=None)
+    _dims: list[int] | None = field(init=False, default=None)
 
     def __attrs_post_init__(self):
-        assert isinstance(self.context, FixedPartnerNumbersContext)
-        object.__setattr__(self, "n_suppliers", self.context.n_suppliers)
-        object.__setattr__(self, "n_consumers", self.context.n_consumers)
-        object.__setattr__(self, "max_quantity", self.context.n_lines)
-        object.__setattr__(self, "n_lines", self.context.n_lines)
-        object.__setattr__(self, "n_partners", self.n_suppliers + self.n_consumers)
-
-    def make_space(self) -> spaces.Space:
-        """Creates the action space"""
-        return spaces.MultiDiscrete(
-            np.asarray(
-                list(
-                    itertools.chain(
-                        [self.max_quantity + 1, self.n_prices] * self.n_partners
-                    )
-                )
-                + [self.max_quantity + 1] * 2
-                + [self.n_lines]
-                + [self.n_bins + 1] * 2
-                + [self.n_bins * 10 + 1]
-                + [self.n_bins + 1] * 3
-            ).flatten()
+        p = extract_context_params(
+            self.context, self.reduce_space_size, raise_on_failure=False
         )
+        if p.nlines:
+            object.__setattr__(self, "n_suppliers", p.nsuppliers)
+            object.__setattr__(self, "n_consumers", p.nconsumers)
+            object.__setattr__(self, "max_quantity", p.nlines)
+            object.__setattr__(self, "n_lines", p.nlines)
+            object.__setattr__(self, "n_partners", p.nsuppliers + p.nconsumers)
+
+    def get_dims(self) -> list[int]:
+        return (
+            list(
+                itertools.chain(
+                    [self.max_group_size * self.max_quantity + 1, self.n_prices]
+                    * self.n_partners
+                )
+            )
+            + list(
+                itertools.chain(
+                    [self.max_group_size * self.max_quantity + 1, self.n_prices]
+                    * self.n_partners
+                )
+            )
+            + [self.max_quantity + 1] * 2  # needed sales and supplies
+            # + [self.n_lines]
+            + [self.n_bins + 1] * 2  # level, relative_simulation
+            + [self.n_bins * 2 + 1]  # neg_relative
+            + [self.n_bins + 1] * 4  # production cost, penalties and other costs
+            + [self.n_bins + 1] * 2  # exogenous_contract quantity summary
+        )
+
+    def make_space(self) -> spaces.MultiDiscrete:
+        """Creates the action space"""
+        dims = self.get_dims()
+        if self._dims is None:
+            self._dims = dims
+        elif self.extra_checks:
+            assert all(
+                a == b for a, b in zip(dims, self._dims, strict=True)
+            ), f"Surprising dims\n{self._dims=}\n{dims=}"
+        space = spaces.MultiDiscrete(np.asarray(dims))
+        return space
 
     def make_first_observation(self, awi: OneShotAWI) -> np.ndarray:
         """Creates the initial observation (returned from gym's reset())"""
@@ -128,50 +157,46 @@ class FixedPartnerNumbersObservationManager(BaseObservationManager):
 
     def encode(self, state: OneShotState) -> np.ndarray:
         """Encodes the state as an array"""
-        partners = state.my_partners
-        assert (
-            len(partners) >= self.n_partners
-        ), f"{len(partners)=} but I can only support {self.n_partners=}"
-        if len(partners) > self.n_partners:
-            partners = partners[: self.n_partners]
-        partner_index = dict(zip(partners, range(self.n_partners)))
-        partnerset = set(partners)
-        infos: list[NegotiationDetails | None] = [None] * self.n_partners  # type: ignore
-        neg_relative_time = 0.0
-        actual_partners = list(
-            itertools.chain(
-                state.current_negotiation_details["buy"].items(),
-                state.current_negotiation_details["sell"].items(),
-            )
+        suppliers = group_partners(
+            state.my_suppliers, self.n_suppliers, self.max_group_size
         )
-        for partner, info in actual_partners:
-            if partner not in partnerset:
-                continue
-            infos[partner_index[partner]] = info
-            if not info.nmi.state.ended:
-                neg_relative_time = max(neg_relative_time, info.nmi.state.relative_time)
-        offers = [
-            (0, 0)
-            if info is None or info.nmi.state.current_offer is None  # type: ignore
-            else (
-                int(info.nmi.state.current_offer[QUANTITY]),  # type: ignore
-                int(
-                    info.nmi.state.current_offer[UNIT_PRICE]  # type: ignore
-                    - info.nmi.outcome_space.issues[UNIT_PRICE].min_value  # type: ignore
-                ),  # type: ignore
-            )
-            for info in infos
-        ]
+        consumers = group_partners(
+            state.my_consumers, self.n_consumers, self.max_group_size
+        )
+
         if self.extra_checks:
-            assert (
-                len(partners) == self.n_partners
-            ), f"{len(partners)=} while {self.n_partners=}: {partners=}"
-            assert (
-                len(infos) == self.n_partners
-            ), f"{len(infos)=} while {self.n_partners=}: {infos=}"
-            assert (
-                len(offers) == self.n_partners
-            ), f"{len(infos)=} while {self.n_partners=}: {offers=}"
+            partners = suppliers + consumers
+            assert len(partners) == self.n_partners, (
+                f"{len(partners)=} but I can only support {self.n_partners=}"
+                f"\n{suppliers=}\n{consumers=}\n{type(self.context)=}\n{self.context=}\n{self=}"
+            )
+        neg_relative_time = 1.0
+        for s in state.current_states.values():
+            neg_relative_time = min(neg_relative_time, s.relative_time)
+        offer_map = state.current_offers
+
+        def read_offers(N, lstoflst, min_price, offer_map=offer_map):
+            offers = [[0, 0] for _ in range(N)]
+            for i, lst in enumerate(lstoflst):
+                n_read = 0
+                for partner in lst:
+                    outcome = offer_map.get(partner, (0, 0, 0))
+                    if outcome is None:
+                        continue
+                    offers[i][0] += outcome[QUANTITY]
+                    offers[i][1] += outcome[UNIT_PRICE] * outcome[QUANTITY]
+                    n_read += 1
+                if n_read and offers[i][0]:
+                    offers[i][1] = offers[i][1] / offers[i][0] - min_price
+            return offers
+
+        min_price = state.current_input_outcome_space.issues[UNIT_PRICE].min_value
+        offers = read_offers(self.n_suppliers, suppliers, min_price)
+
+        min_price = state.current_output_outcome_space.issues[UNIT_PRICE].min_value
+        offers += read_offers(self.n_consumers, consumers, min_price)
+
+        if self.extra_checks:
             assert (
                 state.total_sales == 0 or state.total_supplies == 0
             ), f"{state.total_sales=}, {state.total_supplies=}, {state.exogenous_input_quantity=}, {state.exogenous_output_quantity=}"
@@ -188,50 +213,122 @@ class FixedPartnerNumbersObservationManager(BaseObservationManager):
                 return 1
             return max(0, min(1, (x - mn) / (mx - mn)))
 
+        offerslist = np.asarray(offers).flatten().tolist()
+        if self._previous_offers is None:
+            previous_offers = [0] * len(offerslist)
+        else:
+            previous_offers = self._previous_offers
+        assert (
+            len(previous_offers) == self.n_partners * 2
+        ), f"{len(previous_offers)=} but {self.n_partners=}"
+        assert (
+            len(offerslist) == self.n_partners * 2
+        ), f"{len(offerslist)=} but {self.n_partners=}"
+        exogenous = state.exogenous_contract_summary
+        exogenous = [
+            min(
+                self.n_bins,
+                max(
+                    0,
+                    int(
+                        self.n_bins
+                        * (
+                            exogenous[0][0]
+                            / (self.max_quantity * len(state.all_consumers[0]))
+                        )
+                    ),
+                ),
+            ),
+            min(
+                self.n_bins,
+                max(
+                    0,
+                    int(
+                        self.n_bins
+                        * (
+                            exogenous[-1][0]
+                            / (self.max_quantity * len(state.all_suppliers[-1]))
+                        )
+                    ),
+                ),
+            ),
+        ]
         extra = [
             max(0, state.needed_sales),
             max(0, state.needed_supplies),
-            # state.n_input_negotiations,
-            # state.n_output_negotiations,
-            state.n_lines - 1,
-            int(self.n_bins * (state.level / state.n_processes) + 0.5),
-            int(neg_relative_time * self.n_bins + 0.5),
-            int(state.relative_simulation_time * self.n_bins * 10 + 0.5),
-            int(
-                _normalize(
-                    state.disposal_cost,
-                    state.profile.disposal_cost_mean,
-                    state.profile.disposal_cost_dev,
-                )
-                * self.n_bins
-                + 0.5
+            # state.n_lines - 1,
+            max(
+                0,
+                min(
+                    self.n_bins,
+                    int(self.n_bins * (state.level / (state.n_processes - 1))),
+                ),
             ),
-            int(
-                _normalize(
-                    state.shortfall_penalty,
-                    state.profile.shortfall_penalty_mean,
-                    state.profile.shortfall_penalty_dev,
-                )
-                * self.n_bins
-                + 0.5
+            max(0, min(self.n_bins, int(state.relative_simulation_time * self.n_bins))),
+            max(0, min(self.n_bins * 2, int(neg_relative_time * self.n_bins * 2))),
+            max(
+                0,
+                min(
+                    self.n_bins,
+                    int(self.n_bins * state.profile.cost / self.max_production_cost),
+                ),
             ),
-            int(
-                self.n_bins
-                * min(
-                    1,
-                    (
-                        state.trading_prices[state.my_output_product]
-                        - state.trading_prices[state.my_input_product]
-                    )
-                    / state.trading_prices[state.my_output_product],
-                )
-                + 0.5
+            max(
+                0,
+                min(
+                    self.n_bins,
+                    int(
+                        _normalize(
+                            state.disposal_cost,
+                            state.profile.disposal_cost_mean,
+                            state.profile.disposal_cost_dev,
+                        )
+                        * self.n_bins
+                    ),
+                ),
             ),
-        ]
+            max(
+                0,
+                min(
+                    self.n_bins,
+                    int(
+                        _normalize(
+                            state.shortfall_penalty,
+                            state.profile.shortfall_penalty_mean,
+                            state.profile.shortfall_penalty_dev,
+                        )
+                        * self.n_bins
+                    ),
+                ),
+            ),
+            max(
+                0,
+                min(
+                    self.n_bins,
+                    int(
+                        self.n_bins
+                        * min(
+                            1,
+                            (
+                                state.trading_prices[state.my_output_product]
+                                - state.trading_prices[state.my_input_product]
+                            )
+                            / state.trading_prices[state.my_output_product],
+                        )
+                    ),
+                ),
+            ),
+        ] + exogenous
+        v = np.asarray(offerslist + previous_offers + extra)
 
-        v = np.asarray(np.asarray(offers).flatten().tolist() + extra)
         if self.extra_checks:
+            if self._dims is None:
+                self._dims = self.get_dims()
+            assert all(
+                a <= b for a, b in zip(v, self._dims, strict=True)
+            ), f"Surprising dims\n{v=}\n{self._dims=}"
             space = self.make_space()
+            assert isinstance(space, spaces.MultiDiscrete)
             assert space is not None and space.shape is not None
             exp = space.shape[0]
             assert (
@@ -246,160 +343,77 @@ class FixedPartnerNumbersObservationManager(BaseObservationManager):
                 0 <= a < b for a, b in zip(v, space.nvec)  # type: ignore
             ), f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"  # type: ignore
 
+        self._previous_offers = offerslist
         return v
 
-    def is_valid(self, env) -> bool:
-        """Checks that it is OK to use this observation manager with a given `OneShotEnv`"""
-        if env._n_lines != self.n_lines:
-            return False
-        if env._n_suppliers != self.n_suppliers:
-            return False
-        if env._n_consumers != self.n_consumers:
-            return False
-        return True
-
     def get_offers(
-        self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, SAOResponse]:
-        """Gets the offers from an encoded state"""
-        offers = encoded[: 2 * self.n_partners].reshape((self.n_partners, 2))
-        partners = awi.my_partners[: self.n_partners]
+        self, awi: OneShotAWI, encoded: np.ndarray, previous=False
+    ) -> dict[str, Outcome | None]:
+        """
+        Gets offers from an encoded state.
+        """
+        suppliers = group_partners(
+            awi.my_suppliers, self.n_suppliers, self.max_group_size
+        )
+        consumers = group_partners(
+            awi.my_consumers, self.n_consumers, self.max_group_size
+        )
+        buyos = awi.current_input_outcome_space
+        sellos = awi.current_output_outcome_space
+        min_buy_price = buyos.issues[UNIT_PRICE].min_value
+        min_sell_price = sellos.issues[UNIT_PRICE].min_value
+        return self.decode_offers(
+            encoded,
+            suppliers,
+            consumers,
+            previous,
+            min_buy_price,
+            min_sell_price,
+            awi.current_step,
+            buyos,
+            sellos,
+        )
+
+    def decode_offers(
+        self,
+        encoded: np.ndarray,
+        suppliers: list[list[str]],
+        consumers: list[list[str]],
+        mine: bool,
+        min_buy_price: float,
+        min_sell_price: float,
+        current_step: int,
+        buyos: DiscreteCartesianOutcomeSpace | None = None,
+        sellos: DiscreteCartesianOutcomeSpace | None = None,
+    ) -> dict[str, Outcome | None]:
+        strt = 2 * self.n_partners if mine else 0
+        offers = encoded[strt : strt + 2 * self.n_partners].reshape(
+            (self.n_partners, 2)
+        )
+        partners = suppliers + consumers
+        assert len(offers) == len(partners), f"{len(offers)=}, {len(partners)=}"
         responses = dict()
-        minprice = (
-            awi.current_output_issues
-            if awi.is_first_level
-            else awi.current_input_issues
-        )[UNIT_PRICE].min_value
-        for p, w in zip(partners, offers):
+        for plst, w, is_supplier in zip(
+            partners,
+            offers,
+            [True] * len(suppliers) + [False] * len(consumers),
+            strict=True,
+        ):
+            p = "+".join(plst)
+            minprice = min_buy_price if is_supplier else min_sell_price
             if w[0] == w[1] == 0:
-                responses[p] = SAOResponse(ResponseType.END_NEGOTIATION, None)
+                responses[p] = None
                 continue
 
-            outcome = (w[0], awi.current_step, w[1] + minprice)
+            outcome = (w[0], current_step, w[1] + minprice)
             if self.extra_checks:
-                os = (
-                    awi.current_input_outcome_space
-                    if awi.is_first_level
-                    else awi.current_output_outcome_space
-                )
+                os = buyos if is_supplier else sellos
                 assert (
-                    outcome in os
-                ), f"received {outcome} from {p} ({w}) in step {awi.current_step} for OS {os}\n{encoded=}"
-            responses[p] = SAOResponse(ResponseType.REJECT_OFFER, outcome)
+                    os is None or outcome in os
+                ), f"received {outcome} from {p} ({w}) in step {current_step} for OS {os}\n{encoded=}"
+            responses[p] = outcome
         return responses
 
 
-@define(frozen=True)
-class LimitedPartnerNumbersObservationManager(BaseObservationManager):
-    n_bins: int = 40
-    n_sigmas: int = 2
-    extra_checks: bool = True
-    n_prices: int = 2
-    n_partners: tuple[int, int] = field(init=False)
-    n_suppliers: tuple[int, int] = field(init=False)
-    n_consumers: tuple[int, int] = field(init=False)
-    max_quantity: tuple[int, int] = field(init=False)
-    n_lines: tuple[int, int] = field(init=False)
-    sub_manager: FixedPartnerNumbersObservationManager = field(init=False)
-    submanager_context: type[FixedPartnerNumbersContext] = field(
-        init=False, default=FixedPartnerNumbersOneShotContext
-    )
-
-    def __attrs_post_init__(self):
-        if isinstance(self.context, LimitedPartnerNumbersContext):
-            object.__setattr__(self, "n_suppliers", self.context.n_suppliers)
-            object.__setattr__(self, "n_consumers", self.context.n_consumers)
-            object.__setattr__(self, "max_quantity", self.context.n_lines)
-            object.__setattr__(self, "n_lines", self.context.n_lines)
-        elif isinstance(self.context, FixedPartnerNumbersContext):
-            object.__setattr__(
-                self,
-                "n_suppliers",
-                (self.context.n_suppliers, self.context.n_suppliers),
-            )
-            object.__setattr__(
-                self,
-                "n_consumers",
-                (self.context.n_consumers, self.context.n_consumers),
-            )
-            object.__setattr__(
-                self, "max_quantity", (self.context.n_lines, self.context.n_lines)
-            )
-            object.__setattr__(
-                self, "n_lines", (self.context.n_lines, self.context.n_lines)
-            )
-        else:
-            raise AssertionError(
-                f"{self.__class__} does not support factories of type {self.context.__class__}"
-            )
-        object.__setattr__(
-            self,
-            "n_partners",
-            (
-                self.n_suppliers[0] + self.n_consumers[0],
-                self.n_suppliers[1] + self.n_consumers[1],
-            ),
-        )
-        object.__setattr__(
-            self,
-            "sub_manager",
-            FixedPartnerNumbersObservationManager(
-                context=self.submanager_context(
-                    # year=self.context.year,
-                    level=self.context.level,
-                    n_processes=self.context.n_processes[-1]
-                    if isinstance(self.context.n_processes, tuple)
-                    else self.context.n_processes,
-                    n_consumers=self.context.n_consumers[0]
-                    if isinstance(self.context.n_consumers, tuple)
-                    else self.context.n_consumers,
-                    n_suppliers=self.context.n_suppliers[0]
-                    if isinstance(self.context.n_suppliers, tuple)
-                    else self.context.n_suppliers,
-                    n_competitors=self.context.n_competitors[0]
-                    if isinstance(self.context.n_competitors, tuple)
-                    else self.context.n_competitors,
-                    n_agents_per_process=self.context.n_agents_per_process,
-                    n_lines=self.context.n_lines[0]
-                    if isinstance(self.context.n_lines, tuple)
-                    else self.context.n_lines,
-                    non_competitors=self.context.non_competitors,
-                ),
-                n_bins=self.n_bins,
-                n_sigmas=self.n_sigmas,
-                extra_checks=self.extra_checks,
-                n_prices=self.n_prices,
-            ),
-        )
-
-    def get_offers(
-        self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, SAOResponse]:
-        """Gets the offers from an encoded state"""
-        return self.sub_manager.get_offers(awi, encoded)
-
-    def make_space(self) -> spaces.Space:
-        """Creates the action space"""
-        return self.sub_manager.make_space()
-
-    def make_first_observation(self, awi: OneShotAWI) -> np.ndarray:
-        """Creates the initial observation (returned from gym's reset())"""
-        return self.encode(awi.state)
-
-    def encode(self, state: OneShotState) -> np.ndarray:
-        """Encodes the state as an array"""
-        return self.sub_manager.encode(state)
-
-    def is_valid(self, env) -> bool:
-        """Checks that it is OK to use this observation manager with a given `OneShotEnv`"""
-        if isin(env._n_lines, self.n_lines):
-            return False
-        if isin(env._n_suppliers, self.n_suppliers):
-            return False
-        if isin(env._n_consumers, self.n_consumers):
-            return False
-        return True
-
-
-DefaultObservationManager = FixedPartnerNumbersObservationManager
+DefaultObservationManager = FlexibleObservationManager
 """The default observation manager"""

@@ -3,7 +3,7 @@ from negmas import ResponseType
 from ..agent import OneShotAgent
 from ..policy import OneShotPolicy
 
-__all__ = ["OneshotDoNothingAgent", "OneShotDummyAgent"]
+__all__ = ["OneshotDoNothingAgent", "Placeholder"]
 
 
 class OneshotDoNothingAgent(OneShotAgent):
@@ -23,8 +23,8 @@ class OneshotDoNothingAgent(OneShotAgent):
         return ResponseType.END_NEGOTIATION
 
 
-class OneShotDummyAgent(OneShotPolicy):
+class Placeholder(OneShotPolicy):
     """An agent that always raises an exception if called to negotiate. It is useful as a placeholder (for example for RL and MARL exposition)"""
 
     def act(self, state):
-        raise RuntimeError(f"This agent is not supposed to ever be called")
+        raise RuntimeError("This agent is not supposed to ever be called")

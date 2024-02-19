@@ -1,4 +1,5 @@
 """Implements the world class for the SCML2020 world """
+
 from __future__ import annotations
 
 import copy
@@ -8,20 +9,7 @@ import math
 import random
 import sys
 from collections import Counter, defaultdict, namedtuple
-from dataclasses import dataclass
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Collection, Iterable
 
 import networkx as nx
 import numpy as np
@@ -38,8 +26,6 @@ from negmas.situated import (
     TimeInAgreementMixin,
     World,
 )
-
-from scml.scml2019.utils import _realin
 
 from ..common import (
     distribute_quantities,
@@ -79,6 +65,24 @@ __all__ = [
 
 MAX_WORLD_GENERATION_TRIALS = 100
 """Maximum number of world generation trials for recoverable errors"""
+
+
+def _realin(rng: tuple[float, float] | float) -> float:
+    """
+    Selects a random number within a range if given or the input if it was a float
+
+    Args:
+        rng: Range or single value
+
+    Returns:
+
+        the real within the given range
+    """
+    if not isinstance(rng, Iterable):
+        return rng
+    if abs(rng[1] - rng[0]) < 1e-8:
+        return rng[0]
+    return rng[0] + random.random() * (rng[1] - rng[0])
 
 
 class RecoverableWorldGenerationException(Exception):
@@ -195,7 +199,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         catalog_prices: np.ndarray,
         profiles: list[FactoryProfile],
         agent_types: list[type[SCML2020Agent]],
-        agent_params: list[dict[str, Any]] = None,
+        agent_params: list[dict[str, Any]] | None = None,
         exogenous_contracts: Collection[ExogenousContract] = (),
         initial_balance: np.ndarray | tuple[int, int] | int = 1000,
         allow_buying_output=False,
@@ -208,13 +212,13 @@ class SCML2020World(TimeInAgreementMixin, World):
         liquidation_rate=1.0,
         spot_market_global_loss=0.30,
         interest_rate=0.05,
-        financial_report_period=5,
+        financial_report_period: int = 5,
         # compensation parameters (for victims of bankrupt agents)
-        compensation_fraction=1.0,
+        compensation_fraction: float = 1.0,
         compensate_immediately=False,
         compensate_before_past_debt=True,
         # external contracts parameters
-        exogenous_horizon: int = None,
+        exogenous_horizon: int | None = None,
         exogenous_force_max: bool = False,
         # production failure parameters
         production_confirm=False,
@@ -601,9 +605,11 @@ class SCML2020World(TimeInAgreementMixin, World):
                 production_no_borrow=self.production_no_borrow,
                 production_no_bankruptcy=self.production_no_bankruptcy,
                 confirm_production=self.confirm_production,
-                initial_inventory=None
-                if i < len(profiles) - 2
-                else sys.maxsize // 4 * np.ones(n_products, dtype=int),
+                initial_inventory=(
+                    None
+                    if i < len(profiles) - 2
+                    else sys.maxsize // 4 * np.ones(n_products, dtype=int)
+                ),
             )
             for i, profile in enumerate(profiles)
         ]
@@ -678,7 +684,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.__n_nullified = 0
         self.__n_bankrupt = 0
         self.penalties = 0
-        # self.is_bankrupt: Dict[str, bool] = dict(
+        # self.is_bankrupt: dict[str, bool] = dict(
         #     zip(self.agents.keys(), itertools.repeat(False))
         # )
         self.compensation_balance = 0
@@ -705,9 +711,11 @@ class SCML2020World(TimeInAgreementMixin, World):
                 annotation={
                     "seller": seller_id,
                     "buyer": buyer_id,
-                    "caller": SYSTEM_SELLER_ID
-                    if seller_id == SYSTEM_SELLER_ID
-                    else SYSTEM_BUYER_ID,
+                    "caller": (
+                        SYSTEM_SELLER_ID
+                        if seller_id == SYSTEM_SELLER_ID
+                        else SYSTEM_BUYER_ID
+                    ),
                     "is_buy": random.random() > 0.5,
                     "product": c.product,
                 },
@@ -840,8 +848,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         force_signing=False,
         profit_basis=np.max,
         horizon: tuple[float, float] | float = (0.2, 0.5),
-        inventory_valuation_trading: (np.ndarray | tuple[float, float] | float) = 0.5,
-        inventory_valuation_catalog: (np.ndarray | tuple[float, float] | float) = 0.0,
+        inventory_valuation_trading: np.ndarray | tuple[float, float] | float = 0.5,
+        inventory_valuation_catalog: np.ndarray | tuple[float, float] | float = 0.0,
         random_agent_types: bool = False,
         cost_relativity: float = 1.0,
         method="profitable",
@@ -909,7 +917,7 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         Returns:
 
-            world configuration as a Dict[str, Any]. A world can be generated from this dict by calling SCML2020World(**d)
+            world configuration as a dict[str, Any]. A world can be generated from this dict by calling SCML2020World(**d)
 
         Remarks:
 
@@ -961,15 +969,21 @@ class SCML2020World(TimeInAgreementMixin, World):
             inventory_valuation_trading=inventory_valuation_trading,
             inventory_valuation_catalog=inventory_valuation_catalog,
             cost_relativity=cost_relativity,
-            profit_basis="min"
-            if profit_basis == np.min
-            else "mean"
-            if profit_basis == np.mean
-            else "max"
-            if profit_basis == np.max
-            else "median"
-            if profit_basis == np.median
-            else "unknown",
+            profit_basis=(
+                "min"
+                if profit_basis == np.min
+                else (
+                    "mean"
+                    if profit_basis == np.mean
+                    else (
+                        "max"
+                        if profit_basis == np.max
+                        else "median"
+                        if profit_basis == np.median
+                        else "unknown"
+                    )
+                )
+            ),
             exogenous_supply_surplus=exogenous_supply_surplus,
             exogenous_sales_surplus=exogenous_sales_surplus,
         )
@@ -1007,7 +1021,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             n_agents_per_process = np.asarray([pcount[i] for i in range(len(pnums))])
             assert not any(
                 _ <= 0 for _ in n_agents_per_process
-            ), f"We have some levels with no processes"
+            ), "We have some levels with no processes"
         else:
             n_agents_per_process = make_array(
                 n_agents_per_process, n_processes, dtype=int
@@ -1158,7 +1172,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                     extra_info,
                 ) = runner[method](**params)
                 generated = True
-            except RecoverableWorldGenerationException as e:
+            except RecoverableWorldGenerationException:
                 n_trials += 1
                 if n_trials > MAX_WORLD_GENERATION_TRIALS:
                     raise ValueError(
@@ -1265,8 +1279,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         process_outputs: list[int],
         exogenous_sales_predictability: float,
         costs: np.ndarray,
-        profit_stddevs_agent=List[float],
-        profit_means_agent=List[float],
+        profit_stddevs_agent=list[float],
+        profit_means_agent=list[float],
         initial_balance: np.ndarray | tuple[int, int] | int | None = None,
         cost_relativity: float = 1.0,
         profit_basis=np.max,
@@ -1594,12 +1608,16 @@ class SCML2020World(TimeInAgreementMixin, World):
             expected_welfare=float(np.sum(revenue_after_costs)),
             expected_income_per_step=revenue.sum(axis=0),
             expected_income_per_process=revenue.sum(axis=-1),
-            expected_mean_profit=float(np.sum(revenue_after_costs) / b)
-            if b != 0
-            else np.sum(revenue_after_costs),
-            expected_profit_per_agent=revenue_after_costs.sum(axis=1) / b
-            if b != 0
-            else revenue_after_costs.sum(axis=1),
+            expected_mean_profit=(
+                float(np.sum(revenue_after_costs) / b)
+                if b != 0
+                else np.sum(revenue_after_costs)
+            ),
+            expected_profit_per_agent=(
+                revenue_after_costs.sum(axis=1) / b
+                if b != 0
+                else revenue_after_costs.sum(axis=1)
+            ),
             real_cash_availability=cash_availability,
         )
 
@@ -1744,8 +1762,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         process_outputs: list[int],
         exogenous_sales_predictability: float,
         costs: np.ndarray,
-        profit_stddevs_agent=List[float],
-        profit_means_agent=List[float],
+        profit_stddevs_agent=list[float],
+        profit_means_agent=list[float],
         initial_balance: np.ndarray | tuple[int, int] | int | None = None,
         cost_relativity: float = 1.0,
         profit_basis=np.max,
@@ -1941,12 +1959,14 @@ class SCML2020World(TimeInAgreementMixin, World):
             expected_welfare=float(np.sum(max_income)),
             expected_income_per_step=max_income.sum(axis=0),
             expected_income_per_process=max_income.sum(axis=-1),
-            expected_mean_profit=float(np.sum(max_income) / b)
-            if b != 0
-            else np.sum(max_income),
-            expected_profit_sum=float(n_agents * np.sum(max_income) / b)
-            if b != 0
-            else n_agents * np.sum(max_income),
+            expected_mean_profit=(
+                float(np.sum(max_income) / b) if b != 0 else np.sum(max_income)
+            ),
+            expected_profit_sum=(
+                float(n_agents * np.sum(max_income) / b)
+                if b != 0
+                else n_agents * np.sum(max_income)
+            ),
         )
 
         exogenous = []
@@ -2816,13 +2836,15 @@ class SCML2020World(TimeInAgreementMixin, World):
                         * np.sum(factory.current_inventory * self.trading_prices)
                     )
                     if assets_multiplier_trading
-                    else 0.0
-                    + (
-                        assets_multiplier_catalog
-                        * np.sum(factory.current_inventory * self.catalog_prices)
+                    else (
+                        0.0
+                        + (
+                            assets_multiplier_catalog
+                            * np.sum(factory.current_inventory * self.catalog_prices)
+                        )
+                        if assets_multiplier_catalog
+                        else 0.0 - factory.initial_balance
                     )
-                    if assets_multiplier_catalog
-                    else 0.0 - factory.initial_balance
                 ) / (1 if not factory.initial_balance else factory.initial_balance)
             except:
                 scores[aid] = float("nan")
@@ -2943,12 +2965,14 @@ class SCML2020World(TimeInAgreementMixin, World):
         **kwargs,
     ) -> tuple[Axis, nx.Graph] | tuple[list[Axis], list[nx.Graph]]:
         if where is None:
-            where = (
-                lambda x: self.n_processes + 1
+            where = lambda x: (
+                self.n_processes + 1
                 if x == SYSTEM_BUYER_ID
-                else 0
-                if x == SYSTEM_SELLER_ID
-                else int(self.agents[x].awi.profile.processes[0] + 1)
+                else (
+                    0
+                    if x == SYSTEM_SELLER_ID
+                    else int(self.agents[x].awi.profile.processes[0] + 1)
+                )
             )
         return super().draw(
             steps,

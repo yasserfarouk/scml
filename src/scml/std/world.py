@@ -23,6 +23,11 @@ STD_DEFAULT_PARAMS = dict(
     wide_price_range=False,
     one_time_per_negotiation=False,
     quantity_multiplier=3,
+    max_productivity=(0.8, 1.0),
+    max_supply=(0.2, 1.0),
+    exogenous_supply_predictability=(0.0, 0.7),
+    exogenous_sales_predictability=(0.0, 0.7),
+    cap_exogenous_quantities=False,
 )
 STD_DEFAULT_PARAMS2024 = STD_DEFAULT_PARAMS
 
@@ -40,7 +45,7 @@ class StdWorld(SCMLBaseWorld):
         one_time_per_negotiation=STD_DEFAULT_PARAMS["one_time_per_negotiation"],
         perishable=STD_DEFAULT_PARAMS["perishable"],
         quantity_multiplier=STD_DEFAULT_PARAMS["quantity_multiplier"],
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             *args,
@@ -51,7 +56,7 @@ class StdWorld(SCMLBaseWorld):
             quantity_multiplier=quantity_multiplier,  # type: ignore
             price_multiplier=price_multiplier,  # type: ignore
             wide_price_range=wide_price_range,  # type: ignore
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
@@ -64,7 +69,16 @@ class StdWorld(SCMLBaseWorld):
         storage_cost=STD_DEFAULT_PARAMS["storage_cost"],
         storage_cost_dev=STD_DEFAULT_PARAMS["storage_cost_dev"],
         perishable=STD_DEFAULT_PARAMS["perishable"],
-        **kwargs
+        max_productivity=STD_DEFAULT_PARAMS["max_productivity"],
+        max_supply=STD_DEFAULT_PARAMS["max_supply"],
+        exogenous_supply_predictability=STD_DEFAULT_PARAMS[
+            "exogenous_supply_predictability"
+        ],
+        exogenous_sales_predictability=STD_DEFAULT_PARAMS[
+            "exogenous_sales_predictability"
+        ],
+        cap_exogenous_quantities=STD_DEFAULT_PARAMS["cap_exogenous_quantities"],
+        **kwargs,
     ) -> dict[str, Any]:
         """
         Generates the configuration for a world
@@ -81,7 +95,12 @@ class StdWorld(SCMLBaseWorld):
             storage_cost=storage_cost,
             storage_cost_dev=storage_cost_dev,
             perishable=perishable,  # type: ignore
-            **kwargs
+            max_productivity=max_productivity,
+            max_supply=max_supply,
+            exogenous_supply_predictability=exogenous_supply_predictability,
+            exogenous_sales_predictability=exogenous_sales_predictability,
+            cap_exogenous_quantities=cap_exogenous_quantities,  # type: ignore
+            **kwargs,
         )
 
 

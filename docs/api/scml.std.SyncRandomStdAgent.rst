@@ -41,6 +41,8 @@ SyncRandomStdAgent
       ~SyncRandomStdAgent.after_join
       ~SyncRandomStdAgent.before_join
       ~SyncRandomStdAgent.before_step
+      ~SyncRandomStdAgent.best_price
+      ~SyncRandomStdAgent.buy_price
       ~SyncRandomStdAgent.call
       ~SyncRandomStdAgent.checkpoint
       ~SyncRandomStdAgent.checkpoint_info
@@ -49,15 +51,22 @@ SyncRandomStdAgent
       ~SyncRandomStdAgent.counter_all
       ~SyncRandomStdAgent.create
       ~SyncRandomStdAgent.create_negotiator
-      ~SyncRandomStdAgent.distribute_needs
+      ~SyncRandomStdAgent.distribute_future_offers
+      ~SyncRandomStdAgent.distribute_todays_needs
+      ~SyncRandomStdAgent.estimate_future_needs
       ~SyncRandomStdAgent.first_offer
       ~SyncRandomStdAgent.first_proposals
       ~SyncRandomStdAgent.from_checkpoint
       ~SyncRandomStdAgent.get_ami
       ~SyncRandomStdAgent.get_negotiator
       ~SyncRandomStdAgent.get_nmi
+      ~SyncRandomStdAgent.good2buy
+      ~SyncRandomStdAgent.good2sell
+      ~SyncRandomStdAgent.good_price
       ~SyncRandomStdAgent.init
       ~SyncRandomStdAgent.init_
+      ~SyncRandomStdAgent.is_consumer
+      ~SyncRandomStdAgent.is_supplier
       ~SyncRandomStdAgent.join
       ~SyncRandomStdAgent.kill_negotiator
       ~SyncRandomStdAgent.make_negotiator
@@ -81,6 +90,7 @@ SyncRandomStdAgent
       ~SyncRandomStdAgent.propose
       ~SyncRandomStdAgent.reset
       ~SyncRandomStdAgent.respond
+      ~SyncRandomStdAgent.sell_price
       ~SyncRandomStdAgent.set_preferences
       ~SyncRandomStdAgent.sign_all_contracts
       ~SyncRandomStdAgent.spawn
@@ -119,6 +129,8 @@ SyncRandomStdAgent
    .. automethod:: after_join
    .. automethod:: before_join
    .. automethod:: before_step
+   .. automethod:: best_price
+   .. automethod:: buy_price
    .. automethod:: call
    .. automethod:: checkpoint
    .. automethod:: checkpoint_info
@@ -127,15 +139,22 @@ SyncRandomStdAgent
    .. automethod:: counter_all
    .. automethod:: create
    .. automethod:: create_negotiator
-   .. automethod:: distribute_needs
+   .. automethod:: distribute_future_offers
+   .. automethod:: distribute_todays_needs
+   .. automethod:: estimate_future_needs
    .. automethod:: first_offer
    .. automethod:: first_proposals
    .. automethod:: from_checkpoint
    .. automethod:: get_ami
    .. automethod:: get_negotiator
    .. automethod:: get_nmi
+   .. automethod:: good2buy
+   .. automethod:: good2sell
+   .. automethod:: good_price
    .. automethod:: init
    .. automethod:: init_
+   .. automethod:: is_consumer
+   .. automethod:: is_supplier
    .. automethod:: join
    .. automethod:: kill_negotiator
    .. automethod:: make_negotiator
@@ -159,6 +178,7 @@ SyncRandomStdAgent
    .. automethod:: propose
    .. automethod:: reset
    .. automethod:: respond
+   .. automethod:: sell_price
    .. automethod:: set_preferences
    .. automethod:: sign_all_contracts
    .. automethod:: spawn

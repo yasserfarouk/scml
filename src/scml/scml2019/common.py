@@ -1,17 +1,19 @@
 """Common data-structures and objects used throughout the SCM world implementation"""
-import itertools
 import math
 import sys
 import uuid
 from collections import defaultdict, namedtuple
 from dataclasses import InitVar, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 from negmas.outcomes import make_issue
 from negmas.outcomes.issue_ops import enumerate_issues
 from negmas.preferences import INVALID_UTILITY
 from negmas.situated import Contract, World
+
+if TYPE_CHECKING:
+    from scml.scml2019.agent import SCML2019Agent
 
 __all__ = [
     "UNIT_PRICE",
@@ -323,7 +325,7 @@ class RunningCommandInfo:
     def do_nothing(cls):
         # noinspection PyTypeChecker
         return cls(
-            profile=None,
+            profile=None,  # type: ignore
             beg=-1,
             end=-1,
             action="none",
@@ -474,7 +476,7 @@ class ProductionReport:
     def __str__(self):
         if self.is_empty:
             return ""
-        s = f"{self.line}: " if self.line >= 0 else f"Updates: "
+        s = f"{self.line}: " if self.line >= 0 else "Updates: "
         if self.failed:
             s += f"{str(self.failure)} "
         else:
@@ -689,6 +691,7 @@ class CFP:
                             return [int(x[0])]
                         return [x[0]]
                 if isinstance(x[0], float) or isinstance(x[1], float):
+                    assert self.money_resolution is not None
                     xs = (
                         int(math.floor(x[0] / self.money_resolution)),
                         int(math.floor(x[1] / self.money_resolution)),
@@ -1092,7 +1095,7 @@ class FactoryState:
 
     max_storage: int
     """Maximum storage allowed in this factory"""
-    line_schedules: np.array
+    line_schedules: np.ndarray
     """An array of n_lines * n_steps giving the line schedules"""
     storage: Dict[int, int]
     """Mapping from product index to the amount available in the inventory"""
@@ -1110,7 +1113,7 @@ class FactoryState:
     """A list of profiles used to initialize the factory"""
     next_step: int
     """Next simulation step for this factory"""
-    commands: np.array
+    commands: np.ndarray
     """The production command currently running"""
     jobs: Dict[Tuple[int, int], Job]
     """The jobs waiting to be run on the factory indexed by (time, line) tuples"""
@@ -1132,13 +1135,13 @@ class Factory:
     """Maximum storage allowed in this factory"""
     min_storage: int = 0
     """Minimum allowed storage per product"""
-    min_balance: int = 0
+    min_balance: int | float = 0
     """Minimum allowed balance"""
     initial_balance: float = field(init=False, default=0.0)
     """Initial balance of the factory"""
-    _commands: np.array = field(init=False)
+    _commands: np.ndarray = field(init=False)
     """The production command currently running"""
-    _line_schedules: np.array = field(init=False)
+    _line_schedules: np.ndarray = field(init=False)
     _storage: Dict[int, int] = field(
         default_factory=lambda: defaultdict(int), init=False
     )
@@ -1166,7 +1169,7 @@ class Factory:
         init=False, default_factory=lambda: FactoryStatusUpdate.empty()
     )
     """Carried updates from last executed command"""
-    _world: World = field(init=False, default=None)
+    _world: World = field(init=False, default=None)  # type: ignore
 
     def attach_to_world(self, world):
         self._world = world
@@ -1181,7 +1184,7 @@ class Factory:
         for profile in self.profiles:
             profile.line = mapping[profile.line]
         self._n_lines = len(given_lines)
-        self._commands = np.array(
+        self._commands = np.asarray(
             [RunningCommandInfo.do_nothing() for _ in range(self._n_lines)]
         )
         self._line_schedules = np.ones(self._n_lines, dtype=int) * NO_PRODUCTION
@@ -1211,11 +1214,11 @@ class Factory:
         return self._jobs
 
     @property
-    def commands(self) -> np.array:
+    def commands(self) -> np.ndarray:
         return self._commands
 
     @property
-    def line_schedules(self) -> np.array:
+    def line_schedules(self) -> np.ndarray:
         return self._line_schedules
 
     @property

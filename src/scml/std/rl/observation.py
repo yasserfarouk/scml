@@ -1,13 +1,11 @@
 from scml.oneshot.rl.observation import (
     DefaultObservationManager,
-    FixedPartnerNumbersObservationManager,
-    LimitedPartnerNumbersObservationManager,
+    FlexibleObservationManager,
     ObservationManager,
 )
 
 __all__ = [
     "ObservationManager",
-    "FixedPartnerNumbersObservationManager",
-    "LimitedPartnerNumbersObservationManager",
+    "FlexibleObservationManager",
     "DefaultObservationManager",
 ]

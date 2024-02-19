@@ -23,7 +23,7 @@ def builtin_agent_types(as_str=False):
     types = [
         f"scml.oneshot.agents.{_}"
         for _ in agents.__all__
-        if _ not in ("OneShotDummyAgent",)
+        if _ not in ("StdPlaceholder", "Placeholder", "OneShotDummyAgent")
     ]
     if as_str:
         return types

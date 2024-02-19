@@ -13,6 +13,7 @@ Remarks:
       which is useful if you are keeping information about past negotiations and
       partner behavior.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -544,7 +545,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         if not self._normalize and not self._set_reservation:
             return ufuns
         if not self.awi:
-            raise ValueError(f"AWI is not found!!!")
+            raise ValueError("AWI is not found!!!")
         for partner_id, u in ufuns.items():
             if self.awi.is_system(partner_id):
                 continue

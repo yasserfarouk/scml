@@ -7,12 +7,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import tqdm
 import typer
 from negmas.helpers.inout import add_records
+from rich.progress import track
 
 from scml.oneshot import SCML2020OneShotWorld
 from scml.oneshot.agents import GreedyOneShotAgent, RandomOneShotAgent
+from scml.oneshot.awi import OneShotAWI
+from scml.oneshot.ufun import OneShotUFun
 from scml.scml2020.common import is_system_agent
 
 app = typer.Typer()
@@ -61,30 +63,26 @@ class Recorder(SCML2020OneShotWorld):
         self.__dir_name = dir_name
         self.__params = params
 
-    def simulation_step(self, stage):
+    def simulation_step(self, stage=0):
         result = super().simulation_step(stage)
         for aid, a in self.agents.items():
             if is_system_agent(aid):
                 continue
             if a.ufun is None:
                 continue
+            assert isinstance(a.ufun, OneShotUFun)
             if self.__util_eval_method.startswith("b"):
-                a.ufun.worst = a.ufun.find_limit_brute_force(False)
-                a.ufun.best = a.ufun.find_limit_brute_force(True)
-            elif self.__util_eval_method.startswith("o"):
-                a.ufun.best = a.ufun.find_limit_optimal(True)
-                a.ufun.worst = a.ufun.find_limit_optimal(False)
-            elif self.__util_eval_method.startswith("g"):
-                a.ufun.best = a.ufun.find_limit_greedy(True)
-                a.ufun.worst = a.ufun.find_limit_greedy(False)
+                a.ufun._worst = a.ufun.find_limit_brute_force(False)
+                a.ufun._best = a.ufun.find_limit_brute_force(True)
             else:
-                a.ufun.best = a.ufun.find_limit(True)
-                a.ufun.worst = a.ufun.find_limit(False)
+                a.ufun._best = a.ufun.find_limit(True)
+                a.ufun._worst = a.ufun.find_limit(False)
 
             mx, mn = a.ufun.max_utility, a.ufun.min_utility
-            max_producible = a.ufun.best.producible
-            min_producible = a.ufun.worst.producible
+            max_producible = a.ufun._best.producible
+            min_producible = a.ufun._worst.producible
             state = a.awi.state()
+            assert isinstance(a.awi, OneShotAWI)
             profile = a.awi.profile
             d = {f"p_{k}": v for k, v in self.__params.items()}
             d.update({f"f_{k}": v for k, v in vars(a.ufun).items()})
@@ -174,7 +172,7 @@ def run(
     futures = []
     if serial:
         for method in methods:
-            for v in tqdm.tqdm(param_values):
+            for v in track(param_values):
                 run_once(dict(zip(param_names, v)), steps, method)
     else:
         with ProcessPoolExecutor(max_workers=workers) as pool:
@@ -184,7 +182,7 @@ def run(
                         pool.submit(run_once, dict(zip(param_names, v)), steps, method)
                     )
         print("RUNNING ...", flush=True)
-        for f in tqdm.tqdm(as_completed(futures), total=len(param_values)):
+        for _ in track(as_completed(futures), total=len(param_values)):
             pass
     print("DONE")
 
@@ -234,7 +232,7 @@ def plot(method: str = "bruteforce"):
             data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_util", ax=axs[1, 1]
         )
         plt.suptitle(f"{k}")
-        fig.show()
+        plt.show()
         fig, axs = plt.subplots(2, 2)
         sns.barplot(
             data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_producible", ax=axs[0, 0]
@@ -249,7 +247,7 @@ def plot(method: str = "bruteforce"):
             data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_producible", ax=axs[1, 1]
         )
         plt.suptitle(f"{k}")
-        fig.show()
+        plt.show()
 
 
 if __name__ == "__main__":

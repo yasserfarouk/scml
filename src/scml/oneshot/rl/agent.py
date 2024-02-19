@@ -11,7 +11,7 @@ from scml.oneshot.agents import GreedyOneShotAgent
 from scml.oneshot.context import ANACOneShotContext, Context
 
 from ..policy import OneShotPolicy
-from .action import ActionManager, UnconstrainedActionManager
+from .action import ActionManager, FlexibleActionManager
 from .common import RLAction, RLModel, RLState
 from .observation import ObservationManager
 
@@ -40,7 +40,7 @@ class OneShotRLAgent(OneShotPolicy):
         observation_managers: list[ObservationManager]
         | tuple[ObservationManager, ...] = tuple(),
         action_managers: list[ActionManager] | tuple[ActionManager, ...] | None = None,
-        fallback_type: type[OneShotAgent] = GreedyOneShotAgent,
+        fallback_type: type[OneShotAgent] | None = GreedyOneShotAgent,
         fallback_params: dict[str, Any] | None = None,
         dynamic_context_switching: bool = False,
         randomize_test_order: bool = False,
@@ -50,7 +50,7 @@ class OneShotRLAgent(OneShotPolicy):
         self._models = models
         if action_managers is None:
             action_managers = [
-                UnconstrainedActionManager(ANACOneShotContext())
+                FlexibleActionManager(ANACOneShotContext())
                 for _ in observation_managers
             ]
         self._action_managers = action_managers
@@ -67,6 +67,21 @@ class OneShotRLAgent(OneShotPolicy):
         self._valid_index: int = -1
         self._fallback_agent: OneShotAget = None  # type: ignore
 
+    def setup_fallback(self):
+        if not self._fallback_type:
+            raise ValueError("No fallback type available")
+        self._fallback_agent = instantiate(self._fallback_type, **self._fallback_params)
+        # replace me with the newly created agent
+        self._fallback_agent.id = self.id
+        self._fallback_agent.name = self.name
+        self._fallback_agent._awi = self._awi
+        self._fallback_agent._owner = self._owner
+        self._owner._obj = self._fallback_agent  # type: ignore
+        self._fallback_agent.init()
+
+    def has_no_valid_model(self):
+        return self._valid_index < 0
+
     def context_switch(self):
         aolist = zip(
             self._action_managers, self._obs_managers, range(len(self._obs_managers))
@@ -74,21 +89,19 @@ class OneShotRLAgent(OneShotPolicy):
         if self._randomize_test_order:
             aolist = list(aolist)
             shuffle(aolist)
+        self._valid_index = -1
         for a, o, i in aolist:
-            if self.awi in a.context and self.awi in o.context:
+            if a.context.is_valid_awi(
+                self.awi, types=(type(self),), raise_on_failure=True
+            ) and o.context.is_valid_awi(
+                self.awi, types=(type(self),), raise_on_failure=True
+            ):
                 self._valid_index = i
                 break
-        if self._valid_index < 0 and self._fallback_agent is None:
-            self._fallback_agent = instantiate(
-                self._fallback_type, **self._fallback_params
-            )
+
+        if self.has_no_valid_model() and self._fallback_agent is None:
             # replace me with the newly created agent
-            self._fallback_agent.id = self.id
-            self._fallback_agent.name = self.name
-            self._fallback_agent._awi = self._awi
-            self._fallback_agent._owner = self._owner
-            self._owner._obj = self._fallback_agent  # type: ignore
-            self._fallback_agent.init()
+            self.setup_fallback()
 
     def init(self):
         super().init()
@@ -96,24 +109,24 @@ class OneShotRLAgent(OneShotPolicy):
 
     def encode_state(self, mechanism_states: dict[str, SAOState]) -> RLState:
         _ = mechanism_states
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return self._obs_managers[self._valid_index].encode(self.awi.state)
         raise RuntimeError(
-            f"This is an RL agent running in fallback mode and its encode_state should never be called"
+            "This is an RL agent running in fallback mode and its encode_state should never be called"
         )
 
     def decode_action(self, action: RLAction) -> dict[str, SAOResponse]:
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return self._action_managers[self._valid_index].decode(self.awi, action)
         raise RuntimeError(
-            f"This is an RL agent running in fallback mode and its decode_action should never be called"
+            "This is an RL agent running in fallback mode and its decode_action should never be called"
         )
 
     def act(self, state: RLState) -> RLAction:
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return self._models[self._valid_index](state)
         raise RuntimeError(
-            f"This is an RL agent running in fallback mode and its act() method should never be called"
+            "This is an RL agent running in fallback mode and its act() method should never be called"
         )
 
     # =====================
@@ -122,13 +135,13 @@ class OneShotRLAgent(OneShotPolicy):
 
     def propose(self, *args, **kwargs) -> Outcome | None:
         """Called when the agent is asking to propose in one negotiation"""
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return super().propose(*args, **kwargs)
         return self._fallback_agent.propose(*args, **kwargs)
 
     def respond(self, *args, **kwargs) -> ResponseType:
         """Called when the agent is asked to respond to an offer"""
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return super().respond(*args, **kwargs)
         return self._fallback_agent.respond(*args, **kwargs)
 
@@ -138,7 +151,7 @@ class OneShotRLAgent(OneShotPolicy):
 
     def before_step(self):
         """Called at at the BEGINNING of every production step (day)"""
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return super().before_step()
         return self._fallback_agent.before_step()
 
@@ -146,7 +159,7 @@ class OneShotRLAgent(OneShotPolicy):
         """Called at at the END of every production step (day)"""
         if self._dynamic_context_switching:
             self.context_switch()
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return super().step()
         return self._fallback_agent.step()
 
@@ -156,12 +169,12 @@ class OneShotRLAgent(OneShotPolicy):
 
     def on_negotiation_failure(self, *args, **kwargs) -> None:
         """Called when a negotiation the agent is a party of ends without agreement"""
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return super().on_negotiation_failure(*args, **kwargs)
         return self._fallback_agent.on_negotiation_failure(*args, **kwargs)
 
     def on_negotiation_success(self, *args, **kwargs) -> None:
         """Called when a negotiation the agent is a party of ends with agreement"""
-        if self._valid_index >= 0:
+        if not self.has_no_valid_model():
             return super().on_negotiation_success(*args, **kwargs)
         return self._fallback_agent.on_negotiation_success(*args, **kwargs)

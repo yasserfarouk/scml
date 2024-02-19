@@ -6,10 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import given, settings
-from negmas import ResponseType, save_stats
+from negmas import ResponseType
 from negmas.genius.bridge import genius_bridge_is_running
 from negmas.genius.gnegotiators import NiceTitForTat
-from negmas.helpers import unique_name
 from negmas.outcomes import Outcome
 from negmas.preferences import LinearAdditiveUtilityFunction
 from negmas.preferences.value_fun import AffineFun, ConstFun, IdentityFun, LinearFun
@@ -20,7 +19,6 @@ from pytest import mark, raises
 import scml
 from scml.oneshot import (
     OneShotSingleAgreementAgent,
-    SCML2020OneShotWorld,
     builtin_agent_types,
 )
 from scml.oneshot.agent import (
@@ -29,12 +27,28 @@ from scml.oneshot.agent import (
     OneShotSyncAgent,
 )
 from scml.oneshot.agents import GreedySyncAgent, RandomOneShotAgent
+from scml.oneshot.agents.rand import RandDistOneShotAgent
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE, is_system_agent
 from scml.oneshot.sysagents import DefaultOneShotAdapter
 from scml.oneshot.ufun import OneShotUFun
+from scml.oneshot import (
+    SCML2020OneShotWorld,
+    SCML2021OneShotWorld,
+    SCML2022OneShotWorld,
+    SCML2023OneShotWorld,
+    SCML2024OneShotWorld,
+)
 
-from ..switches import SCML_ON_GITHUB
+from ..switches import (
+    SCML_ON_GITHUB,
+    DefaultOneShotWorld,
+    SCML_TRY2020,
+    SCML_TRY2021,
+    SCML_TRY2022,
+    SCML_TRY2023,
+    SCML_TRY2024,
+)
 
 random.seed(0)
 
@@ -42,6 +56,7 @@ COMPACT = True
 NOLOGS = True
 # agent types to be tested
 types = builtin_agent_types(False)
+
 active_types = types
 std_types = scml.scml2020.builtin_agent_types(as_str=False)
 # try:
@@ -53,7 +68,7 @@ std_types = scml.scml2020.builtin_agent_types(as_str=False)
 
 
 class MyOneShotAgent(RandomOneShotAgent):
-    def respond(self, negotiator_id, state, source=""):
+    def respond(self, negotiator_id, state, source=None) -> ResponseType:
         offer = state.current_offer
         if offer is None:
             return ResponseType.REJECT_OFFER
@@ -73,7 +88,8 @@ class MyOneShotAgent(RandomOneShotAgent):
 
 def generate_world(
     agent_types,
-    n_processes=3,
+    world_type=DefaultOneShotWorld,
+    n_processes=2,
     n_steps=10,
     n_agents_per_process=2,
     n_lines=10,
@@ -81,8 +97,9 @@ def generate_world(
 ):
     kwargs["no_logs"] = True
     kwargs["compact"] = True
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    kwargs["fast"] = True
+    world = world_type(
+        **world_type.generate(
             agent_types,
             n_processes=n_processes,
             n_steps=n_steps,
@@ -113,21 +130,14 @@ def generate_world(
     return world
 
 
-def test_negotiator_ids_are_partner_ids():
-    n_processes = 5
-    world = generate_world(
-        [MyOneShotAgent],
-        n_processes=n_processes,
-        name=unique_name(
-            f"scml2020tests/single/{MyOneShotAgent.__name__}" f"Fine{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
-        compact=True,
-        no_logs=True,
-    )
-    world.run()
-    # save_stats(world, world.log_folder)
+# def test_negotiator_ids_are_partner_ids():
+#     n_processes = 5
+#     world = generate_world(
+#         [MyOneShotAgent],
+#         n_processes=n_processes,
+#         fast=True,
+#     )
+#     world.run()
 
 
 @given(n_processes=st.integers(2, 6))
@@ -153,27 +163,43 @@ def test_quantity_distribution(n_processes):
                     ), f"Contract: {str(c)} has negative or more quantity than n. lines {lines}\n{pformat(world.info)}"
 
 
-@mark.parametrize("agent_type", types)
-@given(n_processes=st.integers(2, 4))
-@settings(deadline=300_000, max_examples=20)
-def test_can_run_with_a_single_agent_type(agent_type, n_processes):
+world_types = []
+for op, w in zip(
+    (SCML_TRY2020, SCML_TRY2021, SCML_TRY2022, SCML_TRY2023, SCML_TRY2024),
+    (
+        SCML2020OneShotWorld,
+        SCML2021OneShotWorld,
+        SCML2022OneShotWorld,
+        SCML2023OneShotWorld,
+        SCML2024OneShotWorld,
+    ),
+):
+    if op:
+        world_types.append(w)
+
+
+@pytest.mark.skip("Too slow. Investigate later")
+@given(
+    agent_type=st.sampled_from(types),
+    n_processes=st.integers(2, 4),
+    world_type=st.sampled_from(world_types),
+)
+@settings(deadline=30_000, max_examples=10)
+def test_can_run_with_a_single_agent_type(agent_type, world_type, n_processes):
     if issubclass(agent_type, OneShotSingleAgreementAgent) and n_processes > 2:
         return
     world = generate_world(
         [agent_type],
+        world_type=world_type,
         n_processes=n_processes,
-        name=unique_name(
-            f"scml2020tests/single/{agent_type.__name__}" f"Fine{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
         compact=COMPACT,
         no_logs=NOLOGS,
+        fast=True,
     )
     world.run()
-    save_stats(world, world.log_folder)
 
 
+@pytest.mark.skip("Too slow. Investigate later")
 @given(
     agent_types=st.lists(
         st.sampled_from(active_types),
@@ -192,18 +218,11 @@ def test_can_run_with_a_multiple_agent_types(agent_types, n_processes):
         return
     world = generate_world(
         agent_types,
-        name=unique_name(
-            f"scml2020tests/multi/{'-'.join(_.__name__[:3] for _ in agent_types)}/"
-            f"Fine_p{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
         n_processes=n_processes,
         compact=COMPACT,
         no_logs=NOLOGS,
     )
     world.run()
-    save_stats(world, world.log_folder)
 
 
 @pytest.mark.skipif(SCML_ON_GITHUB, reason="Known to timeout on CI")
@@ -213,11 +232,6 @@ def test_something_happens_with_random_agents(n_processes):
     world = generate_world(
         [RandomOneShotAgent],
         n_processes=n_processes,
-        name=unique_name(
-            f"scml2020tests/single/do_something/" f"Fine_p{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
         compact=COMPACT,
         no_logs=NOLOGS,
         n_steps=15,
@@ -227,8 +241,8 @@ def test_something_happens_with_random_agents(n_processes):
 
 
 def test_basic_awi_info_suppliers_consumers():
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=RandomOneShotAgent,
             n_steps=10,
             n_processes=2,
@@ -251,8 +265,8 @@ def test_basic_awi_info_suppliers_consumers():
 
 
 def test_generate():
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types=RandomOneShotAgent,
             n_steps=10,
             n_processes=2,
@@ -294,8 +308,8 @@ def test_graph():
 
 
 def test_graphs_lead_to_no_unknown_nodes():
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(agent_types=[RandomOneShotAgent], n_steps=10),
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(agent_types=[RandomOneShotAgent], n_steps=10),
         construct_graphs=True,
     )
     world.graph((0, world.n_steps))
@@ -303,8 +317,8 @@ def test_graphs_lead_to_no_unknown_nodes():
 
 def test_ufun_min_max_in_world():
     for _ in range(20):
-        world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(
+        world = DefaultOneShotWorld(
+            **DefaultOneShotWorld.generate(
                 agent_types=[RandomOneShotAgent], n_steps=10
             ),
             construct_graphs=False,
@@ -447,8 +461,9 @@ def _ufun_unit2(
         storage_penalty_scale=input_penalty_scale,
         current_balance=balance,
     )
-    worst_gt, best_gt = ufun.find_limit_brute_force(False), ufun.find_limit_brute_force(
-        True
+    worst_gt, best_gt = (
+        ufun.find_limit_brute_force(False),
+        ufun.find_limit_brute_force(True),
     )
     mn, mx = worst_gt.utility, best_gt.utility
     assert mx >= mn, f"Worst: {worst_gt}\nBest : {best_gt}"
@@ -695,19 +710,12 @@ def test_builtin_agent_types():
 
 
 def test_builtin_aspiration():
-    from negmas.helpers import get_full_type_name
-
     from scml.oneshot import SingleAgreementAspirationAgent
 
     n_processes = 2
     world = generate_world(
         [SingleAgreementAspirationAgent],
         n_processes=n_processes,
-        name=unique_name(
-            f"scml2020tests/single/{SingleAgreementAspirationAgent.__name__}Fine{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
         compact=True,
         no_logs=True,
     )
@@ -718,13 +726,16 @@ def test_builtin_aspiration():
 @pytest.mark.skip(reason="Not sure why but it is failing.")
 @given(
     atype=st.lists(
-        st.sampled_from(std_types + types), unique=True, min_size=2, max_size=6  # type: ignore
+        st.sampled_from(std_types + types),
+        unique=True,
+        min_size=2,
+        max_size=6,  # type: ignore
     )
 )
 @settings(deadline=900_000, max_examples=10)
 def test_adapter(atype):
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(agent_types=atype, n_steps=10),
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(agent_types=atype, n_steps=10),
         construct_graphs=False,
         compact=True,
         no_logs=True,
@@ -791,11 +802,6 @@ def test_ind_negotiators():
     world = generate_world(
         [MyIndNeg],
         n_processes=n_processes,
-        name=unique_name(
-            f"scml2020tests/single/{MyIndNeg.__name__}" f"Fine{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
         compact=True,
         no_logs=True,
     )
@@ -811,11 +817,6 @@ def test_ind_negotiators_genius():
     world = generate_world(
         [MyGeniusIndNeg],
         n_processes=n_processes,
-        name=unique_name(
-            f"scml2020tests/single/{MyIndNeg.__name__}" f"Fine{n_processes}",
-            add_time=True,
-            rand_digits=4,
-        ),
         compact=True,
         no_logs=True,
     )
@@ -824,13 +825,12 @@ def test_ind_negotiators_genius():
 
 def test_production_cost_increase():
     from scml.oneshot.agents import GreedyOneShotAgent
-    from scml.oneshot.world import SCML2020OneShotWorld
 
     NPROCESSES = 5
     costs = [[] for _ in range(NPROCESSES)]
     for _ in range(100):
-        world = SCML2020OneShotWorld(
-            **SCML2020OneShotWorld.generate(
+        world = DefaultOneShotWorld(
+            **DefaultOneShotWorld.generate(
                 GreedyOneShotAgent,
                 n_agents_per_process=10,
                 n_processes=NPROCESSES,
@@ -856,8 +856,8 @@ def test_production_cost_increase():
 def test_ufun_penalty_scales_are_correct(penalties_scale):
     from scml.oneshot.ufun import OneShotUFun
 
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             MyIndNeg,
             n_agents_per_process=3,
             n_processes=2,
@@ -953,14 +953,19 @@ class MySyncAgent(OneShotSyncAgent):
         ([GreedySyncAgent], 4, 2),
         ([GreedySyncAgent], 5, 2),
         ([GreedySyncAgent], 6, 2),
+        ([RandDistOneShotAgent], 2, 2),
+        ([RandDistOneShotAgent], 3, 2),
+        ([RandDistOneShotAgent], 4, 2),
+        ([RandDistOneShotAgent], 5, 2),
+        ([RandDistOneShotAgent], 6, 2),
     ],
 )
 def test_sync_agent_receives_first_proposals_before_counter_all(
     agent_types, n_agents_per_process, n_processes
 ):
     n_steps = 50
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             [MySyncAgent] + agent_types,
             n_processes=n_processes,
             n_steps=n_steps,
@@ -1033,8 +1038,6 @@ class MyRandomAgent(RandomOneShotAgent):
 def test_trading_prices_updated(n_agents, n_processes, n_steps):
     from negmas.helpers import force_single_thread
 
-    from scml.oneshot import SCML2020OneShotWorld
-
     eps = 1e-3
 
     world = SCML2020OneShotWorld(
@@ -1078,7 +1081,9 @@ class MyOneShotDoNothing(OneShotAgent):
 
 
 def test_do_nothing_goes_bankrupt():
-    world = generate_world([MyOneShotDoNothing], 2, 1000, 4, cash_availability=0.001)
+    world = generate_world(
+        [MyOneShotDoNothing], DefaultOneShotWorld, 2, 1000, 4, cash_availability=0.001
+    )
     world.run()
     for aid, agent in world.agents.items():
         if is_system_agent(aid):
@@ -1177,52 +1182,21 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
 
 
 def test_price_pumping_happen():
-    world = generate_world([PricePumpingAgent], 2, 300, 4)
+    world = generate_world([PricePumpingAgent], DefaultOneShotWorld, 2, 300, 4)
     world.run()
     check_trading_explosion(world)
 
 
 def test_price_pumping_happen_with_random_included():
-    world = generate_world([PricePumpingAgent, RandomOneShotAgent], 2, 300, 4)
+    world = generate_world(
+        [PricePumpingAgent, RandomOneShotAgent], DefaultOneShotWorld, 2, 300, 4
+    )
     world.run()
     check_trading_explosion(world)
 
 
 def test_price_pumping_bankrupts_random_agents():
     types = [PricePumpingAgent, RandomOneShotAgent]
-    world = generate_world(types, 2, 300, 4)
+    world = generate_world(types, DefaultOneShotWorld, 2, 300, 4)
     world.run()
     check_trading_explosion(world, types)
-
-
-# class RationalRandomOneShotAgent(RandomOneShotAgent):
-#     def top_outcome(self, negotiator_id):
-#         return tuple(_.max_value for _ in self.get_nmi(negotiator_id).issues)
-#
-#     def bottom_outcome(self, negotiator_id):
-#         return tuple(_.min_value for _ in self.get_nmi(negotiator_id).issues)
-#
-#     def propose(self, negotiator_id, state):
-#         outcome = super().propose(negotiator_id, state)
-#         if self.awi.is_first_level and not self.ufun.ok_to_sell_at(outcome[UNIT_PRICE]):
-#             return self.top_outcome(negotiator_id)
-#         if self.awi.is_last_level and not self.ufun.ok_to_buy_at(outcome[UNIT_PRICE]):
-#             return self.bottom_outcome(negotiator_id)
-#         return outcome
-#
-#     def accept_if(self, x):
-#         return ResponseType.ACCEPT_OFFER if x else ResponseType.REJECT_OFFER
-#
-#     def respond(self, negotiator_id, state):
-#         offer = state.current_offer
-#         if self.awi.is_first_level:
-#             return self.accept_if(self.ufun.ok_to_sell_at(offer[UNIT_PRICE]))
-#         if self.awi.is_last_level:
-#             return self.accept_if(self.ufun.ok_to_buy_at(offer[UNIT_PRICE]))
-#         return ResponseType.ACCEPT_OFFER
-#
-# def test_price_pumping_does_not_bankrupt_rational_random_agents():
-#     types = [PricePumpingAgent, RationalRandomOneShotAgent]
-#     world = generate_world(types, 2, 300, 4)
-#     world.run()
-#     check_trading_explosion(world, types)

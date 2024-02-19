@@ -1,6 +1,6 @@
 import pytest
 
-from scml.scml2019.utils import anac2019_world
+from scml.scml2019.utils19 import anac2019_world
 from tests.switches import SCML_RUN2019
 
 

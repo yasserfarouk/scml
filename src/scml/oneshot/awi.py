@@ -2,6 +2,7 @@
 Implements the one shot version of the Agent-World Interface.
 
 """
+
 from __future__ import annotations
 
 import itertools
@@ -272,6 +273,11 @@ class OneShotAWI(AgentWorldInterface):
         return self._world.is_bankrupt[aid]
 
     @property
+    def horizon(self) -> int:
+        """Horizon for negotiations"""
+        return self._world.horizon
+
+    @property
     def catalog_prices(self) -> np.ndarray:
         """Returns the catalog prices of all products"""
         return self._world.catalog_prices
@@ -302,6 +308,13 @@ class OneShotAWI(AgentWorldInterface):
         return self.bb_read("settings", "force_signing") or self.bb_read(  # type: ignore
             "settings", "force_exogenous"
         )
+
+    @property
+    def allow_zero_quantity(self) -> bool:
+        """
+        Does negotiations allow zero quantity?
+        """
+        return self._world.allow_zero_quantity
 
     # ================================================================
     # Static Agent Information (does not change during the simulation)
@@ -410,6 +423,7 @@ class OneShotAWI(AgentWorldInterface):
 
         return OneShotState(
             perishable=self.is_perishable,
+            allow_zero_quantity=self.allow_zero_quantity,
             exogenous_input_quantity=self.current_exogenous_input_quantity,
             exogenous_input_price=self.current_exogenous_input_price,
             exogenous_output_quantity=self.current_exogenous_output_quantity,
@@ -790,6 +804,22 @@ class OneShotAWI(AgentWorldInterface):
     def total_future_sales(self) -> int:
         """Total sales so far (this day)"""
         return sum(sum(_.values()) for _ in self.future_sales.values())
+
+    def total_sales_from(self, start: int) -> int:
+        """Total sales starting at start and ending at end (inclusive). Past days are ignored"""
+        return sum(
+            sum(_.values())
+            for i, _ in self._future_sales.items()
+            if max(start, self.current_step) <= i <= self.n_steps - 1
+        )
+
+    def total_supplies_from(self, start: int) -> int:
+        """Total supplies starting at start and ending at end (inclusive). Past days are ignored"""
+        return sum(
+            sum(_.values())
+            for i, _ in self._future_supplies.items()
+            if max(start, self.current_step) <= i <= self.n_steps - 1
+        )
 
     def total_sales_between(self, start: int, end: int) -> int:
         """Total sales starting at start and ending at end (inclusive). Past days are ignored"""

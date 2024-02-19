@@ -35,12 +35,10 @@ from scml.scml2020.agents import (
 from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
 from scml.std.agent import StdAgent
 from scml.std.agents import (
-    GreedySyncAgent,
-    SingleAgreementAspirationAgent,
     SyncRandomStdAgent,
 )
 from scml.std.agents.greedy import GreedyStdAgent
-from scml.std.world import STD_DEFAULT_PARAMS, SCML2024StdWorld, StdWorld
+from scml.std.world import STD_DEFAULT_PARAMS
 
 __all__ = [
     "anac_config_generator_oneshot",
@@ -538,8 +536,8 @@ def anac_assigner_std(
     max_n_worlds: int,
     n_agents_per_competitor: int = 1,
     fair: bool = True,
-    competitors: Sequence[str | type[Agent]] = (),
-    params: Sequence[dict[str, Any]] = (),
+    competitors: Sequence[str | type[OneShotAgent] | type[Agent]] = (),
+    params: Sequence[dict[str, Any]] | None = (),
     dynamic_non_competitors: Sequence[str | type[Agent]] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
@@ -637,7 +635,7 @@ def anac_assigner_std(
                 current_configs.append(_copy_config(perm, current_config, k))
         elif max_n_worlds is None:
             raise ValueError(
-                f"Did not give max_n_worlds and cannot find n_permutations."
+                "Did not give max_n_worlds and cannot find n_permutations."
             )
         else:
             permutation = list(zip(competitors, params))
@@ -687,7 +685,7 @@ def anac_assigner_collusion(
     n_agents_per_competitor: int = 1,
     fair: bool = True,
     competitors: Sequence[type[Agent] | str] = (),
-    params: Sequence[dict[str, Any]] = (),
+    params: Sequence[dict[str, Any]] | None = (),
     dynamic_non_competitors: list[type[Agent] | str] | None = None,
     dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
@@ -809,7 +807,7 @@ def anac_assigner_collusion(
             perm = perm[-1:] + perm[:-1]
             current_configs.append(_copy_config(perm, current_config, k))
     elif max_n_worlds is None:
-        raise ValueError(f"Did not give max_n_worlds and cannot find n_permutations.")
+        raise ValueError("Did not give max_n_worlds and cannot find n_permutations.")
     else:
         permutation = list(zip(competitors, params))
         assert len(permutation) == len(assignable_factories)
@@ -1255,8 +1253,9 @@ def anac2020_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -1343,8 +1342,9 @@ def anac2020_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1471,8 +1471,9 @@ def anac2020_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1599,8 +1600,9 @@ def anac2021_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -1687,8 +1689,9 @@ def anac2021_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1817,8 +1820,9 @@ def anac2021_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1945,8 +1949,9 @@ def anac2021_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2081,8 +2086,9 @@ def anac2022_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -2169,8 +2175,9 @@ def anac2022_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2299,8 +2306,9 @@ def anac2022_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2427,8 +2435,9 @@ def anac2022_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2525,8 +2534,9 @@ def anac2023_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -2614,8 +2624,9 @@ def anac2023_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2742,8 +2753,9 @@ def anac2023_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2871,8 +2883,9 @@ def anac2023_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -3007,10 +3020,12 @@ def anac2024_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
-    world_progress_callback: Callable[[SCML2024OneShotWorld | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
+    world_progress_callback: (
+        Callable[[SCML2024OneShotWorld | None], None] | None
+    ) = None,
     non_competitors: Sequence[str | type[OneShotAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[OneShotAgent]] | None = None,
@@ -3147,10 +3162,12 @@ def anac2024_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: Callable[[WorldRunResults | None], None]
-    | None = None,
-    world_progress_callback: Callable[[SCML2024OneShotWorld | None], None]
-    | None = None,
+    tournament_progress_callback: (
+        Callable[[WorldRunResults | None], None] | None
+    ) = None,
+    world_progress_callback: (
+        Callable[[SCML2024OneShotWorld | None], None] | None
+    ) = None,
     non_competitors: Sequence[str | type[OneShotAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,

@@ -6,13 +6,13 @@ import traceback
 from collections import namedtuple
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
+from typing import Any, Iterable
 
 import click
 import pandas as pd
 from joblib import Parallel, delayed
 from negmas.helpers import unique_name
-from tqdm import tqdm
+from rich.progress import track
 
 from scml import DecentralizingAgent, SCML2020World
 
@@ -98,7 +98,7 @@ fixed_vars = {
 }
 
 
-def jobs(n_jobs: Union[float, int]) -> int:
+def jobs(n_jobs: float | int) -> int:
     if n_jobs <= 0:
         return cpu_count()
     if n_jobs == 1 and isinstance(n_jobs, int):
@@ -106,14 +106,14 @@ def jobs(n_jobs: Union[float, int]) -> int:
     return int(0.5 + n_jobs * cpu_count())
 
 
-def get_var_vals(var: str, val: Any) -> Dict[str, Any]:
+def get_var_vals(var: str, val: Any) -> dict[str, Any]:
     """Extracts variable name and value allowing for multiple names separated by semicolon"""
     if ";" not in var:
         return {var: val}
     return dict(zip(var.split(";"), val))
 
 
-def run_config(world_config: Dict[str, Any], funcs: List[str]):
+def run_config(world_config: dict[str, Any], funcs: list[str]):
     """Runs a single configuration and returns values of all functions for that configuration"""
     world = SCML2020World(**SCML2020World.generate(**world_config))
     results = {}
@@ -128,7 +128,7 @@ def run_config(world_config: Dict[str, Any], funcs: List[str]):
         results["failed_run"] = False
         results["exception"] = None
     except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
+        _, _, exc_traceback = sys.exc_info()
         print(f"Exception occurred: {str(e)}\n{traceback.format_tb(exc_traceback)}")
         results.update({func: float("nan") for func in funcs})
         results["time"] = float("nan")
@@ -141,7 +141,7 @@ def run_config(world_config: Dict[str, Any], funcs: List[str]):
     return results
 
 
-def satisfied(config: Dict[str, Any], constraints: Iterable[Constraint]) -> bool:
+def satisfied(config: dict[str, Any], constraints: Iterable[Constraint]) -> bool:
     """
     Tests whether the constraints are all satisfied in the config or not
 
@@ -157,17 +157,17 @@ def satisfied(config: Dict[str, Any], constraints: Iterable[Constraint]) -> bool
             config[var] in val for var, val in zip(c.condition_vars, c.condition_values)
         ):
             continue
-        if not config[c.conditioned_var] in c.feasible_values:
+        if config[c.conditioned_var] not in c.feasible_values:
             return False
     return True
 
 
 def generate_configs_factorial(
-    ind_vars: Dict[str, list],
-    fixed_vars: Dict[str, Any],
-    n_worlds_per_condition: 5,
-    constraints: Tuple[Constraint] = tuple(),
-) -> List[Dict[str, Any]]:
+    ind_vars: dict[str, list],
+    fixed_vars: dict[str, Any],
+    n_worlds_per_condition=5,
+    constraints: tuple[Constraint, ...] = tuple(),
+) -> list[dict[str, Any]]:
     """
     Generates all configs for an experiment with a factorial design
 
@@ -175,10 +175,10 @@ def generate_configs_factorial(
         ind_vars: Independent variables and their list of values
         fixed_vars: Fixed variables to be passed directly to the world generator
         n_worlds_per_condition: Number of simulations for each config
-        constraints: List of constraints that must be satisfied by all configs tested
+        constraints: list of constraints that must be satisfied by all configs tested
 
     Returns:
-        List of configs
+        list of configs
 
     """
     combinations = []
@@ -202,10 +202,10 @@ def generate_configs_factorial(
 
 def generate_configs_single(
     ind_var: str,
-    ind_values: List[Any],
-    fixed_vars: Dict[str, Any],
-    n_worlds_per_condition: 5,
-) -> List[Dict[str, Any]]:
+    ind_values: list[Any],
+    fixed_vars: dict[str, Any],
+    n_worlds_per_condition=5,
+) -> list[dict[str, Any]]:
     """
     Generates all configs for an experiment with a factorial design
 
@@ -218,7 +218,7 @@ def generate_configs_single(
         n_worlds_per_condition: Number of simulations for each config
 
     Returns:
-        List of configs
+        list of configs
 
     """
     configs = []
@@ -229,28 +229,28 @@ def generate_configs_single(
     return configs
 
 
-def run_configs(configs: Iterable[Dict[str, Any]], n_jobs: int) -> pd.DataFrame:
+def run_configs(configs: Iterable[dict[str, Any]], n_jobs: int) -> pd.DataFrame:
     configs = list(configs)
     if n_jobs == 1:
         results = []
-        for world_config, funcs in configs:
-            results.append(run_config(world_config, funcs))
+        for world_config in configs:
+            results.append(run_config(world_config, list(dep_vars.keys())))
         return pd.DataFrame(results)
 
     results = Parallel(n_jobs=n_jobs)(
         delayed(run_config)(configs[i], list(dep_vars.keys()))
-        for i in tqdm(range(len(configs)))
+        for i in track(range(len(configs)))
     )
     return pd.DataFrame(results)
 
 
 def run(
-    ind_vars: Dict[str, list],
-    fixed_vars: Dict[str, Any],
-    n_worlds_per_condition: 5,
+    ind_vars: dict[str, list],
+    fixed_vars: dict[str, Any],
+    n_worlds_per_condition=5,
     factorial: bool = True,
-    constraints: Tuple[Constraint] = tuple(),
-    n_jobs: Union[float, int] = 0,
+    constraints: tuple[Constraint, ...] = tuple(),
+    n_jobs: float | int = 0,
 ) -> pd.DataFrame:
     """
     Runs an experiment
@@ -259,7 +259,7 @@ def run(
         fixed_vars: Variables not tested but passed to the world generator
         n_worlds_per_condition: Number of simulations to run for each condition
         factorial: If true run all possibilities, otherwise test each ind_var in an experiment (much faster)
-        constraints: List of constraints for world generation each specifying the feasible values of an independent
+        constraints: list of constraints for world generation each specifying the feasible values of an independent
                      variable given that a condition is met
         n_jobs: Number of jobs to use. If 1, processing will be serial. If zero all processes will be used. If a
                 a fraction between zero and one, this fraction of CPU count will be used
@@ -407,7 +407,3 @@ def main(worlds, factorial, variables, name, steps, compact, log, jobs):
     run(ind_vars, fixed_vars, worlds, factorial, constraints, n_jobs=jobs).to_csv(
         path / "results.csv"
     )
-
-
-if __name__ == "__main__":
-    main()

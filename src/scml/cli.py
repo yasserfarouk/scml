@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
 import math
-from rich import print
 import os
 import sys
 import traceback
@@ -14,15 +13,16 @@ from typing import List
 
 import click
 import click_config_file
-from scml.std.world import SCML2024StdWorld
 import negmas
 import numpy as np
 import pandas as pd
-import tqdm
 import yaml
 from negmas import save_stats
 from negmas.helpers import humanize_time, unique_name
 from negmas.helpers.inout import load
+from negmas.tournaments import TournamentResults
+from rich import print
+from rich.progress import track
 from tabulate import tabulate
 
 import scml
@@ -35,7 +35,7 @@ from scml.oneshot.world import (
     SCML2024OneShotWorld,
 )
 from scml.scml2019 import FactoryManager, SCML2019World
-from scml.scml2019.utils import (
+from scml.scml2019.utils19 import (
     DefaultGreedyManager,
     anac2019_collusion,
     anac2019_sabotage,
@@ -43,18 +43,17 @@ from scml.scml2019.utils import (
 )
 from scml.scml2020.agent import SCML2020Agent
 from scml.scml2020.common import is_system_agent
-from scml.scml2020.world import (
-    SCML2020World,
-    SCML2021World,
-    SCML2023World,
-    SCML2024World,
-)
+from scml.scml2020.world import SCML2020World, SCML2021World, SCML2023World
+from scml.std.world import SCML2024StdWorld
 from scml.utils import (
     anac2020_collusion,
     anac2020_std,
     anac2021_collusion,
     anac2021_oneshot,
     anac2021_std,
+    anac2022_collusion,
+    anac2022_oneshot,
+    anac2022_std,
     anac2023_collusion,
     anac2023_oneshot,
     anac2023_std,
@@ -63,7 +62,7 @@ from scml.utils import (
 )
 
 try:
-    from scml.vendor.quick.quick import gui_option
+    from scml.vendor.quick.quick import gui_option  # type: ignore
 except:
 
     def gui_option(x):
@@ -187,7 +186,7 @@ def main():
     pass
 
 
-@main.command(help="Runs an SCML2019 tournament")
+@main.command(help="Runs an SCML2019 tournament")  # type: ignore
 @click.option(
     "--parallel/--serial",
     default=True,
@@ -452,14 +451,14 @@ def tournament2019(
         competitors=all_competitors,
         competitor_params=all_competitors_params,
         non_competitors=non_competitors,
-        non_competitor_params=non_competitor_params,
+        non_competitor_params=non_competitor_params,  # type: ignore
         agent_names_reveal_type=reveal_names,
         n_competitors_per_world=cw,
         n_configs=configs,
         n_runs_per_world=runs,
         parallelism=parallelism,
         max_worlds_per_config=worlds_per_config,
-        tournament_path=log,
+        tournament_path=str(log) if log else log,
         total_timeout=timeout,
         name=name,
         verbose=verbosity > 0,
@@ -478,7 +477,7 @@ def tournament2019(
     print(f"Finished in {end_time}")
 
 
-@main.command(help="Runs an SCML2020 tournament")
+@main.command(help="Runs an SCML2020 tournament")  # type: ignore
 @click.option(
     "--name",
     "-n",
@@ -827,7 +826,7 @@ def _path(path) -> Path:
     return Path(path).absolute()
 
 
-@main.command(help="Run an SCML2019 world simulation")
+@main.command(help="Run an SCML2019 world simulation")  # type: ignore
 @click.option("--steps", default=100, type=int, help="Number of steps.")
 @click.option(
     "--levels",
@@ -968,7 +967,7 @@ def run2019(
     failed = False
     strt = perf_counter()
     try:
-        for i in tqdm.tqdm(range(world.n_steps)):
+        for i in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1118,7 +1117,7 @@ def run2019(
     #     save_run_info(world.name, log_path=log_dir)
 
 
-@main.command(help="Run an SCML2020 world simulation")
+@main.command(help="Run an SCML2020 world simulation")  # type: ignore
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
@@ -1239,7 +1238,7 @@ def run2020(
     failed = False
     strt = perf_counter()
     try:
-        for i in tqdm.tqdm(range(world.n_steps)):
+        for i in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1439,7 +1438,7 @@ DEFAULT_STD_NONCOMPETITORS = [
 ]
 
 
-@main.command(help="Run an 2024 world simulation")
+@main.command(help="Run an 2024 world simulation")  # type: ignore
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
@@ -1604,7 +1603,7 @@ def run2024(
     failed = False
     strt = perf_counter()
     try:
-        for i in tqdm.tqdm(range(world.n_steps)):
+        for i in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1775,7 +1774,7 @@ def run2024(
         save_run_info(world.name, log_dir, "world")
 
 
-@main.command(help="Run an SCML2023 world simulation")
+@main.command(help="Run an SCML2023 world simulation")  # type: ignore
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
@@ -1934,7 +1933,7 @@ def run2023(
     failed = False
     strt = perf_counter()
     try:
-        for i in tqdm.tqdm(range(world.n_steps)):
+        for i in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -2105,7 +2104,7 @@ def run2023(
         save_run_info(world.name, log_dir, "world")
 
 
-@main.command(help="Run an SCML2021 world simulation")
+@main.command(help="Run an SCML2021 world simulation")  # type: ignore
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
@@ -2264,7 +2263,7 @@ def run2022(
     failed = False
     strt = perf_counter()
     try:
-        for i in tqdm.tqdm(range(world.n_steps)):
+        for i in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -2435,7 +2434,7 @@ def run2022(
         save_run_info(world.name, log_dir, "world")
 
 
-@main.command(help="Run an SCML2021 world simulation")
+@main.command(help="Run an SCML2021 world simulation")  # type: ignore
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
@@ -2594,7 +2593,7 @@ def run2021(
     failed = False
     strt = perf_counter()
     try:
-        for i in tqdm.tqdm(range(world.n_steps)):
+        for i in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -2765,7 +2764,7 @@ def run2021(
         save_run_info(world.name, log_dir, "world")
 
 
-@main.command(help="Runs an SCML2020 tournament")
+@main.command(help="Runs an SCML2020 tournament")  # type: ignore
 @click.option(
     "--name",
     "-n",
@@ -2887,7 +2886,7 @@ def run2021(
     help="A file to save the final results to",
 )
 @click_config_file.configuration_option()
-def tournament2020(
+def tournament2022(
     name,
     steps,
     timeout,
@@ -3001,13 +3000,17 @@ def tournament2020(
                 non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = scml.utils.DefaultAgents
+        non_competitors = scml.utils.DefaultAgents2022
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
     print("Non-competitors are: ")
     pprint(non_competitors)
-    runner = anac2020_std if ttype == "std" else anac2020_collusion
+    runner = (
+        anac2022_std
+        if ttype == "std"
+        else (anac2022_oneshot if ttype == "oneshot" else anac2022_collusion)
+    )
     parallelism = "parallel" if parallel else "serial"
     prog_callback = print_world_progress if verbosity > 1 else None
     start = perf_counter()
@@ -3043,7 +3046,7 @@ def tournament2020(
     print(f"Finished in {end_time}")
 
 
-@main.command(help="Runs an SCML2021 tournament")
+@main.command(help="Runs an SCML2021 tournament")  # type: ignore
 @click.option(
     "--name",
     "-n",
@@ -3342,7 +3345,7 @@ def tournament2021(
     save_run_info(name, results.path, "tournament")
 
 
-@main.command(help="Runs an SCML2024 tournament")
+@main.command(help="Runs an SCML2024 tournament")  # type: ignore
 @click.option(
     "--name",
     "-n",
@@ -3640,7 +3643,7 @@ def tournament2024(
     save_run_info(name, results.path, "tournament")
 
 
-@main.command(help="Runs an SCML2023 tournament")
+@main.command(help="Runs an SCML2023 tournament")  # type: ignore
 @click.option(
     "--name",
     "-n",
@@ -3933,13 +3936,15 @@ def tournament2023(
         ignore_negotiation_exceptions=not raise_exceptions,
         **kwargs,
     )
+    assert isinstance(results, TournamentResults)
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
     print(f"Finished in {end_time}")
-    save_run_info(name, results.path, "tournament")
+    if results.path is not None:
+        save_run_info(name, Path(results.path), "tournament")
 
 
-@main.command(help="Prints SCML version and NegMAS version")
+@main.command(help="Prints SCML version and NegMAS version")  # type: ignore
 def version():
     print(f"SCML: {scml.__version__} (NegMAS: {negmas.__version__})")
 

@@ -3,6 +3,7 @@ from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.world import DUMMY_AGENT_BEGINNING
 from scml.std.agents import GreedyStdAgent, SyncRandomStdAgent
 from scml.std.world import SCML2024StdWorld
+from tests.switches import DefaultStdWorld
 
 
 def test_single_run():
@@ -365,3 +366,20 @@ def test_awi_needed_level_middle():
         assert awi.total_sales_between(t1, t2) == v, f"{t1=}, {t2=}, {v=}"
         assert awi.total_supplies_between(t1, t2) == 0
         assert awi.total_sales_between(t1, t2) == 0
+
+
+def test_can_run_single_agent():
+    # agent_types = [RandDistOneShotAgent, RandomOneShotAgent, EqualDistOneShotAgent, GreedyOneShotAgent]
+    target_productivity = 0.2
+    agent_types = [SyncRandomStdAgent]
+    agent_params = [
+        dict(controller_params=dict(target_productivity=target_productivity))
+    ]
+
+    world = DefaultStdWorld(
+        **DefaultStdWorld.generate(
+            agent_types=agent_types, agent_params=agent_params, n_steps=50
+        ),
+        construct_graphs=True,
+    )
+    world.run()

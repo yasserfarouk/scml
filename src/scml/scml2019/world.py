@@ -75,7 +75,7 @@ def _realin(rng: Union[Tuple[float, float], float]) -> float:
 
         the real within the given range
     """
-    if isinstance(rng, float):
+    if not isinstance(rng, Iterable):
         return rng
     if abs(rng[1] - rng[0]) < 1e-8:
         return rng[0]
@@ -110,9 +110,8 @@ class SCML2019World(TimeInAgreementMixin, World):
         factories: List[Factory],
         consumers: List[Consumer],
         miners: List[Miner],
-        factory_managers: Optional[List[FactoryManager]] = None
+        factory_managers: Optional[List[FactoryManager]] = None,
         # timing parameters
-        ,
         n_steps=100,
         time_limit=60 * 90,
         # mechanism params
@@ -120,21 +119,18 @@ class SCML2019World(TimeInAgreementMixin, World):
         neg_n_steps=20,
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
-        negotiation_speed=21
+        negotiation_speed=21,
         # bank parameters
-        ,
         no_bank=False,
         minimum_balance=0,
         interest_rate=0.1,
         interest_max=0.3,
         installment_interest=0.2,
         interest_time_increment=0.02,
-        balance_at_max_interest=None
+        balance_at_max_interest=None,
         # loan parameters
-        ,
-        loan_installments=1
+        loan_installments=1,
         # insurance company parameters
-        ,
         no_insurance=False,
         premium=0.03,
         premium_time_increment=0.03,
@@ -145,9 +141,8 @@ class SCML2019World(TimeInAgreementMixin, World):
         breach_penalty_society=0.1,
         breach_penalty_society_min=0.0,
         breach_penalty_victim=0.0,
-        breach_move_max_product=True
+        breach_move_max_product=True,
         # simulation parameters
-        ,
         initial_wallet_balances: Optional[int] = None,
         money_resolution=0.5,
         default_signing_delay=0,
@@ -167,7 +162,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         # general parameters
         compact=False,
         log_folder=None,
-        log_to_file: bool = True,
+        log_to_file: bool = False,
         log_to_screen: bool = False,
         log_file_level=logging.DEBUG,
         log_screen_level=logging.ERROR,
@@ -182,7 +177,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         save_unresolved_breaches: bool = True,
         ignore_agent_exceptions: bool = False,
         ignore_contract_execution_exceptions: bool = False,
-        name: str = None,
+        name: str | None = None,
         **kwargs,
     ):
         """
@@ -290,7 +285,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         self.default_price_for_products_without_one = (
             default_price_for_products_without_one
         )
-        self.agents: Dict[str, SCML2019Agent] = {}  # just to help static type checkers
+        self.agents: Dict[str, SCML2019Agent] = {}  # type: ignore just to help static type checkers
         if balance_at_max_interest is None:
             balance_at_max_interest = initial_wallet_balances
         self.strip_annotations = strip_annotations
@@ -685,9 +680,8 @@ class SCML2019World(TimeInAgreementMixin, World):
         for level in range(n_intermediate_levels + 1):
             new_product = Product(
                 name=f"p{level + 1}",
-                catalog_price=None
+                catalog_price=None,
                 # keep this to the world to calculate _s(products[-1].catalog_price) + level + 1
-                ,
                 production_level=level + 1,
                 id=level + 1,
                 expires_in=0,
@@ -1549,10 +1543,10 @@ class SCML2019World(TimeInAgreementMixin, World):
         self._stats["n_contracts_nullified_now"].append(self.__n_nullified)
         self._stats["n_bankrupt"].append(self.__n_bankrupt)
         market_size = 0
-        self._stats[f"_balance_bank"].append(self.bank.wallet)
-        self._stats[f"_balance_society"].append(self.penalties)
-        self._stats[f"_balance_insurance"].append(self.insurance_company.wallet)
-        self._stats[f"_storage_insurance"].append(
+        self._stats["_balance_bank"].append(self.bank.wallet)
+        self._stats["_balance_society"].append(self.penalties)
+        self._stats["_balance_insurance"].append(self.insurance_company.wallet)
+        self._stats["_storage_insurance"].append(
             sum(self.insurance_company.storage.values())
         )
         internal_market_size = (
@@ -1571,7 +1565,6 @@ class SCML2019World(TimeInAgreementMixin, World):
         self._stats["_market_size_total"].append(market_size + internal_market_size)
 
     def start_contract_execution(self, contract: Contract) -> Set[Breach]:
-
         partners, agreement = (
             {self.agents[_] for _ in contract.partners},
             contract.agreement,

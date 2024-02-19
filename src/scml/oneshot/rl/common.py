@@ -1,12 +1,8 @@
-from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable, Union
+from typing import Callable
 
 import numpy as np
-from negmas.helpers import get_class
 
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.world import SCMLBaseWorld
+from scml.oneshot.common import is_system_agent
 
 __all__ = [
     "RLState",
@@ -28,3 +24,21 @@ def model_wrapper(model, deterministic: bool = False) -> RLModel:
     """Wraps a stable_baselines3 model as an RL model"""
 
     return lambda obs: model.predict(obs, deterministic=deterministic)[0]
+
+
+def group_partners(
+    my_partners: list[str], n_partners: int, max_group_size: int
+) -> list[list[str]]:
+    """Combines a list of partners/consumers into the given number of groups"""
+    partners = [_ for _ in my_partners if not is_system_agent(_)]
+    partner_sets = [[] for _ in range(n_partners)]
+    for i, partner in enumerate(partners):
+        partner_sets[i % n_partners].append(partner)
+
+    assert not partner_sets or max(len(_) for _ in partner_sets) <= max_group_size, (
+        f"Too many partners {len(partners)} needing to combine more "
+        f"than {max_group_size} which is not supported by "
+        f"the observation space:\n{partner_sets=}"
+    )
+
+    return partner_sets

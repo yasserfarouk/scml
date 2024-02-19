@@ -1,5 +1,6 @@
 import logging
 import random
+from collections import defaultdict
 from functools import partial
 from typing import Any
 
@@ -7,21 +8,26 @@ import numpy as np
 from negmas.gb.common import ResponseType
 from negmas.sao.common import SAOResponse
 from pytest import mark
-from stable_baselines3 import A2C
+
+try:
+    from stable_baselines3 import A2C
+except ImportError:
+    A2C = None
 
 from scml.common import intin
-from scml.oneshot.rl.action import ActionManager, UnconstrainedActionManager
+from scml.oneshot.agents.rand import RandDistOneShotAgent
+from scml.oneshot.context import (
+    ConsumerContext,
+    FixedPartnerNumbersOneShotContext,
+    LimitedPartnerNumbersContext,
+    LimitedPartnerNumbersOneShotContext,
+    SupplierContext,
+)
+from scml.oneshot.rl.action import ActionManager, FlexibleActionManager
 from scml.oneshot.rl.agent import OneShotRLAgent
 from scml.oneshot.rl.common import model_wrapper
-from scml.oneshot.context import (
-    FixedPartnerNumbersOneShotContext,
-    LimitedPartnerNumbersOneShotContext,
-)
 from scml.oneshot.rl.env import OneShotEnv
-from scml.oneshot.rl.observation import (
-    FixedPartnerNumbersObservationManager,
-    LimitedPartnerNumbersObservationManager,
-)
+from scml.oneshot.rl.observation import FlexibleObservationManager, ObservationManager
 from scml.oneshot.rl.policies import greedy_policy, random_action, random_policy
 from scml.oneshot.rl.reward import RewardFunction
 from scml.std.context import (
@@ -74,36 +80,36 @@ def make_env(
         context_type, obs_type, act_type = dict(
             fixed=(
                 FixedPartnerNumbersOneShotContext,
-                FixedPartnerNumbersObservationManager,
-                UnconstrainedActionManager,
+                FlexibleObservationManager,
+                FlexibleActionManager,
             ),
             limited=(
                 LimitedPartnerNumbersOneShotContext,
-                LimitedPartnerNumbersObservationManager,
-                UnconstrainedActionManager,
+                FlexibleObservationManager,
+                FlexibleActionManager,
             ),
             unlimited=(
                 LimitedPartnerNumbersOneShotContext,
-                LimitedPartnerNumbersObservationManager,
-                UnconstrainedActionManager,
+                FlexibleObservationManager,
+                FlexibleActionManager,
             ),
         )[type]
     else:
         context_type, obs_type, act_type = dict(
             fixed=(
                 FixedPartnerNumbersStdContext,
-                FixedPartnerNumbersObservationManager,
-                UnconstrainedActionManager,
+                FlexibleObservationManager,
+                FlexibleActionManager,
             ),
             limited=(
                 LimitedPartnerNumbersStdContext,
-                LimitedPartnerNumbersObservationManager,
-                UnconstrainedActionManager,
+                FlexibleObservationManager,
+                FlexibleActionManager,
             ),
             unlimited=(
                 LimitedPartnerNumbersStdContext,
-                LimitedPartnerNumbersObservationManager,
-                UnconstrainedActionManager,
+                FlexibleObservationManager,
+                FlexibleActionManager,
             ),
         )[type]
     context = context_type(
@@ -134,8 +140,14 @@ def test_env_runs(type_):
     env.close()
 
 
+@mark.skipif(
+    A2C is None,
+    "Skipped because you do not have stable-baselines3 installed.Try: python -m pip install stable-baselines3",
+)
 @mark.parametrize("type_", ["unlimited", "fixed", "limited"])
 def test_training(type_):
+    if A2C is None:
+        return
     env = make_env(extra_checks=True, type=type_)
 
     model = A2C("MlpPolicy", env, verbose=1)
@@ -159,14 +171,20 @@ def test_rl_agent_fallback():
     world.run()
 
 
+@mark.skipif(
+    A2C is None,
+    "Skipped because you do not have stable-baselines3 installed.Try: python -m pip install stable-baselines3",
+)
 def test_rl_agent_with_a_trained_model():
+    if A2C is None:
+        return
     env = make_env(extra_checks=False, type="unlimited")
 
     model = A2C("MlpPolicy", env, verbose=1)
     model.learn(total_timesteps=NTRAINING)
 
     context = LimitedPartnerNumbersOneShotContext()
-    obs = LimitedPartnerNumbersObservationManager(context, extra_checks=False)
+    obs = FlexibleObservationManager(context, extra_checks=False)
     world, agents = context.generate(
         types=(OneShotRLAgent,),
         params=(dict(models=[model_wrapper(model)], observation_managers=[obs]),),
@@ -191,44 +209,135 @@ def test_env_runs_one_world():
     env.close()
 
 
-@mark.skip(reason=f"Known to fail.")
+# @mark.skip(reason=f"Known to fail.")
 @mark.parametrize(
     "type_",
     [
         # LimitedPartnerNumbersActionManager,
         # FixedPartnerNumbersActionManager,
-        UnconstrainedActionManager,
+        FlexibleActionManager,
     ],
 )
 def test_action_manager(type_: type[ActionManager]):
-    context = FixedPartnerNumbersOneShotContext()
+    context = LimitedPartnerNumbersContext()
     manager = type_(context)
     world, agents = context.generate()
-    for _ in range(100):
-        agent = agents[0]
+    agent = agents[0]
+    assert world.neg_n_steps is not None
+    for _ in range(min(100, world.neg_n_steps * (world.n_steps - 1))):
         # action = space.sample()
         responses = dict()
-        awi = agent.awi
-        for nmi in awi.state.current_sell_nmis.values():
-            partner = [x for x in nmi.agent_ids if x != agent.id][0]
-            resp = random.choice(
-                [
-                    ResponseType.REJECT_OFFER,
-                    ResponseType.END_NEGOTIATION,
-                    ResponseType.ACCEPT_OFFER,
-                ]
+        awi = None
+        if not agent._awi:
+            responses = defaultdict(
+                lambda: SAOResponse(ResponseType.REJECT_OFFER, (1, 0, 22))
             )
-            responses[partner] = SAOResponse(
-                resp,
-                awi.current_output_outcome_space.random_outcome()
-                if resp != ResponseType.END_NEGOTIATION
-                else None,
-            )
+        else:
+            awi = agent.awi
+            for nmi in awi.state.current_sell_nmis.values():
+                partner = [x for x in nmi.agent_ids if x != agent.id][0]
+                resp = random.choice(
+                    [
+                        ResponseType.REJECT_OFFER,
+                        ResponseType.END_NEGOTIATION,
+                        ResponseType.ACCEPT_OFFER,
+                    ]
+                )
+                responses[partner] = SAOResponse(
+                    resp,
+                    awi.current_output_outcome_space.random_outcome()
+                    if resp != ResponseType.END_NEGOTIATION
+                    else None,
+                )
         world.step(1, neg_actions={agent.id: responses})
-        action = manager.encode(awi, responses)
-        decoded = manager.decode(awi, action)
-        encoded = manager.encode(awi, decoded)
-        assert np.all(np.isclose(action, encoded)), f"{action=}\n{decoded=}\n{encoded=}"
+        if awi is not None:
+            action = manager.encode(awi, responses)
+            decoded = manager.decode(awi, action)
+            encoded = manager.encode(awi, decoded)
+            assert np.all(
+                np.isclose(action, encoded)
+            ), f"{action=}\n{decoded=}\n{encoded=}"
+
+
+class RecorderAgent(RandDistOneShotAgent):
+    def __init__(self, *args, obs, **kwargs):
+        self.__obs = obs
+        super().__init__(*args, **kwargs)
+
+    def counter_all(self, offers, states):
+        r = super().counter_all(offers, states)
+        self._saved_offers = offers
+        self._saved_states = states
+        self._saved_response = r
+        obs = self.__obs
+        encoded = obs.encode(self.awi.state)
+        decoded = obs.get_offers(self.awi, encoded)
+        expected = offers
+        current = self.awi.current_offers
+        for k, v in current.items():
+            assert expected.get(k, None) == v, f"{current=}\n{expected=}"
+        for k, v in decoded.items():
+            assert "+" in k or expected.get(k, None) == v, f"{decoded=}\n{expected=}"
+        for k, v in expected.items():
+            assert (
+                decoded.get(k, None) is None or decoded.get(k, None) == v
+            ), f"{decoded=}\n{expected=}"
+            assert current.get(k, None) == v, f"{current=}\n{expected=}"
+        assert sum(_[0] for _ in expected.values() if _) == sum(
+            _[0] for _ in decoded.values() if _
+        )
+        assert sum(_[0] * _[-1] for _ in expected.values() if _) == sum(
+            _[0] * _[-1] for _ in decoded.values() if _
+        )
+        return r
+
+    def first_proposals(self):
+        d = super().first_proposals()
+        self._my_first_proposals = d
+        obs = self.__obs
+        state = self.awi.state
+        expected = state.current_offers
+        encoded = obs.encode(state)
+        decoded = obs.get_offers(self.awi, encoded)
+        for k, v in decoded.items():
+            assert (
+                "+" in k or expected.get(k, None) == v
+            ), f"{decoded=}\n{expected=}\n{encoded=}"
+        for k, v in expected.items():
+            assert (
+                decoded.get(k, None) is None or decoded.get(k, None) == v
+            ), f"{decoded=}\n{expected=}\n{encoded=}"
+        assert sum(_[0] for _ in expected.values() if _) == sum(
+            _[0] for _ in decoded.values() if _
+        )
+        assert sum(_[0] * _[-1] for _ in expected.values() if _) == sum(
+            _[0] * _[-1] for _ in decoded.values() if _
+        )
+        return d
+
+
+# @mark.skip(reason=f"Known to fail.")
+@mark.parametrize(
+    "obs_type",
+    [
+        # FixedPartnerNumbersObservationManager,
+        FlexibleObservationManager,
+    ],
+)
+def test_obs_manager(obs_type: type[ObservationManager]):
+    n_worlds = 2
+    level = random.randint(0, 1)
+    context = SupplierContext() if level == 0 else ConsumerContext()
+    obs = obs_type(context)
+    for _ in range(n_worlds):
+        world, agents = context.generate(
+            types=(RecorderAgent,), params=(dict(obs=obs),)
+        )
+        world.init()
+        agent = agents[0]
+        assert isinstance(agent, RecorderAgent)
+        for _ in range(world.n_steps):
+            world.step()
 
 
 def test_env_random_policy():
@@ -344,8 +453,8 @@ def test_reward_reception():
     )
 
     env = OneShotEnv(
-        action_manager=UnconstrainedActionManager(context=context),
-        observation_manager=FixedPartnerNumbersObservationManager(
+        action_manager=FlexibleActionManager(context=context),
+        observation_manager=FlexibleObservationManager(
             context=context, n_bins=20, extra_checks=False
         ),
         context=context,
@@ -380,10 +489,8 @@ def test_relative_times_make_sense():
     )
 
     env = OneShotEnv(
-        action_manager=UnconstrainedActionManager(context=context, extra_checks=True),
-        observation_manager=FixedPartnerNumbersObservationManager(
-            context=context, n_bins=20
-        ),
+        action_manager=FlexibleActionManager(context=context, extra_checks=True),
+        observation_manager=FlexibleObservationManager(context=context, n_bins=20),
         context=context,
     )
 
@@ -396,12 +503,14 @@ def test_relative_times_make_sense():
         obs_manager=env._obs_manager,
         awi=env._agent.awi,
         debug=True,
+        return_decoded=True,
     )
     for _ in range(60):
         results.append([obs[-5], obs[-4]])
-        action = policy(obs)
-        decoded = env._action_manager.decode(env._agent.awi, action)
-        obs, _, terminated, truncated, _ = env.step(action)
+        decoded = policy(obs)
+        assert isinstance(decoded, np.ndarray)
+        # decoded = env._action_manager.decode(env._agent.awi, encoded)
+        obs, _, terminated, truncated, _ = env.step(decoded)
         if terminated or truncated:
             obs, _ = env.reset()
     assert results[-1][-1] > 0, f"{results}"

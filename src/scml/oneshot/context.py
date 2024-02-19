@@ -2,6 +2,7 @@ import random
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from enum import Enum
 from typing import Any, Iterable, Union
 
 import numpy as np
@@ -10,12 +11,7 @@ from negmas.helpers.strings import unique_name
 
 from scml.common import intin, isin, isinclass, isinfloat, isinobject, make_array
 from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agents import (
-    GreedyOneShotAgent,
-    OneShotDummyAgent,
-    SingleAgreementAspirationAgent,
-    SyncRandomOneShotAgent,
-)
+from scml.oneshot.agents import Placeholder, RandDistOneShotAgent
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import is_system_agent
 from scml.oneshot.world import (
@@ -25,6 +21,8 @@ from scml.oneshot.world import (
     SCML2023OneShotWorld,
     SCML2024OneShotWorld,
     SCMLBaseWorld,
+    get_n_agents_per_process,
+    get_n_lines,
 )
 
 # from scml.utils import (
@@ -43,7 +41,7 @@ class Context(ABC):
     @abstractmethod
     def generate(
         self,
-        types: tuple[type[OneShotAgent], ...] = tuple(),
+        types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> tuple[SCMLBaseWorld, tuple[OneShotAgent]]:
         """
@@ -62,7 +60,6 @@ class Context(ABC):
     def is_valid_world(
         self,
         world: SCMLBaseWorld,
-        types: tuple[type[OneShotAgent], ...] = tuple(),
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
         ...
@@ -96,28 +93,35 @@ __all__ = [
     "FixedPartnerNumbersOneShotContext",
     "SupplierContext",
     "ConsumerContext",
+    "StrongSupplierContext",
+    "StrongConsumerContext",
+    "WeakSupplierContext",
+    "WeakConsumerContext",
+    "BalancedSupplierContext",
+    "BalancedConsumerContext",
     "RepeatingContext",
 ]
 
-N_SUPPLIERS = (1, 8)
+N_SUPPLIERS = (4, 8)
 """Numbers of suppliers supported"""
-N_CONSUMERS = (1, 8)
+N_CONSUMERS = (4, 8)
 """Numbers of consumers supported"""
 NTESTS = 20
-DEFAULT_DUMMY_AGENT_TYPES = (OneShotDummyAgent,)
+DEFAULT_DUMMY_AGENT_TYPES = (Placeholder,)
 
+WARN_ON_FAILURE = True
+RAISE_ON_FAILURE = False
 
-DefaultAgentsOneShot2023 = [
-    GreedyOneShotAgent,
-    SingleAgreementAspirationAgent,
-    SyncRandomOneShotAgent,
-]
+DefaultAgentsOneShot2024 = (
+    RandDistOneShotAgent,
+    # EqualDistOneShotAgent,
+)
 
 
 def _is(
     condition: bool,
-    raise_on_failure=False,
-    warn_on_failure=False,
+    raise_on_failure=RAISE_ON_FAILURE,
+    warn_on_failure=WARN_ON_FAILURE,
     message: str = "",
 ) -> bool:
     if not condition:
@@ -131,8 +135,8 @@ def _is(
 
 def _not(
     condition: bool,
-    raise_on_failure=False,
-    warn_on_failure=False,
+    raise_on_failure=RAISE_ON_FAILURE,
+    warn_on_failure=WARN_ON_FAILURE,
     message: str = "",
 ) -> bool:
     if condition:
@@ -151,7 +155,7 @@ def _safeget(d: dict[str, dict[str, Any]], x: str, y: str):
 def _world_matches_config(
     world: SCMLBaseWorld,
     config: dict[str, Any],
-    expected_types: Iterable[type[OneShotAgent] | str],
+    expected_types: Iterable[type[OneShotAgent] | str] | None,
     expected_world_type: type[SCMLBaseWorld] | None = None,
     raise_on_failure: bool = False,
     warn_on_failure: bool = False,
@@ -167,7 +171,7 @@ def _world_matches_config(
         isin(world.n_steps, _safeget(config, "info", "n_steps")),
         raise_on_failure,
         warn_on_failure,
-        "not isin(world.n_steps, self.n_steps)",
+        f'not isin({world.n_steps=}, {_safeget(config, "info", "n_steps")=})',
     ):
         return False
     if _not(
@@ -447,16 +451,20 @@ def _world_matches_config(
         "not isinstance(world, self.world_type)",
     ):
         return False
-    world_agent_types = [
-        type(_._obj) for aid, _ in world.agents.items() if not is_system_agent(aid)  # type: ignore
-    ]
-    if _not(
-        isinclass(world_agent_types, list(expected_types)),
-        raise_on_failure,
-        warn_on_failure,
-        f"not isinclass({world_agent_types=}, {list(expected_types)=})",
-    ):
-        return False
+
+    if expected_types:
+        world_agent_types = [
+            type(_._obj)  # type: ignore
+            for aid, _ in world.agents.items()
+            if not is_system_agent(aid)
+        ]
+        if _not(
+            isinclass(world_agent_types, list(expected_types)),
+            raise_on_failure,
+            warn_on_failure,
+            f"not isinclass({world_agent_types=}, {list(expected_types)=})",
+        ):
+            return False
     return True
 
 
@@ -778,52 +786,70 @@ class BaseContext(Context, ABC):
 
     world_type: type[SCMLBaseWorld] = OneShotWorld
     world_params: dict[str, Any] = field(factory=dict)
-    non_competitors: list[str | type[OneShotAgent]] = DefaultAgentsOneShot2023
+    non_competitors: tuple[str | type[OneShotAgent], ...] = DefaultAgentsOneShot2024
+    placeholder_types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES
+    placeholder_params: tuple[dict, ...] | None = None
+    placeholder_levels: tuple[int, ...] | None = None
 
     @abstractmethod
-    def make_config(
-        self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
-        params: tuple[dict[str, Any], ...] | None = None,
-    ) -> dict[str, Any]:
+    def make_config(self) -> dict[str, Any]:
         """Generates a config for a world"""
 
     @abstractmethod
     def is_valid_world(  # type: ignore
         self,
         world: SCMLBaseWorld,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
         raise_on_failure: bool = False,
         warn_on_failure: bool = False,
+        types: tuple[str | type[OneShotAgent], ...] | None = None,
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
 
     def make(
         self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> SCMLBaseWorld:
         """Generates the oneshot world and assigns an agent of type `agent_type` to it"""
-        return self.world_type(
-            **self.make_config(types, params), one_offer_per_step=True
-        )
+        if types is None:
+            types = self.placeholder_types
+            params = self.placeholder_params
+        return self.make_world(types, params)
 
     def make_world(
         self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> SCMLBaseWorld:
         """Generates a world"""
-        return self.world_type(
-            **self.make_config(types, params),
+        if types is None:
+            types = self.placeholder_types
+            params = self.placeholder_params
+        test_world = (config is not None,)
+        if config is None:
+            config = self.make_config()
+        config = self.world_type.replace_agents(
+            config, self.placeholder_types, types, params
         )
+
+        world = self.world_type(
+            **(self.world_params | config),
+            one_offer_per_step=True,
+        )
+        if test_world:
+            assert self.is_valid_world(world, types=types)
+        return world
 
     def generate(  # type: ignore
         self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> tuple[SCMLBaseWorld, tuple[OneShotAgent, ...]]:
         """Generates the world and assigns an agent to it"""
+        if types is None:
+            types = self.placeholder_types
+            params = self.placeholder_params
         if isinstance(types, OneShotAgent):
             types = (types,)  # type: ignore
         if isinstance(params, dict):
@@ -843,12 +869,14 @@ class BaseContext(Context, ABC):
         awi: OneShotAWI,
         raise_on_failure: bool = False,
         warn_on_failure: bool = False,
+        types: tuple[str | type[OneShotAgent], ...] | None = None,
     ) -> bool:  # type: ignore
         # todo: what should I do with tupes input to is_invalid_world
         return self.is_valid_world(
             awi._world,
             raise_on_failure=raise_on_failure,
             warn_on_failure=warn_on_failure,
+            types=types,
         )
 
     def contains_context(
@@ -859,7 +887,7 @@ class BaseContext(Context, ABC):
         n_tests: int = NTESTS,
     ) -> bool:
         for _ in range(n_tests):
-            world, _ = context.generate(types=DEFAULT_DUMMY_AGENT_TYPES)
+            world, _ = context.generate()
             if not self.is_valid_world(
                 world,
                 raise_on_failure=raise_on_failure,
@@ -879,10 +907,13 @@ class GeneralContext(BaseContext):
     price_multiplier: np.ndarray | tuple[float, float] | float = (1.5, 2.0)
     force_signing = True
     # production graph parameters
-    n_steps: tuple[int, int] | int = (50, 200)
+    n_steps: tuple[int, int] | int = (20, 200)
     n_processes: tuple[int, int] | int = 2
     n_lines: tuple[int, int] | int = 10
-    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = (4, 8)
+    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = (
+        min(N_CONSUMERS[0], N_SUPPLIERS[0]),
+        max(N_CONSUMERS[-1], N_SUPPLIERS[-1]),
+    )
     # profile parameters
     production_costs: np.ndarray | tuple[int, int] | int = (1, 4)
     cash_availability: tuple[float, float] | float = (1.5, 2.5)
@@ -1021,15 +1052,11 @@ class GeneralContext(BaseContext):
         )
         return n_processes, n_agents_per_process
 
-    def make_config(
-        self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
-        params: tuple[dict[str, Any], ...] | None = None,
-        levels: tuple[int, ...] | None = None,
-    ) -> dict[str, Any]:
+    def make_config(self) -> dict[str, Any]:
         """Generates a config for a world"""
-        if params is None:
-            params = tuple(dict() for _ in types)
+        types = self.placeholder_types
+        params = [dict() for _ in types]
+        levels = self.placeholder_levels
         n_processes, n_agents_per_process = self._distribute_agents(len(types))
         assert len(n_agents_per_process) == n_processes
 
@@ -1050,9 +1077,9 @@ class GeneralContext(BaseContext):
     def is_valid_world(  # type: ignore
         self,
         world: SCMLBaseWorld,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
         raise_on_failure: bool = False,
         warn_on_failure: bool = False,
+        types: tuple[str | type[OneShotAgent], ...] | None = None,
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
         if _is(
@@ -1066,7 +1093,7 @@ class GeneralContext(BaseContext):
             isin(world.n_steps, self.n_steps),
             raise_on_failure,
             warn_on_failure,
-            "not isin(world.n_steps, self.n_steps)",
+            f"not isin({world.n_steps=}, {self.n_steps=})",
         ):
             return False
         if _not(
@@ -1298,14 +1325,19 @@ class GeneralContext(BaseContext):
             "not isinstance(world, self.world_type)",
         ):
             return False
-        world_agent_types = [type(_._obj) for aid, _ in world.agents.items() if not is_system_agent(aid)]  # type: ignore
-        if _not(
-            isinclass(world_agent_types, list(self.non_competitors) + list(types)),
-            raise_on_failure,
-            warn_on_failure,
-            "not isinclass(world_agent_types, list(self.non_competitors) + list(types))",
-        ):
-            return False
+        if types:
+            world_agent_types = [
+                type(_._obj)  # type: ignore
+                for aid, _ in world.agents.items()
+                if not is_system_agent(aid)
+            ]
+            if _not(
+                isinclass(world_agent_types, list(self.non_competitors) + list(types)),
+                raise_on_failure,
+                warn_on_failure,
+                f"not isinclass({world_agent_types=}, {list(self.non_competitors)=}), {types=}",
+            ):
+                return False
         return True
 
     def contains_general_context(self, context: "GeneralContext") -> bool:
@@ -1393,15 +1425,45 @@ class GeneralContext(BaseContext):
         return True
 
 
+class Strength(Enum):
+    Weak = -1
+    Balanced = 0
+    Strong = 1
+
+
+def sample_with_strength(
+    c: int | tuple[int, int], n: int | tuple[int, int], s: Strength | None
+):
+    if s is None:
+        c = intin(c)
+        n = intin(n)
+        return c, n
+    mnc, mxc = c if isinstance(c, Iterable) else (c, c)
+    if s == Strength.Balanced:
+        c = intin((mnc + 1, mxc - 1))
+        mn, mx = c, c + 2
+    elif s == Strength.Strong:
+        c = intin((mnc + 1, mxc))
+        mn = n[0] if isinstance(n, Iterable) else n
+        mx = max(mn, c - 1)
+    else:
+        c = intin((mnc, mxc - 1))
+        mx = n[1] if isinstance(n, Iterable) else n
+        mn = min(c + 2, mx)
+    return c, intin((mn, mx))
+
+
 @define
 class LimitedPartnerNumbersContext(GeneralContext):
     """Generates a world limiting the range of the agent level, production capacity
     and the number of suppliers, consumers, and optionally same-level competitors."""
 
     level: int = 0
-    n_consumers: tuple[int, int] = (4, 8)
+    n_consumers: tuple[int, int] = N_CONSUMERS
     n_suppliers: tuple[int, int] = (0, 0)
-    n_competitors: tuple[int, int] = (3, 7)
+    n_competitors: tuple[int, int] = (N_CONSUMERS[0] - 1, N_CONSUMERS[1] - 1)
+    buying_strength: Strength | None = None
+    selling_strength: Strength | None = None
 
     def __attrs_post_init__(self):
         max_n_proceses = (
@@ -1410,37 +1472,54 @@ class LimitedPartnerNumbersContext(GeneralContext):
             else self.n_processes
         )
         assert isin(
-            tuple(_ + 1 for _ in self.n_competitors), self.n_agents_per_process  # type: ignore
-        )
+            tuple(_ + 1 for _ in self.n_competitors),
+            self.n_agents_per_process,  # type: ignore
+        ), f"{self.n_competitors=}, {self.n_agents_per_process=}"
         assert not (self.level > 0 and self.level < max_n_proceses - 1) or (
-            self.n_suppliers[-1] > 0 and self.n_consumers[-1] > 0
-        )
+            self.n_suppliers[-1] > 1 and self.n_consumers[-1] > 1
+        ), f"{self.n_suppliers=}, {self.n_consumers=}, {self.level=}, {self.n_processes=}"
         if self.level == 0:
-            assert isin(self.n_consumers, self.n_agents_per_process)
-            assert max(self.n_suppliers) < 1
+            assert isin(
+                self.n_consumers, self.n_agents_per_process
+            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert max(self.n_suppliers) < 1, f"{self.n_suppliers=}, {self.level=}"
+            assert (
+                min(self.n_consumers) > 0
+            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
         elif (
             self.level == -1
             or isinstance(self.n_processes, int)
             and self.level == max_n_proceses - 1
         ):
-            assert self.level < max_n_proceses
-            assert isin(self.n_suppliers, self.n_agents_per_process)
-            assert max(self.n_consumers) < 1
+            assert self.level < max_n_proceses, f"{max_n_proceses=}, {self.level=}"
+            assert isin(
+                self.n_suppliers, self.n_agents_per_process
+            ), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert (
+                max(self.n_consumers) < 1
+            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert min(self.n_suppliers) > 0, f"{self.n_suppliers=}, {self.level=}"
         else:
-            assert isin(self.n_consumers, self.n_agents_per_process)
-            assert isin(self.n_suppliers, self.n_agents_per_process)
+            assert isin(
+                self.n_consumers, self.n_agents_per_process
+            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert isin(
+                self.n_suppliers, self.n_agents_per_process
+            ), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
 
-    def make_config(
-        self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
-        params: tuple[dict[str, Any], ...] | None = None,
-        levels: tuple[int, ...] | None = None,
-    ) -> dict[str, Any]:
+    def make_config(self) -> dict[str, Any]:
         """Generates a config"""
-        assert levels is None, (
+        types = self.placeholder_types
+        params = (
+            [dict() for _ in types]
+            if self.placeholder_params is None
+            else self.placeholder_params
+        )
+        levels = self.placeholder_levels
+        assert levels is None or all(_ == self.level for _ in levels), (
             "LimitedPartnerNumbersContext does not allow you to decide the levels of "
             "the agents when creating the config as it uses its internal level "
-            "and assigns all dummy agents to it"
+            "and assigns all dummy agents to it: {self.level=}, {levels=}"
         )
         levels = tuple(self.level for _ in types)
         if params is None:
@@ -1448,9 +1527,21 @@ class LimitedPartnerNumbersContext(GeneralContext):
         n_processes, n_agents_per_process = self._distribute_agents(len(types))
         # find my level
         my_level = n_processes - 1 if self.level < 0 else self.level
-        n_suppliers = intin(self.n_suppliers)
-        n_consumers = intin(self.n_consumers)
-        n_competitors = intin(self.n_competitors)
+        n_competitors = self.n_competitors
+        n_suppliers = n_agents_per_process[my_level - 1] if my_level > 0 else 0
+        n_consumers = (
+            n_agents_per_process[my_level + 1] if my_level < n_processes - 1 else 0
+        )
+        if self.buying_strength is not None:
+            n_competitors, n_suppliers = sample_with_strength(
+                n_competitors, self.n_suppliers, self.buying_strength
+            )
+        if self.selling_strength is not None:
+            n_competitors, n_consumers = sample_with_strength(
+                n_competitors, self.n_consumers, self.selling_strength
+            )
+        n_competitors = intin(n_competitors)
+
         # override the number of consumers and number of suppliers to match my choice
         if my_level == 0:
             n_agents_per_process[1] = n_consumers
@@ -1459,8 +1550,15 @@ class LimitedPartnerNumbersContext(GeneralContext):
         else:
             n_agents_per_process[my_level + 1] = n_consumers
             n_agents_per_process[my_level - 1] = n_suppliers
-        n_competitors = intin(n_competitors) + 1
-        n_agents_per_process[my_level] = max(len(types), n_competitors)
+        n_agents_per_process[my_level] = max(len(types), n_competitors + 1)
+        for l, n in enumerate(n_agents_per_process):
+            assert isin(n, self.n_agents_per_process), (
+                f"Level {l} has {n} agents which is not in {self.n_agents_per_process}"
+                f": {self.n_suppliers=}, {self.n_competitors=}, {self.n_consumers=}"
+                f": {self.selling_strength=}, {self.buying_strength=}\n{n_agents_per_process}"
+                f"\n{self.n_agents_per_process}"
+                f"\n {n_suppliers=}, {n_competitors=}, {n_consumers=}"
+            )
 
         return self.make_predefined_config(
             *self._assign_types(
@@ -1472,18 +1570,22 @@ class LimitedPartnerNumbersContext(GeneralContext):
     def find_test_agents(
         self,
         world: SCMLBaseWorld,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent], ...] | None = None,
     ) -> list[str]:
-        return [aid for aid, agent in world.agents.items() if isinobject(agent, types)]  # type: ignore
+        if types is None:
+            types = self.placeholder_types
+        return [aid for aid, agent in world.agents.items() if isinobject(agent, types)]
 
     def is_valid_world(  # type: ignore
         self,
         world: SCMLBaseWorld,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent], ...] | None = None,
         raise_on_failure: bool = False,
         warn_on_failure: bool = False,
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
+        if types is None:
+            types = self.placeholder_types
         agent_ids = self.find_test_agents(world, types)
         n_processes = world.n_processes
         expected_level = self.level
@@ -1515,52 +1617,112 @@ class LimitedPartnerNumbersContext(GeneralContext):
             my_competitors = [_ for _ in my_competitors if _ != aid]
             n_consumers, n_suppliers = len(my_consumers), len(my_suppliers)
             n_competitors = len(my_competitors)
-            if is_first_level:
-                if not isin(n_consumers, self.n_consumers):
-                    if raise_on_failure:
-                        raise AssertionError(
-                            f"Invalid n_consumers: {n_consumers=} != {self.n_consumers=}"
-                        )
-                    return False
-                if my_suppliers != 1:
-                    if raise_on_failure:
-                        raise AssertionError(
-                            f"Invalid n_suppliers for {aid} (at level {my_level} "
-                            f"[of {world.n_processes} processes]): {len(my_suppliers)=} != 1\nAll Suppliers: {world.suppliers}"
-                        )
-                    return False
-            elif is_last_level:
-                if not isin(n_suppliers, self.n_suppliers):
-                    if raise_on_failure:
-                        raise AssertionError(
-                            f"Invalid n_suppliers: {n_suppliers=} != {self.n_suppliers=}"
-                        )
-                    return False
-                if my_consumers != 1:
-                    if raise_on_failure:
-                        raise AssertionError(
-                            f"Invalid n_conumsers: {len(my_consumers)=} != 1"
-                        )
-                    return False
-            else:
-                if not isin(n_suppliers, self.n_suppliers):
-                    if raise_on_failure:
-                        raise AssertionError(
-                            f"Invalid n_suppliers: {n_suppliers=} not in {self.n_suppliers=}"
-                        )
-                    return False
-                if _not(
-                    isin(n_consumers, self.n_consumers),
-                    raise_on_failure,
-                    warn_on_failure,
-                ):
-                    return False
             if not isin(n_competitors, self.n_competitors):
                 warnings.warn(
                     f"Invalid n_competitors: {n_competitors=} != {self.n_competitors=}"
                 )
                 return False
-        return super().is_valid_world(world, types, raise_on_failure=raise_on_failure)
+            if self.buying_strength is not None:
+                if self.buying_strength == Strength.Strong:
+                    if _not(
+                        n_suppliers >= n_competitors + 1,
+                        raise_on_failure=raise_on_failure,
+                        warn_on_failure=warn_on_failure,
+                        message=f"Strength {self.buying_strength} but {n_suppliers=} and {n_competitors=}",
+                    ):
+                        return False
+                elif self.buying_strength == Strength.Weak:
+                    if _not(
+                        n_suppliers <= n_competitors - 1,
+                        raise_on_failure=raise_on_failure,
+                        warn_on_failure=warn_on_failure,
+                        message=f"Strength {self.buying_strength} but {n_suppliers=} and {n_competitors=}",
+                    ):
+                        return False
+                elif self.buying_strength == Strength.Balanced:
+                    if _not(
+                        n_competitors - 1 <= n_suppliers <= n_competitors + 1,
+                        raise_on_failure=raise_on_failure,
+                        warn_on_failure=warn_on_failure,
+                        message=f"Strength {self.buying_strength} but {n_suppliers=} and {n_competitors=}",
+                    ):
+                        return False
+
+            if self.selling_strength is not None:
+                if self.selling_strength == Strength.Strong:
+                    if _not(
+                        n_consumers >= n_competitors + 1,
+                        raise_on_failure=raise_on_failure,
+                        warn_on_failure=warn_on_failure,
+                        message=f"Strength {self.selling_strength} but {n_consumers=} and {n_competitors=}",
+                    ):
+                        return False
+                elif self.selling_strength == Strength.Weak:
+                    if _not(
+                        n_consumers <= n_competitors - 1,
+                        raise_on_failure=raise_on_failure,
+                        warn_on_failure=warn_on_failure,
+                        message=f"Strength {self.selling_strength} but {n_consumers=} and {n_competitors=}",
+                    ):
+                        return False
+                elif self.selling_strength == Strength.Balanced:
+                    if _not(
+                        n_competitors - 1 <= n_consumers <= n_competitors + 1,
+                        raise_on_failure=raise_on_failure,
+                        warn_on_failure=warn_on_failure,
+                        message=f"Strength {self.selling_strength} but {n_consumers=} and {n_competitors=}",
+                    ):
+                        return False
+
+            if is_first_level:
+                if _not(
+                    isin(n_consumers, self.n_consumers),
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=f"Invalid n_consumers: {n_consumers=} != {self.n_consumers=}",
+                ):
+                    return False
+                if _is(
+                    n_suppliers != 0,
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=(
+                        f"Invalid n_suppliers for {aid} (at level {my_level} "
+                        f"[of {world.n_processes} processes]): {len(my_suppliers)=} != 1\nAll Suppliers: {world.suppliers}"
+                    ),
+                ):
+                    return False
+            elif is_last_level:
+                if _not(
+                    isin(n_suppliers, self.n_suppliers),
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=f"Invalid n_suppliers: {n_suppliers=} != {self.n_suppliers=}",
+                ):
+                    return False
+                if _is(
+                    n_consumers != 0,
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=f"Invalid n_conumsers: {len(my_consumers)=} != 1",
+                ):
+                    return False
+            else:
+                if _not(
+                    isin(n_suppliers, self.n_suppliers),
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=f"Invalid n_suppliers: {n_suppliers=} not in {self.n_suppliers=}",
+                ):
+                    return False
+                if _not(
+                    isin(n_consumers, self.n_consumers),
+                    raise_on_failure,
+                    warn_on_failure,
+                    message=f"Invalid n_consumers: {n_consumers=} not in {self.n_consumers=}",
+                ):
+                    return False
+        return super().is_valid_world(world, raise_on_failure=raise_on_failure)
 
     def contains_limited_partner_context(
         self,
@@ -1731,6 +1893,33 @@ class SupplierContext(LimitedPartnerNumbersOneShotContext):
 
 
 @define
+class StrongSupplierContext(SupplierContext):
+    """A supplier with almost many consumers relative to competitors"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs |= dict(selling_strength=Strength.Strong)
+        super().__init__(*args, **kwargs)
+
+
+@define
+class BalancedSupplierContext(SupplierContext):
+    """A supplier with almost same number of consumers as competitors"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs |= dict(selling_strength=Strength.Balanced)
+        super().__init__(*args, **kwargs)
+
+
+@define
+class WeakSupplierContext(SupplierContext):
+    """A supplier with few consumers relative to competitors"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs |= dict(selling_strength=Strength.Weak)
+        super().__init__(*args, **kwargs)
+
+
+@define
 class ConsumerContext(LimitedPartnerNumbersOneShotContext):
     """A world context that can generate any world compatible with the observation manager"""
 
@@ -1750,6 +1939,33 @@ class ConsumerContext(LimitedPartnerNumbersOneShotContext):
 
 
 @define
+class StrongConsumerContext(ConsumerContext):
+    """A consumer with almost many suppliers relative to competitors"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs |= dict(buying_strength=Strength.Strong)
+        super().__init__(*args, **kwargs)
+
+
+@define
+class BalancedConsumerContext(ConsumerContext):
+    """A consumer with almost same number of suppliers as competitors"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs |= dict(buying_strength=Strength.Balanced)
+        super().__init__(*args, **kwargs)
+
+
+@define
+class WeakConsumerContext(ConsumerContext):
+    """A consumer with few suppliers relative to competitors"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs |= dict(buying_strength=Strength.Weak)
+        super().__init__(*args, **kwargs)
+
+
+@define
 class OneShotContext(GeneralContext):
     """A basic context fixing stationary world config parameters"""
 
@@ -1761,14 +1977,13 @@ class RepeatingContext(BaseContext):
     configs: tuple[dict[str, Any], ...] = field(
         factory=lambda: (GeneralContext().make_config(),)
     )
-    placeholder_types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES
     randomize: bool = True
     rename: bool = True
     _next: int = field(init=False, default=0)
 
     def __attrs_post_init__(self):
         if not self.configs:
-            raise ValueError(f"RepeatingContext with no configs")
+            raise ValueError("RepeatingContext with no configs")
 
     def make_config(
         self,
@@ -1776,7 +1991,7 @@ class RepeatingContext(BaseContext):
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> dict[str, Any]:
         if not self.configs:
-            raise ValueError(f"No configs to generate from")
+            raise ValueError("No configs to generate from")
         if self.randomize:
             self._next = random.randint(0, len(self.configs) - 1)
         config = self.configs[self._next]
@@ -1825,16 +2040,18 @@ class RepeatingContext(BaseContext):
     def is_valid_world(
         self,
         world: SCMLBaseWorld,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
-        raise_on_failure=False,
-        warn_on_failure=False,
+        raise_on_failure=RAISE_ON_FAILURE,
+        warn_on_failure=WARN_ON_FAILURE,
+        types: tuple[str | type[OneShotAgent], ...] | None = None,
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
         for config in self.configs:
             if _world_matches_config(
                 world,
                 config,
-                expected_types=list(types) + list(self.non_competitors),
+                expected_types=list(self.non_competitors) + list(types)
+                if types
+                else None,
                 expected_world_type=self.world_type,
                 raise_on_failure=raise_on_failure,
                 warn_on_failure=warn_on_failure,
@@ -1856,3 +2073,67 @@ class RepeatingContext(BaseContext):
         return super().contains_context(
             context, raise_on_failure, warn_on_failure, n_tests
         )
+
+
+@define
+class ContextParams:
+    nlines: int
+    nsuppliers: int
+    nconsumers: int
+
+
+def safemin(x: Iterable | int):
+    if isinstance(x, Iterable):
+        return min(x)
+    return x
+
+
+def extract_context_params(
+    context: BaseContext, reduce_space_size: bool, raise_on_failure: bool = True
+) -> ContextParams:
+    nlines, nsuppliers, nconsumers = 0, 0, 0
+    if isinstance(context, FixedPartnerNumbersContext):
+        nlines = safemin(context.n_lines)
+        nsuppliers = context.n_suppliers
+        nconsumers = context.n_consumers
+    elif isinstance(context, LimitedPartnerNumbersContext):
+        nlines = safemin(context.n_lines)
+        nsuppliers = context.n_suppliers[0 if reduce_space_size else -1]
+        nconsumers = context.n_consumers[0 if reduce_space_size else -1]
+    elif isinstance(context, RepeatingContext):
+        nlines = min(get_n_lines(_)[0] for _ in context.configs)
+        n_agents_list = np.asarray(
+            [get_n_agents_per_process(c) for c in context.configs]
+        )
+        n_agents_min = np.min(n_agents_list, axis=0)
+        n_agents_max = np.max(n_agents_list, axis=1)
+        mn_suppliers, mx_suppliers = float("inf"), float("-inf")
+        mn_consumers, mx_consumers = float("inf"), float("-inf")
+        mn_competitors = float("inf")
+        assert len(context.placeholder_types) == 1
+        oldlevel, level = -1000, -1000
+        for config in context.configs:
+            agent_indx = config["agent_types"].index(context.placeholder_types[0])
+            oldlevel, level = level, config["profiles"][agent_indx].level
+            if oldlevel >= -1 and oldlevel != level:
+                raise ValueError(
+                    f"Cannot use configs with the agent in levels {oldlevel} and {level}"
+                )
+
+            mn_suppliers = min(
+                mn_suppliers, n_agents_min[agent_indx - 1] if agent_indx else 0
+            )
+            mx_suppliers = max(
+                mx_suppliers, n_agents_max[agent_indx - 1] if agent_indx else 0
+            )
+            mn_consumers = min(mn_consumers, n_agents_min[agent_indx + 1])
+            mx_consumers = max(mx_consumers, n_agents_max[agent_indx + 1])
+            mn_competitors = min(mn_competitors, n_agents_min[agent_indx])
+        nsuppliers = mn_suppliers if reduce_space_size else mx_suppliers
+        nconsumers = mn_consumers if reduce_space_size else mx_consumers
+    else:
+        if raise_on_failure:
+            raise ValueError(
+                f"Cannot determine number of suppliers and consumers from the context:\n{context=}"
+            )
+    return ContextParams(nlines, int(nsuppliers), int(nconsumers))

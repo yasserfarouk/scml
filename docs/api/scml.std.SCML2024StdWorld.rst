@@ -10,6 +10,7 @@ SCML2024StdWorld
 
    .. autosummary::
 
+      ~SCML2024StdWorld.agent_contracts
       ~SCML2024StdWorld.agreement_fraction
       ~SCML2024StdWorld.agreement_rate
       ~SCML2024StdWorld.breach_fraction
@@ -52,6 +53,7 @@ SCML2024StdWorld
       ~SCML2024StdWorld.saved_negotiations
       ~SCML2024StdWorld.short_type_name
       ~SCML2024StdWorld.signed_contracts
+      ~SCML2024StdWorld.stat_names
       ~SCML2024StdWorld.stats
       ~SCML2024StdWorld.stats_df
       ~SCML2024StdWorld.system_agent_ids
@@ -79,6 +81,7 @@ SCML2024StdWorld
       ~SCML2024StdWorld.checkpoint_info
       ~SCML2024StdWorld.checkpoint_init
       ~SCML2024StdWorld.checkpoint_on_step_started
+      ~SCML2024StdWorld.combine_stats
       ~SCML2024StdWorld.complete_contract_execution
       ~SCML2024StdWorld.contract_record
       ~SCML2024StdWorld.contract_size
@@ -117,6 +120,8 @@ SCML2024StdWorld
       ~SCML2024StdWorld.on_event
       ~SCML2024StdWorld.on_exception
       ~SCML2024StdWorld.order_contracts_for_execution
+      ~SCML2024StdWorld.plot_combined_stats
+      ~SCML2024StdWorld.plot_stats
       ~SCML2024StdWorld.post_step_stats
       ~SCML2024StdWorld.pre_step_stats
       ~SCML2024StdWorld.read_config
@@ -125,6 +130,7 @@ SCML2024StdWorld
       ~SCML2024StdWorld.register_stats_monitor
       ~SCML2024StdWorld.register_world_monitor
       ~SCML2024StdWorld.relative_welfare
+      ~SCML2024StdWorld.replace_agents
       ~SCML2024StdWorld.request_negotiation_about
       ~SCML2024StdWorld.run
       ~SCML2024StdWorld.run_negotiation
@@ -148,6 +154,7 @@ SCML2024StdWorld
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agent_contracts
    .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
    .. autoattribute:: breach_fraction
@@ -190,6 +197,7 @@ SCML2024StdWorld
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: stats_df
    .. autoattribute:: system_agent_ids
@@ -215,6 +223,7 @@ SCML2024StdWorld
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
@@ -253,6 +262,8 @@ SCML2024StdWorld
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: read_config
@@ -261,6 +272,7 @@ SCML2024StdWorld
    .. automethod:: register_stats_monitor
    .. automethod:: register_world_monitor
    .. automethod:: relative_welfare
+   .. automethod:: replace_agents
    .. automethod:: request_negotiation_about
    .. automethod:: run
    .. automethod:: run_negotiation

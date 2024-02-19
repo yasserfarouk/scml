@@ -1,13 +1,14 @@
-import pytest
 from negmas import ResponseType
 
-from scml import OneShotAgent, SCML2020OneShotWorld
+from scml import OneShotAgent
 from scml.oneshot.agents.rand import RandomOneShotAgent
+
+from ..switches import DefaultOneShotWorld
 
 
 def run_simulation(agent_types):
-    world = SCML2020OneShotWorld(
-        **SCML2020OneShotWorld.generate(
+    world = DefaultOneShotWorld(
+        **DefaultOneShotWorld.generate(
             agent_types,
             n_steps=10,
             random_agent_types=True,
@@ -25,8 +26,8 @@ class MyOneShotDoNothing(OneShotAgent):
         # print(f"proposing to {negotiator_id} at {state.step}")
         return None
 
-    def respond(self, negotiator_id, state):
-        offer = state.current_offer
+    def respond(self, negotiator_id, state, source=None):
+        offer = state.current_offer  # type: ignore
         # print(f"proposing to {negotiator_id} for {offer} at {state.step}")
         return ResponseType.REJECT_OFFER
 

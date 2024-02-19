@@ -30,7 +30,6 @@ from negmas import (
 from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
 from negmas.sao import ControlledSAONegotiator, SAOController, SAONegotiator
 from negmas.situated import NegotiationInfo
-from rich import print
 
 from scml.oneshot.ufun import OneShotUFun
 
@@ -78,6 +77,45 @@ __all__ = [
     "DUMMY_AGENT_BEGINNING",
 ]
 DUMMY_AGENT_BEGINNING = "DUMMY"
+
+
+def get_n_lines(config: dict[str, Any]) -> tuple[int, int]:
+    if "profiles" in config:
+        mn_lines, mx_lines = float("inf"), float("-inf")
+        for profile in config["profiles"]:
+            mn_lines = min(mn_lines, profile.n_lines)
+            mx_lines = max(mx_lines, profile.n_lines)
+        return (int(mn_lines), int(mx_lines))
+    if "n_lines" in config:
+        n_lines = config["n_lines"]
+        if isinstance(n_lines, Iterable):
+            n_lines = tuple(n_lines)
+            assert len(n_lines) == 2, f"Found {n_lines=}"
+            return n_lines
+        return (n_lines, n_lines)
+    raise ValueError(
+        "Cannot find profiles, n_agents_per_profile, agent_processes. I cannot determine the number of agents per level"
+    )
+
+
+def get_n_agents_per_process(config: dict[str, Any]) -> list[int]:
+    if "profiles" in config:
+        counts = defaultdict(int)
+        for profile in config["profiles"]:
+            counts[profile.level] += 1
+        mx = max(counts.keys())
+        return [counts.get(i, 0) for i in range(mx)]
+    if "n_agents_per_process" in config:
+        return config["n_agents_per_process"]
+    if "agent_processes" in config:
+        counts = defaultdict(int)
+        for i in config["agent_processes"]:
+            counts[i] += 1
+        mx = max(counts.keys())
+        return [counts.get(i, 0) for i in range(mx)]
+    raise ValueError(
+        "Cannot find profiles, n_agents_per_profile, agent_processes. I cannot determine the number of agents per level"
+    )
 
 
 class SCMLBaseWorld(TimeInAgreementMixin, World):
@@ -132,8 +170,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         # factory parameters
         initial_balance: np.ndarray | tuple[int, int] | int = 1000,
         # General SCML2020World Parameters
-        compact=False,
-        no_logs=False,
+        compact=True,
+        no_logs=True,
+        fast=True,
         n_steps=1000,
         time_limit=60 * 90,
         sync_calls=False,
@@ -148,10 +187,12 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         # public information
         publish_exogenous_summary=True,
         publish_trading_prices=True,
+        publish_assets=False,
         # negotiation params,
         price_multiplier=0.0,
         price_range_fraction=0.0,
         wide_price_range=False,
+        allow_zero_quantity: bool = False,
         # trading price parameters
         trading_price_discount=0.9,
         # simulation parameters
@@ -175,19 +216,23 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         debug: bool = False,
         **kwargs,
     ):
+        if fast:
+            compact, no_logs, debug = True, True, False
         if horizon == 0:
             one_time_per_negotiation = True
-        self._debug = False
+        self._debug = debug
         # neg_n_steps is ALWAYS the number of rounds. We multiply it by 2 if mechanisms are stepped one offer at a time
         if one_offer_per_step and neg_n_steps is not None:
             neg_n_steps *= 2
 
+        self.publish_assets = publish_assets
         self.perishable = perishable
         self.horizon = horizon
         self.price_range_fraction = price_range_fraction
         self.nullify_bankrupt_contracts = nullify_bankrupt_contracts
         self.inventory_valuation_catalog = inventory_valuation_catalog
         self.inventory_valuation_trading = inventory_valuation_trading
+        self.allow_zero_quantity = allow_zero_quantity
         self._profits: dict[str, list[float]] = defaultdict(list)
         self._breach_levels: dict[str, list[float]] = defaultdict(list)
         self._breaches_of: dict[str, list[bool]] = defaultdict(list)
@@ -282,7 +327,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             **kwargs,
         )
         if not self.bulletin_board:
-            raise ValueError(f"Cannot find the bulletin-board")
+            raise ValueError("Cannot find the bulletin-board")
         self.bulletin_board.record("settings", self.horizon, "horizon")
         self.quantity_multiplier = quantity_multiplier
         self.one_time_per_negotiation = one_time_per_negotiation
@@ -293,6 +338,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             "settings", self.quantity_multiplier, "quantity_multiplier"
         )
         self.bulletin_board.record("settings", self.perishable, "perishable")
+        self.bulletin_board.record("settings", self.publish_assets, "publish_assets")
         self.bulletin_board.record(
             "settings", self.nullify_bankrupt_contracts, "nullify_bankrupt_contracts"
         )
@@ -315,6 +361,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         )
         self.bulletin_board.record(
             "settings", exogenous_force_max, "exogenous_force_max"
+        )
+        self.bulletin_board.record(
+            "settings", self.allow_zero_quantity, "allow_zero_quantity"
         )
         self.bulletin_board.record(
             "settings", self.inventory_valuation_trading, "inventory_valuation_trading"
@@ -360,13 +409,16 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             process_outputs=process_outputs,
             catalog_prices=catalog_prices,
             agent_types_final=[get_full_type_name(_) for _ in agent_types],
-            agent_params_final=[copy.deepcopy(_) for _ in agent_params]
-            if agent_params is not None
-            else agent_params,
+            agent_params_final=(
+                [copy.deepcopy(_) for _ in agent_params]
+                if agent_params is not None
+                else agent_params
+            ),
             initial_balance_final=initial_balance,
             penalties_scale_final=penalties_scale,
             penalize_bankrupt_for_future_contracts=penalize_bankrupt_for_future_contracts,
             perishable=perishable,
+            publish_assets=publish_assets,
             bankruptcy_limit=bankruptcy_limit,
             price_range_fraction=self.price_range_fraction,
             financial_report_period=financial_report_period,
@@ -379,6 +431,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             neg_time_limit=neg_time_limit,
             neg_step_time_limit=neg_step_time_limit,
             negotiation_speed=negotiation_speed,
+            allow_zero_quantity=allow_zero_quantity,
             signing_delay=signing_delay,
             agent_name_reveals_position=agent_name_reveals_position,
             agent_name_reveals_type=agent_name_reveals_type,
@@ -568,21 +621,21 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             self.agent_inputs[agent_id].append(p)
             self.agent_outputs[agent_id].append(p + 1)
             self.agent_profiles[agent_id] = profile
-            self.agents[agent_id].profile = profile
+            self.agents[agent_id].profile = profile  # type: ignore
 
         for aid, agent in self.agents.items():
             if is_system_agent(aid):
                 continue
-            profile: OneShotProfile = agent.profile
-            self.agent_disposal_cost[aid] = np.abs(
+            profile: OneShotProfile = agent.profile  # type: ignore
+            self.agent_disposal_cost[aid] = np.abs(  # type: ignore
                 np.random.randn(self.n_steps) * profile.disposal_cost_dev
                 + profile.disposal_cost_mean
             )
-            self.agent_storage_cost[aid] = np.abs(
+            self.agent_storage_cost[aid] = np.abs(  # type: ignore
                 np.random.randn(self.n_steps) * profile.storage_cost_dev
                 + profile.storage_cost_mean
             )
-            self.agent_shortfall_penalty[aid] = np.abs(
+            self.agent_shortfall_penalty[aid] = np.abs(  # type: ignore
                 np.random.randn(self.n_steps) * profile.shortfall_penalty_dev
                 + profile.shortfall_penalty_mean
             )
@@ -593,9 +646,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             for a in self.consumers[p]:
                 self.agent_suppliers[a] = self.suppliers[p]
 
-        self.agent_processes = {k: np.array(v) for k, v in self.agent_processes.items()}
-        self.agent_inputs = {k: np.array(v) for k, v in self.agent_inputs.items()}
-        self.agent_outputs = {k: np.array(v) for k, v in self.agent_outputs.items()}
+        self.agent_processes = {k: np.array(v) for k, v in self.agent_processes.items()}  # type: ignore
+        self.agent_inputs = {k: np.array(v) for k, v in self.agent_inputs.items()}  # type: ignore # type: ignore
+        self.agent_outputs = {k: np.array(v) for k, v in self.agent_outputs.items()}  # type: ignore
         assert all(
             len(v) == 1 or is_system_agent(self.agents[k].id)
             for k, v in self.agent_outputs.items()
@@ -611,27 +664,29 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self.is_bankrupt: dict[str, bool] = dict(
             zip(self.agents.keys(), itertools.repeat(False))
         )
-        self.exogenous_contracts: dict[int : list[Contract]] = defaultdict(list)
+        self.exogenous_contracts: dict[int : list[Contract]] = defaultdict(list)  # type: ignore
         for c in exogenous_contracts:
-            seller_id = agents[c.seller].id if c.seller >= 0 else SYSTEM_SELLER_ID
-            buyer_id = agents[c.buyer].id if c.buyer >= 0 else SYSTEM_BUYER_ID
+            seller_id = agents[c.seller].id if c.seller >= 0 else SYSTEM_SELLER_ID  # type: ignore
+            buyer_id = agents[c.buyer].id if c.buyer >= 0 else SYSTEM_BUYER_ID  # type: ignore # type: ignore # type: ignore
             contract = Contract(
                 agreement={
                     "time": c.time,
                     "quantity": c.quantity,
                     "unit_price": c.unit_price,
                 },
-                partners=[buyer_id, seller_id],
-                issues=[],
+                partners=[buyer_id, seller_id],  # type: ignore
+                issues=[],  # type: ignore # type: ignore
                 signatures=dict(),
                 signed_at=-1,
                 to_be_signed_at=c.time,
                 annotation={
                     "seller": seller_id,
                     "buyer": buyer_id,
-                    "caller": SYSTEM_SELLER_ID
-                    if seller_id == SYSTEM_SELLER_ID
-                    else SYSTEM_BUYER_ID,
+                    "caller": (
+                        SYSTEM_SELLER_ID
+                        if seller_id == SYSTEM_SELLER_ID
+                        else SYSTEM_BUYER_ID
+                    ),
                     "is_buy": True,
                     "product": c.product,
                 },
@@ -661,7 +716,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self.exogenous_pin = defaultdict(int)
         self.exogenous_contracts_summary = None
 
-        self.initial_balances = dict(zip(self.agents.keys(), initial_balance))
+        self.initial_balances = dict(zip(self.agents.keys(), initial_balance))  # type: ignore
         self._max_n_lines = max(_.n_lines for _ in self.profiles)
         self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
         self._current_issues: list[list[ContiguousIssue]] = []
@@ -681,7 +736,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             ]
             if self._debug:
                 assert all(isinstance(_, ContiguousIssue) for _ in _issues)
-            self._current_issues.append(_issues)
+            self._current_issues.append(_issues)  # type: ignore # type: ignore
 
         def to_lists(d):
             return {
@@ -758,10 +813,12 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     @classmethod
     def generate(
         cls,
-        agent_types: tuple[str | type[OneShotAgent], ...]
-        | list[str | type[OneShotAgent]]
-        | type[OneShotAgent]
-        | str,
+        agent_types: (
+            tuple[str | type[OneShotAgent], ...]
+            | list[str | type[OneShotAgent]]
+            | type[OneShotAgent]
+            | str
+        ),
         agent_params: list[dict[str, Any]] | tuple[dict[str, Any], ...] | None = None,
         agent_processes: list[int] | None = None,
         n_steps: tuple[int, int] | int = (50, 200),
@@ -797,6 +854,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         cap_exogenous_quantities: bool = True,
         exogenous_generation_method="profitable",
         perishable: bool | None = True,
+        max_supply: np.ndarray | tuple[float, float] | float = (0.8, 1.0),
         **kwargs,
     ) -> dict[str, Any]:
         """
@@ -815,6 +873,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             profit_means: Mean profitability per production level (i.e. process).
             profit_stddevs:  Std. Dev. of the profitability of every level (i.e. process).
             max_productivity:  Maximum possible productivity per level (i.e. process).
+            max_supply:  Maximum possible supply level to the market,
             initial_balance: The initial balance of all agents
             n_agents_per_process: Number of agents per process
             agent_processes: The process for each agent. If not `None` , it will override `n_agents_per_process` and must be a list/tuple
@@ -893,9 +952,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 "You cannot pass `agent_processes` and use `random_agent_types`. The first is only "
                 "used when you want to fix the assignment of all agents to specific processes"
             )
-        if agent_processes is not None and len(agent_processes) != len(agent_types):
+        if agent_processes is not None and len(agent_processes) != len(agent_types):  # type: ignore
             raise ValueError(
-                f"Length of `agent_processes` ({len(agent_processes)}) must equal the length of `agent_types` ({len(agent_types)})"
+                f"Length of `agent_processes` ({len(agent_processes)}) must equal the length of `agent_types` ({len(agent_types)})"  # type: ignore
             )
         info = dict(
             perishable=perishable,
@@ -913,6 +972,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             profit_means=profit_means,
             profit_stddevs=profit_stddevs,
             max_productivity=max_productivity,
+            max_supply=max_supply,
             initial_balance=initial_balance,
             cost_increases_with_level=cost_increases_with_level,
             equal_exogenous_sales=equal_exogenous_sales,
@@ -933,19 +993,25 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             cap_exogenous_quantities=cap_exogenous_quantities,
             random_agent_types=random_agent_types,
             exogenous_generation_method=exogenous_generation_method,
-            profit_basis="min"
-            if profit_basis == np.min
-            else "mean"
-            if profit_basis == np.mean
-            else "max"
-            if profit_basis == np.max
-            else "median"
-            if profit_basis == np.median
-            else "unknown",
+            profit_basis=(
+                "min"
+                if profit_basis == np.min
+                else (
+                    "mean"
+                    if profit_basis == np.mean
+                    else (
+                        "max"
+                        if profit_basis == np.max
+                        else "median"
+                        if profit_basis == np.median
+                        else "unknown"
+                    )
+                )
+            ),
         )
         exogenous_price_dev = realin(exogenous_price_dev)
         penalties_scale = strin(penalties_scale)
-        price_multiplier = realin(price_multiplier)
+        price_multiplier = realin(price_multiplier)  # type: ignore
         n_processes = intin(n_processes)
         n_steps = intin(n_steps)
         exogenous_control = realin(exogenous_control)
@@ -972,7 +1038,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             n_agents_per_process = np.asarray([pcount[i] for i in range(len(pnums))])
             assert not any(
                 _ <= 0 for _ in n_agents_per_process
-            ), f"We have some levels with no processes"
+            ), "We have some levels with no processes"
         else:
             n_agents_per_process = make_array(
                 n_agents_per_process, n_processes, dtype=int
@@ -982,6 +1048,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         max_productivity = make_array(
             max_productivity, n_processes * n_steps, dtype=float
         ).reshape((n_processes, n_steps))
+        max_supply = make_array(max_supply, n_steps, dtype=float).reshape((1, n_steps))
         n_agents = n_agents_per_process.sum()
         assert n_agents >= n_processes
         n_products = n_processes + 1
@@ -991,12 +1058,12 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         if not isinstance(agent_types, Iterable):
             agent_types = [agent_types] * n_agents
             if agent_params is None:
-                agent_params = dict()
+                agent_params = dict()  # type: ignore
             if isinstance(agent_params, dict):
                 agent_params = [copy.deepcopy(agent_params) for _ in range(n_agents)]
             else:
-                assert len(agent_params) == 1
-                agent_params = [copy.deepcopy(agent_params[0]) for _ in range(n_agents)]
+                assert len(agent_params) == 1  # type: ignore
+                agent_params = [copy.deepcopy(agent_params[0]) for _ in range(n_agents)]  # type: ignore
         elif not fixed_assignment:
             if agent_params is None:
                 agent_params = [dict() for _ in range(len(agent_types))]
@@ -1018,20 +1085,22 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             agent_types = list(agent_types)
             agent_params = list(agent_params)
             assert len(agent_types) == len(agent_params)
-        agent_params = [_ if not _ is None else dict() for _ in agent_params]
-        for t, p in zip(agent_types, agent_params):
+        agent_params = [_ if _ is not None else dict() for _ in agent_params]
+        for t, p in zip(agent_types, agent_params):  # type: ignore # type: ignore
             p["controller_type"] = t
-        agent_types = [
-            DefaultOneShotAdapter
-            if at
-            and (
-                (isinstance(at, str) and at.startswith(DUMMY_AGENT_BEGINNING))
-                or issubclass(get_class(at), OneShotAgent)
+        agent_types = [  # type: ignore
+            (
+                DefaultOneShotAdapter
+                if at
+                and (
+                    (isinstance(at, str) and at.startswith(DUMMY_AGENT_BEGINNING))
+                    or issubclass(get_class(at), OneShotAgent)
+                )
+                else OneShotSCML2020Adapter
+                if at
+                else None
             )
-            else OneShotSCML2020Adapter
-            if at
-            else None
-            for at in agent_types
+            for at in agent_types  # type: ignore
         ]
         # generate production costs making sure that every agent can do exactly one process
         n_agents_cumsum = n_agents_per_process.cumsum().tolist()
@@ -1045,7 +1114,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     production_costs[f:l] * (i + 1)  # math.sqrt(i + 1)
                 ).astype(int)
 
-        costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
+        costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)  # type: ignore
         for p, (f, l) in enumerate(zip(first_agent, last_agent)):
             costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
 
@@ -1054,9 +1123,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         # - generate total amount of input to the market
         #   (it will end up being an n_products list of n_steps vectors)
         quantities = [
-            np.round(n_lines * n_agents_per_process[0] * max_productivity[0, :]).astype(
-                int
-            )
+            np.round(n_lines * n_agents_per_process[0] * max_supply).astype(int)
         ]
         # - for each level, find the amount of the output product that can be produced given the input amount and
         #   productivity
@@ -1081,7 +1148,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             quantities[0],
             n_agents_per_process[0],
             n_steps,
-            n_lines if cap_exogenous_quantities else None,
+            n_lines if cap_exogenous_quantities else None,  # type: ignore
         )
         quantities[0] = [sum(_) for _ in exogenous_supplies]
         exogenous_sales = distribute_quantities(
@@ -1090,7 +1157,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             quantities[-1],
             n_agents_per_process[-1],
             n_steps,
-            n_lines if cap_exogenous_quantities else None,
+            n_lines if cap_exogenous_quantities else None,  # type: ignore # type: ignore
         )
         quantities[-1] = [sum(_) for _ in exogenous_sales]
 
@@ -1135,7 +1202,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         # the number of active lines come from dividing input by n. inputs consumed
         # by each line
         active_lines = np.hstack(
-            [(n_lines * n_agents_per_process).reshape((n_processes, 1))] * n_steps
+            [(n_lines * n_agents_per_process).reshape((n_processes, 1))] * n_steps  # type: ignore
         )
         assert active_lines.shape == (n_processes, n_steps)
         active_lines[0, :] = input_quantity[0, :] // process_inputs[0]
@@ -1210,7 +1277,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                         OneShotProfile(
                             cost=[_ for _ in costs[nxt][0] if _ != INFINITE_COST][0],
                             input_product=l,
-                            n_lines=n_lines,
+                            n_lines=n_lines,  # type: ignore
                             disposal_cost_mean=sc,
                             shortfall_penalty_mean=dp,
                             storage_cost_mean=storagec,
@@ -1247,10 +1314,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             balance = np.ceil(
                 np.sum(total_costs, axis=1) / n_agents_per_process
             ).astype(int)
-            initial_balance = []
+            initial_balance = []  # type: ignore
             for b, a in zip(balance, n_agents_per_process):
                 initial_balance += [int(math.ceil(b * cash_availability))] * a
-        b = np.sum(initial_balance)
+        b = np.sum(initial_balance)  # type: ignore
 
         info.update(
             dict(
@@ -1267,19 +1334,21 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 expected_welfare=float(np.sum(max_income)),
                 expected_income_per_step=max_income.sum(axis=0),
                 expected_income_per_process=max_income.sum(axis=-1),
-                expected_mean_profit=float(np.sum(max_income))
-                if b != 0
-                else np.sum(max_income),
-                expected_profit_sum=float(n_agents * np.sum(max_income) / b)
-                if b != 0
-                else n_agents * np.sum(max_income),
+                expected_mean_profit=(
+                    float(np.sum(max_income)) if b != 0 else np.sum(max_income)
+                ),
+                expected_profit_sum=(
+                    float(n_agents * np.sum(max_income) / b)
+                    if b != 0
+                    else n_agents * np.sum(max_income)
+                ),
             )
         )
 
         exogenous = []
         for (
             indx,
-            (profile, esales, esale_prices, esupplies, esupply_prices),
+            (_, esales, esale_prices, esupplies, esupply_prices),  # type: ignore Not using profile!!
         ) in enumerate(profile_info):
             input_product = process_of_agent[indx]
             for step, (sale, price) in enumerate(
@@ -1298,8 +1367,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                             unit_price=thisprice,
                             time=step,
                             revelation_time=step,
-                            seller=indx,
-                            buyer=-1,
+                            seller=indx,  # type: ignore
+                            buyer=-1,  # type: ignore
                         )
                     )
                 else:
@@ -1320,8 +1389,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                                 unit_price=thisprice,
                                 time=step,
                                 revelation_time=step,
-                                seller=indx,
-                                buyer=-1,
+                                seller=indx,  # type: ignore # type: ignore
+                                buyer=-1,  # type: ignore
                             )
                         )
             for step, (supply, price) in enumerate(
@@ -1340,8 +1409,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                             unit_price=thisprice,
                             time=step,
                             revelation_time=step,
-                            seller=-1,
-                            buyer=indx,
+                            seller=-1,  # type: ignore
+                            buyer=indx,  # type: ignore
                         )
                     )
                 else:
@@ -1362,8 +1431,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                                 unit_price=thisprice,
                                 time=step,
                                 revelation_time=step,
-                                seller=-1,
-                                buyer=indx,
+                                seller=-1,  # type: ignore
+                                buyer=indx,  # type: ignore
                             )
                         )
         return dict(
@@ -1387,7 +1456,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         )
 
     def current_balance(self, agent_id: str):
-        return sum(self._profits[agent_id]) + self.initial_balances[agent_id]
+        return sum(self._profits[agent_id]) + self.initial_balances[agent_id]  # type: ignore
 
     def add_financial_report(
         self, agent: DefaultOneShotAdapter, reports_agent, reports_time
@@ -1404,15 +1473,25 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         Returns:
 
         """
-        current_balance = sum(self._profits[agent.id]) + self.initial_balances[agent.id]
+        current_balance = sum(self._profits[agent.id]) + self.initial_balances[agent.id]  # type: ignore
         self.is_bankrupt[agent.id] = (
             current_balance < self.bankruptcy_limit
         ) or self.is_bankrupt[agent.id]
+        assets = (
+            (
+                self._inventory_input[agent.id]
+                * self.trading_prices[self.agent_profiles[agent.id].input_product]
+                + self._inventory_output[agent.id]
+                * self.trading_prices[self.agent_profiles[agent.id].output_product]
+            )
+            if self.publish_assets
+            else 0
+        )
         report = FinancialReport(
             agent_id=agent.id,
             step=self.current_step,
             cash=current_balance,
-            assets=0,
+            assets=assets,
             breach_prob=len([_ for _ in self._breaches_of[agent.id] if _])
             / len(self._breaches_of[agent.id]),
             breach_level=sum(self._breach_levels[agent.id])
@@ -1618,11 +1697,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             # dangerous because the agent can change its own ufun. May be I should
             # directly create the ufun here using a global ufun method defined in
             # the ufun.py module that takes a world and an agent (or just an AWI)
-            qin, pin, qout, pout = (
+            qin, qout = (
                 self._input_quantity[aid],
-                self._input_price[aid],
                 self._output_quantity[aid],
-                self._output_price[aid],
             )
             ufun = agent.ufun
             assert isinstance(ufun, OneShotUFun)
@@ -1727,7 +1804,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self.__contracts[contract.annotation["seller"]].append(contract)
         return super().on_contract_signed(contract)
 
-    def contract_size(self, contract: Contract) -> float:
+    def contract_size(self, contract: Contract) -> float:  # type: ignore
         contract = self._adjust_contract_types(contract)
         return contract.agreement["quantity"] * contract.agreement["unit_price"]
 
@@ -1768,7 +1845,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             "time": breach.step,
         }
 
-    def execute_action(self, action, agent, callback: Callable = None) -> bool:
+    def execute_action(self, action, agent, callback: Callable | None = None) -> bool:
+        _ = action, agent, callback
         return True
 
     def contract_size(self, contract: Contract) -> float:
@@ -1791,7 +1869,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             self._stats[f"unit_price_{p}"].append(
                 self._real_price[p, self.current_step + 1]
             )
-        for aid, a in self.agents.items():
+        for aid in self.agents.keys():
             if is_system_agent(aid):
                 continue
             self._stats[f"score_{aid}"].append(scores[aid])
@@ -1820,7 +1898,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         """Total welfare of all agents"""
         scores = self.scores()
         return sum(
-            scores[a.id] for a in self.agents.values() if not is_system_agent(a.id)
+            scores[a.id]
+            for a in self.agents.values()
+            if not is_system_agent(a.id)
+            and (include_bankrupt or not self.is_bankrupt[a.id])
         )
 
     def relative_welfare(self, include_bankrupt: bool = False) -> float | None:
@@ -1847,15 +1928,25 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             assets_multiplier: A multiplier to multiply the assets with.
         """
         scores = dict()
-        for aid, agent in self.agents.items():
+        for aid in self.agents.keys():
             if is_system_agent(aid):
                 continue
-            if not self.initial_balances[aid]:
-                scores[aid] = self.initial_balances[aid] + sum(self._profits[aid])
+            if not self.initial_balances[aid]:  # type: ignore
+                scores[aid] = self.initial_balances[aid] + sum(self._profits[aid])  # type: ignore
                 continue
-            scores[aid] = (
-                self.initial_balances[aid] + sum(self._profits[aid])
-            ) / self.initial_balances[aid]
+            scores[aid] = self.initial_balances[aid] + sum(  # type: ignore
+                self._profits[aid]
+            )  # type: ignore
+            if abs(assets_multiplier) > 1e-6:
+                scores[aid] += (
+                    self._inventory_input[aid]
+                    * self.trading_prices[self.agent_profiles[aid].input_product]
+                )
+                scores[aid] += (
+                    self._inventory_output[aid]
+                    * self.trading_prices[self.agent_profiles[aid].output_product]
+                )
+            scores[aid] /= self.initial_balances[aid]  # type: ignore
         return scores
 
     @property
@@ -1890,7 +1981,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         prices = np.nan * np.ones((self.n_products, self.n_steps), dtype=float)
         quantities = np.zeros((self.n_products, self.n_steps), dtype=int)
         for contract in self.saved_contracts:
-            if contract["condition" + "_at"] < 0:
+            if contract[condition + "_at"] < 0:
                 continue
             p, t, q, u = (
                 contract["product"],
@@ -1902,9 +1993,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 quantities[p, t] + q
             )
             quantities[p, t] += q
-        discount = np.cumprod(discount * np.ones(self.n_steps))
-        discount /= sum(discount)
-        return np.nansum(np.nanprod(prices, discount), axis=-1)
+        discount = np.cumprod(discount * np.ones(self.n_steps))  # type: ignore
+        discount /= sum(discount)  # type: ignore
+        return np.nansum(np.nanprod(prices, discount), axis=-1)  # type: ignore
 
     @property
     def trading_prices(self):
@@ -1933,7 +2024,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     @property
     def system_agents(self) -> list[_StdSystemAgent]:
         """Returns the two system agents"""
-        return [_ for _ in self.agents.values() if is_system_agent(_.id)]
+        return [_ for _ in self.agents.values() if is_system_agent(_.id)]  # type: ignore
 
     @property
     def system_agent_names(self) -> list[str]:
@@ -1943,7 +2034,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     @property
     def non_system_agents(self) -> list[DefaultOneShotAdapter]:
         """Returns all agents except system agents"""
-        return [_ for _ in self.agents.values() if not is_system_agent(_.id)]
+        return [_ for _ in self.agents.values() if not is_system_agent(_.id)]  # type: ignore
 
     @property
     def non_system_agent_names(self) -> list[str]:
@@ -1960,33 +2051,35 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     system_agent_ids = system_agent_names
     non_system_agent_ids = non_system_agent_names
 
-    def draw(
+    def draw(  # type: ignore
         self,
         steps: tuple[int, int] | int | None = None,
         what: Collection[str] = DEFAULT_EDGE_TYPES,
-        who: Callable[[Agent], bool] = None,
-        where: Callable[[Agent], int | tuple[float, float]] = None,
+        who: Callable[[Agent], bool] | None = None,
+        where: Callable[[Agent], int | tuple[float, float]] | None = None,
         together: bool = True,
-        axs: Collection[Axis] = None,
+        axs: Collection[Axis] | None = None,
         ncols: int = 4,
         figsize: tuple[int, int] = (15, 15),
         **kwargs,
     ) -> tuple[Axis, nx.Graph] | tuple[list[Axis], list[nx.Graph]]:
         if where is None:
-            where = (
-                lambda x: self.n_processes + 1
+            where = lambda x: (
+                self.n_processes + 1
                 if x == SYSTEM_BUYER_ID
-                else 0
-                if x == SYSTEM_SELLER_ID
-                else int(self.agents[x].awi.profile.level + 1)
-            )
-        return super().draw(
+                else (
+                    0
+                    if x == SYSTEM_SELLER_ID
+                    else int(self.agents[x].awi.profile.level + 1)  # type: ignore
+                )
+            )  # type: ignore
+        return super().draw(  # type: ignore
             steps,
             what,
             who,
             where,
             together=together,
-            axs=axs,
+            axs=axs,  # type: ignore
             ncols=ncols,
             figsize=figsize,
             **kwargs,
@@ -2073,7 +2166,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             if negotiators is None:
                 assert controller is not None
                 negotiators = [
-                    controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)
+                    controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)  # type: ignore
                     for _ in partners
                 ]
             results += [
@@ -2166,7 +2259,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         partners = [agent_id, partner]
         extra["negotiator_id"] = negotiator.id
         req_id = agent.create_negotiation_request(
-            issues=issues,
+            issues=issues,  # type: ignore
             partners=partners,
             negotiator=negotiator,
             annotation=annotation,
@@ -2174,7 +2267,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         )
         result = self.request_negotiation_about(
             caller=agent,
-            issues=issues,
+            issues=issues,  # type: ignore
             partners=[self.agents[_] for _ in partners],
             req_id=req_id,
             annotation=annotation,
@@ -2193,10 +2286,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             if self._debug:
                 assert result.mechanism is not None
                 assert (
-                    buyer in self.agents[seller].awi.my_consumers
+                    buyer in self.agents[seller].awi.my_consumers  # type: ignore
                 ), f"{seller=}, {buyer=}"
                 assert (
-                    seller in self.agents[buyer].awi.my_suppliers
+                    seller in self.agents[buyer].awi.my_suppliers  # type: ignore
                 ), f"{seller=}, {buyer=}"
             # self._current_negotiations.append(info)
             self._agent_negotiations[seller]["sell"][buyer] = info
@@ -2258,7 +2351,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             self.current_step
             + (self.horizon if not self.one_time_per_negotiation else 0),
         )
-        quantity = (1, max(1, int(self._max_n_lines * self.quantity_multiplier + 0.5)))
+        quantity = (
+            int(not self.allow_zero_quantity),
+            max(1, int(self._max_n_lines * self.quantity_multiplier + 0.5)),
+        )
         return unit_price, time, quantity
 
     def _make_negotiations(self):
@@ -2328,16 +2424,12 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 # request negotiations about the future if needed
                 if self.one_time_per_negotiation and self.horizon:
                     for _ in range(self.horizon):
-                        t = time[0] + 1
+                        t = time[0] + 1  # type: ignore
                         if t >= self.n_steps:
                             continue
                         time = (t, t)
                         self._request_negotiations(
                             agent_id=aid,
-                            product=level,
-                            time=time,
-                            quantity=quantity,
-                            unit_price=unit_price,
                             controller=controllers[aid],
                             negotiators=None,
                             extra=None,
@@ -2381,7 +2473,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
     def start_contract_execution(self, contract: Contract) -> set[Breach] | None:
         # print(f"Started executing {contract.agreement} on {self.current_step} signed on {contract.signed_at}")
-        breaches = super().start_contract_execution(contract)
+        breaches = set()
         # do not process if the partner is bankrupt
         if (
             self.nullify_bankrupt_contracts
@@ -2405,6 +2497,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         contract.executed_at = self.current_step
         product = contract.annotation["product"]
         bought = contract.agreement["quantity"]
+        if bought < 1:
+            contract.nullified_at = self.current_step
+            return breaches
         total_price = bought * contract.agreement["unit_price"]
         oldq = self._sold_quantity[product, self.current_step + 1]
         oldp = self._real_price[product, self.current_step + 1]
@@ -2427,6 +2522,180 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     ) -> None:
         super().complete_contract_execution(contract, breaches, resolution)
 
+    @classmethod
+    def plot_combined_stats(  # type: ignore
+        cls,
+        worlds: tuple[SCMLBaseWorld, ...] | SCMLBaseWorld,
+        stats: str | tuple[str, ...] | None = None,
+        pertype=False,
+        makefig=False,
+        title=True,
+        ylabel=False,
+        xlabel=False,
+        legend=True,
+        figsize=None,
+        perishable: bool = False,
+        **kwargs,
+    ):
+        """Plots combined statistics of multiple worlds in a single plot
+
+        Args:
+            stats: The statistics to plot. If `None`, some selected stats will be displayed
+            pertype: combine agent-statistics  per type
+            use_sum: plot sum for type statistics instead of mean
+            title: If given a title will be added to each subplot
+            ylabel: If given, the ylabel will be added to each subplot
+            xlabel: If given The xlabel will be added (Simulation Step)
+            legend: If given, a legend will be displayed
+            makefig: If given a new figure will be started
+            figsize: Size of the figure to host the plot
+            ylegend: y-axis of legend for cases with large number of labels
+            legend_n_cols: number of columns in the legend
+        """
+        import matplotlib.pyplot as plt
+
+        if not stats:
+            if makefig:
+                fig = plt.figure(figsize=figsize)
+                axes = fig.subplots(4 - int(perishable), 2)
+            else:
+                _, axes = plt.subplots(4 - int(perishable), 2)
+            plt.sca(axes[0, 0])
+            cls.plot_combined_stats(
+                worlds,
+                "shortfall_penalty",
+                pertype=pertype,
+                legend=legend,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+                **kwargs,
+            )
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
+            plt.sca(axes[1, 0])
+            cls.plot_combined_stats(
+                worlds,
+                "disposal_cost" if perishable else "storage_cost",
+                pertype=pertype,
+                legend=False,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+            )
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
+            plt.sca(axes[0, 1])
+            cls.plot_combined_stats(
+                worlds,
+                "score",
+                pertype=pertype,
+                legend=False,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+            )
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
+            plt.sca(axes[1, 1])
+            cls.plot_combined_stats(
+                worlds,
+                "productivity",
+                pertype=pertype,
+                legend=False,
+                xlabel=False,
+                title=title,
+                ylabel=ylabel,
+            )
+            plt.tick_params(
+                axis="x",  # changes apply to the x-axis
+                which="both",  # both major and minor ticks are affected
+                bottom=False,  # ticks along the bottom edge are off
+                top=False,  # ticks along the top edge are off
+                labelbottom=False,
+            )  # labels along the bottom edge are off
+            if not perishable:
+                plt.sca(axes[2, 0])
+                cls.plot_combined_stats(
+                    worlds,
+                    "inventory_penalized",
+                    pertype=pertype,
+                    legend=False,
+                    xlabel=False,
+                    title=title,
+                    ylabel=ylabel,
+                )
+                plt.tick_params(
+                    axis="x",  # changes apply to the x-axis
+                    which="both",  # both major and minor ticks are affected
+                    bottom=False,  # ticks along the bottom edge are off
+                    top=False,  # ticks along the top edge are off
+                    labelbottom=False,
+                )  # labels along the bottom edge are off
+                plt.sca(axes[2, 1])
+                cls.plot_combined_stats(
+                    worlds,
+                    "inventory_input",
+                    pertype=pertype,
+                    legend=False,
+                    xlabel=False,
+                    title=title,
+                    ylabel=ylabel,
+                )
+                plt.tick_params(
+                    axis="x",  # changes apply to the x-axis
+                    which="both",  # both major and minor ticks are affected
+                    bottom=False,  # ticks along the bottom edge are off
+                    top=False,  # ticks along the top edge are off
+                    labelbottom=False,
+                )  # labels along the bottom edge are off
+            plt.sca(axes[3 - int(perishable), 0])
+            cls.plot_combined_stats(
+                worlds,
+                "sold_quantity",
+                pertype=False,
+                xlabel=True,
+                title=title,
+                ylabel=ylabel,
+            )
+            plt.sca(axes[3 - int(perishable), 1])
+            cls.plot_combined_stats(
+                worlds,
+                "trading_price",
+                pertype=False,
+                xlabel=True,
+                title=title,
+                ylabel=ylabel,
+            )
+            return
+        return super().plot_combined_stats(
+            worlds=worlds,
+            stats=stats,
+            pertype=pertype,
+            makefig=makefig,
+            title=title,
+            ylabel=ylabel,
+            xlabel=xlabel,
+            legend=legend,
+            figsize=figsize,
+            **kwargs,
+        )
+
     def plot_stats(
         self,
         stats: str | tuple[str, ...] | None = None,
@@ -2439,6 +2708,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         legend=True,
         figsize=None,
         ylegend=2.0,
+        legend_ncols=8,
     ):
         """Plots statistics of the world in a single plot
 
@@ -2470,6 +2740,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 xlabel=False,
                 title=title,
                 ylabel=ylabel,
+                legend_ncols=legend_ncols,
             )
             plt.tick_params(
                 axis="x",  # changes apply to the x-axis
@@ -2587,6 +2858,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             legend=legend,
             figsize=figsize,
             ylegend=ylegend,
+            legend_ncols=legend_ncols,
         )
 
 

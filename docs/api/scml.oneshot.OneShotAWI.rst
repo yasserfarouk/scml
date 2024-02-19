@@ -13,6 +13,7 @@ OneShotAWI
       ~OneShotAWI.accepted_negotiation_requests
       ~OneShotAWI.all_consumers
       ~OneShotAWI.all_suppliers
+      ~OneShotAWI.allow_zero_quantity
       ~OneShotAWI.catalog_prices
       ~OneShotAWI.current_balance
       ~OneShotAWI.current_buy_nmis
@@ -47,6 +48,7 @@ OneShotAWI
       ~OneShotAWI.future_sales_cost
       ~OneShotAWI.future_supplies
       ~OneShotAWI.future_supplies_cost
+      ~OneShotAWI.horizon
       ~OneShotAWI.initialized
       ~OneShotAWI.is_exogenous_forced
       ~OneShotAWI.is_first_level
@@ -87,6 +89,8 @@ OneShotAWI
       ~OneShotAWI.state
       ~OneShotAWI.supplies
       ~OneShotAWI.supplies_cost
+      ~OneShotAWI.total_future_sales
+      ~OneShotAWI.total_future_supplies
       ~OneShotAWI.total_sales
       ~OneShotAWI.total_supplies
       ~OneShotAWI.trading_prices
@@ -117,12 +121,21 @@ OneShotAWI
       ~OneShotAWI.request_negotiation_about
       ~OneShotAWI.run_negotiation
       ~OneShotAWI.run_negotiations
+      ~OneShotAWI.total_sales_at
+      ~OneShotAWI.total_sales_between
+      ~OneShotAWI.total_sales_from
+      ~OneShotAWI.total_sales_until
+      ~OneShotAWI.total_supplies_at
+      ~OneShotAWI.total_supplies_between
+      ~OneShotAWI.total_supplies_from
+      ~OneShotAWI.total_supplies_until
 
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: accepted_negotiation_requests
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
+   .. autoattribute:: allow_zero_quantity
    .. autoattribute:: catalog_prices
    .. autoattribute:: current_balance
    .. autoattribute:: current_buy_nmis
@@ -157,6 +170,7 @@ OneShotAWI
    .. autoattribute:: future_sales_cost
    .. autoattribute:: future_supplies
    .. autoattribute:: future_supplies_cost
+   .. autoattribute:: horizon
    .. autoattribute:: initialized
    .. autoattribute:: is_exogenous_forced
    .. autoattribute:: is_first_level
@@ -197,6 +211,8 @@ OneShotAWI
    .. autoattribute:: state
    .. autoattribute:: supplies
    .. autoattribute:: supplies_cost
+   .. autoattribute:: total_future_sales
+   .. autoattribute:: total_future_supplies
    .. autoattribute:: total_sales
    .. autoattribute:: total_supplies
    .. autoattribute:: trading_prices
@@ -225,3 +241,11 @@ OneShotAWI
    .. automethod:: request_negotiation_about
    .. automethod:: run_negotiation
    .. automethod:: run_negotiations
+   .. automethod:: total_sales_at
+   .. automethod:: total_sales_between
+   .. automethod:: total_sales_from
+   .. automethod:: total_sales_until
+   .. automethod:: total_supplies_at
+   .. automethod:: total_supplies_between
+   .. automethod:: total_supplies_from
+   .. automethod:: total_supplies_until

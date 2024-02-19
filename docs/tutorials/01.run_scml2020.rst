@@ -441,7 +441,7 @@ happening in the world.
 
 .. code:: ipython3
 
-    agent_types = [GreedyStdAgent, SyncRandomStdAgent, SyncRandomOneShotAgent]
+    agent_types = [SyncRandomStdAgent, RandDistOneShotAgent, GreedyOneShotAgent, RandomStdAgent]
 
     world = SCML2024StdWorld(
         **SCML2024StdWorld.generate(
@@ -499,9 +499,7 @@ conducted over time
 
 .. code:: ipython3
 
-    plt.plot(world.stats['n_negotiations'])
-    plt.xlabel('Simulation Step')
-    plt.ylabel('N. Negotiations')
+    world.plot_stats('n_negotiations')
     plt.show()
 
 
@@ -509,85 +507,145 @@ conducted over time
 .. image:: 01.run_scml2020_files/01.run_scml2020_11_0.png
 
 
-There are exacty 4 \* 4=16 negotiations every step as expected
+There are exacty 7 \* 8 = 56 negotiations the first step as expected.
+Smaller number of negotiations indicate that some agents went bankrupt
+
+We can check which ones:
+
+.. code:: ipython3
+
+    world.plot_stats("bankrupt", ylegend=1.25)
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_13_0.png
+
 
 Several other market statistics are available:
 
 .. code:: ipython3
 
-    pprint(list(_ for _ in world.stats.keys() if "@" not in _  ))
-
-
-.. parsed-literal::
-
-    ['n_contracts_nullified_now',
-     'n_contracts_nullified_quantity',
-     'n_contracts_nullified_price',
-     'trading_price_0',
-     'sold_quantity_0',
-     'unit_price_0',
-     'trading_price_1',
-     'sold_quantity_1',
-     'unit_price_1',
-     'trading_price_2',
-     'sold_quantity_2',
-     'unit_price_2',
-     'n_contracts_executed',
-     'n_contracts_erred',
-     'n_contracts_nullified',
-     'n_contracts_cancelled',
-     'n_contracts_dropped',
-     'n_breaches',
-     'breach_level',
-     'n_contracts_signed',
-     'n_contracts_concluded',
-     'n_negotiations',
-     'activity_level',
-     'step_time',
-     'total_time']
-
-
-Let’s start by seeing how long did each step take (note that ``stats``
-access the stats as a Dict[str, List] but ``stats_df`` access the same
-data as a pandas dataframe.
-
-.. code:: ipython3
-
-    plt.bar(range(world.n_steps), world.stats_df['step_time'])
-    plt.xlabel('Simulation Step')
-    plt.ylabel('Time (s)')
-    plt.show()
+    world.plot_stats()
 
 
 
 .. image:: 01.run_scml2020_files/01.run_scml2020_15_0.png
 
 
-There are statistics specific for each agent that all have
-“\_{agent_name}“. Lets check what is available for the winner agent:
+You can check all available stats:
+
+.. code:: ipython3
+
+    print(world.stat_names)
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
+        <span style="color: #008000; text-decoration-color: #008000">'activity_level'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'balance'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'bankrupt'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'breach_level'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_input'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_output'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_breaches'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_cancelled'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_concluded'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_dropped'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_erred'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_executed'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_nullified'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_nullified_now'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_nullified_price'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_nullified_quantity'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_contracts_signed'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'n_negotiations'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'productivity'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'score'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'sold_quantity_0'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'sold_quantity_1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'sold_quantity_2'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'step_time'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'storage_cost'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'total_time'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'trading_price_0'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'trading_price_1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'trading_price_2'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'unit_price_0'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'unit_price_1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'unit_price_2'</span>
+    <span style="font-weight: bold">]</span>
+    </pre>
+
+
+
+Note that stas that end with a number are about specific products. Some
+stats (e.g. storage_cost) is actually defined per agent (and per agent
+type). We will see that later.
+
+Let’s start by seeing how long did each step take (note that ``stats``
+access the stats as a ``dict[str, List]`` but ``stats_df`` access the
+same data as a pandas dataframe.
+
+.. code:: ipython3
+
+    world.stats_df['step_time'].plot(kind="bar")
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_19_0.png
+
+
+You can ge the same information using ``plot_stats()``. You may prefer
+using ``stats_df`` if you are going to do pandas manipulations over the
+data.
+
+.. code:: ipython3
+
+    world.plot_stats("step_time")
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_21_0.png
+
+
+As we indicated earlier, there are statistics specific for each agent
+that all have “\_{agent_name}“. Lets check what is available for the
+winner agent:
 
 .. code:: ipython3
 
     winner = world.winners[0]
-    pprint(list(_ for _ in world.stats.keys() if winner.name in _ ))
+    print(list(_ for _ in world.stats.keys() if winner.name in _ ))
 
 
-.. parsed-literal::
 
-    ['score_08Sy@1',
-     'balance_08Sy@1',
-     'bankrupt_08Sy@1',
-     'productivity_08Sy@1',
-     'shortfall_quantity_08Sy@1',
-     'shortfall_penalty_08Sy@1',
-     'storage_cost_08Sy@1',
-     'disposal_cost_08Sy@1',
-     'inventory_penalized_08Sy@1',
-     'inventory_08Sy@1_input',
-     'inventory_08Sy@1_output']
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
+        <span style="color: #008000; text-decoration-color: #008000">'score_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'balance_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'bankrupt_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'productivity_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'storage_cost_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_input_10Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_output_10Ra@1'</span>
+    <span style="font-weight: bold">]</span>
+    </pre>
 
 
-The convension is that agent names has the form {ind}{Type}{process}
+
+The convention is that agent names has the form {ind}{Type}{process}
 where **ind** is a unique index, **Type** is a shortened version of the
 agent’s type name, and **process** is the process the agnet can run.
 Note that the agent’s input product has the same number as its process
@@ -599,22 +657,22 @@ time-step of the simulation):
 
 -  **bankrupt** If true, the agent is bankrupt.
 -  **balance** The money the agent has in its wallet (account).
--  **inventory (input)** The number of units of the agent’s input
+-  **inventory_input** The number of units of the agent’s input product
+   available in its inventory (by the end of the simulation step).
+-  **inventory_output** The number of units of the agent’s output
    product available in its inventory (by the end of the simulation
-   step).
--  **inventory (output)** The number of units of the agent’s output
-   product available in its inventory (by the end of the simulation
-   step).
--  **assets** The value of the agent’s assets (input and output products
-   in inventory) evaluated at the trading price
--  **spot market quantity** The quantity bought by this agent from the
-   spot market (of its output product on this step). This can only
-   happen as a result of a product-breach.
--  **spot market loss** The spot market price for the agent. This value
-   will go up the more the agent buys from the spot market and will be
-   used to calculate the price for this agent at future steps. This way
-   agents that depend on the spot market instead of negotiation get
-   punished.
+   step). This will always be zero in SCML.
+-  **inventory_penalized** The amount of inventory penalized by paying
+   storage cost or disposal cost.
+-  **storage_cost** The storage cost paid on the given step. For
+   SCML-OneShot, this will always be zero.
+-  **disposal_cost** The amout paid to dispose of products at the end of
+   the step (if products are perisahble). This is always zero for
+   SCML-Std
+-  **shortfall_quantity** The quantity we promised to sell but failt to
+   produce.
+-  **shortfall_penalty** The penalty we pay for failing to produce the
+   quantity we promised to sell.
 -  **productivity** The fraction of the agent’s production lines that
    were active at a given time-step.
 -  **score** The score of the agent according to the evaluation rule of
@@ -625,22 +683,27 @@ Let’s see how did our agent do
 .. code:: ipython3
 
     #show the first and last value of each of the agent statistics
-    pprint({k:(v[0], v[-1]) for k, v in world.stats.items() if winner.name in k })
+    print({k:(v[0], v[-1]) for k, v in world.stats.items() if winner.name in k })
 
 
-.. parsed-literal::
 
-    {'balance_08Sy@1': (15038.0, 20159.984878846466),
-     'bankrupt_08Sy@1': (False, False),
-     'disposal_cost_08Sy@1': (0.0, 0.0),
-     'inventory_08Sy@1_input': (0, 0),
-     'inventory_08Sy@1_output': (0, 0),
-     'inventory_penalized_08Sy@1': (0, 0),
-     'productivity_08Sy@1': (1.0, 1.0),
-     'score_08Sy@1': (1.00447531894997, 1.3466024232747622),
-     'shortfall_penalty_08Sy@1': (0.0, 0.0),
-     'shortfall_quantity_08Sy@1': (0, 0),
-     'storage_cost_08Sy@1': (0.0, 0.0)}
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">{</span>
+        <span style="color: #008000; text-decoration-color: #008000">'score_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0047540442390228</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.2002162334584274</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'balance_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">15217.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">18177.274855727883</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'bankrupt_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #ff0000; text-decoration-color: #ff0000; font-style: italic">False</span>, <span style="color: #ff0000; text-decoration-color: #ff0000; font-style: italic">False</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'productivity_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">4</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">116.15327847766035</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'storage_cost_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_input_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_output_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>
+    <span style="font-weight: bold">}</span>
+    </pre>
+
 
 
 .. code:: ipython3
@@ -654,7 +717,7 @@ Let’s see how did our agent do
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_20_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_26_0.png
 
 
 We can for example check the activity level of this world (defined as
@@ -662,60 +725,48 @@ the total amount of money transferred due to trade)
 
 .. code:: ipython3
 
-    plt.plot(world.stats['activity_level'])
-    plt.xlabel('Simulation Step')
-    plt.ylabel('Activitiy Level ($)\nTotal Money Transferred')
+    world.plot_stats('activity_level')
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_22_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_28_0.png
 
 
-We can see a picture of contracting in this world as follows:
+It is clear that activity goes down over time. This may just be due to
+the smaller number of negotiations resulting from having bankrupt agents
+but it can also be due to some end-game effect because agents know the
+number of simulated days and can change their behavior near the end
+(e.g. accomulating inventory in the beginning and getting rid of it near
+the end).
+
+We can see a picture of contracting activity in this world as follows:
 
 .. code:: ipython3
 
-    plt.plot(world.stats['n_contracts_concluded'], label='Concluded Contracts')
-    plt.plot(world.stats['n_contracts_cancelled'], label='Cancelled Contracts')
-    plt.plot(world.stats['n_contracts_signed'], label='Signed Contracts')
-    plt.plot(world.stats['n_contracts_executed'], label='Executed Contracts')
-    plt.legend()
-    plt.xlabel('Simulation Step')
-    plt.ylabel('N. Contracts')
+    world.plot_stats(("n_contracts_signed", "n_contracts_executed"))
     plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_24_0.png
-
-
-We can also check the breaches that happened
-
-.. code:: ipython3
-
-    plt.plot(world.stats['breach_level'])
-    plt.xlabel('Simulation Step')
-    plt.ylabel('Total Breach Level')
-    plt.show()
-
-
-
-.. image:: 01.run_scml2020_files/01.run_scml2020_26_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_30_0.png
 
 
 Notice that there can be multiple winners
 
 .. code:: ipython3
 
-    winner_profits = [100*world.scores()[_.id] for _ in world.winners]
+    winner_profits = [100*world.scores()[_.id] - 100 for _ in world.winners]
     winner_types = [_.short_type_name for _ in world.winners]
-    print(f"{world.winners} of type {winner_types} won at {winner_profits}%")
+    print(f"{world.winners} of type {winner_types} won at {winner_profits}% profit")
 
 
-.. parsed-literal::
 
-    [08Sy@1] of type ['syncrandomoneshot:SROS'] won at [134.66024232747623]%
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>10Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span><span style="font-weight: bold">]</span> of type <span style="font-weight: bold">[</span><span style="color: #008000; text-decoration-color: #008000">'randdistoneshot:RDOS'</span><span style="font-weight: bold">]</span> won at <span style="font-weight: bold">[</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20.02162334584274</span><span style="font-weight: bold">]</span>% profit
+    </pre>
+
 
 
 Let’s check how did the first winner’s inventory changes over time:
@@ -723,8 +774,8 @@ Let’s check how did the first winner’s inventory changes over time:
 .. code:: ipython3
 
     # find the keys in stats for the input and output inventory
-    in_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_input')][0]
-    out_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_{winner}_output')][0]
+    in_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_input_{winner}')][0]
+    out_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_output_{winner}')][0]
 
     # find input and output product indices
     input_product, output_product = winner.awi.my_input_product, winner.awi.my_output_product
@@ -744,27 +795,21 @@ Let’s check how did the first winner’s inventory changes over time:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_30_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_34_0.png
 
 
 We can actually check what happens to ALL competitors:
 
 .. code:: ipython3
 
-    from scml.scml2020.world import is_system_agent
-    fig, (profit, score) = plt.subplots(1, 2)
-    snames = sorted(world.non_system_agent_names)
-    for name in snames:
-        profit.plot(100.0 * (np.asarray(world.stats[f'balance_{name}'])/world.stats[f'balance_{name}'][0] - 1.0), label=name)
-        score.plot(100 * np.asarray(world.stats[f'score_{name}']), label=name)
-    profit.set(xlabel='Simulation Step', ylabel='Player Profit Ignoring Inventory (%)')
-    profit.legend(loc='lower left')
-    score.set(xlabel='Simulation Step', ylabel='Player Score (%)')
-    fig.show()
+    _, axs = plt.subplots(1, 2)
+    plt.sca(axs[0]); world.plot_stats("balance", ylegend=-0.05)
+    plt.sca(axs[1]); world.plot_stats("score", legend=False)
+    plt.show()
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_32_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
 
 
 .. code:: ipython3
@@ -782,7 +827,7 @@ We can actually check what happens to ALL competitors:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_33_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_37_0.png
 
 
 or just look at the end of the game
@@ -805,7 +850,7 @@ or just look at the end of the game
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_35_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_39_0.png
 
 
 .. code:: ipython3
@@ -826,7 +871,7 @@ or just look at the end of the game
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_36_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_40_0.png
 
 
 You can inspect what happened in the simulation by plotting different
@@ -846,7 +891,7 @@ different products change over the simulation time.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_38_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_42_0.png
 
 
 You can dig futher to understand what happened during this siumulation.
@@ -901,130 +946,130 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>999</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>23</td>
-          <td>27</td>
-          <td>10</td>
-          <td>23</td>
+          <th>110</th>
+          <td>05SRS@0</td>
+          <td>08Ra@1</td>
+          <td>8</td>
+          <td>30</td>
+          <td>17</td>
+          <td>2</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1388</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>33</td>
-          <td>27</td>
+          <th>186</th>
+          <td>04SRS@0</td>
+          <td>09SRS@1</td>
+          <td>7</td>
+          <td>30</td>
+          <td>17</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>03Ra@0</td>
+          <td>08Ra@1</td>
+          <td>7</td>
+          <td>30</td>
+          <td>16</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>03Ra@0</td>
+          <td>12SRS@1</td>
+          <td>5</td>
+          <td>30</td>
+          <td>15</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>137</th>
+          <td>05SRS@0</td>
+          <td>09SRS@1</td>
+          <td>10</td>
+          <td>30</td>
+          <td>15</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>275</th>
+          <td>06Ra@0</td>
+          <td>14Ra@1</td>
+          <td>13</td>
+          <td>30</td>
+          <td>15</td>
+          <td>5</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1683</th>
+          <td>05SRS@0</td>
+          <td>08Ra@1</td>
+          <td>44</td>
+          <td>30</td>
+          <td>15</td>
+          <td>44</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>106</th>
+          <td>06Ra@0</td>
+          <td>09SRS@1</td>
+          <td>3</td>
+          <td>30</td>
+          <td>14</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>251</th>
+          <td>03Ra@0</td>
+          <td>09SRS@1</td>
           <td>9</td>
-          <td>33</td>
+          <td>30</td>
+          <td>14</td>
+          <td>5</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1389</th>
-          <td>06Sy@0</td>
-          <td>09Gr@1</td>
-          <td>33</td>
-          <td>27</td>
+          <th>252</th>
+          <td>06Ra@0</td>
+          <td>09SRS@1</td>
           <td>9</td>
-          <td>33</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1278</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
           <td>30</td>
-          <td>26</td>
-          <td>10</td>
-          <td>30</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1279</th>
-          <td>00SRS@0</td>
-          <td>12Gr@1</td>
-          <td>30</td>
-          <td>26</td>
-          <td>10</td>
-          <td>30</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1036</th>
-          <td>06Sy@0</td>
-          <td>09Gr@1</td>
-          <td>24</td>
-          <td>25</td>
-          <td>10</td>
-          <td>24</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1113</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>26</td>
-          <td>25</td>
-          <td>10</td>
-          <td>26</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1163</th>
-          <td>06Sy@0</td>
-          <td>12Gr@1</td>
-          <td>27</td>
-          <td>25</td>
-          <td>10</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1313</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>31</td>
-          <td>25</td>
-          <td>10</td>
-          <td>31</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1350</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>32</td>
-          <td>25</td>
-          <td>9</td>
-          <td>32</td>
+          <td>14</td>
+          <td>5</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1079,130 +1124,130 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>999</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>23</td>
-          <td>27</td>
-          <td>10</td>
-          <td>23</td>
+          <th>110</th>
+          <td>05SRS@0</td>
+          <td>08Ra@1</td>
+          <td>8</td>
+          <td>30</td>
+          <td>17</td>
+          <td>2</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1388</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>33</td>
-          <td>27</td>
+          <th>186</th>
+          <td>04SRS@0</td>
+          <td>09SRS@1</td>
+          <td>7</td>
+          <td>30</td>
+          <td>17</td>
+          <td>3</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>03Ra@0</td>
+          <td>08Ra@1</td>
+          <td>7</td>
+          <td>30</td>
+          <td>16</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>03Ra@0</td>
+          <td>12SRS@1</td>
+          <td>5</td>
+          <td>30</td>
+          <td>15</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>137</th>
+          <td>05SRS@0</td>
+          <td>09SRS@1</td>
+          <td>10</td>
+          <td>30</td>
+          <td>15</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>275</th>
+          <td>06Ra@0</td>
+          <td>14Ra@1</td>
+          <td>13</td>
+          <td>30</td>
+          <td>15</td>
+          <td>5</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>1683</th>
+          <td>05SRS@0</td>
+          <td>08Ra@1</td>
+          <td>44</td>
+          <td>30</td>
+          <td>15</td>
+          <td>44</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>106</th>
+          <td>06Ra@0</td>
+          <td>09SRS@1</td>
+          <td>3</td>
+          <td>30</td>
+          <td>14</td>
+          <td>2</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>251</th>
+          <td>03Ra@0</td>
+          <td>09SRS@1</td>
           <td>9</td>
-          <td>33</td>
+          <td>30</td>
+          <td>14</td>
+          <td>5</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1389</th>
-          <td>06Sy@0</td>
-          <td>09Gr@1</td>
-          <td>33</td>
-          <td>27</td>
+          <th>252</th>
+          <td>06Ra@0</td>
+          <td>09SRS@1</td>
           <td>9</td>
-          <td>33</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1278</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
           <td>30</td>
-          <td>26</td>
-          <td>10</td>
-          <td>30</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1279</th>
-          <td>00SRS@0</td>
-          <td>12Gr@1</td>
-          <td>30</td>
-          <td>26</td>
-          <td>10</td>
-          <td>30</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1036</th>
-          <td>06Sy@0</td>
-          <td>09Gr@1</td>
-          <td>24</td>
-          <td>25</td>
-          <td>10</td>
-          <td>24</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1113</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>26</td>
-          <td>25</td>
-          <td>10</td>
-          <td>26</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1163</th>
-          <td>06Sy@0</td>
-          <td>12Gr@1</td>
-          <td>27</td>
-          <td>25</td>
-          <td>10</td>
-          <td>27</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1313</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>31</td>
-          <td>25</td>
-          <td>10</td>
-          <td>31</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1350</th>
-          <td>03Sy@0</td>
-          <td>09Gr@1</td>
-          <td>32</td>
-          <td>25</td>
-          <td>9</td>
-          <td>32</td>
+          <td>14</td>
+          <td>5</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1227,7 +1272,7 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_45_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_49_0.png
 
 
 .. code:: ipython3
@@ -1240,7 +1285,7 @@ and quantity
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_46_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_50_0.png
 
 
 Did any agents go bankrupt and when?
@@ -1249,26 +1294,31 @@ Did any agents go bankrupt and when?
 
     bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
             for a in world.non_system_agent_names}
-    pprint({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
+    print({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
 
 
-.. parsed-literal::
 
-    {'00SRS@0': 'No',
-     '01SRS@0': 'No',
-     '02SRS@0': 'No',
-     '03Sy@0': 'No',
-     '04Gr@0': 'No',
-     '05Gr@0': 'No',
-     '06Sy@0': 'No',
-     '07SRS@1': 'No',
-     '08Sy@1': 'No',
-     '09Gr@1': 'at: 33',
-     '10SRS@1': 'No',
-     '11Sy@1': 'No',
-     '12Gr@1': 'at: 36',
-     '13Sy@1': 'No',
-     '14Sy@1': 'No'}
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">{</span>
+        <span style="color: #008000; text-decoration-color: #008000">'00Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'01Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'02Gr@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'03Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 14'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'04SRS@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'05SRS@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'06Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 24'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'07Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'08Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 45'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'09SRS@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'10Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'11Gr@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 32'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'12SRS@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'13Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 40'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'14Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 34'</span>
+    <span style="font-weight: bold">}</span>
+    </pre>
+
 
 
 You can see what happened during this simulation by drawing graphs at
@@ -1282,7 +1332,7 @@ follows:
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_50_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_54_0.png
 
 
 You can see what happened in this world in a series of graphs using the
@@ -1295,7 +1345,7 @@ You can see what happened in this world in a series of graphs using the
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_52_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_56_0.png
 
 
 You can also run a simple animation to see what happens at every step
@@ -1360,7 +1410,7 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 .. code:: ipython3
 
     tournament_types = [
-        GreedyStdAgent, SyncRandomStdAgent, GreedyOneShotAgent
+        GreedyStdAgent, SyncRandomStdAgent, RandDistOneShotAgent
     ]
     # may take a long time
     results = anac2024_std(
@@ -1387,7 +1437,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['GreedyOneShotAgent']
+    ['RandDistOneShotAgent']
 
 
 
@@ -1402,7 +1452,7 @@ How many simulations were actually run?
 
 .. parsed-literal::
 
-    15
+    30
 
 
 
@@ -1454,27 +1504,39 @@ We can also see the scores that every agent type got
       <tbody>
         <tr>
           <th>0</th>
-          <td>GreedyOneShotAgent</td>
-          <td>30.00</td>
-          <td>1.53</td>
-          <td>0.25</td>
-          <td>1.15</td>
-          <td>1.37</td>
-          <td>1.49</td>
-          <td>1.73</td>
-          <td>1.92</td>
+          <td>RandDistOneShotAgent</td>
+          <td>20.00</td>
+          <td>1.01</td>
+          <td>0.06</td>
+          <td>0.91</td>
+          <td>0.97</td>
+          <td>1.00</td>
+          <td>1.06</td>
+          <td>1.11</td>
         </tr>
         <tr>
           <th>1</th>
+          <td>GreedyStdAgent</td>
+          <td>20.00</td>
+          <td>0.86</td>
+          <td>0.25</td>
+          <td>0.18</td>
+          <td>0.72</td>
+          <td>0.92</td>
+          <td>1.07</td>
+          <td>1.15</td>
+        </tr>
+        <tr>
+          <th>2</th>
           <td>SyncRandomStdAgent</td>
-          <td>15.00</td>
-          <td>0.97</td>
-          <td>0.06</td>
-          <td>0.81</td>
-          <td>0.98</td>
-          <td>1.00</td>
-          <td>1.00</td>
-          <td>1.06</td>
+          <td>20.00</td>
+          <td>0.88</td>
+          <td>0.14</td>
+          <td>0.66</td>
+          <td>0.76</td>
+          <td>0.91</td>
+          <td>1.01</td>
+          <td>1.07</td>
         </tr>
       </tbody>
     </table>
@@ -1524,13 +1586,33 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>GreedyOneShotAgent</td>
+          <td>GreedyStdAgent</td>
           <td>SyncRandomStdAgent</td>
-          <td>1.00</td>
+          <td>0.25</td>
+          <td>0.57</td>
+          <td>20</td>
+          <td>20</td>
+          <td>20</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>GreedyStdAgent</td>
+          <td>RandDistOneShotAgent</td>
+          <td>0.50</td>
+          <td>0.01</td>
+          <td>20</td>
+          <td>20</td>
+          <td>20</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>SyncRandomStdAgent</td>
+          <td>RandDistOneShotAgent</td>
+          <td>0.60</td>
           <td>0.00</td>
-          <td>30</td>
-          <td>15</td>
-          <td>15</td>
+          <td>20</td>
+          <td>20</td>
+          <td>20</td>
         </tr>
       </tbody>
     </table>
@@ -1574,13 +1656,18 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
-          <td>GreedyOneShotAgent</td>
-          <td>1.53</td>
+          <td>RandDistOneShotAgent</td>
+          <td>1.01</td>
         </tr>
         <tr>
           <th>1</th>
           <td>SyncRandomStdAgent</td>
-          <td>0.97</td>
+          <td>0.88</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>GreedyStdAgent</td>
+          <td>0.86</td>
         </tr>
       </tbody>
     </table>
@@ -1603,7 +1690,7 @@ activity level for different simulations.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_72_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_76_0.png
 
 
 We can even get the scores of every agent belonging to every agent type
@@ -1644,33 +1731,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Gr@0</td>
-          <td>GreedyOneShotAgent</td>
-          <td>1.54</td>
+          <td>04Gr@1</td>
+          <td>GreedyStdAgent</td>
+          <td>0.51</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>09SRS@2</td>
+          <td>12SRS@3</td>
           <td>SyncRandomStdAgent</td>
-          <td>1.00</td>
+          <td>0.92</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>13Gr@3</td>
-          <td>GreedyOneShotAgent</td>
-          <td>1.54</td>
+          <td>00SRS@0</td>
+          <td>SyncRandomStdAgent</td>
+          <td>0.69</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>05Gr@1</td>
-          <td>GreedyOneShotAgent</td>
-          <td>1.46</td>
+          <td>06Gr@1</td>
+          <td>GreedyStdAgent</td>
+          <td>1.15</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>06Gr@1</td>
-          <td>GreedyOneShotAgent</td>
-          <td>1.46</td>
+          <td>00Ra@0</td>
+          <td>RandDistOneShotAgent</td>
+          <td>0.91</td>
         </tr>
       </tbody>
     </table>
@@ -1692,7 +1779,7 @@ of each type.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_76_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_80_0.png
 
 
 Running a One-Shot tournament
@@ -1804,50 +1891,50 @@ We can also see the scores that every agent type got
         <tr>
           <th>0</th>
           <td>GreedyOneShotAgent</td>
-          <td>30.00</td>
-          <td>0.70</td>
-          <td>0.20</td>
-          <td>0.21</td>
-          <td>0.62</td>
-          <td>0.71</td>
+          <td>45.00</td>
           <td>0.79</td>
-          <td>1.08</td>
+          <td>0.13</td>
+          <td>0.28</td>
+          <td>0.74</td>
+          <td>0.79</td>
+          <td>0.89</td>
+          <td>0.96</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedySingleAgreementAgent</td>
-          <td>30.00</td>
-          <td>0.78</td>
+          <td>45.00</td>
+          <td>0.75</td>
           <td>0.14</td>
-          <td>0.53</td>
-          <td>0.70</td>
-          <td>0.78</td>
-          <td>0.87</td>
-          <td>1.02</td>
+          <td>0.51</td>
+          <td>0.69</td>
+          <td>0.74</td>
+          <td>0.84</td>
+          <td>1.08</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomOneShotAgent</td>
-          <td>30.00</td>
-          <td>0.77</td>
-          <td>0.12</td>
-          <td>0.50</td>
-          <td>0.70</td>
-          <td>0.76</td>
+          <td>45.00</td>
+          <td>0.79</td>
+          <td>0.14</td>
+          <td>0.40</td>
+          <td>0.75</td>
+          <td>0.84</td>
           <td>0.88</td>
-          <td>0.96</td>
+          <td>0.98</td>
         </tr>
         <tr>
           <th>3</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>30.00</td>
-          <td>1.07</td>
-          <td>0.08</td>
-          <td>0.94</td>
+          <td>45.00</td>
           <td>1.02</td>
-          <td>1.05</td>
-          <td>1.09</td>
-          <td>1.27</td>
+          <td>0.10</td>
+          <td>0.73</td>
+          <td>0.99</td>
+          <td>1.04</td>
+          <td>1.07</td>
+          <td>1.19</td>
         </tr>
       </tbody>
     </table>
@@ -1898,62 +1985,62 @@ You can also do statistical significance testing using ttest or kstest
         <tr>
           <th>0</th>
           <td>GreedyOneShotAgent</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>0.87</td>
-          <td>0.00</td>
-          <td>30</td>
-          <td>30</td>
-          <td>30</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.20</td>
+          <td>0.33</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedyOneShotAgent</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.30</td>
-          <td>0.14</td>
-          <td>30</td>
-          <td>30</td>
-          <td>30</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.82</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
         </tr>
         <tr>
           <th>2</th>
           <td>GreedyOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.27</td>
-          <td>0.24</td>
-          <td>30</td>
-          <td>30</td>
-          <td>30</td>
+          <td>0.29</td>
+          <td>0.05</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>SyncRandomOneShotAgent</td>
           <td>RandomOneShotAgent</td>
-          <td>0.97</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.80</td>
           <td>0.00</td>
-          <td>30</td>
-          <td>30</td>
-          <td>30</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>SyncRandomOneShotAgent</td>
+          <td>RandomOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.87</td>
-          <td>0.00</td>
-          <td>30</td>
-          <td>30</td>
-          <td>30</td>
+          <td>0.33</td>
+          <td>0.01</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>RandomOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.13</td>
-          <td>0.96</td>
-          <td>30</td>
-          <td>30</td>
-          <td>30</td>
+          <td>0.78</td>
+          <td>0.00</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
         </tr>
       </tbody>
     </table>
@@ -1998,22 +2085,22 @@ see the total score
         <tr>
           <th>0</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>1.05</td>
+          <td>1.02</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>GreedySingleAgreementAgent</td>
-          <td>0.78</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.79</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomOneShotAgent</td>
-          <td>0.77</td>
+          <td>0.79</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>GreedyOneShotAgent</td>
-          <td>0.70</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.75</td>
         </tr>
       </tbody>
     </table>
@@ -2061,31 +2148,31 @@ at every simulation
           <th>0</th>
           <td>00Gr@0</td>
           <td>GreedyOneShotAgent</td>
-          <td>0.93</td>
+          <td>0.89</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>05Sy@1</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>1.01</td>
+          <td>01Ra@0</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.87</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>00Sy@0</td>
+          <td>02Sy@0</td>
           <td>SyncRandomOneShotAgent</td>
-          <td>1.14</td>
+          <td>1.06</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>05Ra@1</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.71</td>
+          <td>00Sy@0</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>1.04</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00Sy@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>1.03</td>
+          <td>01Gr@0</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.88</td>
         </tr>
       </tbody>
     </table>
@@ -2107,12 +2194,93 @@ of each type.
 
 
 
-.. image:: 01.run_scml2020_files/01.run_scml2020_93_0.png
+.. image:: 01.run_scml2020_files/01.run_scml2020_97_0.png
 
 
 Now that you can run simulations and complete tournaments, let’s see how
 are we going to develop a new agent for the SCML2023 league
 :math:`\rightarrow`
+
+Running against winners from previous years
+-------------------------------------------
+
+| You can compare your agent against any agents previously submitted to
+  SCML (same track). To do that, you need to install the ``scml-agents``
+  package from pip:
+
+   pip install scml-agents
+
+You can then get agents using the ``get_agents()`` function from this
+package:
+
+.. code:: ipython3
+
+    from scml_agents import get_agents
+
+    winners = [
+        get_agents(y, track="oneshot", winners_only=True, as_class=False)[0]
+        for y in (2021, 2022, 2023)
+    ]
+    print(winners)
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
+        <span style="color: #008000; text-decoration-color: #008000">'scml_agents.scml2021.oneshot.team_86.agent112.Agent112'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'scml_agents.scml2022.oneshot.team_134.agent119.PatientAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'scml_agents.scml2023.oneshot.team_poli_usp.quantity_oriented_agent.QuantityOrientedAgent'</span>
+    <span style="font-weight: bold">]</span>
+    </pre>
+
+
+
+We can now try tem against each other:
+
+.. code:: ipython3
+
+    world = SCML2024OneShotWorld(
+        **SCML2024OneShotWorld.generate(
+            agent_types=winners + [SyncRandomOneShotAgent],
+            n_steps=50
+        ),
+        construct_graphs=True,
+    )
+    world.run()
+
+.. code:: ipython3
+
+    world.plot_stats(pertype=True)
+    plt.show()
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_103_0.png
+
+
+You can also try them in the new scml-std simulation which has the same
+API as scml-oneshot:
+
+.. code:: ipython3
+
+    world = SCML2024StdWorld(
+        **SCML2024StdWorld.generate(
+            agent_types=winners + [SyncRandomStdAgent],
+            n_steps=50
+        ),
+        construct_graphs=True,
+    )
+    world.run()
+
+.. code:: ipython3
+
+    world.plot_stats(pertype=True)
+
+
+
+.. image:: 01.run_scml2020_files/01.run_scml2020_106_0.png
+
 
 
 Download :download:`Notebook<notebooks/01.run_scml2020.ipynb>`.

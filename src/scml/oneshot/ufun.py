@@ -151,6 +151,14 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         self.n_output_negs = n_output_negs
         self.input_qrange, self.input_prange = input_qrange, input_prange
         self.output_qrange, self.output_prange = output_qrange, output_prange
+        if production_cost is None:
+            production_cost = 0.0
+        if disposal_cost is None:
+            disposal_cost = 0.0
+        if storage_cost is None:
+            storage_cost = 0.0
+        if shortfall_penalty is None:
+            shortfall_penalty = 0.0
         (
             self.production_cost,
             self.disposal_cost,
@@ -341,7 +349,9 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             outputs.append(is_output)
             offers.append(self.outcome_as_tuple(c.agreement))
         return self.from_offers(  # type: ignore
-            tuple(offers), tuple(outputs), return_info=return_info  # type: ignore
+            tuple(offers),
+            tuple(outputs),
+            return_info=return_info,  # type: ignore
         )
 
     @staticmethod
@@ -429,7 +439,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
                 outputs = tuple([False] * len(offers))
             else:
                 raise RuntimeError(
-                    f"You cannot pass outputs=None if the agent is neither a first or last level agent"
+                    "You cannot pass outputs=None if the agent is neither a first or last level agent"
                 )
 
         def order(x):
@@ -477,7 +487,8 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         # sort contracts in the optimal order of execution: from cheapest when
         # buying and from the most expensive when selling. See `order` above.
         sorted_offers = sorted(  # type: ignore
-            list(zip(offers, outputs, exogenous, strict=True)), key=order  # type: ignore
+            list(zip(offers, outputs, exogenous, strict=True)),
+            key=order,  # type: ignore
         )
 
         # we calculate the total quantity we are are required to pay for `qin` and

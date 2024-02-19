@@ -56,8 +56,8 @@ class DefaultRewardFunction(RewardFunction):
     """
 
     def before_action(self, awi: OneShotAWI) -> float:
-        return awi.current_balance
+        return awi.current_score
 
     def __call__(self, awi: OneShotAWI, action: dict[str, SAOResponse], info: float):
         _ = action
-        return awi.current_balance - info
+        return awi.current_score - info

@@ -6,7 +6,7 @@ from scml.oneshot.rl.env import OneShotEnv
 from scml.oneshot.rl.observation import ObservationManager
 from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
 from scml.std.agent import StdAgent
-from scml.std.agents.nothing import StdDummyAgent
+from scml.std.agents.nothing import StdPlaceholder
 from scml.std.context import FixedPartnerNumbersStdContext
 
 __all__ = ["StdEnv"]
@@ -20,7 +20,7 @@ class StdEnv(OneShotEnv):
         reward_function: RewardFunction = DefaultRewardFunction(),
         render_mode=None,
         context: GeneralContext = FixedPartnerNumbersStdContext(),
-        agent_type: type[StdAgent] = StdDummyAgent,
+        agent_type: type[StdAgent] = StdPlaceholder,
         agent_params: dict[str, Any] | None = None,
         extra_checks: bool = True,
         skip_after_negotiations: bool = True,

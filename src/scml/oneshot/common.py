@@ -1,8 +1,10 @@
+import random
 import sys
 from dataclasses import dataclass
 from typing import Literal
 
 from attr import define
+from negmas import make_issue, make_os
 from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome
 from negmas.sao import SAONMI
 from negmas.sao.common import SAOState
@@ -171,6 +173,26 @@ class OneShotProfile:
     def process(self):
         return self.input_product
 
+    @classmethod
+    def random(cls, input_product: int, oneshot: bool) -> "OneShotProfile":
+        scm = random.random() * 0.02
+        scv = random.random() * 0.01
+        dcm = dcv = 0
+        if oneshot:
+            scm, scv, dcm, dcv = dcm, dcv, scm, scv
+
+        return OneShotProfile(
+            cost=random.randint(1, 4),
+            input_product=input_product,
+            n_lines=10,
+            shortfall_penalty_mean=random.random() * 0.2,
+            shortfall_penalty_dev=random.random() * 0.02,
+            disposal_cost_mean=dcm,
+            disposal_cost_dev=dcv,
+            storage_cost_mean=scm,
+            storage_cost_dev=scv,
+        )
+
 
 @define(frozen=True)
 class NegotiationDetails:
@@ -290,6 +312,8 @@ class OneShotState:
     """Today needed supplies  as of now (exogenous output - exogenous input - total supplies)."""
     perishable: bool = True
     """Is this a perishable domain (oneshot) of not (std) """
+    allow_zero_quantity: bool = False
+    """Does this world allow zero quantity in negotiated offers"""
     storage_cost: float = 0.0
     """Current unit storage cost. Only used in standard worlds where products are not perishable"""
 
@@ -312,8 +336,7 @@ class OneShotState:
     @property
     def current_states(self) -> dict[str, SAOState]:
         """All running negotiations as a mapping from partner ID to current negotiation state"""
-        d = self.running_buy_states
-        d.update(self.current_sell_states)
+        d = self.running_buy_states | self.current_sell_states
         return d
 
     @property
@@ -333,7 +356,7 @@ class OneShotState:
         }
 
     @property
-    def running_nmis(self) -> dict[str, SAONMI]:
+    def current_nmis(self) -> dict[str, SAONMI]:
         """All running negotiations as a mapping from partner ID to current negotiation state"""
         d = self.current_buy_nmis
         d.update(self.current_sell_nmis)
@@ -360,6 +383,124 @@ class OneShotState:
     @property
     def current_offers(self) -> dict[str, Outcome]:
         """All current negotiations as a mapping from partner ID to current offer"""
-        d = self.current_buy_offers
-        d.update(self.current_sell_offers)
+        d = self.current_buy_offers | self.current_sell_offers
         return d
+
+    @classmethod
+    def random(cls, oneshot: bool | None = None) -> "OneShotState":  # type: ignore
+        if oneshot is None:
+            oneshot = random.randint(0, 1) > 0
+        storage_cost, disposal_cost = 0.0, 0.2 * random.random() + 0.1
+        if not oneshot:
+            storage_cost, disposal_cost = disposal_cost / 5, storage_cost
+        n_processes = 2 if oneshot else random.randint(2, 4)
+        level = random.randint(0, n_processes - 1)
+        n_agents_per_process = [random.randint(2, 8) for _ in range(n_processes)]
+        names, nxt = [], 0
+        namesof = dict()
+        for l in range(n_processes):
+            namesof[l] = [
+                f"{_:02}"
+                + random.choice("ABCDEFGZY")
+                + random.choice("abdioxfwl")
+                + f"@{l:02}"
+                for _ in range(nxt, nxt + n_agents_per_process[l])
+            ]
+            names += namesof[l]
+            nxt += n_agents_per_process[l]
+        if level == 0:
+            ein, eout = random.randint(5, 10), 0
+        elif level == n_processes - 1:
+            eout, ein = random.randint(5, 10), 0
+        else:
+            eout, ein = 0, 0
+
+        ip = random.randint(10, 20)
+        my_suppliers = namesof[level - 1] if level > 0 else ["SELLER"]
+        my_consumers = names[level + 1] if level < n_processes - 1 else ["BUYER"]
+        n_steps = random.randint(50, 200)
+        step = random.randint(0, n_steps)
+        esummary: list[tuple[int, int]] = [(0, 0) for _ in range(n_processes)]
+        esummary[0] = (random.randint(6, 10), random.randint(10, 23))
+        esummary[-1] = (random.randint(6, 10), random.randint(45, 67))
+        return OneShotState(
+            exogenous_input_quantity=ein,
+            exogenous_input_price=ip,
+            exogenous_output_quantity=eout,
+            exogenous_output_price=random.randint(10, 30) + ip,
+            disposal_cost=disposal_cost,
+            shortfall_penalty=random.random() * 0.4 + 0.1,
+            current_balance=random.randint(10000, 20000),
+            total_sales=random.randint(0, 20),
+            total_supplies=random.randint(0, 20),
+            total_future_sales=random.randint(0, 200),
+            total_future_supplies=random.randint(0, 200),
+            n_products=n_processes + 1,
+            n_processes=n_processes,
+            n_competitors=n_agents_per_process[level] - 1,
+            all_suppliers=[["SELLER"]] + [namesof[l] for l in range(len(namesof) - 1)],
+            all_consumers=[namesof[l] for l in range(len(namesof) - 1)] + [["BUYER"]],
+            bankrupt_agents=(
+                [random.choice(names) for _ in range(x)]
+                if (x := random.randint(0, 10)) != 0
+                else []
+            ),
+            catalog_prices=[
+                random.random() * (i + 1) * 10 for i in range(n_processes + 1)
+            ],
+            price_multiplier=random.random() * 0.5 + 1.5,
+            is_exogenous_forced=True,
+            current_step=step,
+            n_steps=n_steps,
+            relative_simulation_time=step / n_steps,
+            profile=OneShotProfile.random(level, oneshot),
+            n_lines=10,
+            is_first_level=level == 0,
+            is_last_level=level == n_processes - 1,
+            is_middle_level=0 < level < n_processes - 1,
+            my_input_product=level,
+            my_output_product=level + 1,
+            level=level,
+            my_suppliers=my_suppliers,
+            my_consumers=my_consumers,
+            my_partners=my_suppliers + my_consumers,
+            penalties_scale=random.choice(["trading", "catalog", "unit", "none"]),
+            n_input_negotiations=n_agents_per_process[level - 1] if level > 0 else 0,
+            n_output_negotiations=(
+                n_agents_per_process[level + 1] if level < n_processes - 1 else 0
+            ),
+            trading_prices=[
+                random.random() * 50 + 10.0 for _ in range(n_processes + 1)
+            ],
+            exogenous_contract_summary=esummary,
+            reports_of_agents=dict(),
+            current_input_outcome_space=make_os(  # type: ignore
+                [
+                    make_issue((1, 10)),
+                    (
+                        make_issue(step, step)
+                        if oneshot
+                        else make_issue(step, step + random.randint(0, 4))
+                    ),
+                    make_issue((20.0, 50.0)),
+                ]
+            ),
+            current_output_outcome_space=make_os(  # type: ignore
+                [
+                    make_issue((1, 10)),
+                    (
+                        make_issue(step, step)
+                        if oneshot
+                        else make_issue(step, step + random.randint(0, 4))
+                    ),
+                    make_issue((40.0, 90.0)),
+                ]
+            ),
+            current_negotiation_details=dict(),
+            sales=dict(),
+            supplies=dict(),
+            needed_sales=random.randint(0, 10) if level < n_processes - 1 else 0,
+            needed_supplies=random.randint(0, 10) if level > 0 else 0,
+            perishable=oneshot,
+            storage_cost=storage_cost,
+        )

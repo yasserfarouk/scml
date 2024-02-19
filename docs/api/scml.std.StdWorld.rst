@@ -10,6 +10,7 @@ StdWorld
 
    .. autosummary::
 
+      ~StdWorld.agent_contracts
       ~StdWorld.agreement_fraction
       ~StdWorld.agreement_rate
       ~StdWorld.breach_fraction
@@ -52,6 +53,7 @@ StdWorld
       ~StdWorld.saved_negotiations
       ~StdWorld.short_type_name
       ~StdWorld.signed_contracts
+      ~StdWorld.stat_names
       ~StdWorld.stats
       ~StdWorld.stats_df
       ~StdWorld.system_agent_ids
@@ -79,6 +81,7 @@ StdWorld
       ~StdWorld.checkpoint_info
       ~StdWorld.checkpoint_init
       ~StdWorld.checkpoint_on_step_started
+      ~StdWorld.combine_stats
       ~StdWorld.complete_contract_execution
       ~StdWorld.contract_record
       ~StdWorld.contract_size
@@ -117,6 +120,8 @@ StdWorld
       ~StdWorld.on_event
       ~StdWorld.on_exception
       ~StdWorld.order_contracts_for_execution
+      ~StdWorld.plot_combined_stats
+      ~StdWorld.plot_stats
       ~StdWorld.post_step_stats
       ~StdWorld.pre_step_stats
       ~StdWorld.read_config
@@ -125,6 +130,7 @@ StdWorld
       ~StdWorld.register_stats_monitor
       ~StdWorld.register_world_monitor
       ~StdWorld.relative_welfare
+      ~StdWorld.replace_agents
       ~StdWorld.request_negotiation_about
       ~StdWorld.run
       ~StdWorld.run_negotiation
@@ -148,6 +154,7 @@ StdWorld
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: agent_contracts
    .. autoattribute:: agreement_fraction
    .. autoattribute:: agreement_rate
    .. autoattribute:: breach_fraction
@@ -190,6 +197,7 @@ StdWorld
    .. autoattribute:: saved_negotiations
    .. autoattribute:: short_type_name
    .. autoattribute:: signed_contracts
+   .. autoattribute:: stat_names
    .. autoattribute:: stats
    .. autoattribute:: stats_df
    .. autoattribute:: system_agent_ids
@@ -215,6 +223,7 @@ StdWorld
    .. automethod:: checkpoint_info
    .. automethod:: checkpoint_init
    .. automethod:: checkpoint_on_step_started
+   .. automethod:: combine_stats
    .. automethod:: complete_contract_execution
    .. automethod:: contract_record
    .. automethod:: contract_size
@@ -253,6 +262,8 @@ StdWorld
    .. automethod:: on_event
    .. automethod:: on_exception
    .. automethod:: order_contracts_for_execution
+   .. automethod:: plot_combined_stats
+   .. automethod:: plot_stats
    .. automethod:: post_step_stats
    .. automethod:: pre_step_stats
    .. automethod:: read_config
@@ -261,6 +272,7 @@ StdWorld
    .. automethod:: register_stats_monitor
    .. automethod:: register_world_monitor
    .. automethod:: relative_welfare
+   .. automethod:: replace_agents
    .. automethod:: request_negotiation_about
    .. automethod:: run
    .. automethod:: run_negotiation

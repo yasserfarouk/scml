@@ -47,7 +47,7 @@ class GreedyOneShotAgent(OneShotAgent):
         opp_price_slack=None,
         opp_acc_price_slack=None,
         range_slack=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         if concession_exponent is None:
