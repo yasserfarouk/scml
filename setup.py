@@ -57,9 +57,8 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires=">=3.10, <3.12",
+    python_requires=">=3.10",
     install_requires=[
-        # 'dataclasses; python_version < "3.7"',
         "click",
         "pytest",
         "hypothesis",
@@ -67,11 +66,11 @@ setup(
         "joblib",
         "jupyter",
         "gif",
+        "gymnasium",
         # "python-constraint",
         # "prettytable",
         # "pulp",
         # "mip",
-        "gymnasium",
         # "stable-baselines3",
     ],
     extras_require={
