@@ -1,6 +1,16 @@
 import random
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    TYPE_CHECKING,
+)
 
 import numpy as np
 from negmas import (
@@ -9,12 +19,11 @@ from negmas import (
     LinearUtilityFunction,
     MechanismState,
     Outcome,
-    PolyAspiration,
     ResponseType,
-    UtilityFunction,
     make_issue,
-    make_os,
     outcome_is_valid,
+    Preferences,
+    UtilityFunction,
 )
 from negmas.common import NegotiatorMechanismInterface
 from negmas.events import Notification, Notifier
@@ -26,7 +35,9 @@ from negmas.sao import (
     SAOState,
     SAOSyncController,
 )
-from negmas.sao.negotiators.controlled import ControlledSAONegotiator
+
+if TYPE_CHECKING:
+    from scml.scml2020.components.trading import PredictionBasedTradingStrategy
 
 from scml.scml2020.common import QUANTITY, TIME, UNIT_PRICE
 
@@ -137,7 +148,7 @@ class StepController(SAOController, Notifier):
             return None
         try:
             self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
-        except:
+        except Exception:
             self.__negotiator._nmi = None
         return self.__negotiator.propose(state)
 

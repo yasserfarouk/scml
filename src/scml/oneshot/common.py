@@ -398,16 +398,16 @@ class OneShotState:
         n_agents_per_process = [random.randint(2, 8) for _ in range(n_processes)]
         names, nxt = [], 0
         namesof = dict()
-        for l in range(n_processes):
-            namesof[l] = [
+        for p in range(n_processes):
+            namesof[p] = [
                 f"{_:02}"
                 + random.choice("ABCDEFGZY")
                 + random.choice("abdioxfwl")
-                + f"@{l:02}"
-                for _ in range(nxt, nxt + n_agents_per_process[l])
+                + f"@{p:02}"
+                for _ in range(nxt, nxt + n_agents_per_process[p])
             ]
-            names += namesof[l]
-            nxt += n_agents_per_process[l]
+            names += namesof[p]
+            nxt += n_agents_per_process[p]
         if level == 0:
             ein, eout = random.randint(5, 10), 0
         elif level == n_processes - 1:
@@ -438,8 +438,8 @@ class OneShotState:
             n_products=n_processes + 1,
             n_processes=n_processes,
             n_competitors=n_agents_per_process[level] - 1,
-            all_suppliers=[["SELLER"]] + [namesof[l] for l in range(len(namesof) - 1)],
-            all_consumers=[namesof[l] for l in range(len(namesof) - 1)] + [["BUYER"]],
+            all_suppliers=[["SELLER"]] + [namesof[k] for k in range(len(namesof) - 1)],
+            all_consumers=[namesof[k] for k in range(len(namesof) - 1)] + [["BUYER"]],
             bankrupt_agents=(
                 [random.choice(names) for _ in range(x)]
                 if (x := random.randint(0, 10)) != 0

@@ -74,9 +74,9 @@ __all__ = [
     "SCML2022OneShotWorld",
     "SCML2023OneShotWorld",
     "SCML2024OneShotWorld",
-    "DUMMY_AGENT_BEGINNING",
+    "PLACEHOLDER_AGENT_PREFIX",
 ]
-DUMMY_AGENT_BEGINNING = "DUMMY"
+PLACEHOLDER_AGENT_PREFIX = "PlaceHolder__"
 
 
 def get_n_lines(config: dict[str, Any]) -> tuple[int, int]:
@@ -225,6 +225,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         if one_offer_per_step and neg_n_steps is not None:
             neg_n_steps *= 2
 
+        self.agents: dict[str, DefaultOneShotAdapter]  # type: ignore
         self.publish_assets = publish_assets
         self.perishable = perishable
         self.horizon = horizon
@@ -503,13 +504,13 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                             s = s2[0] * 3
                         else:
                             s = "Agt"
-                except:
+                except Exception:
                     pass
                 default_names[i] += f"{s}"
         agent_levels = [p.level for p in profiles]
         if agent_name_reveals_position:
-            for i, l in enumerate(agent_levels):
-                default_names[i] += f"@{l:01}"
+            for i, k in enumerate(agent_levels):
+                default_names[i] += f"@{k:01}"
         if agent_params is None:
             agent_params = [dict(name=name) for name in default_names]
         elif isinstance(agent_params, dict):
@@ -1093,7 +1094,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                 DefaultOneShotAdapter
                 if at
                 and (
-                    (isinstance(at, str) and at.startswith(DUMMY_AGENT_BEGINNING))
+                    (isinstance(at, str) and at.startswith(PLACEHOLDER_AGENT_PREFIX))
                     or issubclass(get_class(at), OneShotAgent)
                 )
                 else OneShotSCML2020Adapter
@@ -1107,16 +1108,16 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         first_agent = [0] + n_agents_cumsum[:-1]
         last_agent = n_agents_cumsum[:-1] + [n_agents]
         process_of_agent = np.empty(n_agents, dtype=int)
-        for i, (f, l) in enumerate(zip(first_agent, last_agent)):
-            process_of_agent[f:l] = i
+        for i, (f, k) in enumerate(zip(first_agent, last_agent)):
+            process_of_agent[f:k] = i
             if cost_increases_with_level:
-                production_costs[f:l] = np.round(
-                    production_costs[f:l] * (i + 1)  # math.sqrt(i + 1)
+                production_costs[f:k] = np.round(
+                    production_costs[f:k] * (i + 1)  # math.sqrt(i + 1)
                 ).astype(int)
 
         costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)  # type: ignore
-        for p, (f, l) in enumerate(zip(first_agent, last_agent)):
-            costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
+        for p, (f, k) in enumerate(zip(first_agent, last_agent)):
+            costs[f:k, :, p] = production_costs[f:k].reshape((k - f), 1)
 
         # generate external contract amounts (controlled by productivity):
 
@@ -1256,17 +1257,17 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         ] = []
 
         nxt = 0
-        for l in range(n_processes):
-            for a in range(n_agents_per_process[l]):
+        for k in range(n_processes):
+            for a in range(n_agents_per_process[k]):
                 esales = np.zeros((n_steps, n_products), dtype=int)
                 esupplies = np.zeros((n_steps, n_products), dtype=int)
                 esale_prices = np.zeros((n_steps, n_products), dtype=int)
                 esupply_prices = np.zeros((n_steps, n_products), dtype=int)
                 # TODO make sale_prices vary around a mean
-                if l == 0:
+                if k == 0:
                     esupplies[:, 0] = [exogenous_supplies[s][a] for s in range(n_steps)]
                     esupply_prices[:, 0] = supply_prices[a, :]
-                if l == n_processes - 1:
+                if k == n_processes - 1:
                     esales[:, -1] = [exogenous_sales[s][a] for s in range(n_steps)]
                     esale_prices[:, -1] = sale_prices[a, :]
                 dp = realin(shortfall_penalty)
@@ -1276,7 +1277,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     (
                         OneShotProfile(
                             cost=[_ for _ in costs[nxt][0] if _ != INFINITE_COST][0],
-                            input_product=l,
+                            input_product=k,
                             n_lines=n_lines,  # type: ignore
                             disposal_cost_mean=sc,
                             shortfall_penalty_mean=dp,
@@ -1804,10 +1805,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self.__contracts[contract.annotation["seller"]].append(contract)
         return super().on_contract_signed(contract)
 
-    def contract_size(self, contract: Contract) -> float:  # type: ignore
-        contract = self._adjust_contract_types(contract)
-        return contract.agreement["quantity"] * contract.agreement["unit_price"]
-
     def contract_record(self, contract: Contract) -> dict[str, Any]:
         contract = self._adjust_contract_types(contract)
         c = {
@@ -1852,7 +1849,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
     def contract_size(self, contract: Contract) -> float:
         if contract.nullified_at >= 0:
             return 0
-        return contract.agreement["quantity"] * contract.agreement["unit_price"]
+        return int(contract.agreement["quantity"] + 0.5) * int(
+            contract.agreement["unit_price"] + 0.5
+        )
 
     def post_step_stats(self):
         self._stats["n_contracts_nullified_now"].append(self._n_nullified)
@@ -2064,15 +2063,18 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         **kwargs,
     ) -> tuple[Axis, nx.Graph] | tuple[list[Axis], list[nx.Graph]]:
         if where is None:
-            where = lambda x: (
-                self.n_processes + 1
-                if x == SYSTEM_BUYER_ID
-                else (
-                    0
+
+            def mywhere(x):
+                return (
+                    self.n_processes + 1
+                    if x == SYSTEM_BUYER_ID
+                    else 0
                     if x == SYSTEM_SELLER_ID
-                    else int(self.agents[x].awi.profile.level + 1)  # type: ignore
-                )
-            )  # type: ignore
+                    else int(self.agents[x].awi.profile.level + 1)
+                )  # type: ignore
+
+            where = mywhere
+
         return super().draw(  # type: ignore
             steps,
             what,

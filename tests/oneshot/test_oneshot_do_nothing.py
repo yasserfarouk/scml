@@ -27,7 +27,6 @@ class MyOneShotDoNothing(OneShotAgent):
         return None
 
     def respond(self, negotiator_id, state, source=None):
-        offer = state.current_offer  # type: ignore
         # print(f"proposing to {negotiator_id} for {offer} at {state.step}")
         return ResponseType.REJECT_OFFER
 

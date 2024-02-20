@@ -11,7 +11,6 @@ from negmas import MechanismState, NegotiatorMechanismInterface
 from negmas.events import Notification
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
-from negmas.outcomes import make_issue
 from negmas.preferences import MappingUtilityFunction, WeightedUtilityFunction
 from negmas.situated import Breach, Contract, RenegotiationRequest
 from numpy.random import dirichlet

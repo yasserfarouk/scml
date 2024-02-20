@@ -3,7 +3,7 @@ from collections import defaultdict
 import pytest
 from rich import print
 
-from scml.oneshot import *
+from scml.oneshot import PLACEHOLDER_AGENT_PREFIX
 from scml.oneshot.agents.greedy import (
     GreedyOneShotAgent,
     GreedySingleAgreementAgent,
@@ -156,7 +156,7 @@ def try_agent(agent_type, alone=False, **kwargs):
 
 
 def make_configs(n, n_trials, n_steps=10):
-    types = [f"{DUMMY_AGENT_BEGINNING}{i}" for i in range(n)]
+    types = [f"{PLACEHOLDER_AGENT_PREFIX}{i}" for i in range(n)]
     return [
         (
             types,

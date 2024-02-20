@@ -1,7 +1,7 @@
 """Implements all builtin banks."""
 from abc import ABC
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from negmas import (
     Issue,
@@ -30,16 +30,16 @@ class Bank(Agent, ABC):
     def _respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         role: Optional[str],
         req_id: Optional[str],
     ) -> Optional[Negotiator]:
         pass
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: Optional[list[str]]):
         pass
 
     def on_neg_request_accepted(
@@ -49,8 +49,8 @@ class Bank(Agent, ABC):
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
@@ -64,7 +64,7 @@ class Bank(Agent, ABC):
     def on_contract_signed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_cancelled(self, contract: Contract, rejectors: List[str]) -> None:
+    def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
     def sign_contract(self, contract: Contract) -> Optional[str]:
@@ -73,9 +73,9 @@ class Bank(Agent, ABC):
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: Mechanism,
         role: Optional[str],
         req_id: str,
@@ -86,7 +86,7 @@ class Bank(Agent, ABC):
         pass
 
     def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+        self, contract: Contract, breaches: list[Breach], resolution: Optional[Contract]
     ) -> None:
         pass
 
@@ -100,9 +100,9 @@ class DefaultBank(Bank):
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: Mechanism,
         role: Optional[str],
         req_id: str,
@@ -117,31 +117,31 @@ class DefaultBank(Bank):
         balance_at_max_interest: float,
         installment_interest: float,
         time_increment: float,
-        a2f: Dict[str, Factory],
+        a2f: dict[str, Factory],
         disabled: bool = False,
-        name: str = None,
+        name: str | None = None,
     ):
         super().__init__(name=name)
-        self.storage: Dict[int, int] = defaultdict(int)
+        self.storage: dict[int, int] = defaultdict(int)
         self.wallet: float = 0.0
         self.disabled = disabled
-        self.loans: Dict[SCML2019Agent, List[Loan]] = defaultdict(list)
+        self.loans: dict[SCML2019Agent, list[Loan]] = defaultdict(list)
         self.minimum_balance = minimum_balance
         self.interest_rate = interest_rate
         self.interest_max = interest_max
         self.installment_interest = installment_interest
         self.time_increment = time_increment
         self.balance_at_max_interest = balance_at_max_interest
-        self._credit_rating: Dict[str, float] = defaultdict(float)
+        self._credit_rating: dict[str, float] = defaultdict(float)
         self.a2f = a2f
 
     def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
+        self, contract: Contract, breaches: list[Breach]
     ) -> Optional[RenegotiationRequest]:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
     ) -> Optional[Negotiator]:
         raise ValueError("The bank does not receive callbacks")
 
@@ -218,7 +218,7 @@ class DefaultBank(Bank):
             return loan
         elif bankrupt_if_rejected:
             # the agent rejected a loan with bankrupt_if_rejected, bankrupt the agent
-            self._world.make_bankrupt(
+            self._world.make_bankrupt(  # type: ignore
                 agent, amount=loan.amount, beneficiary=beneficiary, contract=contract
             )
             return None
@@ -242,6 +242,8 @@ class DefaultBank(Bank):
             n_installments=n_installments,
             start_at=self.awi.current_step,
         )
+        if not loan:
+            return loan
         return self._buy_loan(
             agent=agent,
             loan=loan,
@@ -257,7 +259,6 @@ class DefaultBank(Bank):
         if self.disabled:
             return
         t = self.awi.current_step
-        delayed_payments = 0.0
         # for every agent with loans
         for agent, loans in self.loans.items():
             factory = self.a2f[agent.id]
@@ -329,7 +330,7 @@ class DefaultBank(Bank):
                             keep[indx] = False
 
             # remove marked loans (that were completely paid)
-            self.loans[agent] = [l for i, l in enumerate(loans) if keep[i]]
+            self.loans[agent] = [j for i, j in enumerate(loans) if keep[i]]
 
         # remove records of agents that paid all their loans
         self.loans = {k: v for k, v in self.loans.items() if len(v) > 0}

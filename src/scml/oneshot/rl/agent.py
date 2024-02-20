@@ -65,7 +65,7 @@ class OneShotRLAgent(OneShotPolicy):
         self._valid_action_manager: ActionManager = None  # type: ignore
         self._valid_obs_manager: ObservationManager = None  # type: ignore
         self._valid_index: int = -1
-        self._fallback_agent: OneShotAget = None  # type: ignore
+        self._fallback_agent: OneShotAgent = None  # type: ignore
 
     def setup_fallback(self):
         if not self._fallback_type:

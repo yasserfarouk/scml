@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import math
-import random as rand
 import sys
 from collections import defaultdict
 
@@ -10,10 +9,12 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 from hypothesis import given, settings
+import random
+
+from scml.oneshot.ufun import OneShotUFun
 from negmas import Outcome, ResponseType, SAOResponse, SAOState
 from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
-from scml.oneshot import *
 from scml.oneshot import OneShotAgent, OneShotSyncAgent
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
 
@@ -139,13 +140,14 @@ class BetterAgent(SimpleAgent):
         return ((n_steps - step - 1) / (n_steps - 1)) ** self._e
 
 
-class SyncAgent(OneShotSyncAgent, BetterAgent):
+class SyncAgent(OneShotSyncAgent, BetterAgent):  # type: ignore
     """A greedy agent based on OneShotSyncAgent"""
 
     def __init__(self, *args, threshold=0.5, max_round_diff=2, **kwargs):
         super().__init__(*args, **kwargs)
         self._threshold = threshold
         self.max_round_diff = max_round_diff
+        self.ufun: OneShotUFun  # type: ignore
 
     def before_step(self):
         super().before_step()
@@ -169,7 +171,9 @@ class SyncAgent(OneShotSyncAgent, BetterAgent):
         d = max(steps) - min(steps)
         if missing:
             for n in missing:
-                assert not self.negotiators[n][
+                assert not self.negotiators[
+                    n
+                ][
                     0
                 ].nmi.state.running, f"{n} is not present in the state and the negotiation is still running (Max round diff is {d})."
         assert d <= self.max_round_diff, f"Max round diff is {d}\n\t{states}"
@@ -210,7 +214,7 @@ class ReporterAgent(BetterAgent):
     def step(self):
         self.round_nums = defaultdict(int)
 
-    def respond(self, negotiator_id, state, source=""):
+    def respond(self, negotiator_id, state, source=None):
         offer = state.current_offer
         assert state.running, (
             f"{self.id} called to respond in a negotiation that "
@@ -226,6 +230,7 @@ class ReporterAgent(BetterAgent):
                     mx, mx_id = v, k
                 if v < mn:
                     mn, mn_id = v, k
+            assert mn_id is not None and mx_id is not None
             mnsteps = (self.negotiators[mn_id][0].nmi.state.step) * 2
             if max_diff > (self.max_round_diff * mnsteps + 1):
                 msg = (
@@ -318,7 +323,7 @@ def run_experiment(
     if n_steps <= 2:
         raise ValueError("Negmas can't handle less than 3 steps")
 
-    rand.seed(seed)
+    random.seed(seed)
     np.random.seed(seed)
 
     time_limit_args = (
@@ -333,7 +338,7 @@ def run_experiment(
 
     world = DefaultOneShotWorld(
         **DefaultOneShotWorld.generate(
-            agent_types=types,
+            agent_types=tuple(types),
             agent_params=params,
             n_agents_per_process=len(consumers) + len(suppliers),
             n_processes=2,
@@ -341,7 +346,7 @@ def run_experiment(
             construct_graphs=True,
             shuffle_negotiations=shuffle_negotiations,
             name=name,
-            **time_limit_args,
+            **time_limit_args,  # type: ignore
         )
     )
 

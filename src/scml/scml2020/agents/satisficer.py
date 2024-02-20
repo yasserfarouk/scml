@@ -2,15 +2,11 @@
 import math
 import random
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import numpy as np
 from negmas import (
-    Contract,
-    Issue,
     MechanismState,
-    Negotiator,
-    NegotiatorMechanismInterface,
     Outcome,
     ResponseType,
 )
@@ -168,7 +164,7 @@ class SatisficerAgent(SCML2020Agent):
         first_supply = max(s, level)
         last_sale = steps - (processes - level - 1)
         first_sale = first_supply + 1
-        last_supply = last_sale - 1
+        last_sale - 1
 
         period = last_sale - first_sale
 
@@ -409,7 +405,6 @@ class SatisficerAgent(SCML2020Agent):
 
     def on_contracts_finalized(self, signed, cancelled, rejectors):
         # Updates secured_sales/supplies
-        awi: AWI = self.awi
         sell_contracts = [_ for _ in signed if _.annotation["seller"] == self.id]
         buy_contracts = [_ for _ in signed if _.annotation["seller"] != self.id]
 

@@ -1,7 +1,3 @@
-from typing import Any, Dict, List, Optional, Type
-
-from negmas import NamedObject
-
 # from negmas.visualizers import WorldVisualizer, AgentVisualizer, Widget
 #
 #

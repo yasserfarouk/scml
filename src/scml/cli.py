@@ -26,6 +26,7 @@ from rich.progress import track
 from tabulate import tabulate
 
 import scml
+from scml.utils import DefaultAgents, DefaultAgents2022
 
 # from scml.oneshot import SCML2020OneShotWorld, SCML2023OneShotWorld, SCML2024OneShotWorld
 from scml.oneshot.world import (
@@ -43,7 +44,12 @@ from scml.scml2019.utils19 import (
 )
 from scml.scml2020.agent import SCML2020Agent
 from scml.scml2020.common import is_system_agent
-from scml.scml2020.world import SCML2020World, SCML2021World, SCML2023World
+from scml.scml2020.world import (
+    SCML2020World,
+    SCML2021World,
+    SCML2023World,
+    SCML2022World,
+)
 from scml.std.world import SCML2024StdWorld
 from scml.utils import (
     anac2020_collusion,
@@ -63,7 +69,7 @@ from scml.utils import (
 
 try:
     from scml.vendor.quick.quick import gui_option  # type: ignore
-except:
+except Exception:
 
     def gui_option(x):
         return x
@@ -72,7 +78,7 @@ except:
 try:
     # disable a warning in yaml 1b1 version
     yaml.warnings({"YAMLLoadWarning": False})
-except:
+except Exception:
     pass
 
 n_completed = 0
@@ -96,8 +102,11 @@ DB_NAME = "rundb.csv"
 
 
 def save_run_info(
-    name: str, log_path: Path, type_: str = "world", path: Path = DB_FOLDER
+    name: str, log_path: Path | str | None, type_: str = "world", path: Path = DB_FOLDER
 ):
+    if log_path is None:
+        return
+    log_path = Path(log_path)
     try:
         path.mkdir(parents=True, exist_ok=True)
         with open(path / DB_NAME, "a") as f:
@@ -157,15 +166,15 @@ def shortest_unique_names(strs: List[str], sep="."):
     for i, s in enumerate(names):
         locs[s].append(i)
     mapping = {"": ""}
-    for s, l in locs.items():
+    for s, loc_ in locs.items():
         if len(s) < 1:
             continue
-        if len(l) == 1:
-            mapping[strs[l[0]]] = s
+        if len(loc_) == 1:
+            mapping[strs[loc_[0]]] = s
             continue
-        strs_new = [sep.join(lsts[_][:-1]) for _ in l]
+        strs_new = [sep.join(lsts[_][:-1]) for _ in loc_]
         prefixes = shortest_unique_names(strs_new, sep)
-        for loc, prefix in zip(l, prefixes):
+        for loc, prefix in zip(loc_, prefixes):
             x = sep.join([prefix, s])
             if x.startswith(sep):
                 x = x[len(sep) :]
@@ -386,7 +395,7 @@ def tournament2019(
         )
 
     if ttype == "std":
-        agents = 1
+        pass
 
     if worlds_per_config is None:
         n_worlds = (
@@ -470,7 +479,7 @@ def tournament2019(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
@@ -677,7 +686,7 @@ def tournament2020(
         )
 
     if ttype == "std":
-        agents = 1
+        pass
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
@@ -713,7 +722,7 @@ def tournament2020(
                 non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = scml.utils.DefaultAgents
+        non_competitors = DefaultAgents
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
@@ -748,11 +757,12 @@ def tournament2020(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
     print(f"Finished in {end_time}")
+    assert isinstance(results, TournamentResults)
     save_run_info(name, results.path, "tournament")
 
 
@@ -780,7 +790,7 @@ def display_results(results, metric, file_name=None):
     results.score_stats["agent_type"] = short_names
     try:
         xdata = results.score_stats.sort_values(by=viewmetric, ascending=False)
-    except:
+    except Exception:
         xdata = results.score_stats
     print_and_save(tabulate(xdata, headers="keys", tablefmt="psql"))
     if metric in ("mean", "sum"):
@@ -962,7 +972,7 @@ def run2019(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     failed = False
     strt = perf_counter()
@@ -1062,7 +1072,7 @@ def run2019(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [
             f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
@@ -1109,7 +1119,7 @@ def run2019(
         print_and_log("No contracts! :-(")
         print_and_log(f"Running Time {humanize_time(elapsed)}")
 
-    if failed:
+    if failed and exception:
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
@@ -1232,7 +1242,7 @@ def run2020(
             ignore_contract_execution_exceptions=not raise_exceptions,
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
-            **kwargs,
+            **kwargs,  # type: ignore
         )
     )
     failed = False
@@ -1326,7 +1336,7 @@ def run2020(
         try:
             agent_scores = sorted(
                 (
-                    [_.name, world.a2f[_.id].total_balance]
+                    [_.name, world.a2f[_.id].current_balance]
                     for _ in world.agents.values()
                     if isinstance(_, SCML2020Agent)
                 ),
@@ -1337,7 +1347,7 @@ def run2020(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [
             f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
@@ -1406,7 +1416,7 @@ def run2020(
         print_and_log("No contracts! :-(")
         print_and_log(f"Running Time {humanize_time(elapsed)}")
 
-    if failed:
+    if failed and exception:
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
@@ -1694,7 +1704,7 @@ def run2024(
                 (
                     [_.name, world.scores()[_.id]]
                     for _ in world.agents.values()
-                    if not is_system_agent(_)
+                    if not is_system_agent(_.id)
                 ),
                 key=lambda x: x[1],
                 reverse=True,
@@ -1703,7 +1713,7 @@ def run2024(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [f"{_.name} gaining {world.scores()[_.id]}" for _ in world.winners]
         print_and_log(
@@ -1766,7 +1776,7 @@ def run2024(
         print_and_log("No contracts! :-(")
         print_and_log(f"Running Time {humanize_time(elapsed)}")
 
-    if failed:
+    if failed and exception:
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
@@ -1917,7 +1927,7 @@ def run2023(
             time_limit=time,
             compact=compact,
             log_ufuns=log_ufuns,
-            agent_types=all_competitors,
+            agent_types=all_competitors,  # type: ignore
             agent_params=all_competitors_params,
             log_negotiations=log_negs,
             log_folder=log_dir,
@@ -1927,7 +1937,7 @@ def run2023(
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
-            **kwargs,
+            **kwargs,  # type: ignore
         )
     )
     failed = False
@@ -2024,7 +2034,7 @@ def run2023(
                 (
                     [_.name, world.scores()[_.id]]
                     for _ in world.agents.values()
-                    if not is_system_agent(_)
+                    if not is_system_agent(_.id)
                 ),
                 key=lambda x: x[1],
                 reverse=True,
@@ -2033,7 +2043,7 @@ def run2023(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [f"{_.name} gaining {world.scores()[_.id]}" for _ in world.winners]
         print_and_log(
@@ -2096,7 +2106,7 @@ def run2023(
         print_and_log("No contracts! :-(")
         print_and_log(f"Running Time {humanize_time(elapsed)}")
 
-    if failed:
+    if failed and exception:
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
@@ -2247,7 +2257,7 @@ def run2022(
             time_limit=time,
             compact=compact,
             log_ufuns=log_ufuns,
-            agent_types=all_competitors,
+            agent_types=all_competitors,  # type: ignore
             agent_params=all_competitors_params,
             log_negotiations=log_negs,
             log_folder=log_dir,
@@ -2257,7 +2267,7 @@ def run2022(
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
-            **kwargs,
+            **kwargs,  # type: ignore
         )
     )
     failed = False
@@ -2354,7 +2364,7 @@ def run2022(
                 (
                     [_.name, world.scores()[_.id]]
                     for _ in world.agents.values()
-                    if not is_system_agent(_)
+                    if not is_system_agent(_.id)
                 ),
                 key=lambda x: x[1],
                 reverse=True,
@@ -2363,7 +2373,7 @@ def run2022(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [f"{_.name} gaining {world.scores()[_.id]}" for _ in world.winners]
         print_and_log(
@@ -2426,7 +2436,7 @@ def run2022(
         print_and_log("No contracts! :-(")
         print_and_log(f"Running Time {humanize_time(elapsed)}")
 
-    if failed:
+    if failed and exception:
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
@@ -2577,7 +2587,7 @@ def run2021(
             time_limit=time,
             compact=compact,
             log_ufuns=log_ufuns,
-            agent_types=all_competitors,
+            agent_types=all_competitors,  # type: ignore
             agent_params=all_competitors_params,
             log_negotiations=log_negs,
             log_folder=log_dir,
@@ -2587,7 +2597,7 @@ def run2021(
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
             method=method,
-            **kwargs,
+            **kwargs,  # type: ignore
         )
     )
     failed = False
@@ -2684,7 +2694,7 @@ def run2021(
                 (
                     [_.name, world.scores()[_.id]]
                     for _ in world.agents.values()
-                    if not is_system_agent(_)
+                    if not is_system_agent(_.id)
                 ),
                 key=lambda x: x[1],
                 reverse=True,
@@ -2693,7 +2703,7 @@ def run2021(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [f"{_.name} gaining {world.scores()[_.id]}" for _ in world.winners]
         print_and_log(
@@ -2756,7 +2766,7 @@ def run2021(
         print_and_log("No contracts! :-(")
         print_and_log(f"Running Time {humanize_time(elapsed)}")
 
-    if failed:
+    if failed and exception:
         print(exception)
         world.logdebug(exception)
         print(f"FAILED at step {world.current_step} of {world.n_steps}\n")
@@ -2964,7 +2974,7 @@ def tournament2022(
         )
 
     if ttype == "std":
-        agents = 1
+        pass
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
@@ -3000,7 +3010,7 @@ def tournament2022(
                 non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = scml.utils.DefaultAgents2022
+        non_competitors = DefaultAgents2022
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
@@ -3039,7 +3049,7 @@ def tournament2022(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
@@ -3193,7 +3203,6 @@ def tournament2021(
     oneshot = ttype == "oneshot"
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
-    world_type = SCML2020OneShotWorld if oneshot else SCML2021World
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3253,7 +3262,7 @@ def tournament2021(
         )
 
     if ttype == "std":
-        agents = 1
+        pass
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
@@ -3337,11 +3346,12 @@ def tournament2021(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
     print(f"Finished in {end_time}")
+    assert isinstance(results, TournamentResults)
     save_run_info(name, results.path, "tournament")
 
 
@@ -3492,7 +3502,6 @@ def tournament2024(
     oneshot = ttype == "oneshot"
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD
-    world_type = SCML2024OneShotWorld if oneshot else SCML2024StdWorld
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3552,7 +3561,7 @@ def tournament2024(
         )
 
     if ttype == "std":
-        agents = 1
+        pass
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
@@ -3635,11 +3644,12 @@ def tournament2024(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     end_time = humanize_time(perf_counter() - start)
     display_results(results, "median", output)
     print(f"Finished in {end_time}")
+    assert isinstance(results, TournamentResults)
     save_run_info(name, results.path, "tournament")
 
 
@@ -3790,7 +3800,6 @@ def tournament2023(
     oneshot = ttype == "oneshot"
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_2021
-    world_type = SCML2020OneShotWorld if oneshot else SCML2021World
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3850,7 +3859,7 @@ def tournament2023(
         )
 
     if ttype == "std":
-        agents = 1
+        pass
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
@@ -3934,7 +3943,7 @@ def tournament2023(
         ignore_contract_execution_exceptions=not raise_exceptions,
         ignore_simulation_exceptions=not raise_exceptions,
         ignore_negotiation_exceptions=not raise_exceptions,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     assert isinstance(results, TournamentResults)
     end_time = humanize_time(perf_counter() - start)

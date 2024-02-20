@@ -517,7 +517,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                             s = s2[0] * 3
                         else:
                             s = "Agt"
-                except:
+                except Exception:
                     pass
                 default_names[i] += f"{s}"
         agent_levels = [
@@ -526,8 +526,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         ]
 
         if agent_name_reveals_position:
-            for i, l in enumerate(agent_levels):
-                default_names[i] += f"@{l:01}"
+            for i, L_ in enumerate(agent_levels):
+                default_names[i] += f"@{L_:01}"
 
         # for i, (t_, p_ ) in enumerate(zip(agent_types, agent_params)):
         #     if issubclass(get_class(t_), Adapter):
@@ -589,6 +589,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             f"{t}{hash(str(p))}" if len(p) > 0 else t
             for t, p in zip(self.agent_types, agent_params)
         ]
+        assert isinstance(initial_balance, Iterable)
         self.factories = [
             Factory(
                 world=self,
@@ -1036,7 +1037,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         profit_means_agent = make_array(profit_means, n_agents, dtype=float)
         profit_stddevs_agent = make_array(profit_stddevs, n_agents, dtype=float)
         max_productivity_agent = make_array(max_productivity, n_agents, dtype=float)
-        n_products = n_processes + 1
+        n_processes + 1
         production_costs = make_array(production_costs, n_agents, dtype=int)
         if initial_balance is not None:
             initial_balance = make_array(initial_balance, n_agents, dtype=int)
@@ -1078,17 +1079,17 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         # generate production costs making sure that every agent can do exactly one process
         process_of_agent = np.empty(n_agents, dtype=int)
-        for i, (f, l) in enumerate(zip(first_agent, last_agent)):
-            process_of_agent[f:l] = i
+        for i, (f, L_) in enumerate(zip(first_agent, last_agent)):
+            process_of_agent[f:L_] = i
             if cost_increases_with_level:
-                production_costs[f:l] = np.round(
-                    production_costs[f:l] * (i + 1)  # math.sqrt(i + 1)
+                production_costs[f:L_] = np.round(
+                    production_costs[f:L_] * (i + 1)  # math.sqrt(i + 1)
                 ).astype(int)
 
         # costs is the same as production costs but repeated for all n_lines
         costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
-        for p, (f, l) in enumerate(zip(first_agent, last_agent)):
-            costs[f:l, :, p] = production_costs[f:l].reshape((l - f), 1)
+        for p, (f, L_) in enumerate(zip(first_agent, last_agent)):
+            costs[f:L_, :, p] = production_costs[f:L_].reshape((L_ - f), 1)
 
         # generate external contract amounts (controlled by productivity):
         generated_exogenous, trial = False, 0
@@ -1127,9 +1128,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             assert np.all(exogenous_supplies[-n_startup:] == 0)
             generated_exogenous = np.any(exogenous_supplies > 0)
             trial += 1
-        assert (
-            generated_exogenous
-        ), f"Cannot generate this world because we cannot generate any exogenous supply: n_steps: {n_steps}, n_processes: {n_processes}"
+        assert generated_exogenous, f"Cannot generate this world because we cannot generate any exogenous supply: n_steps: {n_steps}, n_processes: {n_processes}"
 
         params = dict(
             n_steps=n_steps,
@@ -1302,12 +1301,11 @@ class SCML2020World(TimeInAgreementMixin, World):
         n_agents = len(process_of_agent)
         n_products = n_processes + 1
         can_choose_initial_balance = initial_balance is None
-        n_startup = n_processes
 
         COST0 = 10
         supplies = np.zeros((n_agents, n_steps), dtype=np.int64)
         revenue = np.zeros((n_agents, n_steps), dtype=np.int64)
-        produced = np.zeros((n_agents, n_steps), dtype=np.int64)
+        np.zeros((n_agents, n_steps), dtype=np.int64)
         sales = np.zeros((n_agents, n_steps), dtype=np.int64)
         total_costs = np.zeros((n_agents, n_steps), dtype=np.int64)
         active_lines = np.zeros((n_agents, n_steps), dtype=np.int64)
@@ -1332,9 +1330,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         pc = 0.05 + (production_costs.max() - production_costs) / production_costs.max()
         normalized_production_cost = np.ones_like(pc, dtype=float)
         for p in range(0, n_processes):
-            f, l = first_agent[p], last_agent[p]
-            normalized_production_cost[f:l] = np.float_power(
-                production_costs[f:l] / production_costs[f:l].max(), cost_relativity
+            f, L_ = first_agent[p], last_agent[p]
+            normalized_production_cost[f:L_] = np.float_power(
+                production_costs[f:L_] / production_costs[f:L_].max(), cost_relativity
             )
 
         def distribute_sales(
@@ -1398,7 +1396,7 @@ class SCML2020World(TimeInAgreementMixin, World):
 
             # I can always sell one step after final production
             distribution_limit = production_limit + production_time
-            distribution_start = production_start + production_time
+            # production_start + production_time
 
             # this loop is for selling production so it goes on the production
             # rather than distribution limits
@@ -1551,23 +1549,23 @@ class SCML2020World(TimeInAgreementMixin, World):
         catalog_prices = np.zeros(n_products, dtype=int)
         for p in range(n_products):
             if p < n_processes:
-                f, l = first_agent[p], last_agent[p]
-                total = supplies[f:l, :].sum()
+                f, L_ = first_agent[p], last_agent[p]
+                total = supplies[f:L_, :].sum()
                 if total < 1:
                     continue
-                supply_unit = total_costs[f:l, :].sum() / total
+                supply_unit = total_costs[f:L_, :].sum() / total
             else:
-                f, l = first_agent[p - 1], last_agent[p - 1]
-                total = sales[f:l, :].sum()
+                f, L_ = first_agent[p - 1], last_agent[p - 1]
+                total = sales[f:L_, :].sum()
                 if total < 1:
                     continue
-                supply_unit = revenue[f:l, :].sum() / total
+                supply_unit = revenue[f:L_, :].sum() / total
             catalog_prices[p] = supply_unit
 
         profile_info: list[FactoryProfile] = []
         nxt = 0
-        for l in range(n_processes):
-            for a in range(n_agents_per_process[l]):
+        for L_ in range(n_processes):
+            for a in range(n_agents_per_process[L_]):
                 profile_info.append(FactoryProfile(costs=costs[nxt]))
                 nxt += 1
         assert nxt == n_agents
@@ -1585,9 +1583,9 @@ class SCML2020World(TimeInAgreementMixin, World):
             initial_balance = total_payments.sum(axis=1)
             max_money_needs_process = np.zeros(n_processes)
             for p in range(n_processes):
-                f, l = first_agent[p], last_agent[p]
-                max_money_needs_process[p] = initial_balance[f:l].max()
-                initial_balance[f:l] = int(
+                f, L_ = first_agent[p], last_agent[p]
+                max_money_needs_process[p] = initial_balance[f:L_].max()
+                initial_balance[f:L_] = int(
                     math.ceil(max_money_needs_process[p] * cash_availability)
                 )
         else:
@@ -1784,7 +1782,6 @@ class SCML2020World(TimeInAgreementMixin, World):
         n_processes = len(first_agent)
         n_agents = len(process_of_agent)
         n_products = n_processes + 1
-        can_choose_initial_balance = initial_balance is None
         n_startup = n_processes
 
         # - make sure there is a cool-down period at the end in which no more input is added that cannot be converted
@@ -1909,16 +1906,16 @@ class SCML2020World(TimeInAgreementMixin, World):
             tuple[FactoryProfile, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
         ] = []
         nxt = 0
-        for l in range(n_processes):
-            for a in range(n_agents_per_process[l]):
+        for L_ in range(n_processes):
+            for a in range(n_agents_per_process[L_]):
                 esales = np.zeros((n_steps, n_products), dtype=int)
                 esupplies = np.zeros((n_steps, n_products), dtype=int)
                 esale_prices = np.zeros((n_steps, n_products), dtype=int)
                 esupply_prices = np.zeros((n_steps, n_products), dtype=int)
-                if l == 0:
+                if L_ == 0:
                     esupplies[:, 0] = [exogenous_supplies[s][a] for s in range(n_steps)]
                     esupply_prices[:, 0] = supply_prices[a, :]
-                if l == n_processes - 1:
+                if L_ == n_processes - 1:
                     esales[:, -1] = [exogenous_sales[s][a] for s in range(n_steps)]
                     esale_prices[:, -1] = sale_prices[a, :]
                 profile_info.append(
@@ -2561,8 +2558,8 @@ class SCML2020World(TimeInAgreementMixin, World):
             contract.annotation["buyer"],
             contract.annotation["seller"],
         )
-        buyer, buyer_factory = self.agents[buyer_id], self.a2f[buyer_id]
-        seller, seller_factory = self.agents[seller_id], self.a2f[seller_id]
+        _buyer, buyer_factory = self.agents[buyer_id], self.a2f[buyer_id]
+        _seller, seller_factory = self.agents[seller_id], self.a2f[seller_id]
         q, u, t = (
             contract.agreement["quantity"],
             contract.agreement["unit_price"],
@@ -2846,7 +2843,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                         else 0.0 - factory.initial_balance
                     )
                 ) / (1 if not factory.initial_balance else factory.initial_balance)
-            except:
+            except Exception:
                 scores[aid] = float("nan")
         return scores
 
@@ -2965,15 +2962,16 @@ class SCML2020World(TimeInAgreementMixin, World):
         **kwargs,
     ) -> tuple[Axis, nx.Graph] | tuple[list[Axis], list[nx.Graph]]:
         if where is None:
-            where = lambda x: (
-                self.n_processes + 1
-                if x == SYSTEM_BUYER_ID
-                else (
-                    0
+
+            def where(x):
+                return (
+                    self.n_processes + 1
+                    if x == SYSTEM_BUYER_ID
+                    else 0
                     if x == SYSTEM_SELLER_ID
                     else int(self.agents[x].awi.profile.processes[0] + 1)
                 )
-            )
+
         return super().draw(
             steps,
             what,
@@ -2998,9 +2996,7 @@ class SCML2021World(SCML2020World):
     def generate(
         cls,
         *args,
-        inventory_valuation_trading: np.ndarray
-        | tuple[float, float]
-        | float = (
+        inventory_valuation_trading: np.ndarray | tuple[float, float] | float = (
             0.0,
             0.5,
         ),

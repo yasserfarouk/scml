@@ -2,7 +2,6 @@ import warnings
 
 import pytest
 
-warnings.filterwarnings("ignore")
 
 import random
 
@@ -16,7 +15,6 @@ from pytest import mark, raises
 
 import scml
 from scml.oneshot import OneShotSingleAgreementAgent
-from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.scml2020 import (
     BuyCheapSellExpensiveAgent,
     DoNothingAgent,
@@ -27,10 +25,10 @@ from scml.scml2020 import (
     is_system_agent,
 )
 from scml.scml2020.agents.decentralizing import DecentralizingAgent
-from scml.utils import anac2021_collusion
 
 from ..switches import SCML_ON_GITHUB, SCML_RUN2021_STD
 
+warnings.filterwarnings("ignore")
 random.seed(0)
 
 COMPACT = True

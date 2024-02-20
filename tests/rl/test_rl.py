@@ -167,7 +167,7 @@ def test_rl_agent_fallback():
     context = FixedPartnerNumbersOneShotContext()
     world, agents = context.generate(types=(OneShotRLAgent,))
     assert len(agents) == 1
-    assert isinstance(agents[0]._obj, OneShotRLAgent), agent.type_name  # type: ignore
+    assert isinstance(agents[0], OneShotRLAgent), agents[0].type_name
     world.run()
 
 

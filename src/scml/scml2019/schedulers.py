@@ -18,6 +18,7 @@ from .common import (
     ProductManufacturingInfo,
     SCMLAgreement,
 )
+from .awi import SCMLAWI
 from .simulators import FactorySimulator, transaction
 
 __all__ = ["ScheduleInfo", "Scheduler", "GreedyScheduler"]
@@ -97,7 +98,7 @@ class Scheduler(ABC):
         self.horizon = horizon
         self.n_steps = 0
         self.n_lines = 0
-        self.simulator: FactorySimulator = None
+        self.simulator: FactorySimulator | None = None
         self.products: List[Product] = []
         self.processes: List[Process] = []
         self.profiles: List[ManufacturingProfileCompiled] = []
@@ -581,7 +582,6 @@ class GreedyScheduler(Scheduler):
                             continue  # should never hit this
                         jobs.append(job)
                         # find the needs
-                        new_needs = []
                         process = self.processes[process_index]
                         length = profile.n_steps
                         for i in process.inputs:
@@ -721,7 +721,6 @@ class GreedyScheduler(Scheduler):
         ensure_storage_for: int = 0,
         start_at: int = 0,
     ):
-
         # Now, schedule the contracts
         schedule = self.schedule_contracts(
             contracts=contracts,

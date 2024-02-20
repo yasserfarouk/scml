@@ -188,7 +188,7 @@ def test_uses_registered_sales_and_supplies():
             ignore_signed_contracts=ignore,
         )
     u.register_sale(2, 14, u.current_step)
-    assert u._signed_is_output[0] == True
+    assert u._signed_is_output[0] is True
     assert u._signed_agreements[0] == (2, 6, 14)
     assert len(u._signed_agreements) == len(u._signed_is_output) == 1
     assert (
@@ -223,7 +223,7 @@ def test_uses_registered_sales_and_supplies():
         ignore_signed_contracts=True,
     )
     u.register_supply(2, 8, u.current_step)
-    assert u._signed_is_output[1] == False
+    assert u._signed_is_output[1] is False
     assert u._signed_agreements[1] == (2, 6, 8)
     assert len(u._signed_agreements) == len(u._signed_is_output) == 2
     assert expected == u.from_offers(

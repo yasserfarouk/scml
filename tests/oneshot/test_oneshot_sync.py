@@ -155,7 +155,7 @@ CONDITIONS = (
 
 
 if pytest in sys.modules:
-    from ..switches import *
+    from ..switches import SCML_RUN2021_ONESHOT_SYNC, SCML_RUN_TEMP_FAILING
 
     @mark.parametrize(
         ["use_sleep", "check_negs", "single_thread", "raise_expected"],

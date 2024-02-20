@@ -1,13 +1,13 @@
 from typing import Any
 
-from scml.oneshot.world import DUMMY_AGENT_BEGINNING, SCMLBaseWorld
+from scml.oneshot.world import PLACEHOLDER_AGENT_PREFIX, SCMLBaseWorld
 
 __all__ = [
     "StdWorld",
     "SCML2024StdWorld",
     "STD_DEFAULT_PARAMS",
     "STD_DEFAULT_PARAMS2024",
-    "DUMMY_AGENT_BEGINNING",
+    "PLACEHOLDER_AGENT_PREFIX",
 ]
 
 STD_DEFAULT_PARAMS = dict(

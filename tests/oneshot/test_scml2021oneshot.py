@@ -259,9 +259,15 @@ def test_basic_awi_info_suppliers_consumers():
         assert a.id in awi.all_consumers[awi.my_input_product]
         assert awi.my_consumers == world.agent_consumers[aid]
         assert awi.my_suppliers == world.agent_suppliers[aid]
-        l = awi.my_input_product
-        assert all(_.endswith(str(l - 1)) or awi.is_system(_) for _ in awi.my_suppliers)
-        assert all(_.endswith(str(l + 1)) or awi.is_system(_) for _ in awi.my_consumers)
+        input_product = awi.my_input_product
+        assert all(
+            _.endswith(str(input_product - 1)) or awi.is_system(_)
+            for _ in awi.my_suppliers
+        )
+        assert all(
+            _.endswith(str(input_product + 1)) or awi.is_system(_)
+            for _ in awi.my_consumers
+        )
 
 
 def test_generate():
@@ -642,7 +648,7 @@ def _ufun_unit(
         mn = float("-inf")
 
     assert mx >= mn or mx == mn == 0
-    u = ufun.from_offers(
+    ufun.from_offers(
         ((qin, 0, pin / qin if qin else 0), (qout, 0, pout / qout if qout else 0)),
         (False, True),
     )
@@ -1128,7 +1134,7 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
         assert agent.awi.is_bankrupt()
         # bankrupt agents remain bankrupt
         bankrupt = stats[f"bankrupt_{aid}"].values.astype(bool)
-        bankrupt_first_index = np.where(bankrupt == True)[0][0]
+        bankrupt_first_index = np.where(bankrupt is True)[0][0]
         assert not np.any(bankrupt[:bankrupt_first_index])
         assert np.all(bankrupt[bankrupt_first_index:])
 

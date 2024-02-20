@@ -91,7 +91,7 @@ class MarketAwareIndependentNegotiationsAgent(
         selling_margin=None,
         min_price_margin=0.5,
         max_price_margin=0.5,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             *args,
@@ -99,5 +99,5 @@ class MarketAwareIndependentNegotiationsAgent(
             selling_margin=selling_margin,
             min_price_margin=min_price_margin,
             max_price_margin=max_price_margin,
-            **kwargs
+            **kwargs,
         )

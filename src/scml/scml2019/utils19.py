@@ -95,26 +95,26 @@ class DefaultGreedyManager(GreedyFactoryManager):
         )
 
 
-def integer_cut(n: int, l: int, l_m: Union[int, List[int]]) -> List[int]:
+def integer_cut(total: int, n: int, mn: Union[int, List[int]]) -> List[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
     Args:
-        n: total
-        l: number of levels
-        l_m: minimum per level
+        total: total
+        n: number of levels
+        mn: minimum per level
 
     Returns:
 
     """
-    if not isinstance(l_m, Iterable):
-        l_m = [l_m] * l
-    sizes = np.asarray(l_m)
-    if n < sizes.sum():
+    if not isinstance(mn, Iterable):
+        mn = [mn] * n
+    sizes = np.asarray(mn)
+    if total < sizes.sum():
         raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
+            f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}"
         )
-    while sizes.sum() < n:
-        sizes[randint(0, l - 1)] += 1
+    while sizes.sum() < total:
+        sizes[randint(0, n - 1)] += 1
     return list(sizes.tolist())
 
 

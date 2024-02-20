@@ -1,47 +1,51 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
+from functools import partial
 import os
 import pathlib
-import sys
-import traceback
-import warnings
-from functools import partial
 from pathlib import Path
 from pprint import pformat, pprint
+import sys
 from time import perf_counter
+import traceback
+import warnings
 
 import click
 import click_config_file
-import negmas
 import numpy as np
 import pandas as pd
 import progressbar
-import yaml
-from negmas import save_stats
-from negmas.helpers.inout import load
-from negmas.helpers.strings import humanize_time, unique_name
-from negmas.tournaments import create_tournament, evaluate_tournament, run_tournament
-from tabulate import tabulate
-
 import scml
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
+from scml.scml2019.factory_managers.builtins import FactoryManager
 from scml.scml2019.utils19 import (
+    DefaultGreedyManager,
     anac2019_assigner,
     anac2019_config_generator,
     anac2019_sabotage_assigner,
     anac2019_sabotage_config_generator,
     anac2019_world_generator,
+    balance_calculator,
     sabotage_effectiveness,
 )
+from scml.scml2019.world import SCML2019World
 from scml.utils import (
     anac2020_world_generator,
     anac_assigner_std,
     anac_config_generator_std_old,
 )
+from tabulate import tabulate
+import yaml
+
+import negmas
+from negmas import save_stats
+from negmas.helpers.inout import load
+from negmas.helpers.strings import humanize_time, unique_name
+from negmas.tournaments import create_tournament, evaluate_tournament, run_tournament
 
 try:
     from .vendor.quick.quick import gui_option
-except:
+except Exception:
 
     def gui_option(x):
         return x
@@ -50,7 +54,7 @@ except:
 try:
     # disable a warning in yaml 1b1 version
     yaml.warnings({"YAMLLoadWarning": False})
-except:
+except Exception:
     pass
 
 n_completed = 0
@@ -658,7 +662,7 @@ def create(
         steps = (steps_min, steps_max)
 
     if worlds_per_config is None:
-        n_comp = len(all_competitors) if ttype != "anac2019sabotage" else 2
+        len(all_competitors) if ttype != "anac2019sabotage" else 2
         n_worlds = permutation_size * runs * configs
         if n_worlds > warning_n_runs:
             print(
@@ -1428,7 +1432,7 @@ def run2019(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [
             f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
@@ -1995,7 +1999,7 @@ def run2020(
                 data=np.array(agent_scores), columns=["Agent", "Final Balance"]
             )
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
-        except:
+        except Exception:
             pass
         winners = [
             f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"

@@ -1,6 +1,6 @@
 from scml.oneshot.agents import SyncRandomOneShotAgent
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.world import DUMMY_AGENT_BEGINNING
+from scml.oneshot.world import PLACEHOLDER_AGENT_PREFIX
 from scml.std.agents import GreedyStdAgent, SyncRandomStdAgent
 from scml.std.world import SCML2024StdWorld
 from tests.switches import DefaultStdWorld
@@ -27,7 +27,7 @@ def test_run_random():
 
 
 def make_configs(n, n_trials, n_processes):
-    types = [f"{DUMMY_AGENT_BEGINNING}{i}" for i in range(n)]
+    types = [f"{PLACEHOLDER_AGENT_PREFIX}{i}" for i in range(n)]
     return [
         (
             tuple(types),

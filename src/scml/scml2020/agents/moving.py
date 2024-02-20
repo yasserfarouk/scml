@@ -7,7 +7,6 @@ from scml.scml2020.components import (
     SupplyDrivenProductionStrategy,
 )
 
-from ..components import KeepOnlyGoodPrices
 from ..components.prediction import MarketAwareTradePredictionStrategy
 from ..components.trading import PredictionBasedTradingStrategy
 from ..world import SCML2020Agent
@@ -30,5 +29,5 @@ class MarketAwareMovingRangeAgent(MarketAwareTradePredictionStrategy, MovingRang
             *args,
             min_price_margin=min_price_margin,
             max_price_margin=max_price_margin,
-            **kwargs
+            **kwargs,
         )

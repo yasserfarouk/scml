@@ -1,6 +1,6 @@
 """Implements the world class for the SCML2020 world """
 import copy
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
 
@@ -15,6 +15,9 @@ from .common import (
     Failure,
     is_system_agent,
 )
+
+if TYPE_CHECKING:
+    from .world import SCML2020World
 
 __all__ = [
     "Factory",
@@ -268,7 +271,7 @@ class Factory:
                 pass
             else:
                 steps, lines = steps[:possible], lines[:possible]
-        except:
+        except Exception:
             return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         return steps, lines
 

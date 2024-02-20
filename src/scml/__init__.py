@@ -6,4 +6,4 @@ from .scml2019 import *
 from .scml2020 import *
 from .oneshot import *
 
-__all__ = scml2020.__all__ + oneshot.__all__
+__all__ = scml2020.__all__ + oneshot.__all__ + ["utils"]

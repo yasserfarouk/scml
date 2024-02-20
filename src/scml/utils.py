@@ -146,40 +146,40 @@ DefaultAgentsStd2024 = [
 
 
 def integer_cut(
+    total: int,
     n: int,
-    l: int,
-    l_m: int | list[int],
-    l_max: int | list[int] = float("inf"),  # type: ignore
+    mn: int | list[int],
+    mx: int | list[int] = float("inf"),  # type: ignore
 ) -> list[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
     Args:
-        n: total
-        l: number of levels
-        l_m: minimum per level
-        l_max: maximum per level. Can be set to infinity
+        total: total
+        n: number of levels
+        mn: minimum per level
+        mx: maximum per level. Can be set to infinity
 
     Returns:
 
     """
-    if not isinstance(l_m, Iterable):
-        l_m = [l_m] * l
-    if not isinstance(l_max, Iterable):
-        l_max = [l_max] * l
-    sizes = np.asarray(l_m)
-    if n < sizes.sum():
+    if not isinstance(mn, Iterable):
+        mn = [mn] * n
+    if not isinstance(mx, Iterable):
+        mx = [mx] * n
+    sizes = np.asarray(mn)
+    if total < sizes.sum():
         raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
+            f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}"
         )
-    maxs = np.asarray(l_max)
-    if n > maxs.sum():
+    maxs = np.asarray(mx)
+    if total > maxs.sum():
         raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {maxs.sum()}"
+            f"Cannot generate {n} numbers summing to {total}  with a maximum summing to {maxs.sum()}"
         )
     # TODO  That is most likely the most stupid way to do it. We just try blindly. There MUST be a better way
-    while sizes.sum() < n:
-        indx = randint(0, l - 1)
-        if sizes[indx] >= l_max[indx]:
+    while sizes.sum() < total:
+        indx = randint(0, n - 1)
+        if sizes[indx] >= mx[indx]:
             continue
         sizes[indx] += 1
     return list(sizes.tolist())

@@ -3,10 +3,12 @@ from collections import defaultdict
 from pprint import pprint
 
 import matplotlib.pyplot as plt
+from scml.oneshot.agent import OneShotAgent
+from scml.oneshot.agents.rand import SyncRandomOneShotAgent
+from scml.oneshot.world import SCML2022OneShotWorld, SCML2023OneShotWorld
 from negmas import ResponseType
-from negmas.sao import SAOResponse
 
-from scml.oneshot import *
+from scml.oneshot import RandomOneShotAgent
 from scml.scml2020.common import is_system_agent
 
 
@@ -25,6 +27,7 @@ def try_agents(
     type_scores = defaultdict(float)
     counts = defaultdict(int)
     agent_scores = dict()
+    world = None
     for _ in range(n_trials):
         p = (
             n_processes
@@ -64,7 +67,7 @@ def try_agents(
             type_scores[type_] += all_scores[aid]
             counts[type_] += 1
     type_scores = {k: v / counts[k] if counts[k] else v for k, v in type_scores.items()}
-    if draw:
+    if draw and world:
         world.draw(
             what=["contracts-concluded"],
             steps=(0, world.n_steps - 1),
@@ -108,7 +111,7 @@ class MyOneShotDoNothing(OneShotAgent):
     def propose(self, negotiator_id, state):
         return None
 
-    def respond(self, negotiator_id, state, source=""):
+    def respond(self, negotiator_id, state, source=None):
         return ResponseType.END_NEGOTIATION
 
 

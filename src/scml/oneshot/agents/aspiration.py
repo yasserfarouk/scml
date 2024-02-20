@@ -64,7 +64,8 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
                 (
                     (
                         self.ufun.from_offers(
-                            (_,), (self.awi.is_first_level,)  # type: ignore
+                            (_,),
+                            (self.awi.is_first_level,),  # type: ignore
                         )
                         - self._reserved_value
                     )

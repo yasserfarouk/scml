@@ -1,11 +1,13 @@
 from __future__ import annotations
-
-from typing import Dict, List, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 from negmas import Contract
 
 from scml.scml2020.common import NO_COMMAND
+
+if TYPE_CHECKING:
+    from scml.scml2020.agent import SCML2020Agent
 
 __all__ = [
     "ProductionStrategy",

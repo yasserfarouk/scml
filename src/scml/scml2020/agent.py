@@ -1,4 +1,5 @@
 """Implements the world class for the SCML2020 world """
+from collections import defaultdict
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
@@ -18,6 +19,7 @@ from negmas import (
 from negmas.helpers import get_full_type_name, instantiate
 from negmas.situated import Adapter
 
+from .common import Failure
 from ..oneshot.agent import OneShotAgent
 from ..oneshot.common import OneShotProfile, OneShotState
 from ..oneshot.mixins import OneShotUFunCreatorMixin

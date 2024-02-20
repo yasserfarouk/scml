@@ -340,7 +340,8 @@ class FlexibleObservationManager(BaseObservationManager):
                 )
                 # breakpoint()
             assert all(
-                0 <= a < b for a, b in zip(v, space.nvec)  # type: ignore
+                0 <= a < b
+                for a, b in zip(v, space.nvec)  # type: ignore
             ), f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"  # type: ignore
 
         self._previous_offers = offerslist

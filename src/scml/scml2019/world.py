@@ -1064,7 +1064,6 @@ class SCML2019World(TimeInAgreementMixin, World):
                     ]
                 )
             else:
-                lines = []
                 for _ in range(_intin(n_lines)):
                     line_processes = sample(processes, _intin(n_processes_per_line))
                     profiles.extend(
@@ -1899,7 +1898,6 @@ class SCML2019World(TimeInAgreementMixin, World):
                 if self.breach_penalty_victim is not None
                 else 0.0
             )
-        penalty_society = self.breach_penalty_society
 
         pind = cfp.product
         buyer_id, seller_id = (
@@ -1908,7 +1906,12 @@ class SCML2019World(TimeInAgreementMixin, World):
         )
         buyer, seller = self.agents[buyer_id], self.agents[seller_id]
         seller_factory, buyer_factory = self.a2f[seller.id], self.a2f[buyer.id]
-        product_breach, money_breach, penalty_breach_victim, penalty_breach_society = (
+        (
+            product_breach,
+            money_breach,
+            _penalty_breach_victim,
+            _penalty_breach_society,
+        ) = (
             None,
             None,
             None,
@@ -1922,9 +1925,9 @@ class SCML2019World(TimeInAgreementMixin, World):
                 elif breach.type == "money":
                     money_breach = breach.level
                 elif breach.type == "penalty":
-                    penalty_breach_victim = breach.level
+                    pass
                 elif breach.type == "penalty_society":
-                    penalty_breach_society = breach.level
+                    pass
         else:
             quantity = resolution.agreement.get("immediate_quantity", quantity)
             unit_price = resolution.agreement.get("immediate_unit_price", unit_price)
@@ -1945,7 +1948,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 to_be_signed_at=self.current_step,
                 signed_at=self.current_step,
                 mechanism_state=None,
-                signatures=dict(zip(contract.partners, contrat.partners)),
+                signatures=dict(zip(contract.partners, contract.partners)),
             )
             self.on_contract_concluded(new_contract, to_be_signed_at=self.current_step)
             self.on_contract_signed(contract=new_contract)
@@ -2233,7 +2236,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             price = self.products[product_index].catalog_price
             if price is None:
                 price = self.default_price_for_products_without_one
-            saved_min_storage, factory.min_storage = factory.min_storage, 0
+            _saved_min_storage, factory.min_storage = factory.min_storage, 0
             factory.sell(product=product_index, quantity=quantity, price=price)
             agent.on_inventory_change(product_index, -quantity, "bankruptcy")
             agent.on_cash_transfer(price, "bankruptcy")

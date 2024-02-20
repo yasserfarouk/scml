@@ -30,7 +30,9 @@ __all__ = ["SCML2019Agent"]
 class SCML2019Agent(Agent):
     """The base for all SCM Agents"""
 
-    def __init__(self, name: str = None, ufun: "UtilityFunction" = None):
+    def __init__(
+        self, name: Optional[str] = None, ufun: Optional["UtilityFunction"] = None
+    ):
         super().__init__(name=name, ufun=ufun)
         self.line_profiles: Dict[int, ManufacturingProfileCompiled] = {}
         """A mapping specifying for each `Line` index, all the profiles used to run it in the factory"""

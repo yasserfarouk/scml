@@ -6,7 +6,6 @@ from random import random
 from negmas.common import MechanismState, NegotiatorMechanismInterface
 from negmas.helpers import get_class
 from negmas.negotiators import Negotiator
-from negmas.outcomes import make_issue
 from negmas.preferences import LinearAdditiveUtilityFunction
 from negmas.situated import Breach, Contract, RenegotiationRequest
 from numpy.random import dirichlet
@@ -16,9 +15,9 @@ from .common import DEFAULT_NEGOTIATOR, FinancialReport
 from .helpers import pos_gauss
 
 if True:
-    from typing import Any, Dict, List, Optional
+    from typing import Any, Optional
 
-    from .common import Loan
+    from .common import Loan, CFP
 
 __all__ = ["Miner", "MiningProfile", "ReactiveMiner"]
 
@@ -68,7 +67,7 @@ class ReactiveMiner(Miner):
         pass
 
     def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
+        self, contract: Contract, breaches: list[Breach], resolution: Optional[Contract]
     ) -> None:
         pass
 
@@ -81,7 +80,7 @@ class ReactiveMiner(Miner):
     def on_new_report(self, report: FinancialReport):
         pass
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: Optional[list[str]]):
         pass
 
     def on_neg_request_accepted(
@@ -97,7 +96,7 @@ class ReactiveMiner(Miner):
     def on_contract_signed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_cancelled(self, contract: Contract, rejectors: List[str]) -> None:
+    def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
     def sign_contract(self, contract: Contract) -> Optional[str]:
@@ -112,7 +111,7 @@ class ReactiveMiner(Miner):
         pass
 
     def confirm_partial_execution(
-        self, contract: Contract, breaches: List[Breach]
+        self, contract: Contract, breaches: list[Breach]
     ) -> bool:
         return True
 
@@ -121,7 +120,7 @@ class ReactiveMiner(Miner):
 
     def __init__(
         self,
-        profiles: Dict[int, MiningProfile] = None,
+        profiles: dict[int, MiningProfile] | None = None,
         negotiator_type=DEFAULT_NEGOTIATOR,
         n_retrials=0,
         reactive=True,
@@ -129,8 +128,8 @@ class ReactiveMiner(Miner):
     ):
         super().__init__(name=name)
         self.negotiator_type = get_class(negotiator_type, scope=globals())
-        self.profiles: Dict[int, MiningProfile] = {}
-        self.n_neg_trials: Dict[str, int] = defaultdict(int)
+        self.profiles: dict[int, MiningProfile] = {}
+        self.n_neg_trials: dict[str, int] = defaultdict(int)
         self.n_retrials = n_retrials
         self.reactive = reactive
         if profiles is not None:
@@ -141,8 +140,8 @@ class ReactiveMiner(Miner):
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
@@ -161,7 +160,7 @@ class ReactiveMiner(Miner):
             self.awi.logdebug(f"Renegotiating {self.n_neg_trials[cfp.id]} on {cfp}")
             self.on_new_cfp(cfp=annotation["cfp"])
 
-    def set_profiles(self, profiles: Dict[int, MiningProfile]):
+    def set_profiles(self, profiles: dict[int, MiningProfile]):
         self.profiles = profiles if profiles is not None else dict()
 
     def _process_cfp(self, cfp: "CFP"):
@@ -248,12 +247,12 @@ class ReactiveMiner(Miner):
         )
 
     def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
+        self, contract: Contract, breaches: list[Breach]
     ) -> Optional[RenegotiationRequest]:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
     ) -> Optional[Negotiator]:
         return None
 

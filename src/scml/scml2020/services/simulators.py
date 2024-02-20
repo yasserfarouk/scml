@@ -1,8 +1,6 @@
 """Simulators module implementing factory simulation"""
 
-import math
 import sys
-from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -84,7 +82,7 @@ class FactorySimulator:
         self._bankrupt_at = NEVER
         self.bankruptcy_limit = bankruptcy_limit
         self.spot_market_global_loss = spot_market_global_loss
-        n_steps, n_products, n_processes = (
+        n_steps, n_products, _n_processes = (
             self._n_steps,
             self._n_products,
             self._n_products - 1,
@@ -711,14 +709,14 @@ class FactorySimulator:
                 self.rollback(bookmark)
                 return False
             scheduled = 0
-            for s, l in zip(steps, lines):
+            for s, ii in zip(steps, lines):
                 if not (
                     (ignore_inventory_shortage or self._inventory[process, s] >= 1)
                     and (ignore_money_shortage or (self._balance[s] >= cost))
                 ):
                     continue
                 scheduled += 1
-                self.commands[s, l] = process
+                self.commands[s, ii] = process
                 self._inventory[process, s] -= 1
                 self._inventory[process + 1, s] += 1
                 self._balance[s] -= cost
@@ -791,7 +789,7 @@ class FactorySimulator:
             `delete_bookmark` `rollback` `transaction` `temporary_transaction`
         """
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
-            raise ValueError(f"there is no active bookmark to delete")
+            raise ValueError("there is no active bookmark to delete")
         self._bookmarks = self._bookmarks[:-1]
         self._active_bookmark = (
             self._bookmarks[-1] if len(self._bookmarks) > 0 else None
@@ -841,7 +839,7 @@ class FactorySimulator:
             `delete_bookmark` `rollback` `transaction` `temporary_transaction`
         """
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
-            raise ValueError(f"there is no active bookmark to rollback")
+            raise ValueError("there is no active bookmark to rollback")
         b = self._active_bookmark
         self._balance, self._inventory = b.balance, b.inventory
         self.commands = b.commands

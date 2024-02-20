@@ -4,8 +4,7 @@ from unittest import mock
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import example, given
-from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
+from hypothesis import given
 
 from scml.scml2020.common import NO_COMMAND, FactoryProfile, FactoryState
 from scml.scml2020.components.simulation import FactorySimulator

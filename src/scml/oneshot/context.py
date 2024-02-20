@@ -1014,8 +1014,8 @@ class GeneralContext(BaseContext):
     def _assign_types(self, n_processes, types, params, levels, n_agents_per_process):
         n_agents = sum(n_agents_per_process)
         perlevel = defaultdict(list)
-        for l, t, p in zip(levels, types, params):
-            perlevel[l].append((t, p))
+        for i, t, p in zip(levels, types, params):
+            perlevel[i].append((t, p))
 
         agent_types = list(random.choices(self.non_competitors, k=n_agents))
         agent_params: list[dict[str, Any]] = list(dict() for _ in agent_types)
@@ -1027,11 +1027,11 @@ class GeneralContext(BaseContext):
             agent_processes[nxt:last] = level
             rngs.append((nxt, last))
             nxt += n_agents_per_process[level]
-        for l, tp in perlevel.items():
-            first, last = rngs[l]
-            assert last - first + 1 >= len(
-                tp
-            ), f"Cannot put agents of type {tp=} in level {l} which has only {last - first + 1} agents"
+        for i, tp in perlevel.items():
+            first, last = rngs[i]
+            assert (
+                last - first + 1 >= len(tp)
+            ), f"Cannot put agents of type {tp=} in level {i} which has only {last - first + 1} agents"
 
             random.shuffle(tp)
             selected = list(range(first, last))
@@ -1297,7 +1297,7 @@ class GeneralContext(BaseContext):
         ):
             return False
         if _is(
-            world.info["random_agent_types"] != False,
+            world.info["random_agent_types"] is not False,
             raise_on_failure,
             warn_on_failure,
             "world.info['random_agent_types'] != False",
@@ -1472,11 +1472,12 @@ class LimitedPartnerNumbersContext(GeneralContext):
             else self.n_processes
         )
         assert isin(
-            tuple(_ + 1 for _ in self.n_competitors),
+            tuple(_ + 1 for _ in self.n_competitors),  # type: ignore
             self.n_agents_per_process,  # type: ignore
         ), f"{self.n_competitors=}, {self.n_agents_per_process=}"
-        assert not (self.level > 0 and self.level < max_n_proceses - 1) or (
-            self.n_suppliers[-1] > 1 and self.n_consumers[-1] > 1
+        assert (
+            not (self.level > 0 and self.level < max_n_proceses - 1)
+            or (self.n_suppliers[-1] > 1 and self.n_consumers[-1] > 1)
         ), f"{self.n_suppliers=}, {self.n_consumers=}, {self.level=}, {self.n_processes=}"
         if self.level == 0:
             assert isin(
@@ -1551,9 +1552,9 @@ class LimitedPartnerNumbersContext(GeneralContext):
             n_agents_per_process[my_level + 1] = n_consumers
             n_agents_per_process[my_level - 1] = n_suppliers
         n_agents_per_process[my_level] = max(len(types), n_competitors + 1)
-        for l, n in enumerate(n_agents_per_process):
+        for k, n in enumerate(n_agents_per_process):
             assert isin(n, self.n_agents_per_process), (
-                f"Level {l} has {n} agents which is not in {self.n_agents_per_process}"
+                f"Level {k} has {n} agents which is not in {self.n_agents_per_process}"
                 f": {self.n_suppliers=}, {self.n_competitors=}, {self.n_consumers=}"
                 f": {self.selling_strength=}, {self.buying_strength=}\n{n_agents_per_process}"
                 f"\n{self.n_agents_per_process}"
@@ -1595,7 +1596,8 @@ class LimitedPartnerNumbersContext(GeneralContext):
                 my_level == expected_level,
                 raise_on_failure,
                 warn_on_failure,
-                f"Agent {aid} of type {world.agents[aid]._obj.__class__.__name__} is on level {my_level} but expected to be on level {expceted_level}",  # type: ignore
+                f"Agent {aid} of type {world.agents[aid]._obj.__class__.__name__} "
+                f"is on level {my_level} but expected to be on level {expected_level}",
             ):
                 return False
             is_first_level = my_level == 0

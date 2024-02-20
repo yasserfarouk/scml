@@ -18,7 +18,6 @@ from negmas import (
     make_issue,
 )
 from negmas.helpers import get_class, instantiate
-from negmas.outcomes.issue_ops import enumerate_issues
 
 from scml.scml2020.awi import AWI
 from scml.scml2020.common import TIME
@@ -510,7 +509,6 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             return
         quantity = c.secured
         target = c.target
-        time_range = info.time_range
         if is_seller:
             controllers = self.sellers
         else:

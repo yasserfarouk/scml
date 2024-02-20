@@ -71,7 +71,7 @@ def test_context_can_generate_and_run(context_type):
                     )
                 )
             )
-        except:
+        except Exception:
             pass
         assert context.is_valid_world(
             world, raise_on_failure=True

@@ -58,7 +58,6 @@ class FactorySimulator(ABC):
         profiles: List[ManufacturingProfile],
         max_storage: Optional[int] = None,
     ):
-
         self._n_steps = n_steps
         self._max_storage = max_storage if max_storage is not None else sys.maxsize
         self._initial_wallet = initial_wallet
@@ -825,7 +824,7 @@ class SlowFactorySimulator(FactorySimulator):
 
     def delete_bookmark(self, bookmark_id: int) -> bool:
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
-            raise ValueError(f"there is no active bookmark to delete")
+            raise ValueError("there is no active bookmark to delete")
         self._bookmarks, self._bookmarked_at = (
             self._bookmarks[:-1],
             self._bookmarked_at[:-1],
@@ -848,7 +847,7 @@ class SlowFactorySimulator(FactorySimulator):
 
     def rollback(self, bookmark_id: int) -> bool:
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
-            raise ValueError(f"there is no active bookmark to rollback")
+            raise ValueError("there is no active bookmark to rollback")
         for t, payment in self._active_bookmark.payment_updates.items():
             self._payment_updates[t] += payment
         for t, payment in self._active_bookmark.loans_updates.items():
@@ -1429,7 +1428,7 @@ class FastFactorySimulator(FactorySimulator):
 
     def delete_bookmark(self, bookmark_id: int) -> bool:
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
-            raise ValueError(f"there is no active bookmark to delete")
+            raise ValueError("there is no active bookmark to delete")
         self._bookmarks = self._bookmarks[:-1]
         self._active_bookmark = (
             self._bookmarks[-1] if len(self._bookmarks) > 0 else None
@@ -1451,7 +1450,7 @@ class FastFactorySimulator(FactorySimulator):
 
     def rollback(self, bookmark_id: int) -> bool:
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
-            raise ValueError(f"there is no active bookmark to rollback")
+            raise ValueError("there is no active bookmark to rollback")
         b = self._active_bookmark
         self._wallet, self._loans, self._storage = b.wallet, b.loans, b.storage
         self._line_schedules, self._has_jobs = b.line_schedules, b.has_jobs

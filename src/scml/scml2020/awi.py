@@ -565,11 +565,6 @@ class AWI(AgentWorldInterface):
         return self._world.consumers
 
     @property
-    def catalog_prices(self) -> np.ndarray:
-        """Returns the catalog prices of all products"""
-        return self._world.catalog_prices
-
-    @property
     def inputs(self) -> np.ndarray:
         """Returns the number of inputs to every production process"""
         return self._world.process_inputs
@@ -578,16 +573,6 @@ class AWI(AgentWorldInterface):
     def outputs(self) -> np.ndarray:
         """Returns the number of outputs to every production process"""
         return self._world.process_outputs
-
-    @property
-    def n_products(self) -> int:
-        """Returns the number of products in the system"""
-        return len(self._world.catalog_prices)
-
-    @property
-    def n_processes(self) -> int:
-        """Returns the number of processes in the system"""
-        return self.n_products - 1
 
     @property
     def n_competitors(self) -> int:
@@ -650,14 +635,19 @@ class AWI(AgentWorldInterface):
         return self.state.n_lines
 
     @property
+    def catalog_prices(self) -> np.ndarray:
+        """Returns the catalog prices of all products"""
+        return self._world.catalog_prices
+
+    @property
     def n_products(self) -> int:
         """Number of products in the world"""
         return self.state.n_products
 
     @property
     def n_processes(self) -> int:
-        """Number of processes in the world"""
-        return self.state.n_processes
+        """Returns the number of processes in the system"""
+        return self.n_products - 1
 
     @property
     def is_first_level(self):

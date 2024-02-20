@@ -369,7 +369,7 @@ class PredictionBasedTradingStrategy(
         s = self.awi.current_step
         for contract, indx in contracts:
             is_seller = contract.annotation["seller"] == self.id
-            q, u, t = (
+            q, _u, t = (
                 contract.agreement["quantity"],
                 contract.agreement["unit_price"],
                 contract.agreement["time"],
@@ -414,7 +414,7 @@ class PredictionBasedTradingStrategy(
 
     def _format(self, c: Contract):
         return (
-            f"{f'>' if c.annotation['seller'] == self.id else '<'}"
+            f"{'>' if c.annotation['seller'] == self.id else '<'}"
             f"{c.annotation['buyer'] if c.annotation['seller'] == self.id else c.annotation['seller']}: "
             f"{c.agreement['quantity']} of {c.annotation['product']} @ {c.agreement['unit_price']} on {c.agreement['time']}"
         )

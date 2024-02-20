@@ -125,28 +125,28 @@ def isinfloat(x: IterableOrFloat, y: IterableOrFloat):
 
 def fraction_cut(n: int, p: np.ndarray) -> np.ndarray:
     """Distributes n items on boxes with probabilities relative to p"""
-    l = len(p) - 1
+    mx = len(p) - 1
     x = (np.round(100 * n * p).astype(np.int64) // 100).astype(int)
 
     total = x.sum()
 
     while total > n:
-        i = random.randint(0, l)
+        i = random.randint(0, mx)
         if x[i] > 0:
             x[i] -= 1
             total -= 1
 
     while total < n:
-        x[random.randint(0, l)] += 1
+        x[random.randint(0, mx)] += 1
         total += 1
     return x
 
 
 def integer_cut(
+    total: int,
     n: int,
-    l: int,
-    l_m: int | list[int],
-    l_x: int | list[int] | None = None,
+    mx: int | list[int],
+    mn: int | list[int] | None = None,
     randomize: bool = True,
 ) -> list[int]:
     """
@@ -161,24 +161,24 @@ def integer_cut(
     Returns:
 
     """
-    if l_x is None:
-        l_x = [float("inf")] * l  # type: ignore
-    if not isinstance(l_x, Iterable):
-        l_x = [l_x] * l  # type: ignore
-    if not isinstance(l_m, Iterable):
-        l_m = [l_m] * l  # type: ignore
-    sizes = np.asarray(l_m)
-    if n < sizes.sum():
+    if mn is None:
+        mn = [float("inf")] * n  # type: ignore
+    if not isinstance(mn, Iterable):
+        mn = [mn] * n  # type: ignore
+    if not isinstance(mx, Iterable):
+        mx = [mx] * n  # type: ignore
+    sizes = np.asarray(mx)
+    if total < sizes.sum():
         raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a minimum summing to {sizes.sum()}"
+            f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}"
         )
-    if n > sum(l_x):  # type: ignore
+    if total > sum(mn):  # type: ignore
         raise ValueError(
-            f"Cannot generate {l} numbers summing to {n}  with a maximum summing to {sum(l_x)}"  # type: ignore
+            f"Cannot generate {n} numbers summing to {total}  with a maximum summing to {sum(mn)}"  # type: ignore
         )
-    valid = [i for i, s in enumerate(sizes) if l_x[i] > s]  # type: ignore
+    valid = [i for i, s in enumerate(sizes) if mn[i] > s]  # type: ignore
     k = 0
-    while sizes.sum() < n:
+    while sizes.sum() < total:
         if not randomize:
             j, k = valid[k], k + 1
             if k >= len(valid):
@@ -186,7 +186,7 @@ def integer_cut(
         else:
             j = random.choice(valid)
         sizes[j] += 1
-        if sizes[j] >= l_x[j]:  # type: ignore
+        if sizes[j] >= mn[j]:  # type: ignore
             valid.remove(j)
             if not randomize:
                 k = max(k - 1, 0)
@@ -398,13 +398,13 @@ def distribute_quantities(
         v = [int(0.5 + _ * float(q[s] / qz)) for _ in base_cut]
         n_changes = max(0, min(q[s], int(0.5 + (1.0 - predictability) * q[s])))
         if limit is not None:
-            n_changes = min(n_changes, sum(l - x for l, x in zip(limit, v)))
+            n_changes = min(n_changes, sum(k - x for k, x in zip(limit, v)))
         if n_changes <= 0:
             values.append(adjust_values(v, limit))
             continue
         subtracted = integer_cut(n_changes, a, 0)
         upper = (
-            [l + s - c for l, c, s in zip(limit, v, subtracted)]
+            [lmt + s - c for lmt, c, s in zip(limit, v, subtracted)]
             if limit is not None
             else None
         )
