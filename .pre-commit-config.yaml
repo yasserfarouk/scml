@@ -38,6 +38,8 @@ repos:
                     --exclude,
                     etc,
                     --unsafe-fixes,
+                    --target-version,
+                    py310,
                 ]
           - id: ruff-format
             types_or: [python, pyi]
