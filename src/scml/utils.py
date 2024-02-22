@@ -22,6 +22,8 @@ from scml.oneshot.agents import (
     GreedySyncAgent,
     SingleAgreementAspirationAgent,
     SyncRandomOneShotAgent,
+    RandDistOneShotAgent,
+    EqualDistOneShotAgent,
 )
 from scml.oneshot.sysagents import _StdSystemAgent as OneShotSysAgent
 from scml.oneshot.world import OneShotWorld, SCML2024OneShotWorld
@@ -36,8 +38,10 @@ from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
 from scml.std.agent import StdAgent
 from scml.std.agents import (
     SyncRandomStdAgent,
+    GreedyStdAgent,
+    GreedySyncAgent,
+    RandomStdAgent,
 )
-from scml.std.agents.greedy import GreedyStdAgent
 from scml.std.world import STD_DEFAULT_PARAMS
 
 __all__ = [
@@ -56,7 +60,6 @@ __all__ = [
     "DefaultAgents2021",
     "DefaultAgents2022",
     "DefaultAgents2023",
-    "DefaultAgents2024",
     "DefaultAgentsOneShot",
     "DefaultAgentsOneShot2023",
     "DefaultAgentsOneShot2024",
@@ -114,13 +117,6 @@ DefaultAgents2023 = [
     # RandomOneShotAgent,
 ]
 
-DefaultAgents2024 = [
-    DecentralizingAgent,
-    # MarketAwareDecentralizingAgent,
-    MarketAwareIndDecentralizingAgent,
-    SatisficerAgent,
-    # RandomOneShotAgent,
-]
 DefaultAgentsOneShot = [
     GreedyOneShotAgent,
     SingleAgreementAspirationAgent,
@@ -135,13 +131,14 @@ DefaultAgentsOneShot2023 = [
 
 DefaultAgentsOneShot2024 = [
     GreedyOneShotAgent,
-    SyncRandomOneShotAgent,
+    RandDistOneShotAgent,
+    EqualDistOneShotAgent,
 ]
 
 DefaultAgentsStd2024 = [
     GreedyStdAgent,
+    RandomStdAgent,
     SyncRandomStdAgent,
-    SyncRandomOneShotAgent,
 ]
 
 
