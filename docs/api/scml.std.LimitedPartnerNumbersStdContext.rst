@@ -63,6 +63,7 @@ LimitedPartnerNumbersStdContext
       ~LimitedPartnerNumbersStdContext.contains_context
       ~LimitedPartnerNumbersStdContext.contains_general_context
       ~LimitedPartnerNumbersStdContext.contains_limited_partner_context
+      ~LimitedPartnerNumbersStdContext.extract_context_params
       ~LimitedPartnerNumbersStdContext.find_test_agents
       ~LimitedPartnerNumbersStdContext.generate
       ~LimitedPartnerNumbersStdContext.is_valid_awi
@@ -125,6 +126,7 @@ LimitedPartnerNumbersStdContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

@@ -63,6 +63,7 @@ WeakConsumerContext
       ~WeakConsumerContext.contains_context
       ~WeakConsumerContext.contains_general_context
       ~WeakConsumerContext.contains_limited_partner_context
+      ~WeakConsumerContext.extract_context_params
       ~WeakConsumerContext.find_test_agents
       ~WeakConsumerContext.generate
       ~WeakConsumerContext.is_valid_awi
@@ -125,6 +126,7 @@ WeakConsumerContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

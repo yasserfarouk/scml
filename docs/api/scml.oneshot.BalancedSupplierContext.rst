@@ -63,6 +63,7 @@ BalancedSupplierContext
       ~BalancedSupplierContext.contains_context
       ~BalancedSupplierContext.contains_general_context
       ~BalancedSupplierContext.contains_limited_partner_context
+      ~BalancedSupplierContext.extract_context_params
       ~BalancedSupplierContext.find_test_agents
       ~BalancedSupplierContext.generate
       ~BalancedSupplierContext.is_valid_awi
@@ -125,6 +126,7 @@ BalancedSupplierContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

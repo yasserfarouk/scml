@@ -10,15 +10,18 @@ DefaultObservationManager
 
    .. autosummary::
 
+      ~DefaultObservationManager.capacity_multiplier
       ~DefaultObservationManager.context
+      ~DefaultObservationManager.continuous
+      ~DefaultObservationManager.exogenous_multiplier
       ~DefaultObservationManager.extra_checks
       ~DefaultObservationManager.max_group_size
       ~DefaultObservationManager.max_production_cost
       ~DefaultObservationManager.max_quantity
       ~DefaultObservationManager.n_bins
       ~DefaultObservationManager.n_consumers
-      ~DefaultObservationManager.n_lines
       ~DefaultObservationManager.n_partners
+      ~DefaultObservationManager.n_past_received_offers
       ~DefaultObservationManager.n_prices
       ~DefaultObservationManager.n_sigmas
       ~DefaultObservationManager.n_suppliers
@@ -28,8 +31,8 @@ DefaultObservationManager
 
    .. autosummary::
 
-      ~DefaultObservationManager.decode_offers
       ~DefaultObservationManager.encode
+      ~DefaultObservationManager.extra_obs
       ~DefaultObservationManager.get_dims
       ~DefaultObservationManager.get_offers
       ~DefaultObservationManager.make_first_observation
@@ -37,15 +40,18 @@ DefaultObservationManager
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: capacity_multiplier
    .. autoattribute:: context
+   .. autoattribute:: continuous
+   .. autoattribute:: exogenous_multiplier
    .. autoattribute:: extra_checks
    .. autoattribute:: max_group_size
    .. autoattribute:: max_production_cost
    .. autoattribute:: max_quantity
    .. autoattribute:: n_bins
    .. autoattribute:: n_consumers
-   .. autoattribute:: n_lines
    .. autoattribute:: n_partners
+   .. autoattribute:: n_past_received_offers
    .. autoattribute:: n_prices
    .. autoattribute:: n_sigmas
    .. autoattribute:: n_suppliers
@@ -53,8 +59,8 @@ DefaultObservationManager
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: decode_offers
    .. automethod:: encode
+   .. automethod:: extra_obs
    .. automethod:: get_dims
    .. automethod:: get_offers
    .. automethod:: make_first_observation

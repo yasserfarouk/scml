@@ -15,16 +15,17 @@ DefaultActionManager
       ~DefaultActionManager.continuous
       ~DefaultActionManager.extra_checks
       ~DefaultActionManager.max_group_size
+      ~DefaultActionManager.max_quantity
+      ~DefaultActionManager.n_consumers
       ~DefaultActionManager.n_partners
       ~DefaultActionManager.n_prices
-      ~DefaultActionManager.n_quantities
+      ~DefaultActionManager.n_suppliers
       ~DefaultActionManager.reduce_space_size
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~DefaultActionManager.adjust_reponses_to_partners
       ~DefaultActionManager.decode
       ~DefaultActionManager.encode
       ~DefaultActionManager.make_space
@@ -36,14 +37,15 @@ DefaultActionManager
    .. autoattribute:: continuous
    .. autoattribute:: extra_checks
    .. autoattribute:: max_group_size
+   .. autoattribute:: max_quantity
+   .. autoattribute:: n_consumers
    .. autoattribute:: n_partners
    .. autoattribute:: n_prices
-   .. autoattribute:: n_quantities
+   .. autoattribute:: n_suppliers
    .. autoattribute:: reduce_space_size
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: adjust_reponses_to_partners
    .. automethod:: decode
    .. automethod:: encode
    .. automethod:: make_space

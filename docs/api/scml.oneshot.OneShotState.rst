@@ -56,6 +56,7 @@ OneShotState
       ~OneShotState.penalties_scale
       ~OneShotState.perishable
       ~OneShotState.price_multiplier
+      ~OneShotState.production_capacities
       ~OneShotState.profile
       ~OneShotState.relative_simulation_time
       ~OneShotState.reports_of_agents
@@ -124,6 +125,7 @@ OneShotState
    .. autoattribute:: penalties_scale
    .. autoattribute:: perishable
    .. autoattribute:: price_multiplier
+   .. autoattribute:: production_capacities
    .. autoattribute:: profile
    .. autoattribute:: relative_simulation_time
    .. autoattribute:: reports_of_agents

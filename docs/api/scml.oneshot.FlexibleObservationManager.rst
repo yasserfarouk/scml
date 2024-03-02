@@ -10,15 +10,18 @@ FlexibleObservationManager
 
    .. autosummary::
 
+      ~FlexibleObservationManager.capacity_multiplier
       ~FlexibleObservationManager.context
+      ~FlexibleObservationManager.continuous
+      ~FlexibleObservationManager.exogenous_multiplier
       ~FlexibleObservationManager.extra_checks
       ~FlexibleObservationManager.max_group_size
       ~FlexibleObservationManager.max_production_cost
       ~FlexibleObservationManager.max_quantity
       ~FlexibleObservationManager.n_bins
       ~FlexibleObservationManager.n_consumers
-      ~FlexibleObservationManager.n_lines
       ~FlexibleObservationManager.n_partners
+      ~FlexibleObservationManager.n_past_received_offers
       ~FlexibleObservationManager.n_prices
       ~FlexibleObservationManager.n_sigmas
       ~FlexibleObservationManager.n_suppliers
@@ -28,8 +31,8 @@ FlexibleObservationManager
 
    .. autosummary::
 
-      ~FlexibleObservationManager.decode_offers
       ~FlexibleObservationManager.encode
+      ~FlexibleObservationManager.extra_obs
       ~FlexibleObservationManager.get_dims
       ~FlexibleObservationManager.get_offers
       ~FlexibleObservationManager.make_first_observation
@@ -37,15 +40,18 @@ FlexibleObservationManager
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: capacity_multiplier
    .. autoattribute:: context
+   .. autoattribute:: continuous
+   .. autoattribute:: exogenous_multiplier
    .. autoattribute:: extra_checks
    .. autoattribute:: max_group_size
    .. autoattribute:: max_production_cost
    .. autoattribute:: max_quantity
    .. autoattribute:: n_bins
    .. autoattribute:: n_consumers
-   .. autoattribute:: n_lines
    .. autoattribute:: n_partners
+   .. autoattribute:: n_past_received_offers
    .. autoattribute:: n_prices
    .. autoattribute:: n_sigmas
    .. autoattribute:: n_suppliers
@@ -53,8 +59,8 @@ FlexibleObservationManager
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: decode_offers
    .. automethod:: encode
+   .. automethod:: extra_obs
    .. automethod:: get_dims
    .. automethod:: get_offers
    .. automethod:: make_first_observation

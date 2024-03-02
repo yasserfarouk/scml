@@ -44,18 +44,21 @@ stored
 
     !rm -r ~/negmas/logs/test_world
 
+
+.. parsed-literal::
+
+    rm: /Users/yasser/negmas/logs/test_world: No such file or directory
+
+
 .. code:: ipython3
 
     from scml import SCML2023World
-    from scml import DecentralizingAgent, RandomAgent, DoNothingAgent, DecentralizingAgentWithLogging
+    from scml import DecentralizingAgent, DoNothingAgent, DecentralizingAgentWithLogging
 
     # create and run the world
     world = SCML2023World(
         **SCML2023World.generate(
-            agent_types=[DoNothingAgent],
-            n_steps=10,
-            n_processes=2,
-            name="test_world"
+            agent_types=[DoNothingAgent], n_steps=10, n_processes=2, name="test_world"
         )
     )
     world.loginfo("This is a test message")
@@ -76,7 +79,6 @@ Let’s check our logs
     !tree ~/negmas/logs/test_world
 
 
-
 .. parsed-literal::
 
     [01;34m/Users/yasser/negmas/logs/test_world[0m
@@ -84,7 +86,7 @@ Let’s check our logs
     ├── [00mevents.json[0m
     └── [00mlog.txt[0m
 
-    1 directory, 2 files
+    2 directories, 2 files
 
 
 As you can see, there is a folder called \**_agent_logs*\* that will
@@ -97,31 +99,32 @@ Now we have agent logs. We can inspect one of them
 .. code:: ipython3
 
     from pathlib import Path
-    with open(Path.home() /"negmas" / "logs" / world.name / "log.txt", "r") as f:
+
+    with open(Path.home() / "negmas" / "logs" / world.name / "log.txt", "r") as f:
         [print(_) for _ in f.readlines()[:10]]
 
 
 .. parsed-literal::
 
-    2023-03-07 16:34:41,382 - INFO - 0/10 [0.00%]: test_world: World Created
+    2024-03-02 15:02:39,396 - INFO - 0/10 [0.00%]: test_world: World Created
 
-    2023-03-07 16:34:41,383 - INFO - 0/10 [0.00%]: 00Do@0 joined
+    2024-03-02 15:02:39,396 - INFO - 0/10 [0.00%]: 00Do@0 joined
 
-    2023-03-07 16:34:41,388 - INFO - 0/10 [0.00%]: 01Do@0 joined
+    2024-03-02 15:02:39,402 - INFO - 0/10 [0.00%]: 01Do@0 joined
 
-    2023-03-07 16:34:41,389 - INFO - 0/10 [0.00%]: 02Do@0 joined
+    2024-03-02 15:02:39,406 - INFO - 0/10 [0.00%]: 02Do@0 joined
 
-    2023-03-07 16:34:41,392 - INFO - 0/10 [0.00%]: 03Do@0 joined
+    2024-03-02 15:02:39,411 - INFO - 0/10 [0.00%]: 03Do@0 joined
 
-    2023-03-07 16:34:41,394 - INFO - 0/10 [0.00%]: 04Do@1 joined
+    2024-03-02 15:02:39,419 - INFO - 0/10 [0.00%]: 04Do@1 joined
 
-    2023-03-07 16:34:41,394 - INFO - 0/10 [0.00%]: 05Do@1 joined
+    2024-03-02 15:02:39,422 - INFO - 0/10 [0.00%]: 05Do@1 joined
 
-    2023-03-07 16:34:41,395 - INFO - 0/10 [0.00%]: 06Do@1 joined
+    2024-03-02 15:02:39,425 - INFO - 0/10 [0.00%]: SELLER joined
 
-    2023-03-07 16:34:41,395 - INFO - 0/10 [0.00%]: 07Do@1 joined
+    2024-03-02 15:02:39,430 - INFO - 0/10 [0.00%]: BUYER joined
 
-    2023-03-07 16:34:41,395 - INFO - 0/10 [0.00%]: SELLER joined
+    2024-03-02 15:02:39,433 - INFO - 0/10 [0.00%]: This is a test message
 
 
 
@@ -148,7 +151,7 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
             agent_types=[DecentralizingAgentWithLogging],
             n_steps=10,
             n_processes=2,
-            name="test_world"
+            name="test_world",
         )
     ).run()
 
@@ -157,51 +160,52 @@ that (e.g. DecentralizingAgent). Let’s check an exmple:
     !tree ~/negmas/logs/test_world
 
 
-
 .. parsed-literal::
 
     [01;34m/Users/yasser/negmas/logs/test_world[0m
     ├── [01;34m_agent_logs[0m
     │   ├── [00m00DWL@0.txt[0m
     │   ├── [00m01DWL@0.txt[0m
-    │   ├── [00m02DWL@0.txt[0m
-    │   ├── [00m03DWL@0.txt[0m
-    │   ├── [00m04DWL@1.txt[0m
-    │   ├── [00m05DWL@1.txt[0m
-    │   └── [00m06DWL@1.txt[0m
-    └── [00mevents.json[0m
+    │   ├── [00m02DWL@1.txt[0m
+    │   ├── [00m03DWL@1.txt[0m
+    │   └── [00m04DWL@1.txt[0m
+    ├── [00mevents.json[0m
+    └── [00mlog.txt[0m
 
-    1 directory, 8 files
+    2 directories, 7 files
 
 
 .. code:: ipython3
 
     from pathlib import Path
-    with open(Path.home() /"negmas" / "logs" / world.name / "_agent_logs" / "00DWL@0.txt", "r") as f:
+
+    with open(
+        Path.home() / "negmas" / "logs" / world.name / "_agent_logs" / "00DWL@0.txt", "r"
+    ) as f:
         [print(_) for _ in f.readlines()[:10]]
 
 
 .. parsed-literal::
 
-    2023-03-07 16:34:41,843 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+    2024-03-02 15:02:40,796 - DEBUG - 0/10 [0.00%]: End step:
 
-    2023-03-07 16:34:41,844 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '04DWL@1'] (ID 11d47784-44a9-4c1a-93b6-ae74fe8026eb)
+    {'_balance': 1517,
 
-    2023-03-07 16:34:41,844 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+     '_input_inventory': 13,
 
-    2023-03-07 16:34:41,844 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 05DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+     '_output_inventory': 0,
 
-    2023-03-07 16:34:41,844 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '05DWL@1'] (ID 64aa28eb-ce25-4d9d-9039-a2954c9bc9cd)
+     'buy_negotiations': [],
 
-    2023-03-07 16:34:41,845 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+     'execution_fraction': 0.9782608695652174,
 
-    2023-03-07 16:34:41,845 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 06DWL@1 q: (1, 10), u: (8, 26), t: (1, 6)
+     'expected_inputs': array([23, 18, 19, 10, 10, 10, 10, 10, 10, 10]),
 
-    2023-03-07 16:34:41,845 - INFO - 0/10 [0.00%]: 01DWL@0 requested negotiation with ['01DWL@0', '06DWL@1'] (ID 3231f970-b4e4-4141-b2b3-255dd906800a)
+     'expected_outputs': array([10, 10, 10, 10, 10, 10, 10, 10, 10, 10]),
 
-    2023-03-07 16:34:41,845 - INFO - 0/10 [0.00%]: 01DWL@0 request was accepted
+     'input_cost': array([10, 10, 10, 10, 10, 10, 10, 10, 10, 10]),
 
-    2023-03-07 16:34:41,846 - DEBUG - 0/10 [0.00%]: 01DWL@0 requested to sell 1 to 04DWL@1 q: (1, 10), u: (8, 26), t: (2, 7)
+     'inputs_needed': array([10, 10, 10, 10, 10, 10, 10, 10, 10,  0]),
 
 
 
@@ -296,20 +300,19 @@ Let’s try changing some of these:
     │   ├── [00m00DWL@0.txt[0m
     │   ├── [00m01DWL@0.txt[0m
     │   ├── [00m02DWL@0.txt[0m
-    │   ├── [00m03DWL@0.txt[0m
-    │   ├── [00m04DWL@1.txt[0m
-    │   └── [00m05DWL@1.txt[0m
+    │   ├── [00m03DWL@1.txt[0m
+    │   └── [00m04DWL@1.txt[0m
     ├── [00magents.json[0m
     ├── [00mbreaches.csv[0m
     ├── [00mcontracts.csv[0m
     ├── [00mevents.json[0m
     ├── [00minfo.json[0m
+    ├── [00mlog.txt[0m
     ├── [00mnegotiations.csv[0m
     ├── [00mparams.json[0m
-    ├── [00mstats.csv[0m
     └── [00mstats.csv.csv[0m
 
-    1 directory, 15 files
+    2 directories, 14 files
 
 
 Now we can see that many more files are created in the log folder. These
@@ -322,12 +325,10 @@ method without needing to enable periodic saving using
 
     !rm -r ~/negmas/logs/test_world
     from negmas import save_stats
+
     world = SCML2023World(
         **SCML2023World.generate(
-            agent_types=[DecentralizingAgent],
-            n_steps=10,
-            n_processes=2,
-            name="test_world"
+            agent_types=[DecentralizingAgent], n_steps=10, n_processes=2, name="test_world"
         )
     )
     world.run()
@@ -344,12 +345,12 @@ method without needing to enable periodic saving using
     ├── [00mcontracts.csv[0m
     ├── [00mevents.json[0m
     ├── [00minfo.json[0m
+    ├── [00mlog.txt[0m
     ├── [00mnegotiations.csv[0m
     ├── [00mparams.json[0m
-    ├── [00mstats.csv[0m
-    └── [00mstats.json[0m
+    └── [00mstats.csv[0m
 
-    1 directory, 9 files
+    2 directories, 9 files
 
 
 Getting infromation about a simulation
@@ -658,8 +659,6 @@ SCML-OneShot simulations):
    victim
 -  **step** The step at which the breach happens
 -  **resolved** Will always be false in SCML2020
-
-
 
 
 Download :download:`Notebook<notebooks/06.logs_and_stats.ipynb>`.

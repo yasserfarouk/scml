@@ -11,6 +11,10 @@ ActionManager
    .. autosummary::
 
       ~ActionManager.context
+      ~ActionManager.continuous
+      ~ActionManager.n_consumers
+      ~ActionManager.n_partners
+      ~ActionManager.n_suppliers
 
    .. rubric:: Methods Summary
 
@@ -23,6 +27,10 @@ ActionManager
    .. rubric:: Attributes Documentation
 
    .. autoattribute:: context
+   .. autoattribute:: continuous
+   .. autoattribute:: n_consumers
+   .. autoattribute:: n_partners
+   .. autoattribute:: n_suppliers
 
    .. rubric:: Methods Documentation
 

@@ -12,6 +12,7 @@ OneShotAdapter
 
       ~OneShotAdapter.accepted_negotiation_requests
       ~OneShotAdapter.adapted_object
+      ~OneShotAdapter.allow_zero_quantity
       ~OneShotAdapter.awi
       ~OneShotAdapter.crisp_ufun
       ~OneShotAdapter.current_disposal_cost
@@ -111,6 +112,7 @@ OneShotAdapter
 
    .. autoattribute:: accepted_negotiation_requests
    .. autoattribute:: adapted_object
+   .. autoattribute:: allow_zero_quantity
    .. autoattribute:: awi
    .. autoattribute:: crisp_ufun
    .. autoattribute:: current_disposal_cost

@@ -76,6 +76,7 @@ OneShotAWI
       ~OneShotAWI.penalties_scale
       ~OneShotAWI.price_multiplier
       ~OneShotAWI.price_range
+      ~OneShotAWI.production_capacities
       ~OneShotAWI.profile
       ~OneShotAWI.quantity_range
       ~OneShotAWI.relative_time
@@ -198,6 +199,7 @@ OneShotAWI
    .. autoattribute:: penalties_scale
    .. autoattribute:: price_multiplier
    .. autoattribute:: price_range
+   .. autoattribute:: production_capacities
    .. autoattribute:: profile
    .. autoattribute:: quantity_range
    .. autoattribute:: relative_time

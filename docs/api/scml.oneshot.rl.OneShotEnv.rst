@@ -21,6 +21,7 @@ OneShotEnv
 
    .. autosummary::
 
+      ~OneShotEnv.calc_info
       ~OneShotEnv.close
       ~OneShotEnv.render
       ~OneShotEnv.reset
@@ -37,6 +38,7 @@ OneShotEnv
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: calc_info
    .. automethod:: close
    .. automethod:: render
    .. automethod:: reset

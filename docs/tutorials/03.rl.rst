@@ -353,30 +353,12 @@ these contexts:
 
 .. code:: ipython3
 
-    N_SUPPLIERS = (1, 8)
-    N_CONSUMERS = (1, 8)
     def make_context(as_supplier: bool):
         """Generates a context for the agent acting as a supplier or as a consumer"""
-        n_agents_per_level = (
-            min(N_SUPPLIERS[0], N_CONSUMERS[0]),  # type: ignore
-            max(N_SUPPLIERS[1], N_CONSUMERS[1]),  # type: ignore
-        )
         if as_supplier:
-            return LimitedPartnerNumbersOneShotContext(
-                n_suppliers=(0, 0),  # suppliers have no suppliers
-                n_consumers=N_CONSUMERS,
-                n_competitors=(N_SUPPLIERS[0] - 1, N_SUPPLIERS[1] - 1),
-                n_agents_per_level=n_agents_per_level,
-                level=0,  # suppliers are always in the first level
-            )
+            return SupplierContext()
 
-        return LimitedPartnerNumbersOneShotContext(
-            n_suppliers=N_SUPPLIERS,
-            n_consumers=(0, 0),  # consumers have no consumers
-            n_competitors=(N_CONSUMERS[0] - 1, N_CONSUMERS[1] - 1),
-            n_agents_per_level=n_agents_per_level,
-            level=-1,  # consumers are always in the last level
-        )
+        return ConsumerContext()
 
 Observation Manager Design
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -400,7 +382,15 @@ observation manager.
 
     from gymnasium import spaces
 
-    class MyObservationManager(LimitedPartnerNumbersObservationManager):
+    class MyRewardFunction(DefaultRewardFunction):
+        def before_action(self, awi: OneShotAWI):
+            return super().before_action(awi)
+
+        def __call__(self, awi: OneShotAWI, action: dict[str, SAOResponse], info) -> float:
+            return super().__call__(awi, action, info)
+
+
+    class MyObservationManager(FlexibleObservationManager):
         """This is my observation manager implementing encoding and decoding the state used by the RL algorithm"""
 
         def make_space(self) -> spaces.Space:
@@ -433,12 +423,12 @@ method to train the model. The two learned models are then returned.
 .. code:: ipython3
 
     from stable_baselines3 import A2C
-    from scml.oneshot.rl.action import UnconstrainedActionManager
+    from scml.oneshot.rl.action import FlexibleActionManager
     from scml.oneshot.rl.agent import OneShotRLAgent
     from scml.oneshot.rl.env import OneShotEnv
 
 
-    def train_models(type_ = "limited", n_training=100):
+    def train_models(type_="limited", n_training=100):
         # choose the type of the model. Possibilities supported are:
         # fixed: Supports a single world configuration
         # limited: Supports a limited range of world configuration
@@ -447,25 +437,26 @@ method to train the model. The two learned models are then returned.
         def make_env(supplier, extra_checks: bool = False) -> OneShotEnv:
             context = make_context(supplier)
             return OneShotEnv(
-                action_manager=UnconstrainedActionManager(context=context),
+                action_manager=FlexibleActionManager(context=context),
                 observation_manager=MyObservationManager(
                     context=context, extra_checks=extra_checks
                 ),
                 context=context,
-                extra_checks=False,
+                reward_function=MyRewardFunction(),
             )
+
         models = []
         for as_supplier in (False, True):
-            suffix = 'supplier' if as_supplier else 'consumer'
+            suffix = "supplier" if as_supplier else "consumer"
             print(f"Training as {suffix}")
             # create a gymnasium environment for training
-            env = make_env(as_supplier, extra_checks=True)
+            env = make_env(as_supplier)
 
             # choose a training algorithm
             model = A2C("MlpPolicy", env, verbose=0)
 
             # train the model
-            model.learn(total_timesteps=n_training, progress_bar=True)
+            model.learn(total_timesteps=n_training)
             print(f"\tFinished training the model for {n_training} steps")
             models.append(model)
         return models
@@ -480,58 +471,8 @@ We can now train our models
 .. parsed-literal::
 
     Training as consumer
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
-    </pre>
-
-
-
-.. parsed-literal::
-
     	Finished training the model for 100 steps
     Training as supplier
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
-    </pre>
-
-
-
-.. parsed-literal::
-
     	Finished training the model for 100 steps
 
 
@@ -556,6 +497,8 @@ observation manager to the base ``OneShotRLAgent`` alongside the model.
 .. code:: ipython3
 
     from scml.oneshot.rl.common import model_wrapper
+
+
     class MyAgent(OneShotRLAgent):
         """
         This is the only class you *need* to implement. The current skeleton simply loads a single model
@@ -570,31 +513,42 @@ observation manager to the base ``OneShotRLAgent`` alongside the model.
                     models=tuple(model_wrapper(_) for _ in trained_models),
                     # create corresponding observation managers
                     observation_managers=(
-                        MyObservationManager(context=make_context(True)),
-                        MyObservationManager(context=make_context(False)),
+                        MyObservationManager(context=SupplierContext()),
+                        MyObservationManager(context=ConsumerContext()),
+                    ),
+                    action_managers=(
+                        FlexibleActionManager(context=SupplierContext()),
+                        FlexibleActionManager(context=ConsumerContext())
                     ),
                 )
             )
             # Initialize the base OneShotRLAgent with model paths and observation managers.
             super().__init__(*args, **kwargs)
 
-Now we can have an agent that can be tested as we did in the previous
+Now we have an agent that can be tested as we did in the previous
 tutorial:
 
 .. code:: ipython3
 
-    world, ascores, tscores = try_agent(MyAgent)
-    print_type_scores(tscores)
+    worlds = []
+    for _ in range(6):
+        world, _ = ANACOneShotContext(placeholder_types=(MyAgent,)).generate()
+        worlds.append(world)
+        world.run()
+
+
+.. code:: ipython3
+
+    SCML2024OneShotWorld.plot_combined_stats(worlds, pertype=True, perishable=True)
 
 
 
-.. image:: 03.rl_files/03.rl_13_0.png
+.. image:: 03.rl_files/03.rl_14_0.png
 
 
-.. parsed-literal::
-
-    [('RandomOneShotAgent', 0.37318126997030443), ('MyAgent', 0.1645352458067952)]
-
+As we should have expected, given the few training steps we used and the
+use of basic observation and action manager and the default sparse
+reward function, the agent did not behave very well.
 
 What next?
 ^^^^^^^^^^
@@ -634,8 +588,6 @@ two contexts one when we are in the first production level and another
 when we are in the last is not going to be enough for scml-std and we
 need at least a third context in which the agent is in the middle of the
 production graph.
-
-
 
 
 Download :download:`Notebook<notebooks/03.rl.ipynb>`.

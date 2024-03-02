@@ -62,6 +62,7 @@ FixedPartnerNumbersOneShotContext
       ~FixedPartnerNumbersOneShotContext.contains_context
       ~FixedPartnerNumbersOneShotContext.contains_general_context
       ~FixedPartnerNumbersOneShotContext.contains_limited_partner_context
+      ~FixedPartnerNumbersOneShotContext.extract_context_params
       ~FixedPartnerNumbersOneShotContext.find_test_agents
       ~FixedPartnerNumbersOneShotContext.generate
       ~FixedPartnerNumbersOneShotContext.is_valid_awi
@@ -123,6 +124,7 @@ FixedPartnerNumbersOneShotContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

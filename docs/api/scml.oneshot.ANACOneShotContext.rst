@@ -56,6 +56,7 @@ ANACOneShotContext
       ~ANACOneShotContext.__call__
       ~ANACOneShotContext.contains_context
       ~ANACOneShotContext.contains_general_context
+      ~ANACOneShotContext.extract_context_params
       ~ANACOneShotContext.generate
       ~ANACOneShotContext.is_valid_awi
       ~ANACOneShotContext.is_valid_world
@@ -110,6 +111,7 @@ ANACOneShotContext
    .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: contains_general_context
+   .. automethod:: extract_context_params
    .. automethod:: generate
    .. automethod:: is_valid_awi
    .. automethod:: is_valid_world

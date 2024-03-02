@@ -13,6 +13,7 @@ AWI
       ~AWI.accepted_negotiation_requests
       ~AWI.all_consumers
       ~AWI.all_suppliers
+      ~AWI.allow_zero_quantity
       ~AWI.catalog_prices
       ~AWI.current_balance
       ~AWI.current_inventory
@@ -88,6 +89,7 @@ AWI
    .. autoattribute:: accepted_negotiation_requests
    .. autoattribute:: all_consumers
    .. autoattribute:: all_suppliers
+   .. autoattribute:: allow_zero_quantity
    .. autoattribute:: catalog_prices
    .. autoattribute:: current_balance
    .. autoattribute:: current_inventory

@@ -63,6 +63,7 @@ SupplierContext
       ~SupplierContext.contains_context
       ~SupplierContext.contains_general_context
       ~SupplierContext.contains_limited_partner_context
+      ~SupplierContext.extract_context_params
       ~SupplierContext.find_test_agents
       ~SupplierContext.generate
       ~SupplierContext.is_valid_awi
@@ -125,6 +126,7 @@ SupplierContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

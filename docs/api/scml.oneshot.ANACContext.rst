@@ -56,6 +56,7 @@ ANACContext
       ~ANACContext.__call__
       ~ANACContext.contains_context
       ~ANACContext.contains_general_context
+      ~ANACContext.extract_context_params
       ~ANACContext.generate
       ~ANACContext.is_valid_awi
       ~ANACContext.is_valid_world
@@ -110,6 +111,7 @@ ANACContext
    .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: contains_general_context
+   .. automethod:: extract_context_params
    .. automethod:: generate
    .. automethod:: is_valid_awi
    .. automethod:: is_valid_world

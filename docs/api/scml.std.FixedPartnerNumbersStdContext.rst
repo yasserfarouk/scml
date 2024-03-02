@@ -62,6 +62,7 @@ FixedPartnerNumbersStdContext
       ~FixedPartnerNumbersStdContext.contains_context
       ~FixedPartnerNumbersStdContext.contains_general_context
       ~FixedPartnerNumbersStdContext.contains_limited_partner_context
+      ~FixedPartnerNumbersStdContext.extract_context_params
       ~FixedPartnerNumbersStdContext.find_test_agents
       ~FixedPartnerNumbersStdContext.generate
       ~FixedPartnerNumbersStdContext.is_valid_awi
@@ -123,6 +124,7 @@ FixedPartnerNumbersStdContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

@@ -63,6 +63,7 @@ LimitedPartnerNumbersOneShotContext
       ~LimitedPartnerNumbersOneShotContext.contains_context
       ~LimitedPartnerNumbersOneShotContext.contains_general_context
       ~LimitedPartnerNumbersOneShotContext.contains_limited_partner_context
+      ~LimitedPartnerNumbersOneShotContext.extract_context_params
       ~LimitedPartnerNumbersOneShotContext.find_test_agents
       ~LimitedPartnerNumbersOneShotContext.generate
       ~LimitedPartnerNumbersOneShotContext.is_valid_awi
@@ -125,6 +126,7 @@ LimitedPartnerNumbersOneShotContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

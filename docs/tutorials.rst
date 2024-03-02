@@ -9,7 +9,6 @@ applicability to a variety of problems.
     :maxdepth: 2
 
     tutorials/01.run_scml2020
-    tutorials/02.develop_agent_scml2024_oneshot
     tutorials/03.rl
     tutorials/04.develop_agent_scml2024_std
     tutorials/05.experiments

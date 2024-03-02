@@ -55,6 +55,7 @@ GeneralContext
       ~GeneralContext.__call__
       ~GeneralContext.contains_context
       ~GeneralContext.contains_general_context
+      ~GeneralContext.extract_context_params
       ~GeneralContext.generate
       ~GeneralContext.is_valid_awi
       ~GeneralContext.is_valid_world
@@ -108,6 +109,7 @@ GeneralContext
    .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: contains_general_context
+   .. automethod:: extract_context_params
    .. automethod:: generate
    .. automethod:: is_valid_awi
    .. automethod:: is_valid_world

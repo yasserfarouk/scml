@@ -19,9 +19,8 @@ this brief introduction in the remainder of this tutorial.
     from negmas import ResponseType, SAOResponse
     from scml.oneshot import *
     from scml.oneshot.common import is_system_agent
-    import pandas as pd
     import numpy as np
-    from time import sleep
+    import pandas as pd
     from rich import print
     import math
     from typing import Iterable
@@ -30,29 +29,47 @@ this brief introduction in the remainder of this tutorial.
     CONFIGS = dict()
     DefaultType = RandDistOneShotAgent
 
+
     def try_agent(agent_type, alone=False, **kwargs):
         """Runs an agent in a world simulation against a randomly behaving agent"""
         if alone:
-            return try_agents([agent_type, agent_type],**kwargs)
-        return try_agents([DefaultType, agent_type],**kwargs)
+            return try_agents([agent_type, agent_type], **kwargs)
+        return try_agents([DefaultType, agent_type], **kwargs)
+
 
     def make_configs(n, n_trials, n_steps=10, year=2024):
-        types = [f"{DUMMY_AGENT_BEGINNING}{i}" for i in range(n)]
-        return [(
-            types,
-            SCML2024OneShotWorld.generate(types, agent_params=None, n_steps=10,
-            random_agent_types=True, construct_graphs=True)
-        ) for _ in range(n_trials)]
+        types = [f"{PLACEHOLDER_AGENT_PREFIX}{i}" for i in range(n)]
+        return [
+            (
+                types,
+                SCML2024OneShotWorld.generate(
+                    types,
+                    agent_params=None,
+                    n_steps=10,
+                    random_agent_types=True,
+                    construct_graphs=True,
+                ),
+            )
+            for _ in range(n_trials)
+        ]
 
-    def try_agents(agent_types, n_trials=4, n_steps=10, year=2024, draw=True,
-                   agent_params=None, debug=True):
+
+    def try_agents(
+        agent_types,
+        n_trials=4,
+        n_steps=10,
+        year=2024,
+        draw=True,
+        agent_params=None,
+        debug=True,
+    ):
         """
         Runs a simulation with the given agent_types, and n_processes n_trial times.
         Optionally also draws a graph showing what happened
         """
         n = len(agent_types)
         if n not in CONFIGS:
-            CONFIGS[n] =  make_configs(n, n_trials, n_steps, year=year)
+            CONFIGS[n] = make_configs(n, n_trials, n_steps, year=year)
         n_rem = n_trials - len(CONFIGS[n])
         if n_rem > 0:
             CONFIGS[n] += make_configs(n, n_rem, n_steps, year=year)
@@ -63,9 +80,10 @@ this brief introduction in the remainder of this tutorial.
         worlds = []
         for old_types, config in configs[:n_trials]:
             world = SCML2024OneShotWorld(
-                **SCML2024OneShotWorld.replace_agents(config, old_types,
-                                                      agent_types, agent_params),
-                debug=debug
+                **SCML2024OneShotWorld.replace_agents(
+                    config, old_types, agent_types, agent_params
+                ),
+                debug=debug,
             )
             worlds.append(world)
             world.run()
@@ -76,27 +94,27 @@ this brief introduction in the remainder of this tutorial.
                     continue
                 key = aid if n_trials == 1 else f"{aid}@{world.id[:4]}"
                 agent_scores[key] = (
-                     agent.type_name.split(':')[-1].split('.')[-1],
-                     all_scores[aid],
-                     '(bankrupt)' if world.is_bankrupt[aid] else ''
-                    )
+                    agent.type_name.split(":")[-1].split(".")[-1],
+                    all_scores[aid],
+                    "(bankrupt)" if world.is_bankrupt[aid] else "",
+                )
             for aid, agent in world.agents.items():
                 if is_system_agent(aid):
                     continue
-                type_ = agent.type_name.split(':')[-1].split('.')[-1]
+                type_ = agent.type_name.split(":")[-1].split(".")[-1]
                 type_scores[type_] += all_scores[aid]
                 counts[type_] += 1
-        type_scores = {k: v/counts[k] if counts[k] else v for k, v in type_scores.items()}
+        type_scores = {k: v / counts[k] if counts[k] else v for k, v in type_scores.items()}
         if draw:
             draw_worlds(worlds)
 
-
         return worlds, agent_scores, type_scores
+
 
     def draw_worlds(worlds):
         n_trials = len(worlds)
         mx = min(n_trials, 2)
-        fig = plt.figure(figsize=(11*mx, 8))
+        fig = plt.figure(figsize=(11 * mx, 8))
         axs = fig.subplots(int(math.ceil(n_trials / mx)), mx)
         if isinstance(axs, Iterable):
             axs = axs.flatten()
@@ -104,27 +122,30 @@ this brief introduction in the remainder of this tutorial.
             world.draw(
                 what=["contracts-concluded"],
                 steps=(0, world.n_steps - 1),
-                together=True, ncols=1,
-                axs=ax
+                together=True,
+                ncols=1,
+                axs=ax,
             )
         plt.show()
 
-    def plot_stats(worlds, stats = "score", pertype=True, legend=False, **kwargs):
-        SCML2024OneShotWorld.plot_combined_stats(worlds, stats=stats,
-                        n_steps=None, pertype=pertype, legend=legend, **kwargs)
+
+    def plot_stats(worlds, stats="score", pertype=True, legend=False, **kwargs):
+        SCML2024OneShotWorld.plot_combined_stats(
+            worlds, stats=stats, n_steps=None, pertype=pertype, legend=legend, **kwargs
+        )
+
 
     def analyze_contracts(worlds):
         """
         Analyzes the contracts signed in the given world
         """
-        import pandas as pd
         dfs = []
         for world in worlds:
             dfs.append(pd.DataFrame.from_records(world.saved_contracts))
         data = pd.concat(dfs)
-        return data.groupby(["seller_name", "buyer_name"])[
-            ["quantity", "unit_price"]
-        ].agg(dict(quantity=("sum", "count"), unit_price="mean"))
+        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].agg(
+            dict(quantity=("sum", "count"), unit_price="mean")
+        )
 
 
     def print_agent_scores(agent_scores):
@@ -133,6 +154,7 @@ this brief introduction in the remainder of this tutorial.
         """
         for aid, (type_, score, bankrupt) in agent_scores.items():
             print(f"Agent {aid} of type {type_} has a final score of {score} {bankrupt}")
+
 
     def print_type_scores(type_scores):
         """Prints scores of agent types"""
@@ -178,9 +200,13 @@ an agent that does absolutely nothing:
 
     class MyOneShotDoNothing(OneShotPolicy):
         """My Agent that does nothing"""
+
         def act(self, state):
-            return { partner: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                    for partner in state.my_suppliers + state.my_consumers}
+            return {
+                partner: SAOResponse(ResponseType.END_NEGOTIATION, None)
+                for partner in state.my_suppliers + state.my_consumers
+            }
+
 
     worlds, ascores, tscores = try_agent(MyOneShotDoNothing)
 
@@ -211,7 +237,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6031176643419602</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6031131220620246</span>
     </pre>
 
 
@@ -219,7 +245,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.727656132471247</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.726283624807331</span>
     </pre>
 
 
@@ -227,7 +253,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 02MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6617786085923489</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 02MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6618281062750258</span>
     </pre>
 
 
@@ -235,7 +261,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6904456043225975</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7012932341835069</span>
     </pre>
 
 
@@ -243,7 +269,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6008827714488467</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6013751822458041</span>
     </pre>
 
 
@@ -251,7 +277,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7867811822459427</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7928252360677007</span>
     </pre>
 
 
@@ -259,7 +285,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.617923151686298</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5966974483402214</span>
     </pre>
 
 
@@ -267,7 +293,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0023792558115745</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9845941143226574</span>
     </pre>
 
 
@@ -275,7 +301,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9280892288339113</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9268995587269059</span>
     </pre>
 
 
@@ -283,7 +309,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9098163189152677</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8388148187938812</span>
     </pre>
 
 
@@ -291,7 +317,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 10Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6996257559844632</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 10Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7173385576092934</span>
     </pre>
 
 
@@ -299,7 +325,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 11MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6437961694263548</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 11MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6403729155816473</span>
     </pre>
 
 
@@ -315,7 +341,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 13Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7277407816461483</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 13Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7577511479257142</span>
     </pre>
 
 
@@ -323,7 +349,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 14Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6393516337546318</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 14Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6026501396666283</span>
     </pre>
 
 
@@ -331,7 +357,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9050916461433971</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9061362198461169</span>
     </pre>
 
 
@@ -339,7 +365,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7807026751284831</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7745993059323387</span>
     </pre>
 
 
@@ -347,7 +373,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5745846266702438</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5728452434236279</span>
     </pre>
 
 
@@ -355,7 +381,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7509814537074158</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9212104543746197</span>
     </pre>
 
 
@@ -363,7 +389,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.839755981538969</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8430875552852014</span>
     </pre>
 
 
@@ -371,7 +397,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8904790288264331</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9875701129127569</span>
     </pre>
 
 
@@ -379,7 +405,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5791323799139121</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.579286723432963</span>
     </pre>
 
 
@@ -387,7 +413,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6313404476043059</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6313451735212542</span>
     </pre>
 
 
@@ -395,7 +421,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8238075213417039</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7465643413179349</span>
     </pre>
 
 
@@ -403,7 +429,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0115954134099812</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8897214077614832</span>
     </pre>
 
 
@@ -411,7 +437,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5456815250863024</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5785701301884822</span>
     </pre>
 
 
@@ -419,7 +445,7 @@ Let’s check the scores of different agents to confirm:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.680541289375583</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.49761339138624994</span>
     </pre>
 
 
@@ -446,7 +472,7 @@ still has to pay for disposal cost and shortfall penalty.
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7723425518718794</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'MyOneShotDoNothing'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6474358883893667</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7599070222878074</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'MyOneShotDoNothing'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6478751040125449</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -511,107 +537,101 @@ market.
         <tr>
           <th rowspan="4" valign="top">00Ra@0</th>
           <th>06Ra@1</th>
-          <td>28</td>
-          <td>12</td>
-          <td>16.083333</td>
+          <td>21</td>
+          <td>11</td>
+          <td>16.272727</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
-          <td>6</td>
-          <td>4</td>
-          <td>16.250000</td>
+          <td>16</td>
+          <td>7</td>
+          <td>16.428571</td>
         </tr>
         <tr>
           <th>10Ra@1</th>
-          <td>9</td>
-          <td>5</td>
-          <td>16.200000</td>
+          <td>24</td>
+          <td>10</td>
+          <td>15.900000</td>
         </tr>
         <tr>
           <th>12Ra@1</th>
-          <td>7</td>
-          <td>3</td>
+          <td>4</td>
+          <td>1</td>
           <td>16.000000</td>
         </tr>
         <tr>
-          <th rowspan="7" valign="top">01Ra@0</th>
+          <th rowspan="6" valign="top">01Ra@0</th>
           <th>06Ra@1</th>
-          <td>15</td>
           <td>7</td>
-          <td>16.285714</td>
+          <td>3</td>
+          <td>16.333333</td>
         </tr>
         <tr>
           <th>07Ra@1</th>
-          <td>19</td>
+          <td>21</td>
           <td>9</td>
-          <td>15.666667</td>
+          <td>15.444444</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
-          <td>9</td>
-          <td>5</td>
-          <td>16.000000</td>
+          <td>24</td>
+          <td>10</td>
+          <td>16.200000</td>
         </tr>
         <tr>
           <th>09Ra@1</th>
-          <td>3</td>
-          <td>3</td>
-          <td>15.000000</td>
+          <td>2</td>
+          <td>1</td>
+          <td>16.000000</td>
         </tr>
         <tr>
           <th>10Ra@1</th>
-          <td>17</td>
-          <td>8</td>
-          <td>15.625000</td>
+          <td>13</td>
+          <td>6</td>
+          <td>15.833333</td>
         </tr>
         <tr>
           <th>13Ra@1</th>
-          <td>1</td>
-          <td>1</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>14Ra@1</th>
-          <td>4</td>
+          <td>2</td>
           <td>1</td>
           <td>15.000000</td>
         </tr>
         <tr>
           <th rowspan="6" valign="top">03Ra@0</th>
           <th>07Ra@1</th>
-          <td>23</td>
-          <td>12</td>
-          <td>15.416667</td>
+          <td>21</td>
+          <td>11</td>
+          <td>15.454545</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
-          <td>8</td>
+          <td>13</td>
+          <td>5</td>
+          <td>15.200000</td>
+        </tr>
+        <tr>
+          <th>09Ra@1</th>
+          <td>2</td>
+          <td>2</td>
+          <td>15.000000</td>
+        </tr>
+        <tr>
+          <th>10Ra@1</th>
+          <td>7</td>
           <td>4</td>
           <td>15.500000</td>
         </tr>
         <tr>
-          <th>09Ra@1</th>
-          <td>7</td>
-          <td>4</td>
-          <td>15.250000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <td>9</td>
-          <td>6</td>
-          <td>15.333333</td>
-        </tr>
-        <tr>
           <th>13Ra@1</th>
-          <td>10</td>
+          <td>8</td>
           <td>4</td>
           <td>15.000000</td>
         </tr>
         <tr>
           <th>14Ra@1</th>
-          <td>10</td>
+          <td>9</td>
           <td>4</td>
-          <td>15.250000</td>
+          <td>15.000000</td>
         </tr>
         <tr>
           <th>04MDN@1</th>
@@ -623,21 +643,21 @@ market.
         <tr>
           <th rowspan="3" valign="top">04Ra@0</th>
           <th>06Ra@1</th>
-          <td>9</td>
-          <td>6</td>
-          <td>15.000000</td>
+          <td>2</td>
+          <td>2</td>
+          <td>15.500000</td>
         </tr>
         <tr>
           <th>10Ra@1</th>
-          <td>7</td>
+          <td>8</td>
           <td>4</td>
-          <td>15.250000</td>
+          <td>15.500000</td>
         </tr>
         <tr>
           <th>12Ra@1</th>
-          <td>13</td>
-          <td>5</td>
-          <td>15.200000</td>
+          <td>4</td>
+          <td>2</td>
+          <td>15.000000</td>
         </tr>
         <tr>
           <th>05MDN@1</th>
@@ -647,46 +667,40 @@ market.
           <td>23.500000</td>
         </tr>
         <tr>
-          <th rowspan="7" valign="top">05Ra@0</th>
+          <th rowspan="6" valign="top">05Ra@0</th>
           <th>06Ra@1</th>
-          <td>28</td>
-          <td>11</td>
-          <td>16.000000</td>
+          <td>10</td>
+          <td>4</td>
+          <td>16.250000</td>
         </tr>
         <tr>
           <th>07Ra@1</th>
-          <td>1</td>
-          <td>1</td>
-          <td>15.000000</td>
+          <td>2</td>
+          <td>2</td>
+          <td>15.500000</td>
         </tr>
         <tr>
           <th>08Ra@1</th>
+          <td>17</td>
           <td>6</td>
-          <td>2</td>
-          <td>17.000000</td>
+          <td>16.666667</td>
         </tr>
         <tr>
           <th>09Ra@1</th>
-          <td>2</td>
-          <td>2</td>
+          <td>5</td>
+          <td>3</td>
           <td>15.000000</td>
         </tr>
         <tr>
           <th>10Ra@1</th>
-          <td>13</td>
-          <td>7</td>
-          <td>15.571429</td>
-        </tr>
-        <tr>
-          <th>12Ra@1</th>
-          <td>10</td>
-          <td>4</td>
-          <td>15.250000</td>
+          <td>18</td>
+          <td>11</td>
+          <td>15.818182</td>
         </tr>
         <tr>
           <th>13Ra@1</th>
+          <td>3</td>
           <td>2</td>
-          <td>1</td>
           <td>15.000000</td>
         </tr>
         <tr>
@@ -697,17 +711,29 @@ market.
           <td>23.000000</td>
         </tr>
         <tr>
-          <th rowspan="2" valign="top">06Ra@0</th>
+          <th rowspan="4" valign="top">06Ra@0</th>
+          <th>07Ra@1</th>
+          <td>1</td>
+          <td>1</td>
+          <td>16.000000</td>
+        </tr>
+        <tr>
           <th>09Ra@1</th>
-          <td>5</td>
-          <td>3</td>
-          <td>15.333333</td>
+          <td>1</td>
+          <td>1</td>
+          <td>15.000000</td>
         </tr>
         <tr>
           <th>10Ra@1</th>
-          <td>9</td>
-          <td>5</td>
-          <td>15.400000</td>
+          <td>8</td>
+          <td>4</td>
+          <td>15.250000</td>
+        </tr>
+        <tr>
+          <th>13Ra@1</th>
+          <td>1</td>
+          <td>1</td>
+          <td>15.000000</td>
         </tr>
         <tr>
           <th>06Ra@1</th>
@@ -1080,7 +1106,7 @@ using the same base class.
         def propose(self, negotiator_id: str, state) -> "Outcome":
             return self.best_offer(negotiator_id)
 
-        def respond(self, negotiator_id, state, source=''):
+        def respond(self, negotiator_id, state, source=""):
             offer = state.current_offer
             my_needs = self._needed(negotiator_id)
             if my_needs <= 0:
@@ -1102,8 +1128,7 @@ using the same base class.
 
             offer = [-1] * 3
             offer[QUANTITY] = max(
-                min(my_needs, quantity_issue.max_value),
-                quantity_issue.min_value
+                min(my_needs, quantity_issue.max_value), quantity_issue.min_value
             )
             offer[TIME] = self.awi.current_step
             offer[UNIT_PRICE] = self._find_good_price(ami)
@@ -1120,10 +1145,15 @@ using the same base class.
             return negotiator_id in self.awi.current_negotiation_details["sell"].keys()
 
         def _needed(self, negotiator_id=None):
-            return self.awi.needed_sales if self.is_seller(negotiator_id) else self.awi.needed_supplies
+            return (
+                self.awi.needed_sales
+                if self.is_seller(negotiator_id)
+                else self.awi.needed_supplies
+            )
 
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
+
 
     worlds, ascores, tscores = try_agent(SimpleAgent)
     world = worlds[0]
@@ -1143,7 +1173,7 @@ Let’s see how well did this agent behave:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0101855004588396</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9555481594595844</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9969970116270792</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9535626397680571</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -1293,7 +1323,7 @@ We will try to remedie both of these issues in the following agent:
             super().__init__(*args, **kwargs)
             self._e = concession_exponent
 
-        def respond(self, negotiator_id, state, source=''):
+        def respond(self, negotiator_id, state, source=""):
             offer = state.current_offer
             if offer is None:
                 return ResponseType.REJECT_OFFER
@@ -1302,8 +1332,8 @@ We will try to remedie both of these issues in the following agent:
                 return response
             nmi = self.get_nmi(negotiator_id)
             return (
-                response if
-                self._is_good_price(nmi, state, offer[UNIT_PRICE])
+                response
+                if self._is_good_price(nmi, state, offer[UNIT_PRICE])
                 else ResponseType.REJECT_OFFER
             )
 
@@ -1338,6 +1368,7 @@ We will try to remedie both of these issues in the following agent:
             """calculates a descending threshold (0 <= th <= 1)"""
             return ((n_steps - step - 1) / (n_steps - 1)) ** self._e
 
+
     world, ascores, tscores = try_agent(BetterAgent)
 
 
@@ -1355,7 +1386,7 @@ Let’s see how well did this agent behave:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0141697807762746</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9774260234215757</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0264522478629563</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9699196786054276</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -1416,7 +1447,8 @@ different concession exponents:
         a = BetterAgent(concession_exponent=e)
         y = [a._th(i, 20) for i in x]
         plt.plot(x, y, label=f"Concession Exponent: {e}")
-        plt.xlabel("Step (Of 20)"); plt.ylabel("Threshold $th$")
+        plt.xlabel("Step (Of 20)")
+        plt.ylabel("Threshold $th$")
         plt.legend()
 
 
@@ -1496,7 +1528,7 @@ concessions. The following agent implements this idea
         def before_step(self):
             self._best_selling, self._best_buying = 0.0, float("inf")
 
-        def respond(self, negotiator_id, state, source=''):
+        def respond(self, negotiator_id, state, source=""):
             """Save the best price received"""
             offer = state.current_offer
             response = super().respond(negotiator_id, state, source)
@@ -1516,6 +1548,7 @@ concessions. The following agent implements this idea
                 mx = min(mx, self._best_buying)
             return mn, mx
 
+
     world, ascores, tscores = try_agent(AdaptiveAgent)
 
 
@@ -1533,7 +1566,7 @@ Let’s see how well did this agent behave:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0102615930307641</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'AdaptiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9119227021022484</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0291281184966112</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'AdaptiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8934810912093554</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -1560,6 +1593,7 @@ because price is not important in SCML-OneShot
             i = nmi.issues[UNIT_PRICE]
             return i.min_value if random.random() < 0.5 else i.max_value
 
+
     world, ascores, tscores = try_agent(GenerousAgent)
 
 
@@ -1575,7 +1609,7 @@ because price is not important in SCML-OneShot
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0116722124185216</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GenerousAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9458590754086689</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000990841985219</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GenerousAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.950642924925293</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -1610,9 +1644,9 @@ do-nothing agent in this form:
 
 .. code:: ipython3
 
-    from negmas import SAOResponse
     class MySyncOneShotDoNothing(OneShotSyncAgent):
         """My Agent that does nothing"""
+
         def counter_all(self, offers, states):
             """Respond to a set of offers given the negotiation state of each."""
             return dict()
@@ -1621,6 +1655,7 @@ do-nothing agent in this form:
             """Decide a first proposal on every negotiation.
             Returning None for a negotiation means ending it."""
             return dict()
+
 
     world, ascores, tscores = try_agent(MySyncOneShotDoNothing)
 
@@ -1668,10 +1703,12 @@ greedy agent using this approach.
         def first_proposals(self):
             """Decide a first proposal on every negotiation.
             Returning None for a negotiation means ending it."""
-            return  dict(zip(
+            return dict(
+                zip(
                     self.negotiators.keys(),
-                    (self.best_offer(_) for _ in self.negotiators.keys())
-            ))
+                    (self.best_offer(_) for _ in self.negotiators.keys()),
+                )
+            )
 
         def counter_all(self, offers, states):
             """Respond to a set of offers given the negotiation state of each."""
@@ -1686,12 +1723,12 @@ greedy agent using this approach.
             my_needs = self._needed()
 
             # Am I a seller?
-            is_selling = ( self._is_selling(self.get_nmi(_)) for _ in offers.keys() )
+            is_selling = (self._is_selling(self.get_nmi(_)) for _ in offers.keys())
 
             # sort my offres by price (descendingly/ascendingly for a seller/buyer)
             sorted_offers = sorted(
                 zip(offers.values(), is_selling),
-                key=lambda x: (- x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE]
+                key=lambda x: (-x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE],
             )
 
             # greedly choose offers until my needs are satsified
@@ -1726,8 +1763,7 @@ greedy agent using this approach.
 
             offer = [-1] * 3
             offer[QUANTITY] = max(
-                min(my_needs, quantity_issue.max_value),
-                quantity_issue.min_value
+                min(my_needs, quantity_issue.max_value), quantity_issue.min_value
             )
             offer[TIME] = self.awi.current_step
             offer[UNIT_PRICE] = self._find_good_price(ami)
@@ -1737,7 +1773,11 @@ greedy agent using this approach.
             return negotiator_id in self.awi.current_negotiation_details["sell"].keys()
 
         def _needed(self, negotiator_id=None):
-            return self.awi.needed_sales if self.is_seller(negotiator_id) else self.awi.needed_supplies
+            return (
+                self.awi.needed_sales
+                if self.is_seller(negotiator_id)
+                else self.awi.needed_supplies
+            )
 
         def _find_good_price(self, nmi):
             """Finds a good-enough price conceding linearly over time"""
@@ -1747,7 +1787,6 @@ greedy agent using this approach.
 
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
-
 
 
     world, ascores, tscores = try_agent(NaiveSyncAgent)
@@ -1885,7 +1924,7 @@ Let’s see how did it do:
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0149357669963393</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'NaiveSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7821971725802134</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0129199272791813</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'NaiveSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7958632384071765</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -1916,6 +1955,7 @@ quantity :math:`q` over :math:`n` partners.
         least one item per bin assuming q > n"""
         from numpy.random import choice
         from collections import Counter
+
         if q < n:
             lst = [0] * (n - q) + [1] * q
             random.shuffle(lst)
@@ -1938,7 +1978,7 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[1, 4, 2, 3], [2, 4, 1, 3], [3, 2, 3, 2], [1, 3, 2, 4], [3, 1, 3, 3]]
+    [[1, 2, 1, 6], [4, 3, 1, 2], [2, 4, 2, 2], [2, 4, 3, 1], [1, 3, 3, 3]]
 
 
 
@@ -1951,7 +1991,7 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[1, 0, 0, 1], [1, 0, 1, 0], [1, 0, 1, 0], [1, 0, 0, 1], [1, 0, 1, 0]]
+    [[0, 0, 1, 1], [0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 1, 0], [1, 1, 0, 0]]
 
 
 
@@ -1962,9 +2002,10 @@ We will also need a helper function to find all subsets of a given set
 
     from itertools import chain, combinations
 
+
     def powerset(iterable):
         s = list(iterable)
-        return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+        return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 .. code:: ipython3
 
@@ -2034,13 +2075,16 @@ We will also need a helper function to find all subsets of a given set
 
                 # If the best combination of offers is good enough, accept them and end all
                 # other negotiations
-                th = self._current_threshold(min([_.relative_time  for _ in states.values()]))
+                th = self._current_threshold(
+                    min([_.relative_time for _ in states.values()])
+                )
                 if best_diff <= th:
                     partner_ids = plist[best_indx]
                     others = list(partners.difference(partner_ids))
-                    response |= ({
-                        k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k]) for k in partner_ids
-                    } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others})
+                    response |= {
+                        k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k])
+                        for k in partner_ids
+                    } | {k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others}
                     continue
 
                 # If I still do not have a good enough offer, distribute my current needs
@@ -2060,23 +2104,20 @@ We will also need a helper function to find all subsets of a given set
 
         def _current_threshold(self, r: float):
             mn, mx = 0, self.awi.n_lines // 2
-            return mn + (mx-mn) * (r**4.0)
+            return mn + (mx - mn) * (r**4.0)
 
         def _step_and_price(self, best_price=False):
             """Returns current step and a random (or max) price"""
             s = self.awi.current_step
             seller = self.awi.is_first_level
             issues = (
-                self.awi.current_output_issues
-                if seller else
-                self.awi.current_input_issues
+                self.awi.current_output_issues if seller else self.awi.current_input_issues
             )
             pmin = issues[UNIT_PRICE].min_value
             pmax = issues[UNIT_PRICE].max_value
             if best_price:
                 return s, pmax if seller else pmin
             return s, random.randint(pmin, pmax)
-
 
 .. code:: ipython3
 
@@ -2095,7 +2136,7 @@ We will also need a helper function to find all subsets of a given set
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0535064014580098</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.005966017704938</span><span style="font-weight: bold">)]</span>
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0501848628435189</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0203591442793456</span><span style="font-weight: bold">)]</span>
     </pre>
 
 
@@ -2293,12 +2334,15 @@ tutorial (we will ignore the do-nothing agents)
     # may take a long time
     worlds, _, tscores = try_agents(
         [
-            SimpleAgent, BetterSyncAgent,
-            BetterAgent, GenerousAgent,
-            AdaptiveAgent, NaiveSyncAgent,
+            SimpleAgent,
+            BetterSyncAgent,
+            BetterAgent,
+            GenerousAgent,
+            AdaptiveAgent,
+            NaiveSyncAgent,
         ],
         n_trials=20,
-        draw=False
+        draw=False,
     )
     print_type_scores(tscores)
 
@@ -2307,12 +2351,12 @@ tutorial (we will ignore the do-nothing agents)
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0706506152742656</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0387263326067897</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GenerousAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.035334453522462</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'AdaptiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0223696771202466</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0018353569832315</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'NaiveSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7775745392767975</span><span style="font-weight: bold">)</span>
+        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0763460675130074</span><span style="font-weight: bold">)</span>,
+        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'AdaptiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0609834039844082</span><span style="font-weight: bold">)</span>,
+        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GenerousAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0537763193991214</span><span style="font-weight: bold">)</span>,
+        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0493394841164685</span><span style="font-weight: bold">)</span>,
+        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9907638782608417</span><span style="font-weight: bold">)</span>,
+        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'NaiveSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7532533862458681</span><span style="font-weight: bold">)</span>
     <span style="font-weight: bold">]</span>
     </pre>
 
@@ -2345,7 +2389,8 @@ in this tutorial (with some modifications):
 .. code:: ipython3
 
     import scml.oneshot.agents as agents
-    print([ _ for _ in agents.__dir__() if _.endswith("Agent")])
+
+    print([_ for _ in agents.__dir__() if _.endswith("Agent")])
 
 
 
@@ -2364,9 +2409,6 @@ in this tutorial (with some modifications):
         <span style="color: #008000; text-decoration-color: #008000">'SingleAgreementRandomAgent'</span>
     <span style="font-weight: bold">]</span>
     </pre>
-
-
-
 
 
 Download :download:`Notebook<notebooks/02.develop_agent_scml2024_oneshot.ipynb>`.

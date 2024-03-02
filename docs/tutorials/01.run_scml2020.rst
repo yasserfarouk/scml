@@ -441,13 +441,15 @@ happening in the world.
 
 .. code:: ipython3
 
-    agent_types = [SyncRandomStdAgent, RandDistOneShotAgent, GreedyOneShotAgent, RandomStdAgent]
+    agent_types = [
+        SyncRandomStdAgent,
+        RandDistOneShotAgent,
+        GreedyOneShotAgent,
+        RandomStdAgent,
+    ]
 
     world = SCML2024StdWorld(
-        **SCML2024StdWorld.generate(
-            agent_types=agent_types,
-            n_steps=50
-        ),
+        **SCML2024StdWorld.generate(agent_types=agent_types, n_steps=50),
         construct_graphs=True,
     )
 
@@ -470,7 +472,7 @@ Now you can run this world simulation by just calling ``run``.
 
 .. code:: ipython3
 
-    world.run_with_progress() # may take few minutes
+    world.run_with_progress()  # may take few minutes
 
 
 
@@ -499,7 +501,7 @@ conducted over time
 
 .. code:: ipython3
 
-    world.plot_stats('n_negotiations')
+    world.plot_stats("n_negotiations")
     plt.show()
 
 
@@ -594,7 +596,7 @@ same data as a pandas dataframe.
 
 .. code:: ipython3
 
-    world.stats_df['step_time'].plot(kind="bar")
+    world.stats_df["step_time"].plot(kind="bar")
     plt.show()
 
 
@@ -622,24 +624,24 @@ winner agent:
 .. code:: ipython3
 
     winner = world.winners[0]
-    print(list(_ for _ in world.stats.keys() if winner.name in _ ))
+    print(list(_ for _ in world.stats.keys() if winner.name in _))
 
 
 
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="color: #008000; text-decoration-color: #008000">'score_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'balance_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'bankrupt_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'productivity_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'storage_cost_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'inventory_input_10Ra@1'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'inventory_output_10Ra@1'</span>
+        <span style="color: #008000; text-decoration-color: #008000">'score_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'balance_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'bankrupt_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'productivity_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'storage_cost_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_input_07Ra@1'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_output_07Ra@1'</span>
     <span style="font-weight: bold">]</span>
     </pre>
 
@@ -682,25 +684,25 @@ Let’s see how did our agent do
 
 .. code:: ipython3
 
-    #show the first and last value of each of the agent statistics
-    print({k:(v[0], v[-1]) for k, v in world.stats.items() if winner.name in k })
+    # show the first and last value of each of the agent statistics
+    print({k: (v[0], v[-1]) for k, v in world.stats.items() if winner.name in k})
 
 
 
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">{</span>
-        <span style="color: #008000; text-decoration-color: #008000">'score_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0047540442390228</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.2002162334584274</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'balance_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">15217.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">18177.274855727883</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'bankrupt_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #ff0000; text-decoration-color: #ff0000; font-style: italic">False</span>, <span style="color: #ff0000; text-decoration-color: #ff0000; font-style: italic">False</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'productivity_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">4</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">116.15327847766035</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'storage_cost_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'inventory_input_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'inventory_output_10Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>
+        <span style="color: #008000; text-decoration-color: #008000">'score_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9834377643860506</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1567247447127778</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'balance_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9980.909870754027</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">11739.599434089982</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'bankrupt_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #ff0000; text-decoration-color: #ff0000; font-style: italic">False</span>, <span style="color: #ff0000; text-decoration-color: #ff0000; font-style: italic">False</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'productivity_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.2</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.3</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_quantity_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'shortfall_penalty_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">184.09012924597346</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">25.226622802500106</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'storage_cost_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'disposal_cost_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_penalized_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_input_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3</span><span style="font-weight: bold">)</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'inventory_output_07Ra@1'</span>: <span style="font-weight: bold">(</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">)</span>
     <span style="font-weight: bold">}</span>
     </pre>
 
@@ -710,7 +712,10 @@ Let’s see how did our agent do
 
     stats = pd.DataFrame(data=world.stats)
     fig, axs = plt.subplots(2, 3)
-    for ax, key in zip(axs.flatten().tolist(), ["score", "balance", "productivity", "shortfall_penalty", "storage_cost"]):
+    for ax, key in zip(
+        axs.flatten().tolist(),
+        ["score", "balance", "productivity", "shortfall_penalty", "storage_cost"],
+    ):
         ax.plot(stats[f"{key}_{winner}"])
         ax.set(ylabel=key)
     fig.show()
@@ -725,7 +730,7 @@ the total amount of money transferred due to trade)
 
 .. code:: ipython3
 
-    world.plot_stats('activity_level')
+    world.plot_stats("activity_level")
     plt.show()
 
 
@@ -756,7 +761,7 @@ Notice that there can be multiple winners
 
 .. code:: ipython3
 
-    winner_profits = [100*world.scores()[_.id] - 100 for _ in world.winners]
+    winner_profits = [100 * world.scores()[_.id] - 100 for _ in world.winners]
     winner_types = [_.short_type_name for _ in world.winners]
     print(f"{world.winners} of type {winner_types} won at {winner_profits}% profit")
 
@@ -764,7 +769,7 @@ Notice that there can be multiple winners
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>10Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span><span style="font-weight: bold">]</span> of type <span style="font-weight: bold">[</span><span style="color: #008000; text-decoration-color: #008000">'randdistoneshot:RDOS'</span><span style="font-weight: bold">]</span> won at <span style="font-weight: bold">[</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20.02162334584274</span><span style="font-weight: bold">]</span>% profit
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>07Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span><span style="font-weight: bold">]</span> of type <span style="font-weight: bold">[</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span><span style="font-weight: bold">]</span> won at <span style="font-weight: bold">[</span><span style="color: #008080; text-decoration-color: #008080; font-weight: bold">15.67247447127778</span><span style="font-weight: bold">]</span>% profit
     </pre>
 
 
@@ -774,22 +779,33 @@ Let’s check how did the first winner’s inventory changes over time:
 .. code:: ipython3
 
     # find the keys in stats for the input and output inventory
-    in_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_input_{winner}')][0]
-    out_key = [_ for _ in world.stats.keys() if _.startswith(f'inventory_output_{winner}')][0]
+    in_key = [_ for _ in world.stats.keys() if _.startswith(f"inventory_input_{winner}")][0]
+    out_key = [_ for _ in world.stats.keys() if _.startswith(f"inventory_output_{winner}")][
+        0
+    ]
 
     # find input and output product indices
-    input_product, output_product = winner.awi.my_input_product, winner.awi.my_output_product
+    input_product, output_product = (
+        winner.awi.my_input_product,
+        winner.awi.my_output_product,
+    )
     # draw
     fig, (quantity, value) = plt.subplots(1, 2)
-    quantity.plot(world.stats[in_key], label=f"Input Product")
-    quantity.plot(world.stats[out_key], label=f"Output Product")
-    quantity.set(xlabel='Simulation Step', ylabel='Winner\'s Total Storage (item)')
+    quantity.plot(world.stats[in_key], label="Input Product")
+    quantity.plot(world.stats[out_key], label="Output Product")
+    quantity.set(xlabel="Simulation Step", ylabel="Winner's Total Storage (item)")
     quantity.legend()
-    value.plot(np.array(world.stats[in_key]) * np.array(world.stats[f"trading_price_{input_product}"])
-                  , label=f"Input Product")
-    value.plot(np.array(world.stats[out_key]) * np.array(world.stats[f"trading_price_{output_product}"])
-                  , label=f"Output Product")
-    value.set(xlabel='Simulation Step', ylabel='Winner\'s Inventory Value ($)')
+    value.plot(
+        np.array(world.stats[in_key])
+        * np.array(world.stats[f"trading_price_{input_product}"]),
+        label="Input Product",
+    )
+    value.plot(
+        np.array(world.stats[out_key])
+        * np.array(world.stats[f"trading_price_{output_product}"]),
+        label="Output Product",
+    )
+    value.set(xlabel="Simulation Step", ylabel="Winner's Inventory Value ($)")
     value.legend()
     fig.show()
 
@@ -803,8 +819,10 @@ We can actually check what happens to ALL competitors:
 .. code:: ipython3
 
     _, axs = plt.subplots(1, 2)
-    plt.sca(axs[0]); world.plot_stats("balance", ylegend=-0.05)
-    plt.sca(axs[1]); world.plot_stats("score", legend=False)
+    plt.sca(axs[0])
+    world.plot_stats("balance", ylegend=-0.05)
+    plt.sca(axs[1])
+    world.plot_stats("score", legend=False)
     plt.show()
 
 
@@ -814,15 +832,17 @@ We can actually check what happens to ALL competitors:
 
 .. code:: ipython3
 
-    from scml.scml2020.world import is_system_agent
     fig, (profit, score) = plt.subplots(1, 2)
     snames = sorted(world.non_system_agent_names)
     for name in snames:
-        profit.plot((np.asarray(world.stats[f'balance_{name}'])), label=name)
-        score.plot(np.asarray(world.stats[f'score_{name}'])*(world.stats[f'balance_{name}'][0]), label=name)
-    profit.set(xlabel='Simulation Step', ylabel='Player Balance ($)')
-    profit.legend(loc='lower left')
-    score.set(xlabel='Simulation Step', ylabel='Player Score Unnormalized ($)')
+        profit.plot((np.asarray(world.stats[f"balance_{name}"])), label=name)
+        score.plot(
+            np.asarray(world.stats[f"score_{name}"]) * (world.stats[f"balance_{name}"][0]),
+            label=name,
+        )
+    profit.set(xlabel="Simulation Step", ylabel="Player Balance ($)")
+    profit.legend(loc="lower left")
+    score.set(xlabel="Simulation Step", ylabel="Player Score Unnormalized ($)")
     fig.show()
 
 
@@ -835,10 +855,13 @@ or just look at the end of the game
 .. code:: ipython3
 
     fig, (score, profit) = plt.subplots(1, 2)
-    final_scores = [100 * world.stats[f"score_{_}"][-1]
-                    for _ in world.non_system_agent_names]
-    final_profits = [100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100
-                     for _ in world.non_system_agent_names]
+    final_scores = [
+        100 * world.stats[f"score_{_}"][-1] for _ in world.non_system_agent_names
+    ]
+    final_profits = [
+        100 * world.stats[f"balance_{_}"][-1] / world.stats[f"balance_{_}"][0] - 100
+        for _ in world.non_system_agent_names
+    ]
     plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
     score.bar(world.non_system_agent_names, final_scores)
@@ -856,10 +879,11 @@ or just look at the end of the game
 .. code:: ipython3
 
     fig, (score, profit) = plt.subplots(1, 2)
-    final_scores = [world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0])
-                    for _ in world.non_system_agent_names]
-    final_profits = [world.stats[f"balance_{_}"][-1]
-                     for _ in world.non_system_agent_names]
+    final_scores = [
+        world.stats[f"score_{_}"][-1] * (world.stats[f"balance_{_}"][0])
+        for _ in world.non_system_agent_names
+    ]
+    final_profits = [world.stats[f"balance_{_}"][-1] for _ in world.non_system_agent_names]
     plt.setp(score.xaxis.get_majorticklabels(), rotation=45)
     plt.setp(profit.xaxis.get_majorticklabels(), rotation=45)
     score.bar(world.non_system_agent_names, final_scores)
@@ -881,12 +905,14 @@ different products change over the simulation time.
 .. code:: ipython3
 
     fig, axs = plt.subplots(2, 2)
-    for ax, key in zip(axs.flatten().tolist(), ["trading_price", "sold_quantity", "unit_price"]):
+    for ax, key in zip(
+        axs.flatten().tolist(), ["trading_price", "sold_quantity", "unit_price"]
+    ):
         for p in range(world.n_products):
             ax.plot(world.stats[f"{key}_{p}"], marker="x", label=f"Product {p}")
             ax.set_ylabel(key.replace("_", " ").title())
             ax.legend().set_visible(False)
-    axs[-1, 0].legend(bbox_to_anchor=(1, -.5), ncol=3)
+    axs[-1, 0].legend(bbox_to_anchor=(1, -0.5), ncol=3)
     fig.show()
 
 
@@ -901,12 +927,22 @@ For example, let’s see some of the contracts that were signed:
 
     # create a view with only signed contracts
     contracts = world.contracts_df
-    signed = contracts.loc[contracts.signed_at>=0, :]
+    signed = contracts.loc[contracts.signed_at >= 0, :]
 
 .. code:: ipython3
 
-    fields = ["seller_name", "buyer_name", "delivery_time", "quantity", "unit_price",
-              "signed_at", "executed", "breached", "nullified", "erred"]
+    fields = [
+        "seller_name",
+        "buyer_name",
+        "delivery_time",
+        "quantity",
+        "unit_price",
+        "signed_at",
+        "executed",
+        "breached",
+        "nullified",
+        "erred",
+    ]
     signed[fields].sort_values(["quantity", "unit_price"], ascending=False).head(10)
 
 
@@ -946,130 +982,130 @@ For example, let’s see some of the contracts that were signed:
       </thead>
       <tbody>
         <tr>
-          <th>110</th>
-          <td>05SRS@0</td>
-          <td>08Ra@1</td>
-          <td>8</td>
-          <td>30</td>
-          <td>17</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>186</th>
-          <td>04SRS@0</td>
-          <td>09SRS@1</td>
-          <td>7</td>
-          <td>30</td>
-          <td>17</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>4</th>
+          <th>0</th>
           <td>03Ra@0</td>
-          <td>08Ra@1</td>
-          <td>7</td>
+          <td>09SRS@1</td>
+          <td>2</td>
+          <td>30</td>
+          <td>18</td>
+          <td>0</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>65</th>
+          <td>06Ra@0</td>
+          <td>09SRS@1</td>
+          <td>11</td>
           <td>30</td>
           <td>16</td>
-          <td>0</td>
+          <td>1</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1</th>
-          <td>03Ra@0</td>
-          <td>12SRS@1</td>
-          <td>5</td>
-          <td>30</td>
-          <td>15</td>
-          <td>0</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>137</th>
-          <td>05SRS@0</td>
-          <td>09SRS@1</td>
-          <td>10</td>
-          <td>30</td>
-          <td>15</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>275</th>
+          <th>185</th>
           <td>06Ra@0</td>
-          <td>14Ra@1</td>
-          <td>13</td>
+          <td>08Ra@1</td>
+          <td>14</td>
           <td>30</td>
-          <td>15</td>
-          <td>5</td>
+          <td>16</td>
+          <td>4</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>316</th>
+          <td>03Ra@0</td>
+          <td>09SRS@1</td>
+          <td>9</td>
+          <td>30</td>
+          <td>16</td>
+          <td>7</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>1683</th>
+          <th>604</th>
+          <td>04SRS@0</td>
+          <td>13Ra@1</td>
+          <td>15</td>
+          <td>30</td>
+          <td>16</td>
+          <td>15</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>656</th>
+          <td>04SRS@0</td>
+          <td>08Ra@1</td>
+          <td>17</td>
+          <td>30</td>
+          <td>16</td>
+          <td>17</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>657</th>
           <td>05SRS@0</td>
           <td>08Ra@1</td>
-          <td>44</td>
+          <td>17</td>
+          <td>30</td>
+          <td>16</td>
+          <td>17</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>678</th>
+          <td>04SRS@0</td>
+          <td>14Ra@1</td>
+          <td>18</td>
+          <td>30</td>
+          <td>16</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>679</th>
+          <td>05SRS@0</td>
+          <td>14Ra@1</td>
+          <td>18</td>
+          <td>30</td>
+          <td>16</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>53</th>
+          <td>06Ra@0</td>
+          <td>11Gr@1</td>
+          <td>5</td>
           <td>30</td>
           <td>15</td>
-          <td>44</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>106</th>
-          <td>06Ra@0</td>
-          <td>09SRS@1</td>
-          <td>3</td>
-          <td>30</td>
-          <td>14</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>251</th>
-          <td>03Ra@0</td>
-          <td>09SRS@1</td>
-          <td>9</td>
-          <td>30</td>
-          <td>14</td>
-          <td>5</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>252</th>
-          <td>06Ra@0</td>
-          <td>09SRS@1</td>
-          <td>9</td>
-          <td>30</td>
-          <td>14</td>
-          <td>5</td>
+          <td>1</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1085,7 +1121,9 @@ Let’s check some of the contracts that were fully executed
 
 .. code:: ipython3
 
-    signed.loc[signed.executed, fields].sort_values(["quantity", "unit_price"], ascending=False).head(10)
+    signed.loc[signed.executed, fields].sort_values(
+        ["quantity", "unit_price"], ascending=False
+    ).head(10)
 
 
 
@@ -1124,38 +1162,12 @@ Let’s check some of the contracts that were fully executed
       </thead>
       <tbody>
         <tr>
-          <th>110</th>
-          <td>05SRS@0</td>
-          <td>08Ra@1</td>
-          <td>8</td>
-          <td>30</td>
-          <td>17</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>186</th>
-          <td>04SRS@0</td>
-          <td>09SRS@1</td>
-          <td>7</td>
-          <td>30</td>
-          <td>17</td>
-          <td>3</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>4</th>
+          <th>0</th>
           <td>03Ra@0</td>
-          <td>08Ra@1</td>
-          <td>7</td>
+          <td>09SRS@1</td>
+          <td>2</td>
           <td>30</td>
-          <td>16</td>
+          <td>18</td>
           <td>0</td>
           <td>True</td>
           <td>False</td>
@@ -1163,91 +1175,117 @@ Let’s check some of the contracts that were fully executed
           <td>False</td>
         </tr>
         <tr>
-          <th>1</th>
+          <th>65</th>
+          <td>06Ra@0</td>
+          <td>09SRS@1</td>
+          <td>11</td>
+          <td>30</td>
+          <td>16</td>
+          <td>1</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>316</th>
           <td>03Ra@0</td>
-          <td>12SRS@1</td>
+          <td>09SRS@1</td>
+          <td>9</td>
+          <td>30</td>
+          <td>16</td>
+          <td>7</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>604</th>
+          <td>04SRS@0</td>
+          <td>13Ra@1</td>
+          <td>15</td>
+          <td>30</td>
+          <td>16</td>
+          <td>15</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>656</th>
+          <td>04SRS@0</td>
+          <td>08Ra@1</td>
+          <td>17</td>
+          <td>30</td>
+          <td>16</td>
+          <td>17</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>657</th>
+          <td>05SRS@0</td>
+          <td>08Ra@1</td>
+          <td>17</td>
+          <td>30</td>
+          <td>16</td>
+          <td>17</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>678</th>
+          <td>04SRS@0</td>
+          <td>14Ra@1</td>
+          <td>18</td>
+          <td>30</td>
+          <td>16</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>679</th>
+          <td>05SRS@0</td>
+          <td>14Ra@1</td>
+          <td>18</td>
+          <td>30</td>
+          <td>16</td>
+          <td>18</td>
+          <td>True</td>
+          <td>False</td>
+          <td>False</td>
+          <td>False</td>
+        </tr>
+        <tr>
+          <th>53</th>
+          <td>06Ra@0</td>
+          <td>11Gr@1</td>
           <td>5</td>
           <td>30</td>
           <td>15</td>
-          <td>0</td>
+          <td>1</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
           <td>False</td>
         </tr>
         <tr>
-          <th>137</th>
-          <td>05SRS@0</td>
-          <td>09SRS@1</td>
+          <th>364</th>
+          <td>03Ra@0</td>
+          <td>12SRS@1</td>
           <td>10</td>
           <td>30</td>
           <td>15</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>275</th>
-          <td>06Ra@0</td>
-          <td>14Ra@1</td>
-          <td>13</td>
-          <td>30</td>
-          <td>15</td>
-          <td>5</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>1683</th>
-          <td>05SRS@0</td>
-          <td>08Ra@1</td>
-          <td>44</td>
-          <td>30</td>
-          <td>15</td>
-          <td>44</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>106</th>
-          <td>06Ra@0</td>
-          <td>09SRS@1</td>
-          <td>3</td>
-          <td>30</td>
-          <td>14</td>
-          <td>2</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>251</th>
-          <td>03Ra@0</td>
-          <td>09SRS@1</td>
-          <td>9</td>
-          <td>30</td>
-          <td>14</td>
-          <td>5</td>
-          <td>True</td>
-          <td>False</td>
-          <td>False</td>
-          <td>False</td>
-        </tr>
-        <tr>
-          <th>252</th>
-          <td>06Ra@0</td>
-          <td>09SRS@1</td>
-          <td>9</td>
-          <td>30</td>
-          <td>14</td>
-          <td>5</td>
+          <td>8</td>
           <td>True</td>
           <td>False</td>
           <td>False</td>
@@ -1292,9 +1330,11 @@ Did any agents go bankrupt and when?
 
 .. code:: ipython3
 
-    bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
-            for a in world.non_system_agent_names}
-    print({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
+    bankruptcy = {
+        a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
+        for a in world.non_system_agent_names
+    }
+    print({k: "No" if len(v) < 1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
 
 
 
@@ -1304,18 +1344,18 @@ Did any agents go bankrupt and when?
         <span style="color: #008000; text-decoration-color: #008000">'00Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'01Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'02Gr@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'03Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 14'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'03Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 32'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'04SRS@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'05SRS@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'06Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 24'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'06Ra@0'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 12'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'07Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'08Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 45'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'08Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 17'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'09SRS@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'10Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'11Gr@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 32'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'11Gr@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 16'</span>,
         <span style="color: #008000; text-decoration-color: #008000">'12SRS@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'No'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'13Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 40'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'14Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 34'</span>
+        <span style="color: #008000; text-decoration-color: #008000">'13Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 15'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'14Ra@1'</span>: <span style="color: #008000; text-decoration-color: #008000">'at: 18'</span>
     <span style="font-weight: bold">}</span>
     </pre>
 
@@ -1328,6 +1368,7 @@ follows:
 .. code:: ipython3
 
     from negmas import show_edge_colors
+
     show_edge_colors()
 
 
@@ -1370,6 +1411,7 @@ then show the animation
 .. code:: ipython3
 
     from IPython.display import HTML
+
     HTML('<img src="run.gif">')
 
 
@@ -1396,31 +1438,35 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 .. code:: ipython3
 
     from scml.utils import anac2024_std
-    pd.options.display.float_format = '{:,.2f}'.format
+
+    pd.options.display.float_format = "{:,.2f}".format
+
+
     def shorten_names(results):
         # just make agent types more readable
-        results.score_stats.agent_type = results.score_stats.agent_type.str.split(".").str[-1]
+        results.score_stats.agent_type = results.score_stats.agent_type.str.split(".").str[
+            -1
+        ]
         results.kstest.a = results.kstest.a.str.split(".").str[-1]
         results.kstest.b = results.kstest.b.str.split(".").str[-1]
-        results.total_scores.agent_type = results.total_scores.agent_type.str.split(".").str[-1]
+        results.total_scores.agent_type = results.total_scores.agent_type.str.split(
+            "."
+        ).str[-1]
         results.scores.agent_type = results.scores.agent_type.str.split(".").str[-1]
         results.winners = [_.split(".")[-1] for _ in results.winners]
         return results
 
 .. code:: ipython3
 
-    tournament_types = [
-        GreedyStdAgent, SyncRandomStdAgent, RandDistOneShotAgent
-    ]
+    tournament_types = [GreedyStdAgent, SyncRandomStdAgent, RandDistOneShotAgent]
     # may take a long time
     results = anac2024_std(
         competitors=tournament_types,
-        n_configs=5, # number of different configurations to generate
-        n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
-        n_steps = 10, # number of days (simulation steps) per simulation
+        n_configs=5,  # number of different configurations to generate
+        n_runs_per_world=1,  # number of times to repeat every simulation (with agent assignment)
+        n_steps=10,  # number of days (simulation steps) per simulation
         print_exceptions=True,
     )
-
 
 .. code:: ipython3
 
@@ -1437,7 +1483,7 @@ Who was the winner?
 
 .. parsed-literal::
 
-    ['RandDistOneShotAgent']
+    ['GreedyStdAgent']
 
 
 
@@ -1507,36 +1553,36 @@ We can also see the scores that every agent type got
           <td>RandDistOneShotAgent</td>
           <td>20.00</td>
           <td>1.01</td>
-          <td>0.06</td>
-          <td>0.91</td>
+          <td>0.08</td>
+          <td>0.88</td>
           <td>0.97</td>
           <td>1.00</td>
           <td>1.06</td>
-          <td>1.11</td>
+          <td>1.16</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedyStdAgent</td>
           <td>20.00</td>
-          <td>0.86</td>
-          <td>0.25</td>
-          <td>0.18</td>
-          <td>0.72</td>
-          <td>0.92</td>
+          <td>1.03</td>
+          <td>0.21</td>
+          <td>0.43</td>
+          <td>1.00</td>
           <td>1.07</td>
-          <td>1.15</td>
+          <td>1.18</td>
+          <td>1.25</td>
         </tr>
         <tr>
           <th>2</th>
           <td>SyncRandomStdAgent</td>
           <td>20.00</td>
-          <td>0.88</td>
+          <td>0.86</td>
           <td>0.14</td>
-          <td>0.66</td>
-          <td>0.76</td>
-          <td>0.91</td>
-          <td>1.01</td>
-          <td>1.07</td>
+          <td>0.57</td>
+          <td>0.81</td>
+          <td>0.84</td>
+          <td>0.94</td>
+          <td>1.13</td>
         </tr>
       </tbody>
     </table>
@@ -1587,9 +1633,9 @@ You can also do statistical significance testing using ttest or kstest
         <tr>
           <th>0</th>
           <td>GreedyStdAgent</td>
-          <td>SyncRandomStdAgent</td>
-          <td>0.25</td>
-          <td>0.57</td>
+          <td>RandDistOneShotAgent</td>
+          <td>0.35</td>
+          <td>0.17</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
@@ -1597,18 +1643,18 @@ You can also do statistical significance testing using ttest or kstest
         <tr>
           <th>1</th>
           <td>GreedyStdAgent</td>
-          <td>RandDistOneShotAgent</td>
-          <td>0.50</td>
-          <td>0.01</td>
+          <td>SyncRandomStdAgent</td>
+          <td>0.55</td>
+          <td>0.00</td>
           <td>20</td>
           <td>20</td>
           <td>20</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>SyncRandomStdAgent</td>
           <td>RandDistOneShotAgent</td>
-          <td>0.60</td>
+          <td>SyncRandomStdAgent</td>
+          <td>0.70</td>
           <td>0.00</td>
           <td>20</td>
           <td>20</td>
@@ -1656,17 +1702,17 @@ see the total score
       <tbody>
         <tr>
           <th>0</th>
+          <td>GreedyStdAgent</td>
+          <td>1.03</td>
+        </tr>
+        <tr>
+          <th>1</th>
           <td>RandDistOneShotAgent</td>
           <td>1.01</td>
         </tr>
         <tr>
-          <th>1</th>
-          <td>SyncRandomStdAgent</td>
-          <td>0.88</td>
-        </tr>
-        <tr>
           <th>2</th>
-          <td>GreedyStdAgent</td>
+          <td>SyncRandomStdAgent</td>
           <td>0.86</td>
         </tr>
       </tbody>
@@ -1680,10 +1726,11 @@ activity level for different simulations.
 
 .. code:: ipython3
 
-    plt.errorbar(range(len(results.agg_stats)),
-                 results.agg_stats.activity_level_mean,
-                 np.sqrt(results.agg_stats.activity_level_var)
-                 )
+    plt.errorbar(
+        range(len(results.agg_stats)),
+        results.agg_stats.activity_level_mean,
+        np.sqrt(results.agg_stats.activity_level_var),
+    )
     plt.xlabel("Simulation Number")
     plt.ylabel("Activity Level")
     plt.show()
@@ -1731,33 +1778,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>04Gr@1</td>
+          <td>00Gr@0</td>
           <td>GreedyStdAgent</td>
-          <td>0.51</td>
+          <td>1.02</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>12SRS@3</td>
-          <td>SyncRandomStdAgent</td>
-          <td>0.92</td>
+          <td>01Ra@0</td>
+          <td>RandDistOneShotAgent</td>
+          <td>1.13</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>00SRS@0</td>
-          <td>SyncRandomStdAgent</td>
-          <td>0.69</td>
+          <td>00Gr@0</td>
+          <td>GreedyStdAgent</td>
+          <td>1.03</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>06Gr@1</td>
-          <td>GreedyStdAgent</td>
-          <td>1.15</td>
+          <td>04Ra@1</td>
+          <td>RandDistOneShotAgent</td>
+          <td>1.00</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>00Ra@0</td>
-          <td>RandDistOneShotAgent</td>
-          <td>0.91</td>
+          <td>00Gr@0</td>
+          <td>GreedyStdAgent</td>
+          <td>1.01</td>
         </tr>
       </tbody>
     </table>
@@ -1770,10 +1817,17 @@ of each type.
 
 .. code:: ipython3
 
-    results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
+    results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[
+        :, 1
+    ]
     results.scores = results.scores.sort_values("level")
-    sns.lineplot(data=results.scores[["agent_type", "level", "score"]],
-                 x="level", y="score", hue="agent_type", ci=None)
+    sns.lineplot(
+        data=results.scores[["agent_type", "level", "score"]],
+        x="level",
+        y="score",
+        hue="agent_type",
+        ci=None,
+    )
     plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
 
@@ -1801,13 +1855,18 @@ longer simulation steps (e.g. 50 :math:`\le` n_steps :math:`\le` 500).
 
 .. code:: ipython3
 
-    tournament_types = [RandomOneShotAgent, SyncRandomOneShotAgent, GreedyOneShotAgent, GreedySingleAgreementAgent]
+    tournament_types = [
+        RandomOneShotAgent,
+        SyncRandomOneShotAgent,
+        GreedyOneShotAgent,
+        GreedySingleAgreementAgent,
+    ]
     # may take a long time
     results = anac2024_oneshot(
         competitors=tournament_types,
-        n_configs=5, # number of different configurations to generate
-        n_runs_per_world=1, # number of times to repeat every simulation (with agent assignment)
-        n_steps = 10, # number of days (simulation steps) per simulation
+        n_configs=5,  # number of different configurations to generate
+        n_runs_per_world=1,  # number of times to repeat every simulation (with agent assignment)
+        n_steps=10,  # number of days (simulation steps) per simulation
         print_exceptions=True,
     )
     results = shorten_names(results)
@@ -1892,49 +1951,49 @@ We can also see the scores that every agent type got
           <th>0</th>
           <td>GreedyOneShotAgent</td>
           <td>45.00</td>
-          <td>0.79</td>
-          <td>0.13</td>
-          <td>0.28</td>
-          <td>0.74</td>
-          <td>0.79</td>
-          <td>0.89</td>
-          <td>0.96</td>
+          <td>0.72</td>
+          <td>0.22</td>
+          <td>0.16</td>
+          <td>0.58</td>
+          <td>0.75</td>
+          <td>0.91</td>
+          <td>1.04</td>
         </tr>
         <tr>
           <th>1</th>
           <td>GreedySingleAgreementAgent</td>
           <td>45.00</td>
-          <td>0.75</td>
-          <td>0.14</td>
-          <td>0.51</td>
-          <td>0.69</td>
-          <td>0.74</td>
-          <td>0.84</td>
-          <td>1.08</td>
+          <td>0.72</td>
+          <td>0.16</td>
+          <td>0.45</td>
+          <td>0.58</td>
+          <td>0.73</td>
+          <td>0.85</td>
+          <td>0.99</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomOneShotAgent</td>
           <td>45.00</td>
-          <td>0.79</td>
-          <td>0.14</td>
-          <td>0.40</td>
-          <td>0.75</td>
-          <td>0.84</td>
-          <td>0.88</td>
-          <td>0.98</td>
+          <td>0.73</td>
+          <td>0.21</td>
+          <td>0.29</td>
+          <td>0.60</td>
+          <td>0.77</td>
+          <td>0.90</td>
+          <td>1.02</td>
         </tr>
         <tr>
           <th>3</th>
           <td>SyncRandomOneShotAgent</td>
           <td>45.00</td>
-          <td>1.02</td>
-          <td>0.10</td>
-          <td>0.73</td>
-          <td>0.99</td>
-          <td>1.04</td>
-          <td>1.07</td>
-          <td>1.19</td>
+          <td>1.05</td>
+          <td>0.08</td>
+          <td>0.77</td>
+          <td>1.00</td>
+          <td>1.05</td>
+          <td>1.11</td>
+          <td>1.21</td>
         </tr>
       </tbody>
     </table>
@@ -1984,17 +2043,7 @@ You can also do statistical significance testing using ttest or kstest
       <tbody>
         <tr>
           <th>0</th>
-          <td>GreedyOneShotAgent</td>
           <td>RandomOneShotAgent</td>
-          <td>0.20</td>
-          <td>0.33</td>
-          <td>45</td>
-          <td>45</td>
-          <td>45</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>GreedyOneShotAgent</td>
           <td>SyncRandomOneShotAgent</td>
           <td>0.82</td>
           <td>0.00</td>
@@ -2003,20 +2052,30 @@ You can also do statistical significance testing using ttest or kstest
           <td>45</td>
         </tr>
         <tr>
-          <th>2</th>
+          <th>1</th>
+          <td>RandomOneShotAgent</td>
           <td>GreedyOneShotAgent</td>
+          <td>0.13</td>
+          <td>0.82</td>
+          <td>45</td>
+          <td>45</td>
+          <td>45</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>RandomOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.29</td>
-          <td>0.05</td>
+          <td>0.18</td>
+          <td>0.48</td>
           <td>45</td>
           <td>45</td>
           <td>45</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>RandomOneShotAgent</td>
           <td>SyncRandomOneShotAgent</td>
-          <td>0.80</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.78</td>
           <td>0.00</td>
           <td>45</td>
           <td>45</td>
@@ -2024,20 +2083,20 @@ You can also do statistical significance testing using ttest or kstest
         </tr>
         <tr>
           <th>4</th>
-          <td>RandomOneShotAgent</td>
+          <td>SyncRandomOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.33</td>
-          <td>0.01</td>
+          <td>0.89</td>
+          <td>0.00</td>
           <td>45</td>
           <td>45</td>
           <td>45</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>SyncRandomOneShotAgent</td>
+          <td>GreedyOneShotAgent</td>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.78</td>
-          <td>0.00</td>
+          <td>0.16</td>
+          <td>0.65</td>
           <td>45</td>
           <td>45</td>
           <td>45</td>
@@ -2085,22 +2144,22 @@ see the total score
         <tr>
           <th>0</th>
           <td>SyncRandomOneShotAgent</td>
-          <td>1.02</td>
+          <td>1.05</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>GreedyOneShotAgent</td>
-          <td>0.79</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.73</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>RandomOneShotAgent</td>
-          <td>0.79</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.72</td>
         </tr>
         <tr>
           <th>3</th>
           <td>GreedySingleAgreementAgent</td>
-          <td>0.75</td>
+          <td>0.72</td>
         </tr>
       </tbody>
     </table>
@@ -2146,33 +2205,33 @@ at every simulation
       <tbody>
         <tr>
           <th>0</th>
-          <td>00Gr@0</td>
-          <td>GreedyOneShotAgent</td>
-          <td>0.89</td>
+          <td>05Ra@1</td>
+          <td>RandomOneShotAgent</td>
+          <td>0.76</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>01Ra@0</td>
-          <td>RandomOneShotAgent</td>
-          <td>0.87</td>
+          <td>06Sy@1</td>
+          <td>SyncRandomOneShotAgent</td>
+          <td>0.94</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>02Sy@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>1.06</td>
+          <td>07Gr@1</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.75</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>00Sy@0</td>
-          <td>SyncRandomOneShotAgent</td>
-          <td>1.04</td>
+          <td>00Gr@0</td>
+          <td>GreedyOneShotAgent</td>
+          <td>0.60</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>01Gr@0</td>
-          <td>GreedyOneShotAgent</td>
-          <td>0.88</td>
+          <td>01GSA@0</td>
+          <td>GreedySingleAgreementAgent</td>
+          <td>0.57</td>
         </tr>
       </tbody>
     </table>
@@ -2185,10 +2244,16 @@ of each type.
 
 .. code:: ipython3
 
-    results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[:, 1]
+    results.scores["level"] = results.scores.agent_name.str.split("@", expand=True).loc[
+        :, 1
+    ]
     results.scores = results.scores.sort_values("level")
-    sns.lineplot(data=results.scores[["agent_type", "level", "score"]],
-                 x="level", y="score", hue="agent_type")
+    sns.lineplot(
+        data=results.scores[["agent_type", "level", "score"]],
+        x="level",
+        y="score",
+        hue="agent_type",
+    )
     # plt.plot([0.0] * len(results.scores["level"].unique()), "b--")
     plt.show()
 
@@ -2242,8 +2307,7 @@ We can now try tem against each other:
 
     world = SCML2024OneShotWorld(
         **SCML2024OneShotWorld.generate(
-            agent_types=winners + [SyncRandomOneShotAgent],
-            n_steps=50
+            agent_types=winners + [SyncRandomOneShotAgent], n_steps=50
         ),
         construct_graphs=True,
     )
@@ -2265,10 +2329,7 @@ API as scml-oneshot:
 .. code:: ipython3
 
     world = SCML2024StdWorld(
-        **SCML2024StdWorld.generate(
-            agent_types=winners + [SyncRandomStdAgent],
-            n_steps=50
-        ),
+        **SCML2024StdWorld.generate(agent_types=winners + [SyncRandomStdAgent], n_steps=50),
         construct_graphs=True,
     )
     world.run()
@@ -2280,7 +2341,6 @@ API as scml-oneshot:
 
 
 .. image:: 01.run_scml2020_files/01.run_scml2020_106_0.png
-
 
 
 Download :download:`Notebook<notebooks/01.run_scml2020.ipynb>`.

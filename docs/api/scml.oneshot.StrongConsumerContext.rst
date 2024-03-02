@@ -63,6 +63,7 @@ StrongConsumerContext
       ~StrongConsumerContext.contains_context
       ~StrongConsumerContext.contains_general_context
       ~StrongConsumerContext.contains_limited_partner_context
+      ~StrongConsumerContext.extract_context_params
       ~StrongConsumerContext.find_test_agents
       ~StrongConsumerContext.generate
       ~StrongConsumerContext.is_valid_awi
@@ -125,6 +126,7 @@ StrongConsumerContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

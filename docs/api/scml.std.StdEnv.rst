@@ -21,6 +21,7 @@ StdEnv
 
    .. autosummary::
 
+      ~StdEnv.calc_info
       ~StdEnv.close
       ~StdEnv.render
       ~StdEnv.reset
@@ -37,6 +38,7 @@ StdEnv
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: calc_info
    .. automethod:: close
    .. automethod:: render
    .. automethod:: reset

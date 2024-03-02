@@ -30,6 +30,8 @@ def group_partners(
     my_partners: list[str], n_partners: int, max_group_size: int, extend: bool = True
 ) -> list[list[str]]:
     """Combines a list of partners/consumers into the given number of groups"""
+    if n_partners == 0:
+        return []
     partners = [_ for _ in my_partners if not is_system_agent(_)]
     partner_sets = [[] for _ in range(n_partners)]
     for i, partner in enumerate(partners):

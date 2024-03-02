@@ -63,6 +63,7 @@ ConsumerContext
       ~ConsumerContext.contains_context
       ~ConsumerContext.contains_general_context
       ~ConsumerContext.contains_limited_partner_context
+      ~ConsumerContext.extract_context_params
       ~ConsumerContext.find_test_agents
       ~ConsumerContext.generate
       ~ConsumerContext.is_valid_awi
@@ -125,6 +126,7 @@ ConsumerContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi

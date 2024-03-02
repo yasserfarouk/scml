@@ -27,6 +27,7 @@ RepeatingContext
       ~RepeatingContext.__call__
       ~RepeatingContext.contains_context
       ~RepeatingContext.contains_repeating_context
+      ~RepeatingContext.extract_context_params
       ~RepeatingContext.from_context
       ~RepeatingContext.generate
       ~RepeatingContext.is_valid_awi
@@ -52,6 +53,7 @@ RepeatingContext
    .. automethod:: __call__
    .. automethod:: contains_context
    .. automethod:: contains_repeating_context
+   .. automethod:: extract_context_params
    .. automethod:: from_context
    .. automethod:: generate
    .. automethod:: is_valid_awi

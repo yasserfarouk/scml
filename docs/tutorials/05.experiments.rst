@@ -87,8 +87,8 @@ that:
 
     world = SCML2023OneShotWorld(
         **SCML2023OneShotWorld.generate(
-            agent_types = types,
-            agent_processes=[0,0,0,0,0, 1,1,1,1,1],
+            agent_types=types,
+            agent_processes=[0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
             n_processes=2,
             n_steps=5,
             construct_graphs=True,
@@ -114,10 +114,7 @@ in the agent name. You can confirm it explicity by checking types:
 
 .. code:: ipython3
 
-    [a._obj.__class__.__name__
-     for a in world.agents.values()
-     if not is_system_agent(a.id)
-    ]
+    [a._obj.__class__.__name__ for a in world.agents.values() if not is_system_agent(a.id)]
 
 
 
@@ -149,16 +146,14 @@ approach we used before:
     for ax in axs:
         world = SCML2023OneShotWorld(
             **SCML2023OneShotWorld.generate(
-                agent_types = types,
+                agent_types=types,
                 n_agents_per_process=(3, 7),
                 n_processes=2,
                 n_steps=10,
                 construct_graphs=True,
             )
         )
-        world.draw(axs=ax, steps=(0, world.n_steps),
-                   what=["contracts-concluded"])
-
+        world.draw(axs=ax, steps=(0, world.n_steps), what=["contracts-concluded"])
 
 
 
@@ -170,7 +165,7 @@ We can run the last of these worlds just to be sure something happens!!
 .. code:: ipython3
 
     world.run()
-    world.draw(what=["contracts-concluded"], steps=(0, world.n_steps-1))
+    world.draw(what=["contracts-concluded"], steps=(0, world.n_steps - 1))
 
 
 
@@ -178,7 +173,7 @@ We can run the last of these worlds just to be sure something happens!!
 .. parsed-literal::
 
     (<AxesSubplot: title={'center': 'Step: 10/10 [ 0s rem  0s] 100.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x147542290>)
+     <networkx.classes.multidigraph.MultiDiGraph at 0x2a40b52d0>)
 
 
 
@@ -200,7 +195,7 @@ level is **between 3 and 7** not exactly either of them.
     for ax in axs:
         world = SCML2023OneShotWorld(
             **SCML2023OneShotWorld.generate(
-                agent_types = types,
+                agent_types=types,
                 n_agents_per_process=[3, 7],
                 n_processes=2,
                 n_steps=5,
@@ -223,7 +218,7 @@ choosing:
     agents_per_process = [2, 3, 2, 3]
     world = SCML2023OneShotWorld(
         **SCML2023OneShotWorld.generate(
-            agent_types = types,
+            agent_types=types,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
             n_steps=5,
@@ -263,15 +258,12 @@ follows:
     from negmas import NaiveTitForTatNegotiator
 
     types = [DecentralizingAgent] * 2 + [BuyCheapSellExpensiveAgent] * 4
-    params = (
-        [dict(negotiator_type=NaiveTitForTatNegotiator), dict()]
-        + [dict()] * 4
-    )
+    params = [dict(negotiator_type=NaiveTitForTatNegotiator), dict()] + [dict()] * 4
     agents_per_process = [2, 3, 1]
     world = SCML2023World(
         **SCML2023World.generate(
-            agent_types = types,
-            agent_params = params,
+            agent_types=types,
+            agent_params=params,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
             n_steps=5,
@@ -299,7 +291,7 @@ world itself:
 
 .. parsed-literal::
 
-    [{}, {}, {'negotiator_type': <class 'negmas.gb.negotiators.titfortat.NaiveTitForTatNegotiator'>}, {}, {}, {}]
+    [{}, {}, {}, {}, {}, {}]
 
 
 We can see that the first agent had the negotiator-type we asked for and
@@ -315,20 +307,19 @@ same method:
 .. code:: ipython3
 
     types = [GreedyOneShotAgent] * 2 + [GreedySingleAgreementAgent] * 4
-    params = (
-        [dict(controller_params=dict(concession_exponent=0.4)),
-         dict(controller_params=dict(concession_exponent=3.0))]
-        + [dict()] * 4
-    )
+    params = [
+        dict(controller_params=dict(concession_exponent=0.4)),
+        dict(controller_params=dict(concession_exponent=3.0)),
+    ] + [dict()] * 4
     world = SCML2023OneShotWorld(
         **SCML2023OneShotWorld.generate(
-            agent_types = types,
-            agent_params = params,
-            agent_processes=[0,0,1,1,1,2],
+            agent_types=types,
+            agent_params=params,
+            agent_processes=[0, 0, 1, 1, 1, 2],
             n_processes=3,
             n_steps=5,
             construct_graphs=True,
-            random_agent_types=False
+            random_agent_types=False,
         )
     )
 
@@ -406,7 +397,7 @@ but you can decide to test it:
     agents_per_process = [2, 3, 2]
     world = SCML2023OneShotWorld(
         **SCML2023OneShotWorld.generate(
-            agent_types = types,
+            agent_types=types,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
             n_steps=20,
@@ -524,7 +515,7 @@ will generate a world in which agents have costs from :math:`1` to
     agents_per_process = [2, 3, 2]
     world = SCML2023OneShotWorld(
         **SCML2023OneShotWorld.generate(
-            agent_types = types,
+            agent_types=types,
             n_agents_per_process=agents_per_process,
             n_processes=len(agents_per_process),
             production_costs=list(range(1, 8)),
@@ -593,20 +584,20 @@ Let’s try to do it for the ``SCML2023World`` first:
 
     types = [DecentralizingAgent] * 3
     agents_per_process = [2, 1]
-    n_processes=len(agents_per_process)
-    n_lines=10
+    n_processes = len(agents_per_process)
+    n_lines = 10
 
     # setup the factory profiles. For each factory we
     # set production cost to INFINITE_COST for all processes
     # except the one it can actually run
     profiles = [
-        FactoryProfile(np.asarray([[3, INFINITE_COST]]*n_lines)),
-        FactoryProfile(np.asarray([[20, INFINITE_COST]]*n_lines)),
-        FactoryProfile(np.asarray([[INFINITE_COST, 5]]*n_lines)),
+        FactoryProfile(np.asarray([[3, INFINITE_COST]] * n_lines)),
+        FactoryProfile(np.asarray([[20, INFINITE_COST]] * n_lines)),
+        FactoryProfile(np.asarray([[INFINITE_COST, 5]] * n_lines)),
     ]
 
     # create exogenous contracts
-    exogenous=[
+    exogenous = [
         ## exogenous supply
         ExogenousContract(
             product=0,
@@ -666,10 +657,15 @@ happened:
 .. code:: ipython3
 
     from pprint import pprint
-    pprint(list((list(str(_)
-          for _ in  contracts)
-          for s, contracts in world.exogenous_contracts.items()
-         )))
+
+    pprint(
+        list(
+            (
+                list(str(_) for _ in contracts)
+                for s, contracts in world.exogenous_contracts.items()
+            )
+        )
+    )
 
 
 .. parsed-literal::
@@ -679,19 +675,19 @@ happened:
       "'00De@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=1, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='0226ef72-cdb3-4f08-8a24-88ea18fa3896')"],
+      "id='9891315c-fc0c-4bcc-92f5-6e0cc90012c1')"],
      ["Contract(agreement={'time': 2, 'quantity': 10, 'unit_price': 7}, "
       "partners=('00De@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
-      "'00De@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
+      "'00De@0', 'caller': 'SELLER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='297068a3-7178-4e50-829a-2cfa52893388')",
+      "id='da0ab71e-079c-4628-b82f-14dd3dc574e7')",
       "Contract(agreement={'time': 1, 'quantity': 10, 'unit_price': 5}, "
       "partners=('BUYER', '02De@1'), annotation={'seller': '02De@1', 'buyer': "
-      "'BUYER', 'caller': 'BUYER', 'is_buy': False, 'product': 0}, issues=(), "
+      "'BUYER', 'caller': 'BUYER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='04cdf76e-5c6c-4f58-ad51-d08dfe02c879')"],
+      "id='a71d144a-9c16-4677-b54d-dca5b3260ded')"],
      [],
      [],
      []]
@@ -723,7 +719,9 @@ Let’s try to run this world
     _, axs = plt.subplots(2)
     world.draw(
         what=["negotiations-started", "contracts-concluded"],
-        steps=(0, world.n_steps), together=False, axs=axs
+        steps=(0, world.n_steps),
+        together=False,
+        axs=axs,
     )
     plt.show()
 
@@ -752,18 +750,18 @@ is slightly different. Here is an example case:
     from scml.oneshot import DefaultOneShotAdapter
 
     types = [DefaultOneShotAdapter] * 3
-    params = [
-        dict(controller_type=GreedyOneShotAgent)
-    ] * 3
+    params = [dict(controller_type=GreedyOneShotAgent)] * 3
     agents_per_process = [2, 1]
-    n_processes=len(agents_per_process)
-    n_lines=10
-    common=dict(
+    n_processes = len(agents_per_process)
+    n_lines = 10
+    common = dict(
         n_lines=10,
         shortfall_penalty_mean=0.2,
         disposal_cost_mean=0.1,
         shortfall_penalty_dev=0.01,
         disposal_cost_dev=0.01,
+        storage_cost_mean=0.0,
+        storage_cost_dev=0.0,
     )
     # setup the factory profiles. For each factory we
     profiles = [
@@ -773,7 +771,7 @@ is slightly different. Here is an example case:
     ]
 
     # create exogenous contracts
-    exogenous=[
+    exogenous = [
         ## exogenous supply
         OneShotExogenousContract(
             product=0,
@@ -834,7 +832,9 @@ The world is constructed. Lets run it and see what happens:
     _, axs = plt.subplots(2)
     world.draw(
         what=["negotiations-started", "contracts-concluded"],
-        steps=(0, world.n_steps), together=False, axs=axs
+        steps=(0, world.n_steps),
+        together=False,
+        axs=axs,
     )
     plt.show()
 
@@ -866,8 +866,6 @@ Gaussians describing shortfall penalties and disposal costs.
 
 Other than these two differences, the rest is almost the same as in the
 previous case.
-
-
 
 
 Download :download:`Notebook<notebooks/05.experiments.ipynb>`.

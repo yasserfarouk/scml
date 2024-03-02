@@ -63,6 +63,7 @@ WeakSupplierContext
       ~WeakSupplierContext.contains_context
       ~WeakSupplierContext.contains_general_context
       ~WeakSupplierContext.contains_limited_partner_context
+      ~WeakSupplierContext.extract_context_params
       ~WeakSupplierContext.find_test_agents
       ~WeakSupplierContext.generate
       ~WeakSupplierContext.is_valid_awi
@@ -125,6 +126,7 @@ WeakSupplierContext
    .. automethod:: contains_context
    .. automethod:: contains_general_context
    .. automethod:: contains_limited_partner_context
+   .. automethod:: extract_context_params
    .. automethod:: find_test_agents
    .. automethod:: generate
    .. automethod:: is_valid_awi
