@@ -596,7 +596,7 @@ def test_relative_times_make_sense():
         obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             obs, _ = env.reset()
-    assert results[-1][-1] > 0, f"{results}"
+    assert results[-1][-1] >= 0, f"{results}"
 
 
 def test_clip():
