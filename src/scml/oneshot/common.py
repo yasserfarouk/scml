@@ -239,6 +239,8 @@ class OneShotState:
     """ A list of all suppliers by product."""
     all_consumers: list[list[str]]
     """ A list of all consumers by product."""
+    production_capacities: list[int]
+    """ A list of total production capacity per production level."""
     bankrupt_agents: list[str]
     """list of bankrupt agents"""
     catalog_prices: list[float]

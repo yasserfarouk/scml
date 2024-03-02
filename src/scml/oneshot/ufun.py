@@ -486,16 +486,17 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         output_offers = []
         # sort contracts in the optimal order of execution: from cheapest when
         # buying and from the most expensive when selling. See `order` above.
-        sorted_offers = sorted(  # type: ignore
+        assert outputs is not None
+        sorted_offers = sorted(
             list(zip(offers, outputs, exogenous, strict=True)),
-            key=order,  # type: ignore
+            key=order,
         )
 
         # we calculate the total quantity we are are required to pay for `qin` and
         # the associated amount of money we are going to pay `pin`. Moreover,
         # we calculate the total quantity we can actually buy given our limited
         # money balance (`qin_bar`).
-        for offer, is_output, is_exogenous in sorted_offers:
+        for offer, is_output, is_exogenous in sorted_offers:  # type: ignore
             if not offer:
                 continue
             # ignore any offers that are not about this time

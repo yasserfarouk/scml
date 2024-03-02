@@ -1201,6 +1201,20 @@ def test_price_pumping_happen_with_random_included():
     check_trading_explosion(world)
 
 
+def test_production_capacity():
+    world = generate_world(
+        [PricePumpingAgent, RandomOneShotAgent], DefaultOneShotWorld, 2, 300, 4
+    )
+    agent = list(world.agents.values())[0]
+    assert agent._obj is not None
+    world.step()
+    awi: OneShotAWI = agent._obj.awi  # type: ignore
+    assert awi is not None
+    consumers = awi.all_consumers
+    for a, b in zip(consumers[:-1], awi.production_capacities, strict=True):
+        assert b == len(a) * awi.profile.n_lines
+
+
 def test_price_pumping_bankrupts_random_agents():
     types = [PricePumpingAgent, RandomOneShotAgent]
     world = generate_world(types, DefaultOneShotWorld, 2, 300, 4)

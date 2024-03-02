@@ -3,7 +3,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, Union, Sequence
 
 import numpy as np
 from attr import define, field
@@ -15,7 +15,6 @@ from scml.oneshot.agents import Placeholder, RandDistOneShotAgent
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import is_system_agent
 from scml.oneshot.world import (
-    OneShotWorld,
     SCML2021OneShotWorld,
     SCML2022OneShotWorld,
     SCML2023OneShotWorld,
@@ -25,11 +24,75 @@ from scml.oneshot.world import (
     get_n_lines,
 )
 
-# from scml.utils import (
-#     anac_assigner_oneshot,
-#     anac_config_context_oneshot,
-#     anac_oneshot_world_context,
-# )
+__all__ = [
+    "Context",
+    "GeneralContext",
+    "ANACContext",
+    "LimitedPartnerNumbersContext",
+    "FixedPartnerNumbersContext",
+    "ANACOneShotContext",
+    "LimitedPartnerNumbersOneShotContext",
+    "FixedPartnerNumbersOneShotContext",
+    "SupplierContext",
+    "ConsumerContext",
+    "StrongSupplierContext",
+    "StrongConsumerContext",
+    "WeakSupplierContext",
+    "WeakConsumerContext",
+    "BalancedSupplierContext",
+    "BalancedConsumerContext",
+    "RepeatingContext",
+    "ContextParams",
+]
+
+
+@define
+class ContextParams:
+    """Basic Parameters you can assume about a context. Returned by `extract_context_params`"""
+
+    nlines: int
+    nsuppliers: int
+    nconsumers: int
+
+
+class Strength(Enum):
+    Weak = -1
+    Balanced = 0
+    Strong = 1
+
+
+def sample_with_strength(
+    c: int | tuple[int, int], n: int | tuple[int, int], s: Strength | None
+):
+    if s is None:
+        c = intin(c)
+        n = intin(n)
+        return c, n
+    mnc, mxc = c if isinstance(c, Iterable) else (c, c)
+    if s == Strength.Balanced:
+        c = intin((mnc + 1, mxc - 1))
+        mn, mx = c, c + 2
+    elif s == Strength.Strong:
+        c = intin((mnc + 1, mxc))
+        mn = n[0] if isinstance(n, Iterable) else n
+        mx = max(mn, c - 1)
+    else:
+        c = intin((mnc, mxc - 1))
+        mx = n[1] if isinstance(n, Iterable) else n
+        mn = min(c + 2, mx)
+    return c, intin((mn, mx))
+
+
+def safemax(x: Iterable | int):
+    if isinstance(x, Iterable):
+        return max(x)
+    return x
+
+
+def safemin(x: Iterable | int):
+    if isinstance(x, Iterable):
+        return min(x)
+    return x
 
 
 class Context(ABC):
@@ -81,26 +144,6 @@ class Context(ABC):
             return self.is_valid_awi(other)
         return self.is_valid_world(other)
 
-
-__all__ = [
-    "Context",
-    "GeneralContext",
-    "ANACContext",
-    "LimitedPartnerNumbersContext",
-    "FixedPartnerNumbersContext",
-    "ANACOneShotContext",
-    "LimitedPartnerNumbersOneShotContext",
-    "FixedPartnerNumbersOneShotContext",
-    "SupplierContext",
-    "ConsumerContext",
-    "StrongSupplierContext",
-    "StrongConsumerContext",
-    "WeakSupplierContext",
-    "WeakConsumerContext",
-    "BalancedSupplierContext",
-    "BalancedConsumerContext",
-    "RepeatingContext",
-]
 
 N_SUPPLIERS = (4, 8)
 """Numbers of suppliers supported"""
@@ -511,7 +554,7 @@ def _config_matches_base(
         'not isin(_safeget(config,"info", dict())["n_lines"], config.get("info","n_lines"))',
     ):
         return False
-    if _is(
+    if _not(
         all(
             isin(_, _safeget(base, "info", "n_agents_per_process"))
             for _ in _safeget(config, "info", "n_agents_per_process")
@@ -784,7 +827,7 @@ def _config_matches_base(
 class BaseContext(Context, ABC):
     """A context that generates oneshot worlds with agents of a given `types` with predetermined structure and settings"""
 
-    world_type: type[SCMLBaseWorld] = OneShotWorld
+    world_type: type[SCMLBaseWorld] = SCML2024OneShotWorld
     world_params: dict[str, Any] = field(factory=dict)
     non_competitors: tuple[str | type[OneShotAgent], ...] = DefaultAgentsOneShot2024
     placeholder_types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES
@@ -804,6 +847,14 @@ class BaseContext(Context, ABC):
         types: tuple[str | type[OneShotAgent], ...] | None = None,
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
+
+    def extract_context_params(
+        self, min_values: bool, level: int | None = None
+    ) -> ContextParams:
+        _ = min_values, level
+        raise NotImplementedError(
+            f"{self.__class__.__name__} did not implement `extrtact_context_params`"
+        )
 
     def make(
         self,
@@ -940,6 +991,41 @@ class GeneralContext(BaseContext):
     equal_exogenous_supply = False
     equal_exogenous_sales = False
     cap_exogenous_quantities: bool = True
+
+    def extract_context_params(
+        self, min_values: bool, level: int | None = None
+    ) -> ContextParams:
+        nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
+        app = self.n_agents_per_process
+        if not isinstance(app, Iterable):
+            nsuppliers = nconsumers = app
+        if isinstance(app, tuple) and len(app) == 2:
+            nsuppliers = nconsumers = app[0] if min_values else app[-1]
+        else:
+            assert isinstance(app, Sequence)
+            n_processes = len(app)
+
+            if level is None:
+                mn_consumers, mn_suppliers = min(app[1:]), min(app[:-1])
+                mx_consumers, mx_suppliers = max(app[1:]), max(app[:-1])
+            else:
+                mx_consumers = mn_consumers = (
+                    app[level + 1] if 0 <= level < n_processes - 1 else 0
+                )
+                mx_suppliers = mn_suppliers = app[level - 1] if level > 0 else 0
+            nsuppliers = mn_suppliers if min_values else mx_suppliers
+            nconsumers = mn_consumers if min_values else mx_consumers
+        if level is None:
+            return ContextParams(nlines, nsuppliers, nconsumers)
+        if level == 0:
+            nsuppliers = 0
+        elif (
+            level == -1
+            or not isinstance(self.n_processes, Iterable)
+            and level == self.n_processes - 1
+        ):
+            nconsumers = 0
+        return ContextParams(nlines, nsuppliers, nconsumers)
 
     def __attrs_post_init__(self):
         from scml.std.world import StdWorld
@@ -1425,34 +1511,6 @@ class GeneralContext(BaseContext):
         return True
 
 
-class Strength(Enum):
-    Weak = -1
-    Balanced = 0
-    Strong = 1
-
-
-def sample_with_strength(
-    c: int | tuple[int, int], n: int | tuple[int, int], s: Strength | None
-):
-    if s is None:
-        c = intin(c)
-        n = intin(n)
-        return c, n
-    mnc, mxc = c if isinstance(c, Iterable) else (c, c)
-    if s == Strength.Balanced:
-        c = intin((mnc + 1, mxc - 1))
-        mn, mx = c, c + 2
-    elif s == Strength.Strong:
-        c = intin((mnc + 1, mxc))
-        mn = n[0] if isinstance(n, Iterable) else n
-        mx = max(mn, c - 1)
-    else:
-        c = intin((mnc, mxc - 1))
-        mx = n[1] if isinstance(n, Iterable) else n
-        mn = min(c + 2, mx)
-    return c, intin((mn, mx))
-
-
 @define
 class LimitedPartnerNumbersContext(GeneralContext):
     """Generates a world limiting the range of the agent level, production capacity
@@ -1507,6 +1565,15 @@ class LimitedPartnerNumbersContext(GeneralContext):
             assert isin(
                 self.n_suppliers, self.n_agents_per_process
             ), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
+
+    def extract_context_params(
+        self, min_values: bool, level: int | None = None
+    ) -> ContextParams:
+        assert level is None or level == self.level
+        nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
+        nsuppliers = self.n_suppliers[0 if min_values else -1]
+        nconsumers = self.n_consumers[0 if min_values else -1]
+        return ContextParams(nlines, int(nsuppliers), int(nconsumers))
 
     def make_config(self) -> dict[str, Any]:
         """Generates a config"""
@@ -1809,6 +1876,15 @@ class FixedPartnerNumbersContext(LimitedPartnerNumbersContext):
         object.__setattr__(self, "n_suppliers", self.n_suppliers[0])  # type: ignore
         object.__setattr__(self, "n_competitors", self.n_competitors[0])  # type: ignore
 
+    def extract_context_params(
+        self, min_values: bool, level: int | None = None
+    ) -> ContextParams:
+        assert level is None or level == self.level
+        nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
+        nsuppliers = self.n_suppliers
+        nconsumers = self.n_consumers
+        return ContextParams(nlines, int(nsuppliers), int(nconsumers))
+
 
 @define
 class FixedPartnerNumbersOneShotContext(FixedPartnerNumbersContext):
@@ -1987,6 +2063,46 @@ class RepeatingContext(BaseContext):
         if not self.configs:
             raise ValueError("RepeatingContext with no configs")
 
+    def extract_context_params(
+        self, min_values: bool, level: int | None = None
+    ) -> ContextParams:
+        nlines, nsuppliers, nconsumers = 0, 0, 0
+        nlines = min(get_n_lines(_)[0] for _ in self.configs)
+        assert len(self.placeholder_types) == 1
+        mn_suppliers, mx_suppliers = float("inf"), float("-inf")
+        mn_consumers, mx_consumers = float("inf"), float("-inf")
+        mn_competitors = float("inf")
+        for config in self.configs:
+            app = get_n_agents_per_process(config)
+            n_processes = len(app)
+            existing_types = [
+                _.get("controller_type", None) for _ in config["agent_params"]
+            ]
+            try:
+                agent_indx = existing_types.index(self.placeholder_types[0])
+            except ValueError:
+                raise ValueError(
+                    f"Cannot find {self.placeholder_types[0]=} in {existing_types=}"
+                )
+
+            my_level = config["profiles"][agent_indx].level
+            assert level is None or my_level == level
+
+            mn_suppliers = min(mn_suppliers, app[my_level - 1] if my_level else 0)
+            mx_suppliers = max(mx_suppliers, app[my_level - 1] if my_level else 0)
+            mn_consumers = min(
+                mn_consumers,
+                app[my_level + 1] if my_level < n_processes - 1 else 0,
+            )
+            mx_consumers = max(
+                mx_consumers,
+                app[my_level + 1] if my_level < n_processes - 1 else 0,
+            )
+            mn_competitors = min(mn_competitors, app[my_level])
+        nsuppliers = mn_suppliers if min_values else mx_suppliers
+        nconsumers = mn_consumers if min_values else mx_consumers
+        return ContextParams(nlines, int(nsuppliers), int(nconsumers))
+
     def make_config(
         self,
         types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
@@ -2075,67 +2191,3 @@ class RepeatingContext(BaseContext):
         return super().contains_context(
             context, raise_on_failure, warn_on_failure, n_tests
         )
-
-
-@define
-class ContextParams:
-    nlines: int
-    nsuppliers: int
-    nconsumers: int
-
-
-def safemin(x: Iterable | int):
-    if isinstance(x, Iterable):
-        return min(x)
-    return x
-
-
-def extract_context_params(
-    context: BaseContext, reduce_space_size: bool, raise_on_failure: bool = True
-) -> ContextParams:
-    nlines, nsuppliers, nconsumers = 0, 0, 0
-    if isinstance(context, FixedPartnerNumbersContext):
-        nlines = safemin(context.n_lines)
-        nsuppliers = context.n_suppliers
-        nconsumers = context.n_consumers
-    elif isinstance(context, LimitedPartnerNumbersContext):
-        nlines = safemin(context.n_lines)
-        nsuppliers = context.n_suppliers[0 if reduce_space_size else -1]
-        nconsumers = context.n_consumers[0 if reduce_space_size else -1]
-    elif isinstance(context, RepeatingContext):
-        nlines = min(get_n_lines(_)[0] for _ in context.configs)
-        n_agents_list = np.asarray(
-            [get_n_agents_per_process(c) for c in context.configs]
-        )
-        n_agents_min = np.min(n_agents_list, axis=0)
-        n_agents_max = np.max(n_agents_list, axis=1)
-        mn_suppliers, mx_suppliers = float("inf"), float("-inf")
-        mn_consumers, mx_consumers = float("inf"), float("-inf")
-        mn_competitors = float("inf")
-        assert len(context.placeholder_types) == 1
-        oldlevel, level = -1000, -1000
-        for config in context.configs:
-            agent_indx = config["agent_types"].index(context.placeholder_types[0])
-            oldlevel, level = level, config["profiles"][agent_indx].level
-            if oldlevel >= -1 and oldlevel != level:
-                raise ValueError(
-                    f"Cannot use configs with the agent in levels {oldlevel} and {level}"
-                )
-
-            mn_suppliers = min(
-                mn_suppliers, n_agents_min[agent_indx - 1] if agent_indx else 0
-            )
-            mx_suppliers = max(
-                mx_suppliers, n_agents_max[agent_indx - 1] if agent_indx else 0
-            )
-            mn_consumers = min(mn_consumers, n_agents_min[agent_indx + 1])
-            mx_consumers = max(mx_consumers, n_agents_max[agent_indx + 1])
-            mn_competitors = min(mn_competitors, n_agents_min[agent_indx])
-        nsuppliers = mn_suppliers if reduce_space_size else mx_suppliers
-        nconsumers = mn_consumers if reduce_space_size else mx_consumers
-    else:
-        if raise_on_failure:
-            raise ValueError(
-                f"Cannot determine number of suppliers and consumers from the context:\n{context=}"
-            )
-    return ContextParams(nlines, int(nsuppliers), int(nconsumers))

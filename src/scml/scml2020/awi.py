@@ -517,6 +517,13 @@ class AWI(AgentWorldInterface):
         )
 
     @property
+    def allow_zero_quantity(self) -> bool:
+        """
+        Does negotiations allow zero quantity?
+        """
+        return False
+
+    @property
     def state(self) -> FactoryState:
         """Receives the factory state"""
         return self._world.a2f[self.agent.id].state

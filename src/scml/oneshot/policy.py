@@ -41,9 +41,9 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
 
     def encode_state(self, mechanism_states: dict[str, SAOState]) -> Any:
         """
-        Called to generate a state to be passed to the act() method. The default is all of `awi.state` of type `OneShotState`
+        Called to generate a state to be passed to the act() method. The default is all of `awi` of type `OneShotState`
         """
-        return self.awi.state
+        return self.awi
 
     @abstractmethod
     def act(self, state: Any) -> Any:
@@ -82,8 +82,8 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """A policy is a callable that receives a state and generates an action"""
         return self.act(state)
 
-    def counter_all(  # type: ignore
-        self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
+    def counter_all(
+        self, offers: dict[str, Outcome], states: dict[str, SAOState]
     ) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).

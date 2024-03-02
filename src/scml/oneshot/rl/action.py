@@ -3,7 +3,6 @@ Defines ways to encode and decode actions.
 """
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from typing import Iterable
 
@@ -11,16 +10,18 @@ import numpy as np
 from attr import define
 from gymnasium import Space, spaces
 from negmas.gb.common import ResponseType, field
+from negmas.helpers import distribute_integer_randomly
+from negmas.outcomes.issue_ops import itertools
 from negmas.sao.common import SAOResponse
 
-from scml.common import integer_cut
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.common import is_system_agent
-from scml.oneshot.context import BaseContext, extract_context_params
-from scml.scml2019.common import QUANTITY, UNIT_PRICE
+from scml.oneshot.context import BaseContext
+from scml.scml2019.common import QUANTITY
+from .helpers import recover_offers, encode_given_offers
 
 __all__ = [
     "ActionManager",
+    "FlexibleActionManager",
     "DefaultActionManager",
 ]
 
@@ -32,6 +33,10 @@ class ActionManager(ABC):
     """
 
     context: BaseContext
+    continuous: bool = False
+    n_suppliers: int = field(init=False, default=8)
+    n_consumers: int = field(init=False, default=8)
+    n_partners: int = field(init=False, default=16)
 
     @abstractmethod
     def make_space(self) -> Space:
@@ -45,7 +50,10 @@ class ActionManager(ABC):
 
     def encode(self, awi: OneShotAWI, responses: dict[str, SAOResponse]) -> np.ndarray:
         """Encodes an action as an array. This is only used for testing so it is optional"""
-        ...
+        _ = awi, responses
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement `encode`."
+        )
 
 
 def safemin(x: Iterable | int | float | str):
@@ -91,236 +99,101 @@ class FlexibleActionManager(ActionManager):
     """
 
     capacity_multiplier: int = 1
-    n_prices: int = 4
+    n_prices: int = 2
     max_group_size: int = 2
     reduce_space_size: bool = True
-    continuous: bool = False
     extra_checks: bool = False
-    n_quantities: int = field(init=False, default=11)
-    n_partners: int = field(init=False, default=8)
+    max_quantity: int = field(init=False, default=10)
 
     def __attrs_post_init__(self):
-        p = extract_context_params(
-            self.context, self.reduce_space_size, raise_on_failure=False
-        )
+        p = self.context.extract_context_params(self.reduce_space_size)
         if p.nlines:
             object.__setattr__(
-                self, "n_quantities", self.capacity_multiplier * p.nlines + 1
+                self, "max_quantity", self.capacity_multiplier * p.nlines
             )
-            object.__setattr__(self, "n_partners", p.nsuppliers + p.nconsumers)
+            object.__setattr__(self, "n_consumers", p.nconsumers)
+            object.__setattr__(self, "n_suppliers", p.nsuppliers)
+        object.__setattr__(self, "n_partners", self.n_suppliers + self.n_consumers)
 
     def make_space(self) -> spaces.MultiDiscrete | spaces.Box:
         """Creates the action space"""
         return (
             spaces.MultiDiscrete(
                 np.asarray(
-                    [self.n_quantities, self.n_prices] * self.n_partners
+                    [self.max_quantity + 1, self.n_prices] * self.n_partners
                 ).flatten()
             )
             if not self.continuous
             else spaces.Box(0.0, 1.0, shape=(self.n_partners * 2,))
         )
 
-    def adjust_reponses_to_partners(
-        self, awi: OneShotAWI, action: np.ndarray, partners: list[str], randomize=False
-    ) -> tuple[np.ndarray, list[str]]:
-        """Called to adjust responses to partners.
-
-        Returns:
-            A tuple of action and selected partners.
-
-        Remarks:
-            - The input is of shape (N, 2) where N can be any nonzero positive integer
-            - The first output must have the shape (n_partners,  2) and all values in the first column must be less than n_quantities while all
-              values in the second column must be greater than n_prices.
-            - The second output must lave length n_partners and specifies the partners with which not to end the negotiation necessarily.
-        """
-        partner_offers = awi.current_offers
-        n_partners, n_action = len(partners), len(action)
-        if n_partners == n_action:
-            return action, partners
-        if n_partners > n_action:
-            return action, partners[:n_action]
-        # find the total quantity to be distributed.
-        qtotal = sum(q for q, _ in action[n_partners:])
-        if qtotal <= 0:
-            return action[:n_partners], partners
-        # We need to distribute some quantities from the part of the encoded action we ignore if possible
-        # find all partners we can distribute to and their corresponding availability to receive extra quantity
-        # If the action for a given partner specifies acceptance (same as the offer from that partner), we cannot
-        # distribute to it
-        action = action[:n_partners]
-        available_partners, available_quantities = [], []
-        received_offers = []
-        for _ in range(n_partners):
-            o = partner_offers.get(partners[_], (float("inf"), 0, float("inf")))
-            if o is None:
-                received_offers.append((float("inf"), float("inf")))
-                continue
-            received_offers.append((o[QUANTITY], o[UNIT_PRICE]))
-        for i, (my_offer, partner_offer) in enumerate(zip(action, received_offers)):
-            if my_offer[0] == 0 or (
-                my_offer[0] == partner_offer[0] and my_offer[1] == partner_offer[1]
-            ):
-                continue
-            # quantities cannot exceed the maximum quantity allowed
-            q = self.n_quantities - 1 - my_offer[0]
-            if q <= 0:
-                continue
-            available_partners.append(i)
-            available_quantities.append(q)
-        if not available_partners:
-            # if we cannot distribute anything, just return the first n_partners offers as the new action
-            return action, partners
-        qtotal = min(qtotal, sum(available_quantities))
-        assert qtotal > 0
-        # we can distribute something here
-        qs = integer_cut(
-            qtotal,
-            len(available_quantities),
-            0,
-            available_quantities,
-            randomize=randomize,
-        )
-        added = np.zeros(n_partners, dtype=int)
-        for i, q in zip(available_partners, qs, strict=True):
-            added[i] = q
-        action = np.asarray(
-            [(_[0] + q, _[1]) for _, q in zip(action, added)], dtype=int
-        )
-        return action, partners
-
     def decode(self, awi: OneShotAWI, action: np.ndarray) -> dict[str, SAOResponse]:
         """
         Generates offers to all partners from an encoded action. Default is to return the action as it is assuming it is a `dict[str, SAOResponse]`
         """
         action = action.reshape((action.size // 2, 2))
-        assert (
-            QUANTITY == 0 and UNIT_PRICE == 2
-        ), "We assume that quantity and price has indices 0, 2. If not, you need to modify the tuples below to put them in the correct index"
-        nmis = awi.current_nmis
-        partners = [_ for _ in awi.my_partners if not is_system_agent(_)]
-        action, partners = self.adjust_reponses_to_partners(awi, action, partners)
-        n_partners = len(partners)
-        assert (
-            len(action) == n_partners
-        ), f"{len(action)=} but {len(partners)=} even after adjustment"
-        # scale quantities and prices in action to match the current issues
-        scaled = []
-        for partner, (q, p) in zip(partners, action, strict=True):
-            nmi = nmis.get(partner, None)
-            if not nmi:
-                scaled.append((0, 0))
-                continue
-            qscale = nmi.issues[QUANTITY].max_value / (self.n_quantities)
-            prange = nmi.issues[UNIT_PRICE].max_value - nmi.issues[UNIT_PRICE].min_value
-            pscale = (prange + 1) / self.n_prices
-            scaled.append(
-                (
-                    min(self.n_quantities - 1, int(q * qscale + 0.5)),
-                    min(prange, int(p * pscale + 0.5)),
-                )
+        if not (len(action) == self.n_partners):
+            raise AssertionError(
+                f"{len(action)=}, {self.n_partners=} ({self.n_suppliers=}, {self.n_consumers=})"
             )
-        action = np.asarray(scaled, dtype=int)
-        responses = dict()
-        for partner, response in zip(partners, action, strict=True):
-            nmi = nmis.get(partner, None)
-            if not nmi:
+        offers = recover_offers(
+            action,
+            awi,
+            self.n_suppliers,
+            self.n_consumers,
+            self.max_group_size,
+            self.continuous,
+            self.n_prices,
+        )
+        separated_offers, responses = dict(), dict()
+        nmis = awi.current_nmis
+        for k, v in offers.items():
+            if "+" not in k:
+                separated_offers[k] = tuple(int(_) for _ in v) if v else v
                 continue
-            minprice = nmi.issues[UNIT_PRICE].min_value
+            partners = k.split("+")
+            if v is None:
+                separated_offers |= dict(zip(partners, itertools.repeat(None)))
+                continue
+            q = v[QUANTITY]
+            dist = distribute_integer_randomly(q, len(partners))
+            separated_offers |= dict(zip(partners, ((_, v[1], v[-1]) for _ in dist)))
+
+        for k, v in separated_offers.items():
+            nmi = nmis.get(k, None)
+            if nmi is None:
+                continue
+            if v is None:
+                responses[k] = SAOResponse(ResponseType.END_NEGOTIATION, None)
+                continue
             partner_offer = nmi.state.current_offer  # type: ignore
-            if partner_offer is None and response[0] > 0:
-                rtype = ResponseType.REJECT_OFFER
-                outcome = (
-                    response[0],
-                    awi.current_step,
-                    response[1] + minprice,
-                )
-            elif partner_offer is None:
-                rtype = ResponseType.END_NEGOTIATION
-                outcome = None
-            elif response[0] <= 0 and response[1] <= 0:
-                rtype = ResponseType.END_NEGOTIATION
-                outcome = None
-            elif (
-                response[0] == partner_offer[QUANTITY]
-                and response[1] + minprice == partner_offer[UNIT_PRICE]
-            ) or (response[0] <= 0 and response[1] > 0):
-                # acceptance is encoded as either returning same offer as the partner's or 0 quantity and nonzero price
-                rtype = ResponseType.ACCEPT_OFFER
-                outcome = partner_offer
-            else:
-                rtype = ResponseType.REJECT_OFFER
-                outcome = (
-                    response[0],
-                    awi.current_step,
-                    response[1] + minprice,
-                )
+            if v == partner_offer:
+                responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, partner_offer)
+                continue
+            responses[k] = SAOResponse(ResponseType.REJECT_OFFER, v)
 
-            if self.extra_checks:
-                assert outcome is None or nmi.outcome_space.is_valid(
-                    outcome
-                ), f"{response=}, {outcome=} is not valid for OS: {nmi.outcome_space}"
-            responses[partner] = SAOResponse(rtype, outcome)
-
-        # end negotiation with anyone ignored
-        ignored_partners = {
-            _
-            for _ in awi.my_partners
-            if _ not in set(partners) and not is_system_agent(_)
-        }
-        for p in ignored_partners:
-            responses[p] = SAOResponse(ResponseType.END_NEGOTIATION, None)
         return responses
 
     def encode(self, awi: OneShotAWI, responses: dict[str, SAOResponse]) -> np.ndarray:
         """
         Receives offers for all partners and generates the corresponding action. Used mostly for debugging and testing.
         """
-        action = np.zeros((self.n_partners, 2), dtype=int)
-        partners = awi.my_partners
-        nmis = awi.current_nmis
+        offers = dict()
+        for k, v in responses.items():
+            if v.response == ResponseType.END_NEGOTIATION:
+                offers[k] = None
+                continue
+            offers[k] = v.outcome
+        encoded = encode_given_offers(
+            offers,
+            awi,
+            self.n_suppliers,
+            self.n_consumers,
+            self.max_group_size,
+            self.continuous,
+        )
 
-        for i, partner in enumerate(partners):
-            # if too many responses are given, just add the responses together in a round-robin fashion
-            j = i % self.n_partners
-            response = responses.get(partner, None)
-            if not response:
-                action[j] = 0
-                continue
-            nmi = nmis.get(partner, None)
-            if not nmi:
-                warnings.warn(
-                    f"Cannot encode an action with a response for {partner} because no such partner currently exist. Will ignore it."
-                )
-                action[j] = 0
-                continue
-            current_offer = nmi.state.current_offer  # type: ignore
-            minprice = nmi.issues[UNIT_PRICE].min_value
-            if response.response == ResponseType.END_NEGOTIATION:
-                action[j] = 0
-            elif response.response == ResponseType.ACCEPT_OFFER:
-                assert (
-                    current_offer == response.outcome
-                ), f"Accepting an outcome different from the current offer!! {current_offer=}, {response.outcome=}"
-                action[j] = [
-                    current_offer[QUANTITY],
-                    current_offer[UNIT_PRICE] - minprice,
-                ]
-            elif response.response == ResponseType.REJECT_OFFER:
-                if response.outcome is None:
-                    action[j] = 0
-                else:
-                    # saturate at maximum allowed quantity
-                    newq = response.outcome[QUANTITY] + action[j][0]
-                    max_allowed = min(nmi.issues[QUANTITY].max_value, newq)
-                    action[j] = [
-                        max_allowed,
-                        response.outcome[UNIT_PRICE] - minprice,
-                    ]
-            else:
-                raise ValueError(f"Unacceptable response type {response}")
-        return action.flatten()
+        return np.asarray(encoded, dtype=np.float32 if self.continuous else np.int32)
 
 
 DefaultActionManager = FlexibleActionManager

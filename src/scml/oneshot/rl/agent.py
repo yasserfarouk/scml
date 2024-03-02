@@ -110,7 +110,7 @@ class OneShotRLAgent(OneShotPolicy):
     def encode_state(self, mechanism_states: dict[str, SAOState]) -> RLState:
         _ = mechanism_states
         if not self.has_no_valid_model():
-            return self._obs_managers[self._valid_index].encode(self.awi.state)
+            return self._obs_managers[self._valid_index].encode(self.awi)
         raise RuntimeError(
             "This is an RL agent running in fallback mode and its encode_state should never be called"
         )

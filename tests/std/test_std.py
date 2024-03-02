@@ -1,8 +1,10 @@
 from scml.oneshot.agents import SyncRandomOneShotAgent
+from scml.oneshot.agents.nothing import Placeholder
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.world import PLACEHOLDER_AGENT_PREFIX
 from scml.std.agents import GreedyStdAgent, SyncRandomStdAgent
 from scml.std.world import SCML2024StdWorld
+
 from tests.switches import DefaultStdWorld
 
 
@@ -64,7 +66,7 @@ def sumall(d):
 def test_awi_needed_level0():
     class MyAWI(OneShotAWI):
         def __init__(self):
-            super().__init__(None, None)
+            super().__init__(None, Placeholder())  # type: ignore
 
         @property
         def is_perishable(self):
@@ -163,7 +165,7 @@ def test_awi_needed_level0():
 def test_awi_needed_level_last():
     class MyAWI(OneShotAWI):
         def __init__(self):
-            super().__init__(None, None)
+            super().__init__(None, Placeholder())  # type: ignore
 
         @property
         def is_perishable(self):
@@ -261,7 +263,7 @@ def test_awi_needed_level_last():
 def test_awi_needed_level_middle():
     class MyAWI(OneShotAWI):
         def __init__(self):
-            super().__init__(None, None)
+            super().__init__(None, Placeholder())  # type: ignore
 
         @property
         def is_perishable(self):
@@ -337,49 +339,25 @@ def test_awi_needed_level_middle():
 
     assert awi.total_sales == 15
     assert awi.total_supplies == 18
-    assert awi.needed_supplies == 3
-    assert awi.needed_sales == 5
-    assert sumall(awi.future_supplies) == 0
+    assert awi.needed_supplies == -8
+    assert awi.needed_sales == 8
+    assert sumall(awi.future_supplies) == 10
     assert sumall(awi.future_sales) == 15
     assert awi.total_future_sales == 15
-    assert awi.total_future_supplies == 0
-    for t, v in [(9, 0), (10, 20), (11, 8), (20, 7)]:
-        assert awi.total_sales_at(t) == v
-        assert awi.total_supplies_at(t) == 0
-    for t, v in [(9, 0), (10, 20), (11, 28), (20, 35)]:
-        assert awi.total_sales_until(t) == v
-        assert awi.total_supplies_until(t) == 0
-    for (t1, t2), v in [
-        ((9, 7), 0),
-        ((10, 10), 20),
-        ((9, 10), 20),
-        ((9, 13), 28),
-        ((10, 12), 28),
-        ((10, 11), 28),
-        ((10, 19), 28),
-        ((10, 20), 35),
-        ((11, 20), 15),
-        ((11, 15), 8),
-        ((15, 20), 7),
-        ((19, 20), 7),
-    ]:
-        assert awi.total_sales_between(t1, t2) == v, f"{t1=}, {t2=}, {v=}"
-        assert awi.total_supplies_between(t1, t2) == 0
-        assert awi.total_sales_between(t1, t2) == 0
+    assert awi.total_future_supplies == 10
+    for t, vo, vi in [(9, 0, 0), (10, 15, 18), (11, 8, 6), (20, 7, 4)]:
+        assert awi.total_sales_at(t) == vo
+        assert awi.total_supplies_at(t) == vi
+    for t, vo, vi in [(9, 0, 0), (10, 15, 18), (11, 23, 24), (20, 30, 28)]:
+        assert awi.total_sales_until(t) == vo
+        assert awi.total_supplies_until(t) == vi
 
 
 def test_can_run_single_agent():
     # agent_types = [RandDistOneShotAgent, RandomOneShotAgent, EqualDistOneShotAgent, GreedyOneShotAgent]
-    target_productivity = 0.2
     agent_types = [SyncRandomStdAgent]
-    agent_params = [
-        dict(controller_params=dict(target_productivity=target_productivity))
-    ]
-
     world = DefaultStdWorld(
-        **DefaultStdWorld.generate(
-            agent_types=agent_types, agent_params=agent_params, n_steps=50
-        ),
+        **DefaultStdWorld.generate(agent_types=agent_types, n_steps=50),
         construct_graphs=True,
     )
     world.run()

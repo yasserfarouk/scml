@@ -5,20 +5,23 @@ Defines ways to encode and decode observations.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import deque
 from typing import Iterable, Protocol, runtime_checkable
 
 import numpy as np
 from attr import define, field
 from gymnasium import spaces
-from negmas import DiscreteCartesianOutcomeSpace
 from negmas.helpers.strings import itertools
 from negmas.outcomes import Outcome
+from scml.oneshot.context import BaseContext
 
 from scml.oneshot.awi import OneShotAWI
-from scml.oneshot.common import OneShotState
-from scml.oneshot.context import BaseContext, extract_context_params
-from scml.oneshot.rl.common import group_partners
-from scml.scml2019.common import QUANTITY, UNIT_PRICE
+from scml.oneshot.rl.helpers import (
+    discretize_and_clip,
+    read_offers,
+    clip,
+    recover_offers,
+)
 
 __all__ = [
     "ObservationManager",
@@ -45,8 +48,8 @@ class ObservationManager(Protocol):
         """Creates the observation space"""
         ...
 
-    def encode(self, state: OneShotState) -> np.ndarray:
-        """Encodes an observation from the agent's state"""
+    def encode(self, awi: OneShotAWI) -> np.ndarray:
+        """Encodes an observation from the agent's awi"""
         ...
 
     def make_first_observation(self, awi: OneShotAWI) -> np.ndarray:
@@ -56,7 +59,7 @@ class ObservationManager(Protocol):
     def get_offers(
         self, awi: OneShotAWI, encoded: np.ndarray
     ) -> dict[str, Outcome | None]:
-        """Gets the offers from an encoded state"""
+        """Gets the offers from an encoded awi"""
         ...
 
 
@@ -65,6 +68,10 @@ class BaseObservationManager(ABC):
     """Base class for all observation managers that use a context"""
 
     context: BaseContext
+    continuous: bool = False
+    n_partners: int = field(init=False, default=16)
+    n_suppliers: int = field(init=False, default=8)
+    n_consumers: int = field(init=False, default=8)
 
     @abstractmethod
     def make_space(self) -> spaces.Space:
@@ -72,52 +79,75 @@ class BaseObservationManager(ABC):
         ...
 
     @abstractmethod
-    def encode(self, state: OneShotState) -> np.ndarray:
-        """Encodes an observation from the agent's state"""
+    def encode(self, awi: OneShotAWI) -> np.ndarray:
+        """Encodes an observation from the agent's awi"""
         ...
 
     @abstractmethod
     def get_offers(
         self, awi: OneShotAWI, encoded: np.ndarray
     ) -> dict[str, Outcome | None]:
-        """Gets the offers from an encoded state"""
+        """Gets the offers from an encoded awi"""
         ...
 
     def make_first_observation(self, awi: OneShotAWI) -> np.ndarray:
         """Creates the initial observation (returned from gym's reset())"""
-        return self.encode(awi.state)
+        return self.encode(awi)
 
 
 @define
 class FlexibleObservationManager(BaseObservationManager):
-    n_bins: int = 40
-    n_sigmas: int = 2
+    """
+    An observation manager that can be used with any SCML world.
+
+    Args:
+        capacity_multiplier: A factor to multiply by the number of lines to give the maximum quantity allowed in offers
+        exogenous_multiplier: A factor to multiply maximum production capacity with when encoding exogenous quantities
+        continuous: If given the observation space will be a Box otherwise it will be a MultiDiscrete
+        n_prices: The number of prices to use for encoding the unit price (if not `continuous`)
+        max_production_cost: The limit for production cost. Anything above that will be mapped to this max
+        max_group_size: Maximum size used for grouping observations from multiple partners. This will be
+                        used in the number of partners in the simulation is larger than the number used
+                        for training.
+        n_past_received_offers: Number of past received offers to add to the observation.
+        n_bins: N. bins to use for discretization (if not `continuous`)
+        n_sigmas: The number of sigmas used for limiting the range of randomly distributed variables
+        extra_checks: If given, extra checks are applied to make sure encoding and decoding make sense
+    Remarks:
+        ...
+    """
+
+    capacity_multiplier: int = 1
     n_prices: int = 2
-    max_production_cost: int = 10
     max_group_size: int = 2
     reduce_space_size: bool = True
-    n_partners: int = field(init=False, default=16)
-    n_suppliers: int = field(init=False, default=8)
-    n_consumers: int = field(init=False, default=8)
-    max_quantity: int = field(init=False, default=10)
-    n_lines: int = field(init=False, default=10)
+    n_past_received_offers: int = 1
     extra_checks: bool = False
+    n_bins: int = 40
+    n_sigmas: int = 2
+    max_production_cost: int = 10
+    exogenous_multiplier: int = 1
+    max_quantity: int = field(init=False, default=10)
     _chosen_partner_indices: list[int] | None = field(init=False, default=None)
-    _previous_offers: list[int] | None = field(init=False, default=None)
+    _previous_offers: deque = field(init=False)
     _dims: list[int] | None = field(init=False, default=None)
 
     def __attrs_post_init__(self):
-        p = extract_context_params(
-            self.context, self.reduce_space_size, raise_on_failure=False
-        )
+        p = self.context.extract_context_params(self.reduce_space_size)
         if p.nlines:
             object.__setattr__(self, "n_suppliers", p.nsuppliers)
             object.__setattr__(self, "n_consumers", p.nconsumers)
-            object.__setattr__(self, "max_quantity", p.nlines)
-            object.__setattr__(self, "n_lines", p.nlines)
+            object.__setattr__(
+                self, "max_quantity", p.nlines * self.capacity_multiplier
+            )
+            if not self.exogenous_multiplier:
+                object.__setattr__(self, "exogenous_multiplier", p.nlines)
             object.__setattr__(self, "n_partners", p.nsuppliers + p.nconsumers)
+        n = (2 * self.n_partners) * self.n_past_received_offers
+        self._previous_offers = deque([0] * n, maxlen=n) if n else deque()
 
     def get_dims(self) -> list[int]:
+        """Get the sizes of all dimensions in the observation space. Used if not continuous."""
         return (
             list(
                 itertools.chain(
@@ -129,17 +159,17 @@ class FlexibleObservationManager(BaseObservationManager):
                 itertools.chain(
                     [self.max_group_size * self.max_quantity + 1, self.n_prices]
                     * self.n_partners
+                    * self.n_past_received_offers
                 )
             )
             + [self.max_quantity + 1] * 2  # needed sales and supplies
-            # + [self.n_lines]
-            + [self.n_bins + 1] * 2  # level, relative_simulation
-            + [self.n_bins * 2 + 1]  # neg_relative
-            + [self.n_bins + 1] * 4  # production cost, penalties and other costs
-            + [self.n_bins + 1] * 2  # exogenous_contract quantity summary
+            + [self.n_bins] * 2  # level, relative_simulation
+            + [self.n_bins * 2]  # neg_relative
+            + [self.n_bins] * 3  # production cost, penalties and other costs
+            + [self.n_bins] * 2  # exogenous_contract quantity summary
         )
 
-    def make_space(self) -> spaces.MultiDiscrete:
+    def make_space(self) -> spaces.MultiDiscrete | spaces.Box:
         """Creates the action space"""
         dims = self.get_dims()
         if self._dims is None:
@@ -147,273 +177,142 @@ class FlexibleObservationManager(BaseObservationManager):
         elif self.extra_checks:
             assert all(
                 a == b for a, b in zip(dims, self._dims, strict=True)
-            ), f"Surprising dims\n{self._dims=}\n{dims=}"
-        space = spaces.MultiDiscrete(np.asarray(dims))
-        return space
+            ), f"Surprising dims while making space\n{self._dims=}\n{dims=}"
+        if self.continuous:
+            return spaces.Box(0.0, 1.0, shape=(len(dims),))
+        return spaces.MultiDiscrete(np.asarray(dims))
 
     def make_first_observation(self, awi: OneShotAWI) -> np.ndarray:
         """Creates the initial observation (returned from gym's reset())"""
-        return self.encode(awi.state)
+        return self.encode(awi)
 
-    def encode(self, state: OneShotState) -> np.ndarray:
-        """Encodes the state as an array"""
-        suppliers = group_partners(
-            state.my_suppliers, self.n_suppliers, self.max_group_size
+    def encode(self, awi: OneShotAWI) -> np.ndarray:
+        """Encodes the awi as an array"""
+
+        offers = read_offers(
+            awi,
+            self.n_suppliers,
+            self.n_consumers,
+            self.max_group_size,
+            self.continuous,
         )
-        consumers = group_partners(
-            state.my_consumers, self.n_consumers, self.max_group_size
-        )
 
-        if self.extra_checks:
-            partners = suppliers + consumers
-            assert len(partners) == self.n_partners, (
-                f"{len(partners)=} but I can only support {self.n_partners=}"
-                f"\n{suppliers=}\n{consumers=}\n{type(self.context)=}\n{self.context=}\n{self=}"
-            )
-        neg_relative_time = 1.0
-        for s in state.current_states.values():
-            neg_relative_time = min(neg_relative_time, s.relative_time)
-        offer_map = state.current_offers
-
-        def read_offers(N, lstoflst, min_price, offer_map=offer_map):
-            offers = [[0, 0] for _ in range(N)]
-            for i, lst in enumerate(lstoflst):
-                n_read = 0
-                for partner in lst:
-                    outcome = offer_map.get(partner, (0, 0, 0))
-                    if outcome is None:
-                        continue
-                    offers[i][0] += outcome[QUANTITY]
-                    offers[i][1] += outcome[UNIT_PRICE] * outcome[QUANTITY]
-                    n_read += 1
-                if n_read and offers[i][0]:
-                    offers[i][1] = offers[i][1] / offers[i][0] - min_price
-            return offers
-
-        min_price = state.current_input_outcome_space.issues[UNIT_PRICE].min_value
-        offers = read_offers(self.n_suppliers, suppliers, min_price)
-
-        min_price = state.current_output_outcome_space.issues[UNIT_PRICE].min_value
-        offers += read_offers(self.n_consumers, consumers, min_price)
+        current_offers = np.asarray(offers).flatten().tolist()
 
         if self.extra_checks:
             assert (
-                state.total_sales == 0 or state.total_supplies == 0
-            ), f"{state.total_sales=}, {state.total_supplies=}, {state.exogenous_input_quantity=}, {state.exogenous_output_quantity=}"
+                len(current_offers) == self.n_partners * 2
+            ), f"{len(current_offers)=} but {self.n_partners=}"
+            assert (
+                len(self._previous_offers)
+                == self.n_past_received_offers * self.n_partners * 2
+            ), f"{self._previous_offers=} but {self.n_partners=}"
 
-        # TODO add more state values here and remember to add corresponding limits in the make_space function
-        def _normalize(x, mu, sigma, n_sigmas=self.n_sigmas):
-            """
-            Normalizes x between 0 and 1 given that it is sampled from a normal (mu, sigma).
-            This is actually a very stupid way to do it.
-            """
-            mn = mu - n_sigmas * sigma
-            mx = mu + n_sigmas * sigma
-            if abs(mn - mx) < 1e-6:
-                return 1
-            return max(0, min(1, (x - mn) / (mx - mn)))
+        extra = self.extra_obs(awi)
+        v = np.asarray(
+            current_offers
+            + list(self._previous_offers)
+            + (
+                [min(1, max(0, v[0] if isinstance(v, Iterable) else v)) for v in extra]
+                if self.continuous
+                else [
+                    discretize_and_clip(
+                        clip(v[0]) if isinstance(v, Iterable) else clip(v),
+                        clip(v[1]) if isinstance(v, Iterable) else self.n_bins,
+                    )
+                    for v in extra
+                ]
+            ),
+            dtype=np.float32 if self.continuous else np.int32,
+        )
+        if self.continuous:
+            v = np.minimum(np.maximum(v, 0.0), 1.0)
 
-        offerslist = np.asarray(offers).flatten().tolist()
-        if self._previous_offers is None:
-            previous_offers = [0] * len(offerslist)
-        else:
-            previous_offers = self._previous_offers
-        assert (
-            len(previous_offers) == self.n_partners * 2
-        ), f"{len(previous_offers)=} but {self.n_partners=}"
-        assert (
-            len(offerslist) == self.n_partners * 2
-        ), f"{len(offerslist)=} but {self.n_partners=}"
-        exogenous = state.exogenous_contract_summary
-        exogenous = [
-            min(
-                self.n_bins,
-                max(
-                    0,
-                    int(
-                        self.n_bins
-                        * (
-                            exogenous[0][0]
-                            / (self.max_quantity * len(state.all_consumers[0]))
-                        )
-                    ),
-                ),
-            ),
-            min(
-                self.n_bins,
-                max(
-                    0,
-                    int(
-                        self.n_bins
-                        * (
-                            exogenous[-1][0]
-                            / (self.max_quantity * len(state.all_suppliers[-1]))
-                        )
-                    ),
-                ),
-            ),
-        ]
-        extra = [
-            max(0, state.needed_sales),
-            max(0, state.needed_supplies),
-            # state.n_lines - 1,
-            max(
-                0,
-                min(
-                    self.n_bins,
-                    int(self.n_bins * (state.level / (state.n_processes - 1))),
-                ),
-            ),
-            max(0, min(self.n_bins, int(state.relative_simulation_time * self.n_bins))),
-            max(0, min(self.n_bins * 2, int(neg_relative_time * self.n_bins * 2))),
-            max(
-                0,
-                min(
-                    self.n_bins,
-                    int(self.n_bins * state.profile.cost / self.max_production_cost),
-                ),
-            ),
-            max(
-                0,
-                min(
-                    self.n_bins,
-                    int(
-                        _normalize(
-                            state.disposal_cost,
-                            state.profile.disposal_cost_mean,
-                            state.profile.disposal_cost_dev,
-                        )
-                        * self.n_bins
-                    ),
-                ),
-            ),
-            max(
-                0,
-                min(
-                    self.n_bins,
-                    int(
-                        _normalize(
-                            state.shortfall_penalty,
-                            state.profile.shortfall_penalty_mean,
-                            state.profile.shortfall_penalty_dev,
-                        )
-                        * self.n_bins
-                    ),
-                ),
-            ),
-            max(
-                0,
-                min(
-                    self.n_bins,
-                    int(
-                        self.n_bins
-                        * min(
-                            1,
-                            (
-                                state.trading_prices[state.my_output_product]
-                                - state.trading_prices[state.my_input_product]
-                            )
-                            / state.trading_prices[state.my_output_product],
-                        )
-                    ),
-                ),
-            ),
-        ] + exogenous
-        v = np.asarray(offerslist + previous_offers + extra)
-
+        if self._previous_offers:
+            for _ in current_offers:
+                self._previous_offers.append(_)
         if self.extra_checks:
-            if self._dims is None:
-                self._dims = self.get_dims()
-            assert all(
-                a <= b for a, b in zip(v, self._dims, strict=True)
-            ), f"Surprising dims\n{v=}\n{self._dims=}"
             space = self.make_space()
-            assert isinstance(space, spaces.MultiDiscrete)
+            assert self.continuous or isinstance(space, spaces.MultiDiscrete)
+            assert not self.continuous or isinstance(space, spaces.Box)
             assert space is not None and space.shape is not None
             exp = space.shape[0]
             assert (
                 len(v) == exp
-            ), f"{len(v)=}, {len(extra)=}, {len(offers)=}, {exp=}, {self.n_partners=}\n{state.current_negotiation_details=}"
-            if not all(0 <= a < b for a, b in zip(v, space.nvec)):  # type: ignore
-                print(
-                    f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"
-                )
-                # breakpoint()
-            assert all(
-                0 <= a < b
-                for a, b in zip(v, space.nvec)  # type: ignore
-            ), f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (state.exogenous_input_quantity , state.total_supplies , state.total_sales , state.exogenous_output_quantity) }"  # type: ignore
+            ), f"{len(v)=}, {len(extra)=}, {len(offers)=}, {exp=}, {self.n_partners=}\n{awi.current_negotiation_details=}"
+            if self._dims is None:
+                self._dims = self.get_dims()
+            assert self.continuous or all(
+                a <= b for a, b in zip(v, self._dims, strict=True)
+            ), f"Surprising dims\n{v=}\n{self._dims=}"
+            assert not self.continuous or all(
+                [0 <= x <= 1 for x in v]
+            ), f"Surprising dims (continuous)\n{v=}"
+            if isinstance(space, spaces.MultiDiscrete):
+                if not all(0 <= a < b for a, b in zip(v, space.nvec)):
+                    print(
+                        f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (awi.current_exogenous_input_quantity , awi.total_supplies , awi.total_sales , awi.current_exogenous_output_quantity) }"
+                    )
+                assert all(
+                    0 <= a < b for a, b in zip(v, space.nvec)
+                ), f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (awi.current_exogenous_input_quantity , awi.total_supplies , awi.total_sales , awi.current_exogenous_output_quantity) }"  # type: ignore
 
-        self._previous_offers = offerslist
         return v
 
+    def extra_obs(self, awi: OneShotAWI) -> list[tuple[float, int] | float]:
+        """ "
+        The observation values other than offers and previous offers.
+
+        Returns:
+            A list of tuples. Each is some observation variable as a
+            real number between zero and one and a number of bins to
+            use for discrediting this variable. If a single value, the
+            number of bins will be self.n_bin
+
+        """
+        # adding extra components to the observation
+        neg_relative_time = min(
+            awi.current_states.values(), key=lambda x: x.relative_time
+        ).relative_time
+        exogenous = awi.exogenous_contract_summary
+        incost = (
+            awi.current_disposal_cost if awi.is_perishable else awi.current_storage_cost
+        )
+
+        return [
+            (awi.needed_sales / self.max_quantity, self.max_quantity + 1),
+            (awi.needed_supplies / self.max_quantity, self.max_quantity + 1),
+            awi.level / (awi.n_processes - 1),
+            awi.relative_time,
+            (neg_relative_time, 2 * self.n_bins),
+            awi.profile.cost / self.max_production_cost,
+            incost / (incost + awi.current_shortfall_penalty),
+            (
+                awi.trading_prices[awi.my_output_product]
+                - awi.trading_prices[awi.my_input_product]
+            )
+            / awi.trading_prices[awi.my_output_product],
+            exogenous[0][0]
+            / (self.exogenous_multiplier * awi.production_capacities[0]),
+            exogenous[-1][0]
+            / (self.exogenous_multiplier * awi.production_capacities[-1]),
+        ]
+
     def get_offers(
-        self, awi: OneShotAWI, encoded: np.ndarray, previous=False
+        self, awi: OneShotAWI, encoded: np.ndarray
     ) -> dict[str, Outcome | None]:
         """
-        Gets offers from an encoded state.
+        Gets offers from an encoded awi.
         """
-        suppliers = group_partners(
-            awi.my_suppliers, self.n_suppliers, self.max_group_size
-        )
-        consumers = group_partners(
-            awi.my_consumers, self.n_consumers, self.max_group_size
-        )
-        buyos = awi.current_input_outcome_space
-        sellos = awi.current_output_outcome_space
-        min_buy_price = buyos.issues[UNIT_PRICE].min_value
-        min_sell_price = sellos.issues[UNIT_PRICE].min_value
-        return self.decode_offers(
+        return recover_offers(
             encoded,
-            suppliers,
-            consumers,
-            previous,
-            min_buy_price,
-            min_sell_price,
-            awi.current_step,
-            buyos,
-            sellos,
+            awi,
+            self.n_suppliers,
+            self.n_consumers,
+            self.max_group_size,
+            self.continuous,
+            n_prices=self.n_prices,
         )
-
-    def decode_offers(
-        self,
-        encoded: np.ndarray,
-        suppliers: list[list[str]],
-        consumers: list[list[str]],
-        mine: bool,
-        min_buy_price: float,
-        min_sell_price: float,
-        current_step: int,
-        buyos: DiscreteCartesianOutcomeSpace | None = None,
-        sellos: DiscreteCartesianOutcomeSpace | None = None,
-    ) -> dict[str, Outcome | None]:
-        strt = 2 * self.n_partners if mine else 0
-        offers = encoded[strt : strt + 2 * self.n_partners].reshape(
-            (self.n_partners, 2)
-        )
-        partners = suppliers + consumers
-        assert len(offers) == len(partners), f"{len(offers)=}, {len(partners)=}"
-        responses = dict()
-        for plst, w, is_supplier in zip(
-            partners,
-            offers,
-            [True] * len(suppliers) + [False] * len(consumers),
-            strict=True,
-        ):
-            p = "+".join(plst)
-            minprice = min_buy_price if is_supplier else min_sell_price
-            if w[0] == w[1] == 0:
-                responses[p] = None
-                continue
-
-            outcome = (w[0], current_step, w[1] + minprice)
-            if self.extra_checks:
-                os = buyos if is_supplier else sellos
-                assert (
-                    os is None or outcome in os
-                ), f"received {outcome} from {p} ({w}) in step {current_step} for OS {os}\n{encoded=}"
-            responses[p] = outcome
-        return responses
 
 
 DefaultObservationManager = FlexibleObservationManager

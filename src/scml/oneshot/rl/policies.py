@@ -50,6 +50,7 @@ def powerset(iterable):
 
 def all_but_concentrated(q, n) -> list[int]:
     """Distributes q over n so that as many values as possible are nonzero with one value being as large as possible"""
+    q = int(q)
     if n < 1:
         return []
     if q <= n:
@@ -69,8 +70,7 @@ def greedy_policy(
     action_manager: ActionManager = FlexibleActionManager(ANACOneShotContext()),
     debug=False,
     distributor: Callable[[int, int], list[int]] = all_but_concentrated,
-    return_decoded: bool = False,
-) -> np.ndarray | dict[str, SAOResponse]:
+) -> np.ndarray:
     """
     A simple greedy policy.
 
@@ -78,11 +78,10 @@ def greedy_policy(
         obs: The current observation
         awi: The AWI of the agent running the policy
         obs_manager: The observation manager used to encode the observation
-        action_manager: The action manager to be used to encode the action (not used if return_decoded=True)
+        action_manager: The action manager to be used to encode the action
         debug: If True, extra assertions are tested
         distributor: A callable that receives a total quantity to be distributed
                      over n partners and returns a list of n values that sum to this total quantity
-        return_decoded: If True, the returned action is already decoded (no need to decode it by the action manager).
 
     Remarks:
         - Accepts the subset of offers with maximum total quantity under current needs.
@@ -97,11 +96,40 @@ def greedy_policy(
         received_offers = {k: o for k, o in offers.items() if o is not None}
         assert isinstance(awi, OneShotAWI)
         awi_offers = awi.current_offers
-        assert set(awi_offers.keys()) == set(
-            received_offers.keys()
-        ), f"{awi_offers=}\n{offers=}\n{received_offers=}"
+        received_keys = []
+        for k in received_offers.keys():
+            if "+" in k:
+                received_keys += [_ for _ in k.split("+") if _ in awi_offers.keys()]
+            else:
+                received_keys.append(k)
+        if set(awi_offers.keys()) != set(received_keys):
+            raise AssertionError(
+                f"AWI keys do not match received keys\n"
+                f"{awi_offers=}\n{offers=}\n{received_offers=}\n{received_keys=}"
+            )
         for k, v in received_offers.items():
-            assert awi_offers[k] == v, f"{awi_offers[k]=} != {offers[k]}"
+            if "+" in k:
+                q, t, p = v
+                assert q == sum(awi_offers.get(_, (0, 0, 0))[0] for _ in k.split("+"))
+                assert (
+                    abs(
+                        p * q
+                        - sum(
+                            awi_offers.get(_, (0, 0, 0))[-1]
+                            * awi_offers.get(_, (0, 0, 0))[0]
+                            for _ in k.split("+")
+                        )
+                    )
+                    < 1e-5
+                )
+                assert all(
+                    t == awi_offers[_][1] for _ in k.split("+") if _ in awi_offers
+                )
+                continue
+            assert awi_offers[k] == v, (
+                f"AWI values do not match received values\n"
+                f"{awi_offers[k]=} != {offers[k]}"
+            )
     needed = awi.needed_supplies if not awi.is_first_level else awi.needed_sales
     all_offers = list(offers.values())
     all_partners = list(offers.keys())
@@ -110,8 +138,8 @@ def greedy_policy(
     best, diff = None, sys.maxsize
     for indices in powerset(all_indices):
         q = sum(
-            _.outcome[QUANTITY] if _.response == ResponseType.REJECT_OFFER else 0
-            for _ in [all_offers[_] for _ in indices]
+            r[QUANTITY] if r is not None else 0
+            for r in [all_offers[_] for _ in indices]
         )
         d = needed - q
         if d < 0:
@@ -171,6 +199,4 @@ def greedy_policy(
             j += 1
             if j >= len(quantities):
                 break
-    if return_decoded:
-        return response
     return action_manager.encode(awi, response)

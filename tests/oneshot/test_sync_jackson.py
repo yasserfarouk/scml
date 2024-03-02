@@ -243,7 +243,7 @@ class ReporterAgent(BetterAgent):
                 if isinstance(self.negotiators[mn_id][0], ControlledSAONegotiator):
                     sync_partner = [
                         _
-                        for _ in self.negotiators[mn_id][0].nmi.mechanism.negotiators
+                        for _ in self.negotiators[mn_id][0].nmi._mechanism.negotiators
                         if _.owner.id == mn_id
                     ][0].parent
                     for k, v in vars(sync_partner).items():

@@ -27,13 +27,17 @@ def model_wrapper(model, deterministic: bool = False) -> RLModel:
 
 
 def group_partners(
-    my_partners: list[str], n_partners: int, max_group_size: int
+    my_partners: list[str], n_partners: int, max_group_size: int, extend: bool = True
 ) -> list[list[str]]:
     """Combines a list of partners/consumers into the given number of groups"""
     partners = [_ for _ in my_partners if not is_system_agent(_)]
     partner_sets = [[] for _ in range(n_partners)]
     for i, partner in enumerate(partners):
         partner_sets[i % n_partners].append(partner)
+    n = len(partners)
+    if extend and n:
+        for i in range(n, n_partners):
+            partner_sets[i].append(partners[(i - n) % n])
 
     assert not partner_sets or max(len(_) for _ in partner_sets) <= max_group_size, (
         f"Too many partners {len(partners)} needing to combine more "

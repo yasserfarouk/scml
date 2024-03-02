@@ -142,26 +142,26 @@ def test_equal_exogenous_supply_stepping_with_random_action():
                     assert partner2 == partner
                     negotiator = [
                         _.id
-                        for _ in neg.nmi.mechanism.negotiators
+                        for _ in neg.nmi._mechanism.negotiators
                         if _.owner.id == agent.id
                     ][0]
                     partner = [
                         _.id
-                        for _ in neg.nmi.mechanism.negotiators
+                        for _ in neg.nmi._mechanism.negotiators
                         if _.owner.id != agent.id
                     ][0]
                     if random.random() > 0.5:
-                        responses[neg.nmi.mechanism.id] = {
+                        responses[neg.nmi.mechanism_id] = {
                             negotiator: SAOResponse(
                                 ResponseType.REJECT_OFFER, neg.nmi.random_outcome()
                             )
                         }
                     elif random.random() < 0.1:
-                        responses[neg.nmi.mechanism.id] = {
+                        responses[neg.nmi.mechanism_id] = {
                             negotiator: SAOResponse(ResponseType.END_NEGOTIATION, None)
                         }
                     else:
-                        responses[neg.nmi.mechanism.id] = {
+                        responses[neg.nmi.mechanism_id] = {
                             negotiator: SAOResponse(
                                 ResponseType.ACCEPT_OFFER, neg.nmi.state.current_offer
                             )

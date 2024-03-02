@@ -30,6 +30,7 @@ from negmas import (
 from negmas.helpers import get_class, get_full_type_name, instantiate, unique_name
 from negmas.sao import ControlledSAONegotiator, SAOController, SAONegotiator
 from negmas.situated import NegotiationInfo
+from .awi import OneShotAWI
 
 from scml.oneshot.ufun import OneShotUFun
 
@@ -104,7 +105,7 @@ def get_n_agents_per_process(config: dict[str, Any]) -> list[int]:
         for profile in config["profiles"]:
             counts[profile.level] += 1
         mx = max(counts.keys())
-        return [counts.get(i, 0) for i in range(mx)]
+        return [counts.get(i, 0) for i in range(mx + 1)]
     if "n_agents_per_process" in config:
         return config["n_agents_per_process"]
     if "agent_processes" in config:
@@ -112,13 +113,13 @@ def get_n_agents_per_process(config: dict[str, Any]) -> list[int]:
         for i in config["agent_processes"]:
             counts[i] += 1
         mx = max(counts.keys())
-        return [counts.get(i, 0) for i in range(mx)]
+        return [counts.get(i, 0) for i in range(mx + 1)]
     raise ValueError(
         "Cannot find profiles, n_agents_per_profile, agent_processes. I cannot determine the number of agents per level"
     )
 
 
-class SCMLBaseWorld(TimeInAgreementMixin, World):
+class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapter]):
     """Implements the a generalized form of SCML-OneShot game which supports both oneshot and standard simulations
 
     Args:
@@ -188,6 +189,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         publish_exogenous_summary=True,
         publish_trading_prices=True,
         publish_assets=False,
+        publish_production_capacity=True,
         # negotiation params,
         price_multiplier=0.0,
         price_range_fraction=0.0,
@@ -227,6 +229,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
         self.agents: dict[str, DefaultOneShotAdapter]  # type: ignore
         self.publish_assets = publish_assets
+        self.publish_production_capacity = publish_production_capacity
         self.perishable = perishable
         self.horizon = horizon
         self.price_range_fraction = price_range_fraction
@@ -341,6 +344,11 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
         self.bulletin_board.record("settings", self.perishable, "perishable")
         self.bulletin_board.record("settings", self.publish_assets, "publish_assets")
         self.bulletin_board.record(
+            "settings",
+            self.publish_production_capacity,
+            "publisher_production_capacity",
+        )
+        self.bulletin_board.record(
             "settings", self.nullify_bankrupt_contracts, "nullify_bankrupt_contracts"
         )
         self.bulletin_board.record(
@@ -420,6 +428,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             penalize_bankrupt_for_future_contracts=penalize_bankrupt_for_future_contracts,
             perishable=perishable,
             publish_assets=publish_assets,
+            publish_production_capacity=publish_production_capacity,
             bankruptcy_limit=bankruptcy_limit,
             price_range_fraction=self.price_range_fraction,
             financial_report_period=financial_report_period,
@@ -594,6 +603,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
 
         self.suppliers: list[list[str]] = [[] for _ in range(n_products)]
         self.consumers: list[list[str]] = [[] for _ in range(n_products)]
+        self.production_capacity: list[int] = [
+            0 if self.publish_production_capacity else -1
+        ] * n_processes
         self.agent_processes: dict[str, list[int]] = defaultdict(list)
         self.agent_inputs: dict[str, list[int]] = defaultdict(list)
         self.agent_outputs: dict[str, list[int]] = defaultdict(list)
@@ -616,6 +628,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             if profile.cost == INFINITE_COST:
                 continue
             p = profile.level
+            if self.publish_production_capacity:
+                self.production_capacity[p] += profile.n_lines
             self.suppliers[p + 1].append(agent_id)
             self.consumers[p].append(agent_id)
             self.agent_processes[agent_id].append(p)
@@ -1115,6 +1129,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
                     production_costs[f:k] * (i + 1)  # math.sqrt(i + 1)
                 ).astype(int)
 
+        n_lines = intin(n_lines)
         costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)  # type: ignore
         for p, (f, k) in enumerate(zip(first_agent, last_agent)):
             costs[f:k, :, p] = production_costs[f:k].reshape((k - f), 1)
@@ -1556,7 +1571,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
               action (response) is given in the agents dict.
             - The world MUST be created with `one_offer_per_step` passed as `True` (default is `False`).
         """
-        from scml.oneshot.awi import OneShotAWI
 
         neg_actions = dict()
         existing = set(self._negotiations.keys())
@@ -1568,12 +1582,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World):
             for partner, neg in negotiations.items():
                 neg: NegotiationDetails
                 mynegs = [
-                    _ for _ in neg.nmi.mechanism.negotiators if _.owner.id == agent
+                    _
+                    for _ in neg.nmi._mechanism.negotiators
+                    if _.owner and _.owner.id == agent
                 ]
                 assert len(mynegs) == 1
-                assert neg.nmi.mechanism._one_offer_per_step  # type: ignore
+                assert neg.nmi._mechanism._one_offer_per_step  # type: ignore
                 response = responses.get(partner, None)
-                mid = neg.nmi.mechanism.id
+                mid = neg.nmi.mechanism_id
                 # if mid not in existing:
                 #     continue
 

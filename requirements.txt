@@ -1,6 +1,6 @@
 click
 prettytable
-negmas>=0.9.0
+negmas>=0.10.14
 jupyter
 gif
 joblib

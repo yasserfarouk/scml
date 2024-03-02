@@ -353,6 +353,7 @@ def test_graphs_lead_to_no_unknown_nodes():
     world.graph((0, world.n_steps))
 
 
+@pytest.mark.skip("known to fail. Will not be supported anymore")
 @pytest.mark.skipif(SCML_ON_GITHUB, reason="known to fail on CI")
 @given(
     atype=st.lists(

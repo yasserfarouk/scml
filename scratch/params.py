@@ -81,7 +81,7 @@ class Recorder(SCML2020OneShotWorld):
             mx, mn = a.ufun.max_utility, a.ufun.min_utility
             max_producible = a.ufun._best.producible
             min_producible = a.ufun._worst.producible
-            state = a.awi.state()
+            awi = a.awi
             assert isinstance(a.awi, OneShotAWI)
             profile = a.awi.profile
             d = {f"p_{k}": v for k, v in self.__params.items()}
@@ -89,14 +89,14 @@ class Recorder(SCML2020OneShotWorld):
             d.update(
                 dict(
                     step=self.current_step,
-                    exogenous_input_quantity=state.exogenous_input_quantity,
-                    exogenous_input_price=state.exogenous_input_price,
-                    exogenous_output_quantity=state.exogenous_output_quantity,
-                    exogenous_output_price=state.exogenous_output_price,
-                    disposal_cost=state.disposal_cost,
-                    shortfall_penalty=state.shortfall_penalty,
+                    exogenous_input_quantity=awi.current_exogenous_input_quantity,
+                    exogenous_input_price=awi.current_exogenous_input_price,
+                    exogenous_output_quantity=awi.current_exogenous_output_quantity,
+                    exogenous_output_price=awi.current_exogenous_output_price,
+                    disposal_cost=awi.current_disposal_cost,
+                    shortfall_penalty=awi.current_shortfall_penalty,
                     production_cost=profile.cost,
-                    current_balance=state.current_balance,
+                    current_balance=awi.current_balance,
                     input_product=profile.input_product,
                     n_lines=profile.n_lines,
                     shortfall_penalty_mean=profile.shortfall_penalty_mean,

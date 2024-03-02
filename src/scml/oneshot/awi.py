@@ -24,8 +24,9 @@ from .common import (
 )
 
 if TYPE_CHECKING:
+    from scml.oneshot.world import SCMLBaseWorld
+
     from .agent import OneShotAgent
-    from .world import SCML2020OneShotWorld
 
 __all__ = ["OneShotAWI"]
 
@@ -47,6 +48,8 @@ class OneShotAWI(AgentWorldInterface):
           - *n_competitors*: Number of other factories on the same production level.
           - *all_suppliers*: A list of all suppliers by product.
           - *all_consumers*: A list of all consumers by product.
+          - *proudction_capacities*: The total production capacity (i.e. number of lines)
+                                     for each production level (i.e. manufacturing process).
           - *is_system*: Is the given system ID corresponding to a system agent?
           - *is_bankrupt*: Is the given agent bankrupt? None asks about self
           - *catalog_prices*: A list of the catalog prices (by product).
@@ -189,7 +192,7 @@ class OneShotAWI(AgentWorldInterface):
 
     """
 
-    def __init__(self, world: SCML2020OneShotWorld, agent: OneShotAgent):
+    def __init__(self, world: SCMLBaseWorld, agent: OneShotAgent):
         super().__init__(world, agent)  # type: ignore
         self._world = world
         self.agent = agent
@@ -246,6 +249,11 @@ class OneShotAWI(AgentWorldInterface):
     def all_suppliers(self) -> list[list[str]]:
         """Returns a list of agent IDs for all suppliers for every product"""
         return self._world.suppliers
+
+    @property
+    def production_capacities(self) -> list[int]:
+        """Returns the total production capacity in the market for each process"""
+        return self._world.production_capacity
 
     @property
     def all_consumers(self) -> list[list[str]]:
@@ -442,6 +450,7 @@ class OneShotAWI(AgentWorldInterface):
             all_suppliers=self.all_suppliers,
             all_consumers=self.all_consumers,
             my_partners=self.my_partners,
+            production_capacities=self.production_capacities,
             catalog_prices=self.catalog_prices.tolist(),
             price_multiplier=self.price_multiplier,
             is_exogenous_forced=self.is_exogenous_forced,
@@ -691,11 +700,17 @@ class OneShotAWI(AgentWorldInterface):
         }
 
     @property
+    def current_sell_nmis(self) -> dict[str, SAONMI]:
+        """All running negotiations as a mapping from partner ID to current negotiation state"""
+        return {  # type: ignore
+            partner: info.nmi
+            for partner, info in self.current_negotiation_details["sell"].items()
+        }
+
+    @property
     def current_nmis(self) -> dict[str, SAONMI]:
         """All running negotiations as a mapping from partner ID to current negotiation nmi"""
-        d = self.current_buy_nmis
-        d.update(self.current_sell_nmis)
-        return d
+        return self.current_buy_nmis | self.current_sell_nmis
 
     @property
     def running_sell_nmis(self) -> dict[str, SAONMI]:
@@ -706,18 +721,9 @@ class OneShotAWI(AgentWorldInterface):
         }
 
     @property
-    def current_sell_nmis(self) -> dict[str, SAONMI]:
-        """All running negotiations as a mapping from partner ID to current negotiation state"""
-        d = self.current_buy_nmis
-        d.update(self.running_sell_nmis)
-        return d
-
-    @property
     def current_states(self) -> dict[str, SAOState]:
         """All running negotiations as a mapping from partner ID to current negotiation state"""
-        d = self.current_buy_states
-        d.update(self.current_sell_states)
-        return d
+        return self.current_buy_states | self.current_sell_states
 
     @property
     def current_buy_offers(self) -> dict[str, Outcome]:

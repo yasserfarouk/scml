@@ -576,6 +576,13 @@ class AWIHelper:
         ]
         return summary
 
+    @property
+    def allow_zero_quantity(self) -> bool:
+        """
+        Does negotiations allow zero quantity?
+        """
+        return False
+
     # Everything else
     # ===============
     def __getattr__(self, attr):
@@ -792,3 +799,10 @@ class OneShotAdapter(
     def current_shortfall_penalty(self) -> float:
         """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
         return 0.0
+
+    @property
+    def allow_zero_quantity(self) -> bool:
+        """
+        Does negotiations allow zero quantity?
+        """
+        return False

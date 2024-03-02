@@ -59,10 +59,10 @@ class AWIHelper:
         unit_price, time, quantity = self._world._make_issues(product)
         return self._world._request_negotiations(
             self._owner.id,
-            product,
-            quantity,
-            unit_price,
-            time,
+            # product,
+            # quantity,
+            # unit_price,
+            # time,
             controller,
             negotiators,
             extra,
@@ -97,12 +97,13 @@ class AWIHelper:
             self._world._request_negotiation(
                 self._owner.id,
                 product,
-                quantity,
-                unit_price,
-                time,
+                # quantity,
+                # unit_price,
+                # time,
                 partner,
                 negotiator,
                 extra,
+                is_buy,
             )
             is not None
         )
@@ -226,3 +227,10 @@ class AWIHelper:
         costs = INFINITE_COST * np.ones((self.n_lines, self.n_products), dtype=int)
         costs[:, self.my_input_product] = self._owner.awi.profile.cost
         return FactoryProfile(costs)
+
+    @property
+    def allow_zero_quantity(self) -> bool:
+        """
+        Does negotiations allow zero quantity?
+        """
+        return False

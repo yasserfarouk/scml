@@ -1,6 +1,10 @@
 import scml.oneshot.rl.action as action
-from scml.oneshot.rl.action import ActionManager, DefaultActionManager
+from scml.oneshot.rl.action import (
+    ActionManager,
+    DefaultActionManager,
+    FlexibleActionManager,
+)
 
 __all__ = action.__all__
 
-_ = ActionManager, DefaultActionManager
+_ = ActionManager, DefaultActionManager, FlexibleActionManager

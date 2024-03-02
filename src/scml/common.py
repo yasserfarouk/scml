@@ -193,7 +193,7 @@ def integer_cut(
     return sizes.tolist()
 
 
-def realin(rng: tuple[float, float] | float) -> float:
+def realin(rng: tuple[float, float] | float | list[float] | np.ndarray) -> float:
     """
     Selects a random number within a range if given or the input if it was a float
 
@@ -204,6 +204,10 @@ def realin(rng: tuple[float, float] | float) -> float:
 
         the real within the given range
     """
+    if isinstance(rng, np.ndarray):
+        rng = rng.tolist()
+    if isinstance(rng, list):
+        rng = random.choice(rng)
     if isinstance(rng, float) or isinstance(rng, int):
         return float(rng)
     if abs(rng[-1] - rng[0]) < 1e-8:
@@ -228,7 +232,7 @@ def strin(lst: list[str] | str) -> str:
     return random.choice(lst)
 
 
-def intin(rng: tuple[int, int] | int) -> int:
+def intin(rng: tuple[int, int] | int | list[int] | np.ndarray) -> int:
     """
     Selects a random number within a range if given or the input if it was an int
 
@@ -239,6 +243,10 @@ def intin(rng: tuple[int, int] | int) -> int:
 
         the int within the given range
     """
+    if isinstance(rng, np.ndarray):
+        rng = rng.tolist()
+    if isinstance(rng, list):
+        rng = random.choice(rng)
     if isinstance(rng, int):
         return rng
     if rng[0] == rng[1]:
