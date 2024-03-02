@@ -23,28 +23,27 @@ from scml.oneshot.context import (
     WeakSupplierContext,
 )
 
-
-@pytest.mark.parametrize(
-    "context_type",
-    (
-        GeneralContext,
-        RepeatingContext,
-        ConsumerContext,
-        SupplierContext,
-        StrongConsumerContext,
-        StrongSupplierContext,
-        WeakConsumerContext,
-        WeakSupplierContext,
-        BalancedConsumerContext,
-        BalancedSupplierContext,
-        ANACContext,
-        ANACOneShotContext,
-        FixedPartnerNumbersContext,
-        FixedPartnerNumbersOneShotContext,
-        LimitedPartnerNumbersContext,
-        LimitedPartnerNumbersOneShotContext,
-    ),
+context_types = (
+    GeneralContext,
+    RepeatingContext,
+    ConsumerContext,
+    SupplierContext,
+    StrongConsumerContext,
+    StrongSupplierContext,
+    WeakConsumerContext,
+    WeakSupplierContext,
+    BalancedConsumerContext,
+    BalancedSupplierContext,
+    ANACContext,
+    ANACOneShotContext,
+    FixedPartnerNumbersContext,
+    FixedPartnerNumbersOneShotContext,
+    LimitedPartnerNumbersContext,
+    LimitedPartnerNumbersOneShotContext,
 )
+
+
+@pytest.mark.parametrize("context_type", context_types)
 def test_context_can_generate_and_run(context_type):
     context = context_type()
     config = context.make_config()
@@ -91,7 +90,10 @@ def test_context_can_generate_and_run(context_type):
                     b._obj.awi  # type: ignore
                 ), f"world {i} has incorrect AWI for agent {b.id}"
 
-    c2 = context_type()
+    if issubclass(context_type, RepeatingContext):
+        c2 = context_type(configs=context.configs)
+    else:
+        c2 = context_type()
     assert context.contains_context(
         c2, raise_on_failure=True
     ), "Identical contexts do not match"

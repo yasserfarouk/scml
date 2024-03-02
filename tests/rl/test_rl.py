@@ -241,7 +241,7 @@ def test_rl_agent_with_a_trained_model(type_, continuous):
     model.learn(total_timesteps=NTRAINING)
 
     if issubclass(type_, RepeatingContext):
-        context = RepeatingContext(configs=env._context.configs)  # type: ignore
+        context = type_(configs=env._context.configs)  # type: ignore
     else:
         context = type_()
     obs = FlexibleObservationManager(context, continuous=continuous)
