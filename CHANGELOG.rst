@@ -1,6 +1,28 @@
 Changelog
 =========
 
+0.7.0 (2024.03.02)
+------------------
+
+* Major improvements to RL support
+* Added more contexts that make more sense.
+* Improved support of SCML OneShot environments in FlexibleActionManager
+* Added FlexibleObservationManager which supports any SCML OneShot
+* environment.
+* SCML Std is not well supported by RL components right now
+* Moving context out of rl
+* Adding plot_stats to world and plot_combined_stats in world
+* supporting py3.12 again
+* switching to ruff  for formatting
+* Improving implementations of greedy and random for Std
+* removing MIP from requirements
+* adding dynamic switching to RLAgent
+* Making contexts callable (and minor other changes)
+* Adding access to future supply and demand in AWI.  In OneShotAWI if you are not using perishable products, you can now access future supply and demand (according to your signed contracts) using self.awi.future_*
+* Small fixes for OneShotEnv registration and warnings raised by UnconstrainedActionManager
+* bugfix: incorrect setting of perishable in std
+* bugfixes in adapter and inheriting std
+
 0.6.3 (2023.12.11)
 ------------------
 
