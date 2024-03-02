@@ -14,6 +14,8 @@ done
 rm -r ./tutorials
 mkdir ./tutorials
 mv ../notebooks/tutorials/*.rst ./tutorials
+cp ../notebooks/tutorials/*.jpg ./tutorials
+cp ../notebooks/tutorials/*.png ./tutorials
 cp ./static_tutorials/*.* ./tutorials
 for fils in ../notebooks/tutorials/*_files ; do
     mv $fils ./tutorials

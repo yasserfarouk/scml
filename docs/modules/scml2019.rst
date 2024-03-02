@@ -1,7 +1,0 @@
-SCML 2019 (Discontinued)
-========================
-    This module describes the Supply Chain Management League Platform as run in 2019
-
-.. automodapi:: scml.scml2019
-    :members:
-    :show-inheritance:

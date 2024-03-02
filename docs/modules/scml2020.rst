@@ -1,8 +1,0 @@
-SCML Standard (Legacy)
-======================
-    This module describes the Supply Chain Management League Platform as run from 2020 to 2023 in ANAC.
-
-
-.. automodapi:: scml.scml2020
-    :members:
-    :show-inheritance:

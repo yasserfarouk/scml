@@ -11,13 +11,13 @@ Contents
    tutorials
    faq
 
-   modules/scmloneshot
-   modules/scmlstd
-   modules/scml2020
-   modules/scml2019
-
+   .. modules/scmloneshot
+   .. modules/scmlstd
+   .. modules/scml2020
+   .. modules/scml2019
+   ..
+   .. reference/index
    scripts
-   reference/index
    contributing
    authors
    changelog

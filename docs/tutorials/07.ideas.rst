@@ -34,4 +34,5 @@ main reason we present these ideas is to *challenge you to come with
 better ones*.
 
 
+
 Download :download:`Notebook<notebooks/07.ideas.ipynb>`.

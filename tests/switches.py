@@ -24,6 +24,7 @@ __all__ = [
     "SCML_RUN_COLLUSION_TOURNAMENTS",
     "SCML_RUN_SABOTAGE_TOURNAMENTS",
     "SCML_RUN_TEMP_FAILING",
+    "SCML_TEST_BRITTLE_ISSUES",
     "DefaultOneShotWorld",
     "DefaultStdWorld",
 ]
@@ -37,6 +38,7 @@ def isnot_disabled(val: str) -> bool:
     return os.environ.get(val, "").lower() not in ("false", "no")
 
 
+SCML_TEST_BRITTLE_ISSUES = is_enabled("SCML_TEST_BRITTLE_ISSUES")
 SCML_RUNALL_TESTS = is_enabled("SCML_RUNALL_TESTS")
 SCML_ON_GITHUB = is_enabled("GITHUB_ACTIONS")
 SCML_FASTRUN = (is_enabled("SCML_FASTRUN") or SCML_ON_GITHUB) and not SCML_RUNALL_TESTS

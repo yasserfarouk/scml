@@ -41,23 +41,24 @@ if not on_rtd:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
-    "sphinx.ext.coverage",
+    # "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
-    "sphinx.ext.githubpages",
+    # "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.autosummary",
-    "sphinx_automodapi.automodapi",
+    # "sphinx_automodapi.automodapi",
+    # "sphinx_automodapi.smart_resolver",
+    "autoapi.extension",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
-    "sphinx_automodapi.smart_resolver",
-    "sphinx_autodoc_typehints",
-    "sphinx_autodoc_annotation",
+    # "sphinx_autodoc_typehints",
+    # "sphinx_autodoc_annotation",
     "nbsphinx",
     # "nb2plots",
     # "sphinxcontrib.fulltoc",
 ]
-
+autoapi_dirs = ["../src"]
 intersphinx_mapping = {
     "python": ("http://docs.python.org/3", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),

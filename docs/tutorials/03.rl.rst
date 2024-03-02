@@ -382,6 +382,7 @@ observation manager.
 
     from gymnasium import spaces
 
+
     class MyRewardFunction(DefaultRewardFunction):
         def before_action(self, awi: OneShotAWI):
             return super().before_action(awi)
@@ -428,20 +429,13 @@ method to train the model. The two learned models are then returned.
     from scml.oneshot.rl.env import OneShotEnv
 
 
-    def train_models(type_="limited", n_training=100):
-        # choose the type of the model. Possibilities supported are:
-        # fixed: Supports a single world configuration
-        # limited: Supports a limited range of world configuration
-        # unlimited: Supports any range of world configurations
-
-        def make_env(supplier, extra_checks: bool = False) -> OneShotEnv:
+    def train_models(n_training=100):
+        def make_env(supplier) -> OneShotEnv:
             context = make_context(supplier)
             return OneShotEnv(
-                action_manager=FlexibleActionManager(context=context),
-                observation_manager=MyObservationManager(
-                    context=context, extra_checks=extra_checks
-                ),
                 context=context,
+                action_manager=FlexibleActionManager(context=context),
+                observation_manager=MyObservationManager(context=context),
                 reward_function=MyRewardFunction(),
             )
 
@@ -456,7 +450,7 @@ method to train the model. The two learned models are then returned.
             model = A2C("MlpPolicy", env, verbose=0)
 
             # train the model
-            model.learn(total_timesteps=n_training)
+            model.learn(total_timesteps=n_training, progress_bar=True)
             print(f"\tFinished training the model for {n_training} steps")
             models.append(model)
         return models
@@ -471,8 +465,58 @@ We can now train our models
 .. parsed-literal::
 
     Training as consumer
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+
+
+
+
+.. parsed-literal::
+
+    Output()
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+    </pre>
+
+
+
+.. parsed-literal::
+
     	Finished training the model for 100 steps
     Training as supplier
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+
+
+
+
+.. parsed-literal::
+
+    Output()
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+    </pre>
+
+
+
+.. parsed-literal::
+
     	Finished training the model for 100 steps
 
 
@@ -500,12 +544,7 @@ observation manager to the base ``OneShotRLAgent`` alongside the model.
 
 
     class MyAgent(OneShotRLAgent):
-        """
-        This is the only class you *need* to implement. The current skeleton simply loads a single model
-        that is supposed to be saved in MODEL_PATH (train.py can be used to train such a model).
-        """
-
-        def __init__(self, *args, trainde_models=trained_models, **kwargs):
+        def __init__(self, *args, trained_models=trained_models, **kwargs):
             # update keyword arguments
             kwargs.update(
                 dict(
@@ -518,7 +557,7 @@ observation manager to the base ``OneShotRLAgent`` alongside the model.
                     ),
                     action_managers=(
                         FlexibleActionManager(context=SupplierContext()),
-                        FlexibleActionManager(context=ConsumerContext())
+                        FlexibleActionManager(context=ConsumerContext()),
                     ),
                 )
             )
@@ -536,7 +575,6 @@ tutorial:
         worlds.append(world)
         world.run()
 
-
 .. code:: ipython3
 
     SCML2024OneShotWorld.plot_combined_stats(worlds, pertype=True, perishable=True)
@@ -549,6 +587,44 @@ tutorial:
 As we should have expected, given the few training steps we used and the
 use of basic observation and action manager and the default sparse
 reward function, the agent did not behave very well.
+
+Let’s try a longer training
+
+.. code:: ipython3
+
+    # train for longer
+    trained_models = train_models(1_000_000)
+    # use trained models
+    class MyTrainedAgent(MyAgent):
+        def __init__(self, *args, trained_models=trained_models, **kwargs):
+            super().__init__(*args, **kwargs)
+    # run some simulations
+    worlds = []
+    for _ in range(6):
+        world, _ = ANACOneShotContext(placeholder_types=(MyTrainedAgent,)).generate()
+        worlds.append(world)
+        world.run()
+    # plot results
+    SCML2024OneShotWorld.plot_combined_stats(worlds, pertype=True, perishable=True)
+
+
+.. parsed-literal::
+
+    Training as consumer
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+
+
+
+
+.. parsed-literal::
+
+    Output()
+
 
 What next?
 ^^^^^^^^^^
@@ -588,6 +664,7 @@ two contexts one when we are in the first production level and another
 when we are in the last is not going to be enough for scml-std and we
 need at least a third context in which the agent is in the middle of the
 production graph.
+
 
 
 Download :download:`Notebook<notebooks/03.rl.ipynb>`.
