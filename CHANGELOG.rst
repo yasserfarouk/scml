@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.7.1 (2024.03.02)
+------------------
+
+* Adding WorldRunner to simplify experimenting with new agent designs
+* Compatibility with negmas 0.10.16
+* Adding more contexts to oneshot and standard
+* improved documentation
+
 0.7.0 (2024.03.02)
 ------------------
 
