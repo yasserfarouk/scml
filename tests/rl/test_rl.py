@@ -401,10 +401,10 @@ class RecorderAgent(RandDistOneShotAgent):
                 sum(_[0] for _ in expected.values() if _)
                 == sum(_[0] for _ in decoded.values() if _)
             ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
-        assert (
-            sum(_[0] * _[-1] for _ in expected.values() if _)
-            == sum(_[0] * _[-1] for _ in decoded.values() if _)
-        ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            assert (
+                sum(_[0] * _[-1] for _ in expected.values() if _)
+                == sum(_[0] * _[-1] for _ in decoded.values() if _)
+            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
         return d
 
 
