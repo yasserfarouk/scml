@@ -367,17 +367,17 @@ class RecorderAgent(RandDistOneShotAgent):
                 sum(_[0] for _ in expected.values() if _)
                 == sum(_[0] for _ in decoded.values() if _)
             ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
-        # note that decoding may not be perfect for discrete obs managers because encoding converts to int which loses fractions for groups
-        if not (
-            abs(
-                sum(_[0] * _[-1] for _ in expected.values() if _)
-                - sum(_[0] * _[-1] for _ in decoded.values() if _)
-            )
-            <= sum(_[0] for _ in expected.values() if _)
-        ):
-            raise AssertionError(
-                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
-            )
+            # note that decoding may not be perfect for discrete obs managers because encoding converts to int which loses fractions for groups
+            if not (
+                abs(
+                    sum(_[0] * _[-1] for _ in expected.values() if _)
+                    - sum(_[0] * _[-1] for _ in decoded.values() if _)
+                )
+                <= sum(_[0] for _ in expected.values() if _)
+            ):
+                raise AssertionError(
+                    f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+                )
         return r
 
     def first_proposals(self):
