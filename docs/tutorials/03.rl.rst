@@ -102,7 +102,7 @@ of the components as well and uses them to interact with the true
 ``RewardFunction``, ``ObservactionManger`` and ``ActionManager``
 explained next.
 
-.. container:: alert alert-block alert-info
+.. container::
 
    ::
 
@@ -243,7 +243,7 @@ own models by hand but, most likely, you will let an RL training
 algorithm train this model offline. You can then use the appropriate
 model for each world through the ``OneShotAgent`` explained above.
 
-.. container:: alert alert-block alert-info
+.. container::
 
    ::
 
@@ -368,7 +368,7 @@ the environment. This is the responsibility of the
 ``ObservationManager``. Here we simply use one of the built-in
 observation managers.
 
-.. container:: alert alert-block alert-warning
+.. container::
 
    ::
 
@@ -450,7 +450,7 @@ method to train the model. The two learned models are then returned.
             model = A2C("MlpPolicy", env, verbose=0)
 
             # train the model
-            model.learn(total_timesteps=n_training, progress_bar=True)
+            model.learn(total_timesteps=n_training, progress_bar=False)
             print(f"\tFinished training the model for {n_training} steps")
             models.append(model)
         return models
@@ -462,62 +462,36 @@ We can now train our models
     trained_models = train_models()
 
 
-.. parsed-literal::
-
-    Training as consumer
-
-
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Training as consumer
     </pre>
 
 
 
-.. parsed-literal::
-
-    	Finished training the model for 100 steps
-    Training as supplier
-
-
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">        Finished training the model for <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">100</span> steps
     </pre>
 
 
 
-.. parsed-literal::
 
-    	Finished training the model for 100 steps
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Training as supplier
+    </pre>
+
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">        Finished training the model for <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">100</span> steps
+    </pre>
+
 
 
 Creating the Agent
@@ -530,12 +504,11 @@ each model should be wrapped in a ``Policy`` object which is done by the
 ``model_wrapper`` method below. Also note that we use pass our
 observation manager to the base ``OneShotRLAgent`` alongside the model.
 
-.. container:: alert alert-block alert-info
+.. container::
 
    ::
 
       It is possible to use different observation managers for differnt models.
-      <br>
       Make sure that the context used to train the model is the same as the one used for the observation manager.
 
 .. code:: ipython3
@@ -588,42 +561,72 @@ As we should have expected, given the few training steps we used and the
 use of basic observation and action manager and the default sparse
 reward function, the agent did not behave very well.
 
-Let’s try a longer training
+Saving and Loading
+^^^^^^^^^^^^^^^^^^
+
+So far, we trained our models and saved them in a global variable
+``trained_models`` that we passed directly to our agent on construction.
+To submit to the `ANAC SCML OneShot <https://scml.cs.brown.edu>`__, you
+need to submit the trained models with your agent. You can download a
+template that does that for you
+`here <https://yasserfarouk.github.io/files/scml/y2024/oneshot_rl.zip>`__.
+In this section, we show a simple way to get this done that does not
+depend on this template.
+
+Firstly, we need to save the models to some known location:
 
 .. code:: ipython3
 
-    # train for longer
-    trained_models = train_models(1_000_000)
-    # use trained models
-    class MyTrainedAgent(MyAgent):
-        def __init__(self, *args, trained_models=trained_models, **kwargs):
-            super().__init__(*args, **kwargs)
-    # run some simulations
+    from pathlib import Path
+
+    MODEL_PATH = Path.cwd() / "models"
+
+
+    def save_models(models, path: Path = MODEL_PATH):
+        # save the models
+        path.mkdir(exist_ok=True, parents=True)
+        for i, model in enumerate(models):
+            model.save(path / f"{i}model")
+        return path
+
+
+    def load_models(models, n=2, path=MODEL_PATH):
+        # load the models
+        return [A2C.load(path / f"{i}model") for i in range(n)]
+
+Let’s try our saver and loader:
+
+.. code:: ipython3
+
+    new_models = load_models(save_models(trained_models), len(trained_models))
+
+At least no errors :-) Now let’s try our new models. We defined
+``MyNewAgent`` to simply load the models from our predefined path and
+pass them to our ``MyAgent``:
+
+.. code:: ipython3
+
+    class MyNewAgent(MyAgent):
+        def __init__(self, *args, path=MODEL_PATH, **kwargs):
+            super().__init__(*args, trained_models=load_models(path, 2), **kwargs)
+
+We can now test the new version:
+
+.. code:: ipython3
+
     worlds = []
     for _ in range(6):
-        world, _ = ANACOneShotContext(placeholder_types=(MyTrainedAgent,)).generate()
+        world, _ = ANACOneShotContext(placeholder_types=(MyNewAgent,)).generate()
         worlds.append(world)
         world.run()
-    # plot results
+
+.. code:: ipython3
+
     SCML2024OneShotWorld.plot_combined_stats(worlds, pertype=True, perishable=True)
 
 
-.. parsed-literal::
 
-    Training as consumer
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
+.. image:: 03.rl_files/03.rl_23_0.png
 
 
 What next?

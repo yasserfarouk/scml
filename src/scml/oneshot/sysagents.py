@@ -33,8 +33,12 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
 
         - It inherits from `Adapter` allowing it to just pass any calls not
           defined explicity in it to the internal `_obj` object representing
-          the SCML2020OneShotAgent.
+          the OneShotAgent.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._obj: OneShotAgent
 
     def make_ufun(self, add_exogenous: bool, in_adapter=False):
         return super().make_ufun(add_exogenous, in_adapter=False)
@@ -94,7 +98,10 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                 f"{self.id} received a  negotiation failure for which it is not a buyer nor a seller"
             )
         result = self._obj.on_negotiation_failure(
-            partners, annotation, mechanism, state
+            partners,
+            annotation,
+            mechanism,
+            state,  # type: ignore
         )
         # for k in ("sell", "buy"):
         #     self.awi._world._agent_negotiations[self._obj.id][k].pop(mechanism.id, None)
@@ -195,7 +202,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if isinstance(self._obj, OneShotAgent):
             self._obj.connect_to_oneshot_adapter(self)
         else:
-            self._obj._awi = AWIHelper(self)
+            self._obj._awi = AWIHelper(self)  # type: ignore
         super().init()
 
     def reset(self):
@@ -237,7 +244,9 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if not self._obj:
             return None
         neg = self._obj.create_negotiator(
-            ControlledSAONegotiator, name=partner, id=partner
+            ControlledSAONegotiator,  # type: ignore
+            name=partner,
+            id=partner,
         )
         return neg
 

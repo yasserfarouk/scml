@@ -216,8 +216,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
         nullify_bankrupt_contracts: bool = False,
         # set to True to add more assertions during debuging
         debug: bool = False,
+        verbose: bool = False,
         **kwargs,
     ):
+        self._verbose = verbose
         if fast:
             compact, no_logs, debug = True, True, False
         if horizon == 0:
@@ -463,7 +465,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
         if not isinstance(agent_types, Iterable):
             agent_types = [agent_types] * len(profiles)
 
-        assert len(profiles) == len(agent_types)
+        profiles = [_ for _ in profiles if _.level not in (-1, n_processes)]
+        if not len(profiles) == len(agent_types):
+            raise AssertionError(f"{len(profiles)=} but {len(agent_types)=}")
         self.profiles = profiles
         self.catalog_prices = catalog_prices
         self.process_inputs = process_inputs
@@ -791,8 +795,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
     def replace_agents(
         cls,
         config: dict,
-        old_types: tuple[str | type[OneShotAgent], ...],
-        types: tuple[str | type[OneShotAgent], ...],
+        old_types: tuple[str | type[OneShotAgent], ...]
+        | list[str | type[OneShotAgent]],
+        types: tuple[str | type[OneShotAgent], ...] | list[str | type[OneShotAgent]],
         params: list[dict[str, Any]] | tuple[dict[str, Any], ...] | None = None,
     ):
         """
@@ -1606,6 +1611,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
     def simulation_step(self, stage=0):
         s = self.current_step
 
+        if self._verbose:
+            print(f"{self.id}: Simulation step {s} stage: {stage}")
+
         if stage == 0:
             self._update_exogenous(s)
 
@@ -2021,7 +2029,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
     @property
     def stats_df(self) -> pd.DataFrame:
         """Returns a pandas data frame with the stats"""
-        return pd.DataFrame(super().stats)
+        return pd.DataFrame(self.stats)
 
     @property
     def contracts_df(self) -> pd.DataFrame:
@@ -2187,6 +2195,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)  # type: ignore
                     for _ in partners
                 ]
+            assert negotiators is not None
             results += [
                 self._request_negotiation(
                     agent_id=agent_id,
@@ -2377,6 +2386,9 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
 
     def _make_negotiations(self):
         # consumer_starts = random.random() > 0.5
+
+        if self._verbose:
+            print(f"{self.id} ({self.current_step}): Making Negotiations")
 
         def values(x: int | tuple[int, int]):
             if not isinstance(x, Iterable):

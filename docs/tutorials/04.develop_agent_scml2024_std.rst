@@ -29,196 +29,109 @@ will affect this tutorial are the following:
    agent may set some target production level and try to achieve it
    instead of relying on its exogenous contracts to set its targets.
 
-Let’s defines some helper functions that will be used throughout this
-tutorial to test our agents.
+First things first, let’s create some helper functions that will allow
+us to evaluate different agents we develop in this tutorial.
 
-The core function is ``try_agents`` which allows you to pass a list of
-agent types and tries them in predefined configurations. Note that the
+Here we use the ``WorldRunner`` class which is designed to allow us to
+compare multiple agents in **exactly** the same conditions. To create a
+``WorldRunner``, you need to pass a context which is used for generating
+the worlds in which the agents are evaluated. the SCML package defines
+several contexts that allow us to control these worlds. For example the
+``StrongSupplierContext`` will always create worlds in which the agent
+being evaluated is in the first production level :math:`L_0` with more
+agents on this level than on the next level. You cand define your own
+contexts for experimenting with specific conditions (e.g. specific
+exogenous contract distribution, market structure, etc). The most
+general context which will produce any world that your agent may
+encounter in the `ANAC comptition <https://scml.cs.brown.edu>`__ is the
+``ANACOneShotContext`` for one-shot worlds and ``ANACStdContext`` for
+standard worlds.
+
+We create two runners:
+
+1. **single_agent_runner** in which a single agent is being evaluated
+   while the rest of the agents are sampled randomly from a subset of
+   SCML built-in agents.
+2. **full_market_runner** in which *all* agents in the market are
+   controlled by the agent type being evaluated. This may be helpful in
+   understanding how your agent behaves in this extreme condition but
+   can be misleading as an estimate of the agent’s performance in the
+   official ANAC competition.
+
+This is time to describe some of the tools that the ``WorldRunner``
+gives you to evaluate the agent. The ``WorldRunner`` is a Callable. You
+just call it with the class (agent type) you want to evaluate. You can
+optionally pass parameters if you would like to compared different
+parameters for example. Remember in this case to also pass a name to
+differentiate between different parameter choices.
 
 .. code:: ipython3
 
-    from collections import defaultdict
-    import random
-    from negmas import ResponseType, SAOResponse
-    from scml.std import *
-    from scml.std.world import PLACEHOLDER_AGENT_PREFIX
-    from scml.std.common import is_system_agent
-    from rich import print
+    import pandas as pd
     import math
     from typing import Iterable
+    from rich.jupyter import print
 
-    CONFIGS = dict()
-    DefaultTypes = [GreedyStdAgent, RandomStdAgent, SyncRandomStdAgent]
-
-
-    def try_agent(agent_type, alone=False, **kwargs):
-        """Runs an agent in a world simulation against a randomly behaving agent"""
-        if alone:
-            return try_agents([agent_type], **kwargs)
-        return try_agents(DefaultTypes + [agent_type], **kwargs)
-
-
-    def make_configs(n, n_trials, n_processes, n_steps=10):
-        types = [f"{PLACEHOLDER_AGENT_PREFIX}{i}" for i in range(n)]
-        return [
-            (
-                types,
-                SCML2024StdWorld.generate(
-                    types,
-                    agent_params=None,
-                    n_steps=10,
-                    n_processes=n_processes,
-                    random_agent_types=True,
-                    construct_graphs=True,
-                ),
-            )
-            for _ in range(n_trials)
-        ]
-
-
-    def try_agents(
-        agent_types,
-        n_processes=3,
-        n_trials=4,
-        n_steps=10,
-        draw=True,
-        agent_params=None,
-        debug=True,
-    ):
-        """
-        Runs a simulation with the given agent_types, and n_processes n_trial times.
-        Optionally also draws a graph showing what happened
-        """
-        n = len(agent_types)
-        if (n, n_processes) not in CONFIGS:
-            CONFIGS[(n, n_processes)] = make_configs(n, n_trials, n_processes, n_steps)
-        n_rem = n_trials - len(CONFIGS[(n, n_processes)])
-        if n_rem > 0:
-            CONFIGS[(n, n_processes)] += make_configs(n, (n_rem), n_processes, n_steps)
-        configs = CONFIGS[(n, n_processes)]
-        type_scores = defaultdict(float)
-        counts = defaultdict(int)
-        agent_scores = dict()
-        worlds = []
-        for old_types, config in configs[:n_trials]:
-            p = (
-                n_processes
-                if isinstance(n_processes, int)
-                else random.randint(*n_processes)
-            )
-            world = SCML2024StdWorld(
-                **SCML2024StdWorld.replace_agents(
-                    config, old_types, agent_types, agent_params
-                ),
-                debug=debug,
-            )
-            worlds.append(world)
-            world.run()
-
-            all_scores = world.scores()
-            for aid, agent in world.agents.items():
-                if is_system_agent(aid):
-                    continue
-                key = aid if n_trials == 1 else f"{aid}@{world.id[:4]}"
-                agent_scores[key] = (
-                    agent.type_name.split(":")[-1].split(".")[-1],
-                    all_scores[aid],
-                    "(bankrupt)" if world.is_bankrupt[aid] else "",
-                )
-            for aid, agent in world.agents.items():
-                if is_system_agent(aid):
-                    continue
-                type_ = agent.type_name.split(":")[-1].split(".")[-1]
-                type_scores[type_] += all_scores[aid]
-                counts[type_] += 1
-        type_scores = {k: v / counts[k] if counts[k] else v for k, v in type_scores.items()}
-        if draw:
-            draw_worlds(worlds)
-
-        return worlds, agent_scores, type_scores
-
-
-    def draw_worlds(worlds):
-        n_trials = len(worlds)
-        mx = min(n_trials, 2)
-        fig = plt.figure(figsize=(11 * mx, 8))
-        axs = fig.subplots(int(math.ceil(n_trials / mx)), mx)
-        if isinstance(axs, Iterable):
-            axs = axs.flatten()
-        for ax, world in zip(axs if n_trials > 1 else [axs], worlds):
-            world.draw(
-                what=["contracts-concluded"],
-                steps=(0, world.n_steps - 1),
-                together=True,
-                ncols=1,
-                axs=ax,
-            )
-        plt.show()
-
-
-    def plot_stats(worlds, stats="score", pertype=False, legend=False, **kwargs):
-        SCML2024StdWorld.plot_combined_stats(
-            worlds, stats=stats, n_steps=None, pertype=pertype, legend=legend, **kwargs
-        )
-
-
-    def analyze_contracts(worlds):
-        """
-        Analyzes the contracts signed in the given world
-        """
-        import pandas as pd
-
-        dfs = []
-        for world in worlds:
-            dfs.append(pd.DataFrame.from_records(world.saved_contracts))
-        data = pd.concat(dfs)
-        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].agg(
-            dict(quantity=("sum", "count"), unit_price="mean")
-        )
-
-
-    def print_agent_scores(agent_scores):
-        """
-        Prints scores of individiual agent instances
-        """
-        for aid, (type_, score, bankrupt) in agent_scores.items():
-            print(f"Agent {aid} of type {type_} has a final score of {score} {bankrupt}")
-
-
-    def print_type_scores(type_scores):
-        """Prints scores of agent types"""
-        print(sorted(tuple(type_scores.items()), key=lambda x: -x[1]))
+    from negmas import SAOResponse, ResponseType, Outcome, SAOState
+    from scml.std import *
+    from scml.runner import WorldRunner
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(RandomStdAgent, alone=True)
+    # create a runner that encapsulates a number of configs to evaluate agents
+    # in the same conditions every time
+    context = ANACStdContext(
+        n_steps=10, n_processes=3, world_params=dict(construct_graphs=True)
+    )
+    single_agent_runner = WorldRunner(
+        context, n_configs=4, n_repetitions=1, save_worlds=True
+    )
+    full_market_runner = WorldRunner.from_runner(
+        single_agent_runner, control_all_agents=True
+    )
 
+Testing a completely random agent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_2_0.png
-
-
-.. code:: ipython3
-
-    print_type_scores(tscores)
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandomStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.03587383970674268</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
+Let’s try an agent that behaves randomly:
 
 .. code:: ipython3
 
-    plot_stats(worlds)
+    full_market_runner(RandomStdAgent);
+
+We can use the runner now to display the worlds for a given type that we
+evaluated:
+
+.. code:: ipython3
+
+    full_market_runner.draw_worlds_of(RandomStdAgent);
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_4_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_6_0.png
 
+
+Lots of contracts have been reached, but were they good contracts? We
+can use the runner now to plot several statistics
+(e.g. shortfall-penalty, disposal-cost, productivity, and score in this
+example). There are more than 42 such statistics that you can display.
+
+.. code:: ipython3
+
+    full_market_runner.plot_stats(agg=False);
+
+
+
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_8_0.png
+
+
+The score is going down *monotonically* showing that this random agent
+is losing money every step. It is clear that the agent gets too high
+shortfall penalty and storage cost. The ``inventory_input`` plot shows
+the amount of the input product in the inventory at the end of each
+simulation step. It is clear that the agent accomulates too much of this
+product as it cannot sell it when it is in the first production level
+and seems to buy too much when it is in the last production level.
 
 This score is much lower than what we got in the oneshot world. Some of
 the reasons for that are the following:
@@ -240,114 +153,122 @@ some of the built in agents to see how do they behave.
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(SyncRandomStdAgent, alone=True)
-    print_type_scores(tscores)
-    plot_stats(worlds)
+    full_market_runner(SyncRandomStdAgent)
+    full_market_runner(GreedyStdAgent);
 
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_6_0.png
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'SyncRandomStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9185676954179436</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_6_2.png
-
+We can also add a couple of one-shot agents in the mix
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(GreedyStdAgent, alone=True)
-    print_type_scores(tscores)
-    plot_stats(worlds)
+    from scml.oneshot.agents import *
 
+    full_market_runner(RandomOneShotAgent)
+    full_market_runner(GreedyOneShotAgent)
+    full_market_runner(RandDistOneShotAgent)
+    full_market_runner(EqualDistOneShotAgent);
 
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_7_0.png
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'GreedyStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.963690745962998</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_7_2.png
-
-
-The two builtin agents behaved roughly similarliy but one of them is
-more likely seems to get many more contracts.
-
-Let’s check how does oneshot agents behave in this simulation:
+and look at the final results:
 
 .. code:: ipython3
 
-    from scml.oneshot.agents import RandDistOneShotAgent
-
-    worlds, ascores, tscores = try_agent(RandDistOneShotAgent, alone=True)
-    print_type_scores(tscores)
-    plot_stats(worlds)
+    full_market_runner.plot_stats(stats="score");
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_9_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_15_0.png
 
 
+The two builtin agents behaved roughly similarliy and outperformed all
+one-shot agents even though the random std agent is even worse than the
+random one-shot agent (because it samples from a much larger outcome
+space).
 
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7517116322669039</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_9_2.png
-
-
-This agent got literally no contracts. The reason is that it is designed
-for a shallow world of two production levels. Agents in the middle never
-have agreements with anyone and this halts the whole market.
-
-Some oneshot agents can work in deeper production graphs like the
-following agent but they still cannot usually get good scores because
-they wait to the last minute to try getting their needed supply and
-negotiate for sales. This is not expected to work well in SCML-Std and
-it does not:
+Note that this test was when the agent controller *every* factory in the
+market. This is very different than the ANAC competition in whic the
+agent controls a single agent. Luckily, we already have a runner that
+tests exactly this case. Let’s see how does ``RandomStdAgent`` behave in
+such cases:
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(GreedyOneShotAgent, alone=True)
-    print_type_scores(tscores)
-    plot_stats(worlds)
+    single_agent_runner(RandomStdAgent);
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(agg=False);
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_11_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_19_0.png
+
+
+Still losing money at the same level. The fact that other agents made
+sense did not help our random agent get higher score. This is very
+different from the one-shot case (if you have already checked the
+previous tutorial). We can now check the distribution of scores for our
+agent using the ``score_summary`` method:
+
+.. code:: ipython3
+
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'GreedyOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.3804299108739227</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.15384</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
+Now, we are ready to start working on our agent.
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_11_2.png
-
-
-Now, we are ready to start working on our agent:
+A do-nothing agent
+~~~~~~~~~~~~~~~~~~
 
 .. code:: ipython3
 
@@ -355,18 +276,16 @@ Now, we are ready to start working on our agent:
         """My Agent that does nothing"""
 
         def act(self, state):
-            return {
-                partner: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                for partner in state.my_suppliers + state.my_consumers
-            }
+            return {}
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(MyStdDoNothing)
+    single_agent_runner(MyStdDoNothing)
+    single_agent_runner.draw_worlds_of(MyStdDoNothing);
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_14_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_24_0.png
 
 
 In all of the graph representing world simulations, we use short names
@@ -375,7 +294,7 @@ that represent the type of the agent. For example an agent named
 that was the third agent to create. ``MSD`` here is a shorthand for
 ``MyStdDoNothingAgent``.
 
-Looking at the ``contracts-concluded``, we can see that none of the
+Looking at the ``contracts-signed``, we can see that none of the
 concluded contracts involved our do-nothing agent. Nevertheless, these
 agents still had *exogenous contracts* which means that they will lose
 money. A do-nothing agent will usually lose money in this game.
@@ -384,453 +303,91 @@ Let’s check the scores of different agents to confirm:
 
 .. code:: ipython3
 
-    print_agent_scores(ascores)
+    single_agent_runner.plot_stats(agg=False);
 
 
 
-.. raw:: html
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_26_0.png
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5835303352883182</span>
-    </pre>
 
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.011510183150527924</span> <span style="font-weight: bold">(</span>bankrupt<span style="font-weight: bold">)</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 02SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0914680071754974</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5222391259039886</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8006518237046701</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1171332265427407</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.318543913865625</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.2513688772104863</span> <span style="font-weight: bold">(</span>bankrupt<span style="font-weight: bold">)</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1152881200111617</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 10Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6371031947182872</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 11SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1845674353903455</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.5236226204265346</span> <span style="font-weight: bold">(</span>bankrupt<span style="font-weight: bold">)</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 13SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1041305102395003</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 14Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.3118719980881885</span> <span style="font-weight: bold">(</span>bankrupt<span style="font-weight: bold">)</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 15Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.4823638636673501</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7551159814440324</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.4058135040032555</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 02Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7530540109193432</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9852933856645596</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.446088593708925</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.21667939684212875</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7174630513930531</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.2365102168322169</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9496240786383395</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 10MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 11MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8602450675647509</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6971926606540689</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 13Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9989456221749038</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 14SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1086219379063835</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 16SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1600505479956373</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 17MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.4957376429580529</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0967977805945475</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.2664821489394195</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0508131055101728</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.5422611347465074</span> <span style="font-weight: bold">(</span>bankrupt<span style="font-weight: bold">)</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 11Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8696861703536307</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.146523803778313</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 15MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7389387752472338</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 16Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.3405699619810418</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 17Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7743356706720631</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0625428168552271</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.38704782906088236</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.24410799640319686</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.4551086832641586</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.1833724442438789</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.3102331541751521</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 10SRS@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type SyncRandomStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.020005437704114</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 14MSD@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type MyStdDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7119620767782724</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 15Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0826080727333998</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 18Gr@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span>@SCML of type GreedyStdAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0055025090347856</span>
-    </pre>
-
-
-
-Notice that our do-nothing agent can never make money. That is because
-it cannot get any contracts from negotiation to satisfy its needs from
-the exogenous contracts but it still have to pay for disposal cost and
+Our do-nothing agent can never makes money. That is because it cannot
+get any contracts from negotiation to satisfy its needs from the
+exogenous contracts but it still have to pay for disposal cost and
 shortfall penalties when it is in the first or last production levels.
+Nevertheless, it is *better* than behaving randomly in a clear inversion
+of the situation in the SCML oneshot game. One reason is that the
+outcome space is too large now that behaving randomly is almost never
+going to get you good contracts (no contracts will be better). Another
+reason is that agents in the middle of the production graph are better
+of not trading at all than if they acrue any imbalance between their
+sales and supplies which is highly likely if they behave randomly.
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SyncRandomStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.022017714341071</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GreedyStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.019515897613306</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'MyStdDoNothing'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7009942471156998</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'RandomStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.157149558270027</span><span style="font-weight: bold">)</span>
-    <span style="font-weight: bold">]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
@@ -839,7 +396,24 @@ market.
 
 .. code:: ipython3
 
-    analyze_contracts((worlds[0],))
+    def analyze_contracts(worlds, exogenous_only=True):
+        """
+        Analyzes the contracts signed in the given world
+        """
+        dfs = []
+        for world in worlds:
+            dfs.append(pd.DataFrame.from_records(world.saved_contracts))
+        data = pd.concat(dfs)
+        if exogenous_only:
+            data = data.loc[
+                (data["seller_name"] == "SELLER") | (data["buyer_name"] == "BUYER"), :
+            ]
+        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].agg(
+            dict(quantity=("sum", "count"), unit_price="mean")
+        )
+
+
+    analyze_contracts(single_agent_runner.worlds_of())
 
 
 
@@ -889,398 +463,236 @@ market.
       </thead>
       <tbody>
         <tr>
-          <th rowspan="6" valign="top">00Ra@0</th>
-          <th>05Gr@1</th>
-          <td>39</td>
-          <td>9</td>
-          <td>13.333333</td>
-        </tr>
-        <tr>
-          <th>06Gr@1</th>
-          <td>57</td>
-          <td>10</td>
-          <td>13.200000</td>
-        </tr>
-        <tr>
-          <th>07Gr@1</th>
-          <td>34</td>
-          <td>9</td>
-          <td>13.444444</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>76</td>
-          <td>6</td>
-          <td>14.833333</td>
-        </tr>
-        <tr>
-          <th>09Gr@1</th>
-          <td>40</td>
-          <td>10</td>
-          <td>13.400000</td>
-        </tr>
-        <tr>
-          <th>10Gr@1</th>
-          <td>40</td>
-          <td>10</td>
-          <td>13.400000</td>
-        </tr>
-        <tr>
-          <th rowspan="6" valign="top">01Ra@0</th>
-          <th>05Gr@1</th>
-          <td>46</td>
-          <td>9</td>
-          <td>13.222222</td>
-        </tr>
-        <tr>
-          <th>06Gr@1</th>
-          <td>47</td>
-          <td>9</td>
-          <td>13.444444</td>
-        </tr>
-        <tr>
-          <th>07Gr@1</th>
-          <td>31</td>
-          <td>10</td>
-          <td>13.600000</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>92</td>
-          <td>5</td>
-          <td>16.000000</td>
-        </tr>
-        <tr>
-          <th>09Gr@1</th>
+          <th>08SRS@2</th>
+          <th>BUYER</th>
           <td>54</td>
-          <td>10</td>
-          <td>13.100000</td>
+          <td>18</td>
+          <td>40.111111</td>
         </tr>
         <tr>
-          <th>10Gr@1</th>
-          <td>44</td>
-          <td>10</td>
-          <td>13.400000</td>
-        </tr>
-        <tr>
-          <th rowspan="6" valign="top">02SRS@0</th>
-          <th>05Gr@1</th>
-          <td>15</td>
-          <td>6</td>
-          <td>14.000000</td>
-        </tr>
-        <tr>
-          <th>06Gr@1</th>
-          <td>6</td>
-          <td>3</td>
-          <td>14.000000</td>
-        </tr>
-        <tr>
-          <th>07Gr@1</th>
-          <td>5</td>
-          <td>3</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>33</td>
-          <td>5</td>
-          <td>16.600000</td>
-        </tr>
-        <tr>
-          <th>09Gr@1</th>
-          <td>9</td>
-          <td>4</td>
-          <td>14.750000</td>
-        </tr>
-        <tr>
-          <th>10Gr@1</th>
-          <td>9</td>
-          <td>4</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th rowspan="6" valign="top">03Ra@0</th>
-          <th>05Gr@1</th>
-          <td>42</td>
-          <td>10</td>
-          <td>13.400000</td>
-        </tr>
-        <tr>
-          <th>06Gr@1</th>
-          <td>43</td>
-          <td>10</td>
-          <td>13.500000</td>
-        </tr>
-        <tr>
-          <th>07Gr@1</th>
-          <td>44</td>
-          <td>10</td>
-          <td>13.200000</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>46</td>
-          <td>5</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>09Gr@1</th>
-          <td>45</td>
-          <td>10</td>
-          <td>13.300000</td>
-        </tr>
-        <tr>
-          <th>10Gr@1</th>
-          <td>35</td>
-          <td>8</td>
-          <td>13.625000</td>
-        </tr>
-        <tr>
-          <th rowspan="5" valign="top">05Gr@1</th>
-          <th>11SRS@2</th>
-          <td>5</td>
-          <td>2</td>
-          <td>29.000000</td>
-        </tr>
-        <tr>
-          <th>12Ra@2</th>
+          <th>09Gr@2</th>
+          <th>BUYER</th>
+          <td>108</td>
           <td>20</td>
-          <td>5</td>
-          <td>29.600000</td>
+          <td>40.200000</td>
         </tr>
         <tr>
-          <th>13SRS@2</th>
-          <td>1</td>
-          <td>1</td>
-          <td>28.000000</td>
-        </tr>
-        <tr>
-          <th>14Ra@2</th>
-          <td>35</td>
-          <td>8</td>
-          <td>29.875000</td>
-        </tr>
-        <tr>
-          <th>15Ra@2</th>
-          <td>32</td>
-          <td>7</td>
-          <td>29.857143</td>
-        </tr>
-        <tr>
-          <th rowspan="5" valign="top">06Gr@1</th>
-          <th>11SRS@2</th>
-          <td>10</td>
-          <td>3</td>
-          <td>28.000000</td>
-        </tr>
-        <tr>
-          <th>12Ra@2</th>
-          <td>13</td>
-          <td>4</td>
-          <td>28.750000</td>
-        </tr>
-        <tr>
-          <th>13SRS@2</th>
-          <td>1</td>
-          <td>1</td>
-          <td>27.000000</td>
-        </tr>
-        <tr>
-          <th>14Ra@2</th>
-          <td>36</td>
-          <td>8</td>
-          <td>29.500000</td>
-        </tr>
-        <tr>
-          <th>15Ra@2</th>
-          <td>36</td>
-          <td>7</td>
-          <td>30.285714</td>
-        </tr>
-        <tr>
-          <th rowspan="5" valign="top">07Gr@1</th>
-          <th>11SRS@2</th>
-          <td>3</td>
-          <td>3</td>
-          <td>28.000000</td>
-        </tr>
-        <tr>
-          <th>12Ra@2</th>
-          <td>22</td>
-          <td>5</td>
-          <td>29.600000</td>
-        </tr>
-        <tr>
-          <th>13SRS@2</th>
-          <td>5</td>
-          <td>3</td>
-          <td>28.000000</td>
-        </tr>
-        <tr>
-          <th>14Ra@2</th>
-          <td>25</td>
-          <td>7</td>
-          <td>30.000000</td>
-        </tr>
-        <tr>
-          <th>15Ra@2</th>
-          <td>30</td>
-          <td>6</td>
-          <td>29.833333</td>
-        </tr>
-        <tr>
-          <th rowspan="5" valign="top">08Ra@1</th>
-          <th>11SRS@2</th>
-          <td>11</td>
-          <td>4</td>
-          <td>26.000000</td>
-        </tr>
-        <tr>
-          <th>12Ra@2</th>
-          <td>87</td>
-          <td>5</td>
-          <td>27.000000</td>
-        </tr>
-        <tr>
-          <th>13SRS@2</th>
-          <td>5</td>
-          <td>4</td>
-          <td>25.500000</td>
-        </tr>
-        <tr>
-          <th>14Ra@2</th>
-          <td>98</td>
-          <td>6</td>
-          <td>27.666667</td>
-        </tr>
-        <tr>
-          <th>15Ra@2</th>
-          <td>103</td>
-          <td>6</td>
-          <td>28.666667</td>
-        </tr>
-        <tr>
-          <th rowspan="5" valign="top">09Gr@1</th>
-          <th>11SRS@2</th>
-          <td>4</td>
-          <td>3</td>
-          <td>27.000000</td>
-        </tr>
-        <tr>
-          <th>12Ra@2</th>
-          <td>13</td>
-          <td>4</td>
-          <td>29.500000</td>
-        </tr>
-        <tr>
-          <th>13SRS@2</th>
-          <td>4</td>
-          <td>2</td>
-          <td>27.500000</td>
-        </tr>
-        <tr>
-          <th>14Ra@2</th>
-          <td>30</td>
-          <td>7</td>
-          <td>30.571429</td>
-        </tr>
-        <tr>
-          <th>15Ra@2</th>
+          <th>10Ra@2</th>
+          <th>BUYER</th>
           <td>26</td>
-          <td>6</td>
-          <td>30.000000</td>
+          <td>8</td>
+          <td>36.750000</td>
         </tr>
         <tr>
-          <th rowspan="5" valign="top">10Gr@1</th>
-          <th>11SRS@2</th>
-          <td>25</td>
-          <td>7</td>
-          <td>27.142857</td>
+          <th>11Ra@2</th>
+          <th>BUYER</th>
+          <td>88</td>
+          <td>18</td>
+          <td>37.000000</td>
+        </tr>
+        <tr>
+          <th>12Gr@2</th>
+          <th>BUYER</th>
+          <td>52</td>
+          <td>20</td>
+          <td>37.600000</td>
         </tr>
         <tr>
           <th>12Ra@2</th>
-          <td>26</td>
-          <td>5</td>
-          <td>29.000000</td>
-        </tr>
-        <tr>
-          <th>13SRS@2</th>
+          <th>BUYER</th>
           <td>12</td>
-          <td>5</td>
-          <td>26.800000</td>
-        </tr>
-        <tr>
-          <th>14Ra@2</th>
-          <td>47</td>
-          <td>9</td>
-          <td>29.333333</td>
-        </tr>
-        <tr>
-          <th>15Ra@2</th>
-          <td>22</td>
-          <td>4</td>
-          <td>27.250000</td>
-        </tr>
-        <tr>
-          <th>11SRS@2</th>
-          <th>BUYER</th>
-          <td>54</td>
           <td>10</td>
-          <td>47.800000</td>
+          <td>40.600000</td>
         </tr>
         <tr>
-          <th>12Ra@2</th>
+          <th>13Gr@2</th>
           <th>BUYER</th>
-          <td>26</td>
-          <td>9</td>
-          <td>42.666667</td>
+          <td>34</td>
+          <td>12</td>
+          <td>38.166667</td>
+        </tr>
+        <tr>
+          <th>13MSD@2</th>
+          <th>BUYER</th>
+          <td>70</td>
+          <td>10</td>
+          <td>50.800000</td>
+        </tr>
+        <tr>
+          <th>13Ra@2</th>
+          <th>BUYER</th>
+          <td>144</td>
+          <td>30</td>
+          <td>45.200000</td>
         </tr>
         <tr>
           <th>13SRS@2</th>
           <th>BUYER</th>
-          <td>26</td>
-          <td>7</td>
-          <td>42.142857</td>
+          <td>108</td>
+          <td>20</td>
+          <td>44.300000</td>
         </tr>
         <tr>
           <th>14Ra@2</th>
           <th>BUYER</th>
-          <td>53</td>
+          <td>370</td>
+          <td>60</td>
+          <td>44.000000</td>
+        </tr>
+        <tr>
+          <th>14SRS@2</th>
+          <th>BUYER</th>
+          <td>98</td>
+          <td>20</td>
+          <td>39.800000</td>
+        </tr>
+        <tr>
+          <th>15Gr@2</th>
+          <th>BUYER</th>
+          <td>144</td>
+          <td>32</td>
+          <td>47.312500</td>
+        </tr>
+        <tr>
+          <th>15MSD@2</th>
+          <th>BUYER</th>
+          <td>111</td>
           <td>10</td>
-          <td>49.800000</td>
+          <td>49.700000</td>
         </tr>
         <tr>
           <th>15Ra@2</th>
           <th>BUYER</th>
-          <td>40</td>
-          <td>8</td>
-          <td>51.250000</td>
+          <td>111</td>
+          <td>10</td>
+          <td>49.700000</td>
         </tr>
         <tr>
-          <th rowspan="4" valign="top">SELLER</th>
+          <th>16Gr@2</th>
+          <th>BUYER</th>
+          <td>154</td>
+          <td>32</td>
+          <td>44.500000</td>
+        </tr>
+        <tr>
+          <th>16SRS@2</th>
+          <th>BUYER</th>
+          <td>72</td>
+          <td>18</td>
+          <td>46.333333</td>
+        </tr>
+        <tr>
+          <th>17Gr@2</th>
+          <th>BUYER</th>
+          <td>66</td>
+          <td>18</td>
+          <td>49.000000</td>
+        </tr>
+        <tr>
+          <th>17SRS@2</th>
+          <th>BUYER</th>
+          <td>72</td>
+          <td>18</td>
+          <td>42.555556</td>
+        </tr>
+        <tr>
+          <th>18Gr@2</th>
+          <th>BUYER</th>
+          <td>94</td>
+          <td>18</td>
+          <td>44.777778</td>
+        </tr>
+        <tr>
+          <th>19Ra@2</th>
+          <th>BUYER</th>
+          <td>24</td>
+          <td>10</td>
+          <td>41.000000</td>
+        </tr>
+        <tr>
+          <th rowspan="14" valign="top">SELLER</th>
           <th>00Ra@0</th>
-          <td>49</td>
+          <td>158</td>
+          <td>34</td>
+          <td>9.588235</td>
+        </tr>
+        <tr>
+          <th>00SRS@0</th>
+          <td>98</td>
+          <td>36</td>
+          <td>9.833333</td>
+        </tr>
+        <tr>
+          <th>01Gr@0</th>
+          <td>196</td>
+          <td>38</td>
+          <td>10.789474</td>
+        </tr>
+        <tr>
+          <th>01SRS@0</th>
+          <td>284</td>
+          <td>38</td>
+          <td>9.578947</td>
+        </tr>
+        <tr>
+          <th>02Gr@0</th>
+          <td>112</td>
+          <td>18</td>
+          <td>9.555556</td>
+        </tr>
+        <tr>
+          <th>02MSD@0</th>
+          <td>58</td>
+          <td>9</td>
+          <td>9.111111</td>
+        </tr>
+        <tr>
+          <th>02Ra@0</th>
+          <td>224</td>
+          <td>29</td>
+          <td>9.448276</td>
+        </tr>
+        <tr>
+          <th>02SRS@0</th>
+          <td>134</td>
+          <td>18</td>
+          <td>10.555556</td>
+        </tr>
+        <tr>
+          <th>03Gr@0</th>
+          <td>262</td>
+          <td>40</td>
+          <td>9.950000</td>
+        </tr>
+        <tr>
+          <th>03MSD@0</th>
+          <td>50</td>
           <td>10</td>
           <td>9.900000</td>
         </tr>
         <tr>
-          <th>01Ra@0</th>
-          <td>32</td>
-          <td>8</td>
-          <td>10.500000</td>
-        </tr>
-        <tr>
-          <th>02SRS@0</th>
-          <td>55</td>
-          <td>10</td>
-          <td>9.700000</td>
-        </tr>
-        <tr>
           <th>03Ra@0</th>
-          <td>58</td>
-          <td>10</td>
-          <td>9.600000</td>
+          <td>100</td>
+          <td>24</td>
+          <td>9.208333</td>
+        </tr>
+        <tr>
+          <th>04Gr@0</th>
+          <td>90</td>
+          <td>20</td>
+          <td>9.500000</td>
+        </tr>
+        <tr>
+          <th>04SRS@0</th>
+          <td>250</td>
+          <td>38</td>
+          <td>10.210526</td>
+        </tr>
+        <tr>
+          <th>05Gr@0</th>
+          <td>102</td>
+          <td>18</td>
+          <td>10.000000</td>
         </tr>
       </tbody>
     </table>
@@ -1463,16 +875,6 @@ using the same base class.
             self.production_level = production_level
             self.future_concession = future_concession
 
-        def init(self):
-            profile = self.awi.profile
-            if profile.shortfall_penalty_mean:
-                self.ratio = min(
-                    1.0,
-                    max(0.0, profile.storage_cost_mean / profile.shortfall_penalty_mean),
-                )
-            else:
-                self.ratio = 1.0
-
         def propose(self, negotiator_id: str, state):
             return self.good_offer(negotiator_id, state)
 
@@ -1492,17 +894,22 @@ using the same base class.
             return offer[QUANTITY] <= self._needs(partner, offer[TIME])
 
         def is_good_price(self, partner, offer, state):
+            # ending the negotiation is bad
             if offer is None:
                 return False
             nmi = self.get_nmi(partner)
             if not nmi:
-                return ResponseType.END_NEGOTIATION
+                return False
             issues = nmi.issues
             minp = issues[UNIT_PRICE].min_value
             maxp = issues[UNIT_PRICE].max_value
+            # use relative negotiation time to concede
+            # for offers about today but conede less for
+            # future contracts
             r = state.relative_time
             if offer[TIME] > self.awi.current_step:
                 r *= self.future_concession
+            # concede linearly
             if self.is_consumer(partner):
                 return offer[UNIT_PRICE] >= minp + (1 - r) * (maxp - minp)
             return -offer[UNIT_PRICE] >= -minp + (1 - r) * (minp - maxp)
@@ -1515,21 +922,28 @@ using the same base class.
             qissue = issues[QUANTITY]
             pissue = issues[UNIT_PRICE]
             for t in sorted(list(issues[TIME].all)):
+                # find my needs for this day
                 needed = self._needs(partner, t)
                 if needed <= 0:
                     continue
                 offer = [-1] * 3
+                # ask for as much as I need for this day
                 offer[QUANTITY] = max(min(needed, qissue.max_value), qissue.min_value)
                 offer[TIME] = t
+                # use relative negotiation time to concede
+                # for offers about today but conede less for
+                # future contracts
                 r = state.relative_time
                 if t > self.awi.current_step:
                     r *= self.future_concession
+                # concede linearly on price
                 minp, maxp = pissue.min_value, pissue.max_value
                 if self.is_consumer(partner):
                     offer[UNIT_PRICE] = int(minp + (maxp - minp) * (1 - r) + 0.5)
                 else:
                     offer[UNIT_PRICE] = int(minp + (maxp - minp) * r + 0.5)
                 return tuple(offer)
+            # just end the negotiation if I need nothing
             return None
 
         def is_consumer(self, partner):
@@ -1543,59 +957,114 @@ using the same base class.
                 total_needs = self.awi.needed_supplies
             else:
                 total_needs = self.production_level * self.awi.n_lines
-            # print(f"{self.id} ({self.awi.current_step}): Exogenous: {self.awi.current_exogenous_input_quantity if self.awi.is_first_level else (self.awi.current_exogenous_output_quantity if self.awi.is_last_level else 0)}\t Today: {total_needs}\t", end="")
             # estimate future needs
             if self.is_consumer(partner):
                 total_needs += (
                     self.production_level * self.awi.n_lines * (t - self.awi.current_step)
                 )
-                # print(f"{self.id} ({self.awi.current_step}): Future: {total_needs}\t", end="")
                 total_needs -= self.awi.total_sales_until(t)
-                # print(f"{self.id} ({self.awi.current_step}): Needed: {total_needs}")
             else:
                 total_needs += (
-                    self.production_level
-                    * self.awi.n_lines
-                    * (self.awi.n_steps - t - 1)
-                    * (1 - self.ratio)
+                    self.production_level * self.awi.n_lines * (self.awi.n_steps - t - 1)
                 )
-                # print(f"{self.id} ({self.awi.current_step}): Future: {total_needs}\t", end="")
                 total_needs -= self.awi.total_supplies_between(t, self.awi.n_steps - 1)
-                # print(f"{self.id} ({self.awi.current_step}): Needed: {total_needs}")
             # subtract already signed contracts
             return int(total_needs)
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(SimpleAgent, alone=True)
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_24_0.png
-
+    single_agent_runner(SimpleAgent);
 
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9867541438632966</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>2</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>1.197341</td>
+          <td>0.236140</td>
+          <td>0.916726</td>
+          <td>1.084812</td>
+          <td>1.193656</td>
+          <td>1.306185</td>
+          <td>1.485327</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
 .. code:: ipython3
 
-    plot_stats(worlds)
+    single_agent_runner.plot_stats(agg=False, legend_ncols=5);
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_27_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_37_0.png
 
 
 This simple agent is better than the random agent. Let’s understand how
@@ -1603,129 +1072,171 @@ it works:
 
 The main idea of this agent is pretty simple. It tries to *secure* as
 much of its needs (sales/supplies) as possible in every negotiation at
-the best possible price for itself.
-
-To achieve this goal, the agent uses the fact that the ``AWI`` already
-keeps track of this information as ``needed_supplies`` and
-``needed_sales``. Therefore, it defines a helper that calculates the
-amount it needs by subtracting the exogenous quantity it has from the
-amount it secured
-
-.. code:: python
-
-   def _needed(self):
-       if self.awi.is_middle_level:
-           return self.awi.n_lines
-       self.awi.needed_sales if self.is_seller(negotiator_id) else self.awi.needed_supplies
-
-where it uses ``needed_sales`` if the current negotiation is for selling
-and ``needed_supplies`` otherwise. Now that the agent can calculate how
-much it needs to buy/sell, it implements the negotiation related
-call-backs (``propose`` and ``respond``).
+the best possible price for itself conceding on price over time. Once
+today’s needs are secure it tries to secure some of what expects to need
+in the future.
 
 Here is the full implementation of ``propose``:
 
 .. code:: python
 
    def propose(self, negotiator_id: str, state) -> "Outcome":
-       return self.best_offer(negotiator_id)
+       return self.good_offer(negotiator_id)
 
-The agent is always offering its best offer which is calculated in the
-``best_offer`` method to be discussed later. It does not conceed at all.
+The agent concedes in price and finds the best quantity to offer (and
+the best day to offer the delivery) in the ``good_offer()`` method which
+we will explain later.
 
-Responding to opponent offers is also simple:
-
--  it starts by calculating its needs using the helper ``_needed``, and
-   ends the negotiation if it needs no more sales/supplies
+The ``respond`` method is also verys simple:
 
 .. code:: python
 
-       my_needs = self._needed()
-       if my_needs <= 0:
-           return ResponseType.END_NEGOTIATION
-
--  If the offered quantity is less than its needs, accept the offer.
-   Otherwise reject the offer.
-
-.. code:: python
-
+   def respond(self, negotiator_id, state, source=""):
+       offer = state.current_offer
        return (
            ResponseType.ACCEPT_OFFER
-           if offer[QUANTITY] <= my_needs
+           if self.is_needed(negotiator_id, offer)
+           and self.is_good_price(negotiator_id, offer, state)
            else ResponseType.REJECT_OFFER
        )
 
-Most of the code is in the ``best_offer`` method which calculates the
-best offer for a negotiation *given the agreements reached so far*.
-Let’s check it line by line:
+It simply accepts the offer if it is *needed* and had a *good price* and
+rejects it otherwise. Note that this agent never ends a negotiation
+because it can always just keep rejecting everything but maybe a good
+offer will come later.
 
--  The agent checks its needs and returns ``None`` ending the
-   negotiation if it needs no more sales/supplies. We also get access to
-   the AMI.
+The agent needs three main subroutines: - ``is_needed()`` to decide if
+an offer is needed. - ``is_good_price()`` to decide if the price is good
+given the delivery date and quantity offered. - ``good_offer()`` to
+generate a good offer.
 
-.. code:: python
+All of these subroutines need to know how much an agent needs to
+buy/sell to a given negotiator at agiven delivery date which is what
+``_needs()`` does. We start by discecting this method:
 
-       my_needs = self._needed()
-       if my_needs <= 0:
-           return None
-       ami = self.get_nmi(negotiator_id)
-       if not ami:
-           return None
-
--  It then finds out the ``Issue`` objects corresponding to the quantity
-   and unit-price for this negotiation and initializes an offer (we have
-   3 issues)
+The first step is to find our *total* needs today which depends on our
+location in the supply chain:
 
 .. code:: python
 
-       quantity_issue = ami.issues[QUANTITY]
-       unit_price_issue = ami.issues[UNIT_PRICE]
-       offer = [-1] * 3
+   if self.awi.is_first_level:
+       total_needs = self.awi.needed_sales
+   elif self.awi.is_last_level:
+       total_needs = self.awi.needed_supplies
+   else:
+       total_needs = self.production_level * self.awi.n_lines
 
--  The time is always the current step.
+If we are in the first or last level, we can directly read our needs
+from the ``AWI``. For agents in the middle of the supply chain, these
+needs will read zero as it can just do nothing. To make some profit, we
+set a production level (25% in this example) and assume that we always
+need to buy and sell enough to achieve this level of production. This
+what the last line above does.
 
-.. code:: python
-
-       offer[TIME] = self.awi.current_step
-
--  The quantity to offer is simply the needs of the agent without mapped
-   within the range of the quantities in the negotiation agenda (note
-   that this may lead the agent to buy more than its needs).
-
-.. code:: python
-
-       offer[QUANTITY] = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
-
--  Finally, the unit price is the maximum possible unit price if the
-   agent is selling otherwise it is the minimum possible price. Note
-   that ``is_selling()`` assumes that the agent will never find itself
-   in a middle layer in a deep negotiation. We will alleviate this issue
-   later.
+This is just what we need to buy/sell today. We then need to convert
+that into what we are *expecting* to need by the time ``t`` passed to
+``_needs()``. This depends on whether we are negotiating with a consumer
+or a supplier. If it is a consumer, we need to add the *expected*
+production until the time ``t`` and then subtract whatever sales we
+already secured *until* ``t``:
 
 .. code:: python
 
-       if self._is_selling(ami):
-           offer[UNIT_PRICE] = unit_price_issue.max_value
-       else:
-           offer[UNIT_PRICE] = unit_price_issue.min_value
-       return tuple(offer)
+   total_needs += self.production_level * self.awi.n_lines * (t - self.awi.current_step)
+   total_needs -= self.awi.total_sales_until(t)
+
+If it is a supplier, we need to add what we expect to produce *after*
+time ``t`` and subtract any supplies we secured *after* ``t``:
+
+.. code:: python
+
+   total_needs += self.production_level * self.awi.n_lines * (self.awi.n_steps - t - 1)
+   total_needs -= self.awi.total_supplies_between(t, self.awi.n_steps - 1)
+
+Now that we know how to calcualte the quantity we should buy/sell at any
+day, we can go back into our three subroutines:
+
+``is_needed()`` is the simplest as it just checks if the quantity in the
+offer is less than or equal the needs at the delivery date offered:
+
+.. code:: python
+
+   return offer[QUANTITY] <= self._needs(partner, offer[TIME])
+
+``is_good_price()`` is also simple. We find the relative time in the
+negotiation (``r``). The nearer are we to the end of the negotiation, we
+simply accept worse prices (higher for buying and lower for selling):
+
+.. code:: python
+
+   if self.is_consumer(partner):
+       return offer[UNIT_PRICE] >= minp + (1 - r) * (maxp - minp)
+   return -offer[UNIT_PRICE] >= -minp + (1 - r) * (minp - maxp)
+
+Moreover, we concede less if this offer is about he future (because we
+can have other chances to negotiate a better deal):
+
+.. code:: python
+
+   r = state.relative_time
+   if offer[TIME] > self.awi.current_step:
+       r *= self.future_concession
+
+Finally, we need to generate good offers in ``good_offer()``. The main
+idea here is to always try to satisfy what we need today before tomorrow
+and tomorrow before the day after. That is why we loop over delivery
+days from now to the negotiation horizon:
+
+.. code:: python
+
+   for t in sorted(list(issues[TIME].all)):
+       ...
+
+For each delivery day, we start by finding our needs using ``_needs()``
+and offer as much of it as we can:
+
+.. code:: python
+
+   offer[QUANTITY] = max(min(needed, qissue.max_value), qissue.min_value)
+
+The only remaining issue is price. We simply concede linearly (as we did
+in ``is_good_price()``) depending on the relative time in the
+negotiation (taking care to concede only to 10% of what we can for
+future contracts). This code is very similar to what we showed before in
+``is_good_price()``.
 
 A (suposedly) better greedy agent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One problem with our ``SimpleAgent`` is that it does not take price into
-account in two ways:
+One problem with our ``SimpleAgent`` is that it does not take its
+*standing offers* into account. For example, if I need 10 items and I am
+negotiating with 5 partners, I will offer all of them to give me these
+10 items and I may end up securing 50 which will lead to penalties. The
+following agent tries to remedie this by just assuming that all standing
+offers will be accepted. This is the other extreme. In the example
+above, it will just offer 10 for the first partner.
 
--  When asked to ``propose``, it *always* proposes an offer with the
-   best price for itself. It **never concedes** on prices. In many cases
-   this will lead to disagreement.
--  When asked to ``respond`` to an offer, *it does not even check the
-   price*. This may lead to bad agreements (i.e. very high buying
-   prices/very low selling prices).
+This is done in the ``_needs()`` method below. It starts by just getting
+the needs the same was as in ``SimpleAgent``:
 
-We will try to remedie both of these issues in the following agent:
+.. code:: python
+
+   n = super()._needs(partner, t)
+
+but it then reduces this by whatever we currently offer after the given
+time ``t``:
+
+.. code:: python
+
+   n = max(0, n - v)
+
+The rest of the code keeps track of our offers (``offered_sales``,
+``offered_supplies``) for each partner at every day.
 
 .. code:: ipython3
+
+    from collections import defaultdict
+
 
     class OptimisticAgent(SimpleAgent):
         """A greedy agent based on SimpleAgent with more sane strategy"""
@@ -1763,84 +1274,122 @@ We will try to remedie both of these issues in the following agent:
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(OptimisticAgent, alone=True)
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_31_0.png
-
+    single_agent_runner(OptimisticAgent);
 
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'OptimisticAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7990401508868769</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>1</th>
+          <td>OptimisticAgent</td>
+          <td>4.0</td>
+          <td>1.246931</td>
+          <td>0.196528</td>
+          <td>1.038273</td>
+          <td>1.160055</td>
+          <td>1.218884</td>
+          <td>1.305761</td>
+          <td>1.511683</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>1.197341</td>
+          <td>0.236140</td>
+          <td>0.916726</td>
+          <td>1.084812</td>
+          <td>1.193656</td>
+          <td>1.306185</td>
+          <td>1.485327</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
 .. code:: ipython3
 
-    plot_stats(worlds)
+    single_agent_runner.plot_stats(agg=False, legend_ncols=4);
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_34_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_44_0.png
 
 
-It seems that ``BetterAgent`` is getting a score that is not any better
-than ``SimpleAgent``. Let’s dive into the agent and analyze how it
-works:
+It seems that ``OptimitisticAgent`` is getting a higher score compared
+with ``SimpleAgent``. Of course this is only guaranteed in the given
+configs. Note that ``OptimisticAgent`` is kind of *over* optimistic as
+it counts anything it offers as if it was *accepted*. A balance is
+needed. Maybe you can find a better wat to achieve this balance.
+Moreover, the decision to just count any standing offer in the future
+when deciding needs is kind of arbitrary. We can do better.
 
-The main idea in ``BetterAgent`` is to treat the *price* issue
-separately to avoid the two issues presented earlier:
-
--  **Never conceding during proposal** This is solved in the ``propose``
-   method by just overriding the price with a ``good-enough`` price:
-
-   .. code:: python
-
-        offer[UNIT_PRICE] = self._find_good_price(self.get_nmi(negotiator_id), state)
-
-   As an aside, notice that we needed to convert the offer to a list in
-   order to overwrite the price then back into a tuple to send it to the
-   partner.
-
--  **Never checking prices of offers** This is solved in the ``respond``
-   method by checking whether or not the price offered is a
-   ``good-enough`` price:
-
-   .. code:: python
-
-        return (
-            response
-            if self._is_good_price(ami, state, offer[UNIT_PRICE])
-            else ResponseType.REJECT_OFFER
-        )
-
-What we mean by a ``good-enough`` price is defined in ``_is_good_price``
-and ``_find_good_price`` methods. Both start by getting the limits of
-the unit-price in the negotiation agenda and a threshold value ``th``:
-
-.. code:: python
-
-   mn, mx = self._price_range(ami, state)
-   th = self._th(mn, mx, state.step, ami.n_steps)
-
-The price range is clear enough. For the threshold ``th`` is a value
-that starts at :math:`1.0` and goes down toward :math:`0.0` over the
-negotiation time under the control of an agent specific parameter ``_e``
-called the concession exponent. Let’s see how does this look for
-different concession exponents:
-
-StdSyncAgent
-~~~~~~~~~~~~
+Simple Sync Agent
+~~~~~~~~~~~~~~~~~
 
 One problem that plagued all of our agents so far is that they have to
 make decisions (``respond``, ``propose``) about negotiations **on the
@@ -1878,28 +1427,110 @@ do-nothing agent in this form:
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(MySyncOneShotDoNothing)
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_38_0.png
-
+    single_agent_runner(MySyncOneShotDoNothing);
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GreedyStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0630159007414333</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SyncRandomStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9744455669960419</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'MySyncOneShotDoNothing'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7012747890048796</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'RandomStdAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.0036680426839358336</span><span style="font-weight: bold">)</span>
-    <span style="font-weight: bold">]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>2</th>
+          <td>OptimisticAgent</td>
+          <td>4.0</td>
+          <td>1.246931</td>
+          <td>0.196528</td>
+          <td>1.038273</td>
+          <td>1.160055</td>
+          <td>1.218884</td>
+          <td>1.305761</td>
+          <td>1.511683</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>1.197341</td>
+          <td>0.236140</td>
+          <td>0.916726</td>
+          <td>1.084812</td>
+          <td>1.193656</td>
+          <td>1.306185</td>
+          <td>1.485327</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.439089</td>
+          <td>0.121767</td>
+          <td>0.361466</td>
+          <td>0.373618</td>
+          <td>0.387218</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
@@ -1918,7 +1549,7 @@ respond to each of these six callbacks. All of these callbacks except
 
 .. code:: ipython3
 
-    class SimpleSyncAgent(StdSyncAgent, OptimisticAgent):
+    class SimpleSyncAgent(StdSyncAgent, SimpleAgent):
         """An agent that distributes its needs over its partners randomly."""
 
         def first_proposals(self):
@@ -1926,7 +1557,7 @@ respond to each of these six callbacks. All of these callbacks except
             Returning None for a negotiation means ending it."""
             return {
                 partner: SAOResponse(
-                    ResponseType.REJECT_OFFER, OptimisticAgent.propose(self, partner, state)
+                    ResponseType.REJECT_OFFER, SimpleAgent.propose(self, partner, state)
                 )
                 for partner, state in self.awi.current_states.items()
             }
@@ -1934,10 +1565,10 @@ respond to each of these six callbacks. All of these callbacks except
         def counter_all(self, offers, states) -> dict:
             """Respond to a set of offers given the negotiation state of each."""
             # find all responses
-            responses = {k: OptimisticAgent.respond(self, k, s) for k, s in states.items()}
+            responses = {k: SimpleAgent.respond(self, k, s) for k, s in states.items()}
             # find counter offers for rejected offers
             myoffers = {
-                k: OptimisticAgent.propose(self, k, s)
+                k: SimpleAgent.propose(self, k, s)
                 for k, s in states.items()
                 if responses[k] == ResponseType.REJECT_OFFER
             }
@@ -1952,6 +1583,9 @@ respond to each of these six callbacks. All of these callbacks except
                 for k in states.keys()
             }
 
+        # needed for the way multiple inheritence work in python.
+        # we only need these because we inherit from `SimpleAgent`.
+        # future agents will not need these two functions.
         def propose(self, negotiator_id, state):
             return StdSyncAgent.propose(self, negotiator_id, state)
 
@@ -1960,33 +1594,132 @@ respond to each of these six callbacks. All of these callbacks except
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(SimpleSyncAgent, alone=True)
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_42_0.png
-
+    single_agent_runner(SimpleSyncAgent);
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7512520020682307</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>2</th>
+          <td>OptimisticAgent</td>
+          <td>4.0</td>
+          <td>1.246931</td>
+          <td>0.196528</td>
+          <td>1.038273</td>
+          <td>1.160055</td>
+          <td>1.218884</td>
+          <td>1.305761</td>
+          <td>1.511683</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>1.197341</td>
+          <td>0.236140</td>
+          <td>0.916726</td>
+          <td>1.084812</td>
+          <td>1.193656</td>
+          <td>1.306185</td>
+          <td>1.485327</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.439089</td>
+          <td>0.121767</td>
+          <td>0.361466</td>
+          <td>0.373618</td>
+          <td>0.387218</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>SimpleSyncAgent</td>
+          <td>4.0</td>
+          <td>0.435511</td>
+          <td>0.124355</td>
+          <td>0.361711</td>
+          <td>0.362763</td>
+          <td>0.379941</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
 .. code:: ipython3
 
-    plot_stats(worlds)
+    single_agent_runner.plot_stats(agg=False, legend_ncols=3, ylegend=2);
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_44_0.png
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_54_0.png
 
 
 This agent behaves exactly the same as ``BetterAgent``. We simply just
@@ -2030,7 +1763,7 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[4, 2, 3, 1], [3, 4, 2, 1], [3, 1, 2, 4], [3, 2, 2, 3], [3, 3, 3, 1]]
+    [[4, 1, 2, 3], [3, 2, 3, 2], [2, 2, 4, 2], [4, 2, 2, 2], [3, 1, 3, 3]]
 
 
 
@@ -2043,7 +1776,7 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[1, 0, 0, 1], [1, 1, 0, 0], [0, 0, 1, 1], [1, 1, 0, 0], [1, 0, 0, 1]]
+    [[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]
 
 
 
@@ -2052,19 +1785,21 @@ We will also need a helper function to find all subsets of a given set
 
 .. code:: ipython3
 
-    from itertools import chain, combinations
+    from itertools import chain, combinations, repeat
 
 
     def powerset(iterable):
         s = list(iterable)
         return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
+Now we can define our new agent:
+
 .. code:: ipython3
 
-    import itertools
-
-
     class ProactiveAgent(SimpleSyncAgent):
+        """An agent that distributes today's needs randomly over 75% of its partners and
+        samples future offers randomly."""
+
         def __init__(self, *args, threshold=None, ptoday=0.75, productivity=0.6, **kwargs):
             super().__init__(*args, **kwargs)
             if threshold is None:
@@ -2073,61 +1808,17 @@ We will also need a helper function to find all subsets of a given set
             self._ptoday = ptoday
             self._productivity = productivity
 
-        def distribute_todays_needs(self, partners=None) -> dict[str, int]:
-            """Distributes my needs randomly over all my partners"""
-            if partners is None:
-                partners = self.negotiators.keys()
-
-            response = dict(zip(partners, itertools.repeat(0)))
-            for is_partner, edge_needs in (
-                (self.is_supplier, self.awi.needed_supplies),
-                (self.is_consumer, self.awi.needed_sales),
-            ):
-                needs = int(
-                    self.awi.n_lines * self._productivity
-                    if self.awi.is_middle_level
-                    else edge_needs
-                )
-                # find my partners and the quantity I need
-                active_partners = [_ for _ in partners if is_partner(_)]
-                if not active_partners or needs < 1:
-                    continue
-                random.shuffle(active_partners)
-                active_partners = active_partners[
-                    : max(1, int(self._ptoday * len(active_partners)))
-                ]
-                n_partners = len(active_partners)
-
-                # if I need nothing, end all negotiations
-                if needs <= 0 or n_partners <= 0:
-                    continue
-
-                # If my needs are small, use a subset of negotiators
-                if needs < n_partners:
-                    active_partners = random.sample(
-                        active_partners, random.randint(1, needs)
-                    )
-                    n_partners = len(active_partners)
-
-                # distribute my needs over my (remaining) partners.
-                response |= dict(zip(active_partners, distribute(needs, n_partners)))
-
-            return response
-
-        def sample_future_offer(self, partner_id):
-            nmi = self.get_nmi(partner_id)
-            outcome = nmi.random_outcome()
-            return outcome
-
-        def is_supplier(self, negotiator_id):
-            return negotiator_id in self.awi.my_suppliers
-
         def first_proposals(self):
             # just randomly distribute my needs over my partners (with best price for me).
-            s, p = self._step_and_price(best_price=True)
+            partners = self.negotiators.keys()
+            s = self.awi.current_step
             distribution = self.distribute_todays_needs()
-            d = {k: (q, s, p) if q > 0 else None for k, q in distribution.items()}
-            return d
+            return {
+                k: (q, s, self.best_price(k))
+                if q > 0
+                else self.sample_future_offer(k).outcome
+                for k, q in distribution.items()
+            }
 
         def counter_all(self, offers, states):
             response = dict()
@@ -2144,13 +1835,13 @@ We will also need a helper function to find all subsets of a given set
                     self.awi.current_output_issues,
                 ),
             ]:
-                needs = int(
-                    self.awi.n_lines * self._productivity
+                # correct needs if I am in the middle
+                needs = (
+                    max(edge_needs, int(self.awi.n_lines * self._productivity))
                     if self.awi.is_middle_level
                     else edge_needs
                 )
-                # get a random price
-                price = issues[UNIT_PRICE].rand()
+
                 # find active partners
                 partners = {_ for _ in all_partners if _ in offers.keys()}
 
@@ -2177,10 +1868,7 @@ We will also need a helper function to find all subsets of a given set
                             k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k])
                             for k in partner_ids
                         }
-                        | {
-                            k: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                            for k in others
-                        }
+                        | {k: self.sample_future_offer(k) for k in others}
                     )
                     continue
 
@@ -2188,161 +1876,160 @@ We will also need a helper function to find all subsets of a given set
                 # randomly over my partners.
                 distribution = self.distribute_todays_needs()
                 response |= {
-                    k: SAOResponse(ResponseType.REJECT_OFFER, self.sample_future_offer(k))
+                    k: self.sample_future_offer(k)
                     if q == 0
                     else SAOResponse(
-                        ResponseType.REJECT_OFFER, (q, self.awi.current_step, price)
+                        ResponseType.REJECT_OFFER, (q, self.awi.current_step, self.price(k))
                     )
                     for k, q in distribution.items()
                 }
             return response
 
-        def _step_and_price(self, best_price=False):
-            """Returns current step and a random (or max) price"""
-            s = self.awi.current_step
-            seller = self.awi.is_first_level
-            issues = (
-                self.awi.current_output_issues if seller else self.awi.current_input_issues
+        def distribute_todays_needs(self, partners=None) -> dict[str, int]:
+            """Distributes my urgent (today's) needs randomly over some my partners"""
+            if partners is None:
+                partners = self.negotiators.keys()
+
+            # initialize all quantities to zero
+            response = dict(zip(partners, repeat(0)))
+            # repeat for supplies and sales
+            for is_partner, edge_needs in (
+                (self.is_supplier, self.awi.needed_supplies),
+                (self.is_consumer, self.awi.needed_sales),
+            ):
+                # get my current needs
+                needs = (
+                    max(edge_needs, int(self.awi.n_lines * self._productivity))
+                    if self.awi.is_middle_level
+                    else edge_needs
+                )
+                #  Select a subset of my partners
+                active_partners = [_ for _ in partners if is_partner(_)]
+                if not active_partners or needs < 1:
+                    continue
+                random.shuffle(active_partners)
+                active_partners = active_partners[
+                    : max(1, int(self._ptoday * len(active_partners)))
+                ]
+                n_partners = len(active_partners)
+
+                # if I need nothing or have no partnrs, just continue
+                if needs <= 0 or n_partners <= 0:
+                    continue
+
+                # If my needs are small, use a subset of negotiators
+                if needs < n_partners:
+                    active_partners = random.sample(
+                        active_partners, random.randint(1, needs)
+                    )
+                    n_partners = len(active_partners)
+
+                # distribute my needs over my (remaining) partners.
+                response |= dict(zip(active_partners, distribute(needs, n_partners)))
+
+            return response
+
+        def sample_future_offer(self, partner):
+            # get a random future offer. In reality an offer today may be returned
+            nmi = self.get_nmi(partner)
+            outcome = nmi.random_outcome()
+            t = outcome[TIME]
+            if t == self.awi.current_step:
+                mn = max(nmi.issues[TIME].min_value, self.awi.current_step + 1)
+                mx = max(nmi.issues[TIME].max_value, self.awi.current_step + 1)
+                if mx <= mn:
+                    return SAOResponse(ResponseType.END_NEGOTITAION, None)
+                t = random.randint(mn, mx)
+            return SAOResponse(
+                ResponseType.REJECT_OFFER, (outcome[QUANTITY], t, self.best_price(partner))
             )
-            pmin = issues[UNIT_PRICE].min_value
-            pmax = issues[UNIT_PRICE].max_value
-            if best_price:
-                return s, pmax if seller else pmin
-            return s, random.randint(pmin, pmax)
 
-.. code:: ipython3
+        def is_supplier(self, partner):
+            return partner in self.awi.my_suppliers
 
-    worlds, ascores, tscores = try_agent(ProactiveAgent, alone=True)
+        def best_price(self, partner):
+            issue = self.get_nmi(partner).issues[UNIT_PRICE]
+            pmin, pmax = issue.min_value, issue.max_value
+            return pmin if self.is_supplier(partner) else pmax
 
+        def price(self, partner):
+            return self.get_nmi(partner).issues[UNIT_PRICE].rand()
 
+As usual for agents based on
+`SyncStdAgent <https://scml.readthedocs.io/en/latest/autoapi/scml/std/agent/index.html#scml.std.agent.StdSyncAgent>`__,
+we need to define ``first_offers()`` and ``counter_all()``
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_53_0.png
+Generating First Offers
+^^^^^^^^^^^^^^^^^^^^^^^
 
-
-.. code:: ipython3
-
-    print_type_scores(tscores)
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'ProactiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8740755133796848</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
-
-.. code:: ipython3
-
-    print_type_scores(tscores)
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'ProactiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8740755133796848</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
-
-This is the highest score we got so far even though that agent is not
-that intelligent in its decision making. Let’s check it in details:
-
-The main idea is to generate offers that will (assuming all accepted)
-give us all the quantity we need (to buy/sell). Moreover, we accept a
-set of offers if the total quantity they provide is within some small
-margin from the quantity we need.
-
-We have a helper method to calculate the quantity we need at any time
-which simply subtracts the secured quantity from our total exogenous
-contract quantities:
+We simply distribute our needs for today over as many partners as
+possible and send random offers (at our best price) for the remaining
+partners. This is achieved in two steps. Firstly, we distribute our
+needs *for today* over all our partners using:
 
 .. code:: python
 
-   def _needs(self):
-       if self.awi.is_first_level:
-           return self.awi.needed_sales
-       return self.awi.needed_supplies
+   distribution = self.distribute_todays_needs()
 
-Another helper function (``_step_and_price``) is defined to return the
-current step and one of the two prices in the agenda:
+If some of our partners are not needed (i.e. has zero quantity in
+``distribution``), we sample random outcomes for them:
 
 .. code:: python
 
-   def _step_and_price(self, best_price=False):
-       """Returns current step and a random (or max) price"""
-       s = self.awi.current_step
-       seller = self.awi.is_first_level
-       issues = self.awi.current_output_issues if seller else self.awi.current_input_issues
-       pmin = issues[UNIT_PRICE].min_value
-       pmax = issues[UNIT_PRICE].max_value
-       if best_price:
-           return s, pmax
-       return s, random.randint(pmin, pmax)
+   return {
+       k: (q, s, self.best_price(k)) if q > 0 else self.sample_future_offer(k).outcome
+       for k, q in distribution.items()
+   }
 
-The core computation of the agent is implemented in the
-``distribute_needs()`` method which is responsible of calculating a
-quantity for each partner (notice that price is completely ignored
-here).
+Note that we always use our *best price* for all offers.
 
-Firstly, we find our partner and our needs and if we do not need
-anything, we simply return :math:`0` for all partners:
+We will describe how do we ``distribute_todays_needs`` and
+``sample_future_offer`` later after we describe counter offering.
 
-.. code:: python
+Generating counter offers
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-     partner_ids = list(self.negotiators.keys())
-     partners = len(partner_ids)
-     needs = self._needs()
-     if needs <= 0:
-         return dict(zip(partner_ids, [0] * partners))
+This process is more involved. The main idea is to process supplies and
+sales separately. For each, we find a subset of partners to distribute
+today’s needs between them and then sample random offers for the rest
+(that will likely have future delivery dates). For all offers, we just
+use random prices. Now, we describe this process in details:
 
-If our needs cannot be distributed over all partners, we select some of
-our partners randomly and return :math:`0` for them (as we will see,
-this will end the negotiation with these partners):
+The way we handle sales and supplies separately is to loop over them
+separately getting the amount we need, names of partners and negotiation
+issues from our AWI:
 
 .. code:: python
 
-   if needs < partners:
-       to_end = random.sample(partner_ids, (partners - needs))
-       response = dict(zip(to_end, [0] * len(to_end)))
-       partner_ids = [_ for _ in partner_ids if _ not in to_end]
-       partners = len(partner_ids)
+   for edge_needs, all_partners, issues in [
+       (self.awi.needed_supplies, self.awi.my_suppliers, self.awi.current_input_issues),
+       (self.awi.needed_sales, self.awi.my_consumers, self.awi.current_output_issues),
+   ]:
+       ...
 
-Finally, we simply distribute our needs over the remaining partners
-uniformly:
-
-.. code:: python
-
-   response.update(dict(zip(partner_ids, distribute(needs, partners))))
-
-Now we can move the main part of the agent which consists of the two
-abstract method implementations (``first_proposals`` and
-``counter_all``).
-
-First set of offers
-^^^^^^^^^^^^^^^^^^^
-
-The first set of proposals from the agent use the best price and will
-distribute the total quantity needed randomly between all partners:
+The needs we get here ``edge_needs`` will not be accurate if we are in
+the middle of the production graph because if we have no contracts we
+will just get zero for both sides. We correct this by just assuming some
+production level and use it if ``edge_needs`` was too small:
 
 .. code:: python
 
-   s, p = self._step_and_price(best_price=True)
-   distribution = self.distribute_needs()
+   needs = int(
+       max(edge_needs, int(self.awi.n_lines * self._productivity))
+       if self.awi.is_middle_level
+       else edge_needs
+   )
 
-We then just return the quantity for each partner or ``None`` to end the
-negotiation if the quantity was :math:`0`
+We then get a random price and find the partners we are still
+negotiating with
 
 .. code:: python
 
-   return dict((k, (q, s, p) if q > 0 else None) for k, q in distribution.items())
+   partners = {_ for _ in all_partners if _ in offers.keys()}
 
-Countering offers
-^^^^^^^^^^^^^^^^^
-
-When we receive some offers (in ``counter_all``) we start by finding the
-subset of them (together) that best satisfy our needs up to a predefined
-threshold (defaulting to zero)
+We then consider all subsets of of offers from our partners and find out
+the one that gives us best match to our needs. Note that we do not
+consider prices at all here.
 
 .. code:: python
 
@@ -2357,128 +2044,701 @@ threshold (defaulting to zero)
        if diff == 0:
            break
 
-If the best subset satisfies our needs up to a threshold (set as zero by
-default), we simply accept all of them ending all other negotiations:
+If the mismatch in quantity we just caculated is good enough (i.e. less
+than some predefined threshold), we accept the subset of offers that
+generated this best match and just sample random quantities and delivery
+dates for others but at our best price (using ``sample_future_offer``).
 
 .. code:: python
 
    if best_diff <= self._threshold:
        partner_ids = plist[best_indx]
        others = list(partners.difference(partner_ids))
-       return {k: SAOResponse(ResponseType.ACCEPT_OFFER, None) for k in partner_ids} | {
-           k: SAOResponse(ResponseType.END_NEGOTIATION, None) for k in others
-       }
+       response.update(
+           {k: SAOResponse(ResponseType.ACCEPT_OFFER, offers[k]) for k in partner_ids}
+           | {k: self.sample_future_offer(k) for k in others}
+       )
+       continue
 
-*Note that we could slightly improve that by only rejecting the
-remaining offers and offering whatever we still need to buy/sell to them
-when the threshold is nonezero and the best subset has a total quantity
-less than our needs. This may improve our results slightly but will
-complicate the code so we do not pursue it in this tutorial.*
-
-If the best subset does not satisfy our needs up to the predefined
-threshold, we simply ignore all offers and generate a new random offer
-for our partners:
+If we did not accept any subset of offers, we simply distribute today’s
+needs over our partners while submitting random counter offers (at best
+price) to any partners we happen to assign zero quantity. This is
+exactly the same as we did in ``first_proposals`` except that we use a
+random price for today’s offers.
 
 .. code:: python
 
-   distribution = self.distribute_needs()
-   return {
-       k: SAOResponse(ResponseType.END_NEGOTIATION, None)
+   distribution = self.distribute_todays_needs()
+   response |= {
+       k: SAOResponse(ResponseType.REJECT_OFFER, self.sample_future_offer(k))
        if q == 0
-       else SAOResponse(ResponseType.REJECT_OFFER, (q, s, p))
+       else SAOResponse(
+           ResponseType.REJECT_OFFER, (q, self.awi.current_step, self.price(k))
+       )
        for k, q in distribution.items()
    }
 
-*Note that we simply end the negotiation with some partners (selected
-randomly) if our needs are less than the number of our partners (see
-``distribute_needs()``.*
+To complete our understanding, we need to clarify the process by which
+we distribute today’s needs and sample future offers.
+
+Distributing Today’s Needs
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As usual, we process sales and supplies independently:
+
+.. code:: python
+
+   for is_partner, edge_needs in (
+       (self.is_supplier, self.awi.needed_supplies),
+       (self.is_consumer, self.awi.needed_sales),
+   ):
+       ...
+
+We correct the need for the case of being in the middle of the
+production graph.
+
+.. code:: python
+
+   needs = (
+       max(edge_needs, int(self.awi.n_lines * self._productivity))
+       if self.awi.is_middle_level
+       else edge_needs
+   )
+
+We then get the suppliers if we are considering supplies and consumers
+if we are considering sales. After that, we sample randomly a predefined
+fraction of them.
+
+.. code:: python
+
+   active_partners = [_ for _ in partners if is_partner(_)]
+   if not active_partners or needs < 1:
+       continue
+   random.shuffle(active_partners)
+   active_partners = active_partners[: max(1, int(self._ptoday * len(active_partners)))]
+   n_partners = len(active_partners)
+
+If we do not need anything or there are no partners, we just go to the
+next group of partners (if any).
+
+.. code:: python
+
+   if needs <= 0 or n_partners <= 0:
+       continue
+
+If our needs are relativey small, we concentrate them in a smaller
+number of partners to keep more of them for future offers.
+
+.. code:: python
+
+   if needs < n_partners:
+       active_partners = random.sample(active_partners, random.randint(1, needs))
+       n_partners = len(active_partners)
+
+Finally, we distribute today’s needs over these partners
+
+.. code:: python
+
+   response |= dict(zip(active_partners, distribute(needs, n_partners)))
+
+Sampling future needs
+^^^^^^^^^^^^^^^^^^^^^
+
+We simply sample a random outcome
+
+.. code:: python
+
+   nmi = self.get_nmi(partner)
+   outcome = nmi.random_outcome()
+
+Note that there is a possiblity that the delivery day here may be today
+but we want to be sure that the offer is in the future. To achieve that,
+we check for this condition and sample a new time in the future. If no
+such time can be found (e.g. in the very last step of the negotiation),
+simply end the negotiation.
+
+.. code:: python
+
+   t = outcome[TIME]
+   if t == self.awi.current_step:
+       mn = max(nmi.issues[TIME].min_value, self.awi.current_step + 1)
+       mx = max(nmi.issues[TIME].max_value, self.awi.current_step + 1)
+       if mx <= mn:
+           return SAOResponse(ResponseType.END_NEGOTITAION, None)
+       t = random.randint(mn, mx)
+
+Now that we have a time in the future, we counter with an offer with the
+sampled quantity, time and best price.
+
+.. code:: python
+
+   return SAOResponse(
+       ResponseType.REJECT_OFFER, (outcome[QUANTITY], t, self.best_price(partner))
+   )
+
+Let’s see how does this agent fair against others we developed so far:
+
+.. code:: ipython3
+
+    single_agent_runner(ProactiveAgent);
+
+.. code:: ipython3
+
+    single_agent_runner.score_summary()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>2</th>
+          <td>OptimisticAgent</td>
+          <td>4.0</td>
+          <td>1.246931</td>
+          <td>0.196528</td>
+          <td>1.038273</td>
+          <td>1.160055</td>
+          <td>1.218884</td>
+          <td>1.305761</td>
+          <td>1.511683</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>1.197341</td>
+          <td>0.236140</td>
+          <td>0.916726</td>
+          <td>1.084812</td>
+          <td>1.193656</td>
+          <td>1.306185</td>
+          <td>1.485327</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>ProactiveAgent</td>
+          <td>4.0</td>
+          <td>0.955803</td>
+          <td>0.204698</td>
+          <td>0.720017</td>
+          <td>0.861105</td>
+          <td>0.944028</td>
+          <td>1.038726</td>
+          <td>1.215140</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.439089</td>
+          <td>0.121767</td>
+          <td>0.361466</td>
+          <td>0.373618</td>
+          <td>0.387218</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>SimpleSyncAgent</td>
+          <td>4.0</td>
+          <td>0.435511</td>
+          <td>0.124355</td>
+          <td>0.361711</td>
+          <td>0.362763</td>
+          <td>0.379941</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(agg=False, legend_ncols=5, ylegend=2);
+
+
+
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_67_0.png
+
+
+These results show that ``ProactiveAgent`` is much better than the
+``SimpleSyncAgent`` which did not really consider all offers together.
+Nevertheless, it is not as good as ``OptimisticAgent`` or
+``SimpleAgent``. Specifically, we can see that it gets higher storage
+cost which means that it seems to carry more inventory that it does not
+need.
 
 Possible Improvements
 ^^^^^^^^^^^^^^^^^^^^^
 
 There are obvious ways to improve this agent:
 
-1. When countering offers, we should take into account the history of
+1. We are using random prices for today’s needs (``price()``). May be,
+   we can concede on price as we did in ``SimpleAgent``.
+2. We are *always* using our best price for future offers. May be, we
+   can concede in price here but not as much as for today’s needs.
+3. When countering offers, we should take into account the history of
    negotiation with each partner (in this round and previously) to make
    a more meaningful distribution of quantities over partners. Currently
    this is just random. We should also consider the probability that our
    offers will be accepted when deciding how to distribute the quantity
    we still need over our partners.
-2. Choosing which negotiators to end the negotiation with when we need a
+4. Choosing which negotiators to end the negotiation with when we need a
    small quantity to buy/sell, is currently random. We could try to find
    a way to only end negotiation with negotiators least likely to
    provide us with our remaining needs.
-3. As indicated earlier, we should not just end the negotiation with all
-   unselected partners when we accept some subset of the offers if the
-   threshold was nonzero and the total quantity we are accepting is not
-   enough to satisfy our needs.
-4. We should take the number of rounds remiaining in the negotiation
-   when deciding whether to accept a subset of offers (e.g. have a
-   higher threshold near the end of the negotiation), and when deciding
-   what quantities to distribute over our partners (e.g. offer more than
-   what we need near the end of the negotiation under the assumption
-   that only some of them will be accepted).
-5. May be consider prices more when approaching our total needs.
-
-In many cases, it may be possible to secure all of the agent’s needs
-(i.e. supplies or sales) using a **single** contract with one of its
-partners. In such cases, the agent can think about the negotiations it
-is engaged in as a **competetive negotiation** not very dissimilar from
-an auction that also allows it to offer. This can lead to a further
-simplification, the agent can be designed to get **at most one
-agreement** from the set of negotiation and end all the rest once this
-is achieved. This is what the ``SingleAgreementOneShotAgent`` does.
+5. We should take the number of rounds remiaining in the negotiation
+   into account when deciding whether to accept a subset of offers
+   (e.g. have a higher threshold near the end of the negotiation), and
+   when deciding what quantities to distribute over our partners
+   (e.g. offer more than what we need near the end of the negotiation
+   under the assumption that only some of them will be accepted).
+6. May be consider prices more when approaching our total needs.
 
 Comparing all agents
 ~~~~~~~~~~~~~~~~~~~~
 
-Let’s run a tournament comparing all agents we developed in this
-tutorial (we will ignore the do-nothing agents)
+We can now look at all the agents we considered so far:
 
 .. code:: ipython3
 
-    # may take a long time
-    worlds, _, tscores = try_agents(
-        [
-            SimpleAgent,
-            OptimisticAgent,
-            SimpleSyncAgent,
-            ProactiveAgent,
-        ],
-        n_trials=20,
-        n_processes=2,
-        draw=False,
-    )
-    print_type_scores(tscores)
+    single_agent_runner.plot_stats(notch=True);
+
+
+
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_70_0.png
+
+
+Let’s also add a couple of the built-in agents to the mix and see where
+do these fit:
+
+.. code:: ipython3
+
+    for t in (GreedyStdAgent, SyncRandomStdAgent):
+        single_agent_runner(t)
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(notch=True, stats="score");
+
+
+
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_73_0.png
+
+
+As you can see, ``GreedyStdAgent`` and ``SyncRandomStdAgent`` are
+getting good scores but not better than the simple agents we developed
+in these tutorials.
+
+.. code:: ipython3
+
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9460638217457741</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'ProactiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.887173521918521</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'OptimisticAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7894631528935026</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6945466585295658</span><span style="font-weight: bold">)</span>
-    <span style="font-weight: bold">]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
 
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>3</th>
+          <td>OptimisticAgent</td>
+          <td>4.0</td>
+          <td>1.246931</td>
+          <td>0.196528</td>
+          <td>1.038273</td>
+          <td>1.160055</td>
+          <td>1.218884</td>
+          <td>1.305761</td>
+          <td>1.511683</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>1.197341</td>
+          <td>0.236140</td>
+          <td>0.916726</td>
+          <td>1.084812</td>
+          <td>1.193656</td>
+          <td>1.306185</td>
+          <td>1.485327</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>GreedyStdAgent</td>
+          <td>4.0</td>
+          <td>1.183594</td>
+          <td>0.163766</td>
+          <td>1.015461</td>
+          <td>1.105895</td>
+          <td>1.156004</td>
+          <td>1.233704</td>
+          <td>1.406908</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>SyncRandomStdAgent</td>
+          <td>4.0</td>
+          <td>1.162453</td>
+          <td>0.180897</td>
+          <td>0.963037</td>
+          <td>1.046484</td>
+          <td>1.156199</td>
+          <td>1.272169</td>
+          <td>1.374376</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>ProactiveAgent</td>
+          <td>4.0</td>
+          <td>0.955803</td>
+          <td>0.204698</td>
+          <td>0.720017</td>
+          <td>0.861105</td>
+          <td>0.944028</td>
+          <td>1.038726</td>
+          <td>1.215140</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.439089</td>
+          <td>0.121767</td>
+          <td>0.361466</td>
+          <td>0.373618</td>
+          <td>0.387218</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>MyStdDoNothing</td>
+          <td>4.0</td>
+          <td>0.436310</td>
+          <td>0.123855</td>
+          <td>0.357187</td>
+          <td>0.367421</td>
+          <td>0.383800</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>SimpleSyncAgent</td>
+          <td>4.0</td>
+          <td>0.435511</td>
+          <td>0.124355</td>
+          <td>0.361711</td>
+          <td>0.362763</td>
+          <td>0.379941</td>
+          <td>0.452689</td>
+          <td>0.620453</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>RandomStdAgent</td>
+          <td>4.0</td>
+          <td>0.359856</td>
+          <td>0.698151</td>
+          <td>-0.320164</td>
+          <td>-0.172369</td>
+          <td>0.302873</td>
+          <td>0.835098</td>
+          <td>1.153840</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+Out of curiosity, let’s compare these agents when each is allowed to
+control the whole market:
+
+.. code:: ipython3
+
+    FMR = WorldRunner.from_runner(single_agent_runner, control_all_agents=True)
+    for t in (
+        SimpleSyncAgent,
+        MyStdDoNothing,
+        MySyncOneShotDoNothing,
+        SimpleAgent,
+        OptimisticAgent,
+        RandomStdAgent,
+        ProactiveAgent,
+        GreedyStdAgent,
+        SyncRandomStdAgent,
+    ):
+        FMR(t)
+
+.. code:: ipython3
+
+    FMR.plot_stats(notch=True, stats="score");
+
+
+
+.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_78_0.png
 
 
 .. code:: ipython3
 
-    plot_stats(worlds, pertype=True, legend=True, ylegend=1.2)
+    FMR.score_summary()
 
 
 
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_59_0.png
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>8</th>
+          <td>SyncRandomStdAgent</td>
+          <td>70.0</td>
+          <td>0.947502</td>
+          <td>0.219816</td>
+          <td>0.341742</td>
+          <td>0.859199</td>
+          <td>0.976417</td>
+          <td>1.094275</td>
+          <td>1.459883</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>SimpleAgent</td>
+          <td>70.0</td>
+          <td>0.934644</td>
+          <td>0.292974</td>
+          <td>0.215137</td>
+          <td>0.679216</td>
+          <td>1.044546</td>
+          <td>1.160171</td>
+          <td>1.374244</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>GreedyStdAgent</td>
+          <td>70.0</td>
+          <td>0.928694</td>
+          <td>0.203014</td>
+          <td>0.360946</td>
+          <td>0.831871</td>
+          <td>0.940393</td>
+          <td>1.048786</td>
+          <td>1.354554</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>ProactiveAgent</td>
+          <td>70.0</td>
+          <td>0.770163</td>
+          <td>0.395298</td>
+          <td>-0.399578</td>
+          <td>0.625169</td>
+          <td>0.886567</td>
+          <td>1.023362</td>
+          <td>1.362790</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>OptimisticAgent</td>
+          <td>70.0</td>
+          <td>0.747347</td>
+          <td>0.309489</td>
+          <td>-0.129647</td>
+          <td>0.606462</td>
+          <td>0.832263</td>
+          <td>0.918301</td>
+          <td>1.329806</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>70.0</td>
+          <td>0.746008</td>
+          <td>0.269398</td>
+          <td>-0.043594</td>
+          <td>0.584976</td>
+          <td>0.794262</td>
+          <td>1.000000</td>
+          <td>1.000000</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>MyStdDoNothing</td>
+          <td>70.0</td>
+          <td>0.745736</td>
+          <td>0.269263</td>
+          <td>-0.021516</td>
+          <td>0.587580</td>
+          <td>0.794162</td>
+          <td>1.000000</td>
+          <td>1.000000</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>SimpleSyncAgent</td>
+          <td>70.0</td>
+          <td>0.742840</td>
+          <td>0.272984</td>
+          <td>-0.046016</td>
+          <td>0.584494</td>
+          <td>0.794225</td>
+          <td>1.000000</td>
+          <td>1.000000</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>RandomStdAgent</td>
+          <td>70.0</td>
+          <td>-0.082708</td>
+          <td>0.505097</td>
+          <td>-1.281687</td>
+          <td>-0.418286</td>
+          <td>-0.154445</td>
+          <td>0.305187</td>
+          <td>0.910405</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
-The way we just compared these agents is not unbiased because not all
-agents are allowed to control the same factories in the same simulation
-envoironment. The best way to compare these agents is to run a
-tournament between them. You already learned how to do that in the
-previous tutorial and we will not repeate it here.
+
+As is clear when comparing the last two tables, the relative order
+(specially between the best scoreing agents) is dependent on the how
+many agents they are allowed to control in the market. In the SCML ANAC
+competition, we are always assuming that the evaluated agent type can
+control a single agent in the market. It is interesting to note that all
+agents lost money on average when allowed to control the whole market
+(and almost all of them if we consider median score).
+
+The way we just compared these agents is unbiased because all agents are
+allowed to control the same factories in the same simulation
+envoironment. Nevertheless, the way we evaluate agents in the official
+ANAC competition uses upper truncated mean not the mean nor the median
+when scoring agents. The best way to compare these agents in exactly the
+same was as in the competition is to run a tournament between them. You
+already learned how to do that in the previous tutorial and we will not
+repeate it here.
 
 *If you are running this notebook, please note that the tournament
 running methods ``anac2023_*`` may not work within a notebook
@@ -2491,25 +2751,25 @@ in this tutorial (with some modifications):
 
 .. code:: ipython3
 
-    import scml.oneshot.agents as agents
+    import scml.std.agents as agents
 
-    pprint([_ for _ in agents.__dir__() if _.endswith("Agent")])
-
-
-.. parsed-literal::
-
-    ['SingleAgreementAspirationAgent',
-     'GreedyOneShotAgent',
-     'GreedySyncAgent',
-     'GreedySingleAgreementAgent',
-     'OneshotDoNothingAgent',
-     'RandomOneShotAgent',
-     'RandDistOneShotAgent',
-     'EqualDistOneShotAgent',
-     'SyncRandomOneShotAgent',
-     'SingleAgreementRandomAgent']
+    print([_ for _ in agents.__dir__() if _.endswith("Agent")])
 
 
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
+        <span style="color: #008000; text-decoration-color: #008000">'SingleAgreementAspirationAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'GreedyStdAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'GreedySyncAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'GreedyOneShotAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'StdDoNothingAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'SyncRandomStdAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'SyncRandomOneShotAgent'</span>,
+        <span style="color: #008000; text-decoration-color: #008000">'RandomStdAgent'</span>
+    <span style="font-weight: bold">]</span>
+    </pre>
 
 
 

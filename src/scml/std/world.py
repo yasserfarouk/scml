@@ -12,8 +12,8 @@ __all__ = [
 
 STD_DEFAULT_PARAMS = dict(
     perishable=False,
+    n_processes=(2, 3),
     horizon=10,
-    n_processes=2,
     disposal_cost=0,
     disposal_cost_dev=0,
     storage_cost=(0.01, 0.05),

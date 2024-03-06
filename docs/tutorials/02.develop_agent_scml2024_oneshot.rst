@@ -8,193 +8,230 @@ planning or production planning as is the case with the standard and
 collusion tracks.
 
 **SCML-OneShot brief introduction** Please refer to the first tutorial
-for a brief introduction about the world simulated in this game as well
-as pointers to more information. We will assume knowledge of at least
-this brief introduction in the remainder of this tutorial.
+for a `brief
+introduction <https://scml.readthedocs.io/en/latest/tutorials/01.run_scml2020.html>`__
+about the world simulated in this game as well as pointers to more
+information. We will assume knowledge of at least this brief
+introduction in the remainder of this tutorial.
+
+First things first, let’s create some helper functions that will allow
+us to evaluate different agents we develop in this tutorial:
 
 .. code:: ipython3
 
-    from collections import defaultdict
-    import random
-    from negmas import ResponseType, SAOResponse
+    from negmas import SAOResponse, ResponseType, Outcome, SAOState
+
+    from scml.oneshot.world import SCML2024OneShotWorld as W
     from scml.oneshot import *
-    from scml.oneshot.common import is_system_agent
-    import numpy as np
+    from scml.runner import WorldRunner
     import pandas as pd
-    from rich import print
-    import math
-    from typing import Iterable
+    from rich.jupyter import print
 
+.. code:: ipython3
 
-    CONFIGS = dict()
-    DefaultType = RandDistOneShotAgent
+    # create a runner that encapsulates a number of configs to evaluate agents
+    # in the same conditions every time
+    context = ANACOneShotContext(n_steps=10, world_params=dict(construct_graphs=True))
+    single_agent_runner = WorldRunner(
+        context, n_configs=4, n_repetitions=1, save_worlds=True
+    )
+    full_market_runner = WorldRunner.from_runner(
+        single_agent_runner, control_all_agents=True
+    )
 
+Here we use the ``WorldRunner`` class which is designed to allow us to
+compare multiple agents in **exactly** the same conditions. To create a
+``WorldRunner``, you need to pass a context which is used for generating
+the worlds in which the agents are evaluated. the SCML package defines
+several contexts that allow us to control these worlds. For example the
+``StrongSupplierContext`` will always create worlds in which the agent
+being evaluated is in the first production level :math:`L_0` with more
+agents on this level than on the next level. You cand define your own
+contexts for experimenting with specific conditions (e.g. specific
+exogenous contract distribution, market structure, etc). The most
+general context which will produce any world that your agent may
+encounter in the `ANAC comptition <https://scml.cs.brown.edu>`__ is the
+``ANACOneShotContext`` for one-shot worlds and ``ANACStdContext`` for
+standard worlds.
 
-    def try_agent(agent_type, alone=False, **kwargs):
-        """Runs an agent in a world simulation against a randomly behaving agent"""
-        if alone:
-            return try_agents([agent_type, agent_type], **kwargs)
-        return try_agents([DefaultType, agent_type], **kwargs)
+We create two runners:
 
+1. **single_agent_runner** in which a single agent is being evaluated
+   while the rest of the agents are sampled randomly from a subset of
+   SCML built-in agents.
+2. **full_market_runner** in which *all* agents in the market are
+   controlled by the agent type being evaluated. This may be helpful in
+   understanding how your agent behaves in this extreme condition but
+   can be misleading as an estimate of the agent’s performance in the
+   official ANAC competition.
 
-    def make_configs(n, n_trials, n_steps=10, year=2024):
-        types = [f"{PLACEHOLDER_AGENT_PREFIX}{i}" for i in range(n)]
-        return [
-            (
-                types,
-                SCML2024OneShotWorld.generate(
-                    types,
-                    agent_params=None,
-                    n_steps=10,
-                    random_agent_types=True,
-                    construct_graphs=True,
-                ),
-            )
-            for _ in range(n_trials)
-        ]
+This is time to describe some of the tools that the ``WorldRunner``
+gives you to evaluate the agent. The ``WorldRunner`` is a Callable. You
+just call it with the class (agent type) you want to evaluate. You can
+optionally pass parameters if you would like to compared different
+parameters for example. Remember in this case to also pass a name to
+differentiate between different parameter choices.
 
-
-    def try_agents(
-        agent_types,
-        n_trials=4,
-        n_steps=10,
-        year=2024,
-        draw=True,
-        agent_params=None,
-        debug=True,
-    ):
-        """
-        Runs a simulation with the given agent_types, and n_processes n_trial times.
-        Optionally also draws a graph showing what happened
-        """
-        n = len(agent_types)
-        if n not in CONFIGS:
-            CONFIGS[n] = make_configs(n, n_trials, n_steps, year=year)
-        n_rem = n_trials - len(CONFIGS[n])
-        if n_rem > 0:
-            CONFIGS[n] += make_configs(n, n_rem, n_steps, year=year)
-        configs = CONFIGS[n]
-        type_scores = defaultdict(float)
-        counts = defaultdict(int)
-        agent_scores = dict()
-        worlds = []
-        for old_types, config in configs[:n_trials]:
-            world = SCML2024OneShotWorld(
-                **SCML2024OneShotWorld.replace_agents(
-                    config, old_types, agent_types, agent_params
-                ),
-                debug=debug,
-            )
-            worlds.append(world)
-            world.run()
-
-            all_scores = world.scores()
-            for aid, agent in world.agents.items():
-                if is_system_agent(aid):
-                    continue
-                key = aid if n_trials == 1 else f"{aid}@{world.id[:4]}"
-                agent_scores[key] = (
-                    agent.type_name.split(":")[-1].split(".")[-1],
-                    all_scores[aid],
-                    "(bankrupt)" if world.is_bankrupt[aid] else "",
-                )
-            for aid, agent in world.agents.items():
-                if is_system_agent(aid):
-                    continue
-                type_ = agent.type_name.split(":")[-1].split(".")[-1]
-                type_scores[type_] += all_scores[aid]
-                counts[type_] += 1
-        type_scores = {k: v / counts[k] if counts[k] else v for k, v in type_scores.items()}
-        if draw:
-            draw_worlds(worlds)
-
-        return worlds, agent_scores, type_scores
-
-
-    def draw_worlds(worlds):
-        n_trials = len(worlds)
-        mx = min(n_trials, 2)
-        fig = plt.figure(figsize=(11 * mx, 8))
-        axs = fig.subplots(int(math.ceil(n_trials / mx)), mx)
-        if isinstance(axs, Iterable):
-            axs = axs.flatten()
-        for ax, world in zip(axs if n_trials > 1 else [axs], worlds):
-            world.draw(
-                what=["contracts-concluded"],
-                steps=(0, world.n_steps - 1),
-                together=True,
-                ncols=1,
-                axs=ax,
-            )
-        plt.show()
-
-
-    def plot_stats(worlds, stats="score", pertype=True, legend=False, **kwargs):
-        SCML2024OneShotWorld.plot_combined_stats(
-            worlds, stats=stats, n_steps=None, pertype=pertype, legend=legend, **kwargs
-        )
-
-
-    def analyze_contracts(worlds):
-        """
-        Analyzes the contracts signed in the given world
-        """
-        dfs = []
-        for world in worlds:
-            dfs.append(pd.DataFrame.from_records(world.saved_contracts))
-        data = pd.concat(dfs)
-        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].agg(
-            dict(quantity=("sum", "count"), unit_price="mean")
-        )
-
-
-    def print_agent_scores(agent_scores):
-        """
-        Prints scores of individiual agent instances
-        """
-        for aid, (type_, score, bankrupt) in agent_scores.items():
-            print(f"Agent {aid} of type {type_} has a final score of {score} {bankrupt}")
-
-
-    def print_type_scores(type_scores):
-        """Prints scores of agent types"""
-        print(sorted(tuple(type_scores.items()), key=lambda x: -x[1]))
-
-What can a random agant do
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Testing a completely random agent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let’s try an agent that behaves randomly:
 
 .. code:: ipython3
 
-    worlds, ascores, tscores = try_agent(RandomOneShotAgent, alone=True)
-    print_type_scores(tscores)
+    full_market_runner(RandomOneShotAgent);
+
+We can use the runner now to display the worlds for a given type that we
+evaluated:
+
+.. code:: ipython3
+
+    full_market_runner.draw_worlds_of(RandomOneShotAgent);
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_3_0.png
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_7_0.png
+
+
+Lots of contracts have been reached, but were they good contracts? We
+can use the runner now to plot several statistics
+(e.g. shortfall-penalty, disposal-cost, productivity, and score in this
+example). There are more than 42 such statistics that you can display.
+
+.. code:: ipython3
+
+    full_market_runner.plot_stats(agg=False);
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_9_0.png
+
+
+The score is going down *monotonically* showing that this random agent
+is losing money every step. Note that this test was when the agent
+controller *every* factory in the market. This is very different than
+the ANAC competition in whic the agent controls a single agent. Luckily,
+we already have a runner that tests exactly this case. Let’s see how
+does ``RandomOneShotAgent`` behave in such cases:
+
+.. code:: ipython3
+
+    single_agent_runner(RandomOneShotAgent)
+    single_agent_runner.draw_worlds_of(RandomOneShotAgent);
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_11_0.png
+
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(agg=False);
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_12_0.png
+
+
+Still losing money but much less than before. The fact that other agents
+made sense actually help our random agent get higher score. We can now
+check the distribution of scores for our agent using the
+``score_summary`` method:
+
+.. code:: ipython3
+
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandomOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.1640674034244166</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>1</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.769502</td>
+          <td>0.296585</td>
+          <td>0.327657</td>
+          <td>0.735819</td>
+          <td>0.897187</td>
+          <td>0.930869</td>
+          <td>0.955976</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.513606</td>
+          <td>0.053251</td>
+          <td>0.435540</td>
+          <td>0.502070</td>
+          <td>0.533963</td>
+          <td>0.545499</td>
+          <td>0.550956</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
+
+You may have noticed that in some worlds multiple agents were of this
+random type (having Ra in their names). We can check which agent in each
+world was evaluated using the ``agents_per_world_of`` method:
 
 .. code:: ipython3
 
-    plot_stats(worlds, stats="score", pertype=False)
-    plt.show()
+    single_agent_runner.agents_per_world_of(RandomOneShotAgent)
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_4_0.png
+
+.. parsed-literal::
+
+    {'SCML2024OneShotWorld/20240305H1702415550267iKou/20240305H170241555063kLcpgGf5': [03Ra@0],
+     'SCML2024OneShotWorld/20240305H170241812281McH0M/20240305H170241812301I7fGJinl': [02Ra@0],
+     'SCML2024OneShotWorld/20240305H170242092494AUfiH/20240305H170242092516WjclXSyn': [03Ra@0],
+     'SCML2024OneShotWorld/20240305H1702422813752SHY0/20240305H170242281394Ao5uQ2oA': [13Ra@1]}
+
 
 
 This random agent always loses money. Can we do better? Let’s start by
-an agent that does absolutely nothing:
+an agent that does absolutely nothing.
+
+An agent that does nothing
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: ipython3
 
@@ -202,17 +239,16 @@ an agent that does absolutely nothing:
         """My Agent that does nothing"""
 
         def act(self, state):
-            return {
-                partner: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                for partner in state.my_suppliers + state.my_consumers
-            }
+            return {}
 
 
-    worlds, ascores, tscores = try_agent(MyOneShotDoNothing)
+    ""
+    single_agent_runner(MyOneShotDoNothing)
+    single_agent_runner.draw_worlds_of(MyOneShotDoNothing);
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_6_0.png
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_18_0.png
 
 
 In all of the graph representing world simulations, we use short names
@@ -222,7 +258,12 @@ level 1 that was the third agent to create. ``MDN`` here is a shorthand
 for ``MyOneShotDoNothingAgent`` (we will usually remove ``OneShot`` and
 ``Agent`` from the name before shortening it).
 
-Looking at the ``contracts-concluded``, we can see that none of the
+Notice how there is exactly one agent of our type (MDN) in each
+simulation. Moreover, these are in exactly the same palces in which the
+random agents evaluated were before. This is how we can guarantee that
+the comparison is fair.
+
+Looking at the ``contracts-signed``, we can see that none of the
 concluded contracts involved our do-nothing agent. Nevertheless, these
 agents still had *exogenous contracts* which means that they will lose
 money. A do-nothing agent will usually lose money in this game.
@@ -231,261 +272,104 @@ Let’s check the scores of different agents to confirm:
 
 .. code:: ipython3
 
-    print_agent_scores(ascores)
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6031131220620246</span>
-    </pre>
+    single_agent_runner.score_summary()
 
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.726283624807331</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 02MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6618281062750258</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7012932341835069</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6013751822458041</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7928252360677007</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5966974483402214</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9845941143226574</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9268995587269059</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8388148187938812</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 10Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7173385576092934</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 11MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6403729155816473</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.4473971752726146</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 13Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7577511479257142</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 14Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6026501396666283</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9061362198461169</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 05MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7745993059323387</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5728452434236279</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 08Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9212104543746197</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 09MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8430875552852014</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 00Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9875701129127569</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 01MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.579286723432963</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 03MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6313451735212542</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 04Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7465643413179349</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 06Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8897214077614832</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 07MDN@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type MyOneShotDoNothing has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5785701301884822</span>
-    </pre>
-
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">Agent 12Ra@<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>@SCML of type RandDistOneShotAgent has a final score of <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.49761339138624994</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.513606</td>
+          <td>0.053251</td>
+          <td>0.43554</td>
+          <td>0.50207</td>
+          <td>0.533963</td>
+          <td>0.545499</td>
+          <td>0.550956</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
 .. code:: ipython3
 
-    plot_stats(worlds, pertype=True, legend=True)
+    single_agent_runner.plot_stats(agg=False);
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_9_0.png
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_21_0.png
 
 
-Notice that our do-nothing agent always loses money and is even worse
-than acting randomly. That is because it cannot get any contracts from
-negotiation to satisfy its needs from the exogenous contracts but it
-still has to pay for disposal cost and shortfall penalty.
-
-.. code:: ipython3
-
-    print_type_scores(tscores)
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7599070222878074</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'MyOneShotDoNothing'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.6478751040125449</span><span style="font-weight: bold">)]</span>
-    </pre>
-
-
-
-Notice how the do-nothing agent is even worse than acting randomly. This
-is usually the case in the OneShot game.
+It is clear that our do-nothing agent always loses money and is even
+worse than acting randomly. That is because it cannot get any contracts
+from negotiation to satisfy its needs from the exogenous contracts but
+it still has to pay for disposal cost and shortfall penalty. This is by
+design. We set the penalties so that this is almost always the case to
+encourage agents to trade.
 
 We can also have a look at the *exogenous* contracts that drive the
 market.
 
 .. code:: ipython3
 
-    analyze_contracts(worlds)
+    import math
+    from typing import Iterable
+
+
+    def analyze_contracts(worlds, exogenous_only=True):
+        """
+        Analyzes the contracts signed in the given world
+        """
+        dfs = []
+        for world in worlds:
+            dfs.append(pd.DataFrame.from_records(world.saved_contracts))
+        data = pd.concat(dfs)
+        if exogenous_only:
+            data = data.loc[
+                (data["seller_name"] == "SELLER") | (data["buyer_name"] == "BUYER"), :
+            ]
+        return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].agg(
+            dict(quantity=("sum", "count"), unit_price="mean")
+        )
+
+
+    analyze_contracts(single_agent_runner.worlds_of())
 
 
 
@@ -535,363 +419,253 @@ market.
       </thead>
       <tbody>
         <tr>
-          <th rowspan="4" valign="top">00Ra@0</th>
-          <th>06Ra@1</th>
-          <td>21</td>
-          <td>11</td>
-          <td>16.272727</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>16</td>
-          <td>7</td>
-          <td>16.428571</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <td>24</td>
-          <td>10</td>
-          <td>15.900000</td>
-        </tr>
-        <tr>
-          <th>12Ra@1</th>
-          <td>4</td>
-          <td>1</td>
-          <td>16.000000</td>
-        </tr>
-        <tr>
-          <th rowspan="6" valign="top">01Ra@0</th>
-          <th>06Ra@1</th>
-          <td>7</td>
-          <td>3</td>
-          <td>16.333333</td>
-        </tr>
-        <tr>
-          <th>07Ra@1</th>
-          <td>21</td>
-          <td>9</td>
-          <td>15.444444</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>24</td>
-          <td>10</td>
-          <td>16.200000</td>
-        </tr>
-        <tr>
-          <th>09Ra@1</th>
-          <td>2</td>
-          <td>1</td>
-          <td>16.000000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <td>13</td>
-          <td>6</td>
-          <td>15.833333</td>
-        </tr>
-        <tr>
-          <th>13Ra@1</th>
-          <td>2</td>
-          <td>1</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th rowspan="6" valign="top">03Ra@0</th>
-          <th>07Ra@1</th>
-          <td>21</td>
-          <td>11</td>
-          <td>15.454545</td>
-        </tr>
-        <tr>
-          <th>08Ra@1</th>
-          <td>13</td>
-          <td>5</td>
-          <td>15.200000</td>
-        </tr>
-        <tr>
-          <th>09Ra@1</th>
-          <td>2</td>
-          <td>2</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <td>7</td>
-          <td>4</td>
-          <td>15.500000</td>
-        </tr>
-        <tr>
-          <th>13Ra@1</th>
-          <td>8</td>
-          <td>4</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>14Ra@1</th>
-          <td>9</td>
-          <td>4</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>04MDN@1</th>
+          <th>04Ra@1</th>
           <th>BUYER</th>
-          <td>46</td>
-          <td>10</td>
-          <td>22.000000</td>
+          <td>98</td>
+          <td>20</td>
+          <td>21.100000</td>
         </tr>
         <tr>
-          <th rowspan="3" valign="top">04Ra@0</th>
-          <th>06Ra@1</th>
-          <td>2</td>
-          <td>2</td>
-          <td>15.500000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <td>8</td>
-          <td>4</td>
-          <td>15.500000</td>
-        </tr>
-        <tr>
-          <th>12Ra@1</th>
-          <td>4</td>
-          <td>2</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>05MDN@1</th>
+          <th>05Gr@1</th>
           <th>BUYER</th>
-          <td>77</td>
-          <td>10</td>
-          <td>23.500000</td>
+          <td>126</td>
+          <td>20</td>
+          <td>22.700000</td>
         </tr>
         <tr>
-          <th rowspan="6" valign="top">05Ra@0</th>
+          <th>06Eq@1</th>
+          <th>BUYER</th>
+          <td>186</td>
+          <td>20</td>
+          <td>24.400000</td>
+        </tr>
+        <tr>
+          <th>06Gr@1</th>
+          <th>BUYER</th>
+          <td>124</td>
+          <td>20</td>
+          <td>27.400000</td>
+        </tr>
+        <tr>
           <th>06Ra@1</th>
-          <td>10</td>
-          <td>4</td>
-          <td>16.250000</td>
+          <th>BUYER</th>
+          <td>186</td>
+          <td>20</td>
+          <td>26.800000</td>
         </tr>
         <tr>
-          <th>07Ra@1</th>
-          <td>2</td>
-          <td>2</td>
-          <td>15.500000</td>
+          <th>07Eq@1</th>
+          <th>BUYER</th>
+          <td>178</td>
+          <td>20</td>
+          <td>29.200000</td>
         </tr>
         <tr>
-          <th>08Ra@1</th>
-          <td>17</td>
-          <td>6</td>
-          <td>16.666667</td>
-        </tr>
-        <tr>
-          <th>09Ra@1</th>
-          <td>5</td>
-          <td>3</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
+          <th>07Gr@1</th>
+          <th>BUYER</th>
+          <td>68</td>
           <td>18</td>
-          <td>11</td>
-          <td>15.818182</td>
-        </tr>
-        <tr>
-          <th>13Ra@1</th>
-          <td>3</td>
-          <td>2</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>06MDN@1</th>
-          <th>BUYER</th>
-          <td>83</td>
-          <td>10</td>
-          <td>23.000000</td>
-        </tr>
-        <tr>
-          <th rowspan="4" valign="top">06Ra@0</th>
-          <th>07Ra@1</th>
-          <td>1</td>
-          <td>1</td>
-          <td>16.000000</td>
-        </tr>
-        <tr>
-          <th>09Ra@1</th>
-          <td>1</td>
-          <td>1</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <td>8</td>
-          <td>4</td>
-          <td>15.250000</td>
-        </tr>
-        <tr>
-          <th>13Ra@1</th>
-          <td>1</td>
-          <td>1</td>
-          <td>15.000000</td>
-        </tr>
-        <tr>
-          <th>06Ra@1</th>
-          <th>BUYER</th>
-          <td>146</td>
-          <td>20</td>
-          <td>29.700000</td>
-        </tr>
-        <tr>
-          <th>07MDN@1</th>
-          <th>BUYER</th>
-          <td>181</td>
-          <td>20</td>
-          <td>29.450000</td>
+          <td>28.444444</td>
         </tr>
         <tr>
           <th>07Ra@1</th>
           <th>BUYER</th>
-          <td>116</td>
-          <td>20</td>
-          <td>25.200000</td>
+          <td>256</td>
+          <td>40</td>
+          <td>24.250000</td>
         </tr>
         <tr>
-          <th>08MDN@1</th>
+          <th>08Eq@1</th>
           <th>BUYER</th>
-          <td>106</td>
+          <td>438</td>
+          <td>60</td>
+          <td>26.733333</td>
+        </tr>
+        <tr>
+          <th>08Gr@1</th>
+          <th>BUYER</th>
+          <td>98</td>
           <td>20</td>
           <td>27.100000</td>
         </tr>
         <tr>
-          <th>08Ra@1</th>
+          <th>09Eq@1</th>
           <th>BUYER</th>
-          <td>121</td>
+          <td>178</td>
           <td>20</td>
-          <td>28.750000</td>
+          <td>26.900000</td>
+        </tr>
+        <tr>
+          <th>09Gr@1</th>
+          <th>BUYER</th>
+          <td>164</td>
+          <td>20</td>
+          <td>27.600000</td>
         </tr>
         <tr>
           <th>09MDN@1</th>
           <th>BUYER</th>
-          <td>238</td>
-          <td>30</td>
-          <td>26.400000</td>
+          <td>71</td>
+          <td>10</td>
+          <td>21.800000</td>
         </tr>
         <tr>
           <th>09Ra@1</th>
           <th>BUYER</th>
-          <td>38</td>
-          <td>10</td>
-          <td>25.400000</td>
-        </tr>
-        <tr>
-          <th>10Ra@1</th>
-          <th>BUYER</th>
-          <td>237</td>
-          <td>30</td>
-          <td>29.400000</td>
-        </tr>
-        <tr>
-          <th>11MDN@1</th>
-          <th>BUYER</th>
           <td>257</td>
           <td>30</td>
-          <td>27.866667</td>
+          <td>24.466667</td>
+        </tr>
+        <tr>
+          <th>10Gr@1</th>
+          <th>BUYER</th>
+          <td>470</td>
+          <td>60</td>
+          <td>28.700000</td>
+        </tr>
+        <tr>
+          <th>11Ra@1</th>
+          <th>BUYER</th>
+          <td>422</td>
+          <td>58</td>
+          <td>27.517241</td>
         </tr>
         <tr>
           <th>12MDN@1</th>
           <th>BUYER</th>
-          <td>95</td>
+          <td>93</td>
           <td>10</td>
-          <td>26.300000</td>
+          <td>26.500000</td>
         </tr>
         <tr>
           <th>12Ra@1</th>
           <th>BUYER</th>
-          <td>88</td>
-          <td>10</td>
-          <td>27.800000</td>
+          <td>245</td>
+          <td>30</td>
+          <td>27.233333</td>
         </tr>
         <tr>
           <th>13Ra@1</th>
           <th>BUYER</th>
-          <td>93</td>
-          <td>10</td>
-          <td>25.400000</td>
+          <td>188</td>
+          <td>20</td>
+          <td>26.000000</td>
         </tr>
         <tr>
-          <th>14Ra@1</th>
+          <th>14Gr@1</th>
           <th>BUYER</th>
-          <td>97</td>
-          <td>10</td>
-          <td>26.400000</td>
-        </tr>
-        <tr>
-          <th rowspan="11" valign="top">SELLER</th>
-          <th>00MDN@0</th>
-          <td>189</td>
+          <td>136</td>
           <td>20</td>
-          <td>10.550000</td>
+          <td>26.500000</td>
         </tr>
         <tr>
-          <th>00Ra@0</th>
-          <td>172</td>
-          <td>20</td>
-          <td>9.800000</td>
-        </tr>
-        <tr>
-          <th>01MDN@0</th>
-          <td>98</td>
-          <td>10</td>
-          <td>10.700000</td>
-        </tr>
-        <tr>
-          <th>01Ra@0</th>
-          <td>282</td>
-          <td>30</td>
-          <td>9.766667</td>
-        </tr>
-        <tr>
-          <th>02MDN@0</th>
-          <td>352</td>
+          <th rowspan="18" valign="top">SELLER</th>
+          <th>00Gr@0</th>
+          <td>322</td>
           <td>40</td>
           <td>9.800000</td>
         </tr>
         <tr>
-          <th>03MDN@0</th>
-          <td>181</td>
+          <th>00Ra@0</th>
+          <td>394</td>
+          <td>40</td>
+          <td>10.600000</td>
+        </tr>
+        <tr>
+          <th>01Eq@0</th>
+          <td>182</td>
           <td>20</td>
-          <td>10.100000</td>
+          <td>9.700000</td>
+        </tr>
+        <tr>
+          <th>01Gr@0</th>
+          <td>386</td>
+          <td>40</td>
+          <td>10.850000</td>
+        </tr>
+        <tr>
+          <th>01Ra@0</th>
+          <td>190</td>
+          <td>20</td>
+          <td>9.700000</td>
+        </tr>
+        <tr>
+          <th>02Eq@0</th>
+          <td>338</td>
+          <td>40</td>
+          <td>9.750000</td>
+        </tr>
+        <tr>
+          <th>02MDN@0</th>
+          <td>98</td>
+          <td>10</td>
+          <td>9.500000</td>
+        </tr>
+        <tr>
+          <th>02Ra@0</th>
+          <td>290</td>
+          <td>30</td>
+          <td>9.900000</td>
+        </tr>
+        <tr>
+          <th>03Eq@0</th>
+          <td>158</td>
+          <td>20</td>
+          <td>9.500000</td>
+        </tr>
+        <tr>
+          <th>03Gr@0</th>
+          <td>176</td>
+          <td>20</td>
+          <td>10.900000</td>
+        </tr>
+        <tr>
+          <th>03MDN@0</th>
+          <td>77</td>
+          <td>10</td>
+          <td>10.400000</td>
         </tr>
         <tr>
           <th>03Ra@0</th>
-          <td>173</td>
-          <td>20</td>
-          <td>10.000000</td>
+          <td>275</td>
+          <td>30</td>
+          <td>10.266667</td>
         </tr>
         <tr>
-          <th>04MDN@0</th>
-          <td>194</td>
+          <th>04Eq@0</th>
+          <td>190</td>
           <td>20</td>
-          <td>10.100000</td>
+          <td>10.800000</td>
+        </tr>
+        <tr>
+          <th>04Gr@0</th>
+          <td>192</td>
+          <td>20</td>
+          <td>10.700000</td>
         </tr>
         <tr>
           <th>04Ra@0</th>
-          <td>75</td>
-          <td>10</td>
-          <td>10.500000</td>
+          <td>172</td>
+          <td>20</td>
+          <td>10.200000</td>
         </tr>
         <tr>
-          <th>05Ra@0</th>
-          <td>287</td>
-          <td>30</td>
-          <td>9.933333</td>
+          <th>05Eq@0</th>
+          <td>166</td>
+          <td>20</td>
+          <td>9.600000</td>
+        </tr>
+        <tr>
+          <th>05Gr@0</th>
+          <td>368</td>
+          <td>40</td>
+          <td>10.250000</td>
         </tr>
         <tr>
           <th>06Ra@0</th>
-          <td>95</td>
-          <td>10</td>
-          <td>9.700000</td>
+          <td>174</td>
+          <td>20</td>
+          <td>9.800000</td>
         </tr>
       </tbody>
     </table>
@@ -1046,6 +820,12 @@ The most important ones are:
       system will try to always give you one offer from each partner in
       the ``counter_all()`` call but that is not guaranteed and
       sometimes it may be called with a subset of the offers.
+   -  **OneShotPolicy** This is very similar to ``OneShotSyncAgent``
+      with only one callback ``act()`` which receives the AWI (as
+      ``state``) and returns a mapping from each partner to an
+      ``SAOResponse`` (i.e. acceptance, ending negotiation, or rejection
+      and a counter offer). This is mostly there to help build RL agents
+      (see next tutorial).
    -  **OneShotSingleAgreementAgent** If your agent is based on
       ``OneShotSingleAgreementAgent`` you will have to implement
       ``is_acceptable()`` to decide if a given offer is acceptable to
@@ -1059,9 +839,8 @@ The most important ones are:
 
 Now we can start working on our agent.
 
-There are three base classes for one-shot agents (``OneShotAgent``,
-``SyncOneShotAgent``, and ``SingleAgreementOneShotAgent``). We will
-discuss them in more details in what follows.
+We will discuss these different base classes and basing your agent in
+each of them in more details in what follows.
 
 OneShotAgent
 ~~~~~~~~~~~~
@@ -1072,24 +851,28 @@ this class and provide support for a simplified way of developing your
 agent (or so we think). It is perfectly OK to use ``OneShotAgent``
 directly as the base of your agent.
 
-We have already seen the ``OneShotAgent`` class for which you need to
-override ``propose`` and may also override ``respond`` to handle
-negotiations independently. The ``propose`` method receives the
-negotiation state (an object of the type ``SAOState`` including among
-other things the current negotiation step, relative time, last offer,
-etc) and is required to return an ``Outcome`` (See ``negmas``
-documentation) as an offer. The ``respond`` method receives a
-negotiation state and an offer (``Outcome``) from the opponent and needs
-to respond to it by a decision from the ``ResponseType`` enumeration
+As discussed earlier, you will receive a ``propose`` and ``respond``
+call for each round in each negotiation. The ``propose`` method receives
+the negotiation state (an object of the type
+```SAOState`` <https://negmas.readthedocs.io/en/latest/api/negmas.sao.SAOState.html>`__
+including among other things the current negotiation step, relative
+time, last offer, etc) and is required to return an ``Outcome`` which is
+just a tuple of a quantity, delivery time (must be this simulation step)
+and unit price, in that order (See ```negmas``
+documentation <https://negmas.readthedocs.io/en/latest>`__) as an offer.
+The ``respond`` method receives a negotiation state and an offer
+(``Outcome``) from the opponent and needs to respond to it by a decision
+from the ```ResponseType``
+enumeration <https://negmas.readthedocs.io/en/latest/api/negmas.gb.ResponseType.html>`__
 (``REJECT_OFFER``, ``ACCEPT_OFFER``, and ``END_NEGOTIATION``). Other
 than these two negotiation related callbacks, the agent receives an
-``init`` call just after it joins the simulatin and a ``step`` call
-after each step. The agent is also informed about failure/success of
-negotiations through the
+``init`` call just after it joins the simulatin and a
+``before_step``/``step`` call before/after each simulation step. The
+agent is also informed about failure/success of negotiations through the
 ``on_negotiation_success``/``on_negotiation_failure`` callbacks. That is
 all. A one-shot agent needs to only think about what should it do to
-respond to each of these six callbacks. All of these callbacks except
-``propose`` are optional.
+respond to each of these seven callbacks. All of these callbacks except
+``propose`` and ``respond`` are optional.
 
 Simple OneShotAgent
 ^^^^^^^^^^^^^^^^^^^
@@ -1154,43 +937,104 @@ using the same base class.
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
 
-
-    worlds, ascores, tscores = try_agent(SimpleAgent)
-    world = worlds[0]
-
-
-
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_16_0.png
-
-
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner(SimpleAgent)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9969970116270792</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9535626397680571</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>2</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>0.999371</td>
+          <td>0.127350</td>
+          <td>0.809181</td>
+          <td>0.988987</td>
+          <td>1.055164</td>
+          <td>1.065547</td>
+          <td>1.077975</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.744209</td>
+          <td>0.117785</td>
+          <td>0.614204</td>
+          <td>0.670876</td>
+          <td>0.738748</td>
+          <td>0.812081</td>
+          <td>0.885138</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.607965</td>
+          <td>0.101957</td>
+          <td>0.486299</td>
+          <td>0.543810</td>
+          <td>0.619446</td>
+          <td>0.683601</td>
+          <td>0.706669</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
-we can check how the score of this type of agent changes over time:
+we can check how the score and other statistics of this type of agent
+changes over time:
 
 .. code:: ipython3
 
-    plot_stats(worlds, pertype=True, legend=True)
+    single_agent_runner.plot_stats(agg=False);
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_20_0.png
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_31_0.png
 
 
-This simple agent is better than the random agent but worse than the
-builtin ``RandDistOneShotAgent``. Let’s understand how it works:
+This simple agent is better than the random agent and our do-nothing
+agent. It can make around 1% profit. Let’s understand how it works:
 
 The main idea of this agent is pretty simple. It tries to *secure* as
 much of its needs (sales/supplies) as possible in every negotiation at
@@ -1368,32 +1212,106 @@ We will try to remedie both of these issues in the following agent:
             """calculates a descending threshold (0 <= th <= 1)"""
             return ((n_steps - step - 1) / (n_steps - 1)) ** self._e
 
-
-    world, ascores, tscores = try_agent(BetterAgent)
-
-
-
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_23_0.png
-
-
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner(BetterAgent)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0264522478629563</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9699196786054276</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>3</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>0.999371</td>
+          <td>0.127350</td>
+          <td>0.809181</td>
+          <td>0.988987</td>
+          <td>1.055164</td>
+          <td>1.065547</td>
+          <td>1.077975</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.744209</td>
+          <td>0.117785</td>
+          <td>0.614204</td>
+          <td>0.670876</td>
+          <td>0.738748</td>
+          <td>0.812081</td>
+          <td>0.885138</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>BetterAgent</td>
+          <td>4.0</td>
+          <td>0.653273</td>
+          <td>0.514147</td>
+          <td>-0.103332</td>
+          <td>0.584050</td>
+          <td>0.836310</td>
+          <td>0.905533</td>
+          <td>1.043804</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.607965</td>
+          <td>0.101957</td>
+          <td>0.486299</td>
+          <td>0.543810</td>
+          <td>0.619446</td>
+          <td>0.683601</td>
+          <td>0.706669</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
-It seems that ``BetterAgent`` is getting a score that is not any better
-than ``SimpleAgent``. Let’s dive into the agent and analyze how it
-works:
+It seems that ``BetterAgent`` is much worse than the ``SimpleAgent``. It
+is as good as the randomly behaving agent!! We failed :-(
+
+Still, Let’s dive into the agent and analyze how it works:
 
 The main idea in ``BetterAgent`` is to treat the *price* issue
 separately to avoid the two issues presented earlier:
@@ -1453,7 +1371,7 @@ different concession exponents:
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_27_0.png
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_38_0.png
 
 
 You can see that the smaller the exponent the more *hard-headed* will
@@ -1506,7 +1424,7 @@ Why did not this approach work
 
 As you may have noticed, ``BetterAgent`` is not relly better than
 ``SimpleAgent``. why? The main reason is that price does not really
-matter that much in the settings for SCML 2023 OneShot because the price
+matter that much in the settings for SCML 2024 OneShot because the price
 range is limited to only two consecutive values (e.g. (9, 10)) which
 increases the relative importance of avoiding penalties by matching
 demand and supply.
@@ -1548,36 +1466,120 @@ concessions. The following agent implements this idea
                 mx = min(mx, self._best_buying)
             return mn, mx
 
-
-    world, ascores, tscores = try_agent(AdaptiveAgent)
-
-
-
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_30_0.png
-
-
 Let’s see how well did this agent behave:
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner(AdaptiveAgent)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0291281184966112</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'AdaptiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.8934810912093554</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>4</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>0.999371</td>
+          <td>0.127350</td>
+          <td>0.809181</td>
+          <td>0.988987</td>
+          <td>1.055164</td>
+          <td>1.065547</td>
+          <td>1.077975</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.744209</td>
+          <td>0.117785</td>
+          <td>0.614204</td>
+          <td>0.670876</td>
+          <td>0.738748</td>
+          <td>0.812081</td>
+          <td>0.885138</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>BetterAgent</td>
+          <td>4.0</td>
+          <td>0.653273</td>
+          <td>0.514147</td>
+          <td>-0.103332</td>
+          <td>0.584050</td>
+          <td>0.836310</td>
+          <td>0.905533</td>
+          <td>1.043804</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>AdaptiveAgent</td>
+          <td>4.0</td>
+          <td>0.649501</td>
+          <td>0.518261</td>
+          <td>-0.104202</td>
+          <td>0.545168</td>
+          <td>0.816800</td>
+          <td>0.921133</td>
+          <td>1.068604</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.607965</td>
+          <td>0.101957</td>
+          <td>0.486299</td>
+          <td>0.543810</td>
+          <td>0.619446</td>
+          <td>0.683601</td>
+          <td>0.706669</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
-Not even as good as ``SimpleAgent``, at least in this simulation (we
-will make a more rigorous comparison later). One possiblity here is that
-the agent became too hard-headed again because now whenever it sees a
-good price on one negotiation, it insists on it for all the rest. This
-may not be a good idea sometimes as it may lead to more disagreements.
-In general *the agent must balance getting good prices with matching its
-input and output quantities*.
+Not even as good as ``BetterAgent``, at least in this simulation. One
+possiblity here is that the agent became too hard-headed again because
+now whenever it sees a good price on one negotiation, it insists on it
+for all the rest. This may not be a good idea sometimes as it may lead
+to more disagreements. In general *the agent must balance getting good
+prices with matching its input and output quantities*.
 
 Let’s just now see what happens if we are generous enough to grant our
 partner the best price for **them** half of the time. This should work
@@ -1593,24 +1595,136 @@ because price is not important in SCML-OneShot
             i = nmi.issues[UNIT_PRICE]
             return i.min_value if random.random() < 0.5 else i.max_value
 
+.. code:: ipython3
 
-    world, ascores, tscores = try_agent(GenerousAgent)
+    single_agent_runner(GenerousAgent)
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_34_0.png
+
+.. parsed-literal::
+
+    [(<scml.oneshot.world.SCML2024OneShotWorld at 0x2aa253990>, [12Ge@1]),
+     (<scml.oneshot.world.SCML2024OneShotWorld at 0x2a9363710>, [09Ge@1]),
+     (<scml.oneshot.world.SCML2024OneShotWorld at 0x2ab1e7690>, [02Ge@0]),
+     (<scml.oneshot.world.SCML2024OneShotWorld at 0x2ab1e7cd0>, [03Ge@0])]
+
 
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000990841985219</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GenerousAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.950642924925293</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>5</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>0.999371</td>
+          <td>0.127350</td>
+          <td>0.809181</td>
+          <td>0.988987</td>
+          <td>1.055164</td>
+          <td>1.065547</td>
+          <td>1.077975</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>GenerousAgent</td>
+          <td>4.0</td>
+          <td>0.957748</td>
+          <td>0.148265</td>
+          <td>0.793810</td>
+          <td>0.852063</td>
+          <td>0.970760</td>
+          <td>1.076445</td>
+          <td>1.095664</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.744209</td>
+          <td>0.117785</td>
+          <td>0.614204</td>
+          <td>0.670876</td>
+          <td>0.738748</td>
+          <td>0.812081</td>
+          <td>0.885138</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>BetterAgent</td>
+          <td>4.0</td>
+          <td>0.653273</td>
+          <td>0.514147</td>
+          <td>-0.103332</td>
+          <td>0.584050</td>
+          <td>0.836310</td>
+          <td>0.905533</td>
+          <td>1.043804</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>AdaptiveAgent</td>
+          <td>4.0</td>
+          <td>0.649501</td>
+          <td>0.518261</td>
+          <td>-0.104202</td>
+          <td>0.545168</td>
+          <td>0.816800</td>
+          <td>0.921133</td>
+          <td>1.068604</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.607965</td>
+          <td>0.101957</td>
+          <td>0.486299</td>
+          <td>0.543810</td>
+          <td>0.619446</td>
+          <td>0.683601</td>
+          <td>0.706669</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
@@ -1656,12 +1770,14 @@ do-nothing agent in this form:
             Returning None for a negotiation means ending it."""
             return dict()
 
+.. code:: ipython3
 
-    world, ascores, tscores = try_agent(MySyncOneShotDoNothing)
+    single_agent_runner(MySyncOneShotDoNothing)
+    single_agent_runner.draw_worlds_of(MySyncOneShotDoNothing);
 
 
 
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_37_0.png
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_50_0.png
 
 
 As you can see, in this case, we need to override ``counter_all`` to
@@ -1788,14 +1904,6 @@ greedy agent using this approach.
         def _is_selling(self, ami):
             return ami.annotation["product"] == self.awi.my_output_product
 
-
-    world, ascores, tscores = try_agent(NaiveSyncAgent)
-
-
-
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_40_0.png
-
-
 This agent shows a case of parameterizing your agent so that it can be
 tested with different hyper-parameters. You do that by passing whatever
 parameters you like as keyword arguments to the constctor:
@@ -1918,16 +2026,148 @@ Let’s see how did it do:
 
 .. code:: ipython3
 
-    print_type_scores(tscores)
+    single_agent_runner(NaiveSyncAgent)
+    single_agent_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0129199272791813</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'NaiveSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7958632384071765</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>7</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>0.999371</td>
+          <td>0.127350</td>
+          <td>0.809181</td>
+          <td>0.988987</td>
+          <td>1.055164</td>
+          <td>1.065547</td>
+          <td>1.077975</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>GenerousAgent</td>
+          <td>4.0</td>
+          <td>0.957748</td>
+          <td>0.148265</td>
+          <td>0.793810</td>
+          <td>0.852063</td>
+          <td>0.970760</td>
+          <td>1.076445</td>
+          <td>1.095664</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.744209</td>
+          <td>0.117785</td>
+          <td>0.614204</td>
+          <td>0.670876</td>
+          <td>0.738748</td>
+          <td>0.812081</td>
+          <td>0.885138</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>BetterAgent</td>
+          <td>4.0</td>
+          <td>0.653273</td>
+          <td>0.514147</td>
+          <td>-0.103332</td>
+          <td>0.584050</td>
+          <td>0.836310</td>
+          <td>0.905533</td>
+          <td>1.043804</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>AdaptiveAgent</td>
+          <td>4.0</td>
+          <td>0.649501</td>
+          <td>0.518261</td>
+          <td>-0.104202</td>
+          <td>0.545168</td>
+          <td>0.816800</td>
+          <td>0.921133</td>
+          <td>1.068604</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.607965</td>
+          <td>0.101957</td>
+          <td>0.486299</td>
+          <td>0.543810</td>
+          <td>0.619446</td>
+          <td>0.683601</td>
+          <td>0.706669</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.606181</td>
+          <td>0.103108</td>
+          <td>0.486235</td>
+          <td>0.538431</td>
+          <td>0.615907</td>
+          <td>0.683657</td>
+          <td>0.706675</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>NaiveSyncAgent</td>
+          <td>4.0</td>
+          <td>0.538803</td>
+          <td>0.413067</td>
+          <td>-0.058402</td>
+          <td>0.422842</td>
+          <td>0.691505</td>
+          <td>0.807467</td>
+          <td>0.830604</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
+
+Ok it works but you did not expect it to work well. right? We called it
+``Naive`` for a reason.
 
 This base-class simplifies the job of the agent developer by providing a
 single function (``counter_all``) in which to handle all offers it
@@ -1938,7 +2178,7 @@ decide to accept a few of these offers and keep negotiating.
 The problem with this agent is that it defines a **good offer**
 independently for each negotiation which defeats the purpose of having
 the chance to decide centrally what to do for all negotiations. That is
-made even less effective by the fact that in SCML 2023, price does not
+made even less effective by the fact that in SCML 2024, price does not
 matter that much. In the following section, we design a very simple
 alternative that tries to resolve this issue
 
@@ -1978,7 +2218,7 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[1, 2, 1, 6], [4, 3, 1, 2], [2, 4, 2, 2], [2, 4, 3, 1], [1, 3, 3, 3]]
+    [[3, 4, 2, 1], [2, 1, 2, 5], [4, 1, 3, 2], [3, 2, 3, 2], [4, 2, 1, 3]]
 
 
 
@@ -1991,7 +2231,7 @@ Here are few examples of how it would distribute :math:`10` units over
 
 .. parsed-literal::
 
-    [[0, 0, 1, 1], [0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 1, 0], [1, 1, 0, 0]]
+    [[0, 0, 1, 1], [0, 1, 1, 0], [1, 1, 0, 0], [1, 0, 1, 0], [0, 0, 1, 1]]
 
 
 
@@ -2121,28 +2361,161 @@ We will also need a helper function to find all subsets of a given set
 
 .. code:: ipython3
 
-    world, ascores, tscores = try_agent(BetterSyncAgent)
+    single_agent_runner(BetterSyncAgent)
+    single_agent_runner.score_summary()
 
-
-
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_52_0.png
-
-
-.. code:: ipython3
-
-    print_type_scores(tscores)
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[(</span><span style="color: #008000; text-decoration-color: #008000">'RandDistOneShotAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0501848628435189</span><span style="font-weight: bold">)</span>, <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0203591442793456</span><span style="font-weight: bold">)]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>8</th>
+          <td>SimpleAgent</td>
+          <td>4.0</td>
+          <td>0.999371</td>
+          <td>0.127350</td>
+          <td>0.809181</td>
+          <td>0.988987</td>
+          <td>1.055164</td>
+          <td>1.065547</td>
+          <td>1.077975</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>BetterSyncAgent</td>
+          <td>4.0</td>
+          <td>0.974842</td>
+          <td>0.136633</td>
+          <td>0.781388</td>
+          <td>0.931658</td>
+          <td>1.013028</td>
+          <td>1.056211</td>
+          <td>1.091922</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>GenerousAgent</td>
+          <td>4.0</td>
+          <td>0.957748</td>
+          <td>0.148265</td>
+          <td>0.793810</td>
+          <td>0.852063</td>
+          <td>0.970760</td>
+          <td>1.076445</td>
+          <td>1.095664</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.744209</td>
+          <td>0.117785</td>
+          <td>0.614204</td>
+          <td>0.670876</td>
+          <td>0.738748</td>
+          <td>0.812081</td>
+          <td>0.885138</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>BetterAgent</td>
+          <td>4.0</td>
+          <td>0.653273</td>
+          <td>0.514147</td>
+          <td>-0.103332</td>
+          <td>0.584050</td>
+          <td>0.836310</td>
+          <td>0.905533</td>
+          <td>1.043804</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>AdaptiveAgent</td>
+          <td>4.0</td>
+          <td>0.649501</td>
+          <td>0.518261</td>
+          <td>-0.104202</td>
+          <td>0.545168</td>
+          <td>0.816800</td>
+          <td>0.921133</td>
+          <td>1.068604</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.607965</td>
+          <td>0.101957</td>
+          <td>0.486299</td>
+          <td>0.543810</td>
+          <td>0.619446</td>
+          <td>0.683601</td>
+          <td>0.706669</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.606181</td>
+          <td>0.103108</td>
+          <td>0.486235</td>
+          <td>0.538431</td>
+          <td>0.615907</td>
+          <td>0.683657</td>
+          <td>0.706675</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>NaiveSyncAgent</td>
+          <td>4.0</td>
+          <td>0.538803</td>
+          <td>0.413067</td>
+          <td>-0.058402</td>
+          <td>0.422842</td>
+          <td>0.691505</td>
+          <td>0.807467</td>
+          <td>0.830604</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
-This is the highest score we got so far even though that agent is not
-that intelligent in its decision making. Let’s check it in details:
+This is *almost* the highest score we got so far even though that agent
+is not that intelligent in its decision making. It is roughly on-bar
+with our ``SimpleAgent``. Let’s check it in details:
 
 The main idea is to generate offers that will (assuming all accepted)
 give us all the quantity we need (to buy/sell). Moreover, we accept a
@@ -2326,61 +2699,260 @@ There are obvious ways to improve this agent:
 Comparing all agents
 ~~~~~~~~~~~~~~~~~~~~
 
-Let’s run a tournament comparing all agents we developed in this
-tutorial (we will ignore the do-nothing agents)
+We can now summarize the results of comparing all agents developed so
+far and while we are at it, compare them with three built-in agents in
+the scml package:
 
 .. code:: ipython3
 
-    # may take a long time
-    worlds, _, tscores = try_agents(
-        [
-            SimpleAgent,
-            BetterSyncAgent,
-            BetterAgent,
-            GenerousAgent,
-            AdaptiveAgent,
-            NaiveSyncAgent,
-        ],
-        n_trials=20,
-        draw=False,
+    for t in (RandDistOneShotAgent, EqualDistOneShotAgent, GreedySyncAgent):
+        single_agent_runner(t)
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(notch=True);
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_69_0.png
+
+
+or in more details:
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(agg=False, stats="score", legend_ncols=4, ylegend=1.4);
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_71_0.png
+
+
+You can easily notice that our SimpleAgent is actually hard to beat. No
+built-in agents can actually beat it. The one that comes closes is
+```RandDistOneShotAgent`` <https://scml.readthedocs.io/en/latest/autoapi/scml/oneshot/agents/rand/index.html#scml.oneshot.agents.rand.RandDistOneShotAgent>`__.
+
+The way we just compared these agents is unbiased because all agents are
+allowed to control the same factories in the same simulation
+envoironment. Nevertheless, it is not the exact method used in the ANAC
+competition. The best way to compare these agents is to run a tournament
+between them. You already learned how to do that in the previous
+tutorial and we will not repeate it here.
+
+*If you are running this notebook, please note that the tournament
+running methods ``anac2024_*`` may not work within a notebook
+environment. You can just move your code to a normal python script and
+it will run correctly*
+
+Just out of curiousity, let’s see how do these agents compare against
+each other if they are allowed to control the whole market instead of a
+single agent:
+
+.. code:: ipython3
+
+    full_market_runner = WorldRunner.from_runner(
+        single_agent_runner, control_all_agents=True
     )
-    print_type_scores(tscores)
+    for a in (
+        BetterSyncAgent,
+        SimpleAgent,
+        GenerousAgent,
+        BetterAgent,
+        AdaptiveAgent,
+        MyOneShotDoNothing,
+        MySyncOneShotDoNothing,
+        NaiveSyncAgent,
+        RandDistOneShotAgent,
+        EqualDistOneShotAgent,
+        GreedySyncAgent,
+    ):
+        full_market_runner(a)
+
+.. code:: ipython3
+
+    full_market_runner.plot_stats();
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_74_0.png
+
+
+.. code:: ipython3
+
+    full_market_runner.score_summary()
+
 
 
 
 .. raw:: html
 
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'SimpleAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0763460675130074</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'AdaptiveAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0609834039844082</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'GenerousAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0537763193991214</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.0493394841164685</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'BetterSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.9907638782608417</span><span style="font-weight: bold">)</span>,
-        <span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">'NaiveSyncAgent'</span>, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.7532533862458681</span><span style="font-weight: bold">)</span>
-    <span style="font-weight: bold">]</span>
-    </pre>
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>4</th>
+          <td>GenerousAgent</td>
+          <td>50.0</td>
+          <td>1.074671</td>
+          <td>0.059074</td>
+          <td>0.910863</td>
+          <td>1.039914</td>
+          <td>1.075568</td>
+          <td>1.113305</td>
+          <td>1.198719</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>SimpleAgent</td>
+          <td>50.0</td>
+          <td>1.073358</td>
+          <td>0.062680</td>
+          <td>0.900424</td>
+          <td>1.039845</td>
+          <td>1.079913</td>
+          <td>1.109175</td>
+          <td>1.201721</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>EqualDistOneShotAgent</td>
+          <td>50.0</td>
+          <td>1.034714</td>
+          <td>0.054495</td>
+          <td>0.868030</td>
+          <td>1.008053</td>
+          <td>1.035171</td>
+          <td>1.069933</td>
+          <td>1.128175</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td>RandDistOneShotAgent</td>
+          <td>50.0</td>
+          <td>1.023430</td>
+          <td>0.059131</td>
+          <td>0.883473</td>
+          <td>0.985707</td>
+          <td>1.028139</td>
+          <td>1.061405</td>
+          <td>1.189772</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>BetterSyncAgent</td>
+          <td>50.0</td>
+          <td>0.997692</td>
+          <td>0.070020</td>
+          <td>0.860389</td>
+          <td>0.949984</td>
+          <td>1.002768</td>
+          <td>1.035163</td>
+          <td>1.153710</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>BetterAgent</td>
+          <td>50.0</td>
+          <td>0.967133</td>
+          <td>0.214765</td>
+          <td>0.111597</td>
+          <td>0.858480</td>
+          <td>1.048749</td>
+          <td>1.105966</td>
+          <td>1.200720</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>AdaptiveAgent</td>
+          <td>50.0</td>
+          <td>0.967114</td>
+          <td>0.213656</td>
+          <td>0.158802</td>
+          <td>0.851377</td>
+          <td>1.051415</td>
+          <td>1.109334</td>
+          <td>1.203722</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>NaiveSyncAgent</td>
+          <td>50.0</td>
+          <td>0.774013</td>
+          <td>0.172624</td>
+          <td>0.234846</td>
+          <td>0.657050</td>
+          <td>0.779045</td>
+          <td>0.905348</td>
+          <td>1.075779</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>GreedySyncAgent</td>
+          <td>50.0</td>
+          <td>0.756386</td>
+          <td>0.101909</td>
+          <td>0.556199</td>
+          <td>0.694618</td>
+          <td>0.748266</td>
+          <td>0.815601</td>
+          <td>0.969735</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>MySyncOneShotDoNothing</td>
+          <td>50.0</td>
+          <td>0.678438</td>
+          <td>0.111906</td>
+          <td>0.401200</td>
+          <td>0.617216</td>
+          <td>0.670378</td>
+          <td>0.742378</td>
+          <td>0.907340</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>MyOneShotDoNothing</td>
+          <td>50.0</td>
+          <td>0.678154</td>
+          <td>0.112744</td>
+          <td>0.401026</td>
+          <td>0.616801</td>
+          <td>0.670370</td>
+          <td>0.742015</td>
+          <td>0.907182</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
-
-.. code:: ipython3
-
-    plot_stats(worlds, legend=True, pertype=True, ylegend=1.2)
-
-
-
-.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_57_0.png
-
-
-The way we just compared these agents is not unbiased because not all
-agents are allowed to control the same factories in the same simulation
-envoironment. The best way to compare these agents is to run a
-tournament between them. You already learned how to do that in the
-previous tutorial and we will not repeate it here.
-
-*If you are running this notebook, please note that the tournament
-running methods ``anac2023_*`` may not work within a notebook
-environment. You can just move your code to a normal python script and
-it will run correctly*
 
 You can find all the agents available in the ``scml`` package for the
 one-shot game under ``scml.oneshot.agents`` including the ones developed
@@ -2412,7 +2984,133 @@ in this tutorial (with some modifications):
 
 
 
+Running against winners from previous years
+-------------------------------------------
 
+| You can compare your agent against any agents previously submitted to
+  SCML (same track). To do that, you need to install the ``scml-agents``
+  package from pip:
+
+   pip install scml-agents
+
+You can then get agents using the ``get_agents()`` function from this
+package:
+
+.. code:: ipython3
+
+    from scml_agents import get_agents
+
+    winners = [
+        get_agents(y, track="oneshot", winners_only=True, as_class=True)[0]
+        for y in (2021, 2022, 2023)
+    ]
+    print(winners)
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
+        <span style="font-weight: bold">&lt;</span><span style="color: #ff00ff; text-decoration-color: #ff00ff; font-weight: bold">class</span><span style="color: #000000; text-decoration-color: #000000"> </span><span style="color: #008000; text-decoration-color: #008000">'scml_agents.scml2021.oneshot.team_86.agent112.Agent112'</span><span style="color: #000000; text-decoration-color: #000000">&gt;,</span>
+    <span style="color: #000000; text-decoration-color: #000000">    &lt;class </span><span style="color: #008000; text-decoration-color: #008000">'scml_agents.scml2022.oneshot.team_134.agent119.PatientAgent'</span><span style="color: #000000; text-decoration-color: #000000">&gt;,</span>
+    <span style="color: #000000; text-decoration-color: #000000">    &lt;class </span><span style="color: #008000; text-decoration-color: #008000">'scml_agents.scml2023.oneshot.team_poli_usp.quantity_oriented_agent.QuantityOrientedAgent'</span><span style="font-weight: bold">&gt;</span>
+    <span style="font-weight: bold">]</span>
+    </pre>
+
+
+
+Let’s add them to the mix
+
+.. code:: ipython3
+
+    for t in winners:
+        single_agent_runner(t)
+
+.. code:: ipython3
+
+    single_agent_runner.score_summary()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>type</th>
+          <th>count</th>
+          <th>mean</th>
+          <th>std</th>
+          <th>min</th>
+          <th>25%</th>
+          <th>50%</th>
+          <th>75%</th>
+          <th>max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>1</th>
+          <td>RandomOneShotAgent</td>
+          <td>4.0</td>
+          <td>0.769502</td>
+          <td>0.296585</td>
+          <td>0.327657</td>
+          <td>0.735819</td>
+          <td>0.897187</td>
+          <td>0.930869</td>
+          <td>0.955976</td>
+        </tr>
+        <tr>
+          <th>0</th>
+          <td>MyOneShotDoNothing</td>
+          <td>4.0</td>
+          <td>0.513606</td>
+          <td>0.053251</td>
+          <td>0.435540</td>
+          <td>0.502070</td>
+          <td>0.533963</td>
+          <td>0.545499</td>
+          <td>0.550956</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    single_agent_runner.plot_stats(stats="score");
+
+
+
+.. image:: 02.develop_agent_scml2024_oneshot_files/02.develop_agent_scml2024_oneshot_83_0.png
+
+
+``QuantityOrientedAgent``, the winner of SCML 2023 OneShot is the best
+performing agent followed by ``PatientAgent`` winner of the SCML 2022
+OneShot competition. Nevertheless, the differences between these agens
+and our ``SimpleAgent`` Can you beat them? The next tutorial explains
+how to try to achieve that using Reinforcement Learning but now you have
+enough information to build your own agent for SCML OneShot. Happy
+hacking
 
 
 

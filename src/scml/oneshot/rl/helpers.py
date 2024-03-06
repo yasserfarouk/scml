@@ -16,7 +16,7 @@ __all__ = [
     "encode_offers_no_time",
     "decode_offers_no_time",
     "unnormalize_offers",
-    "normalize_offers",
+    "normalize_offers_no_time",
     "clip_normal",
     "clip",
     "discretize_and_clip",
@@ -62,10 +62,9 @@ def encode_given_offers(
     n_consumers: int,
     max_group_size: int,
     continuous: bool,
-    with_time: bool = False,
-) -> list[tuple[int, int]] | list[tuple[float, float]] | list[tuple[int, int, int]]:
-    encoder = encode_offers_with_time if with_time else encode_offers_no_time
-    normalizer = normalize_offers_with_time if with_time else normalize_offers
+) -> list[tuple[int, int]] | list[tuple[float, float]]:
+    encoder = encode_offers_no_time
+    normalizer = normalize_offers_no_time
     suppliers = group_partners(state.my_suppliers, n_suppliers, max_group_size)
     consumers = group_partners(state.my_consumers, n_consumers, max_group_size)
 
@@ -305,7 +304,7 @@ def normalize_offers_with_time(
     ]
 
 
-def normalize_offers(
+def normalize_offers_no_time(
     offers: list[tuple[int, int]],
     min_price: int,
     max_price: int,

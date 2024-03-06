@@ -23,10 +23,10 @@ from typing import TYPE_CHECKING, Any
 from negmas import (
     ConstUtilityFunction,
     Contract,
+    ControlledNegotiator,
     ControlledSAONegotiator,
     Entity,
     Issue,
-    MechanismState,
     NegotiatorMechanismInterface,
     Outcome,
     ResponseType,
@@ -55,12 +55,6 @@ __all__ = [
 class OneShotAgent(SAOController, Entity, ABC):
     """
     Base class for all agents in the One-Shot game.
-
-    Args:
-        owner: The adapter owning the agent. You do not need to directly deal
-               with this.
-        ufun: An optional `OneShotUFun` to set for the agent.
-        name: Agent name.
 
     Remarks:
         - You can access all of the negotiators associated with the agent using
@@ -170,7 +164,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         self.utility_function = owner.ufun
 
     @abstractmethod
-    def propose(self, negotiator_id: str, state: MechanismState) -> Outcome | None:
+    def propose(self, negotiator_id: str, state: SAOState) -> Outcome | None:
         """
         Proposes an offer to one of the partners.
 
@@ -182,9 +176,7 @@ class OneShotAgent(SAOController, Entity, ABC):
             an outcome to offer.
         """
 
-    def respond(
-        self, negotiator_id: str, state: MechanismState, source=None
-    ) -> ResponseType:
+    def respond(self, negotiator_id: str, state: SAOState, source=None) -> ResponseType:
         """
         Responds to an offer from one of the partners.
 
@@ -223,7 +215,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         partners: list[str],
         annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-        state: MechanismState,
+        state: SAOState,
     ) -> None:
         """
         Called whenever a negotiation ends without agreement.
@@ -289,13 +281,6 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):  # type: ignore
     """
     An agent that automatically accumulate offers from opponents and allows
     you to control all negotiations centrally in the `counter_all` method.
-
-    Args:
-        owner: The adapter owning the agent. You do not need to directly deal
-               with this.
-        ufun: An optional `OneShotUFun` to set for the agent.
-        name: Agent name.
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -304,7 +289,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):  # type: ignore
 
     @abstractmethod
     def counter_all(
-        self, offers: dict[str, Outcome], states: dict[str, SAOState]
+        self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
     ) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).
@@ -426,7 +411,7 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         """
 
 
-class EndingNegotiator(SAONegotiator):
+class EndingNegotiator(SAONegotiator, ControlledNegotiator):
     def propose(self, state):
         return None
 
@@ -585,7 +570,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         negotiator_type=None,
         name: str | None = None,
         **kwargs,
-    ):
+    ) -> ControlledSAONegotiator:
         """
         Creates a negotiator but does not add it to the controller. Call
         `add_negotiator` to add it.
@@ -605,15 +590,15 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
 
         """
         if name is None:
-            return EndingNegotiator()
+            return EndingNegotiator()  # type: ignore
         ufun = self._ufuns[name]
         if ufun is None:
-            return EndingNegotiator()
+            return EndingNegotiator()  # type: ignore
         negotiator = self.generate_negotiator(name)
         negotiator.id = name
         negotiator.name = name
         negotiator.ufun = ufun
-        return negotiator
+        return negotiator  # type: ignore
 
     def propose(self, negotiator_id, state):
         raise ValueError(

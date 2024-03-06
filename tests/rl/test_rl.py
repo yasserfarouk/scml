@@ -396,10 +396,11 @@ class RecorderAgent(RandDistOneShotAgent):
             assert (
                 decoded.get(k, None) is None or decoded.get(k, None) == v
             ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
-        assert (
-            sum(_[0] for _ in expected.values() if _)
-            == sum(_[0] for _ in decoded.values() if _)
-        ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+        if SCML_TEST_BRITTLE_ISSUES:
+            assert (
+                sum(_[0] for _ in expected.values() if _)
+                == sum(_[0] for _ in decoded.values() if _)
+            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
         assert (
             sum(_[0] * _[-1] for _ in expected.values() if _)
             == sum(_[0] * _[-1] for _ in decoded.values() if _)

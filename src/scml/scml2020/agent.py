@@ -401,6 +401,7 @@ class AWIHelper:
         # TODO add missing components
         all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
         return OneShotState(
+            production_capacities=[],
             perishable=True,
             exogenous_input_quantity=q,
             exogenous_input_price=p,
@@ -435,7 +436,7 @@ class AWIHelper:
             my_suppliers=self.my_suppliers,
             my_consumers=self.my_consumers,
             my_partners=self.my_partners,
-            penalties_scale=self.penalties_scale,
+            penalties_scale=self.penalties_scale,  # type: ignore
             n_input_negotiations=self.n_input_negotiations,
             n_output_negotiations=self.n_output_negotiations,
             trading_prices=self.trading_prices.tolist(),
@@ -520,7 +521,7 @@ class AWIHelper:
                 make_issue(values=t, name="time"),
                 make_issue(values=u, name="unit_price"),
             ]
-        return issues
+        return issues  # type: ignore
 
     @property
     def current_output_issues(self) -> List[Issue]:
@@ -533,20 +534,20 @@ class AWIHelper:
                 make_issue(values=t, name="time"),
                 make_issue(values=u, name="unit_price"),
             ]
-        return issues
+        return issues  # type: ignore
 
     @property
     def current_input_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
-        return make_os(self.current_input_issues) if self.current_input_issues else None
+        return make_os(self.current_input_issues) if self.current_input_issues else None  # type: ignore
 
     @property
     def current_output_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
-        return (
+        return (  # type: ignore
             make_os(self.current_output_issues) if self.current_output_issues else None
         )
 
     @property
-    def penalties_scale(self) -> Literal["trading", "catalog", "input", "none"]:
+    def penalties_scale(self) -> Literal["trading", "catalog", "input", "unit", "none"]:
         return "unit"
 
     # Public Information
@@ -562,7 +563,7 @@ class AWIHelper:
             step.
         """
         if not self._world.publish_exogenous_summary:
-            return None
+            return []
         n_steps = self._owner.awi.n_steps
         n_products = self._owner.awi.n_products
         y = self._world.exogenous_contracts_summary
@@ -612,7 +613,7 @@ class OneShotAdapter(
         ufun=None,
     ):
         if obj:
-            self.oneshot_type = get_full_type_name(obj)
+            self.oneshot_type = get_full_type_name(obj)  # type: ignore
             # note that this may not be true and we cannot guarantee that
             # we can instantiate an agent of the same type
             self.oneshot_params = dict()
@@ -620,17 +621,18 @@ class OneShotAdapter(
             if not oneshot_params:
                 oneshot_params = dict()
             self.oneshot_type, self.oneshot_params = (
-                get_full_type_name(oneshot_type),
+                get_full_type_name(oneshot_type),  # type: ignore
                 oneshot_params,
             )
-            obj = instantiate(oneshot_type, **oneshot_params)
+            obj = instantiate(oneshot_type, **oneshot_params)  # type: ignore
         super().__init__(obj=obj, name=name, type_postfix=type_postfix, ufun=ufun)
-        obj.connect_to_2021_adapter(self)
+        obj.connect_to_2021_adapter(self)  # type: ignore
+        self._obj: SCML2020Agent
 
     def init(self):
         self._oneshot_awi = AWIHelper(self)
-        self._obj._awi = self._oneshot_awi
-        self._obj.ufun = self.make_ufun(add_exogenous=True)
+        self._obj._awi = self._oneshot_awi  # type: ignore
+        self._obj.ufun = self.make_ufun(add_exogenous=True)  # type: ignore
         super().init()
         self._obj.init()
 
@@ -704,8 +706,8 @@ class OneShotAdapter(
         if hasattr(self._obj, "before_step"):
             self._obj.before_step()
 
-    def make_ufun(self, add_exogenous: bool):
-        return super().make_ufun(add_exogenous, in_adapter=True)
+    def make_ufun(self, add_exogenous: bool):  # type: ignore
+        return super().make_ufun(add_exogenous, in_adapter=True)  # type: ignore
 
     def to_dict(self):
         return {
@@ -730,7 +732,7 @@ class OneShotAdapter(
         #     or issues[TIME].max_value != self.awi.current_step + 1
         # ):
         #     return None
-        return self._obj.create_negotiator()
+        return self._obj.create_negotiator()  # type: ignore
 
     def get_disposal_cost(self) -> float:
         # penalty for buying too much

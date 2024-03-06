@@ -142,6 +142,8 @@ class SyncRandomStdAgent(StdSyncAgent):
             for partner, offer in offers.items():
                 if not is_partner(partner):
                     continue
+                if offer is None:
+                    continue
                 q, t = offer[QUANTITY], offer[TIME]
                 today = t == c
                 r = states[partner].relative_time if today else (t - c) / n

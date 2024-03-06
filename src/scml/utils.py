@@ -19,11 +19,8 @@ from negmas.tournaments import TournamentResults, WorldRunResults, tournament
 from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.agents import (
     GreedyOneShotAgent,
-    GreedySyncAgent,
     SingleAgreementAspirationAgent,
     SyncRandomOneShotAgent,
-    RandDistOneShotAgent,
-    EqualDistOneShotAgent,
 )
 from scml.oneshot.sysagents import _StdSystemAgent as OneShotSysAgent
 from scml.oneshot.world import OneShotWorld, SCML2024OneShotWorld
@@ -36,13 +33,9 @@ from scml.scml2020.agents import (
 )
 from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
 from scml.std.agent import StdAgent
-from scml.std.agents import (
-    SyncRandomStdAgent,
-    GreedyStdAgent,
-    GreedySyncAgent,
-    RandomStdAgent,
-)
 from scml.std.world import STD_DEFAULT_PARAMS
+from scml.oneshot.context import DefaultAgentsOneShot
+from scml.std.context import DefaultAgentsStd
 
 __all__ = [
     "anac_config_generator_oneshot",
@@ -62,8 +55,8 @@ __all__ = [
     "DefaultAgents2023",
     "DefaultAgentsOneShot",
     "DefaultAgentsOneShot2023",
-    "DefaultAgentsOneShot2024",
-    "DefaultAgentsStd2024",
+    "DefaultAgentsOneShot",
+    "DefaultAgentsStd",
     "anac2020_tournament",
     "anac2020_std",
     "anac2020_collusion",
@@ -93,53 +86,39 @@ DefaultAgents: tuple[type[SCML2020Agent], ...] = (
 )
 
 
-DefaultAgents2021 = [
+DefaultAgents2021 = (
     DecentralizingAgent,
     # MarketAwareDecentralizingAgent,
     MarketAwareIndDecentralizingAgent,
     SatisficerAgent,
     # RandomOneShotAgent,
-]
+)
 
-DefaultAgents2022 = [
+DefaultAgents2022 = (
     DecentralizingAgent,
     # MarketAwareDecentralizingAgent,
     MarketAwareIndDecentralizingAgent,
     SatisficerAgent,
     # RandomOneShotAgent,
-]
+)
 
-DefaultAgents2023 = [
+DefaultAgents2023 = (
     DecentralizingAgent,
     # MarketAwareDecentralizingAgent,
     MarketAwareIndDecentralizingAgent,
     SatisficerAgent,
     # RandomOneShotAgent,
-]
+)
 
-DefaultAgentsOneShot = [
-    GreedyOneShotAgent,
-    SingleAgreementAspirationAgent,
-    GreedySyncAgent,
-]
 
-DefaultAgentsOneShot2023 = [
+DefaultAgentsOneShot2023 = (
     GreedyOneShotAgent,
     SingleAgreementAspirationAgent,
     SyncRandomOneShotAgent,
-]
+)
 
-DefaultAgentsOneShot2024 = [
-    GreedyOneShotAgent,
-    RandDistOneShotAgent,
-    EqualDistOneShotAgent,
-]
-
-DefaultAgentsStd2024 = [
-    GreedyStdAgent,
-    RandomStdAgent,
-    SyncRandomStdAgent,
-]
+DefaultAgentsOneShot2024 = DefaultAgentsOneShot
+DefaultAgentsStd2024 = DefaultAgentsStd
 
 
 def integer_cut(
@@ -462,9 +441,9 @@ anac_config_generator_std_old = anac_config_generator
 
 def anac_config_generator_oneshot(*args, **kwargs):
     if len(args) >= 5:
-        args = tuple(list(args[:4]) + [DefaultAgentsOneShot2024] + list(args[5:]))
+        args = tuple(list(args[:4]) + [DefaultAgentsOneShot] + list(args[5:]))
     else:
-        kwargs["non_competitors"] = DefaultAgentsOneShot2024
+        kwargs["non_competitors"] = DefaultAgentsOneShot
     kwargs["oneshot_world"] = True
     kwargs["std_world"] = False
     return anac_config_generator(*args, **kwargs)
@@ -472,9 +451,9 @@ def anac_config_generator_oneshot(*args, **kwargs):
 
 def anac_config_generator_std_new(*args, **kwargs):
     if len(args) >= 5:
-        args = tuple(list(args[:4]) + [DefaultAgentsStd2024] + list(args[5:]))
+        args = tuple(list(args[:4]) + [DefaultAgentsStd] + list(args[5:]))
     else:
-        kwargs["non_competitors"] = DefaultAgentsStd2024
+        kwargs["non_competitors"] = DefaultAgentsStd
     kwargs["std_world"] = True
     kwargs["oneshot_world"] = False
 

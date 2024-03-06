@@ -4,7 +4,7 @@ from negmas.negotiators.modular import itertools
 
 from scml.common import isinobject
 from scml.oneshot.context import (
-    DEFAULT_DUMMY_AGENT_TYPES,
+    DEFAULT_PLACEHOLDER_AGENT_TYPES,
     ANACContext,
     ANACOneShotContext,
     BalancedConsumerContext,
@@ -79,7 +79,7 @@ def test_context_can_generate_and_run(context_type):
         for a in agents:
             assert isinobject(
                 a,
-                DEFAULT_DUMMY_AGENT_TYPES,  # type: ignore
+                DEFAULT_PLACEHOLDER_AGENT_TYPES,  # type: ignore
             ), f"world {i} has incorrect agent type for agent {a.id} ({type(a)=}) {a}"
             for b in world.agents.values():
                 # if isinobject(b, DEFAULT_DUMMY_AGENT_TYPES):  # type: ignore

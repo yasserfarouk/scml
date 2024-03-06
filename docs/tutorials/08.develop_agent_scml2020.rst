@@ -1,6 +1,12 @@
 Developing an agent for Legacy (Std/Collusion) [Deprecated]
 -----------------------------------------------------------
 
+.. container::
+
+   ::
+
+      <strong>Deprecation Notice:</strong> SCML 2020 and 2019 worlds are now deprecated. You should not use them for any future development. This tutorial is only kept for understanding legacy agents developed for the ANAC SCML competition's standard and collusion tracks between 2019 and 2023.
+
 **SCML-Standard/Collusoin brief introduction** Please refer to the first
 tutorial for a brief introduction about the world simulated in this game
 as well as pointers to more information. We will assume knowledge of at

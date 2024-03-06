@@ -27,6 +27,14 @@ __all__ = [
     "is_system_agent",
 ]
 
-StdState = OneShotState
-StdExogenousContract = OneShotExogenousContract
-StdProfile = OneShotProfile
+
+class StdState(OneShotState):
+    """State of a one-shot agent"""
+
+
+class StdExogenousContract(OneShotExogenousContract):
+    """Exogenous contract information"""
+
+
+class StdProfile(OneShotProfile):
+    """Defines all private information of a factory"""

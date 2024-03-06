@@ -14,6 +14,24 @@ everthing we discuss applies exactly to all SCML environments. Moreover,
 we will use builtin agents for illustration but of course the same
 methods apply to any agents.
 
+The recommended method
+~~~~~~~~~~~~~~~~~~~~~~
+
+The recommended method is to create a ``Context`` that exactly defines
+the conditions of your experiment. SCML provides a large number of
+contexts for oneshot and std (Search `SCML
+documentation <https://scml.readthedocs.io/en/latest/>`__ for Context to
+learn more). For example, ``SupplierContext`` will create contexts in
+which your agent is always a supplier and so on. You can create new
+contexts as well. The context that allows you to control exactly what
+happens is the ``RepeatingContext`` which receives some predefined
+configurations (may be generated through the ``generate()`` method
+described leater or defined explicitly) and just repeats them. This
+gives you the finest possible control over the experiment. In the
+remaining of this tutorial we focus on using ``generate()`` to create
+worlds directly but you can also use the generated configurations in a
+repeating context.
+
 Levels of control
 ~~~~~~~~~~~~~~~~~
 
@@ -23,18 +41,18 @@ There are four levels of control for world generation:
    more conveniently — ``scml.utils.anac2022_*`` functions to run a
    tournament. You can adjust the parameters used to create worlds in
    this simulation using almost all the same parameters that are
-   received by ``SCML2020OneShotWorld.generate()`` method (next level of
+   received by ``SCML2024OneShotWorld.generate()`` method (next level of
    control below). It is harder in this case to control the number of
    simulations and factory assignment.
-2. You can use ``SCML2020OneShotWorld.generate()`` or
-   ``SCML2021World.generate()`` method to generate a **single** world
-   for which you can either allow the system to select agent types and
-   their placement or with full control over those. Using this approach
-   (recommended), you can control almost all aspects of the simulations
-   except the **exact** exogenous contracts and profiles for agents.
-3. Finally, you can just construct ``SCML2020OneShotWorld`` and
-   ``SCML2021World`` objects directly which allows you to control
-   everything including every single profile and exogenous contract.
+2. You can use ``OneShotWorld.generate()`` or ``StdWorld.generate()``
+   method to generate a **single** world for which you can either allow
+   the system to select agent types and their placement or with full
+   control over those. Using this approach (recommended), you can
+   control almost all aspects of the simulations except the **exact**
+   exogenous contracts and profiles for agents.
+3. You can just construct ``OneShotWorld`` and ``StdWorld`` objects
+   directly which allows you to control everything including every
+   single profile and exogenous contract.
 4. You can subclass the world and override some of its private members
    to modify how the simulation runs. For example, you can override
    ``_make_issues()`` to change the ranges of issues for negotiations.
@@ -165,20 +183,11 @@ We can run the last of these worlds just to be sure something happens!!
 .. code:: ipython3
 
     world.run()
-    world.draw(what=["contracts-concluded"], steps=(0, world.n_steps - 1))
+    world.draw(what=["contracts-concluded"], steps=(0, world.n_steps - 1));
 
 
 
-
-.. parsed-literal::
-
-    (<AxesSubplot: title={'center': 'Step: 10/10 [ 0s rem  0s] 100.00%'}>,
-     <networkx.classes.multidigraph.MultiDiGraph at 0x2a40b52d0>)
-
-
-
-
-.. image:: 05.experiments_files/05.experiments_9_1.png
+.. image:: 05.experiments_files/05.experiments_9_0.png
 
 
 As you can see, passing a tuple as ``n_agents_per_process`` did not
@@ -675,19 +684,19 @@ happened:
       "'00De@0', 'caller': 'SELLER', 'is_buy': False, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=1, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='9891315c-fc0c-4bcc-92f5-6e0cc90012c1')"],
+      "id='fe0624eb-8cfa-468f-affb-4bdcd88f451f')"],
      ["Contract(agreement={'time': 2, 'quantity': 10, 'unit_price': 7}, "
       "partners=('00De@0', 'SELLER'), annotation={'seller': 'SELLER', 'buyer': "
       "'00De@0', 'caller': 'SELLER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='da0ab71e-079c-4628-b82f-14dd3dc574e7')",
+      "id='50763d3c-b112-4b57-b1d9-b29513fb7444')",
       "Contract(agreement={'time': 1, 'quantity': 10, 'unit_price': 5}, "
       "partners=('BUYER', '02De@1'), annotation={'seller': '02De@1', 'buyer': "
       "'BUYER', 'caller': 'BUYER', 'is_buy': True, 'product': 0}, issues=(), "
       'signed_at=-1, executed_at=-1, concluded_at=-1, nullified_at=-1, '
       'to_be_signed_at=0, signatures={}, mechanism_state=None, mechanism_id=None, '
-      "id='a71d144a-9c16-4677-b54d-dca5b3260ded')"],
+      "id='33a6bda4-b143-4d91-94c5-7de5f9749c39')"],
      [],
      [],
      []]
@@ -726,8 +735,151 @@ Let’s try to run this world
     plt.show()
 
 
+::
 
-.. image:: 05.experiments_files/05.experiments_46_0.png
+
+    ---------------------------------------------------------------------------
+
+    ValueError                                Traceback (most recent call last)
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1557, in World._step_a_mechanism(self, mechanism, force_immediate_signing, action)
+       1556 try:
+    -> 1557     result = mechanism.step(action)
+       1558 except Exception as e:
+
+
+    File ~/code/projects/negmas/negmas/mechanisms.py:1114, in Mechanism.step(self, action)
+       1113 strt = time.perf_counter()
+    -> 1114 a._on_negotiation_start(state=state)
+       1115 self._negotiator_times[a.id] += time.perf_counter() - strt
+
+
+    File ~/code/projects/negmas/negmas/negotiators/negotiator.py:301, in Negotiator._on_negotiation_start(self, state)
+        300     super().set_preferences(self._preferences, force=True)
+    --> 301 self.on_negotiation_start(state=state)
+
+
+    File ~/code/projects/negmas/negmas/negotiators/controller.py:411, in Controller.on_negotiation_start(self, negotiator_id, state)
+        410 if negotiator is None:
+    --> 411     raise ValueError(f"Unknown negotiator {negotiator_id}")
+        412 return self.call(negotiator, "on_negotiation_start", state=state)
+
+
+    ValueError: Unknown negotiator 00De@0
+
+
+    During handling of the above exception, another exception occurred:
+
+
+    ValueError                                Traceback (most recent call last)
+
+    Cell In[23], line 1
+    ----> 1 world.run()
+          3 _, axs = plt.subplots(2)
+          4 world.draw(
+          5     what=["negotiations-started", "contracts-concluded"],
+          6     steps=(0, world.n_steps),
+          7     together=False,
+          8     axs=axs,
+          9 )
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:2280, in World.run(self)
+       2278 if self.time >= self.time_limit:
+       2279     break
+    -> 2280 if not self.step():
+       2281     break
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1880, in World.step(self, n_neg_steps, n_mechanisms, actions, neg_actions)
+       1878     assert self.__next_operation_index != 0
+       1879 while self.__next_operation_index != 0:
+    -> 1880     if not _negotiate(n_neg_steps):
+       1881         pass
+       1882         # print(
+       1883         #     "Some negotiations are still running but all should be completed by now"
+       1884         # )
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1800, in World.step.<locals>._negotiate(n_steps_to_run)
+       1791     if n_mechanisms is not None and len(mechanisms) > n_mechanisms:
+       1792         mechanisms = mechanisms[:n_mechanisms]
+       1793 (
+       1794     _,
+       1795     _,
+       1796     n_steps_broken_,
+       1797     n_steps_success_,
+       1798     n_broken_,
+       1799     n_success_,
+    -> 1800 ) = self._step_negotiations(
+       1801     [_[0] for _ in mechanisms],
+       1802     n_steps_to_run,
+       1803     False,
+       1804     [_[1] for _ in mechanisms],
+       1805     action=neg_actions,
+       1806 )
+       1807 self.__stepped_mechanisms = self.__stepped_mechanisms.union(
+       1808     {_[0].id for _ in mechanisms}
+       1809 )
+       1810 running = [
+       1811     _.mechanism.id
+       1812     for _ in self._negotiations.values()
+       (...)
+       1815     and not _.mechanism.state.ended
+       1816 ]
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1648, in World._step_negotiations(self, mechanisms, n_steps, force_immediate_signing, partners, action)
+       1646     break
+       1647 mechanism = mechanisms[i]
+    -> 1648 contract, r = self._step_a_mechanism(
+       1649     mechanism,
+       1650     force_immediate_signing,
+       1651     action=action.get(mechanism.id, None) if action else None,
+       1652 )
+       1653 contracts[i] = contract
+       1654 running[i] = r
+
+
+    File ~/code/projects/negmas/negmas/situated/world.py:1559, in World._step_a_mechanism(self, mechanism, force_immediate_signing, action)
+       1557     result = mechanism.step(action)
+       1558 except Exception as e:
+    -> 1559     result = mechanism.abort()
+       1560     if not self.ignore_negotiation_exceptions:
+       1561         raise e
+
+
+    File ~/code/projects/negmas/negmas/mechanisms.py:1228, in Mechanism.abort(self)
+       1222 """Aborts the negotiation."""
+       1223 (
+       1224     self._current_state.has_error,
+       1225     self._current_state.error_details,
+       1226     self._current_state.waiting,
+       1227 ) = (True, "Uncaught Exception", False)
+    -> 1228 self.on_mechanism_error()
+       1229 (
+       1230     self._current_state.broken,
+       1231     self._current_state.timedout,
+       1232     self._current_state.agreement,
+       1233 ) = (True, False, None)
+       1234 state = self.state
+
+
+    File ~/code/projects/negmas/negmas/mechanisms.py:945, in Mechanism.on_mechanism_error(self)
+        943 for a in self.negotiators:
+        944     strt = time.perf_counter()
+    --> 945     a.on_mechanism_error(state=state)
+        946     self._negotiator_times[a.id] += time.perf_counter() - strt
+
+
+    File ~/code/projects/negmas/negmas/negotiators/controller.py:474, in Controller.on_mechanism_error(self, negotiator_id, state)
+        472 negotiator, cntxt = self._negotiators.get(negotiator_id, (None, None))
+        473 if negotiator is None:
+    --> 474     raise ValueError(f"Unknown negotiator {negotiator_id}")
+        475 return self.call(negotiator, "on_mechanism_error", state=state)
+
+
+    ValueError: Unknown negotiator 00De@0
 
 
 We can see that there were :math:`2` concluded exogenous supply
@@ -818,11 +970,6 @@ is slightly different. Here is an example case:
     world.draw(what=["contracts-concluded"])
     plt.show()
 
-
-
-.. image:: 05.experiments_files/05.experiments_48_0.png
-
-
 The world is constructed. Lets run it and see what happens:
 
 .. code:: ipython3
@@ -837,11 +984,6 @@ The world is constructed. Lets run it and see what happens:
         axs=axs,
     )
     plt.show()
-
-
-
-.. image:: 05.experiments_files/05.experiments_50_0.png
-
 
 You can confirm for yourself that this is what we expected. Let’s dive
 into the details.

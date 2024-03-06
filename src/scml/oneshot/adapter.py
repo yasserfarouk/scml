@@ -1,13 +1,20 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
-from negmas import Adapter, Breach, Contract
+from negmas import Breach, Contract
 
 from .helper import AWIHelper
 from .sysagents import DefaultOneShotAdapter
 
+if TYPE_CHECKING:
+    from scml.scml2020.agent import SCML2020Agent
 
-class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):
+
+class OneShotSCML2020Adapter(DefaultOneShotAdapter):
     """Base class for adapters allowing SCML std agents to run as Oneshot agents in SCML2020Oneshot worlds"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._obj: SCML2020Agent  # type: ignore
 
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
@@ -64,4 +71,4 @@ class OneShotSCML2020Adapter(DefaultOneShotAdapter, Adapter):
         return self._obj.on_neg_request_rejected(req_id, by)
 
     def on_neg_request_accepted(self, req_id, mechanism):
-        return self._obj.on_neg_request_rejected(req_id, mechanism)
+        return self._obj.on_neg_request_rejected(req_id, mechanism)  # type: ignore

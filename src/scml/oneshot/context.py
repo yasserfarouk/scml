@@ -7,11 +7,13 @@ from typing import Any, Iterable, Union, Sequence
 
 import numpy as np
 from attr import define, field
+from scml.oneshot.agents.greedy import GreedyOneShotAgent
+from scml.oneshot.agents.rand import EqualDistOneShotAgent, RandDistOneShotAgent
 from negmas.helpers.strings import unique_name
 
 from scml.common import intin, isin, isinclass, isinfloat, isinobject, make_array
 from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agents import Placeholder, RandDistOneShotAgent
+from scml.oneshot.agents import Placeholder
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import is_system_agent
 from scml.oneshot.world import (
@@ -46,10 +48,18 @@ __all__ = [
 ]
 
 
+DefaultAgentsOneShot = (
+    GreedyOneShotAgent,
+    RandDistOneShotAgent,
+    EqualDistOneShotAgent,
+)
+
+
 @define
 class ContextParams:
     """Basic Parameters you can assume about a context. Returned by `extract_context_params`"""
 
+    perishable: bool
     nlines: int
     nsuppliers: int
     nconsumers: int
@@ -150,15 +160,10 @@ N_SUPPLIERS = (4, 8)
 N_CONSUMERS = (4, 8)
 """Numbers of consumers supported"""
 NTESTS = 20
-DEFAULT_DUMMY_AGENT_TYPES = (Placeholder,)
+DEFAULT_PLACEHOLDER_AGENT_TYPES = (Placeholder,)
 
 WARN_ON_FAILURE = True
 RAISE_ON_FAILURE = False
-
-DefaultAgentsOneShot2024 = (
-    RandDistOneShotAgent,
-    # EqualDistOneShotAgent,
-)
 
 
 def _is(
@@ -829,8 +834,8 @@ class BaseContext(Context, ABC):
 
     world_type: type[SCMLBaseWorld] = SCML2024OneShotWorld
     world_params: dict[str, Any] = field(factory=dict)
-    non_competitors: tuple[str | type[OneShotAgent], ...] = DefaultAgentsOneShot2024
-    placeholder_types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES
+    non_competitors: tuple[str | type[OneShotAgent], ...] = DefaultAgentsOneShot
+    placeholder_types: tuple[type[OneShotAgent], ...] = DEFAULT_PLACEHOLDER_AGENT_TYPES
     placeholder_params: tuple[dict, ...] | None = None
     placeholder_levels: tuple[int, ...] | None = None
 
@@ -953,7 +958,7 @@ class GeneralContext(BaseContext):
     """A context that generates oneshot worlds with agents of a given `types` with predetermined structure and settings"""
 
     # std vs oneshot
-    perishable: bool | None = True
+    perishable: bool = True
     # negotiation parameters
     price_multiplier: np.ndarray | tuple[float, float] | float = (1.5, 2.0)
     force_signing = True
@@ -1016,7 +1021,7 @@ class GeneralContext(BaseContext):
             nsuppliers = mn_suppliers if min_values else mx_suppliers
             nconsumers = mn_consumers if min_values else mx_consumers
         if level is None:
-            return ContextParams(nlines, nsuppliers, nconsumers)
+            return ContextParams(self.perishable, nlines, nsuppliers, nconsumers)
         if level == 0:
             nsuppliers = 0
         elif (
@@ -1025,7 +1030,7 @@ class GeneralContext(BaseContext):
             and level == self.n_processes - 1
         ):
             nconsumers = 0
-        return ContextParams(nlines, nsuppliers, nconsumers)
+        return ContextParams(self.perishable, nlines, nsuppliers, nconsumers)
 
     def __attrs_post_init__(self):
         from scml.std.world import StdWorld
@@ -1052,7 +1057,7 @@ class GeneralContext(BaseContext):
             agent_processes=agent_processes,
             perishable=self.perishable,
             n_steps=self.n_steps,
-            n_processes=self.n_processes,
+            n_processes=len(n_agents_per_process),
             n_lines=self.n_lines,
             n_agents_per_process=np.asarray(n_agents_per_process),
             process_inputs=self.process_inputs,
@@ -1573,7 +1578,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
         nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
         nsuppliers = self.n_suppliers[0 if min_values else -1]
         nconsumers = self.n_consumers[0 if min_values else -1]
-        return ContextParams(nlines, int(nsuppliers), int(nconsumers))
+        return ContextParams(self.perishable, nlines, int(nsuppliers), int(nconsumers))
 
     def make_config(self) -> dict[str, Any]:
         """Generates a config"""
@@ -1587,7 +1592,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
         assert levels is None or all(_ == self.level for _ in levels), (
             "LimitedPartnerNumbersContext does not allow you to decide the levels of "
             "the agents when creating the config as it uses its internal level "
-            "and assigns all dummy agents to it: {self.level=}, {levels=}"
+            "and assigns all placeholder agents to it: {self.level=}, {levels=}"
         )
         levels = tuple(self.level for _ in types)
         if params is None:
@@ -1883,7 +1888,7 @@ class FixedPartnerNumbersContext(LimitedPartnerNumbersContext):
         nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
         nsuppliers = self.n_suppliers
         nconsumers = self.n_consumers
-        return ContextParams(nlines, int(nsuppliers), int(nconsumers))
+        return ContextParams(self.perishable, nlines, int(nsuppliers), int(nconsumers))
 
 
 @define
@@ -2068,6 +2073,11 @@ class RepeatingContext(BaseContext):
     ) -> ContextParams:
         nlines, nsuppliers, nconsumers = 0, 0, 0
         nlines = min(get_n_lines(_)[0] for _ in self.configs)
+        perishables = set(_.get("perishable", None) for _ in self.configs)
+        assert (
+            len(perishables) == 1
+        ), f"Found {perishables} perishables. We cannot combine OneShot and Std worlds here"
+        perishable = list(perishables)[0]
         assert len(self.placeholder_types) == 1
         mn_suppliers, mx_suppliers = float("inf"), float("-inf")
         mn_consumers, mx_consumers = float("inf"), float("-inf")
@@ -2101,11 +2111,11 @@ class RepeatingContext(BaseContext):
             mn_competitors = min(mn_competitors, app[my_level])
         nsuppliers = mn_suppliers if min_values else mx_suppliers
         nconsumers = mn_consumers if min_values else mx_consumers
-        return ContextParams(nlines, int(nsuppliers), int(nconsumers))
+        return ContextParams(perishable, nlines, int(nsuppliers), int(nconsumers))
 
     def make_config(
         self,
-        types: tuple[type[OneShotAgent], ...] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent], ...] = DEFAULT_PLACEHOLDER_AGENT_TYPES,
         params: tuple[dict[str, Any], ...] | None = None,
     ) -> dict[str, Any]:
         if not self.configs:
@@ -2128,7 +2138,7 @@ class RepeatingContext(BaseContext):
         cls: type,
         context: BaseContext,
         n: int = 1,
-        types: tuple[type[OneShotAgent]] = DEFAULT_DUMMY_AGENT_TYPES,
+        types: tuple[type[OneShotAgent]] = DEFAULT_PLACEHOLDER_AGENT_TYPES,
         rename: bool = False,
         randomize: bool = False,
     ):

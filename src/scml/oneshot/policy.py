@@ -83,7 +83,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         return self.act(state)
 
     def counter_all(
-        self, offers: dict[str, Outcome], states: dict[str, SAOState]
+        self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
     ) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).

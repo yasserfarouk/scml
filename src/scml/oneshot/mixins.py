@@ -7,12 +7,17 @@ from .ufun import OneShotUFun
 
 if TYPE_CHECKING:
     from .agent import OneShotAgent
+    from .sysagents import DefaultOneShotAdapter
 
 __all__ = ["OneShotUFunCreatorMixin"]
 
 
 class OneShotUFunCreatorMixin:
-    def make_ufun(self: OneShotAgent, add_exogenous, in_adapter):  # type: ignore
+    def make_ufun(
+        self: OneShotAgent | DefaultOneShotAdapter,  # type: ignore
+        add_exogenous,
+        in_adapter,
+    ):  # type: ignore
         awi = self._obj.awi if in_adapter else self.awi  # type: ignore
         it = awi.current_input_issues[TIME] if awi.current_input_issues else None
 

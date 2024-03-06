@@ -188,10 +188,9 @@ class GreedyStdAgent(StdAgent):
                 mx = max(0, min(mx, self.awi.n_lines * (t - self.awi.current_step)))
                 if mx < 1:
                     continue
-                offer[QUANTITY] = random.randint(
-                    max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps)),
-                    int(mx),
-                )
+                mn_ = max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps))
+                mx_ = int(mx)
+                offer[QUANTITY] = random.randint(mn_, mx_) if mn_ < mx_ else mn_
                 offer[TIME] = t
                 if self._is_selling(nmi):
                     offer[UNIT_PRICE] = unit_price_issue.max_value
