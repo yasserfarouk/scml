@@ -116,6 +116,7 @@ class Context(ABC):
         self,
         types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
+        name: str | None = None,
     ) -> tuple[SCMLBaseWorld, tuple[OneShotAgent]]:
         """
         Generates a world with one or more agents to be controlled externally and returns both
@@ -123,6 +124,7 @@ class Context(ABC):
         Args:
             agent_types: The types of a list of agents to be guaranteed to exist in the world
             agent_params: The parameters to pass to the constructors of these agents. None means no parameters for any agents
+            name: The name of the worlds to generate. Uses a random name if not given
 
         Returns:
             The constructed world and a tuple of the agents created corresponding (in order) to the given agent types/params
@@ -832,6 +834,7 @@ def _config_matches_base(
 class BaseContext(Context, ABC):
     """A context that generates oneshot worlds with agents of a given `types` with predetermined structure and settings"""
 
+    name: str | None = None
     world_type: type[SCMLBaseWorld] = SCML2024OneShotWorld
     world_params: dict[str, Any] = field(factory=dict)
     non_competitors: tuple[str | type[OneShotAgent], ...] = DefaultAgentsOneShot
@@ -865,18 +868,20 @@ class BaseContext(Context, ABC):
         self,
         types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
+        name: str | None = None,
     ) -> SCMLBaseWorld:
         """Generates the oneshot world and assigns an agent of type `agent_type` to it"""
         if types is None:
             types = self.placeholder_types
             params = self.placeholder_params
-        return self.make_world(types, params)
+        return self.make_world(types, params, name=name)
 
     def make_world(
         self,
         types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
         config: dict[str, Any] | None = None,
+        name: str | None = None,
     ) -> SCMLBaseWorld:
         """Generates a world"""
         if types is None:
@@ -888,6 +893,10 @@ class BaseContext(Context, ABC):
         config = self.world_type.replace_agents(
             config, self.placeholder_types, types, params
         )
+        if name is None:
+            name = unique_name(self.name, sep=".")
+        if name is not None:
+            config["name"] = name
 
         world = self.world_type(
             **(self.world_params | config),
@@ -901,8 +910,11 @@ class BaseContext(Context, ABC):
         self,
         types: tuple[type[OneShotAgent], ...] | None = None,
         params: tuple[dict[str, Any], ...] | None = None,
+        name: str | None = None,
     ) -> tuple[SCMLBaseWorld, tuple[OneShotAgent, ...]]:
         """Generates the world and assigns an agent to it"""
+        if not name:
+            name = self.name
         if types is None:
             types = self.placeholder_types
             params = self.placeholder_params
@@ -910,7 +922,7 @@ class BaseContext(Context, ABC):
             types = (types,)  # type: ignore
         if isinstance(params, dict):
             params = (params,)
-        world = self.make(types, params)
+        world = self.make(types, params, name)
         ids = []
         if types:
             ids = [id for id, a in world.agents.items() if isinobject(a._obj, types)]  # type: ignore
