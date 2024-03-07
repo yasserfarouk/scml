@@ -229,7 +229,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
         if one_offer_per_step and neg_n_steps is not None:
             neg_n_steps *= 2
 
-        self.agents: dict[str, DefaultOneShotAdapter]  # type: ignore
+        self.agents: dict[str, DefaultOneShotAdapter]
         self.publish_assets = publish_assets
         self.publish_production_capacity = publish_production_capacity
         self.perishable = perishable
