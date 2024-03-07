@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import TYPE_CHECKING, Literal
-
+from typing import TYPE_CHECKING, Literal, Any
 import numpy as np
 from negmas import ContiguousIssue
 from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome, make_os
@@ -29,6 +28,10 @@ if TYPE_CHECKING:
     from .agent import OneShotAgent
 
 __all__ = ["OneShotAWI"]
+
+
+def defaultdict_int() -> dict[Any, int]:
+    return defaultdict(int)
 
 
 class OneShotAWI(AgentWorldInterface):
@@ -189,17 +192,13 @@ class OneShotAWI(AgentWorldInterface):
         super().__init__(world, agent)  # type: ignore
         self._world = world
         self.agent = agent
-        self._future_sales: dict[int, dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
-        )
-        self._future_supplies: dict[int, dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
-        )
+        self._future_sales: dict[int, dict[str, int]] = defaultdict(defaultdict_int)
+        self._future_supplies: dict[int, dict[str, int]] = defaultdict(defaultdict_int)
         self._future_sales_cost: dict[int, dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
+            defaultdict_int
         )
         self._future_supplies_cost: dict[int, dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
+            defaultdict_int
         )
 
     # ================================================================
