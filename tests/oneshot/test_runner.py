@@ -1,8 +1,13 @@
-from typing import Iterable
-from scml.oneshot.agents.rand import EqualDistOneShotAgent, RandDistOneShotAgent
 from scml.oneshot.context import ANACOneShotContext
+from scml.runner import WorldInfo, WorldRunner
+from scml.oneshot.agents import (
+    EqualDistOneShotAgent,
+    RandDistOneShotAgent,
+    GreedySyncAgent,
+    RandomOneShotAgent,
+)
+from typing import Iterable
 from scml.oneshot.world import SCMLBaseWorld
-from scml.runner import WorldRunner
 from pytest import mark
 from scml.std.agents.greedy import GreedyStdAgent
 from scml.std.agents.rand import RandomStdAgent
@@ -34,8 +39,8 @@ def test_simple_run(all_agents):
     for v in runner.worlds.values():
         assert len(v) == 2
         for x in v:
-            assert len(x) == 2
-            assert isinstance(x[0], SCMLBaseWorld)
+            assert isinstance(x, WorldInfo)
+            assert isinstance(x.world, SCMLBaseWorld)
     assert len(runner.all_worlds) == 3 * 2 * 2
     assert len(runner.worlds_of(RandDistOneShotAgent)) == 3 * 2
     assert len(runner.worlds_of(EqualDistOneShotAgent)) == 3 * 2
@@ -100,8 +105,8 @@ def test_std_runner(all_agents):
     for v in runner.worlds.values():
         assert len(v) == 2
         for x in v:
-            assert len(x) == 2
-            assert isinstance(x[0], StdWorld)
+            assert isinstance(x, WorldInfo)
+            assert isinstance(x.world, StdWorld)
     assert len(runner.all_worlds) == 3 * 2 * 2
     assert len(runner.worlds_of(GreedyStdAgent)) == 3 * 2
     assert len(runner.worlds_of(RandomStdAgent)) == 3 * 2
@@ -137,3 +142,63 @@ def test_agents_per_world():
     runner(EqualDistOneShotAgent)
     runner(RandDistOneShotAgent)
     runner.agents_per_world_of(EqualDistOneShotAgent)
+
+
+@mark.parametrize("progress", (True, False))
+def test_runner_without_saving(progress):
+    runner = WorldRunner(
+        ANACOneShotContext(name="myc", n_steps=20),
+        n_configs=3,
+        n_repetitions=2,
+        save_worlds=False,
+    )
+
+    for t in (
+        EqualDistOneShotAgent,
+        RandDistOneShotAgent,
+        GreedySyncAgent,
+        RandomOneShotAgent,
+    ):
+        infos = runner.add(t)
+        runner._runall(infos, progress=progress)
+
+    assert all([_.world.current_step == 20 for _ in runner.all_world_infos])
+    assert all([_.world.name.startswith("myc") for _ in runner.all_world_infos])
+
+
+@mark.parametrize("progress", (True, False))
+def test_runner_with_call(progress):
+    runner = WorldRunner(
+        ANACOneShotContext(name="myc", n_steps=20), n_configs=3, n_repetitions=2
+    )
+
+    for t in (
+        EqualDistOneShotAgent,
+        RandDistOneShotAgent,
+        GreedySyncAgent,
+        RandomOneShotAgent,
+    ):
+        runner(t, progress=progress)
+
+    assert all([_.world.current_step == 20 for _ in runner.all_world_infos])
+    assert all([_.world.name.startswith("myc") for _ in runner.all_world_infos])
+
+
+@mark.parametrize("progress", (True, False))
+def test_runner_in_two_stages_saving(progress):
+    runner = WorldRunner(
+        ANACOneShotContext(name="myc", n_steps=20), n_configs=3, n_repetitions=2
+    )
+
+    for t in (
+        EqualDistOneShotAgent,
+        RandDistOneShotAgent,
+        GreedySyncAgent,
+        RandomOneShotAgent,
+    ):
+        runner.add(t)
+
+    runner.runall(progress=progress)
+
+    assert all([_.world.current_step == 20 for _ in runner.all_world_infos])
+    assert all([_.world.name.startswith("myc") for _ in runner.all_world_infos])
