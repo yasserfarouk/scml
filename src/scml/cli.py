@@ -1602,7 +1602,7 @@ def run2024(
             ignore_contract_execution_exceptions=not raise_exceptions,
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
-            method=method,
+            exogenous_generation_method=method,
         )
     )
     if oneshot:
@@ -1936,7 +1936,7 @@ def run2023(
             ignore_contract_execution_exceptions=not raise_exceptions,
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
-            method=method,
+            exogenous_generation_method=method,
             **kwargs,  # type: ignore
         )
     )
@@ -2266,7 +2266,7 @@ def run2022(
             ignore_contract_execution_exceptions=not raise_exceptions,
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
-            method=method,
+            exogenous_generation_method=method,
             **kwargs,  # type: ignore
         )
     )
@@ -2596,7 +2596,7 @@ def run2021(
             ignore_contract_execution_exceptions=not raise_exceptions,
             ignore_simulation_exceptions=not raise_exceptions,
             ignore_negotiation_exceptions=not raise_exceptions,
-            method=method,
+            exogenous_generation_method=method,
             **kwargs,  # type: ignore
         )
     )
@@ -2790,10 +2790,8 @@ def run2021(
 )
 @click.option(
     "--ttype",
-    "--tournament-type",
-    "--tournament",
     default="std",
-    type=click.Choice(["collusion", "std"]),
+    type=click.Choice(["collusion", "std", "oneshot"]),
     help="The config to use. It can be collusion or std",
 )
 @click.option(
@@ -2972,9 +2970,6 @@ def tournament2022(
             f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
             f"{recommended}. Will continue"
         )
-
-    if ttype == "std":
-        pass
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)

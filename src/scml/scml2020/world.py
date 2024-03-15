@@ -853,7 +853,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         inventory_valuation_catalog: np.ndarray | tuple[float, float] | float = 0.0,
         random_agent_types: bool = False,
         cost_relativity: float = 1.0,
-        method="profitable",
+        exogenous_generation_method="profitable",
         exogenous_supply_surplus: tuple[float, float] | float = 0.0,
         exogenous_sales_surplus: tuple[float, float] | float = 0.0,
         run_extra_checks: bool = True,
@@ -1169,13 +1169,13 @@ class SCML2020World(TimeInAgreementMixin, World):
                     profiles,
                     initial_balance,
                     extra_info,
-                ) = runner[method](**params)
+                ) = runner[exogenous_generation_method](**params)
                 generated = True
             except RecoverableWorldGenerationException:
                 n_trials += 1
                 if n_trials > MAX_WORLD_GENERATION_TRIALS:
                     raise ValueError(
-                        f"Tried to generate the world {n_trials} times using {method} but failed"
+                        f"Tried to generate the world {n_trials} times using {exogenous_generation_method} but failed"
                     )
 
         # add surplus exogneous contracts if needed
