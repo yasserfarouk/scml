@@ -520,7 +520,7 @@ def test_satisficer_n_agent_per_level(method, n_agents, n_processes, n_steps):
             n_agents_per_process=n_agents,
             n_processes=n_processes,
             n_steps=n_steps,
-            method=method,
+            exogenous_generation_method=method,
             random_agent_types=False,
             neg_step_time_limit=float("inf"),
             neg_time_limit=float("inf"),

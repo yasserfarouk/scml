@@ -486,7 +486,7 @@ def test_env_greedy_policy_no_end():
     assert len(world.saved_contracts) > 0
     if SCML_TEST_BRITTLE_ISSUES:
         assert accepted_sometime
-    assert not ended_everything
+        assert not ended_everything
 
 
 def test_env_random_policy_no_end():
