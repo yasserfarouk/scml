@@ -1,5 +1,6 @@
 from __future__ import annotations
 from attr import define
+import random
 import numbers
 from collections import defaultdict
 from scml.oneshot.agent import OneShotAgent
@@ -459,7 +460,7 @@ class WorldRunner:
         include=None,
         exclude=None,
         by: str | tuple[str, ...] = "type",
-        sorter: str = "mean",
+        order_by: str | None = "score",
         ascending: bool = False,
     ) -> pd.DataFrame:
         """A summary of comparative scores of all agent types tested so far.
@@ -469,18 +470,24 @@ class WorldRunner:
             include: passed to `groupby`
             exclud: passed to `groupby`
             by: passed to `groupby`
-            sorter: The method for sorting resulting scores
+            order_by: The method for sorting resulting scores.
+                      Possibilities: score, mean, min, max, 20%, 50%, 75%, median
             ascending: Ascending or descending scores.
 
         Returns:
             A dataframe that describes the scores of all evaluated types.
         """
-        return (
-            self._scores.groupby(by)["score"]
-            .describe(percentiles=percentiles, include=include, exclude=exclude)
-            .reset_index()
-            .sort_values(sorter, ascending=ascending)
+        if order_by and order_by == "median":
+            order_by = "50%"
+        df1 = self._scores.groupby(by)["score"].apply(truncated_mean)
+        df2 = self._scores.groupby(by)["score"].describe(
+            percentiles=percentiles, include=include, exclude=exclude
         )
+        df = pd.concat((df1, df2), axis=1, ignore_index=False)
+        df = df.reset_index()
+        if order_by:
+            df = df.sort_values(order_by, ascending=ascending)
+        return df
 
     def plot_stats(
         self,
@@ -491,6 +498,8 @@ class WorldRunner:
         ylegend: float = 1.8,
         legend_ncols=3,
         title: bool = True,
+        order_by: str | None = "score",
+        ascending: bool = False,
         **kwargs,
     ):
         """Plots saves statistics (`save_stats` must be given)
@@ -504,12 +513,17 @@ class WorldRunner:
             legend_ncols: How many columns to use in the legend. Pass zero to disable the legend
             ylegend: The y-coordinate of the legend to control where it appears.
             title: Show stat names as title (instead of ylabel)
+            order_by: The statistic to order with.
+                      Possibilities are score, mean, 50%, max, min, 20%, 75%, median
+            ascending: If true, order ascendingly
             **kwargs: Any extra paramters to pass to the underlying seaborn method
                       (lineplot in case agg=False and boxplot in case agg=True)
 
         Returns:
             The figure and axes used.
         """
+        if order_by and order_by == "median":
+            order_by = "50%"
         import matplotlib.pyplot as plt
         import seaborn as sns
 
@@ -536,7 +550,15 @@ class WorldRunner:
             #     stats += ["sold_quantity", "trading_price"]
         if not stats:
             return
-        order = self.score_summary(by=by)[by].tolist()
+        # print(self.score_summary(by=by))
+        # print(self.score_summary(by=by).sort_values(order_by)[by])
+        order = (
+            self.score_summary(by=by)
+            .sort_values(order_by, ascending=ascending)[by]
+            .tolist()
+            if order_by
+            else None
+        )
         if len(stats) == 1:
             ncols = nrows = 1
         else:
@@ -607,6 +629,8 @@ class WorldRunner:
         type: AgentType | str | None,
         config: str | None = None,
         what=("contracts-signed",),
+        n: int | None = 4,
+        randomize: bool = False,
     ):
         """Draws the given set of worlds
 
@@ -614,6 +638,8 @@ class WorldRunner:
             type: The type to filter by
             config: The config to filter by
             what: what stat to draw. See `negmas.situated.World.draw_world` for all options available
+            n: Number of worlds to draw. If None, all of them will be drawn
+            randomize: If given the worlds will be shuffled before display but only if not all worlds will be displayed
 
         Returns:
             figure and axes used.
@@ -622,6 +648,12 @@ class WorldRunner:
         import math
 
         worlds = self.worlds_of(type, config)
+        if self.n_repetitions > 1 and n is not None and not randomize:
+            worlds = worlds[:: self.n_repetitions]
+        if randomize and n is not None and len(worlds) > n:
+            random.shuffle(worlds)
+        if n is not None and len(worlds) > n:
+            worlds = worlds[:n]
         n_trials = len(worlds)
         mx = min(n_trials, 2)
         fig = plt.figure(figsize=(11 * mx, 8))

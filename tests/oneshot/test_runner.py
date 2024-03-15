@@ -32,6 +32,7 @@ def test_simple_run(all_agents):
             runner.agents_of(RandDistOneShotAgent, config=config)
         )
     score_summary = runner.score_summary()
+    assert "score" in score_summary.columns, f"{score_summary}"
     assert len(score_summary) == 2, f"{score_summary}"
     if not all_agents:
         assert len(runner.scores) == 3 * 2 * 2
