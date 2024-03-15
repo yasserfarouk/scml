@@ -27,7 +27,6 @@ from negmas import (
     ControlledSAONegotiator,
     Entity,
     Issue,
-    NegotiatorMechanismInterface,
     Outcome,
     ResponseType,
     SAOController,
@@ -214,7 +213,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         self,
         partners: list[str],
         annotation: dict[str, Any],
-        mechanism: NegotiatorMechanismInterface,
+        mechanism: SAONMI,
         state: SAOState,
     ) -> None:
         """
@@ -230,9 +229,7 @@ class OneShotAgent(SAOController, Entity, ABC):
                    including the agreement if any.
         """
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: SAONMI) -> None:
         """
         Called whenever a negotiation ends with agreement.
 
