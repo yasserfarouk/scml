@@ -58,6 +58,13 @@ We create two runners:
    can be misleading as an estimate of the agent’s performance in the
    official ANAC competition.
 
+.. container::
+
+   We are using a relatively large nubmer of configurations, repetitions
+   per configuration and steps (days) per repetition. If you are running
+   this notebook for the first time, consider reducing CONFIGS, REPS,
+   STEPS above to make it run faster.
+
 This is time to describe some of the tools that the ``WorldRunner``
 gives you to evaluate the agent. The ``WorldRunner`` is a Callable. You
 just call it with the class (agent type) you want to evaluate. You can
@@ -80,11 +87,12 @@ differentiate between different parameter choices.
 
     # create a runner that encapsulates a number of configs to evaluate agents
     # in the same conditions every time
+    CONFIGS, REPS, STEPS = 10, 3, 50
     context = ANACStdContext(
-        n_steps=10, n_processes=3, world_params=dict(construct_graphs=True)
+        n_steps=STEPS, n_processes=3, world_params=dict(construct_graphs=True)
     )
     single_agent_runner = WorldRunner(
-        context, n_configs=4, n_repetitions=1, save_worlds=True
+        context, n_configs=CONFIGS, n_repetitions=REPS, save_worlds=True
     )
     full_market_runner = WorldRunner.from_runner(
         single_agent_runner, control_all_agents=True
@@ -236,6 +244,7 @@ agent using the ``score_summary`` method:
         <tr style="text-align: right;">
           <th></th>
           <th>type</th>
+          <th>score</th>
           <th>count</th>
           <th>mean</th>
           <th>std</th>
@@ -250,14 +259,15 @@ agent using the ``score_summary`` method:
         <tr>
           <th>0</th>
           <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.15384</td>
+          <td>-0.061693</td>
+          <td>30.0</td>
+          <td>-0.061693</td>
+          <td>0.708594</td>
+          <td>-1.504509</td>
+          <td>-0.510917</td>
+          <td>-0.183504</td>
+          <td>0.474423</td>
+          <td>0.981504</td>
         </tr>
       </tbody>
     </table>
@@ -350,6 +360,7 @@ sales and supplies which is highly likely if they behave randomly.
         <tr style="text-align: right;">
           <th></th>
           <th>type</th>
+          <th>score</th>
           <th>count</th>
           <th>mean</th>
           <th>std</th>
@@ -364,26 +375,28 @@ sales and supplies which is highly likely if they behave randomly.
         <tr>
           <th>0</th>
           <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
+          <td>0.634120</td>
+          <td>30.0</td>
+          <td>0.634120</td>
+          <td>0.303902</td>
+          <td>0.123079</td>
+          <td>0.504789</td>
+          <td>0.704111</td>
+          <td>0.878543</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>1</th>
           <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
+          <td>-0.061693</td>
+          <td>30.0</td>
+          <td>-0.061693</td>
+          <td>0.708594</td>
+          <td>-1.504509</td>
+          <td>-0.510917</td>
+          <td>-0.183504</td>
+          <td>0.474423</td>
+          <td>0.981504</td>
         </tr>
       </tbody>
     </table>
@@ -465,234 +478,416 @@ market.
         <tr>
           <th>08SRS@2</th>
           <th>BUYER</th>
-          <td>54</td>
-          <td>18</td>
-          <td>40.111111</td>
+          <td>582</td>
+          <td>210</td>
+          <td>44.285714</td>
         </tr>
         <tr>
           <th>09Gr@2</th>
           <th>BUYER</th>
-          <td>108</td>
-          <td>20</td>
-          <td>40.200000</td>
+          <td>1092</td>
+          <td>282</td>
+          <td>44.340426</td>
         </tr>
         <tr>
           <th>10Ra@2</th>
           <th>BUYER</th>
-          <td>26</td>
-          <td>8</td>
-          <td>36.750000</td>
+          <td>1536</td>
+          <td>300</td>
+          <td>44.840000</td>
+        </tr>
+        <tr>
+          <th>10SRS@2</th>
+          <th>BUYER</th>
+          <td>2928</td>
+          <td>300</td>
+          <td>48.800000</td>
+        </tr>
+        <tr>
+          <th>11MSD@2</th>
+          <th>BUYER</th>
+          <td>1143</td>
+          <td>150</td>
+          <td>46.360000</td>
         </tr>
         <tr>
           <th>11Ra@2</th>
           <th>BUYER</th>
-          <td>88</td>
-          <td>18</td>
-          <td>37.000000</td>
+          <td>1635</td>
+          <td>360</td>
+          <td>46.800000</td>
         </tr>
         <tr>
           <th>12Gr@2</th>
           <th>BUYER</th>
-          <td>52</td>
-          <td>20</td>
-          <td>37.600000</td>
+          <td>4158</td>
+          <td>846</td>
+          <td>44.843972</td>
         </tr>
         <tr>
           <th>12Ra@2</th>
           <th>BUYER</th>
-          <td>12</td>
-          <td>10</td>
-          <td>40.600000</td>
+          <td>2808</td>
+          <td>588</td>
+          <td>45.948980</td>
+        </tr>
+        <tr>
+          <th>12SRS@2</th>
+          <th>BUYER</th>
+          <td>2988</td>
+          <td>300</td>
+          <td>33.380000</td>
         </tr>
         <tr>
           <th>13Gr@2</th>
           <th>BUYER</th>
-          <td>34</td>
-          <td>12</td>
-          <td>38.166667</td>
-        </tr>
-        <tr>
-          <th>13MSD@2</th>
-          <th>BUYER</th>
-          <td>70</td>
-          <td>10</td>
-          <td>50.800000</td>
+          <td>6270</td>
+          <td>864</td>
+          <td>43.750000</td>
         </tr>
         <tr>
           <th>13Ra@2</th>
           <th>BUYER</th>
-          <td>144</td>
-          <td>30</td>
-          <td>45.200000</td>
+          <td>7752</td>
+          <td>1188</td>
+          <td>43.156566</td>
         </tr>
         <tr>
-          <th>13SRS@2</th>
+          <th>14Gr@2</th>
           <th>BUYER</th>
-          <td>108</td>
-          <td>20</td>
-          <td>44.300000</td>
+          <td>1206</td>
+          <td>288</td>
+          <td>44.666667</td>
+        </tr>
+        <tr>
+          <th>14MSD@2</th>
+          <th>BUYER</th>
+          <td>1527</td>
+          <td>150</td>
+          <td>45.780000</td>
         </tr>
         <tr>
           <th>14Ra@2</th>
           <th>BUYER</th>
-          <td>370</td>
-          <td>60</td>
-          <td>44.000000</td>
+          <td>8979</td>
+          <td>1050</td>
+          <td>41.928571</td>
         </tr>
         <tr>
           <th>14SRS@2</th>
           <th>BUYER</th>
-          <td>98</td>
-          <td>20</td>
-          <td>39.800000</td>
+          <td>2052</td>
+          <td>540</td>
+          <td>45.722222</td>
         </tr>
         <tr>
           <th>15Gr@2</th>
           <th>BUYER</th>
-          <td>144</td>
-          <td>32</td>
-          <td>47.312500</td>
+          <td>1710</td>
+          <td>294</td>
+          <td>45.959184</td>
         </tr>
         <tr>
           <th>15MSD@2</th>
           <th>BUYER</th>
-          <td>111</td>
-          <td>10</td>
-          <td>49.700000</td>
+          <td>1416</td>
+          <td>150</td>
+          <td>44.040000</td>
         </tr>
         <tr>
           <th>15Ra@2</th>
           <th>BUYER</th>
-          <td>111</td>
-          <td>10</td>
-          <td>49.700000</td>
+          <td>9714</td>
+          <td>1338</td>
+          <td>42.439462</td>
         </tr>
         <tr>
-          <th>16Gr@2</th>
+          <th>15SRS@2</th>
           <th>BUYER</th>
-          <td>154</td>
-          <td>32</td>
-          <td>44.500000</td>
+          <td>1878</td>
+          <td>492</td>
+          <td>47.243902</td>
+        </tr>
+        <tr>
+          <th>16MSD@2</th>
+          <th>BUYER</th>
+          <td>744</td>
+          <td>141</td>
+          <td>45.340426</td>
+        </tr>
+        <tr>
+          <th>16Ra@2</th>
+          <th>BUYER</th>
+          <td>6216</td>
+          <td>999</td>
+          <td>45.468468</td>
         </tr>
         <tr>
           <th>16SRS@2</th>
           <th>BUYER</th>
-          <td>72</td>
-          <td>18</td>
-          <td>46.333333</td>
+          <td>1194</td>
+          <td>294</td>
+          <td>47.489796</td>
         </tr>
         <tr>
           <th>17Gr@2</th>
           <th>BUYER</th>
-          <td>66</td>
-          <td>18</td>
-          <td>49.000000</td>
+          <td>3666</td>
+          <td>816</td>
+          <td>45.294118</td>
+        </tr>
+        <tr>
+          <th>17Ra@2</th>
+          <th>BUYER</th>
+          <td>2484</td>
+          <td>300</td>
+          <td>46.260000</td>
         </tr>
         <tr>
           <th>17SRS@2</th>
           <th>BUYER</th>
-          <td>72</td>
-          <td>18</td>
-          <td>42.555556</td>
+          <td>1272</td>
+          <td>282</td>
+          <td>46.234043</td>
         </tr>
         <tr>
-          <th>18Gr@2</th>
+          <th>18Ra@2</th>
           <th>BUYER</th>
-          <td>94</td>
-          <td>18</td>
-          <td>44.777778</td>
+          <td>2616</td>
+          <td>576</td>
+          <td>44.447917</td>
         </tr>
         <tr>
-          <th>19Ra@2</th>
+          <th>18SRS@2</th>
           <th>BUYER</th>
-          <td>24</td>
-          <td>10</td>
-          <td>41.000000</td>
+          <td>3114</td>
+          <td>594</td>
+          <td>46.525253</td>
         </tr>
         <tr>
-          <th rowspan="14" valign="top">SELLER</th>
+          <th>19Gr@2</th>
+          <th>BUYER</th>
+          <td>4224</td>
+          <td>816</td>
+          <td>45.977941</td>
+        </tr>
+        <tr>
+          <th>19SRS@2</th>
+          <th>BUYER</th>
+          <td>2046</td>
+          <td>300</td>
+          <td>42.620000</td>
+        </tr>
+        <tr>
+          <th>20Ra@2</th>
+          <th>BUYER</th>
+          <td>2238</td>
+          <td>300</td>
+          <td>48.420000</td>
+        </tr>
+        <tr>
+          <th>20SRS@2</th>
+          <th>BUYER</th>
+          <td>3912</td>
+          <td>594</td>
+          <td>44.636364</td>
+        </tr>
+        <tr>
+          <th>21Gr@2</th>
+          <th>BUYER</th>
+          <td>1500</td>
+          <td>288</td>
+          <td>47.312500</td>
+        </tr>
+        <tr>
+          <th>21SRS@2</th>
+          <th>BUYER</th>
+          <td>2190</td>
+          <td>546</td>
+          <td>44.681319</td>
+        </tr>
+        <tr>
+          <th>22Ra@2</th>
+          <th>BUYER</th>
+          <td>2034</td>
+          <td>288</td>
+          <td>46.208333</td>
+        </tr>
+        <tr>
+          <th>22SRS@2</th>
+          <th>BUYER</th>
+          <td>2142</td>
+          <td>294</td>
+          <td>42.204082</td>
+        </tr>
+        <tr>
+          <th rowspan="28" valign="top">SELLER</th>
+          <th>00Gr@0</th>
+          <td>5334</td>
+          <td>852</td>
+          <td>10.190141</td>
+        </tr>
+        <tr>
+          <th>00MSD@0</th>
+          <td>840</td>
+          <td>141</td>
+          <td>10.191489</td>
+        </tr>
+        <tr>
           <th>00Ra@0</th>
-          <td>158</td>
-          <td>34</td>
-          <td>9.588235</td>
+          <td>3084</td>
+          <td>681</td>
+          <td>10.207048</td>
         </tr>
         <tr>
           <th>00SRS@0</th>
-          <td>98</td>
-          <td>36</td>
-          <td>9.833333</td>
+          <td>5160</td>
+          <td>1014</td>
+          <td>10.112426</td>
         </tr>
         <tr>
           <th>01Gr@0</th>
-          <td>196</td>
-          <td>38</td>
-          <td>10.789474</td>
+          <td>2808</td>
+          <td>300</td>
+          <td>9.920000</td>
+        </tr>
+        <tr>
+          <th>01Ra@0</th>
+          <td>5532</td>
+          <td>864</td>
+          <td>10.118056</td>
         </tr>
         <tr>
           <th>01SRS@0</th>
-          <td>284</td>
-          <td>38</td>
-          <td>9.578947</td>
+          <td>10386</td>
+          <td>1662</td>
+          <td>10.119134</td>
         </tr>
         <tr>
           <th>02Gr@0</th>
-          <td>112</td>
-          <td>18</td>
-          <td>9.555556</td>
-        </tr>
-        <tr>
-          <th>02MSD@0</th>
-          <td>58</td>
-          <td>9</td>
-          <td>9.111111</td>
+          <td>12000</td>
+          <td>1476</td>
+          <td>10.060976</td>
         </tr>
         <tr>
           <th>02Ra@0</th>
-          <td>224</td>
-          <td>29</td>
-          <td>9.448276</td>
+          <td>672</td>
+          <td>228</td>
+          <td>9.763158</td>
         </tr>
         <tr>
           <th>02SRS@0</th>
-          <td>134</td>
-          <td>18</td>
-          <td>10.555556</td>
+          <td>8580</td>
+          <td>1146</td>
+          <td>9.790576</td>
         </tr>
         <tr>
           <th>03Gr@0</th>
-          <td>262</td>
-          <td>40</td>
-          <td>9.950000</td>
+          <td>6228</td>
+          <td>870</td>
+          <td>9.813793</td>
         </tr>
         <tr>
           <th>03MSD@0</th>
-          <td>50</td>
-          <td>10</td>
-          <td>9.900000</td>
+          <td>894</td>
+          <td>150</td>
+          <td>10.120000</td>
         </tr>
         <tr>
           <th>03Ra@0</th>
-          <td>100</td>
-          <td>24</td>
-          <td>9.208333</td>
+          <td>4422</td>
+          <td>672</td>
+          <td>9.937500</td>
+        </tr>
+        <tr>
+          <th>03SRS@0</th>
+          <td>9336</td>
+          <td>1164</td>
+          <td>9.881443</td>
         </tr>
         <tr>
           <th>04Gr@0</th>
-          <td>90</td>
-          <td>20</td>
-          <td>9.500000</td>
+          <td>2526</td>
+          <td>300</td>
+          <td>10.000000</td>
+        </tr>
+        <tr>
+          <th>04MSD@0</th>
+          <td>417</td>
+          <td>105</td>
+          <td>9.742857</td>
+        </tr>
+        <tr>
+          <th>04Ra@0</th>
+          <td>4401</td>
+          <td>903</td>
+          <td>10.156146</td>
         </tr>
         <tr>
           <th>04SRS@0</th>
-          <td>250</td>
-          <td>38</td>
-          <td>10.210526</td>
+          <td>6888</td>
+          <td>1074</td>
+          <td>9.944134</td>
         </tr>
         <tr>
           <th>05Gr@0</th>
-          <td>102</td>
-          <td>18</td>
-          <td>10.000000</td>
+          <td>1890</td>
+          <td>288</td>
+          <td>10.104167</td>
+        </tr>
+        <tr>
+          <th>05Ra@0</th>
+          <td>4770</td>
+          <td>522</td>
+          <td>9.919540</td>
+        </tr>
+        <tr>
+          <th>05SRS@0</th>
+          <td>10926</td>
+          <td>1368</td>
+          <td>10.118421</td>
+        </tr>
+        <tr>
+          <th>06Gr@0</th>
+          <td>5238</td>
+          <td>846</td>
+          <td>10.021277</td>
+        </tr>
+        <tr>
+          <th>06MSD@0</th>
+          <td>507</td>
+          <td>129</td>
+          <td>9.883721</td>
+        </tr>
+        <tr>
+          <th>06Ra@0</th>
+          <td>2595</td>
+          <td>429</td>
+          <td>9.993007</td>
+        </tr>
+        <tr>
+          <th>06SRS@0</th>
+          <td>2382</td>
+          <td>498</td>
+          <td>9.975904</td>
+        </tr>
+        <tr>
+          <th>07Gr@0</th>
+          <td>1800</td>
+          <td>288</td>
+          <td>10.020833</td>
+        </tr>
+        <tr>
+          <th>07Ra@0</th>
+          <td>1506</td>
+          <td>288</td>
+          <td>10.354167</td>
+        </tr>
+        <tr>
+          <th>07SRS@0</th>
+          <td>1692</td>
+          <td>270</td>
+          <td>10.088889</td>
         </tr>
       </tbody>
     </table>
@@ -1005,6 +1200,7 @@ Let’s see how well did this agent behave:
         <tr style="text-align: right;">
           <th></th>
           <th>type</th>
+          <th>score</th>
           <th>count</th>
           <th>mean</th>
           <th>std</th>
@@ -1019,38 +1215,41 @@ Let’s see how well did this agent behave:
         <tr>
           <th>2</th>
           <td>SimpleAgent</td>
-          <td>4.0</td>
-          <td>1.197341</td>
-          <td>0.236140</td>
-          <td>0.916726</td>
-          <td>1.084812</td>
-          <td>1.193656</td>
-          <td>1.306185</td>
-          <td>1.485327</td>
+          <td>0.718652</td>
+          <td>30.0</td>
+          <td>0.718652</td>
+          <td>0.626017</td>
+          <td>-0.840914</td>
+          <td>0.827423</td>
+          <td>0.999168</td>
+          <td>1.043844</td>
+          <td>1.212995</td>
         </tr>
         <tr>
           <th>0</th>
           <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
+          <td>0.634120</td>
+          <td>30.0</td>
+          <td>0.634120</td>
+          <td>0.303902</td>
+          <td>0.123079</td>
+          <td>0.504789</td>
+          <td>0.704111</td>
+          <td>0.878543</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>1</th>
           <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
+          <td>-0.061693</td>
+          <td>30.0</td>
+          <td>-0.061693</td>
+          <td>0.708594</td>
+          <td>-1.504509</td>
+          <td>-0.510917</td>
+          <td>-0.183504</td>
+          <td>0.474423</td>
+          <td>0.981504</td>
         </tr>
       </tbody>
     </table>
@@ -1306,6 +1505,7 @@ Let’s see how well did this agent behave:
         <tr style="text-align: right;">
           <th></th>
           <th>type</th>
+          <th>score</th>
           <th>count</th>
           <th>mean</th>
           <th>std</th>
@@ -1318,52 +1518,56 @@ Let’s see how well did this agent behave:
       </thead>
       <tbody>
         <tr>
-          <th>1</th>
-          <td>OptimisticAgent</td>
-          <td>4.0</td>
-          <td>1.246931</td>
-          <td>0.196528</td>
-          <td>1.038273</td>
-          <td>1.160055</td>
-          <td>1.218884</td>
-          <td>1.305761</td>
-          <td>1.511683</td>
-        </tr>
-        <tr>
           <th>3</th>
           <td>SimpleAgent</td>
-          <td>4.0</td>
-          <td>1.197341</td>
-          <td>0.236140</td>
-          <td>0.916726</td>
-          <td>1.084812</td>
-          <td>1.193656</td>
-          <td>1.306185</td>
-          <td>1.485327</td>
+          <td>0.718652</td>
+          <td>30.0</td>
+          <td>0.718652</td>
+          <td>0.626017</td>
+          <td>-0.840914</td>
+          <td>0.827423</td>
+          <td>0.999168</td>
+          <td>1.043844</td>
+          <td>1.212995</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>OptimisticAgent</td>
+          <td>0.715633</td>
+          <td>30.0</td>
+          <td>0.715633</td>
+          <td>0.595175</td>
+          <td>-0.833523</td>
+          <td>0.806630</td>
+          <td>0.972029</td>
+          <td>1.036741</td>
+          <td>1.183959</td>
         </tr>
         <tr>
           <th>0</th>
           <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
+          <td>0.634120</td>
+          <td>30.0</td>
+          <td>0.634120</td>
+          <td>0.303902</td>
+          <td>0.123079</td>
+          <td>0.504789</td>
+          <td>0.704111</td>
+          <td>0.878543</td>
+          <td>1.000000</td>
         </tr>
         <tr>
           <th>2</th>
           <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
+          <td>-0.061693</td>
+          <td>30.0</td>
+          <td>-0.061693</td>
+          <td>0.708594</td>
+          <td>-1.504509</td>
+          <td>-0.510917</td>
+          <td>-0.183504</td>
+          <td>0.474423</td>
+          <td>0.981504</td>
         </tr>
       </tbody>
     </table>
@@ -1433,107 +1637,6 @@ do-nothing agent in this form:
 
     single_agent_runner.score_summary()
 
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>type</th>
-          <th>count</th>
-          <th>mean</th>
-          <th>std</th>
-          <th>min</th>
-          <th>25%</th>
-          <th>50%</th>
-          <th>75%</th>
-          <th>max</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>2</th>
-          <td>OptimisticAgent</td>
-          <td>4.0</td>
-          <td>1.246931</td>
-          <td>0.196528</td>
-          <td>1.038273</td>
-          <td>1.160055</td>
-          <td>1.218884</td>
-          <td>1.305761</td>
-          <td>1.511683</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>SimpleAgent</td>
-          <td>4.0</td>
-          <td>1.197341</td>
-          <td>0.236140</td>
-          <td>0.916726</td>
-          <td>1.084812</td>
-          <td>1.193656</td>
-          <td>1.306185</td>
-          <td>1.485327</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>MySyncOneShotDoNothing</td>
-          <td>4.0</td>
-          <td>0.439089</td>
-          <td>0.121767</td>
-          <td>0.361466</td>
-          <td>0.373618</td>
-          <td>0.387218</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>0</th>
-          <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
-
 As you can see, in this case, we need to override ``counter_all`` to
 counter offers received from *all* the partners and ``first_proposals``
 to decide a first offer for *each* partner.
@@ -1600,127 +1703,9 @@ respond to each of these six callbacks. All of these callbacks except
 
     single_agent_runner.score_summary()
 
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>type</th>
-          <th>count</th>
-          <th>mean</th>
-          <th>std</th>
-          <th>min</th>
-          <th>25%</th>
-          <th>50%</th>
-          <th>75%</th>
-          <th>max</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>2</th>
-          <td>OptimisticAgent</td>
-          <td>4.0</td>
-          <td>1.246931</td>
-          <td>0.196528</td>
-          <td>1.038273</td>
-          <td>1.160055</td>
-          <td>1.218884</td>
-          <td>1.305761</td>
-          <td>1.511683</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>SimpleAgent</td>
-          <td>4.0</td>
-          <td>1.197341</td>
-          <td>0.236140</td>
-          <td>0.916726</td>
-          <td>1.084812</td>
-          <td>1.193656</td>
-          <td>1.306185</td>
-          <td>1.485327</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>MySyncOneShotDoNothing</td>
-          <td>4.0</td>
-          <td>0.439089</td>
-          <td>0.121767</td>
-          <td>0.361466</td>
-          <td>0.373618</td>
-          <td>0.387218</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>0</th>
-          <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>SimpleSyncAgent</td>
-          <td>4.0</td>
-          <td>0.435511</td>
-          <td>0.124355</td>
-          <td>0.361711</td>
-          <td>0.362763</td>
-          <td>0.379941</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
-
 .. code:: ipython3
 
     single_agent_runner.plot_stats(agg=False, legend_ncols=3, ylegend=2);
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_54_0.png
-
 
 This agent behaves exactly the same as ``BetterAgent``. We simply just
 call ``propose()`` and ``respond()`` from ``BetterAgent``
@@ -1758,27 +1743,9 @@ Here are few examples of how it would distribute :math:`10` units over
 
     [distribute(10, 4) for _ in range(5)]
 
-
-
-
-.. parsed-literal::
-
-    [[4, 1, 2, 3], [3, 2, 3, 2], [2, 2, 4, 2], [4, 2, 2, 2], [3, 1, 3, 3]]
-
-
-
 .. code:: ipython3
 
     [distribute(2, 4) for _ in range(5)]
-
-
-
-
-.. parsed-literal::
-
-    [[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]
-
-
 
 We will also need a helper function to find all subsets of a given set
 (powerset):
@@ -2186,139 +2153,9 @@ Let’s see how does this agent fair against others we developed so far:
 
     single_agent_runner.score_summary()
 
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>type</th>
-          <th>count</th>
-          <th>mean</th>
-          <th>std</th>
-          <th>min</th>
-          <th>25%</th>
-          <th>50%</th>
-          <th>75%</th>
-          <th>max</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>2</th>
-          <td>OptimisticAgent</td>
-          <td>4.0</td>
-          <td>1.246931</td>
-          <td>0.196528</td>
-          <td>1.038273</td>
-          <td>1.160055</td>
-          <td>1.218884</td>
-          <td>1.305761</td>
-          <td>1.511683</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>SimpleAgent</td>
-          <td>4.0</td>
-          <td>1.197341</td>
-          <td>0.236140</td>
-          <td>0.916726</td>
-          <td>1.084812</td>
-          <td>1.193656</td>
-          <td>1.306185</td>
-          <td>1.485327</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>ProactiveAgent</td>
-          <td>4.0</td>
-          <td>0.955803</td>
-          <td>0.204698</td>
-          <td>0.720017</td>
-          <td>0.861105</td>
-          <td>0.944028</td>
-          <td>1.038726</td>
-          <td>1.215140</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>MySyncOneShotDoNothing</td>
-          <td>4.0</td>
-          <td>0.439089</td>
-          <td>0.121767</td>
-          <td>0.361466</td>
-          <td>0.373618</td>
-          <td>0.387218</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>0</th>
-          <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>SimpleSyncAgent</td>
-          <td>4.0</td>
-          <td>0.435511</td>
-          <td>0.124355</td>
-          <td>0.361711</td>
-          <td>0.362763</td>
-          <td>0.379941</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
-
 .. code:: ipython3
 
     single_agent_runner.plot_stats(agg=False, legend_ncols=5, ylegend=2);
-
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_67_0.png
-
 
 These results show that ``ProactiveAgent`` is much better than the
 ``SimpleSyncAgent`` which did not really consider all offers together.
@@ -2363,11 +2200,6 @@ We can now look at all the agents we considered so far:
 
     single_agent_runner.plot_stats(notch=True);
 
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_70_0.png
-
-
 Let’s also add a couple of the built-in agents to the mix and see where
 do these fit:
 
@@ -2380,11 +2212,6 @@ do these fit:
 
     single_agent_runner.plot_stats(notch=True, stats="score");
 
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_73_0.png
-
-
 As you can see, ``GreedyStdAgent`` and ``SyncRandomStdAgent`` are
 getting good scores but not better than the simple agents we developed
 in these tutorials.
@@ -2392,155 +2219,6 @@ in these tutorials.
 .. code:: ipython3
 
     single_agent_runner.score_summary()
-
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>type</th>
-          <th>count</th>
-          <th>mean</th>
-          <th>std</th>
-          <th>min</th>
-          <th>25%</th>
-          <th>50%</th>
-          <th>75%</th>
-          <th>max</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>3</th>
-          <td>OptimisticAgent</td>
-          <td>4.0</td>
-          <td>1.246931</td>
-          <td>0.196528</td>
-          <td>1.038273</td>
-          <td>1.160055</td>
-          <td>1.218884</td>
-          <td>1.305761</td>
-          <td>1.511683</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>SimpleAgent</td>
-          <td>4.0</td>
-          <td>1.197341</td>
-          <td>0.236140</td>
-          <td>0.916726</td>
-          <td>1.084812</td>
-          <td>1.193656</td>
-          <td>1.306185</td>
-          <td>1.485327</td>
-        </tr>
-        <tr>
-          <th>0</th>
-          <td>GreedyStdAgent</td>
-          <td>4.0</td>
-          <td>1.183594</td>
-          <td>0.163766</td>
-          <td>1.015461</td>
-          <td>1.105895</td>
-          <td>1.156004</td>
-          <td>1.233704</td>
-          <td>1.406908</td>
-        </tr>
-        <tr>
-          <th>8</th>
-          <td>SyncRandomStdAgent</td>
-          <td>4.0</td>
-          <td>1.162453</td>
-          <td>0.180897</td>
-          <td>0.963037</td>
-          <td>1.046484</td>
-          <td>1.156199</td>
-          <td>1.272169</td>
-          <td>1.374376</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>ProactiveAgent</td>
-          <td>4.0</td>
-          <td>0.955803</td>
-          <td>0.204698</td>
-          <td>0.720017</td>
-          <td>0.861105</td>
-          <td>0.944028</td>
-          <td>1.038726</td>
-          <td>1.215140</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>MySyncOneShotDoNothing</td>
-          <td>4.0</td>
-          <td>0.439089</td>
-          <td>0.121767</td>
-          <td>0.361466</td>
-          <td>0.373618</td>
-          <td>0.387218</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>MyStdDoNothing</td>
-          <td>4.0</td>
-          <td>0.436310</td>
-          <td>0.123855</td>
-          <td>0.357187</td>
-          <td>0.367421</td>
-          <td>0.383800</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>7</th>
-          <td>SimpleSyncAgent</td>
-          <td>4.0</td>
-          <td>0.435511</td>
-          <td>0.124355</td>
-          <td>0.361711</td>
-          <td>0.362763</td>
-          <td>0.379941</td>
-          <td>0.452689</td>
-          <td>0.620453</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>RandomStdAgent</td>
-          <td>4.0</td>
-          <td>0.359856</td>
-          <td>0.698151</td>
-          <td>-0.320164</td>
-          <td>-0.172369</td>
-          <td>0.302873</td>
-          <td>0.835098</td>
-          <td>1.153840</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
 
 Out of curiosity, let’s compare these agents when each is allowed to
 control the whole market:
@@ -2565,163 +2243,9 @@ control the whole market:
 
     FMR.plot_stats(notch=True, stats="score");
 
-
-
-.. image:: 04.develop_agent_scml2024_std_files/04.develop_agent_scml2024_std_78_0.png
-
-
 .. code:: ipython3
 
     FMR.score_summary()
-
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>type</th>
-          <th>count</th>
-          <th>mean</th>
-          <th>std</th>
-          <th>min</th>
-          <th>25%</th>
-          <th>50%</th>
-          <th>75%</th>
-          <th>max</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>8</th>
-          <td>SyncRandomStdAgent</td>
-          <td>70.0</td>
-          <td>0.947502</td>
-          <td>0.219816</td>
-          <td>0.341742</td>
-          <td>0.859199</td>
-          <td>0.976417</td>
-          <td>1.094275</td>
-          <td>1.459883</td>
-        </tr>
-        <tr>
-          <th>6</th>
-          <td>SimpleAgent</td>
-          <td>70.0</td>
-          <td>0.934644</td>
-          <td>0.292974</td>
-          <td>0.215137</td>
-          <td>0.679216</td>
-          <td>1.044546</td>
-          <td>1.160171</td>
-          <td>1.374244</td>
-        </tr>
-        <tr>
-          <th>0</th>
-          <td>GreedyStdAgent</td>
-          <td>70.0</td>
-          <td>0.928694</td>
-          <td>0.203014</td>
-          <td>0.360946</td>
-          <td>0.831871</td>
-          <td>0.940393</td>
-          <td>1.048786</td>
-          <td>1.354554</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>ProactiveAgent</td>
-          <td>70.0</td>
-          <td>0.770163</td>
-          <td>0.395298</td>
-          <td>-0.399578</td>
-          <td>0.625169</td>
-          <td>0.886567</td>
-          <td>1.023362</td>
-          <td>1.362790</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>OptimisticAgent</td>
-          <td>70.0</td>
-          <td>0.747347</td>
-          <td>0.309489</td>
-          <td>-0.129647</td>
-          <td>0.606462</td>
-          <td>0.832263</td>
-          <td>0.918301</td>
-          <td>1.329806</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>MySyncOneShotDoNothing</td>
-          <td>70.0</td>
-          <td>0.746008</td>
-          <td>0.269398</td>
-          <td>-0.043594</td>
-          <td>0.584976</td>
-          <td>0.794262</td>
-          <td>1.000000</td>
-          <td>1.000000</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>MyStdDoNothing</td>
-          <td>70.0</td>
-          <td>0.745736</td>
-          <td>0.269263</td>
-          <td>-0.021516</td>
-          <td>0.587580</td>
-          <td>0.794162</td>
-          <td>1.000000</td>
-          <td>1.000000</td>
-        </tr>
-        <tr>
-          <th>7</th>
-          <td>SimpleSyncAgent</td>
-          <td>70.0</td>
-          <td>0.742840</td>
-          <td>0.272984</td>
-          <td>-0.046016</td>
-          <td>0.584494</td>
-          <td>0.794225</td>
-          <td>1.000000</td>
-          <td>1.000000</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>RandomStdAgent</td>
-          <td>70.0</td>
-          <td>-0.082708</td>
-          <td>0.505097</td>
-          <td>-1.281687</td>
-          <td>-0.418286</td>
-          <td>-0.154445</td>
-          <td>0.305187</td>
-          <td>0.910405</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
 
 As is clear when comparing the last two tables, the relative order
 (specially between the best scoreing agents) is dependent on the how
@@ -2754,24 +2278,6 @@ in this tutorial (with some modifications):
     import scml.std.agents as agents
 
     print([_ for _ in agents.__dir__() if _.endswith("Agent")])
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">[</span>
-        <span style="color: #008000; text-decoration-color: #008000">'SingleAgreementAspirationAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'GreedyStdAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'GreedySyncAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'GreedyOneShotAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'StdDoNothingAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'SyncRandomStdAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'SyncRandomOneShotAgent'</span>,
-        <span style="color: #008000; text-decoration-color: #008000">'RandomStdAgent'</span>
-    <span style="font-weight: bold">]</span>
-    </pre>
-
-
 
 
 Download :download:`Notebook<notebooks/04.develop_agent_scml2024_std.ipynb>`.
