@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.7.2 (2024.03.02)
+------------------
+
+* requiring negmas >=0.10.17
+* minor bugfix correcting method name in 2022 version
+* correcting NMI type in some agents
+* bugfix CLI failed because "method" is not in World
+* WorldRunner improvements: Allowing separation of agent addition and running
+* WorldRunner improvements: Controlling order of plotting in runner.
+* replacing lambdas in AWI to allow pickling
+* adding names to contexts
+* avoiding testing exact decoding in obs manager
+
 0.7.1 (2024.03.02)
 ------------------
 
