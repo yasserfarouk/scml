@@ -1,4 +1,6 @@
 import pytest
+from scml.oneshot.agents.rand import NiceAgent, RandomOneShotAgent
+from scml.oneshot.common import is_system_agent
 from negmas import ResponseType, SAOResponse
 from negmas.negotiators.modular import itertools
 
@@ -21,6 +23,12 @@ from scml.oneshot.context import (
     SupplierContext,
     WeakConsumerContext,
     WeakSupplierContext,
+    MonopolicContext,
+    EutopiaContext,
+    EutopiaConsumerContext,
+    EutopiaSupplierContext,
+    SingleAgentPerLevelSupplierContext,
+    SingleAgentPerLevelConsumerContext,
 )
 
 context_types = (
@@ -40,6 +48,12 @@ context_types = (
     FixedPartnerNumbersOneShotContext,
     LimitedPartnerNumbersContext,
     LimitedPartnerNumbersOneShotContext,
+    MonopolicContext,
+    SingleAgentPerLevelSupplierContext,
+    EutopiaContext,
+    EutopiaConsumerContext,
+    EutopiaSupplierContext,
+    SingleAgentPerLevelConsumerContext,
 )
 
 
@@ -100,3 +114,66 @@ def test_context_can_generate_and_run(context_type):
     assert c2.contains_context(
         context, raise_on_failure=True
     ), "Identical contexts do not match"
+
+
+def test_monoplic_context():
+    context = MonopolicContext()
+    for _ in range(10):
+        world, a = context((MyAgent,))
+        world.step()
+        assert len(a) == 1
+        agent = a[0]
+        assert isinstance(agent, MyAgent)
+        assert agent.awi.n_competitors == 0
+        assert len(agent.awi.my_competitors) == 0
+
+
+@pytest.mark.parametrize("level", [0, 1])
+def test_single_agent_context(level):
+    context = (
+        SingleAgentPerLevelSupplierContext()
+        if level == 0
+        else SingleAgentPerLevelConsumerContext()
+    )
+    for _ in range(10):
+        world, a = context((MyAgent,))
+        world.step()
+        assert all(len(_) == 1 for _ in a[0].awi.all_suppliers)
+        for agent in world.agents.values():
+            if is_system_agent(agent.id):
+                continue
+            assert agent.awi.n_competitors == 0
+            assert not agent.awi.my_competitors
+
+
+class MyAgent(RandomOneShotAgent):
+    ...
+
+
+@pytest.mark.parametrize(
+    ["context_type", "level"],
+    ((EutopiaConsumerContext, -1), (EutopiaSupplierContext, 0), (EutopiaContext, None)),
+)
+def test_eutopia_contexts(context_type, level):
+    context = context_type()
+    for _ in range(10):
+        world, a = context((MyAgent,))
+        world.step()
+        assert len(a) == 1
+        agent = a[0]
+        assert not agent.awi.is_middle_level
+        assert isinstance(agent, MyAgent)
+        assert agent.awi.n_competitors == 0
+        if level is None:
+            pass
+        elif level == -1:
+            assert agent.awi.is_last_level
+        else:
+            assert agent.awi.is_first_level
+
+        for aa in world.agents.values():
+            if is_system_agent(aa.id):
+                continue
+            assert agent.id == aa.id or isinstance(
+                aa._obj, NiceAgent
+            ), f"{aa.id=} != {agent.id} AND {type(aa)} is not NiceAgent"

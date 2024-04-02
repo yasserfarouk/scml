@@ -8,7 +8,11 @@ from typing import Any, Iterable, Union, Sequence
 import numpy as np
 from attr import define, field
 from scml.oneshot.agents.greedy import GreedyOneShotAgent
-from scml.oneshot.agents.rand import EqualDistOneShotAgent, RandDistOneShotAgent
+from scml.oneshot.agents.rand import (
+    EqualDistOneShotAgent,
+    NiceAgent,
+    RandDistOneShotAgent,
+)
 from negmas.helpers.strings import unique_name
 
 from scml.common import intin, isin, isinclass, isinfloat, isinobject, make_array
@@ -45,6 +49,11 @@ __all__ = [
     "BalancedConsumerContext",
     "RepeatingContext",
     "ContextParams",
+    "MonopolicContext",
+    "SingleAgentPerLevelSupplierContext",
+    "EutopiaContext",
+    "EutopiaConsumerContext",
+    "EutopiaSupplierContext",
 ]
 
 
@@ -1009,6 +1018,14 @@ class GeneralContext(BaseContext):
     equal_exogenous_sales = False
     cap_exogenous_quantities: bool = True
 
+    def __attrs_post_init__(self):
+        from scml.std.world import StdWorld
+
+        if self.perishable:
+            assert not issubclass(self.world_type, StdWorld)
+        else:
+            assert issubclass(self.world_type, StdWorld)
+
     def extract_context_params(
         self, min_values: bool, level: int | None = None
     ) -> ContextParams:
@@ -1043,14 +1060,6 @@ class GeneralContext(BaseContext):
         ):
             nconsumers = 0
         return ContextParams(self.perishable, nlines, nsuppliers, nconsumers)
-
-    def __attrs_post_init__(self):
-        from scml.std.world import StdWorld
-
-        if self.perishable:
-            assert not issubclass(self.world_type, StdWorld)
-        else:
-            assert issubclass(self.world_type, StdWorld)
 
     def make_predefined_config(
         self,
@@ -1901,6 +1910,82 @@ class FixedPartnerNumbersContext(LimitedPartnerNumbersContext):
         nsuppliers = self.n_suppliers
         nconsumers = self.n_consumers
         return ContextParams(self.perishable, nlines, int(nsuppliers), int(nconsumers))
+
+
+@define
+class MonopolicContext(LimitedPartnerNumbersContext):
+    """An agent that has no competitors in the same level as themselves"""
+
+    # n_competitors: tuple[int, int] = field(default=(0, 0), converter=lambda _: (0, 0))
+    n_competitors: tuple[int, int] = (0, 0)
+    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(
+        default=(1, max(N_CONSUMERS[-1], N_SUPPLIERS[-1])),
+        converter=lambda _: (1, max(N_CONSUMERS[-1], N_SUPPLIERS[-1])),
+    )
+
+    def __attrs_post_init__(self):
+        npp = self.n_agents_per_process
+        if isinstance(npp, int):
+            assert (
+                npp == 1
+            ), f"You passed {self.n_agents_per_process=} to a MonopolicContext but this MUST be one in this case"
+        elif isinstance(npp, tuple):
+            npp = (min(1, npp[0]), npp[1])
+        else:
+            npp = list(set(list(npp) + [1]))
+        object.__setattr__(self, "n_agents_per_process", npp)
+        return super().__attrs_post_init__()
+
+
+@define
+class SingleAgentPerLevelConsumerContext(MonopolicContext):
+    """A world in which every level has exactly one factory and the agent is a consumer"""
+
+    level: int = -1
+    n_consumers: tuple[int, int] = (0, 0)
+    n_suppliers: tuple[int, int] = (1, 1)
+    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(
+        default=1, converter=lambda _: 1
+    )
+
+
+@define
+class SingleAgentPerLevelSupplierContext(MonopolicContext):
+    """A world in which every level has exactly one factory and the agent is a supplier"""
+
+    level: int = 0
+    n_consumers: tuple[int, int] = (1, 1)
+    n_suppliers: tuple[int, int] = (0, 0)
+    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(
+        default=1, converter=lambda _: 1
+    )
+
+
+@define
+class EutopiaContext(MonopolicContext):
+    """An unrealistic context in which the agent is the only one in its level and all other agents are nice."""
+
+    non_competitors: tuple[str | type[OneShotAgent], ...] = field(
+        default=(NiceAgent,), converter=lambda _: (NiceAgent,)
+    )
+
+
+@define
+class EutopiaSupplierContext(EutopiaContext):
+    """An unrealistic context in which the agent is the only supplier and all consumers are nice."""
+
+    level: int = field(default=0, converter=lambda _: 0)
+    n_consumers: tuple[int, int] = N_CONSUMERS
+    n_suppliers: tuple[int, int] = (0, 0)
+
+
+@define
+class EutopiaConsumerContext(EutopiaContext):
+    """An unrealistic context in which the agent is the only consumer and all suppliers are nice."""
+
+    level: int = field(default=-1, converter=lambda _: -1)
+    n_consumers: tuple[int, int] = (0, 0)
+    n_suppliers: tuple[int, int] = N_SUPPLIERS
 
 
 @define

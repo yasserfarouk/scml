@@ -930,8 +930,8 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             storage_cost_dev: The standard deviation of storage cost relative to the mean price
             exogenous_price_dev: The standard deviation of exogenous contract prices relative to the mean price
             price_multiplier: A value to multiply with trading/catalog price to get the upper limit on prices for all negotiations
-            random_agent_types: If True, the final agent types used by the generato wil always be sampled from the given types.
-                                If False, this random sampling will only happin if len(agent_types) != n_agents.
+            random_agent_types: If True, the final agent types used by the generator will always be sampled from the given types.
+                                If False, this random sampling will only happen if len(agent_types) != n_agents.
             penalties_scale: What are `disposal_cost` and `shortfall_penalty` relative to.
                             There are four options: `trading`, `catalog` mean trading
                             and catalog prices of the product. `unit` means the unit
