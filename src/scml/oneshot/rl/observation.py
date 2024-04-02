@@ -260,7 +260,7 @@ class FlexibleObservationManager(BaseObservationManager):
         return v
 
     def extra_obs(self, awi: OneShotAWI) -> list[tuple[float, int] | float]:
-        """ "
+        """
         The observation values other than offers and previous offers.
 
         Returns:
