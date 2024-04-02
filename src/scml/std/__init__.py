@@ -21,7 +21,7 @@ def builtin_agent_types(as_str=False):
     from negmas.helpers import get_class
 
     types = [
-        f"scml.oneshot.agents.{_}"
+        f"scml.std.agents.{_}"
         for _ in agents.__all__
         if _ not in ("StdPlaceholder", "Placeholder", "OneShotDummyAgent")
     ]
