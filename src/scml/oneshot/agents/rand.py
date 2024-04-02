@@ -40,7 +40,7 @@ class RandomOneShotAgent(OneShotAgent):
         p_end=PROB_END,
         **kwargs,
     ):
-        self.p_accept, self.p_end = p_accept, p_end
+        self.p_accept, self.p_end = p_accept + p_end, p_end
         super().__init__(*args, **kwargs)
 
     def _random_offer(self, negotiator_id: str):
@@ -53,11 +53,22 @@ class RandomOneShotAgent(OneShotAgent):
         return self._random_offer(negotiator_id)
 
     def respond(self, negotiator_id, state, source=None) -> ResponseType:
-        if random.random() < self.p_end:
+        r = random.random()
+        if r < self.p_end:
             return ResponseType.END_NEGOTIATION
-        if random.random() < self.p_accept:
+        if r < self.p_accept:
             return ResponseType.ACCEPT_OFFER
         return ResponseType.REJECT_OFFER
+
+
+class NiceAgent(RandomOneShotAgent):
+    """An agent that offers randomly and accepts anything"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, p_accept=0, p_end=0, **kwargs)
+
+    def respond(self, negotiator_id, state, source=None) -> ResponseType:
+        return ResponseType.ACCEPT_OFFER
 
 
 class SyncRandomOneShotAgent(OneShotSyncAgent):
