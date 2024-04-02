@@ -230,7 +230,7 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def n_competitors(self) -> int:
         """Returns the number of factories/agents in the same production level"""
-        return len(self._world.consumers[self.my_output_product]) - 1
+        return len(self._world.consumers[self.my_input_product]) - 1
 
     @property
     def n_processes(self) -> int:
@@ -385,6 +385,15 @@ class OneShotAWI(AgentWorldInterface):
     def my_output_product(self) -> int:
         """the product I need to sell"""
         return self.profile.output_product if self.profile else -10
+
+    @property
+    def my_competitors(self) -> list[str]:
+        """Returns the names of all factories in the same level as me"""
+        return [
+            _
+            for _ in self._world.consumers[self.my_input_product]
+            if _ != self.agent.id
+        ]
 
     @property
     def my_suppliers(self) -> list[str]:
