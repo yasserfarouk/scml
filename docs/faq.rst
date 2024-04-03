@@ -215,11 +215,11 @@ league world ( `randint(2, min(4, len(COMPETITORS)))` ).
 
 How can I save sklearn models and load them later?
 --------------------------------------------------
-Machine learning models are just files, so first please see `how to save and load files<https://scml.readthedocs.io/en/latest/faq.html#how-can-i-access-a-data-file-in-my-package>`_ .
+Machine learning models are just files, so first please see `how to save and load files <https://scml.readthedocs.io/en/latest/faq.html#how-can-i-access-a-data-file-in-my-package>`_ .
 
 Nevertheless, many machine learning libraries including scikit-learn use (or recommend using) pickle for saving and loading files. The problem with pickle is that it is very sensitive to changes in versions between the machine used for saving the file and the one used for loading it. We recommend not using pickle at all and using another more robust format. If you are going to use pickle, make sure to have a fallback for this kind of version mismatch.
 
-Here is how to save and load models in `scikit-learn<https://scikit-learn.org/stable/model_persistence.html>`_ . Of special interest is the issue of version incompatibility mentioned there and repeated here: When an estimator is unpickled with a scikit-learn version that is inconsistent with the version the estimator was pickled with, a InconsistentVersionWarning is raised.
+Here is how to save and load models in `scikit-learn <https://scikit-learn.org/stable/model_persistence.html>`_ . Of special interest is the issue of version incompatibility mentioned there and repeated here: When an estimator is unpickled with a scikit-learn version that is inconsistent with the version the estimator was pickled with, a InconsistentVersionWarning is raised.
 This warning can be caught to obtain the original version the estimator was pickled with::
 
     from sklearn.exceptions import InconsistentVersionWarning
