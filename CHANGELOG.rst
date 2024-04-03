@@ -1,6 +1,20 @@
 Changelog
 =========
 
+0.7.4 (2024.04.03)
+------------------
+
+* AWI: Correcting n_competitors and adding my_competitors
+* slightly faster random oneshot
+* bugfix in builtin_std_agents
+* Adding more contexts
+* Adding loading sklearn to FAQ
+
+0.7.3 (2024.03.15)
+------------------
+
+* Requiring negmas 0.10.18
+
 0.7.2 (2024.03.02)
 ------------------
 
