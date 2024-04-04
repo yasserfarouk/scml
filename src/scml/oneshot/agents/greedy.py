@@ -1,5 +1,6 @@
 import itertools
 import random
+import math
 from collections import defaultdict
 
 from negmas import Outcome, ResponseType, SAOResponse
@@ -155,7 +156,8 @@ class GreedyOneShotAgent(OneShotAgent):
         return response
 
     def best_offer(self, negotiator_id):
-        my_needs = int(self._needed(negotiator_id))
+        _need = self._needed(negotiator_id)
+        my_needs = int(_need) if _need and not math.isinf(_need) else 0
         if my_needs <= 0:
             return None
         nmi = self.get_nmi(negotiator_id)
