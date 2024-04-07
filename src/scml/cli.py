@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
+
 import math
 import os
 import sys
@@ -3377,6 +3378,12 @@ def tournament2021(
     "-t",
     default=-1,
     type=int,
+    help="Timeout for every world simulation (0 for infinite)",
+)
+@click.option(
+    "--total-timeout",
+    default=-1,
+    type=int,
     help="Timeout the whole tournament after the given number of seconds (0 for infinite)",
 )
 @click.option(
@@ -3476,6 +3483,7 @@ def tournament2024(
     name,
     steps,
     timeout,
+    total_timeout,
     ttype,
     log,
     verbosity,
@@ -3514,6 +3522,8 @@ def tournament2024(
     warning_n_runs = 2000
     if timeout <= 0:
         timeout = None
+    if total_timeout <= 0:
+        total_timeout = None
     if name == "random":
         name = unique_name(base="", rand_digits=0)
     if max_runs <= 0:
@@ -3626,7 +3636,8 @@ def tournament2024(
         n_runs_per_world=runs,
         max_worlds_per_config=worlds_per_config,
         tournament_path=log,
-        total_timeout=timeout,
+        total_timeout=total_timeout,
+        time_limit=timeout,
         name=name,
         verbose=verbosity > 0,
         compact=compact,

@@ -73,6 +73,8 @@ __all__ = [
     "anac2024_std",
 ]
 
+ONESHOT_TIMEOUT = 60 * 30
+ONESHOT_NEG_TIMEOUT = 60
 
 FORCED_LOGS_FRACTION = 1.0
 
@@ -357,8 +359,8 @@ def anac_config_generator(
             name=world_name,
             agent_types=agent_types,
             agent_params=manager_params,
-            time_limit=7200 + 3600,
-            neg_time_limit=120,
+            time_limit=ONESHOT_TIMEOUT,
+            neg_time_limit=ONESHOT_NEG_TIMEOUT,
             neg_n_steps=20,
             neg_step_time_limit=10,
             negotiation_speed=21,
@@ -376,8 +378,8 @@ def anac_config_generator(
             name=world_name,
             agent_types=agent_types,
             agent_params=manager_params,
-            time_limit=7200 + 3600,
-            neg_time_limit=120,
+            time_limit=ONESHOT_TIMEOUT,
+            neg_time_limit=ONESHOT_NEG_TIMEOUT,
             neg_n_steps=20,
             neg_step_time_limit=10,
             negotiation_speed=21,
