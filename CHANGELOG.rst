@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.7.5 (2024.04.07)
+------------------
+
+* bugfix in greedy (when needs cannot be found)
+* requiring latest negams (0.10.23) to improve tournament timeout
+* Adding a 30min simulation timeout while keeping the 2min negotiation timeout
+
 0.7.4 (2024.04.03)
 ------------------
 
