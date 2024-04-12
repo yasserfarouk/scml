@@ -1376,8 +1376,16 @@ def run2020(
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
-        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        exogenous = [
+            _
+            for _ in world.saved_contracts
+            if any(is_system_agent(a) for a in _["partners"])
+        ]
+        negotiated = [
+            _
+            for _ in world.saved_contracts
+            if all(not is_system_agent(a) for a in _["partners"])
+        ]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -1483,7 +1491,7 @@ DEFAULT_STD_NONCOMPETITORS = [
 )
 @click.option(
     "--show-contracts/--no-contracts",
-    default=True,
+    default=False,
     help="Show or do not show all signed contracts",
 )
 @click.option(
@@ -1739,8 +1747,16 @@ def run2024(
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
-        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        exogenous = [
+            _
+            for _ in world.saved_contracts
+            if any(is_system_agent(a) for a in _["partners"])
+        ]
+        negotiated = [
+            _
+            for _ in world.saved_contracts
+            if all(not is_system_agent(a) for a in _["partners"])
+        ]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -2069,8 +2085,16 @@ def run2023(
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
-        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        exogenous = [
+            _
+            for _ in world.saved_contracts
+            if any(is_system_agent(a) for a in _["partners"])
+        ]
+        negotiated = [
+            _
+            for _ in world.saved_contracts
+            if all(not is_system_agent(a) for a in _["partners"])
+        ]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -2399,8 +2423,16 @@ def run2022(
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
-        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        exogenous = [
+            _
+            for _ in world.saved_contracts
+            if any(is_system_agent(a) for a in _["partners"])
+        ]
+        negotiated = [
+            _
+            for _ in world.saved_contracts
+            if all(not is_system_agent(a) for a in _["partners"])
+        ]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -2729,8 +2761,16 @@ def run2021(
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [_ for _ in world.saved_contracts if not _["issues"]]
-        negotiated = [_ for _ in world.saved_contracts if _["issues"]]
+        exogenous = [
+            _
+            for _ in world.saved_contracts
+            if any(is_system_agent(a) for a in _["partners"])
+        ]
+        negotiated = [
+            _
+            for _ in world.saved_contracts
+            if all(not is_system_agent(a) for a in _["partners"])
+        ]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])

@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import pytest
 from rich import print
+from collections import Counter
 
 from scml.oneshot import PLACEHOLDER_AGENT_PREFIX
 from scml.oneshot.agents.greedy import (
@@ -18,6 +19,7 @@ from scml.oneshot.common import is_system_agent
 from scml.oneshot.context import ANACOneShotContext
 from scml.oneshot.rl.agent import OneShotRLAgent
 from scml.oneshot.world import SCML2024OneShotWorld
+from scml.utils import DefaultAgentsOneShot2024
 
 from ..switches import DefaultOneShotWorld
 
@@ -236,3 +238,24 @@ def test_combining_stats():
         makefig=True,
         ylegend=1.0,
     )
+
+
+def test_run_defaults_gets_contracts():
+    world = SCML2024OneShotWorld(
+        **SCML2024OneShotWorld.generate(DefaultAgentsOneShot2024, n_steps=50)
+    )
+    world.run()
+    exogenous = [
+        _
+        for _ in world.saved_contracts
+        if any(is_system_agent(a) for a in _["partners"])
+    ]
+    negotiated = [
+        _
+        for _ in world.saved_contracts
+        if all(not is_system_agent(a) for a in _["partners"])
+    ]
+    assert len(exogenous) > 0
+    assert (
+        len(negotiated) > 0
+    ), f"{Counter([tuple(_['partners']) for _ in world.saved_contracts])}"
