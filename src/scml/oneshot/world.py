@@ -16,6 +16,7 @@ import pandas as pd
 from matplotlib.axis import Axis
 from negmas import (
     DEFAULT_EDGE_TYPES,
+    Outcome,
     Agent,
     Breach,
     BreachProcessing,
@@ -117,6 +118,18 @@ def get_n_agents_per_process(config: dict[str, Any]) -> list[int]:
     raise ValueError(
         "Cannot find profiles, n_agents_per_profile, agent_processes. I cannot determine the number of agents per level"
     )
+
+
+def values(x: int | tuple[int, int]):
+    if not isinstance(x, Iterable):
+        return int(x), int(x)
+    return int(x[0]), int(x[1])
+
+
+def to_lists(d):
+    return {
+        k: v.tolist() if isinstance(v, np.ndarray) else list(v) for k, v in d.items()
+    }
 
 
 class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapter]):
@@ -733,18 +746,13 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
         self.exogenous_qin = defaultdict(int)
         self.exogenous_pout = defaultdict(int)
         self.exogenous_pin = defaultdict(int)
-        self.exogenous_contracts_summary = None
+        self.exogenous_contracts_summary = []
 
         self.initial_balances = dict(zip(self.agents.keys(), initial_balance))  # type: ignore
         self._max_n_lines = max(_.n_lines for _ in self.profiles)
         self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
         self._current_issues: list[list[ContiguousIssue]] = []
         self.__contracts: dict[str, list[Contract]] = defaultdict(list)
-
-        def values(x: int | tuple[int, int]):
-            if not isinstance(x, Iterable):
-                return int(x), int(x)
-            return int(x[0]), int(x[1])
 
         for product in range(self.n_products):
             unit_price, time, quantity = self._make_issues(product)
@@ -756,12 +764,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             if self._debug:
                 assert all(isinstance(_, ContiguousIssue) for _ in _issues)
             self._current_issues.append(_issues)  # type: ignore # type: ignore
-
-        def to_lists(d):
-            return {
-                k: v.tolist() if isinstance(v, np.ndarray) else list(v)
-                for k, v in d.items()
-            }
 
         self.info.update(
             dict(
@@ -786,10 +788,84 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
         self.info.update(dict(agent_processes=to_lists(self.agent_processes)))
         self.info.update(dict(agent_initial_balances=self.initial_balances))
         self._update_exogenous(0)
-        # self._current_negotiations: list[NegotiationDetails] = []
         self._agent_negotiations: dict[
             str, dict[str, dict[str, NegotiationDetails]]
         ] = dict()
+
+    def action_info_cols(self) -> list[tuple[str, type]]:
+        return [
+            ("quantity", int),
+            ("delivery_step", int),
+            ("unit_price", int),
+        ]
+
+    def extract_action_info(self, action: Any) -> list[int]:
+        return [
+            action[QUANTITY] if action else 0,
+            action[TIME] if action else 0,
+            action[UNIT_PRICE] if action else 0,
+        ]
+
+    def agreement_info_cols(self) -> list[tuple[str, type]]:
+        return [
+            ("quantity", int),
+            ("delivery_step", int),
+            ("unit_price", int),
+        ]
+
+    def extract_agreement_info(self, agreement: Outcome | None) -> list[int]:
+        return [
+            agreement[QUANTITY] if agreement else 0,
+            agreement[TIME] if agreement else 0,
+            agreement[UNIT_PRICE] if agreement else 0,
+        ]
+
+    def extra_neg_info(self, info: NegotiationInfo) -> dict[str, Any]:
+        first = info.partners[0]
+        last = info.partners[1]
+        results = dict()
+        results["product"] = info.annotation["product"]
+        results["exogenous_quantity0"] = (
+            0
+            if not first
+            else first.awi.current_exogenous_input_quantity
+            if first.awi.is_first_level
+            else first.awi.current_exogenous_output_quantity
+            if first.awi.is_last_level
+            else 0
+        )
+        results["exogenous_quantity1"] = (
+            0
+            if not last
+            else last.awi.current_exogenous_input_quantity
+            if last.awi.is_first_level
+            else last.awi.current_exogenous_output_quantity
+            if last.awi.is_last_level
+            else 0
+        )
+        results["exogenous_price0"] = (
+            0
+            if not first
+            else first.awi.current_exogenous_input_price
+            if first.awi.is_first_level
+            else first.awi.current_exogenous_output_price
+            if first.awi.is_last_level
+            else 0
+        )
+        results["exogenous_price1"] = (
+            0
+            if not last
+            else last.awi.current_exogenous_input_price
+            if last.awi.is_first_level
+            else last.awi.current_exogenous_output_price
+            if last.awi.is_last_level
+            else 0
+        )
+        results["needed_sales0"] = first.awi.needed_sales if first else 0
+        results["needed_sales1"] = last.awi.needed_sales if first else 0
+        results["needed_supplies0"] = first.awi.needed_supplies if first else 0
+        results["needed_supplies1"] = last.awi.needed_supplies if first else 0
+        return results
 
     @classmethod
     def replace_agents(
@@ -1475,6 +1551,30 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             penalties_scale=penalties_scale,
             **kwargs,
         )
+
+    def type_name_for_logs(self, agent: OneShotAgent | None) -> str | None:
+        if not agent:
+            return None
+        x = agent.type_name.split(":")[-1]
+        if x.startswith("scml"):
+            x = x.split(".")[-1]
+        return x
+
+    @property
+    def negotiated_contract_records(self) -> list[dict[str, Any]]:
+        return [
+            _
+            for _ in self._saved_contracts.values()
+            if all(not is_system_agent(a) for a in _["partners"])
+        ]
+
+    @property
+    def exogenous_contract_records(self) -> list[dict[str, Any]]:
+        return [
+            _
+            for _ in self._saved_contracts.values()
+            if any(is_system_agent(a) for a in _["partners"])
+        ]
 
     def current_balance(self, agent_id: str):
         return sum(self._profits[agent_id]) + self.initial_balances[agent_id]  # type: ignore
