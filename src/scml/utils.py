@@ -409,8 +409,6 @@ def anac_config_generator(
         generated_world_params = cls.generate(**world_params)  # type: ignore
     else:
         generated_world_params = context.make_config(cls, params=world_params)  # type: ignore
-    # world_params["agent_types"] = _agent_types
-    # world_params["agent_params"] = _agent_params
     for k in ("agent_types", "agent_params"):
         if k in generated_world_params.keys():
             del generated_world_params[k]
@@ -825,13 +823,28 @@ def anac_world_generator(*, year: int, **kwargs):
             kwargs["world_params"]["agent_types"]
         )
     cnfg = kwargs["world_params"].pop("__exact_params")
+
     kwargs["world_params"].pop("__context", None)
     cnfg = deserialize(cnfg)
     kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.scml2020.world.SCML{int(year)}World")
     cnfg2 = cls.generate(**kwargs["world_params"])  # type: ignore
-    for k in ("agent_types", "agent_params"):
-        cnfg[k] = cnfg2[k]  # type: ignore
+    assert isinstance(cnfg, dict)
+    assert isinstance(cnfg2, dict)
+    for k in (
+        "agent_types",
+        "agent_params",
+        "name",
+        "log_folder",
+        "log_ufuns",
+        "log_negotiations",
+        "ignore_agent_exceptions",
+        "ignore_contract_execution_exceptions",
+        "ignore_simulation_exceptions",
+        "ignore_negotiation_exceptions",
+    ):
+        if k in cnfg2:
+            cnfg[k] = cnfg2[k]
     for _p in cnfg["profiles"]:  # type: ignore
         _p.costs = np.asarray(_p.costs)  # type: ignore
     if "info" not in cnfg.keys():  # type: ignore
@@ -859,17 +872,33 @@ def anac_oneshot_world_generator(*, year, **kwargs):
     # cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
     # for k in ("n_agents_per_process","n_processes"):
     #     del kwargs["world_params"][k]
+    kwargs["world_params"]["random_agent_types"] = False
     cnfg = kwargs["world_params"].pop("__exact_params")
+    if "random_agent_types" in cnfg:
+        cnfg["random_agent_types"] = False
     cnfg = deserialize(cnfg)
     context = kwargs["world_params"].pop("__context", None)
-    kwargs["world_params"]["random_agent_types"] = False
     cls = get_class(f"scml.oneshot.world.SCML{int(year)}OneShotWorld")
     if context is None:
         cnfg2 = cls.generate(**kwargs["world_params"])
     else:
         cnfg2 = deserialize(context).generate(cls, params=kwargs["world_params"])
-    for k in ("agent_types", "agent_params", "name"):
-        cnfg[k] = cnfg2[k]
+    assert isinstance(cnfg, dict)
+    assert isinstance(cnfg2, dict)
+    for k in (
+        "agent_types",
+        "agent_params",
+        "name",
+        "log_folder",
+        "log_ufuns",
+        "log_negotiations",
+        "ignore_agent_exceptions",
+        "ignore_contract_execution_exceptions",
+        "ignore_simulation_exceptions",
+        "ignore_negotiation_exceptions",
+    ):
+        if k in cnfg2:
+            cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
     cnfg["info"]["is_default"] = kwargs["is_default"]
@@ -901,8 +930,22 @@ def anac_std_world_generator(*, year, **kwargs):
         cnfg2 = cls.generate(**kwargs["world_params"])
     else:
         cnfg2 = deserialize(context).generate(cls, params=kwargs["world_params"])
-    for k in ("agent_types", "agent_params", "name"):
-        cnfg[k] = cnfg2[k]
+    assert isinstance(cnfg, dict)
+    assert isinstance(cnfg2, dict)
+    for k in (
+        "agent_types",
+        "agent_params",
+        "name",
+        "log_folder",
+        "log_ufuns",
+        "log_negotiations",
+        "ignore_agent_exceptions",
+        "ignore_contract_execution_exceptions",
+        "ignore_simulation_exceptions",
+        "ignore_negotiation_exceptions",
+    ):
+        if k in cnfg2:
+            cnfg[k] = cnfg2[k]
     if "info" not in cnfg.keys():
         cnfg["info"] = dict()
     cnfg["info"]["is_default"] = kwargs["is_default"]
