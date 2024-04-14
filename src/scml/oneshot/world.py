@@ -1616,7 +1616,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
 
         if stage == 0:
             self._update_exogenous(s)
-
             # publish public information
             # --------------------------
             if self.publish_trading_prices:
@@ -1625,7 +1624,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     value=self.trading_prices,
                     key=str(self.current_step),
                 )
-            if self.publish_exogenous_summary:
                 q, p = np.zeros(self.n_products), np.zeros(self.n_products)
                 for contract in self.exogenous_contracts[s]:
                     product = contract.annotation["product"]
@@ -1636,6 +1634,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     q[product] += quantity
                     p[product] += quantity * unit_price
                 self.exogenous_contracts_summary = [(a, b) for a, b in zip(q, p)]
+            if self.publish_exogenous_summary:
                 self.bulletin_board.record(
                     "exogenous_contracts_summary",
                     value=self.exogenous_contracts_summary,
@@ -1795,7 +1794,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
 
         # Clean negotiation details
         # -------------------------
-        # self._current_negotiations = []
         self._agent_negotiations = dict(
             zip(
                 [_ for _ in self.agents.keys()],
