@@ -157,8 +157,15 @@ class SatisficerAgent(SCML2020Agent):
         if prices is None:
             prices = awi.catalog_prices
 
-        available_input = int(awi.current_inventory[awi.my_input_product])
-        available_output = int(awi.current_inventory[awi.my_output_product])
+        if 0 <= awi.my_input_product < len(awi.current_inventory):
+            available_input = int(awi.current_inventory[awi.my_input_product])
+        else:
+            available_input = 0
+
+        if 0 <= awi.my_output_product < len(awi.current_inventory):
+            available_output = int(awi.current_inventory[awi.my_output_product])
+        else:
+            available_output = 0
 
         # find the time of first and last allowed sale and supply days
         first_supply = max(s, level)

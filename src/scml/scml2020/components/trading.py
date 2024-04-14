@@ -86,7 +86,14 @@ class TradingStrategy:
         if s > n - 2:
             return
         inventory = awi.current_inventory
-        n_in, n_out = inventory[awi.my_input_product], inventory[awi.my_output_product]
+        if 0 <= awi.my_input_product < len(inventory):
+            n_in = inventory[awi.my_input_product]
+        else:
+            n_in = 0
+        if 0 <= awi.my_output_product < len(inventory):
+            n_out = inventory[awi.my_output_product]
+        else:
+            n_out = 0
         # first_layer = self.awi.my_input_product <= 0
         # if first_layer:
         #     self.outputs_needed[s + 1] += n_out + n_in
