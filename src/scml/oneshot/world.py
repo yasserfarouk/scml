@@ -2306,28 +2306,31 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             req_id=req_id,
             annotation=annotation,
         )
-        if result:
-            if is_buy:
-                buyer, seller = agent.id, [_ for _ in partners if _ != agent.id][0]
-            else:
-                seller, buyer = agent.id, [_ for _ in partners if _ != agent.id][0]
-            info = NegotiationDetails(
-                seller=seller,
-                buyer=buyer,
-                nmi=result.mechanism.nmi,  # type: ignore
-                product=product,
-            )
-            if self._debug:
-                assert result.mechanism is not None
-                assert (
-                    buyer in self.agents[seller].awi.my_consumers  # type: ignore
-                ), f"{seller=}, {buyer=}"
-                assert (
-                    seller in self.agents[buyer].awi.my_suppliers  # type: ignore
-                ), f"{seller=}, {buyer=}"
-            # self._current_negotiations.append(info)
-            self._agent_negotiations[seller]["sell"][buyer] = info
-            self._agent_negotiations[buyer]["buy"][seller] = info
+        # signal failure if the request is rejected
+        if not result:
+            return result
+        partner_ = [_ for _ in partners if _ != agent.id][0]
+        if is_buy:
+            buyer, seller = agent.id, partner_
+        else:
+            seller, buyer = agent.id, partner_
+        assert result.mechanism is not None
+        info = NegotiationDetails(
+            seller=seller,
+            buyer=buyer,
+            nmi=result.mechanism.nmi,
+            product=product,
+        )
+        if self._debug:
+            assert (
+                buyer in self.agents[seller].awi.my_consumers  # type: ignore
+            ), f"{seller=}, {buyer=}"
+            assert (
+                seller in self.agents[buyer].awi.my_suppliers  # type: ignore
+            ), f"{seller=}, {buyer=}"
+        # self._current_negotiations.append(info)
+        self._agent_negotiations[seller]["sell"][buyer] = info
+        self._agent_negotiations[buyer]["buy"][seller] = info
         return result
 
     def _make_issues(
