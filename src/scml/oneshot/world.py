@@ -1763,7 +1763,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             # ================
             for aid, a in self.agents.items():
                 if hasattr(a, "reset"):
-                    a.reset()  # type: ignore
+                    a.reset()
 
             # request all negotiations
             # ========================

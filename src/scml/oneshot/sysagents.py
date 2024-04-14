@@ -214,7 +214,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if self.awi._world._debug:
             self._negs_done = dict()
         self.awi._reset_sales_and_supplies()
-        self._obj.reset()
+        self.reset()
         if hasattr(self._obj, "before_step"):
             self._obj.before_step()
 
@@ -222,7 +222,6 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if self.awi._world._debug:
             self._negs_done = dict()
         self._obj.step()
-        self._obj.reset()
 
     def to_dict(self):
         return {
