@@ -1,4 +1,5 @@
 """The base class agent needed for all SCML agents."""
+
 import itertools
 import math
 from abc import abstractmethod
@@ -68,6 +69,10 @@ class SCML2019Agent(Agent):
     def awi(self, awi: "SCMLAWI"):
         """Sets the AWI. Not to be used by agents. Only used by the world simulation itself."""
         self._awi = awi
+
+    def reset(self):
+        # only needed for compatibility with oneshot
+        pass
 
     def init_(self):
         """The initialization function called by the world directly.

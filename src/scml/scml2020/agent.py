@@ -1,4 +1,5 @@
-"""Implements the world class for the SCML2020 world """
+"""Implements the world class for the SCML2020 world"""
+
 from collections import defaultdict
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -35,6 +36,10 @@ __all__ = [
 
 class SCML2020Agent(Agent):
     """Base class for all SCML2020 agents (factory managers)"""
+
+    def reset(self):
+        # only needed for compatibility with oneshot
+        pass
 
     def init(self):
         pass

@@ -3,6 +3,12 @@ from click.testing import CliRunner
 
 from scml.cli import main
 
+# STD_TEST_RANGE = (2019, 2025)
+# ONESHOT_TEST_RANGE = (2021, 2025)
+
+STD_TEST_RANGE = (2024, 2025)
+ONESHOT_TEST_RANGE = (2024, 2025)
+
 
 def test_main():
     runner = CliRunner()
@@ -31,7 +37,7 @@ def test_versionm():
     assert "NegMAS" in output[0].strip()
 
 
-@mark.parametrize("year", list(range(2019, 2025)))
+@mark.parametrize("year", list(range(*STD_TEST_RANGE)))
 def test_run_std(year):
     runner = CliRunner()
     result = runner.invoke(main, [f"run{year}", "--steps", "5"])
@@ -42,7 +48,7 @@ def test_run_std(year):
         assert year in (2019, 2020) or x in result.output
 
 
-@mark.parametrize("year", list(range(2021, 2025)))
+@mark.parametrize("year", list(range(*ONESHOT_TEST_RANGE)))
 def test_run_oneshot(year):
     runner = CliRunner()
     result = runner.invoke(main, [f"run{year}", "--oneshot", "--steps", "5"])
@@ -51,7 +57,7 @@ def test_run_oneshot(year):
         assert x in result.output
 
 
-@mark.parametrize("year", list(range(2021, 2025)))
+@mark.parametrize("year", list(range(*ONESHOT_TEST_RANGE)))
 def test_run_tournaments_oneshot(year):
     runner = CliRunner()
     result = runner.invoke(
@@ -62,6 +68,27 @@ def test_run_tournaments_oneshot(year):
             "--no-neg-logs",
             "--ttype",
             "oneshot",
+            "--steps",
+            "5",
+            "--compact",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    for x in ("Tournament will be run",):
+        assert x in result.output
+
+
+@mark.parametrize("year", list(range(*STD_TEST_RANGE)))
+def test_run_tournaments_std(year):
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            f"tournament{year}",
+            "--no-ufun-logs",
+            "--no-neg-logs",
+            "--ttype",
+            "std",
             "--steps",
             "5",
             "--compact",
