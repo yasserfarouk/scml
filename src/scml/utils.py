@@ -115,7 +115,7 @@ DefaultAgents2023 = (
 )
 
 
-DefaultAgentsOneShot2023 = (
+DefaultAgentsOneShot2022 = DefaultAgentsOneShot2023 = (
     GreedyOneShotAgent,
     SingleAgreementAspirationAgent,
     SyncRandomOneShotAgent,
