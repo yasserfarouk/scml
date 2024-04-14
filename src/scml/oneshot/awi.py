@@ -613,12 +613,12 @@ class OneShotAWI(AgentWorldInterface):
         Returns:
             A list of tuples giving the total quantity and total price of
             all revealed exogenous contracts of all products at the current
-            step.
+            step. Will be empty if the world has "publish_exogenous_summary==False"
         """
-        return (  # type: ignore
+        return (
             self._world.exogenous_contracts_summary
             if self._world.publish_exogenous_summary
-            else None
+            else []
         )
 
     # Other agents' information
