@@ -1892,6 +1892,13 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             self._stats[f"unit_price_{p}"].append(
                 self._real_price[p, self.current_step + 1]
             )
+            if self.exogenous_contracts_summary:
+                self._stats[f"exogenous_quantity_{p}"].append(
+                    self.exogenous_contracts_summary[p][0]
+                )
+                self._stats[f"exogenous_price_{p}"].append(
+                    self.exogenous_contracts_summary[p][1]
+                )
         for aid in self.agents.keys():
             if is_system_agent(aid):
                 continue
