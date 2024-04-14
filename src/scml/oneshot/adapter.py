@@ -16,6 +16,9 @@ class OneShotSCML2020Adapter(DefaultOneShotAdapter):
         super().__init__(*args, **kwargs)
         self._obj: SCML2020Agent  # type: ignore
 
+    def reset(self):
+        pass
+
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
 
