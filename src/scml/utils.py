@@ -73,8 +73,10 @@ __all__ = [
     "anac2024_std",
 ]
 
-ONESHOT_TIMEOUT = 60 * 30
-ONESHOT_NEG_TIMEOUT = 120
+ONESHOT_TIMEOUT = 60 * 15
+ONESHOT_NEG_TIMEOUT = 60
+ONESHOT_NEG_HIDDEN_TIMEOUT = 60
+NEG_STEP_TIME_LIMIT = 20
 
 FORCED_LOGS_FRACTION = 1.0
 
@@ -361,8 +363,9 @@ def anac_config_generator(
             agent_params=manager_params,
             time_limit=ONESHOT_TIMEOUT,
             neg_time_limit=ONESHOT_NEG_TIMEOUT,
+            neg_hidden_time_limit=ONESHOT_NEG_HIDDEN_TIMEOUT,
             neg_n_steps=20,
-            neg_step_time_limit=10,
+            neg_step_time_limit=NEG_STEP_TIME_LIMIT,
             negotiation_speed=21,
             start_negotiations_immediately=False,
             agent_processes=agent_processes,
@@ -380,8 +383,9 @@ def anac_config_generator(
             agent_params=manager_params,
             time_limit=ONESHOT_TIMEOUT,
             neg_time_limit=ONESHOT_NEG_TIMEOUT,
+            neg_hidden_time_limit=ONESHOT_NEG_HIDDEN_TIMEOUT,
             neg_n_steps=20,
-            neg_step_time_limit=10,
+            neg_step_time_limit=NEG_STEP_TIME_LIMIT,
             negotiation_speed=21,
             spot_market_global_loss=0.2,
             interest_rate=0.08,
