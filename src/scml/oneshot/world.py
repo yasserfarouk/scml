@@ -1844,7 +1844,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             "nullified_at": contract.nullified_at,
             "concluded_at": contract.concluded_at,
             "signatures": "|".join(str(_) for _ in contract.signatures),
-            "issues": contract.issues if not self.compact else None,
+            "issues": contract.issues,
             "seller": contract.annotation["seller"],
             "buyer": contract.annotation["buyer"],
             "partners": contract.partners,
