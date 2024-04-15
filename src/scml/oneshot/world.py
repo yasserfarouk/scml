@@ -824,6 +824,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
     def extra_neg_info(self, info: NegotiationInfo) -> dict[str, Any]:
         first = info.partners[0]
         last = info.partners[1]
+        product = info.annotation["product"]
         results = dict()
         results["product"] = info.annotation["product"]
         results["exogenous_quantity0"] = (
@@ -844,28 +845,43 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             if last.awi.is_last_level
             else 0
         )
-        results["exogenous_price0"] = (
-            0
-            if not first
-            else first.awi.current_exogenous_input_price
-            if first.awi.is_first_level
-            else first.awi.current_exogenous_output_price
-            if first.awi.is_last_level
+        results["exogenous_unit_price0"] = (
+            (
+                (
+                    0
+                    if not first
+                    else first.awi.current_exogenous_input_price
+                    if first.awi.is_first_level
+                    else first.awi.current_exogenous_output_price
+                    if first.awi.is_last_level
+                    else 0
+                )
+                / results["exogenous_quantity0"]
+            )
+            if results["exogenous_quantity0"]
             else 0
         )
-        results["exogenous_price1"] = (
-            0
-            if not last
-            else last.awi.current_exogenous_input_price
-            if last.awi.is_first_level
-            else last.awi.current_exogenous_output_price
-            if last.awi.is_last_level
+        results["exogenous_unit_price1"] = (
+            (
+                (
+                    0
+                    if not last
+                    else last.awi.current_exogenous_input_price
+                    if last.awi.is_first_level
+                    else last.awi.current_exogenous_output_price
+                    if last.awi.is_last_level
+                    else 0
+                )
+                / results["exogenous_quantity1"]
+            )
+            if results["exogenous_quantity1"]
             else 0
         )
         results["needed_sales0"] = first.awi.needed_sales if first else 0
         results["needed_sales1"] = last.awi.needed_sales if first else 0
         results["needed_supplies0"] = first.awi.needed_supplies if first else 0
         results["needed_supplies1"] = last.awi.needed_supplies if first else 0
+        results["trading_price"] = self.trading_prices[product]
         return results
 
     @classmethod
@@ -1994,11 +2010,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                 self._real_price[p, self.current_step + 1]
             )
             if self.exogenous_contracts_summary:
-                self._stats[f"exogenous_quantity_{p}"].append(
-                    self.exogenous_contracts_summary[p][0]
-                )
-                self._stats[f"exogenous_price_{p}"].append(
-                    self.exogenous_contracts_summary[p][1]
+                qq = self.exogenous_contracts_summary[p][0]
+                self._stats[f"exogenous_quantity_{p}"].append(qq)
+                self._stats[f"exogenous_unit_price_{p}"].append(
+                    (self.exogenous_contracts_summary[p][1] / qq) if qq else 0.0
                 )
         for aid in self.agents.keys():
             if is_system_agent(aid):
@@ -2389,6 +2404,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             "buyer": agent_id if is_buy else partner,
             "seller": partner if is_buy else agent_id,
             "caller": agent_id,
+            "sim_step": self.current_step,
         }
         issues = self._current_issues[product]
         partners = [agent_id, partner]
