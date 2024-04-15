@@ -101,7 +101,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         result = self._obj.on_negotiation_failure(
             partners,
             annotation,
-            mechanism,
+            mechanism,  # type: ignore
             state,  # type: ignore
         )
         # for k in ("sell", "buy"):
@@ -180,7 +180,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             raise ValueError(
                 f"{self.id} received a  contract for which it is not a buyer nor a seller: {contract=}"
             )
-        result = self._obj.on_negotiation_success(contract, mechanism)
+        result = self._obj.on_negotiation_success(contract, mechanism)  # type: ignore
         # for k in ("sell", "buy"):
         #     self.awi._world._agent_negotiations[self._obj.id][k].pop(mechanism.id, None)
         return result
@@ -210,11 +210,17 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         if hasattr(self._obj, "reset"):
             self._obj.reset()
 
+    def is_clean(self) -> bool:
+        # only needed for compatibility with oneshot
+        if not hasattr(self._obj, "is_clean"):
+            return True
+        return self._obj.is_clean()
+
     def before_step(self):
         if self.awi._world._debug:
             self._negs_done = dict()
         self.awi._reset_sales_and_supplies()
-        self.reset()
+        # self.reset()
         if hasattr(self._obj, "before_step"):
             self._obj.before_step()
 

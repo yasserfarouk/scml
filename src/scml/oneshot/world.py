@@ -1762,8 +1762,10 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             # Reset all agents
             # ================
             for aid, a in self.agents.items():
-                if hasattr(a, "reset"):
-                    a.reset()
+                a.reset()
+                assert (
+                    a.is_clean()
+                ), f"Agent {aid} has unclean state: Negotiations: {a._negotiations}"
 
             # request all negotiations
             # ========================
@@ -2511,8 +2513,11 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             controllers[aid] = a.adapted_object  # type: ignore
             a.adapted_object.make_ufun(add_exogenous=True)  # type: ignore
 
+            assert (
+                a.is_clean()
+            ), f"Agent {aid} has unclean state: Negotiations: {a._negotiations}"
+
         # initialize negotiation details
-        # self._current_negotiations = []
         self._agent_negotiations = dict(
             zip(
                 [_ for _ in self.agents.keys()],

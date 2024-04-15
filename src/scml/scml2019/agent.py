@@ -74,6 +74,10 @@ class SCML2019Agent(Agent):
         # only needed for compatibility with oneshot
         pass
 
+    def is_clean(self) -> bool:
+        # only needed for compatibility with oneshot
+        return True
+
     def init_(self):
         """The initialization function called by the world directly.
 

@@ -19,6 +19,10 @@ class OneShotSCML2020Adapter(DefaultOneShotAdapter):
     def reset(self):
         pass
 
+    def is_clean(self) -> bool:
+        # only needed for compatibility with oneshot
+        return True
+
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         return self._obj.on_negotiation_failure(partners, annotation, mechanism, state)
 
