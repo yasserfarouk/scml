@@ -71,6 +71,9 @@ def test_run_tournaments_oneshot(year):
             "--steps",
             "5",
             "--compact",
+            "--serial",
+            "--configs",
+            "2",
         ],
     )
     assert result.exit_code == 0, result.output
@@ -92,6 +95,9 @@ def test_run_tournaments_std(year):
             "--steps",
             "5",
             "--compact",
+            "--serial",
+            "--configs",
+            "2",
         ],
     )
     assert result.exit_code == 0, result.output

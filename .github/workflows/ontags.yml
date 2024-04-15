@@ -1,77 +1,68 @@
 name: CI (On-Tags)
-
 on:
-  push:
-    tags:
-      - '*'
-
+    push:
+        tags:
+            - "*"
 jobs:
-  tests:
-    name: "Python ${{ matrix.python-version }}"
-    runs-on: "ubuntu-latest"
-    env:
-      USING_COVERAGE: '3.12'
-
-    strategy:
-      matrix:
-        python-version: ['3.12']
-
-    steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: "${{ matrix.python-version }}"
-      - name: "Install dependencies"
-        run: |
-          set -xe
-          python -VV
-          python -m site
-          python -m pip install --upgrade pip setuptools wheel pytest
-          python -m pip install --upgrade  virtualenv
-          python -m pip install -r requirements.txt
-          python -m pip install jupyter ipykernel
-          python -m ipykernel install --user --name=scml
-      - name: "Run pytest for ${{ matrix.python-version }}"
-        run: "python -m pytest tests"
-
-  package:
-    name: "Build & verify package"
-    runs-on: "ubuntu-latest"
-
-    steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: '3.12'
-
-      - name: "Install pep517 and twine"
-        run: "python -m pip install --upgrade pip setuptools wheel pytest twine"
-      - name: "Build package"
-        run: "python setup.py sdist bdist_wheel"
-      - name: "List result"
-        run: "ls -l dist"
-      - name: "Check long_description"
-        run: "python -m twine check dist/*"
-
-  install-dev:
-    strategy:
-      matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-
-    name: "Verify dev env"
-    runs-on: "${{ matrix.os }}"
-
-    steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: '3.12'
-      - name: "Install in dev mode"
-        run: |
-          python -m pip install --upgrade pip setuptools wheel pytest
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-dev.txt
-          python -m pip install -r docs/requirements.txt
-          python -m pip install -e .
-      - name: "Import package"
-        run: "python -c 'import scml; print(scml.__version__)'"
+    tests:
+        name: "Python ${{ matrix.python-version }}"
+        runs-on: "ubuntu-latest"
+        env:
+            USING_COVERAGE: "3.12"
+        strategy:
+            matrix:
+                python-version: ["3.12"]
+        steps:
+            - uses: "actions/checkout@v2"
+            - uses: "actions/setup-python@v2"
+              with:
+                  python-version: "${{ matrix.python-version }}"
+            - name: "Install dependencies"
+              run: |
+                  set -xe
+                  python -VV
+                  python -m site
+                  python -m pip install --upgrade pip setuptools wheel pytest
+                  python -m pip install --upgrade  virtualenv
+                  python -m pip install -r requirements.txt
+                  python -m pip install -e .
+                  python -m pip install jupyter ipykernel
+                  python -m ipykernel install --user --name=scml
+            - name: "Run pytest for ${{ matrix.python-version }}"
+              run: "python -m pytest tests"
+    package:
+        name: "Build & verify package"
+        runs-on: "ubuntu-latest"
+        steps:
+            - uses: "actions/checkout@v2"
+            - uses: "actions/setup-python@v2"
+              with:
+                  python-version: "3.12"
+            - name: "Install pep517 and twine"
+              run: "python -m pip install --upgrade pip setuptools wheel pytest twine"
+            - name: "Build package"
+              run: "python setup.py sdist bdist_wheel"
+            - name: "List result"
+              run: "ls -l dist"
+            - name: "Check long_description"
+              run: "python -m twine check dist/*"
+    install-dev:
+        strategy:
+            matrix:
+                os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        name: "Verify dev env"
+        runs-on: "${{ matrix.os }}"
+        steps:
+            - uses: "actions/checkout@v2"
+            - uses: "actions/setup-python@v2"
+              with:
+                  python-version: "3.12"
+            - name: "Install in dev mode"
+              run: |
+                  python -m pip install --upgrade pip setuptools wheel pytest
+                  python -m pip install -r requirements.txt
+                  python -m pip install -r requirements-dev.txt
+                  python -m pip install -r docs/requirements.txt
+                  python -m pip install -e .
+            - name: "Import package"
+              run: "python -c 'import scml; print(scml.__version__)'"
