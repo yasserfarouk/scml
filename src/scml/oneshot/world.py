@@ -1784,6 +1784,15 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     a.is_clean()
                 ), f"Agent {aid} has unclean state: Negotiations: {a._negotiations}"
 
+            # # Clean negotiation details
+            # # -------------------------
+            # self._agent_negotiations = dict(
+            #     zip(
+            #         [_ for _ in self.agents.keys()],
+            #         [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
+            #     )
+            # )
+
             # request all negotiations
             # ========================
             self._make_negotiations()
@@ -1911,14 +1920,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     continue
                 self.add_financial_report(agent, reports_agent, reports_time)  # type: ignore
 
-        # Clean negotiation details
-        # -------------------------
-        self._agent_negotiations = dict(
-            zip(
-                [_ for _ in self.agents.keys()],
-                [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
-            )
-        )
+        # # Clean negotiation details
+        # # -------------------------
+        # self._agent_negotiations = dict(
+        #     zip(
+        #         [_ for _ in self.agents.keys()],
+        #         [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
+        #     )
+        # )
 
     def _breach_record(
         self,
@@ -2514,6 +2523,14 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
     def _make_negotiations(self):
         # consumer_starts = random.random() > 0.5
 
+        # initialize negotiation details
+        self._agent_negotiations = dict(
+            zip(
+                [_ for _ in self.agents.keys()],
+                [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
+            )
+        )
+
         if self._verbose:
             print(f"{self.id} ({self.current_step}): Making Negotiations")
 
@@ -2533,14 +2550,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             assert (
                 a.is_clean()
             ), f"Agent {aid} has unclean state: Negotiations: {a._negotiations}"
-
-        # initialize negotiation details
-        self._agent_negotiations = dict(
-            zip(
-                [_ for _ in self.agents.keys()],
-                [dict(buy=dict(), sell=dict()) for _ in self.agents.keys()],
-            )
-        )
 
         expected_negs = set()
         if self._debug:

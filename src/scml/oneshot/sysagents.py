@@ -62,7 +62,14 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             if self.ufun is not None:
                 self.ufun.register_supply_failure(annotation["seller"])
             try:
-                self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+                # print(
+                #     f"{self.awi.current_step}: Popping {annotation['seller']} from buy for {self.id}: {partners=}, {annotation=}"
+                # )
+
+                if annotation["sim_step"] == self.awi.current_step:
+                    self.awi.current_negotiation_details["buy"].pop(
+                        annotation["seller"]
+                    )
             except Exception as e:
                 if self.awi._world._debug:
                     raise AssertionError(
@@ -84,7 +91,13 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
             ):
                 pass
             try:
-                self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
+                # print(
+                #     f"{self.awi.current_step}: Popping {annotation['buyer']} from sell for {self.id}: {partners=}, {annotation=}"
+                # )
+                if annotation["sim_step"] == self.awi.current_step:
+                    self.awi.current_negotiation_details["sell"].pop(
+                        annotation["buyer"]
+                    )
             except Exception as e:
                 if self.awi._world._debug:
                     raise AssertionError(
@@ -142,7 +155,13 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     agreement["time"],
                 )
             try:
-                self.awi.current_negotiation_details["buy"].pop(annotation["seller"])
+                # print(
+                #     f"{self.awi.current_step}: Popping {annotation['seller']} from buy for {self.id}: Contract {contract.partners=}, {annotation=}"
+                # )
+                if annotation["sim_step"] == self.awi.current_step:
+                    self.awi.current_negotiation_details["buy"].pop(
+                        annotation["seller"]
+                    )
             except Exception as e:
                 if self.awi._world._debug:
                     raise AssertionError(
@@ -166,7 +185,13 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
                     agreement["time"],
                 )
             try:
-                self.awi.current_negotiation_details["sell"].pop(annotation["buyer"])
+                # print(
+                #     f"{self.awi.current_step}: Popping {annotation['buyer']} from sell for {self.id}: Contract {contract.partners=}, {annotation=}"
+                # )
+                if annotation["sim_step"] == self.awi.current_step:
+                    self.awi.current_negotiation_details["sell"].pop(
+                        annotation["buyer"]
+                    )
             except Exception as e:
                 if self.awi._world._debug:
                     raise AssertionError(
@@ -269,6 +294,7 @@ class DefaultOneShotAdapter(Adapter, OneShotUFunCreatorMixin):
         return None
 
     def on_neg_request_rejected(self, req_id: str, by: Optional[list[str]]):
+        print(f"{self.awi.current_step}: {self.id} had a rejected request from {by}")
         pass
 
     def on_neg_request_accepted(

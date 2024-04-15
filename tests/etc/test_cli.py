@@ -3,11 +3,11 @@ from click.testing import CliRunner
 
 from scml.cli import main
 
-STD_TEST_RANGE = (2019, 2025)
-ONESHOT_TEST_RANGE = (2021, 2025)
+# STD_TEST_RANGE = (2019, 2025)
+# ONESHOT_TEST_RANGE = (2021, 2025)
 
-# STD_TEST_RANGE = (2024, 2025)
-# ONESHOT_TEST_RANGE = (2024, 2025)
+STD_TEST_RANGE = (2024, 2025)
+ONESHOT_TEST_RANGE = (2024, 2025)
 
 
 def test_main():
