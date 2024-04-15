@@ -8,6 +8,7 @@ jobs:
     tests:
         name: "Python ${{ matrix.python-version }}"
         runs-on: "ubuntu-latest"
+        timeout-minutes: 120
         env:
             USING_COVERAGE: "3.12"
         strategy:
@@ -34,6 +35,7 @@ jobs:
     package:
         name: "Build & verify package"
         runs-on: "ubuntu-latest"
+        timeout-minutes: 60
         steps:
             - uses: "actions/checkout@v2"
             - uses: "actions/setup-python@v2"

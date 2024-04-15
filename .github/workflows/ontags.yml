@@ -7,6 +7,7 @@ jobs:
     tests:
         name: "Python ${{ matrix.python-version }}"
         runs-on: "ubuntu-latest"
+        timeout-minutes: 60
         env:
             USING_COVERAGE: "3.12"
         strategy:
