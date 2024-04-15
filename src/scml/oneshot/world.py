@@ -721,6 +721,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     ),
                     "is_buy": True,
                     "product": c.product,
+                    "sim_step": self.current_step,
                 },
             )
             self.exogenous_contracts[c.time].append(contract)
