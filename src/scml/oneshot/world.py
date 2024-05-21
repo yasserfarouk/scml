@@ -2510,9 +2510,12 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             )
             assert unit_price[0] + 1 == unit_price[1] or unit_price[1] == 1
         time = (
-            self.current_step,
-            self.current_step
-            + (self.horizon if not self.one_time_per_negotiation else 0),
+            min(self.current_step, self.n_steps - 1),
+            min(
+                self.current_step
+                + (self.horizon if not self.one_time_per_negotiation else 0),
+                self.n_steps - 1,
+            ),
         )
         quantity = (
             int(not self.allow_zero_quantity),
