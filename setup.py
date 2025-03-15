@@ -63,7 +63,7 @@ setup(
         "click",
         "pytest",
         "hypothesis",
-        "negmas>=0.10.23",
+        "negmas>=0.11.2",
         "joblib",
         "jupyter",
         "gif",
