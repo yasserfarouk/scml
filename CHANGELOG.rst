@@ -1,6 +1,39 @@
 Changelog
 =========
 
+0.7.6 (2025.03.16)
+------------------
+
+* Compatibility with negmas 0.11.2
+* Guaranteeing all time ranges are valid in oneshot
+* Upgrading GitHub actions to avoid node 16
+* Adding timeout to all github actions
+* Getting CLI tests to pass on CI
+* Synchrony between AWI and counter_all inputs Ensure and test that offers and states inputs to counter_all() are the same as what is accessible from the AWI through self.awi.current_offers, self.awi.current_states. Also check that self.awi.current_amis has the same keys as the other two.
+* Saving exogenous unit-price and trading in details
+* Saving sim_step in annotations
+* Using is_clean from base controller in negmas
+* Getting all CLI commands to avoid using adapters
+* Getting some old SCML2020 agents to work in oneshot
+* Avoiding double-resetting introduced recently
+* Allowing 2020 agents to run in oneshot again. This is very brittle and should be removed in the future
+* Avoiding test failures in SCML 2020 and 2019
+* Setting timing limits for oneshot and standard
+
+    * 15 min simulation time-limit
+    * 20 seconds step time-limit
+    * 1 min negotiation time-limit
+
+* Better handling of exact-config params in generator
+* Adding more details to logs (needs negmas>=0.10.24)
+* Make AWI.exogenous_summary always work
+* Slightly better formatting
+* Adding exogenous to stats
+* Always keeping issues in contracts
+* Properly resetting agents at the end of each step
+* Always return a list from exogenous_summary in AWI
+* bugfix: Correcting negotiation stats in CLI
+
 0.7.5 (2024.04.07)
 ------------------
 
