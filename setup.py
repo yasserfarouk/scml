@@ -61,6 +61,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "click",
+        "click-aliases",
         "pytest",
         "hypothesis",
         "negmas>=0.11.2",

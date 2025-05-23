@@ -25,6 +25,7 @@ from negmas.tournaments import TournamentResults
 from rich import print
 from rich.progress import track
 from tabulate import tabulate
+from click_aliases import ClickAliasedGroup
 
 import scml
 from scml.utils import DefaultAgents, DefaultAgents2022, DefaultAgentsOneShot2022
@@ -218,7 +219,7 @@ click.option = partial(click.option, show_default=True)
 
 
 @gui_option
-@click.group()
+@click.group(cls=ClickAliasedGroup)
 def main():
     pass
 
@@ -848,15 +849,15 @@ def run2020(
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
             f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
-            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+            f" were signed ({n_exogenous_signed / n_exogenous if n_exogenous != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
-            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+            f" were signed ({n_negotiated_signed / n_negotiated if n_negotiated != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
-            f" were signed ({1-world.cancellation_rate:0.1%})"
+            f" were signed ({1 - world.cancellation_rate:0.1%})"
         )
         print_and_log(
             f"Executed: {world.contract_execution_fraction:0.1%}"
@@ -1189,15 +1190,15 @@ def run2021(
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
             f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
-            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+            f" were signed ({n_exogenous_signed / n_exogenous if n_exogenous != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
-            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+            f" were signed ({n_negotiated_signed / n_negotiated if n_negotiated != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
-            f" were signed ({1-world.cancellation_rate:0.1%})"
+            f" were signed ({1 - world.cancellation_rate:0.1%})"
         )
         print_and_log(
             f"Executed: {world.contract_execution_fraction:0.1%}"
@@ -1527,15 +1528,15 @@ def run2022(
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
             f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
-            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+            f" were signed ({n_exogenous_signed / n_exogenous if n_exogenous != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
-            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+            f" were signed ({n_negotiated_signed / n_negotiated if n_negotiated != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
-            f" were signed ({1-world.cancellation_rate:0.1%})"
+            f" were signed ({1 - world.cancellation_rate:0.1%})"
         )
         print_and_log(
             f"Executed: {world.contract_execution_fraction:0.1%}"
@@ -1865,15 +1866,15 @@ def run2023(
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
             f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
-            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+            f" were signed ({n_exogenous_signed / n_exogenous if n_exogenous != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
-            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+            f" were signed ({n_negotiated_signed / n_negotiated if n_negotiated != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
-            f" were signed ({1-world.cancellation_rate:0.1%})"
+            f" were signed ({1 - world.cancellation_rate:0.1%})"
         )
         print_and_log(
             f"Executed: {world.contract_execution_fraction:0.1%}"
@@ -1903,7 +1904,7 @@ def run2023(
         save_run_info(world.name, log_dir, "world")
 
 
-@main.command(help="Run an 2024 world simulation")  # type: ignore
+@main.command(aliases=["run2025"], help="Run an 2024/2025 world simulation")  # type: ignore
 @click.option("--steps", default=10, type=int, help="Number of steps.")
 @click.option(
     "--competitors",
@@ -2209,15 +2210,15 @@ def run2024(
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
             f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
-            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+            f" were signed ({n_exogenous_signed / n_exogenous if n_exogenous != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
-            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+            f" were signed ({n_negotiated_signed / n_negotiated if n_negotiated != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
-            f" were signed ({1-world.cancellation_rate:0.1%})"
+            f" were signed ({1 - world.cancellation_rate:0.1%})"
         )
         print_and_log(
             f"Executed: {world.contract_execution_fraction:0.1%}"
@@ -2264,7 +2265,7 @@ def run2024(
     "-s",
     default=10,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--ttype",
@@ -2550,7 +2551,7 @@ def tournament2019(
     "-s",
     default=10,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--ttype",
@@ -2830,7 +2831,7 @@ def tournament2020(
     "-s",
     default=10,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--ttype",
@@ -3135,7 +3136,7 @@ def tournament2021(
     "-s",
     default=10,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--ttype",
@@ -3429,7 +3430,7 @@ def tournament2022(
     "-s",
     default=10,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--ttype",
@@ -3723,7 +3724,7 @@ def tournament2023(
         save_run_info(name, Path(results.path), "tournament")
 
 
-@main.command(help="Runs an SCML2024 tournament")  # type: ignore
+@main.command(aliases=["tournament2025"], help="Runs an SCML2024/2025 tournament")  # type: ignore
 @click.option(
     "--name",
     "-n",
@@ -3735,7 +3736,7 @@ def tournament2023(
     "-s",
     default=10,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--ttype",
