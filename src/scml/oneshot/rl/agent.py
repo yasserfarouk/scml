@@ -92,9 +92,9 @@ class OneShotRLAgent(OneShotPolicy):
         self._valid_index = -1
         for a, o, i in aolist:
             if a.context.is_valid_awi(
-                self.awi, types=(type(self),), raise_on_failure=True
+                self.awi, types=(type(self),), raise_on_failure=False
             ) and o.context.is_valid_awi(
-                self.awi, types=(type(self),), raise_on_failure=True
+                self.awi, types=(type(self),), raise_on_failure=False
             ):
                 self._valid_index = i
                 break

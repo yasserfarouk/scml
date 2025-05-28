@@ -1668,7 +1668,9 @@ class LimitedPartnerNumbersContext(GeneralContext):
     ) -> list[str]:
         if types is None:
             types = self.placeholder_types
-        return [aid for aid, agent in world.agents.items() if isinobject(agent, types)]
+        return [
+            aid for aid, agent in world.agents.items() if isinobject(agent._obj, types)
+        ]
 
     def is_valid_world(  # type: ignore
         self,
@@ -1681,6 +1683,9 @@ class LimitedPartnerNumbersContext(GeneralContext):
         if types is None:
             types = self.placeholder_types
         agent_ids = self.find_test_agents(world, types)
+        assert (
+            not types or agent_ids
+        ), f"Found no agent IDs for types {types} ({agent_ids=})"
         n_processes = world.n_processes
         expected_level = self.level
         for aid in agent_ids:
@@ -1704,11 +1709,11 @@ class LimitedPartnerNumbersContext(GeneralContext):
             my_competitors = (
                 world.suppliers[my_level + 1]
                 if not is_last_level
-                else world.consumers[my_level - 1]
+                else world.suppliers[-1]
             )
             assert (
                 aid in my_competitors
-            ), f"{aid} not found in its competitors!! {my_competitors=}"
+            ), f"{aid} not found in its competitors!! {my_competitors=}. My level is {my_level}"
             my_competitors = [_ for _ in my_competitors if _ != aid]
             n_consumers, n_suppliers = len(my_consumers), len(my_suppliers)
             n_competitors = len(my_competitors)
