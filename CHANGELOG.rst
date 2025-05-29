@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.7.7 (2025.05.28)
+------------------
+
+* bugfix: Always loading first context OneshotRLAgent
+* Adding 2025 commands as aliases
+
+
 0.7.6 (2025.03.16)
 ------------------
 
