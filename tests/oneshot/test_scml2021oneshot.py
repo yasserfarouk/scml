@@ -19,6 +19,11 @@ from pytest import mark, raises
 import scml
 from scml.oneshot import (
     OneShotSingleAgreementAgent,
+    SCML2020OneShotWorld,
+    SCML2021OneShotWorld,
+    SCML2022OneShotWorld,
+    SCML2023OneShotWorld,
+    SCML2024OneShotWorld,
     builtin_agent_types,
 )
 from scml.oneshot.agent import (
@@ -32,22 +37,15 @@ from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE, is_system_agent
 from scml.oneshot.sysagents import DefaultOneShotAdapter
 from scml.oneshot.ufun import OneShotUFun
-from scml.oneshot import (
-    SCML2020OneShotWorld,
-    SCML2021OneShotWorld,
-    SCML2022OneShotWorld,
-    SCML2023OneShotWorld,
-    SCML2024OneShotWorld,
-)
 
 from ..switches import (
     SCML_ON_GITHUB,
-    DefaultOneShotWorld,
     SCML_TRY2020,
     SCML_TRY2021,
     SCML_TRY2022,
     SCML_TRY2023,
     SCML_TRY2024,
+    DefaultOneShotWorld,
 )
 
 random.seed(0)
@@ -72,17 +70,11 @@ class MyOneShotAgent(RandomOneShotAgent):
         offer = state.current_offer
         if offer is None:
             return ResponseType.REJECT_OFFER
-        assert (
-            negotiator_id in self.awi.my_consumers
-            or negotiator_id in self.awi.my_suppliers
-        ), (self.id, self.name, negotiator_id)
+        assert negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers, (self.id, self.name, negotiator_id)
         return super().respond(negotiator_id, state, source)
 
     def propose(self, negotiator_id, state):
-        assert (
-            negotiator_id in self.awi.my_consumers
-            or negotiator_id in self.awi.my_suppliers
-        ), (self.id, self.name, negotiator_id)
+        assert negotiator_id in self.awi.my_consumers or negotiator_id in self.awi.my_suppliers, (self.id, self.name, negotiator_id)
         return super().propose(negotiator_id, state)
 
 
@@ -108,25 +100,21 @@ def generate_world(
             **kwargs,
         )
     )
-    for s1, s2 in zip(world.suppliers[:-1], world.suppliers[1:]):
+    for s1, s2 in zip(world.suppliers[:-1], world.suppliers[1:], strict=False):
         assert len(set(s1).intersection(set(s2))) == 0
-    for s1, s2 in zip(world.consumers[:-1], world.consumers[1:]):
+    for s1, s2 in zip(world.consumers[:-1], world.consumers[1:], strict=False):
         assert len(set(s1).intersection(set(s2))) == 0
     for p in range(n_processes):
         assert len(world.suppliers[p + 1]) == n_agents_per_process
         assert len(world.consumers[p]) == n_agents_per_process
-    for a in world.agents.keys():
+    for a in world.agents:
         if is_system_agent(a):
             continue
         assert len(world.agent_inputs[a]) == 1
         assert len(world.agent_outputs[a]) == 1
         assert len(world.agent_processes[a]) == 1
-        assert len(world.agent_suppliers[a]) == (
-            n_agents_per_process if world.agent_inputs[a][0] != 0 else 1
-        )
-        assert len(world.agent_consumers[a]) == (
-            n_agents_per_process if world.agent_outputs[a][0] != n_processes else 1
-        )
+        assert len(world.agent_suppliers[a]) == (n_agents_per_process if world.agent_inputs[a][0] != 0 else 1)
+        assert len(world.agent_consumers[a]) == (n_agents_per_process if world.agent_outputs[a][0] != n_processes else 1)
     return world
 
 
@@ -158,9 +146,9 @@ def test_quantity_distribution(n_processes):
                     if is_system_agent(p):
                         continue
                     lines = world.agent_profiles[p].n_lines
-                    assert (
-                        lines >= c.agreement["quantity"] >= 0
-                    ), f"Contract: {str(c)} has negative or more quantity than n. lines {lines}\n{pformat(world.info)}"
+                    assert lines >= c.agreement["quantity"] >= 0, (
+                        f"Contract: {str(c)} has negative or more quantity than n. lines {lines}\n{pformat(world.info)}"
+                    )
 
 
 world_types = []
@@ -173,6 +161,7 @@ for op, w in zip(
         SCML2023OneShotWorld,
         SCML2024OneShotWorld,
     ),
+    strict=False,
 ):
     if op:
         world_types.append(w)
@@ -211,10 +200,7 @@ def test_can_run_with_a_single_agent_type(agent_type, world_type, n_processes):
 )
 @settings(deadline=300_000, max_examples=20)
 def test_can_run_with_a_multiple_agent_types(agent_types, n_processes):
-    if (
-        any(issubclass(_, OneShotSingleAgreementAgent) for _ in agent_types)
-        and n_processes > 2
-    ):
+    if any(issubclass(_, OneShotSingleAgreementAgent) for _ in agent_types) and n_processes > 2:
         return
     world = generate_world(
         agent_types,
@@ -260,14 +246,8 @@ def test_basic_awi_info_suppliers_consumers():
         assert awi.my_consumers == world.agent_consumers[aid]
         assert awi.my_suppliers == world.agent_suppliers[aid]
         input_product = awi.my_input_product
-        assert all(
-            _.endswith(str(input_product - 1)) or awi.is_system(_)
-            for _ in awi.my_suppliers
-        )
-        assert all(
-            _.endswith(str(input_product + 1)) or awi.is_system(_)
-            for _ in awi.my_consumers
-        )
+        assert all(_.endswith(str(input_product - 1)) or awi.is_system(_) for _ in awi.my_suppliers)
+        assert all(_.endswith(str(input_product + 1)) or awi.is_system(_) for _ in awi.my_consumers)
 
 
 def test_generate():
@@ -324,9 +304,7 @@ def test_graphs_lead_to_no_unknown_nodes():
 def test_ufun_min_max_in_world():
     for _ in range(20):
         world = DefaultOneShotWorld(
-            **DefaultOneShotWorld.generate(
-                agent_types=[RandomOneShotAgent], n_steps=10
-            ),
+            **DefaultOneShotWorld.generate(agent_types=[RandomOneShotAgent], n_steps=10),
             construct_graphs=False,
             compact=True,
             no_logs=True,
@@ -707,12 +685,7 @@ def test_builtin_agent_types():
     types = scml.oneshot.builtin_agent_types(False)
     assert len(strs) == len(types)
     assert len(strs) > 0
-    assert all(
-        [
-            get_full_type_name(a).split(".")[-1] == b.split(".")[-1]
-            for a, b in zip(types, strs)
-        ]
-    )
+    assert all(get_full_type_name(a).split(".")[-1] == b.split(".")[-1] for a, b in zip(types, strs, strict=False))
 
 
 def test_builtin_aspiration():
@@ -762,22 +735,22 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
         super().__init__(*args, **kwargs)
 
     def generate_ufuns(self):
-        d = dict()
+        d = {}
         # generate ufuns that prever higher prices when selling
         for partner_id in self.awi.my_consumers:
             if self.awi.is_system(partner_id):
                 continue
             d[partner_id] = LinearAdditiveUtilityFunction(
-                dict(
-                    quantity=LinearFun(0.1),
-                    time=ConstFun(0),
-                    unit_price=IdentityFun(),
-                ),
-                weights=dict(
-                    quantity=0.1,
-                    time=0.0,
-                    unit_price=0.9,
-                ),
+                {
+                    "quantity": LinearFun(0.1),
+                    "time": ConstFun(0),
+                    "unit_price": IdentityFun(),
+                },
+                weights={
+                    "quantity": 0.1,
+                    "time": 0.0,
+                    "unit_price": 0.9,
+                },
                 issues=self.awi.current_output_issues,
                 reserved_value=0.0,
             )
@@ -787,16 +760,16 @@ class MyGeniusIndNeg(OneShotIndNegotiatorsAgent):
             if self.awi.is_system(partner_id):
                 continue
             d[partner_id] = LinearAdditiveUtilityFunction(
-                dict(
-                    quantity=IdentityFun(),
-                    time=ConstFun(0.0),
-                    unit_price=AffineFun(-1, issues[UNIT_PRICE].max_value),
-                ),
-                weights=dict(
-                    quantity=0.1,
-                    time=0.0,
-                    unit_price=0.9,
-                ),
+                {
+                    "quantity": IdentityFun(),
+                    "time": ConstFun(0.0),
+                    "unit_price": AffineFun(-1, issues[UNIT_PRICE].max_value),
+                },
+                weights={
+                    "quantity": 0.1,
+                    "time": 0.0,
+                    "unit_price": 0.9,
+                },
                 issues=self.awi.current_input_issues,
                 reserved_value=0.0,
             )
@@ -844,18 +817,15 @@ def test_production_cost_increase():
             compact=True,
             no_logs=True,
         )
-        for aid in world.agent_profiles.keys():
+        for aid in world.agent_profiles:
             if is_system_agent(aid):
                 continue
             profile = world.agent_profiles[aid]
             costs[profile.input_product].append(profile.cost)
     mean_costs = [sum(_) / len(_) for _ in costs]
-    assert all(
-        [
-            b > (0.5 * (i + 2) / (i + 1)) * a
-            for i, (a, b) in enumerate(zip(mean_costs[:-1], mean_costs[1:]))
-        ]
-    ), f"non-ascending costs {mean_costs}"
+    assert all(b > (0.5 * (i + 2) / (i + 1)) * a for i, (a, b) in enumerate(zip(mean_costs[:-1], mean_costs[1:], strict=False))), (
+        f"non-ascending costs {mean_costs}"
+    )
 
 
 @mark.parametrize("penalties_scale", ["trading", "catalog"])
@@ -894,9 +864,7 @@ def test_ufun_penalty_scales_are_correct(penalties_scale):
                     == old_trading[awi.my_input_product]
                 )
             else:
-                assert (
-                    u.output_penalty_scale == awi.catalog_prices[awi.my_output_product]
-                )
+                assert u.output_penalty_scale == awi.catalog_prices[awi.my_output_product]
                 assert u.input_penalty_scale == awi.catalog_prices[awi.my_input_product]
 
 
@@ -913,8 +881,8 @@ class MySyncAgent(OneShotSyncAgent):
         return dict(
             zip(
                 self.negotiators.keys(),
-                [SAOResponse(ResponseType.END_NEGOTIATION, None)]
-                * len(self.negotiators),
+                [SAOResponse(ResponseType.END_NEGOTIATION, None)] * len(self.negotiators),
+                strict=False,
             )
         )
 
@@ -936,7 +904,8 @@ class MySyncAgent(OneShotSyncAgent):
         return dict(
             zip(
                 self.negotiators.keys(),
-                (self.get_offer(neg_id) for neg_id in self.negotiators.keys()),
+                (self.get_offer(neg_id) for neg_id in self.negotiators),
+                strict=False,
             )
         )
 
@@ -966,9 +935,7 @@ class MySyncAgent(OneShotSyncAgent):
         ([RandDistOneShotAgent], 6, 2),
     ],
 )
-def test_sync_agent_receives_first_proposals_before_counter_all(
-    agent_types, n_agents_per_process, n_processes
-):
+def test_sync_agent_receives_first_proposals_before_counter_all(agent_types, n_agents_per_process, n_processes):
     n_steps = 50
     world = DefaultOneShotWorld(
         **DefaultOneShotWorld.generate(
@@ -993,9 +960,7 @@ class MyRandomAgent(RandomOneShotAgent):
     def has_trade(self, s=None):
         if s is None:
             s = self.awi.current_step
-        return (self.awi._world._sold_quantity[:, s] > 0) & (
-            np.abs(self.awi._world._real_price[:, s] - self.catalog) >= 1
-        )
+        return (self.awi._world._sold_quantity[:, s] > 0) & (np.abs(self.awi._world._real_price[:, s] - self.catalog) >= 1)
 
     def trading_(self, s=None):
         if s is None:
@@ -1060,7 +1025,7 @@ def test_trading_prices_updated(n_agents, n_processes, n_steps):
     diffs = np.zeros_like(catalog_prices)
 
     # we start at catlaog prices
-    for aid, agent in world.agents.items():
+    for _aid, agent in world.agents.items():
         assert np.abs(agent.awi.trading_prices - catalog_prices).max() < eps  # type: ignore
 
     force_single_thread(True)
@@ -1087,16 +1052,14 @@ class MyOneShotDoNothing(OneShotAgent):
 
 
 def test_do_nothing_goes_bankrupt():
-    world = generate_world(
-        [MyOneShotDoNothing], DefaultOneShotWorld, 2, 1000, 4, cash_availability=0.001
-    )
+    world = generate_world([MyOneShotDoNothing], DefaultOneShotWorld, 2, 1000, 4, cash_availability=0.001)
     world.run()
     for aid, agent in world.agents.items():
         if is_system_agent(aid):
             continue
-        assert world.is_bankrupt[
-            aid
-        ], f"Agent {aid} is not bankrupt with balance {world.current_balance(aid)} and initial_balance of {world.initial_balances[aid]}"  # type: ignore
+        assert world.is_bankrupt[aid], (
+            f"Agent {aid} is not bankrupt with balance {world.current_balance(aid)} and initial_balance of {world.initial_balances[aid]}"
+        )  # type: ignore
         assert agent.awi.is_bankrupt()  # type: ignore
 
 
@@ -1111,11 +1074,7 @@ class PricePumpingAgent(OneShotAgent):
 
     def respond(self, negotiator_id, state, source=None):
         offer = state.current_offer  # type: ignore
-        return (
-            ResponseType.ACCEPT_OFFER
-            if self.top_outcome(negotiator_id) == offer
-            else ResponseType.REJECT_OFFER
-        )
+        return ResponseType.ACCEPT_OFFER if self.top_outcome(negotiator_id) == offer else ResponseType.REJECT_OFFER
 
 
 def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
@@ -1125,9 +1084,7 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
     for aid, agent in world.agents.items():
         if is_system_agent(aid):
             continue
-        if not agent.awi.is_last_level or not any(
-            issubclass(agent.__class__, _) for _ in checked_types
-        ):
+        if not agent.awi.is_last_level or not any(issubclass(agent.__class__, _) for _ in checked_types):
             continue
         # all sellers should go bankrupt
         assert world.is_bankrupt[aid]
@@ -1142,8 +1099,7 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
         assert (
             len(
                 contracts.loc[
-                    (contracts.signed_at <= bankrupt_first_index)
-                    & (contracts.buyer_name == aid),
+                    (contracts.signed_at <= bankrupt_first_index) & (contracts.buyer_name == aid),
                     :,
                 ]
             )
@@ -1154,8 +1110,7 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
         assert (
             len(
                 contracts.loc[
-                    (contracts.signed_at > bankrupt_first_index)
-                    & (contracts.buyer_name == aid),
+                    (contracts.signed_at > bankrupt_first_index) & (contracts.buyer_name == aid),
                     :,
                 ]
             )
@@ -1166,8 +1121,7 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
         assert (
             len(
                 negotiations.loc[
-                    (negotiations.requested_at > bankrupt_first_index)
-                    & (negotiations.partners.apply(lambda x: aid in x)),
+                    (negotiations.requested_at > bankrupt_first_index) & (negotiations.partners.apply(lambda x, aid=aid: aid in x)),
                     :,
                 ]
             )
@@ -1178,8 +1132,7 @@ def check_trading_explosion(world, checked_types=(PricePumpingAgent,)):
         assert (
             len(
                 negotiations.loc[
-                    (negotiations.requested_at <= bankrupt_first_index)
-                    & (negotiations.partners.apply(lambda x: aid in x)),
+                    (negotiations.requested_at <= bankrupt_first_index) & (negotiations.partners.apply(lambda x, aid=aid: aid in x)),
                     :,
                 ]
             )
@@ -1194,17 +1147,13 @@ def test_price_pumping_happen():
 
 
 def test_price_pumping_happen_with_random_included():
-    world = generate_world(
-        [PricePumpingAgent, RandomOneShotAgent], DefaultOneShotWorld, 2, 300, 4
-    )
+    world = generate_world([PricePumpingAgent, RandomOneShotAgent], DefaultOneShotWorld, 2, 300, 4)
     world.run()
     check_trading_explosion(world)
 
 
 def test_production_capacity():
-    world = generate_world(
-        [PricePumpingAgent, RandomOneShotAgent], DefaultOneShotWorld, 2, 300, 4
-    )
+    world = generate_world([PricePumpingAgent, RandomOneShotAgent], DefaultOneShotWorld, 2, 300, 4)
     agent = list(world.agents.values())[0]
     assert agent._obj is not None
     world.step()
