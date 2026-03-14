@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import copy
 from collections import defaultdict
+from collections.abc import Callable, Iterable, Sequence
 from functools import partial
 from itertools import chain
 from os import PathLike
 from pathlib import Path
 from random import randint, random, shuffle
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any
 
 import numpy as np
 from negmas import Agent
@@ -22,6 +23,7 @@ from scml.oneshot.agents import (
     SingleAgreementAspirationAgent,
     SyncRandomOneShotAgent,
 )
+from scml.oneshot.context import DefaultAgentsOneShot
 from scml.oneshot.sysagents import _StdSystemAgent as OneShotSysAgent
 from scml.oneshot.world import OneShotWorld, SCML2024OneShotWorld
 from scml.scml2020.agent import _SystemAgent as StdSysAgent
@@ -33,9 +35,8 @@ from scml.scml2020.agents import (
 )
 from scml.scml2020.world import SCML2020Agent, SCML2020World, is_system_agent
 from scml.std.agent import StdAgent
-from scml.std.world import STD_DEFAULT_PARAMS
-from scml.oneshot.context import DefaultAgentsOneShot
 from scml.std.context import DefaultAgentsStd
+from scml.std.world import STD_DEFAULT_PARAMS
 
 __all__ = [
     "anac_config_generator_oneshot",
@@ -148,14 +149,10 @@ def integer_cut(
         mx = [mx] * n
     sizes = np.asarray(mn)
     if total < sizes.sum():
-        raise ValueError(
-            f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}"
-        )
+        raise ValueError(f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}")
     maxs = np.asarray(mx)
     if total > maxs.sum():
-        raise ValueError(
-            f"Cannot generate {n} numbers summing to {total}  with a maximum summing to {maxs.sum()}"
-        )
+        raise ValueError(f"Cannot generate {n} numbers summing to {total}  with a maximum summing to {maxs.sum()}")
     # TODO  That is most likely the most stupid way to do it. We just try blindly. There MUST be a better way
     while sizes.sum() < total:
         indx = randint(0, n - 1)
@@ -165,9 +162,7 @@ def integer_cut(
     return list(sizes.tolist())
 
 
-def integer_cut_dynamic(
-    n: int, l_min: int, l_max: int, min_levels: int = 0
-) -> list[int]:
+def integer_cut_dynamic(n: int, l_min: int, l_max: int, min_levels: int = 0) -> list[int]:
     """
     Generates a list random integers that sum to n where each of them is between l_m and l_max
 
@@ -181,9 +176,7 @@ def integer_cut_dynamic(
 
     """
     if n < min_levels * l_min:
-        raise ValueError(
-            f"Cannot cut {n} into at least {min_levels} numbers each is at least {l_min}"
-        )
+        raise ValueError(f"Cannot cut {n} into at least {min_levels} numbers each is at least {l_min}")
 
     sizes = [l_min] * min_levels
 
@@ -273,12 +266,12 @@ def anac_config_generator(
 ) -> list[dict[str, Any]]:
     if non_competitors is None:
         non_competitors = DefaultAgents
-        non_competitor_params = tuple(dict() for _ in non_competitors)
+        non_competitor_params = tuple({} for _ in non_competitors)
 
     if non_competitor_params and all(not _ for _ in non_competitor_params):
         non_competitor_params = None
     if not non_competitor_params:
-        non_competitor_params = tuple(dict() for _ in non_competitors)
+        non_competitor_params = tuple({} for _ in non_competitors)
 
     if isinstance(n_processes, Iterable):
         n_processes = tuple(n_processes)
@@ -298,13 +291,11 @@ def anac_config_generator(
                 n_defaults[i] = min_factories_per_level - n_a
             if n_a + n_defaults[i] > max_factories_per_level and n_defaults[i] > 1:
                 n_defaults[i] = max(1, min_factories_per_level - n_a)
-        n_f_list = [a + b for a, b in zip(n_defaults, n_a_list)]
+        n_f_list = [a + b for a, b in zip(n_defaults, n_a_list, strict=False)]
     else:
         min_n_processes = randint(*n_processes)
         n_agents = n_agents_per_competitor * n_competitors
-        n_default_managers = max(
-            0, min_n_processes * min_factories_per_level - n_agents
-        )
+        n_default_managers = max(0, min_n_processes * min_factories_per_level - n_agents)
         n_f_list = integer_cut_dynamic(
             n_agents + n_default_managers,
             min_factories_per_level,
@@ -334,9 +325,7 @@ def anac_config_generator(
     for level in range(np):
         n_d = n_defaults[level]
         n_f = n_f_list[level]
-        assert (
-            n_d <= n_f
-        ), f"Got {n_f} total factories at level {level} out of which {n_d} are default!!"
+        assert n_d <= n_f, f"Got {n_f} total factories at level {level} out of which {n_d} are default!!"
         for j in range(n_f):
             if j >= n_f - n_d:  # default managers are last managers in the list
                 def_indx = randint(0, max_def_agents)
@@ -347,59 +336,56 @@ def anac_config_generator(
         first_in_level += n_f
 
     world_name = unique_name("", add_time=True, rand_digits=4)
-    agent_types = [
-        get_full_type_name(_) if isinstance(_, SCML2020Agent) else _
-        for _ in agent_types
-    ]
+    agent_types = [get_full_type_name(_) if isinstance(_, SCML2020Agent) else _ for _ in agent_types]
     no_logs = compact
     agent_processes = []
     for i, n in enumerate(n_f_list):
-        for j in range(n):
+        for _j in range(n):
             agent_processes.append(i)
     if oneshot_world or std_world:
-        world_params = dict(
-            name=world_name,
-            agent_types=agent_types,
-            agent_params=manager_params,
-            time_limit=ONESHOT_TIMEOUT,
-            neg_time_limit=ONESHOT_NEG_TIMEOUT,
-            neg_hidden_time_limit=ONESHOT_NEG_HIDDEN_TIMEOUT,
-            neg_n_steps=20,
-            neg_step_time_limit=NEG_STEP_TIME_LIMIT,
-            negotiation_speed=21,
-            start_negotiations_immediately=False,
-            agent_processes=agent_processes,
-            n_processes=np,
-            n_steps=n_steps,
-            n_lines=n_lines,
-            compact=compact,
-            no_logs=no_logs,
-            random_agent_types=False,
-        )
+        world_params = {
+            "name": world_name,
+            "agent_types": agent_types,
+            "agent_params": manager_params,
+            "time_limit": ONESHOT_TIMEOUT,
+            "neg_time_limit": ONESHOT_NEG_TIMEOUT,
+            "neg_hidden_time_limit": ONESHOT_NEG_HIDDEN_TIMEOUT,
+            "neg_n_steps": 20,
+            "neg_step_time_limit": NEG_STEP_TIME_LIMIT,
+            "negotiation_speed": 21,
+            "start_negotiations_immediately": False,
+            "agent_processes": agent_processes,
+            "n_processes": np,
+            "n_steps": n_steps,
+            "n_lines": n_lines,
+            "compact": compact,
+            "no_logs": no_logs,
+            "random_agent_types": False,
+        }
     else:
-        world_params = dict(
-            name=world_name,
-            agent_types=agent_types,
-            agent_params=manager_params,
-            time_limit=ONESHOT_TIMEOUT,
-            neg_time_limit=ONESHOT_NEG_TIMEOUT,
-            neg_hidden_time_limit=ONESHOT_NEG_HIDDEN_TIMEOUT,
-            neg_n_steps=20,
-            neg_step_time_limit=NEG_STEP_TIME_LIMIT,
-            negotiation_speed=21,
-            spot_market_global_loss=0.2,
-            interest_rate=0.08,
-            bankruptcy_limit=1.0,
-            initial_balance=None,
-            start_negotiations_immediately=False,
-            agent_processes=agent_processes,
-            n_processes=np,
-            n_steps=n_steps,
-            n_lines=n_lines,
-            compact=compact,
-            no_logs=no_logs,
-            random_agent_types=False,
-        )
+        world_params = {
+            "name": world_name,
+            "agent_types": agent_types,
+            "agent_params": manager_params,
+            "time_limit": ONESHOT_TIMEOUT,
+            "neg_time_limit": ONESHOT_NEG_TIMEOUT,
+            "neg_hidden_time_limit": ONESHOT_NEG_HIDDEN_TIMEOUT,
+            "neg_n_steps": 20,
+            "neg_step_time_limit": NEG_STEP_TIME_LIMIT,
+            "negotiation_speed": 21,
+            "spot_market_global_loss": 0.2,
+            "interest_rate": 0.08,
+            "bankruptcy_limit": 1.0,
+            "initial_balance": None,
+            "start_negotiations_immediately": False,
+            "agent_processes": agent_processes,
+            "n_processes": np,
+            "n_steps": n_steps,
+            "n_lines": n_lines,
+            "compact": compact,
+            "no_logs": no_logs,
+            "random_agent_types": False,
+        }
     world_params.update(kwargs)
     # _agent_types = copy.deepcopy(world_params.pop("agent_types"))
     # _agent_params = copy.deepcopy(world_params.pop("agent_params"))
@@ -414,7 +400,7 @@ def anac_config_generator(
     else:
         generated_world_params = context.make_config(cls, params=world_params)  # type: ignore
     for k in ("agent_types", "agent_params"):
-        if k in generated_world_params.keys():
+        if k in generated_world_params:
             del generated_world_params[k]
     if oneshot_world or std_world:
         for _p in generated_world_params["profiles"]:
@@ -422,9 +408,7 @@ def anac_config_generator(
     else:
         for _p in generated_world_params["profiles"]:
             _p.costs = _p.costs.tolist()
-    world_params["__exact_params"] = serialize(
-        generated_world_params, deep=True, ignore_lambda=True
-    )
+    world_params["__exact_params"] = serialize(generated_world_params, deep=True, ignore_lambda=True)
     if context is not None:
         world_params["__context"] = serialize(context, deep=True, ignore_lambda=True)
     config = {
@@ -464,6 +448,9 @@ def anac_config_generator_std_new(*args, **kwargs):
     return anac_config_generator(*args, **kwargs)
 
 
+anac_config_generator_std = anac_config_generator_std_new
+
+
 def anac_config_generator_collusion(
     year: int,
     n_competitors: int,
@@ -497,18 +484,10 @@ anac2023_config_generator_oneshot = partial(anac_config_generator_oneshot, year=
 anac2024_config_generator_oneshot = partial(anac_config_generator_oneshot, year=2024)
 anac2024_config_generator_std = partial(anac_config_generator_std_new, year=2024)
 
-anac2020_config_generator_collusion = partial(
-    anac_config_generator_collusion, year=2020
-)
-anac2021_config_generator_collusion = partial(
-    anac_config_generator_collusion, year=2021
-)
-anac2022_config_generator_collusion = partial(
-    anac_config_generator_collusion, year=2022
-)
-anac2023_config_generator_collusion = partial(
-    anac_config_generator_collusion, year=2023
-)
+anac2020_config_generator_collusion = partial(anac_config_generator_collusion, year=2020)
+anac2021_config_generator_collusion = partial(anac_config_generator_collusion, year=2021)
+anac2022_config_generator_collusion = partial(anac_config_generator_collusion, year=2022)
+anac2023_config_generator_collusion = partial(anac_config_generator_collusion, year=2023)
 
 
 def anac_assigner_std(
@@ -527,16 +506,9 @@ def anac_assigner_std(
         if i > 0:
             n_agents_per_competitor = 1
 
-        competitors = list(
-            get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
-            for _ in competitors
-        )
+        competitors = [get_full_type_name(_) if not isinstance(_, str) and _ is not None else _ for _ in competitors]
         n_competitors = len(competitors)
-        params = (
-            list(params)
-            if params is not None
-            else [dict() for _ in range(n_competitors)]
-        )
+        params = list(params) if params is not None else [{} for _ in range(n_competitors)]
 
         n_permutations = n_competitors
 
@@ -545,67 +517,52 @@ def anac_assigner_std(
         # assign non-competitor factories to extra-non-competitors
         if dynamic_non_competitors is not None:
             n_extra = len(dynamic_non_competitors)
-            dynamic_non_competitors = list(
-                get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
-                for _ in dynamic_non_competitors
-            )
+            dynamic_non_competitors = [
+                get_full_type_name(_) if not isinstance(_, str) and _ is not None else _ for _ in dynamic_non_competitors
+            ]
             if dynamic_non_competitor_params is None:
-                dynamic_non_competitor_params = [dict() for _ in range(n_extra)]
+                dynamic_non_competitor_params = [{} for _ in range(n_extra)]
             # removing the competitors from the dynamic competitors
             if exclude_competitors_from_reassignment:
                 # TODO May be use a better way to hash the a parameters than just conversion to str
                 # Note that None and and empty dict() will both become ""
-                compset = set(zip(competitors, (str(_) if _ else "" for _ in params)))
+                compset = set(zip(competitors, (str(_) if _ else "" for _ in params), strict=False))
                 dynset = list(
                     zip(
                         dynamic_non_competitors,
                         (str(_) if _ else "" for _ in dynamic_non_competitor_params),
+                        strict=False,
                     )
                 )
-                dynamic_non_competitor_indices = [
-                    i for i, _ in enumerate(dynset) if _ not in compset
-                ]
-                dynamic_non_competitors = [
-                    dynamic_non_competitors[i] for i in dynamic_non_competitor_indices
-                ]
-                dynamic_non_competitor_params = [
-                    dynamic_non_competitor_params[i]
-                    for i in dynamic_non_competitor_indices
-                ]
+                dynamic_non_competitor_indices = [i for i, _ in enumerate(dynset) if _ not in compset]
+                dynamic_non_competitors = [dynamic_non_competitors[i] for i in dynamic_non_competitor_indices]
+                dynamic_non_competitor_params = [dynamic_non_competitor_params[i] for i in dynamic_non_competitor_indices]
                 n_extra = len(dynamic_non_competitors)
             if n_extra:
                 for i, isd in enumerate(is_default):
                     if not isd:
                         continue
                     extra_indx = randint(0, n_extra - 1)
-                    current_config["agent_types"][i] = dynamic_non_competitors[
-                        extra_indx
-                    ]
-                    current_config["agent_params"][i] = dynamic_non_competitor_params[
-                        extra_indx
-                    ]
+                    current_config["agent_types"][i] = dynamic_non_competitors[extra_indx]
+                    current_config["agent_params"][i] = dynamic_non_competitor_params[extra_indx]
         _assignable_f = [i for i, mtype in enumerate(agent_types) if mtype is None]
         shuffle(_assignable_f)
-        assignable_factories = (
-            np.asarray(_assignable_f)
-            .reshape((n_competitors, n_agents_per_competitor))
-            .tolist()
-        )
+        assignable_factories = np.asarray(_assignable_f).reshape((n_competitors, n_agents_per_competitor)).tolist()
 
         current_configs = []
 
-        def _copy_config(perm_, c, indx):
+        def _copy_config(perm_, c, indx, is_default=is_default, assignable_factories=assignable_factories):
             _ = indx
             new_config = copy.deepcopy(c)
             new_config["is_default"] = is_default
-            for (a, p_), assignable in zip(perm_, assignable_factories):
+            for (a, p_), assignable in zip(perm_, assignable_factories, strict=False):
                 for factory in assignable:
                     new_config["agent_types"][factory] = a
                     new_config["agent_params"][factory] = copy.deepcopy(p_)
             return [new_config]
 
         if n_permutations is not None and max_n_worlds is None:
-            permutation = list(zip(competitors, params))
+            permutation = list(zip(competitors, params, strict=False))
             assert len(permutation) == len(assignable_factories)
             shuffle(permutation)
             perm = permutation
@@ -614,11 +571,9 @@ def anac_assigner_std(
                 perm = perm[-1:] + perm[:-1]
                 current_configs.append(_copy_config(perm, current_config, k))
         elif max_n_worlds is None:
-            raise ValueError(
-                "Did not give max_n_worlds and cannot find n_permutations."
-            )
+            raise ValueError("Did not give max_n_worlds and cannot find n_permutations.")
         else:
-            permutation = list(zip(competitors, params))
+            permutation = list(zip(competitors, params, strict=False))
             assert len(permutation) == len(assignable_factories)
             if fair:
                 n_min = len(assignable_factories)
@@ -672,14 +627,9 @@ def anac_assigner_collusion(
 ) -> list[list[dict[str, Any]]]:
     current_config = config[0]
 
-    competitors = list(
-        get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
-        for _ in competitors
-    )
+    competitors = [get_full_type_name(_) if not isinstance(_, str) and _ is not None else _ for _ in competitors]
     n_competitors = len(competitors)
-    params = (
-        list(params) if params is not None else [dict() for _ in range(n_competitors)]
-    )
+    params = list(params) if params is not None else [{} for _ in range(n_competitors)]
 
     n_permutations = n_competitors
 
@@ -688,32 +638,26 @@ def anac_assigner_collusion(
     # assign non-competitor factories to extra-non-competitors
     if dynamic_non_competitors is not None:
         n_extra = len(dynamic_non_competitors)
-        dynamic_non_competitors = list(
-            get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
-            for _ in dynamic_non_competitors
-        )
+        dynamic_non_competitors = [
+            get_full_type_name(_) if not isinstance(_, str) and _ is not None else _ for _ in dynamic_non_competitors
+        ]
         if dynamic_non_competitor_params is None:
-            dynamic_non_competitor_params = [dict() for _ in range(n_extra)]
+            dynamic_non_competitor_params = [{} for _ in range(n_extra)]
         # removing the competitors from the dynamic competitors
         if exclude_competitors_from_reassignment:
             # TODO May be use a better way to hash the a parameters than just conversion to str
             # Note that None and and empty dict() will both become ""
-            compset = set(zip(competitors, (str(_) if _ else "" for _ in params)))
+            compset = set(zip(competitors, (str(_) if _ else "" for _ in params), strict=False))
             dynset = list(
                 zip(
                     dynamic_non_competitors,
                     (str(_) if _ else "" for _ in dynamic_non_competitor_params),
+                    strict=False,
                 )
             )
-            dynamic_non_competitor_indices = [
-                i for i, _ in enumerate(dynset) if _ not in compset
-            ]
-            dynamic_non_competitors = [
-                dynamic_non_competitors[i] for i in dynamic_non_competitor_indices
-            ]
-            dynamic_non_competitor_params = [
-                dynamic_non_competitor_params[i] for i in dynamic_non_competitor_indices
-            ]
+            dynamic_non_competitor_indices = [i for i, _ in enumerate(dynset) if _ not in compset]
+            dynamic_non_competitors = [dynamic_non_competitors[i] for i in dynamic_non_competitor_indices]
+            dynamic_non_competitor_params = [dynamic_non_competitor_params[i] for i in dynamic_non_competitor_indices]
             n_extra = len(dynamic_non_competitors)
         if n_extra:
             for i, isd in enumerate(is_default):
@@ -721,14 +665,10 @@ def anac_assigner_collusion(
                     continue
                 extra_indx = randint(0, n_extra - 1)
                 current_config["agent_types"][i] = dynamic_non_competitors[extra_indx]
-                current_config["agent_params"][i] = dynamic_non_competitor_params[
-                    extra_indx
-                ]
+                current_config["agent_params"][i] = dynamic_non_competitor_params[extra_indx]
     afs = [i for i, mtype in enumerate(agent_types) if mtype is None]
     shuffle(afs)
-    assignable_factories = (
-        np.asarray(afs).reshape((n_competitors, n_agents_per_competitor)).tolist()
-    )
+    assignable_factories = np.asarray(afs).reshape((n_competitors, n_agents_per_competitor)).tolist()
 
     current_configs = []
 
@@ -736,21 +676,17 @@ def anac_assigner_collusion(
         _ = indx
         new_config = copy.deepcopy(c)
         new_config["is_default"] = is_default
-        for (a, p_), assignable in zip(perm_, assignable_factories):
+        for (a, p_), assignable in zip(perm_, assignable_factories, strict=False):
             for factory in assignable:
                 new_config["agent_types"][factory] = a
                 new_config["agent_params"][factory] = copy.deepcopy(p_)
-        configs: list[dict] = [
-            copy.deepcopy(new_config) for _ in range(n_agents_per_competitor + 1)
-        ]
+        configs: list[dict] = [copy.deepcopy(new_config) for _ in range(n_agents_per_competitor + 1)]
 
-        non_competitor_info = list(
-            (a, p if p else dict())
-            for a, p, d in zip(
-                new_config["agent_types"], new_config["agent_params"], is_default
-            )
+        non_competitor_info = [
+            (a, p if p else {})
+            for a, p, d in zip(new_config["agent_types"], new_config["agent_params"], is_default, strict=False)
             if d and a is not None and a not in competitors
-        )
+        ]
 
         non_competitors = [get_full_type_name(a) for a, _ in non_competitor_info]
         non_competitor_params = [b for _, b in non_competitor_info]
@@ -761,7 +697,7 @@ def anac_assigner_collusion(
 
         assert len(free_factories) == n_agents_per_competitor
         # for each config other than the first, remove all unassigned factories keeping one
-        for j, config in zip(free_factories, configs[1:]):
+        for j, config in zip(free_factories, configs[1:], strict=False):
             for i in free_factories:
                 if i == j:
                     continue
@@ -778,7 +714,7 @@ def anac_assigner_collusion(
         return configs
 
     if n_permutations is not None and max_n_worlds is None:
-        permutation = list(zip(competitors, params))
+        permutation = list(zip(competitors, params, strict=False))
         assert len(permutation) == len(assignable_factories)
         shuffle(permutation)
         perm = permutation
@@ -789,7 +725,7 @@ def anac_assigner_collusion(
     elif max_n_worlds is None:
         raise ValueError("Did not give max_n_worlds and cannot find n_permutations.")
     else:
-        permutation = list(zip(competitors, params))
+        permutation = list(zip(competitors, params, strict=False))
         assert len(permutation) == len(assignable_factories)
         if fair:
             n_min = len(assignable_factories)
@@ -819,13 +755,9 @@ def anac_assigner_collusion(
 
 def anac_world_generator(*, year: int, **kwargs):
     if "n_agents_per_process" in kwargs["world_params"]:
-        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
-            kwargs["world_params"]["agent_types"]
-        )
+        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(kwargs["world_params"]["agent_types"])
     else:
-        assert len(kwargs["world_params"]["agent_processes"]) == len(
-            kwargs["world_params"]["agent_types"]
-        )
+        assert len(kwargs["world_params"]["agent_processes"]) == len(kwargs["world_params"]["agent_types"])
     cnfg = kwargs["world_params"].pop("__exact_params")
 
     kwargs["world_params"].pop("__context", None)
@@ -851,8 +783,8 @@ def anac_world_generator(*, year: int, **kwargs):
             cnfg[k] = cnfg2[k]
     for _p in cnfg["profiles"]:  # type: ignore
         _p.costs = np.asarray(_p.costs)  # type: ignore
-    if "info" not in cnfg.keys():  # type: ignore
-        cnfg["info"] = dict()  # type: ignore
+    if "info" not in cnfg:  # type: ignore
+        cnfg["info"] = {}  # type: ignore
     cnfg["info"]["is_default"] = kwargs["is_default"]  # type: ignore
     world = cls(**cnfg)  # type: ignore
     return world
@@ -866,13 +798,9 @@ anac2023_world_generator = partial(anac_world_generator, year=2023)
 
 def anac_oneshot_world_generator(*, year, **kwargs):
     if "n_agents_per_process" in kwargs["world_params"]:
-        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
-            kwargs["world_params"]["agent_types"]
-        )
+        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(kwargs["world_params"]["agent_types"])
     else:
-        assert len(kwargs["world_params"]["agent_processes"]) == len(
-            kwargs["world_params"]["agent_types"]
-        )
+        assert len(kwargs["world_params"]["agent_processes"]) == len(kwargs["world_params"]["agent_types"])
     # cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
     # for k in ("n_agents_per_process","n_processes"):
     #     del kwargs["world_params"][k]
@@ -903,8 +831,8 @@ def anac_oneshot_world_generator(*, year, **kwargs):
     ):
         if k in cnfg2:
             cnfg[k] = cnfg2[k]
-    if "info" not in cnfg.keys():
-        cnfg["info"] = dict()
+    if "info" not in cnfg:
+        cnfg["info"] = {}
     cnfg["info"]["is_default"] = kwargs["is_default"]
     world = cls(**cnfg)
     return world
@@ -912,13 +840,9 @@ def anac_oneshot_world_generator(*, year, **kwargs):
 
 def anac_std_world_generator(*, year, **kwargs):
     if "n_agents_per_process" in kwargs["world_params"]:
-        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(
-            kwargs["world_params"]["agent_types"]
-        )
+        assert sum(kwargs["world_params"]["n_agents_per_process"]) == len(kwargs["world_params"]["agent_types"])
     else:
-        assert len(kwargs["world_params"]["agent_processes"]) == len(
-            kwargs["world_params"]["agent_types"]
-        )
+        assert len(kwargs["world_params"]["agent_processes"]) == len(kwargs["world_params"]["agent_types"])
     # cnfg = SCML2020OneShotWorld.generate(**kwargs["world_params"])
     # for k in ("n_agents_per_process","n_processes"):
     #     del kwargs["world_params"][k]
@@ -950,8 +874,8 @@ def anac_std_world_generator(*, year, **kwargs):
     ):
         if k in cnfg2:
             cnfg[k] = cnfg2[k]
-    if "info" not in cnfg.keys():
-        cnfg["info"] = dict()
+    if "info" not in cnfg:
+        cnfg["info"] = {}
     cnfg["info"]["is_default"] = kwargs["is_default"]
 
     world = cls(**cnfg)
@@ -994,12 +918,8 @@ def balance_calculator(
 
     """
     if scoring_context is not None:
-        inventory_catalog_price_weight = scoring_context.get(
-            "inventory_catalog_price_weight", inventory_catalog_price_weight
-        )
-        inventory_trading_average_weight = scoring_context.get(
-            "inventory_trading_average_weight", inventory_trading_average_weight
-        )
+        inventory_catalog_price_weight = scoring_context.get("inventory_catalog_price_weight", inventory_catalog_price_weight)
+        inventory_trading_average_weight = scoring_context.get("inventory_trading_average_weight", inventory_trading_average_weight)
         consolidated = scoring_context.get("consolidated", consolidated)
     assert len(worlds) == 1
     world = worlds[0]
@@ -1007,28 +927,17 @@ def balance_calculator(
         inventory_trading_average_weight = world.inventory_valuation_trading
     if world.inventory_valuation_catalog is not None:
         inventory_catalog_price_weight = world.inventory_valuation_catalog
-    result = WorldRunResults(
-        world_names=[world.name], log_file_names=[world.log_file_name]
-    )
+    result = WorldRunResults(world_names=[world.name], log_file_names=[world.log_file_name])
     initial_balances = []
     is_default = world.info["is_default"]
     factories = [_ for _ in world.factories if not is_system_agent(_.agent_id)]
-    agents = [
-        world.agents[f.agent_id] for f in factories if not is_system_agent(f.agent_id)
-    ]
-    agent_types = [
-        _
-        for _ in world.agent_unique_types
-        if not _.startswith("system_agent")
-        and not _.split(".")[-1].startswith("_System")
-    ]
+    agents = [world.agents[f.agent_id] for f in factories if not is_system_agent(f.agent_id)]
+    agent_types = [_ for _ in world.agent_unique_types if not _.startswith("system_agent") and not _.split(".")[-1].startswith("_System")]
     if len(set(agent_types)) == len(set(world.agent_types)):
         agent_types = [
             _
             for _ in world.agent_types
-            if not _.startswith("system_agent")
-            and not _.split(".")[-1].startswith("_System")
-            and not get_class(_) == StdSysAgent
+            if not _.startswith("system_agent") and not _.split(".")[-1].startswith("_System") and get_class(_) != StdSysAgent
         ]
     for i, factory in enumerate(factories):
         if is_default[i] and ignore_default:
@@ -1036,14 +945,12 @@ def balance_calculator(
         initial_balances.append(factory.initial_balance)
     normalize = all(_ != 0 for _ in initial_balances)
     consolidated_scores = defaultdict(float)
-    individual_scores = list()
+    individual_scores = []
     initial_sums = defaultdict(float)
     assert len(is_default) == len(agents)
     assert len(agents) == len(factories)
     assert len(factories) == len(agent_types)
-    for default, factory, manager, agent_type in zip(
-        is_default, factories, agents, agent_types
-    ):
+    for default, factory, manager, agent_type in zip(is_default, factories, agents, agent_types, strict=False):
         if default and ignore_default:
             continue
         result.names.append(manager.name)
@@ -1054,34 +961,24 @@ def balance_calculator(
             continue
         final_balance = factory.current_balance
         if inventory_catalog_price_weight != 0.0:
-            final_balance += np.sum(
-                inventory_catalog_price_weight
-                * factory.current_inventory
-                * world.catalog_prices
-            )
+            final_balance += np.sum(inventory_catalog_price_weight * factory.current_inventory * world.catalog_prices)
         if inventory_trading_average_weight != 0.0:
-            final_balance += np.sum(
-                inventory_trading_average_weight
-                * factory.current_inventory
-                * world.trading_prices
-            )
+            final_balance += np.sum(inventory_trading_average_weight * factory.current_inventory * world.trading_prices)
         profit = final_balance - factory.initial_balance
-        individual_scores.append(
-            profit / factory.initial_balance if normalize else profit
-        )
+        individual_scores.append(profit / factory.initial_balance if normalize else profit)
         consolidated_scores[agent_type] += profit
         initial_sums[agent_type] += factory.initial_balance
     if normalize:
-        for k in consolidated_scores.keys():
+        for k in consolidated_scores:
             consolidated_scores[k] /= initial_sums[k]
     extra = []
     for k, v in consolidated_scores.items():
-        extra.append(dict(type=k, score=v))
+        extra.append({"type": k, "score": v})
     result.extra_scores["combined_scores"] = extra
     result.extra_scores["consolidated_scores"] = extra
 
     if consolidated:
-        for indx, type_ in enumerate(result.types):
+        for _indx, type_ in enumerate(result.types):
             result.scores.append(consolidated_scores[type_])
     else:
         result.scores = individual_scores
@@ -1170,10 +1067,7 @@ def balance_calculator_collusion(
         return results_with_collusion
     allscores = list(chain(*(_.scores for _ in results_without_collusion)))
     mean_score = sum(allscores) / len(allscores)
-    results_with_collusion.scores = [
-        _ - (1.0 - raw_collusion_score_multiplier) * mean_score
-        for _ in results_with_collusion.scores
-    ]
+    results_with_collusion.scores = [_ - (1.0 - raw_collusion_score_multiplier) * mean_score for _ in results_with_collusion.scores]
     # todo: check consolidated scores
     return results_with_collusion
 
@@ -1213,29 +1107,17 @@ def balance_calculator_oneshot(
         consolidated = scoring_context.get("consolidated", consolidated)
     assert len(worlds) == 1
     world = worlds[0]
-    result = WorldRunResults(
-        world_names=[world.name], log_file_names=[world.log_file_name]
-    )
+    result = WorldRunResults(world_names=[world.name], log_file_names=[world.log_file_name])
     is_default = world.info["is_default"]
-    agents = list(
-        _ for _ in world.agents.values() if not issubclass(type(_), OneShotSysAgent)
-    )
-    agent_types = [
-        _
-        for _ in world.agent_unique_types
-        if not _.startswith("system_agent") and not _.startswith("System")
-    ]
+    agents = [_ for _ in world.agents.values() if not issubclass(type(_), OneShotSysAgent)]
+    agent_types = [_ for _ in world.agent_unique_types if not _.startswith("system_agent") and not _.startswith("System")]
     if len(set(agent_types)) == len(set(world.agent_types)):
-        agent_types = [
-            _
-            for _ in world.agent_types
-            if not _.startswith("system_agent") and not _.startswith("System")
-        ]
+        agent_types = [_ for _ in world.agent_types if not _.startswith("system_agent") and not _.startswith("System")]
     consolidated_scores = defaultdict(float)
-    individual_scores = list()
+    individual_scores = []
     scores = world.scores()
     assert len(agents) == len(is_default) and len(agents) == len(agent_types)
-    for default, manager, agent_type in zip(is_default, agents, agent_types):
+    for default, manager, agent_type in zip(is_default, agents, agent_types, strict=False):
         if default and ignore_default:
             continue
         result.names.append(manager.name)
@@ -1249,12 +1131,12 @@ def balance_calculator_oneshot(
         consolidated_scores[agent_type] += profit
     extra = []
     for k, v in consolidated_scores.items():
-        extra.append(dict(type=k, score=v))
+        extra.append({"type": k, "score": v})
     result.extra_scores["combined_scores"] = extra
     result.extra_scores["consolidated_scores"] = extra
 
     if consolidated:
-        for indx, type_ in enumerate(result.types):
+        for _indx, type_ in enumerate(result.types):
             result.scores.append(consolidated_scores[type_])
     else:
         result.scores = individual_scores
@@ -1278,9 +1160,7 @@ def anac2020_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -1367,9 +1247,7 @@ def anac2020_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1437,13 +1315,11 @@ def anac2020_std(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -1496,9 +1372,7 @@ def anac2020_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1567,13 +1441,11 @@ def anac2020_collusion(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -1625,9 +1497,7 @@ def anac2021_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -1714,9 +1584,7 @@ def anac2021_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1784,13 +1652,11 @@ def anac2021_std(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents2021
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -1845,9 +1711,7 @@ def anac2021_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -1920,7 +1784,7 @@ def anac2021_collusion(
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents2021
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -1974,9 +1838,7 @@ def anac2021_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2049,13 +1911,11 @@ def anac2021_oneshot(
     #     p["controller_type"] = get_full_type_name(t)
     # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgentsOneShot
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
     kwargs["n_processes"] = 2
@@ -2111,9 +1971,7 @@ def anac2022_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -2200,9 +2058,7 @@ def anac2022_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2270,13 +2126,11 @@ def anac2022_std(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents2022
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -2331,9 +2185,7 @@ def anac2022_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2406,7 +2258,7 @@ def anac2022_collusion(
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents2022
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -2460,9 +2312,7 @@ def anac2022_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2497,13 +2347,11 @@ def anac2022_oneshot(
     #     p["controller_type"] = get_full_type_name(t)
     # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgentsOneShot
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
     kwargs["n_processes"] = 2
@@ -2559,9 +2407,7 @@ def anac2023_tournament(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     name: str | None = None,
     verbose: bool = False,
@@ -2649,9 +2495,7 @@ def anac2023_collusion(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2724,7 +2568,7 @@ def anac2023_collusion(
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents2023
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -2778,9 +2622,7 @@ def anac2023_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2848,13 +2690,11 @@ def anac2023_std(
 
     """
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgents2023
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     return tournament(
         competitors=competitors,
@@ -2908,9 +2748,7 @@ def anac2023_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
     world_progress_callback: Callable[[SCML2020World | None], None] | None = None,
     non_competitors: Sequence[str | type[SCML2020Agent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
@@ -2983,13 +2821,11 @@ def anac2023_oneshot(
     #     p["controller_type"] = get_full_type_name(t)
     # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgentsOneShot
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
     kwargs["n_processes"] = 2
@@ -3045,12 +2881,8 @@ def anac2024_oneshot(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
-    world_progress_callback: (
-        Callable[[SCML2024OneShotWorld | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
+    world_progress_callback: (Callable[[SCML2024OneShotWorld | None], None] | None) = None,
     non_competitors: Sequence[str | type[OneShotAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[OneShotAgent]] | None = None,
@@ -3123,13 +2955,11 @@ def anac2024_oneshot(
     #     p["controller_type"] = get_full_type_name(t)
     # competitors = ["scml.oneshot.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgentsOneShot
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["oneshot_world"] = True
     kwargs["n_processes"] = 2
@@ -3187,12 +3017,8 @@ def anac2024_std(
     parallelism="parallel",
     scheduler_ip: str | None = None,
     scheduler_port: str | None = None,
-    tournament_progress_callback: (
-        Callable[[WorldRunResults | None], None] | None
-    ) = None,
-    world_progress_callback: (
-        Callable[[SCML2024OneShotWorld | None], None] | None
-    ) = None,
+    tournament_progress_callback: (Callable[[WorldRunResults | None], None] | None) = None,
+    world_progress_callback: (Callable[[SCML2024OneShotWorld | None], None] | None) = None,
     non_competitors: Sequence[str | type[OneShotAgent]] | None = None,
     non_competitor_params: Sequence[dict[str, Any]] | None = None,
     dynamic_non_competitors: list[type[Agent]] | None = None,
@@ -3265,13 +3091,11 @@ def anac2024_std(
     #     p["controller_type"] = get_full_type_name(t)
     # competitors = ["scml.std.world.DefaultOneShotAdapter"] * len(competitors)
     if n_competitors_per_world is None:
-        n_competitors_per_world = kwargs.get(
-            "n_competitors_per_world", randint(2, min(4, len(competitors)))
-        )
+        n_competitors_per_world = kwargs.get("n_competitors_per_world", randint(2, min(4, len(competitors))))
     kwargs.pop("n_competitors_per_world", None)
     if non_competitors is None:
         non_competitors = DefaultAgentsOneShot
-        non_competitor_params = [dict() for _ in non_competitors]
+        non_competitor_params = [{} for _ in non_competitors]
     kwargs["round_robin"] = kwargs.get("round_robin", ROUND_ROBIN)
     kwargs["std_world"] = True
     if context:

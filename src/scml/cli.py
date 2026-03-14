@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
 
+import contextlib
 import math
 import os
 import sys
@@ -10,7 +11,6 @@ from functools import partial
 from pathlib import Path
 from pprint import pformat, pprint
 from time import perf_counter
-from typing import List
 
 import click
 import click_config_file
@@ -18,6 +18,7 @@ import negmas
 import numpy as np
 import pandas as pd
 import yaml
+from click_aliases import ClickAliasedGroup
 from negmas import save_stats
 from negmas.helpers import humanize_time, unique_name
 from negmas.helpers.inout import load
@@ -25,10 +26,8 @@ from negmas.tournaments import TournamentResults
 from rich import print
 from rich.progress import track
 from tabulate import tabulate
-from click_aliases import ClickAliasedGroup
 
 import scml
-from scml.utils import DefaultAgents, DefaultAgents2022, DefaultAgentsOneShot2022
 
 # from scml.oneshot import SCML2020OneShotWorld, SCML2023OneShotWorld, SCML2024OneShotWorld
 from scml.oneshot.world import (
@@ -49,11 +48,14 @@ from scml.scml2020.common import is_system_agent
 from scml.scml2020.world import (
     SCML2020World,
     SCML2021World,
-    SCML2023World,
     SCML2022World,
+    SCML2023World,
 )
 from scml.std.world import SCML2024StdWorld
 from scml.utils import (
+    DefaultAgents,
+    DefaultAgents2022,
+    DefaultAgentsOneShot2022,
     anac2020_collusion,
     anac2020_std,
     anac2021_collusion,
@@ -77,19 +79,15 @@ except Exception:
         return x
 
 
-try:
+with contextlib.suppress(Exception):
     # disable a warning in yaml 1b1 version
     yaml.warnings({"YAMLLoadWarning": False})
-except Exception:
-    pass
 
 n_completed = 0
 n_total = 0
 
 DEFAULT_STD_OLD = "RandomAgent;BuyCheapSellExpensiveAgent;SatisficerAgent;DecentralizingAgent;DoNothingAgent"
-DEFAULT_STD_2021 = (
-    "MarketAwareDecentralizingAgent;RandomAgent;SatisficerAgent;DecentralizingAgent"
-)
+DEFAULT_STD_2021 = "MarketAwareDecentralizingAgent;RandomAgent;SatisficerAgent;DecentralizingAgent"
 DEFAULT_ONESHOT = "GreedySyncAgent;SyncRandomOneShotAgent"
 DEFAULT_STD = "GreedySyncAgent;SyncRandomStdAgent;SyncRandomOneShotAgent"
 
@@ -130,9 +128,7 @@ DB_FOLDER = default_log_path().parent / "runsdb"
 DB_NAME = "rundb.csv"
 
 
-def save_run_info(
-    name: str, log_path: Path | str | None, type_: str = "world", path: Path = DB_FOLDER
-):
+def save_run_info(name: str, log_path: Path | str | None, type_: str = "world", path: Path = DB_FOLDER):
     if log_path is None:
         return
     log_path = Path(log_path)
@@ -168,16 +164,13 @@ def print_progress(_, i, n) -> None:
 def print_world_progress(world) -> None:
     """Prints the progress of a world"""
     step = world.current_step + 1
-    s = (
-        f"SCML2020World# {n_completed:04}: {step:04}  of {world.n_steps:04} "
-        f"steps completed ({step / world.n_steps:0.2f}) "
-    )
+    s = f"SCML2020World# {n_completed:04}: {step:04}  of {world.n_steps:04} steps completed ({step / world.n_steps:0.2f}) "
     if n_total > 0:
         s += f"TOTAL: ({n_completed + step / world.n_steps / n_total:0.2f})"
     print(s, flush=True)
 
 
-def shortest_unique_names(strs: List[str], sep="."):
+def shortest_unique_names(strs: list[str], sep="."):
     """
     Finds the shortest unique strings starting from the end of each input
     string based on the separator.
@@ -203,7 +196,7 @@ def shortest_unique_names(strs: List[str], sep="."):
             continue
         strs_new = [sep.join(lsts[_][:-1]) for _ in loc_]
         prefixes = shortest_unique_names(strs_new, sep)
-        for loc, prefix in zip(loc_, prefixes):
+        for loc, prefix in zip(loc_, prefixes, strict=False):
             x = sep.join([prefix, s])
             if x.startswith(sep):
                 x = x[len(sep) :]
@@ -225,62 +218,54 @@ def main():
 
 
 def display_results(results, metric, file_name=None):
-    file = None
-    if file_name:
-        file = open(file_name, "w")
+    with open(file_name, "w") if file_name else contextlib.nullcontext() as file:
 
-    def print_and_save(x):
-        print(x)
-        if file:
-            file.write(x)
+        def print_and_save(x):
+            print(x)
+            if file:
+                file.write(x)
 
-    viewmetric = [
-        "50%"
-        if metric == "median" and "median" not in results.score_stats.columns
-        else metric
-    ]
-    if results is None or results.score_stats is None or len(results.score_stats) == 0:
-        print("[red]No results found[/red]")
-        return
-    strs = results.score_stats["agent_type"].values.tolist()
-    short_names = shortest_unique_names(strs)
-    mapping = dict(zip(strs, short_names))
-    results.score_stats["agent_type"] = short_names
-    try:
-        xdata = results.score_stats.sort_values(by=viewmetric, ascending=False)
-    except Exception:
-        xdata = results.score_stats
-    print_and_save(tabulate(xdata, headers="keys", tablefmt="psql"))
-    if metric in ("mean", "sum"):
-        results.ttest["a"] = [mapping[_] for _ in results.ttest["a"]]
-        results.ttest["b"] = [mapping[_] for _ in results.ttest["b"]]
-        print_and_save(tabulate(results.ttest, headers="keys", tablefmt="psql"))
-    else:
-        results.kstest["a"] = [mapping[_] for _ in results.kstest["a"]]
-        results.kstest["b"] = [mapping[_] for _ in results.kstest["b"]]
-        print_and_save(tabulate(results.kstest, headers="keys", tablefmt="psql"))
+        viewmetric = ["50%" if metric == "median" and "median" not in results.score_stats.columns else metric]
+        if results is None or results.score_stats is None or len(results.score_stats) == 0:
+            print("[red]No results found[/red]")
+            return
+        strs = results.score_stats["agent_type"].values.tolist()
+        short_names = shortest_unique_names(strs)
+        mapping = dict(zip(strs, short_names, strict=False))
+        results.score_stats["agent_type"] = short_names
+        try:
+            xdata = results.score_stats.sort_values(by=viewmetric, ascending=False)
+        except Exception:
+            xdata = results.score_stats
+        print_and_save(tabulate(xdata, headers="keys", tablefmt="psql"))
+        if metric in ("mean", "sum"):
+            results.ttest["a"] = [mapping[_] for _ in results.ttest["a"]]
+            results.ttest["b"] = [mapping[_] for _ in results.ttest["b"]]
+            print_and_save(tabulate(results.ttest, headers="keys", tablefmt="psql"))
+        else:
+            results.kstest["a"] = [mapping[_] for _ in results.kstest["a"]]
+            results.kstest["b"] = [mapping[_] for _ in results.kstest["b"]]
+            print_and_save(tabulate(results.kstest, headers="keys", tablefmt="psql"))
 
-    if results.agg_stats is not None and len(results.agg_stats) > 0:
-        agg_stats = results.agg_stats.loc[
-            :,
-            [
-                "n_negotiations_sum",
-                "n_contracts_concluded_sum",
-                "n_contracts_signed_sum",
-                "n_contracts_executed_sum",
-                "activity_level_sum",
-            ],
-        ]
-        agg_stats.columns = [
-            "negotiated",
-            "concluded",
-            "signed",
-            "executed",
-            "business",
-        ]
-        print_and_save(tabulate(agg_stats.describe(), headers="keys", tablefmt="psql"))
-    if file:
-        file.close()
+        if results.agg_stats is not None and len(results.agg_stats) > 0:
+            agg_stats = results.agg_stats.loc[
+                :,
+                [
+                    "n_negotiations_sum",
+                    "n_contracts_concluded_sum",
+                    "n_contracts_signed_sum",
+                    "n_contracts_executed_sum",
+                    "activity_level_sum",
+                ],
+            ]
+            agg_stats.columns = [
+                "negotiated",
+                "concluded",
+                "signed",
+                "executed",
+                "business",
+            ]
+            print_and_save(tabulate(agg_stats.describe(), headers="keys", tablefmt="psql"))
 
 
 def _path(path) -> Path:
@@ -288,9 +273,8 @@ def _path(path) -> Path:
     if isinstance(path, Path):
         return path.absolute()
     path.replace("/", os.sep)
-    if isinstance(path, str):
-        if path.startswith("~"):
-            path = Path.home() / (os.sep.join(path.split(os.sep)[1:]))
+    if isinstance(path, str) and path.startswith("~"):
+        path = Path.home() / (os.sep.join(path.split(os.sep)[1:]))
     return Path(path).absolute()
 
 
@@ -300,8 +284,7 @@ def _path(path) -> Path:
     "--levels",
     default=3,
     type=int,
-    help="Number of intermediate production levels (processes). "
-    "-1 means a single product and no factories.",
+    help="Number of intermediate production levels (processes). -1 means a single product and no factories.",
 )
 @click.option(
     "--competitors",
@@ -327,8 +310,7 @@ def _path(path) -> Path:
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -361,27 +343,27 @@ def run2019(
     path,
     world_config,
 ):
-    kwargs = dict(
-        no_bank=True,
-        no_insurance=False,
-        prevent_cfp_tampering=True,
-        ignore_negotiated_penalties=False,
-        neg_step_time_limit=10,
-        breach_penalty_society=0.02,
-        premium=0.03,
-        premium_time_increment=0.1,
-        premium_breach_increment=0.001,
-        max_allowed_breach_level=None,
-        breach_penalty_society_min=0.0,
-        breach_penalty_victim=0.0,
-        breach_move_max_product=True,
-        transfer_delay=0,
-        start_negotiations_immediately=False,
-        catalog_profit=0.15,
-        financial_reports_period=10,
-        default_price_for_products_without_one=1,
-        compensation_fraction=0.5,
-    )
+    kwargs = {
+        "no_bank": True,
+        "no_insurance": False,
+        "prevent_cfp_tampering": True,
+        "ignore_negotiated_penalties": False,
+        "neg_step_time_limit": 10,
+        "breach_penalty_society": 0.02,
+        "premium": 0.03,
+        "premium_time_increment": 0.1,
+        "premium_breach_increment": 0.001,
+        "max_allowed_breach_level": None,
+        "breach_penalty_society_min": 0.0,
+        "breach_penalty_victim": 0.0,
+        "breach_move_max_product": True,
+        "transfer_delay": 0,
+        "start_negotiations_immediately": False,
+        "catalog_profit": 0.15,
+        "financial_reports_period": 10,
+        "default_price_for_products_without_one": 1,
+        "compensation_fraction": 0.5,
+    }
     if world_config is not None and len(world_config) > 0:
         for wc in world_config:
             kwargs.update(load(wc))
@@ -402,17 +384,13 @@ def run2019(
     exception = None
 
     def _no_default(s):
-        return not (
-            s.startswith("scml.scml2019") and s.endswith("GreedyFactoryManager")
-        )
+        return not (s.startswith("scml.scml2019") and s.endswith("GreedyFactoryManager"))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             all_competitors[i] = "scml.scml2019.factory_managers." + cp
-    all_competitors_params = [
-        dict() if _no_default(_) else factory_kwargs for _ in all_competitors
-    ]
+    all_competitors_params = [{} if _no_default(_) else factory_kwargs for _ in all_competitors]
 
     world = SCML2019World.chain_world(
         n_steps=steps,
@@ -435,7 +413,7 @@ def run2019(
     failed = False
     strt = perf_counter()
     try:
-        for i in track(range(world.n_steps), total=world.n_steps):
+        for _ in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -507,7 +485,7 @@ def run2019(
             )
         )
         d2 = d2.reset_index().sort_values(["product_id"])
-        products = dict(zip([_.id for _ in world.products], world.products))
+        products = dict(zip([_.id for _ in world.products], world.products, strict=False))
         d2["Product"] = np.array([products[_] for _ in d2["product_id"].values])
         d2 = d2.loc[:, ["Product", "uprice", "quantity"]]
         d2.columns = ["Product", "Avg. Unit Price", "Total Quantity"]
@@ -518,24 +496,15 @@ def run2019(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.a2f[_.id].total_balance]
-                    for _ in world.agents.values()
-                    if isinstance(_, FactoryManager)
-                ),
+                ([_.name, world.a2f[_.id].total_balance] for _ in world.agents.values() if isinstance(_, FactoryManager)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
-        winners = [
-            f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
-            for _ in world.winners
-        ]
+        winners = [f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}" for _ in world.winners]
         print_and_log(
             f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
             f"{world.agreement_rate:0.0%}]"
@@ -598,9 +567,7 @@ def run2019(
     default=default_world_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
-@click.option(
-    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
-)
+@click.option("--time", "-t", default=-1, type=int, help="Allowed time for the simulation")
 @click.option(
     "--log-ufuns/--no-ufun-logs",
     default=False,
@@ -614,8 +581,7 @@ def run2019(
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--show-contracts/--no-contracts",
@@ -685,7 +651,7 @@ def run2020(
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             all_competitors[i] = "scml.scml2020.agents." + cp
-    all_competitors_params = [dict() for _ in all_competitors]
+    all_competitors_params = [{} for _ in all_competitors]
     world = SCML2020World(
         **SCML2020World.generate(
             time_limit=time,
@@ -706,7 +672,7 @@ def run2020(
     failed = False
     strt = perf_counter()
     try:
-        for i in track(range(world.n_steps), total=world.n_steps):
+        for _ in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -776,12 +742,8 @@ def run2020(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
-        d2["Catalog"] = world.catalog_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
-        d2["Trading"] = world.trading_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
+        d2["Catalog"] = world.catalog_prices[d2["product"].str.slice(start=-1).astype(int).values]
+        d2["Trading"] = world.trading_prices[d2["product"].str.slice(start=-1).astype(int).values]
         d2["Product"] = d2["product"]
         d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
@@ -793,23 +755,16 @@ def run2020(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.a2f[_.id].current_balance]
-                    for _ in world.agents.values()
-                    if isinstance(_, SCML2020Agent)
-                ),
+                ([_.name, world.a2f[_.id].current_balance] for _ in world.agents.values() if isinstance(_, SCML2020Agent)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
         winners = [
-            f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
-            for _ in world.winners
+            f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}" for _ in world.winners
         ]
         print_and_log(
             f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
@@ -824,25 +779,15 @@ def run2020(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = (
-            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
-        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [
-            _
-            for _ in world.saved_contracts
-            if any(is_system_agent(a) for a in _["partners"])
-        ]
-        negotiated = [
-            _
-            for _ in world.saved_contracts
-            if all(not is_system_agent(a) for a in _["partners"])
-        ]
+        exogenous = [_ for _ in world.saved_contracts if any(is_system_agent(a) for a in _["partners"])]
+        negotiated = [_ for _ in world.saved_contracts if all(not is_system_agent(a) for a in _["partners"])]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -903,9 +848,7 @@ def run2020(
     default=default_world_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
-@click.option(
-    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
-)
+@click.option("--time", "-t", default=-1, type=int, help="Allowed time for the simulation")
 @click.option(
     "--log-ufuns/--no-ufun-logs",
     default=False,
@@ -919,8 +862,7 @@ def run2020(
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--show-contracts/--no-contracts",
@@ -1002,13 +944,7 @@ def run2021(
 
     log_dir = _path(log)
 
-    world_name = (
-        unique_name(
-            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
-        )
-        if not name
-        else name
-    )
+    world_name = name if name else unique_name(base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
     os.makedirs(log_dir, exist_ok=True)
@@ -1016,9 +952,7 @@ def run2021(
     exception = None
 
     def _no_default(s):
-        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
-            oneshot and not (s.startswith("scml.oneshot.agents."))
-        )
+        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (oneshot and not (s.startswith("scml.oneshot.agents.")))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -1027,7 +961,7 @@ def run2021(
                 all_competitors[i] = "scml.oneshot.agents." + cp
             else:
                 all_competitors[i] = "scml.scml2020.agents." + cp
-    all_competitors_params = [dict() for _ in all_competitors]
+    all_competitors_params = [{} for _ in all_competitors]
     world = world_type(
         **world_type.generate(
             time_limit=time,
@@ -1049,7 +983,7 @@ def run2021(
     failed = False
     strt = perf_counter()
     try:
-        for i in track(range(world.n_steps), total=world.n_steps):
+        for _ in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1120,12 +1054,8 @@ def run2021(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
-        d2["Catalog"] = world.catalog_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
-        d2["Trading"] = world.trading_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
+        d2["Catalog"] = world.catalog_prices[d2["product"].str.slice(start=-1).astype(int).values]
+        d2["Trading"] = world.trading_prices[d2["product"].str.slice(start=-1).astype(int).values]
         d2["Product"] = d2["product"]
         d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
@@ -1137,17 +1067,11 @@ def run2021(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.scores()[_.id]]
-                    for _ in world.agents.values()
-                    if not is_system_agent(_.id)
-                ),
+                ([_.name, world.scores()[_.id]] for _ in world.agents.values() if not is_system_agent(_.id)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
@@ -1165,25 +1089,15 @@ def run2021(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = (
-            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
-        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [
-            _
-            for _ in world.saved_contracts
-            if any(is_system_agent(a) for a in _["partners"])
-        ]
-        negotiated = [
-            _
-            for _ in world.saved_contracts
-            if all(not is_system_agent(a) for a in _["partners"])
-        ]
+        exogenous = [_ for _ in world.saved_contracts if any(is_system_agent(a) for a in _["partners"])]
+        negotiated = [_ for _ in world.saved_contracts if all(not is_system_agent(a) for a in _["partners"])]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -1241,9 +1155,7 @@ def run2021(
     default=default_world_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
-@click.option(
-    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
-)
+@click.option("--time", "-t", default=-1, type=int, help="Allowed time for the simulation")
 @click.option(
     "--log-ufuns/--no-ufun-logs",
     default=False,
@@ -1257,8 +1169,7 @@ def run2021(
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--show-contracts/--no-contracts",
@@ -1340,13 +1251,7 @@ def run2022(
 
     log_dir = _path(log)
 
-    world_name = (
-        unique_name(
-            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
-        )
-        if not name
-        else name
-    )
+    world_name = name if name else unique_name(base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
     os.makedirs(log_dir, exist_ok=True)
@@ -1354,9 +1259,7 @@ def run2022(
     exception = None
 
     def _no_default(s):
-        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
-            oneshot and not (s.startswith("scml.oneshot.agents."))
-        )
+        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (oneshot and not (s.startswith("scml.oneshot.agents.")))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -1365,7 +1268,7 @@ def run2022(
                 all_competitors[i] = "scml.oneshot.agents." + cp
             else:
                 all_competitors[i] = "scml.scml2020.agents." + cp
-    all_competitors_params = [dict() for _ in all_competitors]
+    all_competitors_params = [{} for _ in all_competitors]
     world = world_type(
         **world_type.generate(
             time_limit=time,
@@ -1387,7 +1290,7 @@ def run2022(
     failed = False
     strt = perf_counter()
     try:
-        for i in track(range(world.n_steps), total=world.n_steps):
+        for _ in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1458,12 +1361,8 @@ def run2022(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
-        d2["Catalog"] = world.catalog_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
-        d2["Trading"] = world.trading_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
+        d2["Catalog"] = world.catalog_prices[d2["product"].str.slice(start=-1).astype(int).values]
+        d2["Trading"] = world.trading_prices[d2["product"].str.slice(start=-1).astype(int).values]
         d2["Product"] = d2["product"]
         d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
@@ -1475,17 +1374,11 @@ def run2022(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.scores()[_.id]]
-                    for _ in world.agents.values()
-                    if not is_system_agent(_.id)
-                ),
+                ([_.name, world.scores()[_.id]] for _ in world.agents.values() if not is_system_agent(_.id)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
@@ -1503,25 +1396,15 @@ def run2022(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = (
-            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
-        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [
-            _
-            for _ in world.saved_contracts
-            if any(is_system_agent(a) for a in _["partners"])
-        ]
-        negotiated = [
-            _
-            for _ in world.saved_contracts
-            if all(not is_system_agent(a) for a in _["partners"])
-        ]
+        exogenous = [_ for _ in world.saved_contracts if any(is_system_agent(a) for a in _["partners"])]
+        negotiated = [_ for _ in world.saved_contracts if all(not is_system_agent(a) for a in _["partners"])]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -1579,9 +1462,7 @@ def run2022(
     default=default_world_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
-@click.option(
-    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
-)
+@click.option("--time", "-t", default=-1, type=int, help="Allowed time for the simulation")
 @click.option(
     "--log-ufuns/--no-ufun-logs",
     default=False,
@@ -1595,8 +1476,7 @@ def run2022(
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--show-contracts/--no-contracts",
@@ -1678,13 +1558,7 @@ def run2023(
 
     log_dir = _path(log)
 
-    world_name = (
-        unique_name(
-            base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0
-        )
-        if not name
-        else name
-    )
+    world_name = name if name else unique_name(base=f"scml2020{'oneshot' if oneshot else ''}", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
     os.makedirs(log_dir, exist_ok=True)
@@ -1692,9 +1566,7 @@ def run2023(
     exception = None
 
     def _no_default(s):
-        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (
-            oneshot and not (s.startswith("scml.oneshot.agents."))
-        )
+        return (not oneshot and not (s.startswith("scml.scml2020.agents."))) or (oneshot and not (s.startswith("scml.oneshot.agents.")))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -1703,7 +1575,7 @@ def run2023(
                 all_competitors[i] = "scml.oneshot.agents." + cp
             else:
                 all_competitors[i] = "scml.scml2020.agents." + cp
-    all_competitors_params = [dict() for _ in all_competitors]
+    all_competitors_params = [{} for _ in all_competitors]
     world = world_type(
         **world_type.generate(
             time_limit=time,
@@ -1725,7 +1597,7 @@ def run2023(
     failed = False
     strt = perf_counter()
     try:
-        for i in track(range(world.n_steps), total=world.n_steps):
+        for _ in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1796,12 +1668,8 @@ def run2023(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
-        d2["Catalog"] = world.catalog_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
-        d2["Trading"] = world.trading_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
+        d2["Catalog"] = world.catalog_prices[d2["product"].str.slice(start=-1).astype(int).values]
+        d2["Trading"] = world.trading_prices[d2["product"].str.slice(start=-1).astype(int).values]
         d2["Product"] = d2["product"]
         d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
@@ -1813,17 +1681,11 @@ def run2023(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.scores()[_.id]]
-                    for _ in world.agents.values()
-                    if not is_system_agent(_.id)
-                ),
+                ([_.name, world.scores()[_.id]] for _ in world.agents.values() if not is_system_agent(_.id)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
@@ -1841,25 +1703,15 @@ def run2023(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = (
-            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
-        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [
-            _
-            for _ in world.saved_contracts
-            if any(is_system_agent(a) for a in _["partners"])
-        ]
-        negotiated = [
-            _
-            for _ in world.saved_contracts
-            if all(not is_system_agent(a) for a in _["partners"])
-        ]
+        exogenous = [_ for _ in world.saved_contracts if any(is_system_agent(a) for a in _["partners"])]
+        negotiated = [_ for _ in world.saved_contracts if all(not is_system_agent(a) for a in _["partners"])]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -1917,9 +1769,7 @@ def run2023(
     default=default_world_path(),
     help="Default location to save logs (A folder will be created under it)",
 )
-@click.option(
-    "--time", "-t", default=-1, type=int, help="Allowed time for the simulation"
-)
+@click.option("--time", "-t", default=-1, type=int, help="Allowed time for the simulation")
 @click.option(
     "--log-ufuns/--no-ufun-logs",
     default=False,
@@ -1933,8 +1783,7 @@ def run2023(
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--show-contracts/--no-contracts",
@@ -2016,15 +1865,7 @@ def run2024(
 
     log_dir = _path(log)
 
-    world_name = (
-        unique_name(
-            base=f"scml2024{'oneshot' if oneshot else 'std'}",
-            add_time=True,
-            rand_digits=0,
-        )
-        if not name
-        else name
-    )
+    world_name = name if name else unique_name(base=f"scml2024{'oneshot' if oneshot else 'std'}", add_time=True, rand_digits=0)
     log_dir = log_dir / world_name
     log_dir = log_dir.absolute()
     os.makedirs(log_dir, exist_ok=True)
@@ -2032,9 +1873,7 @@ def run2024(
     exception = None
 
     def _no_default(s):
-        return (not oneshot and not (s.startswith("scml.std.agents."))) or (
-            oneshot and not (s.startswith("scml.oneshot.agents."))
-        )
+        return (not oneshot and not (s.startswith("scml.std.agents."))) or (oneshot and not (s.startswith("scml.oneshot.agents.")))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -2043,33 +1882,33 @@ def run2024(
                 all_competitors[i] = "scml.oneshot.agents." + cp
             else:
                 all_competitors[i] = "scml.std.agents." + cp
-    all_competitors_params = [dict() for _ in all_competitors]
+    all_competitors_params = [{} for _ in all_competitors]
     kwargs.update(
-        dict(
-            time_limit=time,
-            compact=compact,
-            log_ufuns=log_ufuns,
-            agent_types=all_competitors,
-            agent_params=all_competitors_params,
-            log_negotiations=log_negs,
-            log_folder=log_dir,
-            name=world_name,
-            ignore_agent_exceptions=not raise_exceptions,
-            ignore_contract_execution_exceptions=not raise_exceptions,
-            ignore_simulation_exceptions=not raise_exceptions,
-            ignore_negotiation_exceptions=not raise_exceptions,
-            exogenous_generation_method=method,
-        )
+        {
+            "time_limit": time,
+            "compact": compact,
+            "log_ufuns": log_ufuns,
+            "agent_types": all_competitors,
+            "agent_params": all_competitors_params,
+            "log_negotiations": log_negs,
+            "log_folder": log_dir,
+            "name": world_name,
+            "ignore_agent_exceptions": not raise_exceptions,
+            "ignore_contract_execution_exceptions": not raise_exceptions,
+            "ignore_simulation_exceptions": not raise_exceptions,
+            "ignore_negotiation_exceptions": not raise_exceptions,
+            "exogenous_generation_method": method,
+        }
     )
     if oneshot:
-        kwargs.update(dict(storage_cost=0, storage_cost_dev=0, perishable=True))
+        kwargs.update({"storage_cost": 0, "storage_cost_dev": 0, "perishable": True})
     else:
-        kwargs.update(dict(disposal_cost=0, disposal_cost_dev=0, perishable=False))
+        kwargs.update({"disposal_cost": 0, "disposal_cost_dev": 0, "perishable": False})
     world = world_type(**world_type.generate(**kwargs))
     failed = False
     strt = perf_counter()
     try:
-        for i in track(range(world.n_steps), total=world.n_steps):
+        for _ in track(range(world.n_steps), total=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -2140,12 +1979,8 @@ def run2024(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
-        d2["Catalog"] = world.catalog_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
-        d2["Trading"] = world.trading_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
+        d2["Catalog"] = world.catalog_prices[d2["product"].str.slice(start=-1).astype(int).values]
+        d2["Trading"] = world.trading_prices[d2["product"].str.slice(start=-1).astype(int).values]
         d2["Product"] = d2["product"]
         d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
@@ -2157,17 +1992,11 @@ def run2024(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.scores()[_.id]]
-                    for _ in world.agents.values()
-                    if not is_system_agent(_.id)
-                ),
+                ([_.name, world.scores()[_.id]] for _ in world.agents.values() if not is_system_agent(_.id)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
@@ -2185,25 +2014,15 @@ def run2024(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = (
-            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
-        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
         n_erred = int(round(n_signed * world.contract_err_fraction))
         n_breached = int(round(n_signed * world.breach_fraction))
         n_executed = int(round(n_signed * world.contract_execution_fraction))
-        exogenous = [
-            _
-            for _ in world.saved_contracts
-            if any(is_system_agent(a) for a in _["partners"])
-        ]
-        negotiated = [
-            _
-            for _ in world.saved_contracts
-            if all(not is_system_agent(a) for a in _["partners"])
-        ]
+        exogenous = [_ for _ in world.saved_contracts if any(is_system_agent(a) for a in _["partners"])]
+        negotiated = [_ for _ in world.saved_contracts if all(not is_system_agent(a) for a in _["partners"])]
         n_exogenous = len(exogenous)
         n_negotiated = len(negotiated)
         n_exogenous_signed = len([_ for _ in exogenous if _["signed_at"] >= 0])
@@ -2305,8 +2124,7 @@ def run2024(
 @click.option(
     "--non-competitors",
     default="",
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -2341,8 +2159,7 @@ def run2024(
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -2420,15 +2237,13 @@ def tournament2019(
     if not compact:
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             all_competitors[i] = ("scml.scml2019.factory_managers.builtins.") + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors) if "sabotage" not in ttype else 1
     if cw > len(all_competitors):
@@ -2442,21 +2257,13 @@ def tournament2019(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if ttype == "std":
         pass
 
     if worlds_per_config is None:
-        n_worlds = (
-            permutation_size
-            * runs
-            * configs
-            * (nCr(len(all_competitors), cw) if "sabotage" not in ttype else 1)
-        )
+        n_worlds = permutation_size * runs * configs * (nCr(len(all_competitors), cw) if "sabotage" not in ttype else 1)
         if n_worlds > warning_n_runs:
             print(
                 f"You are running the maximum possible number of permutations for each configuration. This is roughly"
@@ -2475,9 +2282,7 @@ def tournament2019(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     parallelism = "parallel" if parallel else "serial"
 
@@ -2500,13 +2305,7 @@ def tournament2019(
     pprint(all_competitors)
     print("Non-competitors are: ")
     pprint(non_competitors)
-    runner = (
-        anac2019_std
-        if ttype == "std"
-        else anac2019_collusion
-        if ttype == "collusion"
-        else anac2019_sabotage
-    )
+    runner = anac2019_std if ttype == "std" else anac2019_collusion if ttype == "collusion" else anac2019_sabotage
     kwargs["round_robin"] = True
     start = perf_counter()
     results = runner(
@@ -2591,8 +2390,7 @@ def tournament2019(
 @click.option(
     "--non-competitors",
     default=DEFAULT_STD_NONCOMPETITORS_OLD,
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -2627,8 +2425,7 @@ def tournament2019(
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -2711,15 +2508,13 @@ def tournament2020(
     if not compact:
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             all_competitors[i] = ("scml.scml2020.agents.") + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors)
     if cw > len(all_competitors):
@@ -2733,10 +2528,7 @@ def tournament2020(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if ttype == "std":
         pass
@@ -2761,9 +2553,7 @@ def tournament2020(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -2871,8 +2661,7 @@ def tournament2020(
 @click.option(
     "--non-competitors",
     default="",
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -2907,8 +2696,7 @@ def tournament2020(
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -2967,11 +2755,7 @@ def tournament2021(
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_OLD
     if not non_competitors:
-        non_competitors = (
-            ";".join(DEFAULT_ONESHOT_NONCOMPETITORS)
-            if oneshot
-            else ";".join(DEFAULT_STD_NONCOMPETITORS_OLD)
-        )
+        non_competitors = ";".join(DEFAULT_ONESHOT_NONCOMPETITORS) if oneshot else ";".join(DEFAULT_STD_NONCOMPETITORS_OLD)
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3000,9 +2784,7 @@ def tournament2021(
     if not compact:
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -3011,7 +2793,7 @@ def tournament2021(
                 all_competitors[i] = ("scml.oneshot.agents.") + cp
             else:
                 all_competitors[i] = ("scml.scml2020.agents.") + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors)
     if cw > len(all_competitors):
@@ -3025,10 +2807,7 @@ def tournament2021(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if ttype == "std":
         pass
@@ -3053,9 +2832,7 @@ def tournament2021(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -3070,23 +2847,13 @@ def tournament2021(
                     non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = (
-            DEFAULT_ONESHOT_NONCOMPETITORS
-            if ttype == "oneshot"
-            else DEFAULT_2021_NONCOMPETITORS
-        )
+        non_competitors = DEFAULT_ONESHOT_NONCOMPETITORS if ttype == "oneshot" else DEFAULT_2021_NONCOMPETITORS
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
     print("Non-competitors are: ")
     pprint(non_competitors)
-    runner = (
-        anac2021_std
-        if ttype == "std"
-        else anac2021_collusion
-        if ttype == "collusion"
-        else anac2021_oneshot
-    )
+    runner = anac2021_std if ttype == "std" else anac2021_collusion if ttype == "collusion" else anac2021_oneshot
     parallelism = "parallel" if parallel else "serial"
     prog_callback = print_world_progress if verbosity > 1 else None
     start = perf_counter()
@@ -3174,8 +2941,7 @@ def tournament2021(
 @click.option(
     "--non-competitors",
     default="",
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -3210,8 +2976,7 @@ def tournament2021(
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -3270,11 +3035,7 @@ def tournament2022(
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_OLD
     if not non_competitors:
-        non_competitors = (
-            ";".join(DEFAULT_ONESHOT_NONCOMPETITORS)
-            if oneshot
-            else ";".join(DEFAULT_STD_NONCOMPETITORS_OLD)
-        )
+        non_competitors = ";".join(DEFAULT_ONESHOT_NONCOMPETITORS) if oneshot else ";".join(DEFAULT_STD_NONCOMPETITORS_OLD)
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3303,9 +3064,7 @@ def tournament2022(
     if not compact:
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -3314,7 +3073,7 @@ def tournament2022(
                 all_competitors[i] = ("scml.oneshot.agents.") + cp
             else:
                 all_competitors[i] = ("scml.scml2020.agents.") + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors)
     if cw > len(all_competitors):
@@ -3328,10 +3087,7 @@ def tournament2022(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if worlds_per_config is None:
         n_worlds = permutation_size * runs * configs * nCr(len(all_competitors), cw)
@@ -3353,9 +3109,7 @@ def tournament2022(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -3370,19 +3124,13 @@ def tournament2022(
                     all_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = (
-            DefaultAgents2022 if ttype != "oneshot" else DefaultAgentsOneShot2022
-        )
+        non_competitors = DefaultAgents2022 if ttype != "oneshot" else DefaultAgentsOneShot2022
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
     print("Non-competitors are: ")
     pprint(non_competitors)
-    runner = (
-        anac2022_std
-        if ttype == "std"
-        else (anac2022_oneshot if ttype == "oneshot" else anac2022_collusion)
-    )
+    runner = anac2022_std if ttype == "std" else (anac2022_oneshot if ttype == "oneshot" else anac2022_collusion)
     parallelism = "parallel" if parallel else "serial"
     prog_callback = print_world_progress if verbosity > 1 else None
     start = perf_counter()
@@ -3470,8 +3218,7 @@ def tournament2022(
 @click.option(
     "--non-competitors",
     default="",
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -3506,8 +3253,7 @@ def tournament2022(
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -3566,11 +3312,7 @@ def tournament2023(
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD_OLD
     if not non_competitors:
-        non_competitors = (
-            ";".join(DEFAULT_ONESHOT_NONCOMPETITORS)
-            if oneshot
-            else ";".join(DEFAULT_STD_NONCOMPETITORS_OLD)
-        )
+        non_competitors = ";".join(DEFAULT_ONESHOT_NONCOMPETITORS) if oneshot else ";".join(DEFAULT_STD_NONCOMPETITORS_OLD)
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3599,9 +3341,7 @@ def tournament2023(
     if not compact:
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -3610,7 +3350,7 @@ def tournament2023(
                 all_competitors[i] = ("scml.oneshot.agents.") + cp
             else:
                 all_competitors[i] = ("scml.scml2020.agents.") + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors)
     if cw > len(all_competitors):
@@ -3624,10 +3364,7 @@ def tournament2023(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if ttype == "std":
         pass
@@ -3652,9 +3389,7 @@ def tournament2023(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -3669,23 +3404,13 @@ def tournament2023(
                     non_competitors[i] = ("scml.scml2020.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = (
-            DEFAULT_ONESHOT_NONCOMPETITORS
-            if ttype == "oneshot"
-            else DEFAULT_2021_NONCOMPETITORS
-        )
+        non_competitors = DEFAULT_ONESHOT_NONCOMPETITORS if ttype == "oneshot" else DEFAULT_2021_NONCOMPETITORS
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
     print("Non-competitors are: ")
     pprint(non_competitors)
-    runner = (
-        anac2023_std
-        if ttype == "std"
-        else anac2023_collusion
-        if ttype == "collusion"
-        else anac2023_oneshot
-    )
+    runner = anac2023_std if ttype == "std" else anac2023_collusion if ttype == "collusion" else anac2023_oneshot
     parallelism = "parallel" if parallel else "serial"
     prog_callback = print_world_progress if verbosity > 1 else None
     start = perf_counter()
@@ -3782,8 +3507,7 @@ def tournament2023(
 @click.option(
     "--non-competitors",
     default="",
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -3818,8 +3542,7 @@ def tournament2023(
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -3879,11 +3602,7 @@ def tournament2024(
     if not competitors:
         competitors = DEFAULT_ONESHOT if oneshot else DEFAULT_STD
     if not non_competitors:
-        non_competitors = (
-            ";".join(DEFAULT_ONESHOT_NONCOMPETITORS)
-            if oneshot
-            else ";".join(DEFAULT_STD_NONCOMPETITORS)
-        )
+        non_competitors = ";".join(DEFAULT_ONESHOT_NONCOMPETITORS) if oneshot else ";".join(DEFAULT_STD_NONCOMPETITORS)
     if len(output) == 0 or output == "none":
         output = None
     if output:
@@ -3914,9 +3633,7 @@ def tournament2024(
     if not compact:
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
@@ -3925,7 +3642,7 @@ def tournament2024(
                 all_competitors[i] = ("scml.oneshot.agents.") + cp
             else:
                 all_competitors[i] = ("scml.std.agents.") + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     permutation_size = len(all_competitors)
     if cw > len(all_competitors):
@@ -3939,10 +3656,7 @@ def tournament2024(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if ttype == "std":
         pass
@@ -3967,9 +3681,7 @@ def tournament2024(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -3984,11 +3696,7 @@ def tournament2024(
                     non_competitors[i] = ("scml.std.agents.") + cp
 
     if non_competitors is None:
-        non_competitors = (
-            DEFAULT_ONESHOT_NONCOMPETITORS
-            if ttype == "oneshot"
-            else DEFAULT_STD_NONCOMPETITORS
-        )
+        non_competitors = DEFAULT_ONESHOT_NONCOMPETITORS if ttype == "oneshot" else DEFAULT_STD_NONCOMPETITORS
         non_competitor_params = tuple({} for _ in range(len(non_competitors)))
     print(f"Tournament will be run between {len(all_competitors)} agents: ")
     pprint(all_competitors)
@@ -4001,9 +3709,9 @@ def tournament2024(
     kwargs["round_robin"] = True
 
     if oneshot:
-        kwargs.update(dict(storage_cost=0, storage_cost_dev=0, perishable=True))
+        kwargs.update({"storage_cost": 0, "storage_cost_dev": 0, "perishable": True})
     else:
-        kwargs.update(dict(disposal_cost=0, disposal_cost_dev=0, perishable=False))
+        kwargs.update({"disposal_cost": 0, "disposal_cost_dev": 0, "perishable": False})
     results = runner(
         competitors=all_competitors,
         competitor_params=all_competitors_params,

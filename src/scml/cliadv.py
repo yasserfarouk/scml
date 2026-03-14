@@ -1,20 +1,30 @@
 #!/usr/bin/env python
 """The SCML universal command line tool"""
-from functools import partial
+
+import contextlib
 import os
 import pathlib
-from pathlib import Path
-from pprint import pformat, pprint
 import sys
-from time import perf_counter
 import traceback
 import warnings
+from functools import partial
+from pathlib import Path
+from pprint import pformat, pprint
+from time import perf_counter
 
 import click
 import click_config_file
+import negmas
 import numpy as np
 import pandas as pd
 import progressbar
+import yaml
+from negmas import save_stats
+from negmas.helpers.inout import load
+from negmas.helpers.strings import humanize_time, unique_name
+from negmas.tournaments import create_tournament, evaluate_tournament, run_tournament
+from tabulate import tabulate
+
 import scml
 from scml.scml2019.common import DEFAULT_NEGOTIATOR
 from scml.scml2019.factory_managers.builtins import FactoryManager
@@ -34,14 +44,6 @@ from scml.utils import (
     anac_assigner_std,
     anac_config_generator_std_old,
 )
-from tabulate import tabulate
-import yaml
-
-import negmas
-from negmas import save_stats
-from negmas.helpers.inout import load
-from negmas.helpers.strings import humanize_time, unique_name
-from negmas.tournaments import create_tournament, evaluate_tournament, run_tournament
 
 try:
     from .vendor.quick.quick import gui_option
@@ -51,11 +53,9 @@ except Exception:
         return x
 
 
-try:
+with contextlib.suppress(Exception):
     # disable a warning in yaml 1b1 version
     yaml.warnings({"YAMLLoadWarning": False})
-except Exception:
-    pass
 
 n_completed = 0
 n_total = 0
@@ -97,10 +97,7 @@ def print_progress(_, i, n) -> None:
 def print_world_progress(world) -> None:
     """Prints the progress of a world"""
     step = world.current_step + 1
-    s = (
-        f"SCML2020World# {n_completed:04}: {step:04}  of {world.n_steps:04} "
-        f"steps completed ({step / world.n_steps:0.2f}) "
-    )
+    s = f"SCML2020World# {n_completed:04}: {step:04}  of {world.n_steps:04} steps completed ({step / world.n_steps:0.2f}) "
     if n_total > 0:
         s += f"TOTAL: ({n_completed + step / world.n_steps / n_total:0.2f})"
     print(s, flush=True)
@@ -142,7 +139,7 @@ def tournament(ctx, ignore_warnings):
     "-s",
     default=None,
     type=int,
-    help="Number of steps. If passed then --steps-min and --steps-max are " "ignored",
+    help="Number of steps. If passed then --steps-min and --steps-max are ignored",
 )
 @click.option(
     "--steps-min",
@@ -204,9 +201,7 @@ def tournament(ctx, ignore_warnings):
     type=int,
     help="Number of agents per competitor (not used for anac2019std in which this is preset to 1).",
 )
-@click.option(
-    "--factories", default=2, type=int, help="Numbers of factories to have per level."
-)
+@click.option("--factories", default=2, type=int, help="Numbers of factories to have per level.")
 @click.option(
     "--competitors",
     default="default",
@@ -217,8 +212,7 @@ def tournament(ctx, ignore_warnings):
 @click.option(
     "--non-competitors",
     default="",
-    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors "
-    "(their scores will not be calculated).",
+    help="A semicolon (;) separated list of agent types to exist in the worlds as non-competitors (their scores will not be calculated).",
 )
 @click.option(
     "--log",
@@ -230,7 +224,7 @@ def tournament(ctx, ignore_warnings):
 @click.option(
     "--world-config",
     type=click.Path(dir_okay=False, file_okay=True),
-    default=tuple(),
+    default=(),
     multiple=True,
     help="A file to load extra configuration parameters for world simulations from.",
 )
@@ -243,7 +237,7 @@ def tournament(ctx, ignore_warnings):
 @click.option(
     "--reveal-names/--hidden-names",
     default=True,
-    help="Reveal agent names (should be used only for " "debugging)",
+    help="Reveal agent names (should be used only for debugging)",
 )
 @click.option(
     "--log-ufuns/--no-ufun-logs",
@@ -258,8 +252,7 @@ def tournament(ctx, ignore_warnings):
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--raise-exceptions/--ignore-exceptions",
@@ -334,18 +327,13 @@ def tournament(ctx, ignore_warnings):
     default=None,
     help="SCML2020: The production cost (see --increasing-costs, --costs-min, --costs-max)",
 )
-@click.option(
-    "--costs-min", type=int, default=1, help="SCML2020: The minimum production cost"
-)
-@click.option(
-    "--costs-max", type=int, default=10, help="SCML2020: The maximum production cost"
-)
+@click.option("--costs-min", type=int, default=1, help="SCML2020: The minimum production cost")
+@click.option("--costs-max", type=int, default=10, help="SCML2020: The maximum production cost")
 @click.option(
     "--productivity",
     type=float,
     default=None,
-    help="SCML2020: The fraction of production slots (lines/steps) that can be occupied with production given the "
-    "exogenous contracts",
+    help="SCML2020: The fraction of production slots (lines/steps) that can be occupied with production given the exogenous contracts",
 )
 @click.option(
     "--productivity-min",
@@ -460,8 +448,7 @@ def tournament(ctx, ignore_warnings):
 @click.option(
     "--force-exogenous/--sign-exogenous",
     default=False,
-    help="SCML2020: Whether the exogenous contracts are forced to their full quantity"
-    " or agents can choose to sign or not sign them.",
+    help="SCML2020: Whether the exogenous contracts are forced to their full quantity or agents can choose to sign or not sign them.",
 )
 @click.option(
     "--balance",
@@ -546,9 +533,7 @@ def create(
     if balance < 0:
         balance = None
     productivity = get_range(productivity, productivity_min, productivity_max)
-    cash_availability = get_range(
-        cash_availability, cash_availability_min, cash_availability_max
-    )
+    cash_availability = get_range(cash_availability, cash_availability_min, cash_availability_max)
     inputs = get_range(inputs, inputs_min, inputs_max)
     if "2020" in ttype:
         factories = (min(factories, factories_min), max(factories, factories_max))
@@ -610,25 +595,17 @@ def create(
 
     if not compact:
         if not reveal_names:
-            print(
-                "You are running the tournament with --debug. Will reveal agent types in their names"
-            )
+            print("You are running the tournament with --debug. Will reveal agent types in their names")
         reveal_names = True
         verbosity = max(1, verbosity)
 
-    worlds_per_config = (
-        None if max_runs is None else int(round(max_runs / (configs * runs)))
-    )
+    worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
-            all_competitors[i] = (
-                "scml.scml2019.factory_managers."
-                if "2019" in ttype
-                else "scml.scml2020.agents."
-            ) + cp
-    all_competitors_params = [dict() for _ in range(len(all_competitors))]
+            all_competitors[i] = ("scml.scml2019.factory_managers." if "2019" in ttype else "scml.scml2020.agents.") + cp
+    all_competitors_params = [{} for _ in range(len(all_competitors))]
 
     # if ttype.lower() == "anac2019std":
     #     if (
@@ -650,10 +627,7 @@ def create(
         return
 
     if max_runs is not None and max_runs < recommended:
-        print(
-            f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least "
-            f"{recommended}. Will continue"
-        )
+        print(f"You are running {max_runs} worlds only but it is recommended to set {max_runs} to at least {recommended}. Will continue")
 
     if ttype == "anac2019std":
         agents = 1
@@ -688,9 +662,7 @@ def create(
                 max_runs = None
             if max_runs is not None and max_runs < 0:
                 exit(0)
-            worlds_per_config = (
-                None if max_runs is None else int(round(max_runs / (configs * runs)))
-            )
+            worlds_per_config = None if max_runs is None else int(round(max_runs / (configs * runs)))
 
     non_competitor_params = None
     if len(non_competitors) < 1:
@@ -699,11 +671,7 @@ def create(
         non_competitors = non_competitors.split(";")
         for i, cp in enumerate(non_competitors):
             if "." not in cp:
-                non_competitors[i] = (
-                    "scml.scml2019.factory_managers."
-                    if "2019" in ttype
-                    else "scml.scml2020.agents."
-                ) + cp
+                non_competitors[i] = ("scml.scml2019.factory_managers." if "2019" in ttype else "scml.scml2020.agents.") + cp
 
     if ttype.lower().startswith("scml"):
         ttype = ttype.lower().replace("scml", "anac")
@@ -924,21 +892,18 @@ def create(
 @click.option(
     "--ip",
     default="127.0.0.1",
-    help="The IP address for a dask scheduler to run the distributed tournament."
-    " Effective only if --distributed",
+    help="The IP address for a dask scheduler to run the distributed tournament. Effective only if --distributed",
 )
 @click.option(
     "--port",
     default=8786,
     type=int,
-    help="The IP port number a dask scheduler to run the distributed tournament."
-    " Effective only if --distributed",
+    help="The IP port number a dask scheduler to run the distributed tournament. Effective only if --distributed",
 )
 @click.option(
     "--compact/--debug",
     default=True,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--path",
@@ -954,15 +919,11 @@ def create(
 )
 @click_config_file.configuration_option()
 @click.pass_context
-def run(
-    ctx, name, verbosity, parallel, distributed, ip, port, compact, path, log, metric
-):
+def run(ctx, name, verbosity, parallel, distributed, ip, port, compact, path, log, metric):
     if len(name) == 0:
         name = ctx.obj.get("tournament_name", "")
     if len(name) == 0:
-        print(
-            "Name is not given to run command and was not stored during a create command call"
-        )
+        print("Name is not given to run command and was not stored during a create command call")
         exit(1)
     if len(path) > 0:
         sys.path.append(path)
@@ -985,9 +946,7 @@ def run(
         print_exceptions=verbosity > 1,
     )
     end_time = humanize_time(perf_counter() - start)
-    results = evaluate_tournament(
-        tournament_path=tpath, verbose=verbosity > 0, metric=metric, recursive=False
-    )
+    results = evaluate_tournament(tournament_path=tpath, verbose=verbosity > 0, metric=metric, recursive=False)
     display_results(results, metric)
     print(f"Finished in {end_time}")
 
@@ -1025,9 +984,8 @@ def _path(path) -> Path:
     if isinstance(path, Path):
         return path.absolute()
     path.replace("/", os.sep)
-    if isinstance(path, str):
-        if path.startswith("~"):
-            path = Path.home() / (os.sep.join(path.split(os.sep)[1:]))
+    if isinstance(path, str) and path.startswith("~"):
+        path = Path.home() / (os.sep.join(path.split(os.sep)[1:]))
     return Path(path).absolute()
 
 
@@ -1037,8 +995,7 @@ def _path(path) -> Path:
     "--levels",
     default=3,
     type=int,
-    help="Number of intermediate production levels (processes). "
-    "-1 means a single product and no factories.",
+    help="Number of intermediate production levels (processes). -1 means a single product and no factories.",
 )
 @click.option("--neg-speedup", default=21, help="Negotiation Speedup.")
 @click.option(
@@ -1050,13 +1007,13 @@ def _path(path) -> Path:
     "--min-consumption",
     default=3,
     type=int,
-    help="The minimum number of units consumed by each consumer at every " "time-step.",
+    help="The minimum number of units consumed by each consumer at every time-step.",
 )
 @click.option(
     "--max-consumption",
     default=5,
     type=int,
-    help="The maximum number of units consumed by each consumer at every " "time-step.",
+    help="The maximum number of units consumed by each consumer at every time-step.",
 )
 @click.option(
     "--agents",
@@ -1067,12 +1024,8 @@ def _path(path) -> Path:
 @click.option("--horizon", default=15, type=int, help="Consumption horizon.")
 @click.option("--transport", default=0, type=int, help="Transportation Delay.")
 @click.option("--time", default=7200, type=int, help="Total time limit.")
-@click.option(
-    "--neg-time", default=120, type=int, help="Time limit per single negotiation"
-)
-@click.option(
-    "--neg-steps", default=20, type=int, help="Number of rounds per single negotiation"
-)
+@click.option("--neg-time", default=120, type=int, help="Time limit per single negotiation")
+@click.option("--neg-steps", default=20, type=int, help="Number of rounds per single negotiation")
 @click.option(
     "--sign",
     default=1,
@@ -1082,7 +1035,7 @@ def _path(path) -> Path:
 @click.option(
     "--guaranteed",
     default=False,
-    help="Whether to only sign contracts that are guaranteed not to cause " "breaches",
+    help="Whether to only sign contracts that are guaranteed not to cause breaches",
 )
 @click.option("--lines", default=10, help="The number of lines per factory")
 @click.option(
@@ -1103,9 +1056,7 @@ def _path(path) -> Path:
     help="Use insurance against partner in factory managers up to this premium. Pass zero for never buying insurance"
     " and a 'inf' (without quotes) for infinity.",
 )
-@click.option(
-    "--riskiness", default=0.0, help="How risky is the default factory manager"
-)
+@click.option("--riskiness", default=0.0, help="How risky is the default factory manager")
 @click.option(
     "--competitors",
     default="GreedyFactoryManager",
@@ -1130,8 +1081,7 @@ def _path(path) -> Path:
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--shared-profile/--multi-profile",
@@ -1164,7 +1114,7 @@ def _path(path) -> Path:
 @click.option(
     "--world-config",
     type=click.Path(dir_okay=False, file_okay=True),
-    default=tuple(),
+    default=(),
     multiple=True,
     help="A file to load extra configuration parameters for world simulations from.",
 )
@@ -1201,27 +1151,27 @@ def run2019(
     path,
     world_config,
 ):
-    kwargs = dict(
-        no_bank=True,
-        no_insurance=False,
-        prevent_cfp_tampering=True,
-        ignore_negotiated_penalties=False,
-        neg_step_time_limit=10,
-        breach_penalty_society=0.02,
-        premium=0.03,
-        premium_time_increment=0.1,
-        premium_breach_increment=0.001,
-        max_allowed_breach_level=None,
-        breach_penalty_society_min=0.0,
-        breach_penalty_victim=0.0,
-        breach_move_max_product=True,
-        transfer_delay=0,
-        start_negotiations_immediately=False,
-        catalog_profit=0.15,
-        financial_reports_period=10,
-        default_price_for_products_without_one=1,
-        compensation_fraction=0.5,
-    )
+    kwargs = {
+        "no_bank": True,
+        "no_insurance": False,
+        "prevent_cfp_tampering": True,
+        "ignore_negotiated_penalties": False,
+        "neg_step_time_limit": 10,
+        "breach_penalty_society": 0.02,
+        "premium": 0.03,
+        "premium_time_increment": 0.1,
+        "premium_breach_increment": 0.001,
+        "max_allowed_breach_level": None,
+        "breach_penalty_society_min": 0.0,
+        "breach_penalty_victim": 0.0,
+        "breach_move_max_product": True,
+        "transfer_delay": 0,
+        "start_negotiations_immediately": False,
+        "catalog_profit": 0.15,
+        "financial_reports_period": 10,
+        "default_price_for_products_without_one": 1,
+        "compensation_fraction": 0.5,
+    }
     if world_config is not None and len(world_config) > 0:
         for wc in world_config:
             kwargs.update(load(wc))
@@ -1230,7 +1180,8 @@ def run2019(
     if max_insurance < 0:
         warnings.warn(
             f"Negative max insurance ({max_insurance}) is deprecated. Set --max-insurance=inf for always "
-            f"buying and --max-insurance=0.0 for never buying. Will continue assuming --max-insurance=inf"
+            f"buying and --max-insurance=0.0 for never buying. Will continue assuming --max-insurance=inf",
+            stacklevel=2,
         )
         max_insurance = float("inf")
 
@@ -1286,17 +1237,13 @@ def run2019(
     exception = None
 
     def _no_default(s):
-        return not (
-            s.startswith("scml.scml2019") and s.endswith("GreedyFactoryManager")
-        )
+        return not (s.startswith("scml.scml2019") and s.endswith("GreedyFactoryManager"))
 
     all_competitors = competitors.split(";")
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             all_competitors[i] = "scml.scml2019.factory_managers." + cp
-    all_competitors_params = [
-        dict() if _no_default(_) else factory_kwargs for _ in all_competitors
-    ]
+    all_competitors_params = [{} if _no_default(_) else factory_kwargs for _ in all_competitors]
 
     world = SCML2019World.chain_world(
         n_steps=steps,
@@ -1332,7 +1279,7 @@ def run2019(
     failed = False
     strt = perf_counter()
     try:
-        for i in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
+        for _ in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1409,7 +1356,7 @@ def run2019(
             )
         )
         d2 = d2.reset_index().sort_values(["product_id"])
-        products = dict(zip([_.id for _ in world.products], world.products))
+        products = dict(zip([_.id for _ in world.products], world.products, strict=False))
         d2["Product"] = np.array([products[_] for _ in d2["product_id"].values])
         d2 = d2.loc[:, ["Product", "uprice", "quantity"]]
         d2.columns = ["Product", "Avg. Unit Price", "Total Quantity"]
@@ -1420,24 +1367,15 @@ def run2019(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.a2f[_.id].total_balance]
-                    for _ in world.agents.values()
-                    if isinstance(_, FactoryManager)
-                ),
+                ([_.name, world.a2f[_.id].total_balance] for _ in world.agents.values() if isinstance(_, FactoryManager)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
-        winners = [
-            f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
-            for _ in world.winners
-        ]
+        winners = [f"{_.name} gaining {world.a2f[_.id].total_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}" for _ in world.winners]
         print_and_log(
             f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
             f"{world.agreement_rate:0.0%}]"
@@ -1486,9 +1424,7 @@ def run2019(
 
 
 @cli.command(help="Run an SCML2020 world simulation")
-@click.option(
-    "--force-signing/--confirm-signing", default=False, help="Whether to force signing"
-)
+@click.option("--force-signing/--confirm-signing", default=False, help="Whether to force signing")
 @click.option(
     "--batch-signing/--individual-signing",
     default=True,
@@ -1503,9 +1439,7 @@ def run2019(
     help="Number of processes. Should never be less than 2",
 )
 @click.option("--neg-speedup", default=21, help="Negotiation Speedup.")
-@click.option(
-    "--factories", default=None, type=int, help="Number of agents per production level"
-)
+@click.option("--factories", default=None, type=int, help="Number of agents per production level")
 @click.option(
     "--factories-min",
     default=2,
@@ -1520,21 +1454,15 @@ def run2019(
 )
 @click.option("--horizon", default=15, type=int, help="Exogenous contracts horizon.")
 @click.option("--time", default=7200, type=int, help="Total time limit.")
-@click.option(
-    "--neg-time", default=120, type=int, help="Time limit per single negotiation"
-)
-@click.option(
-    "--neg-steps", default=20, type=int, help="Number of rounds per single negotiation"
-)
+@click.option("--neg-time", default=120, type=int, help="Time limit per single negotiation")
+@click.option("--neg-steps", default=20, type=int, help="Number of rounds per single negotiation")
 @click.option(
     "--lines",
     type=int,
     default=10,
-    help="The number of lines per factory. Overrides " "--lines-min, --lines-max",
+    help="The number of lines per factory. Overrides --lines-min, --lines-max",
 )
-@click.option(
-    "--inputs", type=int, default=1, help="The number inputs to each production process"
-)
+@click.option("--inputs", type=int, default=1, help="The number inputs to each production process")
 @click.option(
     "--inputs-min",
     type=int,
@@ -1577,22 +1505,19 @@ def run2019(
     "--productivity",
     type=float,
     default=None,
-    help="The fraction of production slots (lines/steps) that can be occupied with production given the "
-    "exogenous contracts",
+    help="The fraction of production slots (lines/steps) that can be occupied with production given the exogenous contracts",
 )
 @click.option(
     "--productivity-min",
     type=float,
     default=0.8,
-    help="The minimum fraction of production slots (lines/steps) that can be occupied with production given the "
-    "exogenous contracts",
+    help="The minimum fraction of production slots (lines/steps) that can be occupied with production given the exogenous contracts",
 )
 @click.option(
     "--productivity-max",
     type=float,
     default=1.0,
-    help="The maximum fraction of production slots (lines/steps) that can be occupied with production given the "
-    "exogenous contracts",
+    help="The maximum fraction of production slots (lines/steps) that can be occupied with production given the exogenous contracts",
 )
 @click.option(
     "--cash-availability",
@@ -1678,9 +1603,7 @@ def run2019(
     default=0.2,
     help="The penalty relative to the breach committed.",
 )
-@click.option(
-    "--reports", type=int, default=5, help="The period for financial report publication"
-)
+@click.option("--reports", type=int, default=5, help="The period for financial report publication")
 @click.option(
     "--interest",
     type=float,
@@ -1690,8 +1613,7 @@ def run2019(
 @click.option(
     "--force-exogenous/--sign-exogenous",
     default=False,
-    help="Whether the exogenous contracts are forced to their full quantity"
-    " or agents can choose to sign or not sign some of them.",
+    help="Whether the exogenous contracts are forced to their full quantity or agents can choose to sign or not sign some of them.",
 )
 @click.option(
     "--competitors",
@@ -1717,8 +1639,7 @@ def run2019(
 @click.option(
     "--compact/--debug",
     default=False,
-    help="If True, effort is exerted to reduce the memory footprint which"
-    "includes reducing logs dramatically.",
+    help="If True, effort is exerted to reduce the memory footprint whichincludes reducing logs dramatically.",
 )
 @click.option(
     "--show-contracts/--no-contracts",
@@ -1746,7 +1667,7 @@ def run2019(
 @click.option(
     "--world-config",
     type=click.Path(dir_okay=False, file_okay=True),
-    default=tuple(),
+    default=(),
     multiple=True,
     help="A file to load extra configuration parameters for world simulations from.",
 )
@@ -1807,9 +1728,7 @@ def run2020(
     if balance < 0:
         balance = None
     productivity = get_range(productivity, productivity_min, productivity_max)
-    cash_availability = get_range(
-        cash_availability, cash_availability_min, cash_availability_max
-    )
+    cash_availability = get_range(cash_availability, cash_availability_min, cash_availability_max)
     factories = get_range(factories, factories_min, factories_max)
     inputs = get_range(inputs, inputs_min, inputs_max)
     outputs = get_range(outputs, outputs_min, outputs_max)
@@ -1876,7 +1795,7 @@ def run2020(
     for i, cp in enumerate(all_competitors):
         if "." not in cp:
             all_competitors[i] = "scml.scml2020.agents." + cp
-    all_competitors_params = [dict() for _ in all_competitors]
+    all_competitors_params = [{} for _ in all_competitors]
     world = scml.SCML2020World(
         **scml.SCML2020World.generate(
             time_limit=time,
@@ -1898,7 +1817,7 @@ def run2020(
     failed = False
     strt = perf_counter()
     try:
-        for i in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
+        for _ in progressbar.progressbar(range(world.n_steps), max_value=world.n_steps):
             elapsed = perf_counter() - strt
             if world.time_limit is not None and elapsed >= world.time_limit:
                 break
@@ -1970,12 +1889,8 @@ def run2020(
             )
         )
         d2 = d2.reset_index().sort_values(["product"])
-        d2["Catalog"] = world.catalog_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
-        d2["Trading"] = world.trading_prices[
-            d2["product"].str.slice(start=-1).astype(int).values
-        ]
+        d2["Catalog"] = world.catalog_prices[d2["product"].str.slice(start=-1).astype(int).values]
+        d2["Trading"] = world.trading_prices[d2["product"].str.slice(start=-1).astype(int).values]
         d2["Product"] = d2["product"]
         d2 = d2.loc[:, ["Product", "quantity", "uprice", "Catalog", "Trading"]]
 
@@ -1987,23 +1902,16 @@ def run2020(
         n_contracts = len(world.saved_contracts)
         try:
             agent_scores = sorted(
-                (
-                    [_.name, world.a2f[_.id].total_balance]
-                    for _ in world.agents.values()
-                    if isinstance(_, FactoryManager)
-                ),
+                ([_.name, world.a2f[_.id].total_balance] for _ in world.agents.values() if isinstance(_, FactoryManager)),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            agent_scores = pd.DataFrame(
-                data=np.array(agent_scores), columns=["Agent", "Final Balance"]
-            )
+            agent_scores = pd.DataFrame(data=np.array(agent_scores), columns=["Agent", "Final Balance"])
             print_and_log(tabulate(agent_scores, headers="keys", tablefmt="psql"))
         except Exception:
             pass
         winners = [
-            f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}"
-            for _ in world.winners
+            f"{_.name} gaining {world.a2f[_.id].current_balance / world.a2f[_.id].initial_balance - 1.0:0.0%}" for _ in world.winners
         ]
         print_and_log(
             f"{n_contracts} contracts :-) [N. Negotiations: {n_negs}, Agreement Rate: "
@@ -2018,9 +1926,7 @@ def run2020(
             + world.breach_fraction
             + world.contract_execution_fraction
         )
-        n_cancelled = (
-            int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
-        )
+        n_cancelled = int(round(n_contracts * world.cancellation_rate)) if n_negs > 0 else 0
         n_signed = n_contracts - n_cancelled
         n_dropped = int(round(n_signed * world.contract_dropping_fraction))
         n_nullified = int(round(n_signed * world.contract_nullification_fraction))
@@ -2035,15 +1941,15 @@ def run2020(
         n_negotiated_signed = len([_ for _ in negotiated if _["signed_at"] >= 0])
         print_and_log(
             f"Exogenous Contracts : {n_exogenous} of which {n_exogenous_signed} "
-            f" were signed ({n_exogenous_signed/n_exogenous if n_exogenous!=0 else 0: 0.1%})"
+            f" were signed ({n_exogenous_signed / n_exogenous if n_exogenous != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"Negotiated Contracts: {n_negotiated} of which {n_negotiated_signed} "
-            f" were signed ({n_negotiated_signed/n_negotiated if n_negotiated!=0 else 0: 0.1%})"
+            f" were signed ({n_negotiated_signed / n_negotiated if n_negotiated != 0 else 0: 0.1%})"
         )
         print_and_log(
             f"All Contracts       : {n_exogenous + n_negotiated} of which {n_exogenous_signed + n_negotiated_signed} "
-            f" were signed ({1-world.cancellation_rate:0.1%})"
+            f" were signed ({1 - world.cancellation_rate:0.1%})"
         )
         print_and_log(
             f"Executed: {world.contract_execution_fraction:0.1%}"

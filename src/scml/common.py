@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import random
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 from negmas.helpers import distribute_integer_randomly, get_class
@@ -38,9 +39,7 @@ EPSILON = 1e-5
 
 
 def isinobject(x: IterableOrObject, y: IterableOrClass):
-    return isinclass(
-        type(x) if not isinstance(x, Iterable) else [type(_) for _ in x], y
-    )
+    return isinclass(type(x) if not isinstance(x, Iterable) else [type(_) for _ in x], y)
 
 
 def isinclass(x: IterableOrClass, y: IterableOrClass):
@@ -71,26 +70,24 @@ def isin(x: IterableOrInt, y: IterableOrInt):
     if isinstance(y, np.ndarray):
         y = y.tolist()
     if isinstance(x, list):
-        x = {_ for _ in x}
+        x = set(x)
     if isinstance(y, list):
-        y = {_ for _ in y}
+        y = set(y)
     if isinstance(x, tuple):
         if isinstance(y, tuple):
             return y[0] <= x[0] <= y[-1]
         if not isinstance(y, Iterable):
             return x[0] == y == x[-1]
-        x = set(list(range(x[0], x[-1])))
+        x = set(range(x[0], x[-1]))
     if isinstance(y, tuple):
         if not isinstance(x, Iterable):
             return y[0] <= x <= y[-1]
-        y = set(list(range(y[0], y[-1])))
+        y = set(range(y[0], y[-1]))
     if not isinstance(x, Iterable):
         x = {x}
     if not isinstance(y, Iterable):
         y = {y}
-    assert isinstance(x, set) and isinstance(
-        y, set
-    ), f"{x=} ({type(x)=}), {y=} ({type(y)})"
+    assert isinstance(x, set) and isinstance(y, set), f"{x=} ({type(x)=}), {y=} ({type(y)})"
     return not x.difference(y)
 
 
@@ -107,9 +104,8 @@ def isinfloat(x: IterableOrFloat, y: IterableOrFloat):
             return y[0] - EPSILON <= x[0] <= y[-1] + EPSILON
         if not isinstance(y, Iterable):
             return abs(x[0] - y) < EPSILON and abs(y - x[-1]) < EPSILON
-    if isinstance(y, tuple):
-        if not isinstance(x, Iterable):
-            return y[0] - EPSILON <= x <= y[-1] + EPSILON
+    if isinstance(y, tuple) and not isinstance(x, Iterable):
+        return y[0] - EPSILON <= x <= y[-1] + EPSILON
     if not isinstance(x, Iterable):
         x = [x]
     if not isinstance(y, Iterable):
@@ -169,9 +165,7 @@ def integer_cut(
         mx = [mx] * n  # type: ignore
     sizes = np.asarray(mx)
     if total < sizes.sum():
-        raise ValueError(
-            f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}"
-        )
+        raise ValueError(f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}")
     if total > sum(mn):  # type: ignore
         raise ValueError(
             f"Cannot generate {n} numbers summing to {total}  with a maximum summing to {sum(mn)}"  # type: ignore
@@ -208,7 +202,7 @@ def realin(rng: tuple[float, float] | float | list[float] | np.ndarray) -> float
         rng = rng.tolist()
     if isinstance(rng, list):
         rng = random.choice(rng)
-    if isinstance(rng, float) or isinstance(rng, int):
+    if isinstance(rng, (float, int)):
         return float(rng)
     if abs(rng[-1] - rng[0]) < 1e-8:
         return rng[0]
@@ -262,15 +256,11 @@ def make_array(
 ) -> np.ndarray:
     """Creates an array with the given choices"""
     if not isinstance(x, Iterable):
-        assert (
-            x * n >= min_total
-        ), f"You are asking to make an array with {x} values that is at least {min_total} in length!!"
+        assert x * n >= min_total, f"You are asking to make an array with {x} values that is at least {min_total} in length!!"
         return np.ones(n, dtype=dtype) * int(x)
     if isinstance(x, tuple) and len(x) == 2:
-        assert (
-            min_total < 1 or n * x[-1] >= min_total
-        ), f"Cannot generate an array with choices{x=} and a minimum total of {min_total}"
-        if dtype == int:
+        assert min_total < 1 or n * x[-1] >= min_total, f"Cannot generate an array with choices{x=} and a minimum total of {min_total}"
+        if dtype is int:
             lst = np.random.randint(x[0], x[1] + 1, n, dtype=dtype)  # type: ignore
         else:
             lst = x[0] + np.random.rand(n) * (x[1] - x[0])
@@ -279,18 +269,12 @@ def make_array(
             return lst
         missing = min_total - n_total
         for _ in range(100):
-            lst = lst + np.asarray(
-                distribute_integer_randomly(missing, len(lst), min_per_bin=0)
-            )
+            lst = lst + np.asarray(distribute_integer_randomly(missing, len(lst), min_per_bin=0))
             if lst.max() <= x[-1]:
                 break
             lst = np.asarray([min(_, x[-1]) for _ in lst])
         else:
-            lst = np.asarray(
-                distribute_integer_randomly(
-                    min_total, n, min_per_bin=int(x[0]) if x[0] else 0
-                )
-            )
+            lst = np.asarray(distribute_integer_randomly(min_total, n, min_per_bin=int(x[0]) if x[0] else 0))
         return lst
     # we have a list. Return it as it is if it has the correct length else sample from it
     xlst = list(x)
@@ -348,9 +332,7 @@ def distribute_quantities(
     base_cut = integer_cut(qz, a, 0, limit)
     limit_sum = sum(limit) if limit is not None else float("inf")
     if limit is not None:
-        assert all(
-            [a <= b for a, b in zip(base_cut, limit)]
-        ), f"base_cut above limit:\nbase_cut: {base_cut}\nLimit: {limit}"
+        assert all(a <= b for a, b in zip(base_cut, limit, strict=False)), f"base_cut above limit:\nbase_cut: {base_cut}\nLimit: {limit}"
     assert min(base_cut) >= 0, f"base cut has negative value {base_cut}"
 
     def adjust_values(v, limit):
@@ -378,7 +360,7 @@ def distribute_quantities(
             # we have too many at index i
             errs = v[i] - limit[i]
             v[i] = limit[i]
-            available = [x - y for x, y in zip(limit, v)]
+            available = [x - y for x, y in zip(limit, v, strict=False)]
             available = available[:i] + available[i + 1 :]
             if sum(available) < errs:
                 errs = sum(available)
@@ -396,9 +378,7 @@ def distribute_quantities(
     q = q.flatten().tolist()
     assert len(q) == n_steps
     for s in range(n_steps):
-        assert (
-            limit is None or sum(limit) >= q[s]
-        ), f"Sum of limits is {limit_sum} but we need to distribute {q[s]} at step {s}"
+        assert limit is None or sum(limit) >= q[s], f"Sum of limits is {limit_sum} but we need to distribute {q[s]} at step {s}"
         if qz == 0 or q[s] == 0:
             values.append([0] * a)
             continue
@@ -406,16 +386,12 @@ def distribute_quantities(
         v = [int(0.5 + _ * float(q[s] / qz)) for _ in base_cut]
         n_changes = max(0, min(q[s], int(0.5 + (1.0 - predictability) * q[s])))
         if limit is not None:
-            n_changes = min(n_changes, sum(k - x for k, x in zip(limit, v)))
+            n_changes = min(n_changes, sum(k - x for k, x in zip(limit, v, strict=False)))
         if n_changes <= 0:
             values.append(adjust_values(v, limit))
             continue
         subtracted = integer_cut(n_changes, a, 0)
-        upper = (
-            [lmt + s - c for lmt, c, s in zip(limit, v, subtracted)]
-            if limit is not None
-            else None
-        )
+        upper = [lmt + s - c for lmt, c, s in zip(limit, v, subtracted, strict=False)] if limit is not None else None
         added = integer_cut(n_changes, a, 0, upper)
         # assert isinstance(added[0], int) and isinstance(subtracted[0], int)
         for i in range(len(v)):
@@ -424,12 +400,8 @@ def distribute_quantities(
 
     for s, v in enumerate(values):
         if limit is not None:
-            assert all(
-                a >= b for a, b in zip(limit, v)
-            ), f"Some values are above limit\n Limit: {limit}\nValues: {v}"
-        assert (
-            abs(sum(v) - q[s]) < 2 * a
-        ), f"Failed to distribute: expected {q[s]} but got {sum(v)}: {values[-1]}"
+            assert all(a >= b for a, b in zip(limit, v, strict=False)), f"Some values are above limit\n Limit: {limit}\nValues: {v}"
+        assert abs(sum(v) - q[s]) < 2 * a, f"Failed to distribute: expected {q[s]} but got {sum(v)}: {values[-1]}"
         assert min(v) >= 0, f"Negative  value {min(v)} in quantities!\n{v}"
     return values
 
