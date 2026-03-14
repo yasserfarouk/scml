@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import itertools
 import logging
@@ -5,20 +6,10 @@ import math
 import sys
 import uuid
 from collections import defaultdict
+from collections.abc import Callable, Collection, Iterable, Sequence
 from random import choices, randint, random, sample, shuffle
 from typing import (
     Any,
-    Callable,
-    Collection,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    Union,
 )
 
 import numpy as np
@@ -64,7 +55,7 @@ MINER_SIMULATION_PRIORITY = 3
 __all__ = ["SCML2019World", "Factory"]
 
 
-def _realin(rng: Union[Tuple[float, float], float]) -> float:
+def _realin(rng: tuple[float, float] | float) -> float:
     """
     Selects a random number within a range if given or the input if it was a float
 
@@ -82,7 +73,7 @@ def _realin(rng: Union[Tuple[float, float], float]) -> float:
     return rng[0] + random() * (rng[1] - rng[0])
 
 
-def _intin(rng: Union[Tuple[int, int], int]) -> int:
+def _intin(rng: tuple[int, int] | int) -> int:
     """
     Selects a random number within a range if given or the input if it was an int
 
@@ -107,15 +98,15 @@ class SCML2019World(TimeInAgreementMixin, World):
         self,
         products: Collection[Product],
         processes: Collection[Process],
-        factories: List[Factory],
-        consumers: List[Consumer],
-        miners: List[Miner],
-        factory_managers: Optional[List[FactoryManager]] = None,
+        factories: list[Factory],
+        consumers: list[Consumer],
+        miners: list[Miner],
+        factory_managers: list[FactoryManager] | None = None,
         # timing parameters
         n_steps=100,
         time_limit=60 * 90,
         # mechanism params
-        mechanisms: Optional[Dict[str, Dict[str, Any]]] = None,
+        mechanisms: dict[str, dict[str, Any]] | None = None,
         neg_n_steps=20,
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
@@ -143,7 +134,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         breach_penalty_victim=0.0,
         breach_move_max_product=True,
         # simulation parameters
-        initial_wallet_balances: Optional[int] = None,
+        initial_wallet_balances: int | None = None,
         money_resolution=0.5,
         default_signing_delay=0,
         transportation_delay: int = 0,
@@ -228,9 +219,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             log_negotiations = False
             log_ufuns = False
             log_screen_level = logging.CRITICAL
-            save_cancelled_contracts = (
-                save_resolved_breaches
-            ) = save_negotiations = False
+            save_cancelled_contracts = save_resolved_breaches = save_negotiations = False
         self.compact = compact
         super().__init__(
             bulletin_board=None,
@@ -245,9 +234,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             default_signing_delay=default_signing_delay,
             start_negotiations_immediately=start_negotiations_immediately,
             neg_step_time_limit=neg_step_time_limit,
-            mechanisms={"negmas.sao.SAOMechanism": {}}
-            if mechanisms is None
-            else mechanisms,
+            mechanisms={"negmas.sao.SAOMechanism": {}} if mechanisms is None else mechanisms,
             log_to_screen=log_to_screen,
             log_file_level=log_file_level,
             log_screen_level=log_screen_level,
@@ -282,17 +269,13 @@ class SCML2019World(TimeInAgreementMixin, World):
         self.ignore_negotiated_penalties = ignore_negotiated_penalties
         self.compensation_fraction = compensation_fraction
         self.save_mechanism_state_in_contract = save_mechanism_state_in_contract
-        self.default_price_for_products_without_one = (
-            default_price_for_products_without_one
-        )
-        self.agents: Dict[str, SCML2019Agent] = {}  # type: ignore just to help static type checkers
+        self.default_price_for_products_without_one = default_price_for_products_without_one
+        self.agents: dict[str, SCML2019Agent] = {}  # type: ignore just to help static type checkers
         if balance_at_max_interest is None:
             balance_at_max_interest = initial_wallet_balances
         self.strip_annotations = strip_annotations
         self.bulletin_board.register_listener(event_type="new_record", listener=self)
-        self.bulletin_board.register_listener(
-            event_type="will_remove_record", listener=self
-        )
+        self.bulletin_board.register_listener(event_type="will_remove_record", listener=self)
         self.bulletin_board.add_section("cfps")
         self.bulletin_board.add_section("products")
         self.bulletin_board.add_section("processes")
@@ -316,9 +299,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             key="breach_penalty_society",
             value=breach_penalty_society,
         )
-        self.bulletin_board.record(
-            section="settings", key="breach_penalty_victim", value=breach_penalty_victim
-        )
+        self.bulletin_board.record(section="settings", key="breach_penalty_victim", value=breach_penalty_victim)
         self.bulletin_board.record(
             section="settings",
             key="immediate_negotiations",
@@ -329,23 +310,15 @@ class SCML2019World(TimeInAgreementMixin, World):
             key="negotiation_speed_multiple",
             value=negotiation_speed,
         )
-        self.bulletin_board.record(
-            section="settings", key="negotiation_n_steps", value=neg_n_steps
-        )
+        self.bulletin_board.record(section="settings", key="negotiation_n_steps", value=neg_n_steps)
         self.bulletin_board.record(
             section="settings",
             key="negotiation_step_time_limit",
             value=neg_step_time_limit,
         )
-        self.bulletin_board.record(
-            section="settings", key="negotiation_time_limit", value=neg_time_limit
-        )
-        self.bulletin_board.record(
-            section="settings", key="transportation_delay", value=transportation_delay
-        )
-        self.bulletin_board.record(
-            section="settings", key="default_signing_delay", value=default_signing_delay
-        )
+        self.bulletin_board.record(section="settings", key="negotiation_time_limit", value=neg_time_limit)
+        self.bulletin_board.record(section="settings", key="transportation_delay", value=transportation_delay)
+        self.bulletin_board.record(section="settings", key="default_signing_delay", value=default_signing_delay)
         self.bulletin_board.record(
             section="settings",
             key="breach_penalty_society_min",
@@ -356,21 +329,17 @@ class SCML2019World(TimeInAgreementMixin, World):
             key="financial_reports_period",
             value=financial_reports_period,
         )
-        self.bulletin_board.record(
-            section="settings", key="transfer_delay", value=transfer_delay
-        )
+        self.bulletin_board.record(section="settings", key="transfer_delay", value=transfer_delay)
         self.bulletin_board.record(section="settings", key="n_steps", value=n_steps)
-        self.bulletin_board.record(
-            section="settings", key="time_limit", value=time_limit
-        )
+        self.bulletin_board.record(section="settings", key="time_limit", value=time_limit)
         self.avg_process_cost_is_public = avg_process_cost_is_public
         self.catalog_prices_are_public = catalog_prices_are_public
         self.initial_wallet_balances = initial_wallet_balances
-        self.products: List[Product] = []
-        self.processes: List[Process] = []
-        self.factory_managers: List[FactoryManager] = []
-        self.miners: List[Miner] = []
-        self.consumers: List[Consumer] = []
+        self.products: list[Product] = []
+        self.processes: list[Process] = []
+        self.factory_managers: list[FactoryManager] = []
+        self.miners: list[Miner] = []
+        self.consumers: list[Consumer] = []
         self.set_products(products)
         self.set_processes(processes)
         self.factories = factories
@@ -380,7 +349,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         self.set_consumers(consumers)
         self.set_factory_managers(factory_managers)
 
-        self._report_receivers: Dict[str, Set[SCML2019Agent]] = defaultdict(set)
+        self._report_receivers: dict[str, set[SCML2019Agent]] = defaultdict(set)
         # self._remove_processes_not_used_by_factories()
         # self._remove_products_not_used_by_processes()
         if catalog_prices_are_public or avg_process_cost_is_public:
@@ -390,34 +359,28 @@ class SCML2019World(TimeInAgreementMixin, World):
             for factory in self.factories:
                 factory._wallet = initial_wallet_balances
 
-        self.f2a: Dict[str, SCML2019Agent] = {}
-        self.a2f: Dict[str, Factory] = {}
-        for factory, agent in zip(self.factories, self.factory_managers):
+        self.f2a: dict[str, SCML2019Agent] = {}
+        self.a2f: dict[str, Factory] = {}
+        for factory, agent in zip(self.factories, self.factory_managers, strict=False):
             self.f2a[factory.id] = agent
             self.a2f[agent.id] = factory
         for agent in self.consumers:
-            factory = Factory(
-                initial_storage={}, initial_wallet=0, profiles=[], min_balance=-np.inf
-            )
+            factory = Factory(initial_storage={}, initial_wallet=0, profiles=[], min_balance=-np.inf)
             factories.append(factory)
             self.f2a[factory.id] = agent
             self.a2f[agent.id] = factory
         for agent in self.miners:
-            factory = Factory(
-                initial_storage={}, initial_wallet=0.0, profiles=[], min_storage=-np.inf
-            )
+            factory = Factory(initial_storage={}, initial_wallet=0.0, profiles=[], min_storage=-np.inf)
             factories.append(factory)
             self.f2a[factory.id] = agent
             self.a2f[agent.id] = factory
 
-        self.__interested_agents: List[List[SCML2019Agent]] = [[]] * len(self.products)
+        self.__interested_agents: list[list[SCML2019Agent]] = [[]] * len(self.products)
         self.n_new_cfps = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
-        self._transport: Dict[int, List[Tuple[SCML2019Agent, int, int]]] = defaultdict(
-            list
-        )
-        self._transfer: Dict[int, List[Tuple[SCML2019Agent, float]]] = defaultdict(list)
+        self._transport: dict[int, list[tuple[SCML2019Agent, int, int]]] = defaultdict(list)
+        self._transfer: dict[int, list[tuple[SCML2019Agent, float]]] = defaultdict(list)
         self.transfer_delay = transfer_delay
 
         self._n_production_failures = 0
@@ -445,9 +408,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         self.join(self.insurance_company)
 
         self.traders = {}
-        for agent in itertools.chain(
-            self.miners, self.consumers, self.factory_managers
-        ):  # type: ignore
+        for agent in itertools.chain(self.miners, self.consumers, self.factory_managers):  # type: ignore
             agent.init_()
             self.traders[agent.id] = agent
         # self.standing_jobs: Dict[int, List[Tuple[Factory, Job]]] = defaultdict(list)
@@ -465,17 +426,15 @@ class SCML2019World(TimeInAgreementMixin, World):
         super().join(x=x, simulation_priority=simulation_priority)
 
     def save_config(self, file_name: str) -> None:
-        d = {k: v for k, v in self.__dict__.items()}
-        d["factory_manager_types"] = {
-            manager.id: manager.short_type_name for manager in self.factory_managers
-        }
+        d = dict(self.__dict__.items())
+        d["factory_manager_types"] = {manager.id: manager.short_type_name for manager in self.factory_managers}
         with open(file_name, "w") as file:
             yaml.safe_dump(d, file)
 
     def assign_managers(
         self,
-        factory_managers=Iterable[Union[str, Type[FactoryManager], FactoryManager]],
-        params: Optional[Iterable[Dict[str, Any]]] = None,
+        factory_managers=Iterable[str | type[FactoryManager] | FactoryManager],
+        params: Iterable[dict[str, Any]] | None = None,
     ) -> None:
         """
         Assigns existing factories to new factory managers created from the given types and parameters or manager
@@ -497,7 +456,7 @@ class SCML2019World(TimeInAgreementMixin, World):
               exactly one factory and that all factories are assigned exactly one unique manager.
         """
         if params is None:
-            params = [dict()]
+            params = [{}]
         # todo add an exit function to agents and call it as they are leaving the world
         self.factory_managers, self.a2f, self.f2a = [], {}, {}
         for factory, (manager_type, manager_params) in zip(
@@ -506,12 +465,10 @@ class SCML2019World(TimeInAgreementMixin, World):
         ):
             if isinstance(manager_type, FactoryManager):
                 manager = manager_type
-                if manager.id in self.a2f.keys():
+                if manager.id in self.a2f:
                     manager = copy.deepcopy(manager)
                     manager.id = uuid.uuid4()
-                    manager.name = unique_name(
-                        manager.name, add_time=False, rand_digits=4
-                    )
+                    manager.name = unique_name(manager.name, add_time=False, rand_digits=4)
             else:
                 manager = instantiate(manager_type, **manager_params)
             self.join(manager, simulation_priority=MANAGER_SIMULATION_PRIORITY)
@@ -525,9 +482,9 @@ class SCML2019World(TimeInAgreementMixin, World):
         cls,
         n_production_levels: int = 1,
         n_factories: int = 10,
-        factory_kwargs: Dict[str, Any] = None,
-        miner_kwargs: Dict[str, Any] = None,
-        consumer_kwargs: Dict[str, Any] = None,
+        factory_kwargs: dict[str, Any] = None,
+        miner_kwargs: dict[str, Any] = None,
+        consumer_kwargs: dict[str, Any] = None,
         **kwargs,
     ):
         return cls.random(
@@ -565,29 +522,29 @@ class SCML2019World(TimeInAgreementMixin, World):
         n_intermediate_levels=0,
         n_miners=5,
         n_factories_per_level=5,
-        n_consumers: Union[int, Tuple[int, int], List[int]] = 5,
+        n_consumers: int | tuple[int, int] | list[int] = 5,
         n_steps=100,
         n_lines_per_factory=10,
         n_max_assignable_factories=None,
         log_file_name: str = None,
         agent_names_reveal_type: bool = False,
         negotiator_type: str = DEFAULT_NEGOTIATOR,
-        miner_type: Union[str, Type[Miner]] = ReactiveMiner,
-        consumer_type: Union[str, Type[Consumer]] = JustInTimeConsumer,
+        miner_type: str | type[Miner] = ReactiveMiner,
+        consumer_type: str | type[Consumer] = JustInTimeConsumer,
         max_storage: int = sys.maxsize,
-        default_manager_params: Dict[str, Any] = None,
-        miner_kwargs: Dict[str, Any] = None,
-        consumption: Union[int, Tuple[int, int]] = (0, 5),
-        consumer_kwargs: Dict[str, Any] = None,
-        negotiation_speed: Optional[int] = 21,
-        manager_types: Sequence[Type[FactoryManager]] = (GreedyFactoryManager,),
-        manager_params: Optional[Sequence[Dict[str, Any]]] = None,
+        default_manager_params: dict[str, Any] = None,
+        miner_kwargs: dict[str, Any] = None,
+        consumption: int | tuple[int, int] = (0, 5),
+        consumer_kwargs: dict[str, Any] = None,
+        negotiation_speed: int | None = 21,
+        manager_types: Sequence[type[FactoryManager]] = (GreedyFactoryManager,),
+        manager_params: Sequence[dict[str, Any]] | None = None,
         n_default_per_level: int = 0,
-        default_factory_manager_type: Type[FactoryManager] = GreedyFactoryManager,
+        default_factory_manager_type: type[FactoryManager] = GreedyFactoryManager,
         randomize: bool = True,
         initial_wallet_balances=1000,
-        process_cost: Union[float, Tuple[float, float]] = (1.0, 5.0),
-        process_time: Union[int, Tuple[int, int]] = 1,
+        process_cost: float | tuple[float, float] = (1.0, 5.0),
+        process_time: int | tuple[int, int] = 1,
         interest_rate=float("inf"),
         interest_max=float("inf"),
         shared_profile_per_factory=False,
@@ -648,17 +605,13 @@ class SCML2019World(TimeInAgreementMixin, World):
         if miner_kwargs is None:
             miner_kwargs = {}
         if manager_params is None and len(manager_types) > 0:
-            manager_params = [dict() for _ in range(len(manager_types))]
+            manager_params = [{} for _ in range(len(manager_types))]
         if negotiator_type is not None:
             for args in (default_manager_params, consumer_kwargs, miner_kwargs):
-                if "negotiator_type" not in args.keys():
+                if "negotiator_type" not in args:
                     args["negotiator_type"] = negotiator_type
 
-        products = [
-            Product(
-                id=0, name="p0", catalog_price=1.0, production_level=0, expires_in=0
-            )
-        ]
+        products = [Product(id=0, name="p0", catalog_price=1.0, production_level=0, expires_in=0)]
         processes = []
         miners = [
             instantiate(
@@ -710,9 +663,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                     profiles.append(
                         ManufacturingProfile(
                             n_steps=_intin(process_time),
-                            cost=_realin(process_cost)
-                            if not shared_profile_per_factory
-                            else shared_cost,
+                            cost=_realin(process_cost) if not shared_profile_per_factory else shared_cost,
                             initial_pause_cost=0,
                             running_pause_cost=0,
                             resumption_cost=0,
@@ -730,32 +681,27 @@ class SCML2019World(TimeInAgreementMixin, World):
                 )
                 factories.append(factory)
                 if j >= n_default_per_level and (
-                    n_max_assignable_factories is None
-                    or len(assignable_factories) < n_max_assignable_factories
+                    n_max_assignable_factories is None or len(assignable_factories) < n_max_assignable_factories
                 ):
                     assignable_factories.append(j + level * n_factories_per_level)
                 else:
                     default_factories.append(j + level * n_factories_per_level)
             for j, indx in enumerate(default_factories):
                 manager_name = unique_name(base="_df_", add_time=False, rand_digits=12)
-                manager = _DefaultFactoryManager(
-                    name=manager_name, **default_manager_params
-                )
+                manager = _DefaultFactoryManager(name=manager_name, **default_manager_params)
                 if agent_names_reveal_type:
                     manager.name = f"_df_{manager.short_type_name}@{level + 1}_{j}"
                 managers[indx] = manager
         if randomize:
             shuffle(assignable_factories)
-        for j, (index, (params, manager_type)) in enumerate(
+        for _j, (index, (params, manager_type)) in enumerate(
             zip(
                 assignable_factories,
-                itertools.cycle(zip(manager_params, manager_types)),
+                itertools.cycle(zip(manager_params, manager_types, strict=False)),
             )
         ):
             factory = factories[index]
-            manager_name = (
-                f"{unique_name(base='', add_time=False, rand_digits=12)}@{factory.id}"
-            )
+            manager_name = f"{unique_name(base='', add_time=False, rand_digits=12)}@{factory.id}"
             manager = instantiate(manager_type, name=manager_name, **params)
             if agent_names_reveal_type:
                 manager.name = f"{manager.short_type_name}@{factory.id[1:]}"
@@ -763,17 +709,13 @@ class SCML2019World(TimeInAgreementMixin, World):
 
         def create_schedule():
             if isinstance(consumption, tuple) and len(consumption) == 2:
-                return np.random.randint(
-                    consumption[0], consumption[1], n_steps
-                ).tolist()
+                return np.random.randint(consumption[0], consumption[1], n_steps).tolist()
             return consumption
 
         consumers = [
             instantiate(
                 consumer_type,
-                profiles={
-                    products[-1].id: ConsumptionProfile(schedule=create_schedule())
-                },
+                profiles={products[-1].id: ConsumptionProfile(schedule=create_schedule())},
                 name=f"c_{i}",
                 **consumer_kwargs,
             )
@@ -798,43 +740,39 @@ class SCML2019World(TimeInAgreementMixin, World):
     @classmethod
     def random(
         cls,
-        n_raw_materials: Union[int, Tuple[int, int]] = (5, 10),
-        raw_material_price: Union[float, Tuple[float, float]] = (1.0, 30.0),
-        n_final_products: Union[int, Tuple[int, int]] = (3, 5),
-        n_production_levels: Union[int, Tuple[int, int]] = (3, 5),
-        n_products_per_level: Union[int, Tuple[int, int]] = (3, 5),
-        n_processes_per_level: Union[int, Tuple[int, int]] = (6, 10),
-        n_inputs_per_process: Union[int, Tuple[int, int]] = (2, 5),
+        n_raw_materials: int | tuple[int, int] = (5, 10),
+        raw_material_price: float | tuple[float, float] = (1.0, 30.0),
+        n_final_products: int | tuple[int, int] = (3, 5),
+        n_production_levels: int | tuple[int, int] = (3, 5),
+        n_products_per_level: int | tuple[int, int] = (3, 5),
+        n_processes_per_level: int | tuple[int, int] = (6, 10),
+        n_inputs_per_process: int | tuple[int, int] = (2, 5),
         bias_toward_last_level_products: float = 0.0,
-        quantity_per_input: Union[int, Tuple[int, int]] = (1, 10),
-        input_step: Union[float, Tuple[float, float]] = 0.0,
-        quantity_per_output: Union[int, Tuple[int, int]] = (1, 1),
-        output_step: Union[float, Tuple[float, float]] = 1.0,
-        process_relative_cost: Union[float, Tuple[float, float]] = (0.05, 0.4),
-        n_outputs_per_process: Union[int, Tuple[int, int]] = (1, 1),
-        n_lines: Union[int, Tuple[int, int]] = (3, 5),
+        quantity_per_input: int | tuple[int, int] = (1, 10),
+        input_step: float | tuple[float, float] = 0.0,
+        quantity_per_output: int | tuple[int, int] = (1, 1),
+        output_step: float | tuple[float, float] = 1.0,
+        process_relative_cost: float | tuple[float, float] = (0.05, 0.4),
+        n_outputs_per_process: int | tuple[int, int] = (1, 1),
+        n_lines: int | tuple[int, int] = (3, 5),
         lines_are_similar: bool = False,
-        n_processes_per_line: Union[int, Tuple[int, int]] = None,
-        cost_for_line: Union[float, Tuple[float, float]] = (5.0, 50.0),
-        n_production_steps: Union[int, Tuple[int, int]] = (2, 10),
-        max_storage: Union[int, Tuple[int, int]] = 2000,
-        n_factories: Union[int, Tuple[int, int]] = 20,
-        n_consumers: Union[int, Tuple[int, int]] = 5,
-        n_products_per_consumer: Union[int, Tuple[int, int]] = None,
-        n_miners: Union[int, Tuple[int, int]] = 5,
-        n_products_per_miner: Optional[Union[int, Tuple[int, int]]] = None,
-        factory_manager_types: Union[
-            Type[FactoryManager], List[Type[FactoryManager]]
-        ] = GreedyFactoryManager,
-        consumer_types: Union[
-            Type[Consumer], List[Type[Consumer]]
-        ] = JustInTimeConsumer,
-        miner_types: Union[Type[Miner], List[Type[Miner]]] = ReactiveMiner,
+        n_processes_per_line: int | tuple[int, int] = None,
+        cost_for_line: float | tuple[float, float] = (5.0, 50.0),
+        n_production_steps: int | tuple[int, int] = (2, 10),
+        max_storage: int | tuple[int, int] = 2000,
+        n_factories: int | tuple[int, int] = 20,
+        n_consumers: int | tuple[int, int] = 5,
+        n_products_per_consumer: int | tuple[int, int] = None,
+        n_miners: int | tuple[int, int] = 5,
+        n_products_per_miner: int | tuple[int, int] | None = None,
+        factory_manager_types: type[FactoryManager] | list[type[FactoryManager]] = GreedyFactoryManager,
+        consumer_types: type[Consumer] | list[type[Consumer]] = JustInTimeConsumer,
+        miner_types: type[Miner] | list[type[Miner]] = ReactiveMiner,
         negotiator_type=DEFAULT_NEGOTIATOR,
-        initial_wallet_balance: Union[float, Tuple[float, float]] = 1000,
-        factory_kwargs: Dict[str, Any] = None,
-        miner_kwargs: Dict[str, Any] = None,
-        consumer_kwargs: Dict[str, Any] = None,
+        initial_wallet_balance: float | tuple[float, float] = 1000,
+        factory_kwargs: dict[str, Any] = None,
+        miner_kwargs: dict[str, Any] = None,
+        consumer_kwargs: dict[str, Any] = None,
         **kwargs,
     ):
         """
@@ -902,12 +840,10 @@ class SCML2019World(TimeInAgreementMixin, World):
 
         if negotiator_type is not None:
             for args in (factory_kwargs, consumer_kwargs, miner_kwargs):
-                if "negotiator_type" not in args.keys():
+                if "negotiator_type" not in args:
                     args["negotiator_type"] = negotiator_type
 
-        def _sample_product(
-            products: list, old_products: list, last_level_products: list, k: int
-        ):
+        def _sample_product(products: list, old_products: list, last_level_products: list, k: int):
             if bias_toward_last_level_products < 1e-7:
                 return sample(products, k=min(k, len(products)))
             elif bias_toward_last_level_products > 1 - 1e-7:
@@ -931,13 +867,11 @@ class SCML2019World(TimeInAgreementMixin, World):
         ]
         raw_materials = products.copy()
         last_level_products = products  # last level of products
-        old_products: List[Product] = []  # products not including last level
-        processes: List[Process] = []
+        old_products: list[Product] = []  # products not including last level
+        processes: list[Process] = []
 
         def _adjust_level_of_production(new_products, new_processes):
-            product_prices: Dict[Product, List[float]] = defaultdict(
-                list
-            )  # will keep the costs for generating products
+            product_prices: dict[Product, list[float]] = defaultdict(list)  # will keep the costs for generating products
             for process in new_processes:
                 process.inputs = {
                     InputOutput(
@@ -960,21 +894,14 @@ class SCML2019World(TimeInAgreementMixin, World):
                     )
                     for _ in sample(new_products, _intin(n_outputs_per_process))
                 }
-                process.historical_cost = sum(
-                    products[_.product].catalog_price * _.quantity
-                    for _ in process.inputs
-                )
+                process.historical_cost = sum(products[_.product].catalog_price * _.quantity for _ in process.inputs)
                 process.historical_cost *= 1 + _realin(process_relative_cost)
                 for output in process.outputs:
-                    product_prices[products[output.product]].append(
-                        process.historical_cost
-                    )
+                    product_prices[products[output.product]].append(process.historical_cost)
 
-            new_products = [_ for _ in product_prices.keys()]
+            new_products = list(product_prices.keys())
             for product in new_products:
-                product.catalog_price = sum(product_prices[product]) / len(
-                    product_prices[product]
-                )
+                product.catalog_price = sum(product_prices[product]) / len(product_prices[product])
             return new_products, new_processes
 
         n_levels = _intin(n_production_levels)
@@ -1001,9 +928,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                     )
                     for ind in range(_intin(n_processes_per_level))
                 ]
-                new_products, new_processes = _adjust_level_of_production(
-                    new_products, new_processes
-                )
+                new_products, new_processes = _adjust_level_of_production(new_products, new_processes)
                 products += new_products
                 old_products += last_level_products
                 last_level_products = new_products
@@ -1031,9 +956,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 for ind in range(_intin(n_processes_per_level))
             ]
 
-            final_products, new_processes = _adjust_level_of_production(
-                final_products, new_processes
-            )
+            final_products, new_processes = _adjust_level_of_production(final_products, new_processes)
             products += final_products
             processes += new_processes
         else:
@@ -1097,18 +1020,11 @@ class SCML2019World(TimeInAgreementMixin, World):
                 return [x]
 
         miner_types_list, consumer_types_list, factory_manager_types_list = (
-            _ensure_list(_)
-            for _ in (miner_types, consumer_types, factory_manager_types)
+            _ensure_list(_) for _ in (miner_types, consumer_types, factory_manager_types)
         )
 
-        factory_managers = [
-            current(**factory_kwargs)
-            for current in choices(factory_manager_types_list, k=n_factories)
-        ]
-        miners = [
-            current(**miner_kwargs)
-            for current in choices(miner_types_list, k=_intin(n_miners))
-        ]
+        factory_managers = [current(**factory_kwargs) for current in choices(factory_manager_types_list, k=n_factories)]
+        miners = [current(**miner_kwargs) for current in choices(miner_types_list, k=_intin(n_miners))]
         if n_products_per_miner is None:
             n_products_per_miner = len(raw_materials)
         if n_products_per_consumer is None:
@@ -1121,19 +1037,18 @@ class SCML2019World(TimeInAgreementMixin, World):
                 zip(
                     (_.index for _ in sample(raw_materials, _n)),
                     [MiningProfile.random() for _ in range(_n)],
+                    strict=False,
                 )
             )
             miner.set_profiles(mining_profiles)
-        consumers = [
-            current(**consumer_kwargs)
-            for current in choices(consumer_types_list, k=_intin(n_consumers))
-        ]
+        consumers = [current(**consumer_kwargs) for current in choices(consumer_types_list, k=_intin(n_consumers))]
         for consumer in consumers:
             _n = _intin(n_products_per_consumer)
             consumer_profiles = dict(
                 zip(
                     (_.index for _ in sample(final_products, _n)),
                     [ConsumptionProfile.random() for _ in range(_n)],
+                    strict=False,
                 )
             )
             consumer.set_profiles(consumer_profiles)
@@ -1162,10 +1077,10 @@ class SCML2019World(TimeInAgreementMixin, World):
         def _or_for_none(a, b):
             return (a is None and b) or a or b
 
-        product_costs: Dict[Product, List[float]] = defaultdict(list)
-        process_costs: Dict[Process, List[float]] = defaultdict(list)
-        producers: Dict[Product, List[Tuple[Process, int]]] = defaultdict(list)
-        consumers: Dict[Product, List[Tuple[Process, int]]] = defaultdict(list)
+        product_costs: dict[Product, list[float]] = defaultdict(list)
+        process_costs: dict[Process, list[float]] = defaultdict(list)
+        producers: dict[Product, list[tuple[Process, int]]] = defaultdict(list)
+        consumers: dict[Product, list[tuple[Process, int]]] = defaultdict(list)
 
         def production_record(process_: Process, product_: Product):
             for output_ in process_.outputs:
@@ -1194,15 +1109,12 @@ class SCML2019World(TimeInAgreementMixin, World):
 
         # find the average manufacturing profile cost for every process
         for factory in self.factories:
-            for profile_index, profile in enumerate(factory.profiles):
+            for _profile_index, profile in enumerate(factory.profiles):
                 process = profile.process
                 if self.avg_process_cost_is_public:
                     process_costs[process].append(profile.cost)
 
-        process_costs_avg = {
-            k: sum(v) / len(v) if len(v) > 0 else math.inf
-            for k, v in process_costs.items()
-        }
+        process_costs_avg = {k: sum(v) / len(v) if len(v) > 0 else math.inf for k, v in process_costs.items()}
 
         # loop over all products finding the processes that can produce it and add a new cost example for this product
         for product in products:
@@ -1215,10 +1127,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 for input_ in process.inputs:
                     iproduct = self.products[input_.product]
                     if iproduct.catalog_price is None:
-                        if (
-                            self.catalog_prices_are_public
-                            or self.avg_process_cost_is_public
-                        ):
+                        if self.catalog_prices_are_public or self.avg_process_cost_is_public:
                             raise ValueError(
                                 f"Catalog prices should be public but product {product} is needed for process {process}"
                                 f" without a catalog price"
@@ -1226,15 +1135,10 @@ class SCML2019World(TimeInAgreementMixin, World):
                         return
                     input_cost += iproduct.catalog_price * input_.quantity
                 # append a new unit price for this product
-                product_costs[product].append(
-                    (input_cost + process_costs_avg[process]) / quantity
-                )
+                product_costs[product].append((input_cost + process_costs_avg[process]) / quantity)
 
             # now we have the product cost for all processes producing this product. Average them
-            if (
-                product_costs.get(product, None) is None
-                or len(product_costs[product]) < 1
-            ):
+            if product_costs.get(product) is None or len(product_costs[product]) < 1:
                 continue
             avg_cost = sum(product_costs[product]) / len(product_costs[product])
             if product.catalog_price is None:
@@ -1257,28 +1161,22 @@ class SCML2019World(TimeInAgreementMixin, World):
         if self.money_resolution is not None:
             for product in self.products:
                 if product.catalog_price is not None:
-                    product.catalog_price = (
-                        math.floor(product.catalog_price / self.money_resolution)
-                        * self.money_resolution
-                    )
+                    product.catalog_price = math.floor(product.catalog_price / self.money_resolution) * self.money_resolution
             for process in self.processes:
                 if process.historical_cost is not None:
-                    process.historical_cost = (
-                        math.floor(process.historical_cost / self.money_resolution)
-                        * self.money_resolution
-                    )
+                    process.historical_cost = math.floor(process.historical_cost / self.money_resolution) * self.money_resolution
 
-    def set_consumers(self, consumers: List[Consumer]):
+    def set_consumers(self, consumers: list[Consumer]):
         self.consumers = consumers
         for f in consumers:
             self.join(f, simulation_priority=CONSUMER_SIMULATION_PRIORITY)
 
-    def set_miners(self, miners: List[Miner]):
+    def set_miners(self, miners: list[Miner]):
         self.miners = miners
         for f in miners:
             self.join(f, simulation_priority=MINER_SIMULATION_PRIORITY)
 
-    def set_factory_managers(self, factory_managers: Optional[List[FactoryManager]]):
+    def set_factory_managers(self, factory_managers: list[FactoryManager] | None):
         if factory_managers is None:
             factory_managers = []
         self.factory_managers = factory_managers
@@ -1319,9 +1217,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         if not isinstance(agent, FactoryManager):
             if callback is not None:
                 callback(action, False)
-            self.logerror(
-                f"{str(action)} received from {agent.id} which is {agent.__class__.__name__} not a FactoryManager"
-            )
+            self.logerror(f"{str(action)} received from {agent.id} which is {agent.__class__.__name__} not a FactoryManager")
             return False
         factory = self.a2f[agent.id]
         if factory is None:
@@ -1356,26 +1252,17 @@ class SCML2019World(TimeInAgreementMixin, World):
         contract = action.params.get("contract", None)
         time = action.params.get("time", None)
         override = action.params.get("override", True)
-        if (
-            (profile_index is None and line is None)
-            or time is None
-            or time < 0
-            or time > self.n_steps - 1
-        ):
+        if (profile_index is None and line is None) or time is None or time < 0 or time > self.n_steps - 1:
             if callback is not None:
                 callback(action, False)
-            self.logerror(
-                f"{str(action)} from {agent.id}: Neither profile index nor line is given or invalid time"
-            )
+            self.logerror(f"{str(action)} from {agent.id}: Neither profile index nor line is given or invalid time")
             return False
         if profile_index is not None:
             profile = factory.profiles[profile_index]
             if line is not None and profile.line != line:
                 if callback is not None:
                     callback(action, False)
-                self.logerror(
-                    f"{str(action)} from {agent.id}: profile's line {profile.line} != given line {line}"
-                )
+                self.logerror(f"{str(action)} from {agent.id}: profile's line {profile.line} != given line {line}")
                 return False
             line = profile.line
         job = Job(
@@ -1409,9 +1296,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             jobs=f.jobs,
         )
 
-    def receive_financial_reports(
-        self, agent: SCML2019Agent, receive: bool, agents: Optional[List[str]]
-    ):
+    def receive_financial_reports(self, agent: SCML2019Agent, receive: bool, agents: list[str] | None):
         """Registers interest/disinterest in receiving financial reports"""
         if agents is None:
             agents = self.agents.keys()
@@ -1435,10 +1320,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 if factory is None:
                     continue
                 try:
-                    inventory = sum(
-                        self.products[product].catalog_price * quantity
-                        for product, quantity in factory.storage.items()
-                    )
+                    inventory = sum(self.products[product].catalog_price * quantity for product, quantity in factory.storage.items())
                 except ArithmeticError:
                     inventory = None
                 report = FinancialReport(
@@ -1491,10 +1373,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 else:
                     manager.on_production_success(nonempty)
             else:
-                self.logdebug(
-                    f"{manager.name}: money={factory.wallet}"
-                    f", storage={str(dict(factory.storage))}"
-                )
+                self.logdebug(f"{manager.name}: money={factory.wallet}, storage={str(dict(factory.storage))}")
 
         # finish transportation and money transfer
         # -----------------------------------------
@@ -1545,25 +1424,17 @@ class SCML2019World(TimeInAgreementMixin, World):
         self._stats["_balance_bank"].append(self.bank.wallet)
         self._stats["_balance_society"].append(self.penalties)
         self._stats["_balance_insurance"].append(self.insurance_company.wallet)
-        self._stats["_storage_insurance"].append(
-            sum(self.insurance_company.storage.values())
-        )
-        internal_market_size = (
-            self.bank.wallet + self.penalties + self.insurance_company.wallet
-        )
+        self._stats["_storage_insurance"].append(sum(self.insurance_company.storage.values()))
+        internal_market_size = self.bank.wallet + self.penalties + self.insurance_company.wallet
         for a in itertools.chain(self.miners, self.consumers, self.factory_managers):
             self._stats[f"balance_{a.name}"].append(self.a2f[a.id].balance)
             self._stats[f"storage_{a.name}"].append(self.a2f[a.id].total_storage)
             market_size += self.a2f[a.id].balance
         self._stats["market_size"].append(market_size)
-        self._stats["production_failures"].append(
-            self._n_production_failures / len(self.factories)
-            if len(self.factories) > 0
-            else np.nan
-        )
+        self._stats["production_failures"].append(self._n_production_failures / len(self.factories) if len(self.factories) > 0 else np.nan)
         self._stats["_market_size_total"].append(market_size + internal_market_size)
 
-    def start_contract_execution(self, contract: Contract) -> Set[Breach]:
+    def start_contract_execution(self, contract: Contract) -> set[Breach]:
         partners, agreement = (
             {self.agents[_] for _ in contract.partners},
             contract.agreement,
@@ -1572,36 +1443,23 @@ class SCML2019World(TimeInAgreementMixin, World):
         breaches = set()
         quantity, unit_price = agreement["quantity"], agreement["unit_price"]
         if quantity < 1 or unit_price < 0.0:
-            self.loginfo(
-                f"Contract with quantity {quantity} and unit price {unit_price} will be ignored: "
-                f"{str(contract)}"
-            )
+            self.loginfo(f"Contract with quantity {quantity} and unit price {unit_price} will be ignored: {str(contract)}")
             return breaches
         if unit_price < 1e-7:
             self.logdebug(f"Contract with {unit_price} unit_price: {str(contract)}")
         # find out the values for vicitm and social penalties
-        penalty_victim = (
-            agreement.get("penalty", None)
-            if not self.ignore_negotiated_penalties
-            else None
-        )
+        penalty_victim = agreement.get("penalty", None) if not self.ignore_negotiated_penalties else None
         if penalty_victim is not None and self.breach_penalty_victim is not None:
             # there is a defined penalty, find its value
             penalty_victim = penalty_victim if penalty_victim is not None else 0.0
-            penalty_victim += (
-                self.breach_penalty_victim
-                if self.breach_penalty_victim is not None
-                else 0.0
-            )
+            penalty_victim += self.breach_penalty_victim if self.breach_penalty_victim is not None else 0.0
         penalty_society = self.breach_penalty_society
         penalty_value = 0.0
 
         # ask each partner to confirm the execution
         for partner in partners:
             if not partner.confirm_contract_execution(contract=contract):
-                self.logdebug(
-                    f"{partner.name} refused execution og Contract {contract.id}"
-                )
+                self.logdebug(f"{partner.name} refused execution og Contract {contract.id}")
                 breaches.add(
                     Breach(
                         contract=contract,
@@ -1648,11 +1506,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             pass
 
         # check the seller
-        available_quantity = (
-            seller_factory.storage.get(pind, 0)
-            if not isinstance(seller, Miner)
-            else quantity
-        )
+        available_quantity = seller_factory.storage.get(pind, 0) if not isinstance(seller, Miner) else quantity
         missing_quantity = max(0, quantity - available_quantity)
         original_quantity = quantity
         if missing_quantity > 0:
@@ -1706,9 +1560,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                     if unit_price == 0:
                         paid_for_quantity = missing_quantity
                     else:
-                        paid_for_quantity = int(
-                            math.floor(seller_factory.wallet / unit_price)
-                        )
+                        paid_for_quantity = int(math.floor(seller_factory.wallet / unit_price))
                     paid_penalties = unit_price * paid_for_quantity
                     missing_quantity_unpaid_for = missing_quantity - paid_for_quantity
                     if is_victim:
@@ -1717,9 +1569,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                         penalty_breach_society = missing_quantity_unpaid_for / quantity
 
                 # actually pay the payable amount
-                self.logdebug(
-                    f'Penalty: {seller.name} paid {paid_penalties} to {buyer.name if is_victim else "society"}'
-                )
+                self.logdebug(f"Penalty: {seller.name} paid {paid_penalties} to {buyer.name if is_victim else 'society'}")
                 seller_factory.pay(paid_penalties)
                 if is_victim:
                     buyer_factory.receive(paid_penalties)
@@ -1762,9 +1612,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             )
 
         # check the buyer
-        available_money = (
-            buyer_factory.wallet if not isinstance(buyer, Consumer) else money
-        )
+        available_money = buyer_factory.wallet if not isinstance(buyer, Consumer) else money
         missing_money = max(0.0, money - available_money)
         if missing_money > 0.0:
             # if the buyer cannot pay, then offer him a loan. The loan is always optional
@@ -1845,26 +1693,17 @@ class SCML2019World(TimeInAgreementMixin, World):
                 buyer_factory.transport_to(product_id, quantity)
                 buyer.on_inventory_change(product_id, quantity, "contract")
             else:
-                self._transport[self.current_step + self.transportation_delay].append(
-                    (buyer, product_id, quantity)
-                )
+                self._transport[self.current_step + self.transportation_delay].append((buyer, product_id, quantity))
         if money > 0:
             buyer_factory.pay(money)
             if self.transfer_delay < 1:
                 seller_factory.receive(money)
                 seller.on_cash_transfer(money, "contract")
             else:
-                self._transfer[self.current_step + self.transfer_delay].append(
-                    (seller, money)
-                )
-        self.logdebug(
-            f"Moved {quantity} units of {self.products[product_id].name} from {seller.name} to {buyer.name} "
-            f"for {money} dollars"
-        )
+                self._transfer[self.current_step + self.transfer_delay].append((seller, money))
+        self.logdebug(f"Moved {quantity} units of {self.products[product_id].name} from {seller.name} to {buyer.name} for {money} dollars")
 
-    def complete_contract_execution(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ):
+    def complete_contract_execution(self, contract: Contract, breaches: list[Breach], resolution: Contract | None):
         """The resolution can either be None or a contract with the following items:
 
         The issues can be any or all of the following:
@@ -1885,19 +1724,11 @@ class SCML2019World(TimeInAgreementMixin, World):
         quantity, unit_price = agreement["quantity"], agreement["unit_price"]
         if quantity < 1 and unit_price <= 0.0:
             return
-        penalty_victim = (
-            agreement.get("penalty", None)
-            if not self.ignore_negotiated_penalties
-            else None
-        )
+        penalty_victim = agreement.get("penalty", None) if not self.ignore_negotiated_penalties else None
         if penalty_victim is not None and self.breach_penalty_victim is not None:
             # there is a defined penalty, find its value
             penalty_victim = penalty_victim if penalty_victim is not None else 0.0
-            penalty_victim += (
-                self.breach_penalty_victim
-                if self.breach_penalty_victim is not None
-                else 0.0
-            )
+            penalty_victim += self.breach_penalty_victim if self.breach_penalty_victim is not None else 0.0
 
         pind = cfp.product
         buyer_id, seller_id = (
@@ -1924,9 +1755,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                     product_breach = breach.level
                 elif breach.type == "money":
                     money_breach = breach.level
-                elif breach.type == "penalty":
-                    pass
-                elif breach.type == "penalty_society":
+                elif breach.type == "penalty" or breach.type == "penalty_society":
                     pass
         else:
             quantity = resolution.agreement.get("immediate_quantity", quantity)
@@ -1948,7 +1777,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 to_be_signed_at=self.current_step,
                 signed_at=self.current_step,
                 mechanism_state=None,
-                signatures=dict(zip(contract.partners, contract.partners)),
+                signatures=dict(zip(contract.partners, contract.partners, strict=False)),
             )
             self.on_contract_concluded(new_contract, to_be_signed_at=self.current_step)
             self.on_contract_signed(contract=new_contract)
@@ -1958,19 +1787,13 @@ class SCML2019World(TimeInAgreementMixin, World):
         money = unit_price * quantity
 
         # check the seller
-        available_quantity = (
-            max(0, seller_factory.storage.get(pind, 0))
-            if not isinstance(seller, Miner)
-            else quantity
-        )
+        available_quantity = max(0, seller_factory.storage.get(pind, 0)) if not isinstance(seller, Miner) else quantity
         missing_quantity = max(0, quantity - available_quantity)
         if missing_quantity > 0 and quantity > 0:
             product_breach = missing_quantity / quantity
 
         # check the buyer
-        available_money = (
-            max(0.0, buyer_factory.wallet) if not isinstance(buyer, Consumer) else money
-        )
+        available_money = max(0.0, buyer_factory.wallet) if not isinstance(buyer, Consumer) else money
         if unit_price > 0.0:
             available_money = (available_money // unit_price) * unit_price
         missing_money = max(0.0, money - available_money)
@@ -1987,17 +1810,12 @@ class SCML2019World(TimeInAgreementMixin, World):
         if 0 < len(perpetrators) < len(partners):
             victims = {_.id for _ in partners} - set(perpetrators)
         execute = (
-            all(
-                self.agents[victim].confirm_partial_execution(
-                    contract=contract, breaches=list(breaches)
-                )
-                for victim in victims
-            )
+            all(self.agents[victim].confirm_partial_execution(contract=contract, breaches=list(breaches)) for victim in victims)
             if len(victims) > 0
             else True
         )
 
-        if product_breach is not None and resolution is None:
+        if product_breach is not None and resolution is None:  # noqa: SIM102
             # apply insurances if they exist
             # register the breach independent of insurance
             if self.insurance_company.is_insured(contract=contract, perpetrator=seller):
@@ -2011,9 +1829,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 # if buyer_deficit > 0:
                 #     self.bank.buy_loan(agent=buyer, amount=buyer_deficit, n_installments=self.loan_installments)
                 if unit_price > 0:
-                    insured_quantity = min(
-                        missing_quantity, int(available_money // unit_price)
-                    )
+                    insured_quantity = min(missing_quantity, int(available_money // unit_price))
                 else:
                     insured_quantity = missing_quantity
                 self.logdebug(
@@ -2033,7 +1849,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 quantity -= insured_quantity
                 money -= insured_quantity_cost
 
-        if money_breach is not None and resolution is None:
+        if money_breach is not None and resolution is None:  # noqa: SIM102
             # apply insurances if they exist.
             if self.insurance_company.is_insured(contract=contract, perpetrator=buyer):
                 # if the seller has an insurance against the buyer for this contract, then just give him the missing
@@ -2043,17 +1859,11 @@ class SCML2019World(TimeInAgreementMixin, World):
                 # the insurance company will provide enough money to buy whatever actually exist of the contract in the
                 # seller's storage
                 insured_money = min(missing_money, available_quantity * unit_price)
-                insured_money_quantity = int(
-                    insured_money // unit_price
-                )  # I never come here if unit_price is zero.
+                insured_money_quantity = int(insured_money // unit_price)  # I never come here if unit_price is zero.
                 insured_money = insured_money_quantity * unit_price
-                self.logdebug(
-                    f"Insurance: {seller.name} got {insured_money} dollars from insurance"
-                )
+                self.logdebug(f"Insurance: {seller.name} got {insured_money} dollars from insurance")
                 seller_factory.receive(insured_money)
-                seller_factory.transport_from(
-                    product=pind, quantity=insured_money_quantity
-                )
+                seller_factory.transport_from(product=pind, quantity=insured_money_quantity)
                 seller.on_inventory_change(pind, -insured_money_quantity, "insurance")
                 seller.on_cash_transfer(insured_money, "insurance")
                 self.insurance_company.wallet -= insured_money
@@ -2067,33 +1877,23 @@ class SCML2019World(TimeInAgreementMixin, World):
         # recalculate total and quantity to avoid rounding errors
         money = unit_price * quantity
         # check the seller
-        available_quantity = (
-            max(0, seller_factory.storage.get(pind, 0))
-            if not isinstance(seller, Miner)
-            else quantity
-        )
+        available_quantity = max(0, seller_factory.storage.get(pind, 0)) if not isinstance(seller, Miner) else quantity
         missing_quantity = max(0, quantity - available_quantity)
 
         # check the buyer
-        available_money = (
-            max(0.0, buyer_factory.wallet) if not isinstance(buyer, Consumer) else money
-        )
+        available_money = max(0.0, buyer_factory.wallet) if not isinstance(buyer, Consumer) else money
         if unit_price > 0.0:
             available_money = (available_money // unit_price) * unit_price
         missing_money = max(0.0, money - available_money)
 
         # missing quantity/money is now fully handled. Just remove them from the contract and execute the rest
         if missing_money > 0.0 and missing_quantity == 0:
-            quantity -= (
-                int(math.ceil(missing_money / unit_price)) if unit_price != 0.0 else 0
-            )
+            quantity -= int(math.ceil(missing_money / unit_price)) if unit_price != 0.0 else 0
         elif missing_money <= 0.0 and missing_quantity > 0:
             quantity -= missing_quantity  # int(math.floor(money / unit_price)) if unit_price != 0.0 else 0
         elif missing_money > 0.0 and missing_quantity > 0:
             money_for_available_quantity = (quantity - missing_quantity) * unit_price
-            quantity_for_available_money = int(
-                math.floor((money - missing_money) / unit_price)
-            )
+            quantity_for_available_money = int(math.floor((money - missing_money) / unit_price))
             money_for_available_money = quantity_for_available_money * unit_price
             available_money = money - missing_money
             money = max(
@@ -2106,9 +1906,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                     )
                 ),
             )
-            quantity = max(
-                0, int(math.floor(money / unit_price)) if unit_price != 0.0 else 0
-            )
+            quantity = max(0, int(math.floor(money / unit_price)) if unit_price != 0.0 else 0)
         money = quantity * unit_price
 
         # confirm that the money and quantity match given the unit price.
@@ -2118,8 +1916,8 @@ class SCML2019World(TimeInAgreementMixin, World):
                 f", unit price {unit_price}, missing quantity {missing_quantity}, missing money {missing_money}"
                 f", breaches: {[str(_) for _ in breaches]}, insured_quantity {insured_quantity}"
                 f", insured_quantity_cost {insured_quantity_cost}, insured_money {insured_money}"
-                f', insured_money_quantity {insured_money_quantity}, original quantity {agreement["quantity"]}'
-                f', original money {agreement["unit_price"] * agreement["quantity"]}'
+                f", insured_money_quantity {insured_money_quantity}, original quantity {agreement['quantity']}"
+                f", original money {agreement['unit_price'] * agreement['quantity']}"
             )
 
         if not abs(money - unit_price * quantity) < 1e-5:
@@ -2128,8 +1926,8 @@ class SCML2019World(TimeInAgreementMixin, World):
                 f", unit price {unit_price}, missing quantity {missing_quantity}, missing money {missing_money}"
                 f", breaches: {[str(_) for _ in breaches]}, insured_quantity {insured_quantity}"
                 f", insured_quantity_cost {insured_quantity_cost}, insured_money {insured_money}"
-                f', insured_money_quantity {insured_money_quantity}, original quantity {agreement["quantity"]}'
-                f', original money {agreement["unit_price"] * agreement["quantity"]}'
+                f", insured_money_quantity {insured_money_quantity}, original quantity {agreement['quantity']}"
+                f", original money {agreement['unit_price'] * agreement['quantity']}"
             )
 
         # if money > unit_price * quantity:
@@ -2147,9 +1945,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                     product_id=pind,
                 )
             else:
-                self.logdebug(
-                    f"Contract {contract.id}: one of {[_.id for _ in victims]} refused partial execution."
-                )
+                self.logdebug(f"Contract {contract.id}: one of {[_.id for _ in victims]} refused partial execution.")
         else:
             self.logdebug(f"Contract {contract.id} has no transfers")
 
@@ -2166,9 +1962,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         if isinstance(seller, Miner):
             available_quantity = quantity
         else:
-            available_quantity = min(
-                quantity, seller_factory.storage.get(product_id, 0)
-            )
+            available_quantity = min(quantity, seller_factory.storage.get(product_id, 0))
         if isinstance(buyer, Consumer):
             available_money = money
         else:
@@ -2185,46 +1979,34 @@ class SCML2019World(TimeInAgreementMixin, World):
                 buyer_factory.transport_to(product_id, available_quantity)
                 buyer.on_inventory_change(product_id, -available_quantity, "contract")
             else:
-                self._transport[self.current_step + self.transportation_delay].append(
-                    (buyer, product_id, available_quantity)
-                )
+                self._transport[self.current_step + self.transportation_delay].append((buyer, product_id, available_quantity))
         if available_money > 0:
             buyer_factory.pay(available_money)
             if self.transfer_delay < 1:
                 seller_factory.receive(available_money)
                 seller.on_cash_transfer(available_money, "contract")
             else:
-                self._transfer[self.current_step + self.transfer_delay].append(
-                    (seller, available_money)
-                )
+                self._transfer[self.current_step + self.transfer_delay].append((seller, available_money))
 
-    def register_interest(self, agent: SCML2019Agent, products: List[int]) -> None:
+    def register_interest(self, agent: SCML2019Agent, products: list[int]) -> None:
         for product in products:
-            self.__interested_agents[product] = list(
-                set(self.__interested_agents[product] + [agent])
-            )
+            self.__interested_agents[product] = list(set(self.__interested_agents[product] + [agent]))
 
-    def unregister_interest(self, agent: SCML2019Agent, products: List[int]) -> None:
+    def unregister_interest(self, agent: SCML2019Agent, products: list[int]) -> None:
         for product in products:
-            try:
+            with contextlib.suppress(ValueError):
                 self.__interested_agents[product].remove(agent)
-            except ValueError:
-                pass
 
     def make_bankrupt(
         self,
         agent: SCML2019Agent,
         amount: float,
         beneficiary: Agent,
-        contract: Optional[Contract],
+        contract: Contract | None,
     ) -> None:
         """Marks the agent as bankrupt"""
-        self.bulletin_board.record(
-            "bankruptcy", {"time": self.current_step}, key=agent.id
-        )
-        for receiver in itertools.chain(
-            self.miners, self.consumers, self.factory_managers
-        ):
+        self.bulletin_board.record("bankruptcy", {"time": self.current_step}, key=agent.id)
+        for receiver in itertools.chain(self.miners, self.consumers, self.factory_managers):
             receiver.on_agent_bankrupt(agent.id)
         # liquidate the bankrupt agent
         factory = self.a2f.get(agent.id, None)
@@ -2268,10 +2050,7 @@ class SCML2019World(TimeInAgreementMixin, World):
                 if agent.id in contract.partners:
                     victim = [_ for _ in contract.partners if _ != agent.id][0]
                     nulled_contracts.append((victim, contract))
-                    owed += (
-                        contract.agreement["quantity"]
-                        * contract.agreement["unit_price"]
-                    )
+                    owed += contract.agreement["quantity"] * contract.agreement["unit_price"]
         self.__n_bankrupt += 1
         if owed <= 0.0:
             return
@@ -2290,25 +2069,19 @@ class SCML2019World(TimeInAgreementMixin, World):
                 continue
             compensation = min(
                 factory.wallet,
-                fraction
-                * contract.agreement["quantity"]
-                * contract.agreement["unit_price"],
+                fraction * contract.agreement["quantity"] * contract.agreement["unit_price"],
             )
             if compensation > 0.0:
                 bfactory.receive(compensation)
                 factory.pay(compensation)
-            victim.on_contract_nullified(
-                contract=contract, bankrupt_partner=agent.id, compensation=compensation
-            )
+            victim.on_contract_nullified(contract=contract, bankrupt_partner=agent.id, compensation=compensation)
             self.nullify_contract(contract)
 
     def nullify_contract(self, contract: Contract):
         self.__n_nullified += 1
         contract.nullified_at = self.current_step
 
-    def evaluate_insurance(
-        self, contract: Contract, agent: SCML2019Agent, t: int = None
-    ) -> Optional[float]:
+    def evaluate_insurance(self, contract: Contract, agent: SCML2019Agent, t: int = None) -> float | None:
         """Can be called to evaluate the premium for insuring the given contract against breachs committed by others
 
         Args:
@@ -2320,9 +2093,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         against = [self.agents[_] for _ in contract.partners if _ != agent.id]
         if len(against) == 0:
             against = [agent.id]
-        return self.insurance_company.evaluate_insurance(
-            contract=contract, insured=agent, against=against[0], t=t
-        )
+        return self.insurance_company.evaluate_insurance(contract=contract, insured=agent, against=against[0], t=t)
 
     def buy_insurance(self, contract: Contract, agent: SCML2019Agent) -> bool:
         """Buys insurance for the contract by the premium calculated by the insurance company.
@@ -2333,35 +2104,22 @@ class SCML2019World(TimeInAgreementMixin, World):
         against = [self.agents[_] for _ in contract.partners if _ != agent.id]
         if len(against) != 1:
             raise ValueError("Cannot find partner while evaluating insurance")
-        return (
-            self.insurance_company.buy_insurance(
-                contract=contract, insured=agent, against=against[0]
-            )
-            is not None
-        )
+        return self.insurance_company.buy_insurance(contract=contract, insured=agent, against=against[0]) is not None
 
-    def _process_annotation(
-        self, annotation: Optional[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+    def _process_annotation(self, annotation: dict[str, Any] | None) -> dict[str, Any] | None:
         """Processes an annotation stripping any extra information not allowed if necessary. Will return None if the
         annotation is suspecious"""
         if annotation is None:
             return {}
         if not self.strip_annotations:
             return annotation
-        annotation = {
-            k: v
-            for k, v in annotation.items()
-            if k in ("partners", "cfp", "buyer", "seller")
-        }
+        annotation = {k: v for k, v in annotation.items() if k in ("partners", "cfp", "buyer", "seller")}
         if self.prevent_cfp_tampering:
-            cfp = annotation.get("cfp", None)
+            cfp = annotation.get("cfp")
             if cfp is not None:
                 cfp_ = self.bulletin_board.read("cfps", cfp.id)
                 if cfp_ is None:
-                    self.logerror(
-                        f"CFP {str(cfp)} with id {cfp.id} was tampered with by {self.agent.name} and will be ignored"
-                    )
+                    self.logerror(f"CFP {str(cfp)} with id {cfp.id} was tampered with by {self.agent.name} and will be ignored")
                     return None
                 else:
                     annotation["cfp"] = cfp_
@@ -2386,10 +2144,10 @@ class SCML2019World(TimeInAgreementMixin, World):
         ufun: UtilityFunction = None,
         caller_role: str = None,
         roles: Collection[str] = None,
-        annotation: Optional[Dict[str, Any]] = None,
+        annotation: dict[str, Any] | None = None,
         mechanism_name: str = None,
-        mechanism_params: Dict[str, Any] = None,
-    ) -> Optional[Tuple[Contract, NegotiatorMechanismInterface]]:
+        mechanism_params: dict[str, Any] = None,
+    ) -> tuple[Contract, NegotiatorMechanismInterface] | None:
         annotation = self._process_annotation(annotation)
         if annotation is None:
             return None
@@ -2408,17 +2166,17 @@ class SCML2019World(TimeInAgreementMixin, World):
     def run_negotiations(
         self,
         caller: "Agent",
-        issues: Union[List[Issue], List[List[Issue]]],
-        partners: List[List["Agent"]],
-        negotiators: List[Negotiator],
-        ufuns: List[UtilityFunction] = None,
-        caller_roles: List[str] = None,
-        roles: Optional[List[Optional[List[str]]]] = None,
-        annotations: Optional[List[Optional[Dict[str, Any]]]] = None,
-        mechanism_names: Optional[Union[str, List[str]]] = None,
-        mechanism_params: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
+        issues: list[Issue] | list[list[Issue]],
+        partners: list[list["Agent"]],
+        negotiators: list[Negotiator],
+        ufuns: list[UtilityFunction] = None,
+        caller_roles: list[str] = None,
+        roles: list[list[str] | None] | None = None,
+        annotations: list[dict[str, Any] | None] | None = None,
+        mechanism_names: str | list[str] | None = None,
+        mechanism_params: dict[str, Any] | list[dict[str, Any]] | None = None,
         all_or_none: bool = False,
-    ) -> List[Tuple[Contract, NegotiatorMechanismInterface]]:
+    ) -> list[tuple[Contract, NegotiatorMechanismInterface]]:
         if annotations is None:
             return None
         for i, annotation in enumerate(annotations):
@@ -2439,12 +2197,12 @@ class SCML2019World(TimeInAgreementMixin, World):
         self,
         req_id: str,
         caller: "Agent",
-        issues: List[Issue],
-        partners: List["Agent"],
-        roles: List[str] = None,
-        annotation: Optional[Dict[str, Any]] = None,
+        issues: list[Issue],
+        partners: list["Agent"],
+        roles: list[str] = None,
+        annotation: dict[str, Any] | None = None,
         mechanism_name: str = None,
-        mechanism_params: Dict[str, Any] = None,
+        mechanism_params: dict[str, Any] = None,
         group=None,
     ):
         annotation = self._process_annotation(annotation)
@@ -2475,10 +2233,7 @@ class SCML2019World(TimeInAgreementMixin, World):
             )
         else:
             balances = sorted(
-                (
-                    (self.a2f[_.id].balance / self.a2f[_.id].initial_balance, _)
-                    for _ in self.factory_managers
-                ),
+                ((self.a2f[_.id].balance / self.a2f[_.id].initial_balance, _) for _ in self.factory_managers),
                 key=lambda x: x[0],
                 reverse=True,
             )
@@ -2510,14 +2265,12 @@ class SCML2019World(TimeInAgreementMixin, World):
                 if m.id != cfp.publisher:
                     m.on_remove_cfp(copy.deepcopy(cfp))
 
-    def contract_record(self, contract: Contract) -> Dict[str, Any]:
+    def contract_record(self, contract: Contract) -> dict[str, Any]:
         c = {
             "id": contract.id,
             "seller_name": self.agents[contract.annotation["seller"]].name,
             "buyer_name": self.agents[contract.annotation["buyer"]].name,
-            "seller_type": self.agents[
-                contract.annotation["seller"]
-            ].__class__.__name__,
+            "seller_type": self.agents[contract.annotation["seller"]].__class__.__name__,
             "buyer_type": self.agents[contract.annotation["buyer"]].__class__.__name__,
             "product_name": self.products[contract.annotation["cfp"].product],
             "delivery_time": contract.agreement["time"],
@@ -2538,7 +2291,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         c["n_neg_steps"] = contract.mechanism_state.step
         return c
 
-    def breach_record(self, breach: Breach) -> Dict[str, Any]:
+    def breach_record(self, breach: Breach) -> dict[str, Any]:
         return {
             "perpetrator": breach.perpetrator,
             "perpetrator_name": breach.perpetrator,

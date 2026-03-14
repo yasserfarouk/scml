@@ -27,17 +27,9 @@ from scml.scml2019.miners import MiningProfile, ReactiveMiner
 from scml.scml2019.world import SCML2019World
 
 if True:
+    from collections.abc import Callable, Iterable, Sequence
     from typing import (
         Any,
-        Callable,
-        Dict,
-        Iterable,
-        List,
-        Optional,
-        Sequence,
-        Tuple,
-        Type,
-        Union,
     )
 
     from .factory_managers.builtins import FactoryManager
@@ -95,7 +87,7 @@ class DefaultGreedyManager(GreedyFactoryManager):
         )
 
 
-def integer_cut(total: int, n: int, mn: Union[int, List[int]]) -> List[int]:
+def integer_cut(total: int, n: int, mn: int | list[int]) -> list[int]:
     """
     Generates l random integers that sum to n where each of them is at least l_m
     Args:
@@ -110,15 +102,13 @@ def integer_cut(total: int, n: int, mn: Union[int, List[int]]) -> List[int]:
         mn = [mn] * n
     sizes = np.asarray(mn)
     if total < sizes.sum():
-        raise ValueError(
-            f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}"
-        )
+        raise ValueError(f"Cannot generate {n} numbers summing to {total}  with a minimum summing to {sizes.sum()}")
     while sizes.sum() < total:
         sizes[randint(0, n - 1)] += 1
     return list(sizes.tolist())
 
 
-def _realin(rng: Union[Tuple[float, float], float]) -> float:
+def _realin(rng: tuple[float, float] | float) -> float:
     """
     Selects a random number within a range if given or the input if it was a float
 
@@ -136,7 +126,7 @@ def _realin(rng: Union[Tuple[float, float], float]) -> float:
     return rng[0] + random() * (rng[1] - rng[0])
 
 
-def _intin(rng: Union[Tuple[int, int], int]) -> int:
+def _intin(rng: tuple[int, int] | int) -> int:
     """
     Selects a random number within a range if given or the input if it was an int
 
@@ -158,25 +148,25 @@ def anac2019_sabotage_config_generator(
     n_competitors: int,
     n_agents_per_competitor: int,
     agent_names_reveal_type: bool = False,
-    non_competitors: Optional[Tuple[Union[str, FactoryManager]]] = None,
-    non_competitor_params: Optional[Tuple[Dict[str, Any]]] = None,
+    non_competitors: tuple[str | FactoryManager] | None = None,
+    non_competitor_params: tuple[dict[str, Any]] | None = None,
     compact: bool = True,
     *,
-    consumption_schedule: Tuple[int, int] = (0, 5),
-    consumption_horizon: Tuple[int, int] = (10, 15),
-    n_retrials: Union[int, Tuple[int, int]] = 2,
+    consumption_schedule: tuple[int, int] = (0, 5),
+    consumption_horizon: tuple[int, int] = (10, 15),
+    n_retrials: int | tuple[int, int] = 2,
     negotiator_type: str = DEFAULT_NEGOTIATOR,
-    n_steps: Union[int, Tuple[int, int]] = (50, 100),
-    n_miners: Union[int, Tuple[int, int]] = 5,
-    n_consumers: Union[int, Tuple[int, int]] = 5,
-    profile_cost: Tuple[float, float] = (1, 4),
-    profile_time: Union[int, Tuple[int, int]] = 1,
-    n_intermediate: Tuple[int, int] = (1, 4),
+    n_steps: int | tuple[int, int] = (50, 100),
+    n_miners: int | tuple[int, int] = 5,
+    n_consumers: int | tuple[int, int] = 5,
+    profile_cost: tuple[float, float] = (1, 4),
+    profile_time: int | tuple[int, int] = 1,
+    n_intermediate: tuple[int, int] = (1, 4),
     min_factories_per_level: int = 5,
-    n_default_managers: Tuple[int, int] = (1, 4),
+    n_default_managers: tuple[int, int] = (1, 4),
     n_lines: int = 10,
     **kwargs,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     return anac2019_config_generator(
         1,
         n_agents_per_competitor=n_agents_per_competitor,
@@ -205,26 +195,26 @@ def anac2019_config_generator(
     n_competitors: int,
     n_agents_per_competitor: int,
     agent_names_reveal_type: bool = False,
-    non_competitors: Optional[Tuple[Union[str, FactoryManager]]] = None,
-    non_competitor_params: Optional[Tuple[Dict[str, Any]]] = None,
+    non_competitors: tuple[str | FactoryManager] | None = None,
+    non_competitor_params: tuple[dict[str, Any]] | None = None,
     compact: bool = True,
     *,
-    consumption_schedule: Tuple[int, int] = (0, 5),
-    consumption_horizon: Tuple[int, int] = (10, 15),
-    n_retrials: Union[int, Tuple[int, int]] = 2,
+    consumption_schedule: tuple[int, int] = (0, 5),
+    consumption_horizon: tuple[int, int] = (10, 15),
+    n_retrials: int | tuple[int, int] = 2,
     negotiator_type: str = DEFAULT_NEGOTIATOR,
-    n_steps: Union[int, Tuple[int, int]] = (50, 100),
-    n_miners: Union[int, Tuple[int, int]] = 5,
-    n_consumers: Union[int, Tuple[int, int]] = 5,
-    profile_cost: Tuple[float, float] = (1, 4),
-    profile_time: Union[int, Tuple[int, int]] = 1,
-    n_intermediate: Tuple[int, int] = (1, 4),
+    n_steps: int | tuple[int, int] = (50, 100),
+    n_miners: int | tuple[int, int] = 5,
+    n_consumers: int | tuple[int, int] = 5,
+    profile_cost: tuple[float, float] = (1, 4),
+    profile_time: int | tuple[int, int] = 1,
+    n_intermediate: tuple[int, int] = (1, 4),
     min_factories_per_level: int = 5,  # strictly guaranteed
     max_factories_per_level: int = 8,  # not strictly guaranteed
-    n_default_managers: Tuple[int, int] = (1, 4),
+    n_default_managers: tuple[int, int] = (1, 4),
     n_lines: int = 10,
     **kwargs,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     if non_competitors is None:
         non_competitors = (DefaultGreedyManager,)
     if isinstance(n_intermediate, Iterable):
@@ -244,14 +234,12 @@ def anac2019_config_generator(
     miner_kwargs = {"negotiator_type": negotiator_type, "n_retrials": n_retrials}
     if negotiator_type is not None:
         for args in (consumer_kwargs, miner_kwargs):
-            if "negotiator_type" not in args.keys():
+            if "negotiator_type" not in args:
                 args["negotiator_type"] = negotiator_type
 
     n_intermediate_levels = randint(*n_intermediate)
 
-    products = [
-        Product(id=0, name="p0", catalog_price=3.0, production_level=0, expires_in=0)
-    ]
+    products = [Product(id=0, name="p0", catalog_price=3.0, production_level=0, expires_in=0)]
     processes = []
     miners = [
         instantiate(
@@ -294,7 +282,7 @@ def anac2019_config_generator(
         products.append(new_product)
 
     n_defaults = []
-    for level in range(n_intermediate_levels + 1):
+    for _level in range(n_intermediate_levels + 1):
         n_defaults.append(_intin(n_default_managers))
     n_agents = n_agents_per_competitor * n_competitors
     n_a_list = integer_cut(n_agents, n_intermediate_levels + 1, 0)
@@ -303,7 +291,7 @@ def anac2019_config_generator(
             n_defaults[i] = min_factories_per_level - n_a
         if n_a + n_defaults[i] > max_factories_per_level and n_defaults[i] > 1:
             n_defaults[i] = max(1, min_factories_per_level - n_a)
-    n_f_list = [a + b for a, b in zip(n_defaults, n_a_list)]
+    n_f_list = [a + b for a, b in zip(n_defaults, n_a_list, strict=False)]
     n_factories = sum(n_f_list)
 
     if non_competitor_params is None:
@@ -311,10 +299,8 @@ def anac2019_config_generator(
 
     non_competitors = [get_full_type_name(_) for _ in non_competitors]
 
-    for c_, p_ in zip(non_competitors, non_competitor_params):
-        if (
-            c_.startswith("scml.scml2019.") and c_.endswith("GreedyFactoryManager")
-        ) or "DefaultGreedyManager" in c_:
+    for c_, p_ in zip(non_competitors, non_competitor_params, strict=False):
+        if (c_.startswith("scml.scml2019.") and c_.endswith("GreedyFactoryManager")) or "DefaultGreedyManager" in c_:
             p_.update({"negotiator_type": negotiator_type, "n_retrials": n_retrials})
 
     max_def_agents = len(non_competitors) - 1
@@ -324,9 +310,7 @@ def anac2019_config_generator(
     for level in range(n_intermediate_levels + 1):
         n_d = n_defaults[level]
         n_f = n_f_list[level]
-        assert (
-            n_d <= n_f
-        ), f"Got {n_f} total factories at level {level} out of which {n_d} are default!!"
+        assert n_d <= n_f, f"Got {n_f} total factories at level {level} out of which {n_d} are default!!"
         for j in range(n_f):
             profiles = []
             factory_time = _intin(profile_time)
@@ -359,20 +343,14 @@ def anac2019_config_generator(
                 if agent_names_reveal_type:
                     params_["name"] = f"_df_{level + 1}_{j}"
                 else:
-                    params_[
-                        "name"
-                    ] = f"_df_{level + 1}_{j}"  # because I use name to know that this is a default agent in evaluate.
+                    params_["name"] = f"_df_{level + 1}_{j}"  # because I use name to know that this is a default agent in evaluate.
                     # @todo do not use name to identify default agents in evaluation
                 manager_params[first_in_level + j] = params_
         first_in_level += n_f
 
     def create_schedule():
         if isinstance(consumption_schedule, tuple) and len(consumption_schedule) == 2:
-            return list(
-                np.random.randint(
-                    consumption_schedule[0], consumption_schedule[1], n_steps
-                ).tolist()
-            )
+            return list(np.random.randint(consumption_schedule[0], consumption_schedule[1], n_steps).tolist())
         return consumption_schedule
 
     consumers = [
@@ -385,35 +363,35 @@ def anac2019_config_generator(
         for i in range(n_consumers)
     ]
     world_name = unique_name("", add_time=True, rand_digits=4)
-    world_params = dict(
-        name=world_name,
-        time_limit=7200 + 3600,
-        neg_time_limit=120,
-        neg_n_steps=20,
-        neg_step_time_limit=10,
-        negotiation_speed=21,
-        default_signing_delay=1,
-        transportation_delay=0,
-        no_bank=True,
-        breach_penalty_society=0.02,
-        no_insurance=False,
-        premium=0.03,
-        premium_time_increment=0.1,
-        premium_breach_increment=0.001,
-        max_allowed_breach_level=None,
-        breach_penalty_society_min=0.0,
-        breach_penalty_victim=0.0,
-        breach_move_max_product=True,
-        initial_wallet_balances=1000.0,
-        transfer_delay=0,
-        start_negotiations_immediately=False,
-        catalog_profit=0.15,
-        financial_reports_period=10,
-        default_price_for_products_without_one=1,
-        compensation_fraction=0.5,
-        n_steps=n_steps,
-        compact=compact,
-    )
+    world_params = {
+        "name": world_name,
+        "time_limit": 7200 + 3600,
+        "neg_time_limit": 120,
+        "neg_n_steps": 20,
+        "neg_step_time_limit": 10,
+        "negotiation_speed": 21,
+        "default_signing_delay": 1,
+        "transportation_delay": 0,
+        "no_bank": True,
+        "breach_penalty_society": 0.02,
+        "no_insurance": False,
+        "premium": 0.03,
+        "premium_time_increment": 0.1,
+        "premium_breach_increment": 0.001,
+        "max_allowed_breach_level": None,
+        "breach_penalty_society_min": 0.0,
+        "breach_penalty_victim": 0.0,
+        "breach_move_max_product": True,
+        "initial_wallet_balances": 1000.0,
+        "transfer_delay": 0,
+        "start_negotiations_immediately": False,
+        "catalog_profit": 0.15,
+        "financial_reports_period": 10,
+        "default_price_for_products_without_one": 1,
+        "compensation_fraction": 0.5,
+        "n_steps": n_steps,
+        "compact": compact,
+    }
     world_params.update(kwargs)
     config = {
         "world_params": world_params,
@@ -435,33 +413,26 @@ def anac2019_config_generator(
             for f in factories
         ],
         "miners": [
-            dict(
-                id=m.id,
-                name=m.name,
-                type=get_full_type_name(miner_type),
-                args=miner_kwargs,
-                profiles={
-                    k: serialize(v, add_type_field=False) for k, v in m.profiles.items()
-                },
-            )
+            {
+                "id": m.id,
+                "name": m.name,
+                "type": get_full_type_name(miner_type),
+                "args": miner_kwargs,
+                "profiles": {k: serialize(v, add_type_field=False) for k, v in m.profiles.items()},
+            }
             for m in miners
         ],
         "consumers": [
-            dict(
-                id=c.id,
-                name=c.name,
-                type=get_full_type_name(consumer_type),
-                args=consumer_kwargs,
-                profiles={
-                    k: serialize(v, add_type_field=False) for k, v in c.profiles.items()
-                },
-            )
+            {
+                "id": c.id,
+                "name": c.name,
+                "type": get_full_type_name(consumer_type),
+                "args": consumer_kwargs,
+                "profiles": {k: serialize(v, add_type_field=False) for k, v in c.profiles.items()},
+            }
             for c in consumers
         ],
-        "manager_types": [
-            get_full_type_name(_) if isinstance(_, FactoryManager) else _
-            for _ in manager_types
-        ],
+        "manager_types": [get_full_type_name(_) if isinstance(_, FactoryManager) else _ for _ in manager_types],
         "manager_params": manager_params,
         "n_factories_per_level": n_f_list,
         "agent_names_reveal_type": agent_names_reveal_type,
@@ -475,25 +446,20 @@ def anac2019_config_generator(
 
 
 def anac2019_sabotage_assigner(
-    config: List[Dict[str, Any]],
+    config: list[dict[str, Any]],
     max_n_worlds: int,
     n_agents_per_competitor: int = 1,
     fair: bool = True,
-    competitors: Sequence[Type[Agent]] = (),
-    params: Sequence[Dict[str, Any]] = (),
-    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    competitors: Sequence[type[Agent]] = (),
+    params: Sequence[dict[str, Any]] = (),
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
-) -> List[List[Dict[str, Any]]]:
+) -> list[list[dict[str, Any]]]:
     config = config[0]
-    competitors = list(
-        get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
-        for _ in competitors
-    )
+    competitors = [get_full_type_name(_) if not isinstance(_, str) and _ is not None else _ for _ in competitors]
     n_competitors = len(competitors)
-    params = (
-        list(params) if params is not None else [dict() for _ in range(n_competitors)]
-    )
+    params = list(params) if params is not None else [{} for _ in range(n_competitors)]
     agent_names_reveal_type = config.pop("agent_names_reveal_type", False)
 
     n_permutations = 1
@@ -502,32 +468,18 @@ def anac2019_sabotage_assigner(
 
     assignable_factories = [i for i, mtype in enumerate(manager_types) if mtype is None]
     shuffle(assignable_factories)
-    assignable_factories = (
-        np.asarray(assignable_factories).reshape((1, n_agents_per_competitor)).tolist()
-    )
+    assignable_factories = np.asarray(assignable_factories).reshape((1, n_agents_per_competitor)).tolist()
 
     configs = []
 
-    def shorten(long_name: str, d: Dict[str, Any]) -> str:
-        name = (
-            long_name.split(".")[-1]
-            .lower()
-            .replace("factory_manager", "")
-            .replace("manager", "")
-        )
-        name = (
-            name.replace("factory", "")
-            .replace("agent", "")
-            .replace("miner", "m")
-            .replace("consumer", "")
-        )
+    def shorten(long_name: str, d: dict[str, Any]) -> str:
+        name = long_name.split(".")[-1].lower().replace("factory_manager", "").replace("manager", "")
+        name = name.replace("factory", "").replace("agent", "").replace("miner", "m").replace("consumer", "")
         if long_name.startswith("jnegmas"):
             name = f"j:{name}"
         return name
 
-    non_competitors = config.get(
-        "non_competitors", ("scml.scml2019.utils.DefaultGreedyManager",)
-    )
+    non_competitors = config.get("non_competitors", ("scml.scml2019.utils.DefaultGreedyManager",))
     max_def = len(non_competitors) - 1
     non_competitor_params = config.get("non_competitor_params", None)
     if non_competitor_params is None:
@@ -547,10 +499,8 @@ def anac2019_sabotage_assigner(
                 perm_[i] = (comp, c_p)
         new_config = copy.deepcopy(conf)
         new_config["world_params"]["name"] += f".{indx:05d}_with_{shorten(comp, c_p)}"
-        new_config["scoring_context"].update(
-            {"competitor": ctype, "competitor_params": c_p}
-        )
-        for (a, p_), assignable in zip(perm_, assignable_factories):
+        new_config["scoring_context"].update({"competitor": ctype, "competitor_params": c_p})
+        for (a, p_), assignable in zip(perm_, assignable_factories, strict=False):
             for factory in assignable:
                 new_config["manager_types"][factory] = a
                 new_config["manager_params"][factory] = copy.deepcopy(p_)
@@ -562,54 +512,42 @@ def anac2019_sabotage_assigner(
                 def_indx = randint(0, max_def)
                 perm1[i] = (non_competitors[def_indx], non_competitor_params[def_indx])
         no_sabotage_config = copy.deepcopy(conf)
-        no_sabotage_config["world_params"][
-            "name"
-        ] += f".{indx:05d}_no_{shorten(comp, c_p)}"
-        no_sabotage_config["scoring_context"].update(
-            {"competitor": ctype, "competitor_params": c_p}
-        )
-        for (a, p_), assignable in zip(perm1, assignable_factories):
+        no_sabotage_config["world_params"]["name"] += f".{indx:05d}_no_{shorten(comp, c_p)}"
+        no_sabotage_config["scoring_context"].update({"competitor": ctype, "competitor_params": c_p})
+        for (a, p_), assignable in zip(perm1, assignable_factories, strict=False):
             for factory in assignable:
                 no_sabotage_config["manager_types"][factory] = a
                 no_sabotage_config["manager_params"][factory] = copy.deepcopy(p_)
 
         return [new_config, no_sabotage_config]
 
-    max_n_worlds = (
-        int(max(1, max_n_worlds // n_competitors)) if max_n_worlds is not None else None
-    )
+    max_n_worlds = int(max(1, max_n_worlds // n_competitors)) if max_n_worlds is not None else None
 
-    if n_permutations is not None and (
-        max_n_worlds is None or n_permutations <= max_n_worlds
-    ):
-        k = 0
-        others = list(choices(list(zip(non_competitors, non_competitor_params))))
+    if n_permutations is not None and (max_n_worlds is None or n_permutations <= max_n_worlds):
+        others = list(choices(list(zip(non_competitors, non_competitor_params, strict=False))))
         agents = ["competitor"] + [_[0] for _ in others]
         agent_params = ["competitor"] + [_[1] for _ in others]
-        permutation = list(zip(agents, agent_params))
-        for competitor, c_params in zip(competitors, params):
+        permutation = list(zip(agents, agent_params, strict=False))
+        for k, (competitor, c_params) in enumerate(zip(competitors, params, strict=False)):
             perm = copy.deepcopy(permutation)
             configs.append(_copy_config(perm, config, k, competitor, c_params))
-            k += 1
     elif max_n_worlds is None:
         raise ValueError("Did not give max_n_worlds and cannot find n_permutations.")
     else:
-        others = list(choices(list(zip(non_competitors, non_competitor_params))))
+        others = list(choices(list(zip(non_competitors, non_competitor_params, strict=False))))
         agents = ["competitor"] + [_[0] for _ in others]
         agent_params = ["competitor"] + [_[1] for _ in others]
-        permutation = list(zip(agents, agent_params))
-        assert len(permutation) == len(
-            assignable_factories
-        ), f"assignable {len(assignable_factories)}, permutation {len(permutation)}"
+        permutation = list(zip(agents, agent_params, strict=False))
+        assert len(permutation) == len(assignable_factories), f"assignable {len(assignable_factories)}, permutation {len(permutation)}"
         if fair:
             k = 0
             shuffle(permutation)
-            for competitor, c_params in zip(competitors, params):
+            for competitor, c_params in zip(competitors, params, strict=False):
                 perm = copy.deepcopy(permutation)
                 configs.append(_copy_config(perm, config, k, competitor, c_params))
         else:
             for k in range(max_n_worlds):
-                for competitor, c_params in zip(competitors, params):
+                for competitor, c_params in zip(competitors, params, strict=False):
                     perm = copy.deepcopy(permutation)
                     shuffle(perm)
                     configs.append(_copy_config(perm, config, k, competitor, c_params))
@@ -622,6 +560,7 @@ def anac2019_sabotage_assigner(
                         config["manager_types"],
                         config["manager_params"],
                         config["factories"],
+                        strict=False,
                     )
                 ):
                     if p.get("name", "").startswith("_df_"):
@@ -634,32 +573,27 @@ def anac2019_sabotage_assigner(
                         if not isinstance(t, str)
                         else shorten(t, config["manager_params"][i])
                     )
-                    p["name"] = f'{name_}@{f["id"][1:]}'
+                    p["name"] = f"{name_}@{f['id'][1:]}"
                     config["manager_params"][i] = copy.deepcopy(p)
                     nxt = nxt + 1
     return configs
 
 
 def anac2019_assigner(
-    config: List[Dict[str, Any]],
+    config: list[dict[str, Any]],
     max_n_worlds: int,
     n_agents_per_competitor: int = 1,
     fair: bool = True,
-    competitors: Sequence[Type[Agent]] = (),
-    params: Sequence[Dict[str, Any]] = (),
-    dynamic_non_competitors: Optional[List[Type[Agent]]] = None,
-    dynamic_non_competitor_params: Optional[List[Dict[str, Any]]] = None,
+    competitors: Sequence[type[Agent]] = (),
+    params: Sequence[dict[str, Any]] = (),
+    dynamic_non_competitors: list[type[Agent]] | None = None,
+    dynamic_non_competitor_params: list[dict[str, Any]] | None = None,
     exclude_competitors_from_reassignment: bool = True,
-) -> List[List[Dict[str, Any]]]:
+) -> list[list[dict[str, Any]]]:
     config = config[0]
-    competitors = list(
-        get_full_type_name(_) if not isinstance(_, str) and _ is not None else _
-        for _ in competitors
-    )
+    competitors = [get_full_type_name(_) if not isinstance(_, str) and _ is not None else _ for _ in competitors]
     n_competitors = len(competitors)
-    params = (
-        list(params) if params is not None else [dict() for _ in range(n_competitors)]
-    )
+    params = list(params) if params is not None else [{} for _ in range(n_competitors)]
     agent_names_reveal_type = config.pop("agent_names_reveal_type", False)
 
     try:
@@ -671,38 +605,32 @@ def anac2019_assigner(
 
     assignable_factories = [i for i, mtype in enumerate(manager_types) if mtype is None]
     shuffle(assignable_factories)
-    assignable_factories = (
-        np.asarray(assignable_factories)
-        .reshape((n_competitors, n_agents_per_competitor))
-        .tolist()
-    )
+    assignable_factories = np.asarray(assignable_factories).reshape((n_competitors, n_agents_per_competitor)).tolist()
 
     configs = []
 
     def _copy_config(perm_, c, indx):
         new_config = copy.deepcopy(c)
         new_config["world_params"]["name"] += f".{indx:05d}"
-        for (a, p_), assignable in zip(perm_, assignable_factories):
+        for (a, p_), assignable in zip(perm_, assignable_factories, strict=False):
             for factory in assignable:
                 new_config["manager_types"][factory] = a
                 new_config["manager_params"][factory] = copy.deepcopy(p_)
         return [new_config]
 
     if n_permutations is not None and max_n_worlds is None:
-        k = 0
-        permutation = list(zip(competitors, params))
+        permutation = list(zip(competitors, params, strict=False))
         assert len(permutation) == len(assignable_factories)
         shuffle(permutation)
         perm = permutation
-        for __ in range(n_permutations):
-            k += 1
+        for k in range(1, n_permutations + 1):
             perm = copy.deepcopy(perm)
             perm = perm[-1:] + perm[:-1]
             configs.append(_copy_config(perm, config, k))
     elif max_n_worlds is None:
         raise ValueError("Did not give max_n_worlds and cannot find n_permutations.")
     else:
-        permutation = list(zip(competitors, params))
+        permutation = list(zip(competitors, params, strict=False))
         assert len(permutation) == len(assignable_factories)
         if fair:
             n_min = len(assignable_factories)
@@ -727,19 +655,9 @@ def anac2019_assigner(
                 shuffle(perm)
                 configs.append(_copy_config(perm, config, k))
 
-    def shorten(long_name: str, d: Dict[str, Any]) -> str:
-        name = (
-            long_name.split(".")[-1]
-            .lower()
-            .replace("factory_manager", "")
-            .replace("manager", "")
-        )
-        name = (
-            name.replace("factory", "")
-            .replace("agent", "")
-            .replace("miner", "m")
-            .replace("consumer", "")
-        )
+    def shorten(long_name: str, d: dict[str, Any]) -> str:
+        name = long_name.split(".")[-1].lower().replace("factory_manager", "").replace("manager", "")
+        name = name.replace("factory", "").replace("agent", "").replace("miner", "m").replace("consumer", "")
         if long_name.startswith("jnegmas"):
             name = f"j:{name}"
         return name
@@ -753,6 +671,7 @@ def anac2019_assigner(
                         config["manager_types"],
                         config["manager_params"],
                         config["factories"],
+                        strict=False,
                     )
                 ):
                     if p.get("name", "").startswith("_df_"):
@@ -765,7 +684,7 @@ def anac2019_assigner(
                         if not isinstance(t, str)
                         else shorten(t, config["manager_params"][i])
                     )
-                    p["name"] = f'{name_}@{f["id"][1:]}'
+                    p["name"] = f"{name_}@{f['id'][1:]}"
                     config["manager_params"][i] = copy.deepcopy(p)
                     nxt = nxt + 1
     return configs
@@ -785,7 +704,7 @@ def anac2019_world_generator(**kwargs):
                 initial_storage={},
                 initial_wallet=f["initial_wallet"],
                 max_storage=f["max_storage"],
-                id=f'{f["id"]}',
+                id=f"{f['id']}",
                 profiles=[
                     ManufacturingProfile(
                         n_steps=p["n_steps"],
@@ -826,10 +745,7 @@ def anac2019_world_generator(**kwargs):
     kwargs.pop("n_factories_per_level", None)
     manager_types = kwargs.pop("manager_types", [])
     manager_params = kwargs.pop("manager_params", [])
-    managers = [
-        instantiate(mt, **mp)
-        for mt, mp in zip(manager_types, itertools.cycle(manager_params))
-    ]
+    managers = [instantiate(mt, **mp) for mt, mp in zip(manager_types, itertools.cycle(manager_params))]
     world = SCML2019World(
         products=products,
         processes=processes,
@@ -843,13 +759,13 @@ def anac2019_world_generator(**kwargs):
 
 
 def anac2019_world(
-    competitors: Sequence[Union[str, Type[FactoryManager]]] = (),
-    params: Sequence[Dict[str, Any]] = (),
+    competitors: Sequence[str | type[FactoryManager]] = (),
+    params: Sequence[dict[str, Any]] = (),
     randomize: bool = True,
     log_file_name: str = None,
     name: str = None,
     agent_names_reveal_type: bool = False,
-    n_intermediate: Tuple[int, int] = (1, 4),
+    n_intermediate: tuple[int, int] = (1, 4),
     n_miners=5,
     n_factories_per_level=11,
     n_agents_per_competitor=1,
@@ -921,11 +837,7 @@ def anac2019_world(
 
     """
     competitors = list(competitors)
-    params = (
-        list(params)
-        if params is not None
-        else [dict() for _ in range(len(competitors))]
-    )
+    params = list(params) if params is not None else [{} for _ in range(len(competitors))]
     if n_factories_per_level == n_default_per_level and len(competitors) > 0:
         raise ValueError(
             f"All factories in all levels are occupied by the default factory manager. Either decrease"
@@ -937,19 +849,14 @@ def anac2019_world(
     else:
         n_intermediate = [n_intermediate, n_intermediate]
     n_competitors = len(competitors)
-    n_intermediate_levels_min = (
-        int(math.ceil(n_competitors / (n_factories_per_level - n_default_per_level)))
-        - 1
-    )
+    n_intermediate_levels_min = int(math.ceil(n_competitors / (n_factories_per_level - n_default_per_level))) - 1
     if n_intermediate_levels_min > n_intermediate[1]:
-        raise ValueError(
-            f"Need {n_intermediate_levels_min} intermediate levels to run {n_competitors} competitors"
-        )
+        raise ValueError(f"Need {n_intermediate_levels_min} intermediate levels to run {n_competitors} competitors")
     n_intermediate[0] = max(n_intermediate_levels_min, n_intermediate[0])
     competitors = [get_class(c) if isinstance(c, str) else c for c in competitors]
     if len(competitors) < 1:
         competitors.append(DefaultGreedyManager)
-        params.append(dict())
+        params.append({})
     world = SCML2019World.chain_world(
         log_file_name=log_file_name,
         n_steps=n_steps,
@@ -992,8 +899,8 @@ def anac2019_world(
 
 
 def balance_calculator(
-    worlds: List[SCML2019World],
-    scoring_context: Dict[str, Any],
+    worlds: list[SCML2019World],
+    scoring_context: dict[str, Any],
     dry_run: bool,
     ignore_default=True,
 ) -> WorldRunResults:
@@ -1013,9 +920,7 @@ def balance_calculator(
     """
     assert len(worlds) == 1
     world = worlds[0]
-    result = WorldRunResults(
-        world_names=[world.name], log_file_names=[world.log_file_name]
-    )
+    result = WorldRunResults(world_names=[world.name], log_file_names=[world.log_file_name])
     initial_balances = []
     for manager in world.factory_managers:
         if "_df_" in manager.name and ignore_default:
@@ -1033,18 +938,13 @@ def balance_calculator(
             result.scores.append(None)
             continue
         if normalize:
-            result.scores.append(
-                (factory.total_balance - factory.initial_balance)
-                / factory.initial_balance
-            )
+            result.scores.append((factory.total_balance - factory.initial_balance) / factory.initial_balance)
         else:
             result.scores.append(factory.total_balance - factory.initial_balance)
     return result
 
 
-def sabotage_effectiveness(
-    worlds: List[SCML2019World], scoring_context: Dict[str, Any], dry_run: bool
-) -> WorldRunResults:
+def sabotage_effectiveness(worlds: list[SCML2019World], scoring_context: dict[str, Any], dry_run: bool) -> WorldRunResults:
     """A scoring function that scores factory managers' performance by the final balance only ignoring whatever still
     in their inventory.
 
@@ -1060,7 +960,7 @@ def sabotage_effectiveness(
 
     """
     assert len(worlds) == 2
-    type_scored = scoring_context.get("competitor", None)
+    type_scored = scoring_context.get("competitor")
     if type_scored is None:
         raise ValueError("Cannot determine which is the sabotaging agent")
     if dry_run:
@@ -1070,9 +970,7 @@ def sabotage_effectiveness(
         results.types = [type_scored]
         results.scores = [None]
         return results
-    results = [
-        balance_calculator([_], {}, dry_run=False, ignore_default=False) for _ in worlds
-    ]
+    results = [balance_calculator([_], {}, dry_run=False, ignore_default=False) for _ in worlds]
     normal_scores, sabotaged_scores = [], []
     sabotaged_indices, normal_indices = [], []
     for i in range(len(worlds)):
@@ -1081,27 +979,15 @@ def sabotage_effectiveness(
         else:
             normal_indices.append(int(i))
     if len(sabotaged_indices) < 1:
-        raise ValueError(
-            f"The sabotaging agent type {type_scored} did not participate in any worlds"
-        )
+        raise ValueError(f"The sabotaging agent type {type_scored} did not participate in any worlds")
     if len(normal_indices) < 1:
-        raise ValueError(
-            f"The sabotaging agent type {type_scored} participated in ALL worlds"
-        )
+        raise ValueError(f"The sabotaging agent type {type_scored} participated in ALL worlds")
 
     for indx in sabotaged_indices:
-        sabotaged_scores += [
-            score
-            for score, type_ in zip(results[indx].scores, results[indx].types)
-            if type_ != type_scored
-        ]
+        sabotaged_scores += [score for score, type_ in zip(results[indx].scores, results[indx].types, strict=False) if type_ != type_scored]
 
     for indx in normal_indices:
-        normal_scores += [
-            score
-            for score, type_ in zip(results[indx].scores, results[indx].types)
-            if type_ != type_scored
-        ]
+        normal_scores += [score for score, type_ in zip(results[indx].scores, results[indx].types, strict=False) if type_ != type_scored]
 
     normal_score = sum(normal_scores) / len(normal_scores)
     sabotaged_score = sum(sabotaged_scores) / len(sabotaged_scores)
@@ -1117,25 +1003,25 @@ def sabotage_effectiveness(
 
 
 def anac2019_tournament(
-    competitors: Sequence[Union[str, Type[FactoryManager]]],
+    competitors: Sequence[str | type[FactoryManager]],
     agent_names_reveal_type=False,
     n_configs: int = 5,
     max_worlds_per_config: int = 1000,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2019World | None], None] = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2019 SCML tournament (collusion track).
 
@@ -1201,28 +1087,28 @@ def anac2019_tournament(
 
 
 def anac2019_std(
-    competitors: Sequence[Union[str, Type[FactoryManager]]],
-    competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
+    competitors: Sequence[str | type[FactoryManager]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = 1000,
+    max_worlds_per_config: int | None = 1000,
     n_runs_per_world: int = 5,
     min_factories_per_level: int = 5,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2019World | None], None] = None,
+    non_competitors: Sequence[str | type[FactoryManager]] | None = None,
+    non_competitor_params: Sequence[str | type[FactoryManager]] | None = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2019 SCML tournament (standard track).
 
@@ -1302,30 +1188,29 @@ def anac2019_std(
 
 
 def anac2019_collusion(
-    competitors: Sequence[Union[str, Type[FactoryManager]]],
-    competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
+    competitors: Sequence[str | type[FactoryManager]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = 1000,
+    max_worlds_per_config: int | None = 1000,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     min_factories_per_level: int = 5,
     tournament_path: str = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None]
-    | None = None,
-    world_progress_callback: Callable[[Optional[SCML2019World]], None] | None = None,
-    non_competitors: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
-    non_competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] | None = None,
+    world_progress_callback: Callable[[SCML2019World | None], None] | None = None,
+    non_competitors: Sequence[str | type[FactoryManager]] | None = None,
+    non_competitor_params: Sequence[dict[str, Any]] | None = None,
     name: str | None = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2019 SCML tournament (collusion track).
 
@@ -1406,29 +1291,29 @@ def anac2019_collusion(
 
 
 def anac2019_sabotage(
-    competitors: Sequence[Union[str, Type[FactoryManager]]],
-    competitor_params: Optional[Sequence[Dict[str, Any]]] = None,
+    competitors: Sequence[str | type[FactoryManager]],
+    competitor_params: Sequence[dict[str, Any]] | None = None,
     agent_names_reveal_type=False,
     n_configs: int = 5,
-    max_worlds_per_config: Optional[int] = 1000,
+    max_worlds_per_config: int | None = 1000,
     n_runs_per_world: int = 5,
     n_agents_per_competitor: int = 5,
     min_factories_per_level: int = 5,
     tournament_path: str | Path | None = None,
-    total_timeout: Optional[int] = None,
+    total_timeout: int | None = None,
     parallelism="parallel",
-    scheduler_ip: Optional[str] = None,
-    scheduler_port: Optional[str] = None,
-    tournament_progress_callback: Callable[[Optional[WorldRunResults]], None] = None,
-    world_progress_callback: Callable[[Optional[SCML2019World]], None] = None,
-    non_competitors: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
-    non_competitor_params: Optional[Sequence[Union[str, Type[FactoryManager]]]] = None,
+    scheduler_ip: str | None = None,
+    scheduler_port: str | None = None,
+    tournament_progress_callback: Callable[[WorldRunResults | None], None] = None,
+    world_progress_callback: Callable[[SCML2019World | None], None] = None,
+    non_competitors: Sequence[str | type[FactoryManager]] | None = None,
+    non_competitor_params: Sequence[str | type[FactoryManager]] | None = None,
     name: str = None,
     verbose: bool = False,
     configs_only=False,
     compact=False,
     **kwargs,
-) -> Union[TournamentResults, PathLike]:
+) -> TournamentResults | PathLike:
     """
     The function used to run ANAC 2019 SCML tournament (collusion track).
 
