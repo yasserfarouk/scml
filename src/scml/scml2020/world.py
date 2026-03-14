@@ -1,4 +1,4 @@
-"""Implements the world class for the SCML2020 world """
+"""Implements the world class for the SCML2020 world"""
 
 from __future__ import annotations
 
@@ -9,7 +9,8 @@ import math
 import random
 import sys
 from collections import Counter, defaultdict, namedtuple
-from typing import Any, Callable, Collection, Iterable
+from collections.abc import Callable, Collection, Iterable
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -93,9 +94,7 @@ class RecoverableWorldGenerationException(Exception):
     pass
 
 
-CompensationRecord = namedtuple(
-    "CompensationRecord", ["product", "quantity", "money", "seller_bankrupt", "factory"]
-)
+CompensationRecord = namedtuple("CompensationRecord", ["product", "quantity", "money", "seller_bankrupt", "factory"])
 """A record of delayed compensation used when a factory goes bankrupt to keep
 honoring its future contracts to the limit possible"""
 
@@ -308,11 +307,11 @@ class SCML2020World(TimeInAgreementMixin, World):
             mechanisms={
                 "negmas.sao.SAOMechanism": mechanisms.get(
                     "negmas.sao.SAOMechanism",
-                    dict(
-                        end_on_no_response=end_negotiation_on_refusal_to_propose,
-                        dynamic_entry=False,
-                        max_wait=negotiation_quota_per_step,
-                    ),
+                    {
+                        "end_on_no_response": end_negotiation_on_refusal_to_propose,
+                        "dynamic_entry": False,
+                        "max_wait": negotiation_quota_per_step,
+                    },
                 )
             },
             default_signing_delay=signing_delay,
@@ -340,21 +339,11 @@ class SCML2020World(TimeInAgreementMixin, World):
             name=name,
             **kwargs,
         )
-        self.bulletin_board.record(
-            "settings", publish_trading_prices, "public_trading_prices"
-        )
-        self.bulletin_board.record(
-            "settings", publish_exogenous_summary, "public_exogenous_summary"
-        )
-        self.bulletin_board.record(
-            "settings", buy_missing_products, "buy_missing_products"
-        )
-        self.bulletin_board.record(
-            "settings", inventory_valuation_trading, "inventory_valuation_trading"
-        )
-        self.bulletin_board.record(
-            "settings", inventory_valuation_catalog, "inventory_valuation_catalog"
-        )
+        self.bulletin_board.record("settings", publish_trading_prices, "public_trading_prices")
+        self.bulletin_board.record("settings", publish_exogenous_summary, "public_exogenous_summary")
+        self.bulletin_board.record("settings", buy_missing_products, "buy_missing_products")
+        self.bulletin_board.record("settings", inventory_valuation_trading, "inventory_valuation_trading")
+        self.bulletin_board.record("settings", inventory_valuation_catalog, "inventory_valuation_catalog")
         self.bulletin_board.record(
             "settings",
             inventory_valuation_trading + inventory_valuation_catalog,
@@ -362,40 +351,20 @@ class SCML2020World(TimeInAgreementMixin, World):
         )
         self.bulletin_board.record("settings", borrow_on_breach, "borrow_on_breach")
         self.bulletin_board.record("settings", bankruptcy_limit, "bankruptcy_limit")
-        self.bulletin_board.record(
-            "settings", spot_market_global_loss, "spot_market_global_loss"
-        )
-        self.bulletin_board.record(
-            "settings", financial_report_period, "financial_report_period"
-        )
+        self.bulletin_board.record("settings", spot_market_global_loss, "spot_market_global_loss")
+        self.bulletin_board.record("settings", financial_report_period, "financial_report_period")
         self.bulletin_board.record("settings", interest_rate, "interest_rate")
         self.bulletin_board.record("settings", exogenous_horizon, "exogenous_horizon")
-        self.bulletin_board.record(
-            "settings", compensation_fraction, "compensation_fraction"
-        )
-        self.bulletin_board.record(
-            "settings", compensate_immediately, "compensate_immediately"
-        )
-        self.bulletin_board.record(
-            "settings", compensate_before_past_debt, "compensate_before_past_debt"
-        )
-        self.bulletin_board.record(
-            "settings", exogenous_force_max, "exogenous_force_max"
-        )
+        self.bulletin_board.record("settings", compensation_fraction, "compensation_fraction")
+        self.bulletin_board.record("settings", compensate_immediately, "compensate_immediately")
+        self.bulletin_board.record("settings", compensate_before_past_debt, "compensate_before_past_debt")
+        self.bulletin_board.record("settings", exogenous_force_max, "exogenous_force_max")
         self.bulletin_board.record("settings", production_confirm, "production_confirm")
-        self.bulletin_board.record(
-            "settings", production_buy_missing, "production_buy_missing"
-        )
-        self.bulletin_board.record(
-            "settings", production_no_borrow, "production_no_borrow"
-        )
-        self.bulletin_board.record(
-            "settings", production_no_bankruptcy, "production_no_bankruptcy"
-        )
+        self.bulletin_board.record("settings", production_buy_missing, "production_buy_missing")
+        self.bulletin_board.record("settings", production_no_borrow, "production_no_borrow")
+        self.bulletin_board.record("settings", production_no_bankruptcy, "production_no_bankruptcy")
         self.bulletin_board.record("settings", production_penalty, "production_penalty")
-        self.bulletin_board.record(
-            "settings", len(exogenous_contracts) > 0, "has_exogenous_contracts"
-        )
+        self.bulletin_board.record("settings", len(exogenous_contracts) > 0, "has_exogenous_contracts")
         self.bulletin_board.record(
             "settings",
             n_concurrent_negs_between_partners,
@@ -470,9 +439,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.compensate_before_past_debt = compensate_before_past_debt
         self.confirm_production = production_confirm
         self.financial_reports_period = (
-            financial_report_period
-            if financial_report_period >= 1
-            else int(0.5 + financial_report_period * n_steps)
+            financial_report_period if financial_report_period >= 1 else int(0.5 + financial_report_period * n_steps)
         )
         self.compensation_fraction = compensation_fraction
         self.compensate_immediately = compensate_immediately
@@ -481,9 +448,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         # assert all([_> 1e-5 for _ in initial_balance]), "Some initial  balances are zero or negative {initial_balance}"
         agent_types = [get_class(_) for _ in agent_types]
         self.bankruptcy_limit = (
-            -bankruptcy_limit
-            if isinstance(bankruptcy_limit, int)
-            else -int(0.5 + bankruptcy_limit * initial_balance.mean())
+            -bankruptcy_limit if isinstance(bankruptcy_limit, int) else -int(0.5 + bankruptcy_limit * initial_balance.mean())
         )
         assert self.n_products == self.n_processes + 1
 
@@ -493,7 +458,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         else:
             default_names = [unique_name("", add_time=False) for _ in range(n_agents)]
         if agent_name_reveals_type:
-            for i, (at, ap) in enumerate(zip(agent_types, agent_params)):
+            for i, (at, ap) in enumerate(zip(agent_types, agent_params, strict=False)):
                 if issubclass(at, OneShotAdapter):
                     s2 = (
                         get_class(ap["oneshot_type"])
@@ -503,7 +468,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                         .replace("Adapter", "")
                         .replace("OneShot", "")
                     )
-                    s2 += f'O({at._type_name().split(".")[-1].replace("Agent", "").replace("OneShot", "").replace("Adapter", "")})'
+                    s2 += f"O({at._type_name().split('.')[-1].replace('Agent', '').replace('OneShot', '').replace('Adapter', '')})"
                 else:
                     s2 = at._type_name().split(".")[-1].replace("Agent", "")
                 s = "".join([c for c in s2 if c.isupper()])[:3]
@@ -520,10 +485,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 except Exception:
                     pass
                 default_names[i] += f"{s}"
-        agent_levels = [
-            int(np.nonzero(np.max(p.costs != INFINITE_COST, axis=0).flatten())[0])
-            for p in profiles
-        ]
+        agent_levels = [int(np.nonzero(np.max(p.costs != INFINITE_COST, axis=0).flatten())[0][0]) for p in profiles]
 
         if agent_name_reveals_position:
             for i, L_ in enumerate(agent_levels):
@@ -534,24 +496,24 @@ class SCML2020World(TimeInAgreementMixin, World):
         #         p_["obj"] = get_class(p_["oneshot_type"])(**p_.get("oneshot_params", dict()))
 
         if agent_params is None:
-            agent_params = [dict(name=name) for i, name in enumerate(default_names)]
+            agent_params = [{"name": name} for i, name in enumerate(default_names)]
         elif isinstance(agent_params, dict):
             a = copy.copy(agent_params)
             agent_params = []
-            for i, name in enumerate(default_names):
+            for _i, name in enumerate(default_names):
                 b = copy.deepcopy(a)
                 b["name"] = name
                 agent_params.append(b)
         elif len(agent_params) == 1:
             a = copy.copy(agent_params[0])
             agent_params = []
-            for i, _ in enumerate(default_names):
+            for _i, _ in enumerate(default_names):
                 b = copy.deepcopy(a)
                 b["name"] = name
                 agent_params.append(b)
         else:
             if agent_name_reveals_type or agent_name_reveals_position:
-                for i, (ns, ps) in enumerate(zip(default_names, agent_params)):
+                for i, (ns, ps) in enumerate(zip(default_names, agent_params, strict=False)):
                     agent_params[i] = dict(**ps)
                     agent_params[i]["name"] = ns
 
@@ -567,28 +529,16 @@ class SCML2020World(TimeInAgreementMixin, World):
         profiles.append(FactoryProfile(INFINITE_COST * np.ones(n_processes, dtype=int)))
         profiles.append(FactoryProfile(INFINITE_COST * np.ones(n_processes, dtype=int)))
         agents = []
-        for i, (atype, aparams) in enumerate(zip(agent_types, agent_params)):
+        for i, (atype, aparams) in enumerate(zip(agent_types, agent_params, strict=False)):
             # aparams = {k:v for k, v in aparams if k not in ("oneshot_params", "oneshot_type")}
             a = instantiate(atype, **aparams)
             a.id = a.name
             self.join(a, i)
             agents.append(a)
         self.agent_types = [_.type_name for _ in agents]
-        self.agent_params = [
-            {k: v for k, v in _.items() if k not in ("name",)} for _ in agent_params
-        ]
-        agent_params = [
-            {
-                k: v
-                for k, v in _.items()
-                if k not in ("name", "oneshot_type", "oneshot_params", "obj")
-            }
-            for _ in agent_params
-        ]
-        self.agent_unique_types = [
-            f"{t}{hash(str(p))}" if len(p) > 0 else t
-            for t, p in zip(self.agent_types, agent_params)
-        ]
+        self.agent_params = [{k: v for k, v in _.items() if k not in ("name",)} for _ in agent_params]
+        agent_params = [{k: v for k, v in _.items() if k not in ("name", "oneshot_type", "oneshot_params", "obj")} for _ in agent_params]
+        self.agent_unique_types = [f"{t}{hash(str(p))}" if len(p) > 0 else t for t, p in zip(self.agent_types, agent_params, strict=False)]
         assert isinstance(initial_balance, Iterable)
         self.factories = [
             Factory(
@@ -606,17 +556,13 @@ class SCML2020World(TimeInAgreementMixin, World):
                 production_no_borrow=self.production_no_borrow,
                 production_no_bankruptcy=self.production_no_bankruptcy,
                 confirm_production=self.confirm_production,
-                initial_inventory=(
-                    None
-                    if i < len(profiles) - 2
-                    else sys.maxsize // 4 * np.ones(n_products, dtype=int)
-                ),
+                initial_inventory=(None if i < len(profiles) - 2 else sys.maxsize // 4 * np.ones(n_products, dtype=int)),
             )
             for i, profile in enumerate(profiles)
         ]
-        self.a2f = dict(zip((_.id for _ in agents), self.factories))
-        self.afp = list(zip(agents, self.factories, profiles))
-        self.f2i = self.a2i = dict(zip((_.id for _ in agents), range(n_agents)))
+        self.a2f = dict(zip((_.id for _ in agents), self.factories, strict=False))
+        self.afp = list(zip(agents, self.factories, profiles, strict=False))
+        self.f2i = self.a2i = dict(zip((_.id for _ in agents), range(n_agents), strict=False))
         self.i2a = agents
         self.i2f = self.factories
 
@@ -640,15 +586,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.agent_processes[SYSTEM_SELLER_ID] = []
         self.agent_inputs[SYSTEM_SELLER_ID] = []
         self.agent_outputs[SYSTEM_SELLER_ID] = [0]
-        self.agent_profiles: dict[str, Any] = dict()
-        self.initial_balances: dict[str, Any] = dict()
-        for agent_id, profile in zip(self.agents.keys(), profiles):
+        self.agent_profiles: dict[str, Any] = {}
+        self.initial_balances: dict[str, Any] = {}
+        for agent_id, profile in zip(self.agents.keys(), profiles, strict=False):
             self.agent_profiles[agent_id] = profile
-        for agent_id, ib in zip(self.agents.keys(), initial_balance):
+        for agent_id, ib in zip(self.agents.keys(), initial_balance, strict=False):
             self.initial_balances[agent_id] = ib
 
         for p in range(n_processes):
-            for agent_id, profile in zip(self.agents.keys(), profiles):
+            for agent_id, profile in zip(self.agents.keys(), profiles, strict=False):
                 self.agent_profiles[agent_id] = profile
                 if is_system_agent(agent_id):
                     continue
@@ -669,18 +615,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         self.agent_processes = {k: np.array(v) for k, v in self.agent_processes.items()}
         self.agent_inputs = {k: np.array(v) for k, v in self.agent_inputs.items()}
         self.agent_outputs = {k: np.array(v) for k, v in self.agent_outputs.items()}
-        assert all(
-            len(v) == 1 or is_system_agent(self.agents[k].id)
-            for k, v in self.agent_outputs.items()
-        ), f"Not all agent outputs are singular:\n{self.agent_outputs}"
-        assert all(
-            len(v) == 1 or is_system_agent(self.agents[k].id)
-            for k, v in self.agent_inputs.items()
-        ), f"Not all agent inputs are singular:\n{self.agent_outputs}"
-        assert all(
-            is_system_agent(k) or self.agent_inputs[k][0] == self.agent_outputs[k] - 1
-            for k in self.agent_inputs.keys()
-        ), f"Some agents have outputs != input+1\n{self.agent_outputs}\n{self.agent_inputs}"
+        assert all(len(v) == 1 or is_system_agent(self.agents[k].id) for k, v in self.agent_outputs.items()), (
+            f"Not all agent outputs are singular:\n{self.agent_outputs}"
+        )
+        assert all(len(v) == 1 or is_system_agent(self.agents[k].id) for k, v in self.agent_inputs.items()), (
+            f"Not all agent inputs are singular:\n{self.agent_outputs}"
+        )
+        assert all(is_system_agent(k) or self.agent_inputs[k][0] == self.agent_outputs[k] - 1 for k in self.agent_inputs), (
+            f"Some agents have outputs != input+1\n{self.agent_outputs}\n{self.agent_inputs}"
+        )
         self._n_production_failures = 0
         self.__n_nullified = 0
         self.__n_bankrupt = 0
@@ -689,9 +632,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         #     zip(self.agents.keys(), itertools.repeat(False))
         # )
         self.compensation_balance = 0
-        self.compensation_records: dict[str, list[CompensationRecord]] = defaultdict(
-            list
-        )
+        self.compensation_records: dict[str, list[CompensationRecord]] = defaultdict(list)
         self.exogenous_contracts: dict[int : list[Contract]] = defaultdict(list)
         for c in exogenous_contracts:
             seller_id = agents[c.seller].id if c.seller >= 0 else SYSTEM_SELLER_ID
@@ -706,17 +647,13 @@ class SCML2020World(TimeInAgreementMixin, World):
                 },
                 partners=[buyer_id, seller_id],
                 issues=[],
-                signatures=dict(),
+                signatures={},
                 signed_at=-1,
                 to_be_signed_at=c.revelation_time,
                 annotation={
                     "seller": seller_id,
                     "buyer": buyer_id,
-                    "caller": (
-                        SYSTEM_SELLER_ID
-                        if seller_id == SYSTEM_SELLER_ID
-                        else SYSTEM_BUYER_ID
-                    ),
+                    "caller": (SYSTEM_SELLER_ID if seller_id == SYSTEM_SELLER_ID else SYSTEM_BUYER_ID),
                     "is_buy": random.random() > 0.5,
                     "product": c.product,
                 },
@@ -755,9 +692,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         # self._real_price[0, :] = self.catalog_prices[0]
         # self._real_price[-1, :] = self.catalog_prices[-1]
         self._real_price[:, 0] = self.catalog_prices
-        self._trading_price = np.tile(
-            self._real_price[:, 0].reshape((n_products, 1)), (1, n_steps + 1)
-        )
+        self._trading_price = np.tile(self._real_price[:, 0].reshape((n_products, 1)), (1, n_steps + 1))
         self._betas = np.ones(n_steps + 1)
         self._betas[1] = self.trading_price_discount
         self._betas[1:] = np.cumprod(self._betas[1:])
@@ -766,9 +701,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         self._alphas = np.ones(n_steps + 1)
         self._alphas[1] = self.spot_discount
         self._alphas[1:] = np.cumprod(self._alphas[1:])
-        self._agent_spot_loss = self.spot_market_global_loss * np.ones(
-            (n_agents, n_steps)
-        )
+        self._agent_spot_loss = self.spot_market_global_loss * np.ones((n_agents, n_steps))
         self._agent_spot_quantity = np.zeros((n_agents, n_steps), dtype=int)
         self._registered_negs: dict[tuple[str], int] = Counter()
         if self.publish_trading_prices:
@@ -797,30 +730,22 @@ class SCML2020World(TimeInAgreementMixin, World):
                 )
 
         self.info.update(
-            dict(
-                agent_profiles={
-                    k: dict(
-                        costs=v.costs.tolist(),
-                        n_lines=v.n_lines,
-                        input_product=int(
-                            v.input_products[0]
-                            if v.input_products is not None and len(v.input_products)
-                            else -1
-                        ),
-                        output_product=int(
-                            v.output_products[0]
-                            if v.output_products is not None and len(v.output_products)
-                            else -1
-                        ),
-                    )
+            {
+                "agent_profiles": {
+                    k: {
+                        "costs": v.costs.tolist(),
+                        "n_lines": v.n_lines,
+                        "input_product": int(v.input_products[0] if v.input_products is not None and len(v.input_products) else -1),
+                        "output_product": int(v.output_products[0] if v.output_products is not None and len(v.output_products) else -1),
+                    }
                     for k, v in self.agent_profiles.items()
                 }
-            )
+            }
         )
-        self.info.update(dict(agent_inputs=self.agent_inputs))
-        self.info.update(dict(agent_outputs=self.agent_outputs))
-        self.info.update(dict(agent_processes=self.agent_processes))
-        self.info.update(dict(agent_initial_balances=self.initial_balances))
+        self.info.update({"agent_inputs": self.agent_inputs})
+        self.info.update({"agent_outputs": self.agent_outputs})
+        self.info.update({"agent_processes": self.agent_processes})
+        self.info.update({"agent_initial_balances": self.initial_balances})
 
     @classmethod
     def generate(
@@ -943,51 +868,45 @@ class SCML2020World(TimeInAgreementMixin, World):
             raise ValueError(
                 f"Length of `agent_processes` ({len(agent_processes)}) must equal the length of `agent_types` ({len(agent_types)})"
             )
-        runner = dict(
-            profitable=cls.generate_profitable,
-            guaranteed_profit=cls.generate_guaranteed_profit,
-        )
-        info = dict(
-            n_steps=n_steps,
-            n_processes=n_processes,
-            n_lines=n_lines,
-            force_signing=force_signing,
-            agent_processes=agent_processes,
-            n_agents_per_process=n_agents_per_process,
-            process_inputs=process_inputs,
-            process_outputs=process_outputs,
-            production_costs=production_costs,
-            profit_means=profit_means,
-            profit_stddevs=profit_stddevs,
-            max_productivity=max_productivity,
-            initial_balance=initial_balance,
-            cost_increases_with_level=cost_increases_with_level,
-            equal_exogenous_sales=equal_exogenous_sales,
-            equal_exogenous_supply=equal_exogenous_supply,
-            exogenous_supply_predictability=exogenous_supply_predictability,
-            exogenous_sales_predictability=exogenous_sales_predictability,
-            cash_availability=cash_availability,
-            inventory_valuation_trading=inventory_valuation_trading,
-            inventory_valuation_catalog=inventory_valuation_catalog,
-            cost_relativity=cost_relativity,
-            profit_basis=(
+        runner = {
+            "profitable": cls.generate_profitable,
+            "guaranteed_profit": cls.generate_guaranteed_profit,
+        }
+        info = {
+            "n_steps": n_steps,
+            "n_processes": n_processes,
+            "n_lines": n_lines,
+            "force_signing": force_signing,
+            "agent_processes": agent_processes,
+            "n_agents_per_process": n_agents_per_process,
+            "process_inputs": process_inputs,
+            "process_outputs": process_outputs,
+            "production_costs": production_costs,
+            "profit_means": profit_means,
+            "profit_stddevs": profit_stddevs,
+            "max_productivity": max_productivity,
+            "initial_balance": initial_balance,
+            "cost_increases_with_level": cost_increases_with_level,
+            "equal_exogenous_sales": equal_exogenous_sales,
+            "equal_exogenous_supply": equal_exogenous_supply,
+            "exogenous_supply_predictability": exogenous_supply_predictability,
+            "exogenous_sales_predictability": exogenous_sales_predictability,
+            "cash_availability": cash_availability,
+            "inventory_valuation_trading": inventory_valuation_trading,
+            "inventory_valuation_catalog": inventory_valuation_catalog,
+            "cost_relativity": cost_relativity,
+            "profit_basis": (
                 "min"
                 if profit_basis == np.min
                 else (
                     "mean"
                     if profit_basis == np.mean
-                    else (
-                        "max"
-                        if profit_basis == np.max
-                        else "median"
-                        if profit_basis == np.median
-                        else "unknown"
-                    )
+                    else ("max" if profit_basis == np.max else "median" if profit_basis == np.median else "unknown")
                 )
             ),
-            exogenous_supply_surplus=exogenous_supply_surplus,
-            exogenous_sales_surplus=exogenous_sales_surplus,
-        )
+            "exogenous_supply_surplus": exogenous_supply_surplus,
+            "exogenous_sales_surplus": exogenous_sales_surplus,
+        }
         exogenous_supply_surplus = realin(exogenous_supply_surplus)
         exogenous_sales_surplus = realin(exogenous_sales_surplus)
         inventory_valuation_trading = realin(inventory_valuation_trading)
@@ -1002,9 +921,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         # n_startup = n_processes
         n_startup = n_processes
         if n_steps <= n_startup:
-            raise ValueError(
-                f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}"
-            )
+            raise ValueError(f"Cannot generate a world with n_steps <= n_processes: {n_steps} <= {n_startup}")
 
         horizon = max(1, min(n_steps, int(realin(horizon) * n_steps)))
         process_inputs = make_array(process_inputs, n_processes, dtype=int)
@@ -1016,22 +933,16 @@ class SCML2020World(TimeInAgreementMixin, World):
             for i in agent_processes:
                 pcount[i] += 1
             pnums = list(pcount.keys())
-            assert (
-                min(pnums) == 0 and max(pnums) == len(pnums) - 1
-            ), f"`agent_processes` is invalid: {agent_processes} as it leads to the following `n_agents_per_process`: {dict(pcount)}"
-            n_agents_per_process = np.asarray([pcount[i] for i in range(len(pnums))])
-            assert not any(
-                _ <= 0 for _ in n_agents_per_process
-            ), "We have some levels with no processes"
-        else:
-            n_agents_per_process = make_array(
-                n_agents_per_process, n_processes, dtype=int
+            assert min(pnums) == 0 and max(pnums) == len(pnums) - 1, (
+                f"`agent_processes` is invalid: {agent_processes} as it leads to the following `n_agents_per_process`: {dict(pcount)}"
             )
+            n_agents_per_process = np.asarray([pcount[i] for i in range(len(pnums))])
+            assert not any(_ <= 0 for _ in n_agents_per_process), "We have some levels with no processes"
+        else:
+            n_agents_per_process = make_array(n_agents_per_process, n_processes, dtype=int)
         # profit_means = make_array(profit_means, n_processes, dtype=float)
         # profit_stddevs = make_array(profit_stddevs, n_processes, dtype=float)
-        max_productivity_process = make_array(
-            max_productivity, n_processes * n_steps, dtype=float
-        ).reshape((n_processes, n_steps))
+        max_productivity_process = make_array(max_productivity, n_processes * n_steps, dtype=float).reshape((n_processes, n_steps))
         n_agents = int(n_agents_per_process.sum())
         assert n_agents >= n_processes
         profit_means_agent = make_array(profit_means, n_agents, dtype=float)
@@ -1044,7 +955,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         if not isinstance(agent_types, Iterable):
             agent_types = [agent_types] * n_agents
             if agent_params is None:
-                agent_params = dict()
+                agent_params = {}
             if isinstance(agent_params, dict):
                 agent_params = [copy.copy(agent_params) for _ in range(n_agents)]
             else:
@@ -1052,22 +963,18 @@ class SCML2020World(TimeInAgreementMixin, World):
                 agent_params = [copy.copy(agent_params[0]) for _ in range(n_agents)]
         elif not fixed_assignment:
             if agent_params is None:
-                agent_params = [dict() for _ in range(len(agent_types))]
+                agent_params = [{} for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
-                agent_params = [
-                    copy.copy(agent_params) for _ in range(len(agent_types))
-                ]
+                agent_params = [copy.copy(agent_params) for _ in range(len(agent_types))]
             assert len(agent_types) == len(agent_params)
             tp = random.choices(list(range(len(agent_types))), k=n_agents)
             agent_types = [copy.copy(agent_types[_]) for _ in tp]
             agent_params = [copy.copy(agent_params[_]) for _ in tp]
         else:
             if agent_params is None:
-                agent_params = [dict() for _ in range(len(agent_types))]
+                agent_params = [{} for _ in range(len(agent_types))]
             if isinstance(agent_params, dict):
-                agent_params = [
-                    copy.copy(agent_params) for _ in range(len(agent_types))
-                ]
+                agent_params = [copy.copy(agent_params) for _ in range(len(agent_types))]
             agent_types = list(agent_types)
             agent_params = list(agent_params)
             assert len(agent_types) == len(agent_params)
@@ -1079,7 +986,7 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         # generate production costs making sure that every agent can do exactly one process
         process_of_agent = np.empty(n_agents, dtype=int)
-        for i, (f, L_) in enumerate(zip(first_agent, last_agent)):
+        for i, (f, L_) in enumerate(zip(first_agent, last_agent, strict=False)):
             process_of_agent[f:L_] = i
             if cost_increases_with_level:
                 production_costs[f:L_] = np.round(
@@ -1088,16 +995,14 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         # costs is the same as production costs but repeated for all n_lines
         costs = INFINITE_COST * np.ones((n_agents, n_lines, n_processes), dtype=int)
-        for p, (f, L_) in enumerate(zip(first_agent, last_agent)):
+        for p, (f, L_) in enumerate(zip(first_agent, last_agent, strict=False)):
             costs[f:L_, :, p] = production_costs[f:L_].reshape((L_ - f), 1)
 
         # generate external contract amounts (controlled by productivity):
         generated_exogenous, trial = False, 0
         while not generated_exogenous and trial < MAX_WORLD_GENERATION_TRIALS:
             # - generate total amount of input to the market (it will end up being an n_products list of n_steps vectors)
-            first_quantities = np.round(
-                n_lines * n_agents_per_process[0] * max_productivity_process[0, :]
-            ).astype(int)
+            first_quantities = np.round(n_lines * n_agents_per_process[0] * max_productivity_process[0, :]).astype(int)
             first_quantities[-n_startup:] = 0
 
             # - divide the quantity at every level between factories
@@ -1128,37 +1033,39 @@ class SCML2020World(TimeInAgreementMixin, World):
             assert np.all(exogenous_supplies[-n_startup:] == 0)
             generated_exogenous = np.any(exogenous_supplies > 0)
             trial += 1
-        assert generated_exogenous, f"Cannot generate this world because we cannot generate any exogenous supply: n_steps: {n_steps}, n_processes: {n_processes}"
-
-        params = dict(
-            n_steps=n_steps,
-            n_lines=n_lines,
-            n_agents_per_process=n_agents_per_process,
-            process_of_agent=process_of_agent,
-            first_agent=first_agent,
-            last_agent=last_agent,
-            production_costs=production_costs,
-            exogenous_control=exogenous_control,
-            cash_availability=cash_availability,
-            force_signing=force_signing,
-            horizon=horizon,
-            exogenous_supplies=exogenous_supplies,
-            initial_balance=initial_balance,
-            cost_relativity=cost_relativity,
-            profit_basis=profit_basis,
-            inventory_valuation_trading=inventory_valuation_trading,
-            inventory_valuation_catalog=inventory_valuation_catalog,
-            exogenous_sales_predictability=exogenous_sales_predictability,
-            max_productivity_process=max_productivity_process,
-            max_productivity_agent=max_productivity_agent,
-            equal_exogenous_sales=equal_exogenous_sales,
-            process_inputs=process_inputs,
-            process_outputs=process_outputs,
-            costs=costs,
-            profit_stddevs_agent=profit_stddevs_agent,
-            profit_means_agent=profit_means_agent,
-            run_extra_checks=run_extra_checks,
+        assert generated_exogenous, (
+            f"Cannot generate this world because we cannot generate any exogenous supply: n_steps: {n_steps}, n_processes: {n_processes}"
         )
+
+        params = {
+            "n_steps": n_steps,
+            "n_lines": n_lines,
+            "n_agents_per_process": n_agents_per_process,
+            "process_of_agent": process_of_agent,
+            "first_agent": first_agent,
+            "last_agent": last_agent,
+            "production_costs": production_costs,
+            "exogenous_control": exogenous_control,
+            "cash_availability": cash_availability,
+            "force_signing": force_signing,
+            "horizon": horizon,
+            "exogenous_supplies": exogenous_supplies,
+            "initial_balance": initial_balance,
+            "cost_relativity": cost_relativity,
+            "profit_basis": profit_basis,
+            "inventory_valuation_trading": inventory_valuation_trading,
+            "inventory_valuation_catalog": inventory_valuation_catalog,
+            "exogenous_sales_predictability": exogenous_sales_predictability,
+            "max_productivity_process": max_productivity_process,
+            "max_productivity_agent": max_productivity_agent,
+            "equal_exogenous_sales": equal_exogenous_sales,
+            "process_inputs": process_inputs,
+            "process_outputs": process_outputs,
+            "costs": costs,
+            "profit_stddevs_agent": profit_stddevs_agent,
+            "profit_means_agent": profit_means_agent,
+            "run_extra_checks": run_extra_checks,
+        }
 
         generated, n_trials = False, 0
         while not generated:
@@ -1176,7 +1083,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 if n_trials > MAX_WORLD_GENERATION_TRIALS:
                     raise ValueError(
                         f"Tried to generate the world {n_trials} times using {exogenous_generation_method} but failed"
-                    )
+                    ) from None
 
         # add surplus exogneous contracts if needed
         for surplus, is_sale in [
@@ -1187,20 +1094,14 @@ class SCML2020World(TimeInAgreementMixin, World):
                 continue
             process = n_processes - 1 if is_sale else 0
             for a in range(first_agent[process], last_agent[process]):
-                contracts = [
-                    _
-                    for _ in exogenous
-                    if (_.seller == a and is_sale) or (_.buyer == a and not is_sale)
-                ]
+                contracts = [_ for _ in exogenous if (_.seller == a and is_sale) or (_.buyer == a and not is_sale)]
                 if len(contracts) < 1:
                     continue
                 q = int(round(sum(_.quantity for _ in contracts) * surplus))
                 if q < 1:
                     continue
                 unit_price = int(catalog_prices[process + 1 if is_sale else process])
-                unit_price = random.randint(
-                    int(unit_price * 0.8), int(unit_price * 1.2)
-                )
+                unit_price = random.randint(int(unit_price * 0.8), int(unit_price * 1.2))
                 for step, quantity in enumerate(integer_cut(q, n_steps, 0)):
                     exogenous.append(
                         ExogenousContract(
@@ -1219,24 +1120,18 @@ class SCML2020World(TimeInAgreementMixin, World):
                 if c.seller < 0:
                     assert c.product == 0, f"Invalid Exogenous Contract (Seller): {c}"
                 else:
-                    assert (
-                        c.product == process_of_agent[c.seller] + 1
-                    ), f"Invalid Contract (seller): {c}"
+                    assert c.product == process_of_agent[c.seller] + 1, f"Invalid Contract (seller): {c}"
                 if c.buyer < 0:
-                    assert (
-                        c.product == n_processes
-                    ), f"Invalid Exogenous Contract (buyer): {c}"
+                    assert c.product == n_processes, f"Invalid Exogenous Contract (buyer): {c}"
                 else:
-                    assert (
-                        c.product == process_of_agent[c.buyer]
-                    ), f"Invalid Contract (Buyer): {c}"
+                    assert c.product == process_of_agent[c.buyer], f"Invalid Contract (Buyer): {c}"
 
         info = dict(**info, **extra_info)
 
-        for i, (t, p) in enumerate(zip(agent_types, agent_params)):
+        for i, (t, p) in enumerate(zip(agent_types, agent_params, strict=False)):
             if t is not None and issubclass(get_class(t), OneShotAgent):
                 agent_types[i] = get_full_type_name(OneShotAdapter)
-                agent_params[i] = dict(oneshot_type=t, oneshot_params=p, obj=None)
+                agent_params[i] = {"oneshot_type": t, "oneshot_params": p, "obj": None}
 
         return dict(
             process_inputs=process_inputs,
@@ -1310,18 +1205,11 @@ class SCML2020World(TimeInAgreementMixin, World):
         total_costs = np.zeros((n_agents, n_steps), dtype=np.int64)
         active_lines = np.zeros((n_agents, n_steps), dtype=np.int64)
         supplies[first_agent[0] : last_agent[0], :] = exogenous_supplies.transpose()
-        exogenous_prices = (
-            exogenous_supplies
-            * (COST0 + 0.5 * np.random.randn(*exogenous_supplies.shape))
-            .round()
-            .astype(int)
-        ).transpose()
+        exogenous_prices = (exogenous_supplies * (COST0 + 0.5 * np.random.randn(*exogenous_supplies.shape)).round().astype(int)).transpose()
 
         total_costs[first_agent[0] : last_agent[0], :] = exogenous_prices
 
-        agent_profits = (
-            np.random.randn(n_agents) * profit_stddevs_agent + profit_means_agent
-        )
+        agent_profits = np.random.randn(n_agents) * profit_stddevs_agent + profit_means_agent
         simulated_contracts: list[ContractRecord] = []
 
         # signing step, delivery step, seller, buyer, quantity, unit price, is_exogenous
@@ -1331,9 +1219,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         normalized_production_cost = np.ones_like(pc, dtype=float)
         for p in range(0, n_processes):
             f, L_ = first_agent[p], last_agent[p]
-            normalized_production_cost[f:L_] = np.float_power(
-                production_costs[f:L_] / production_costs[f:L_].max(), cost_relativity
-            )
+            normalized_production_cost[f:L_] = np.float_power(production_costs[f:L_] / production_costs[f:L_].max(), cost_relativity)
 
         def distribute_sales(
             active_lines: np.ndarray,
@@ -1416,9 +1302,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                         available = n_lines * n - active.sum(axis=1)
                         if available.sum() > 0:
                             available = available / available.sum()
-                    p1 = (production_limit - s) * p[
-                        first_buyer:last_buyer
-                    ] + s * available
+                    p1 = (production_limit - s) * p[first_buyer:last_buyer] + s * available
                     if p1.sum() < 1e-5:
                         p1 = np.ones_like(p1) / len(p1)
                     else:
@@ -1434,15 +1318,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                     d = fraction_cut(active_lines[i, s], p1).reshape(n_buyers, n)
                     unit_price = max(
                         1,
-                        int(
-                            np.ceil(
-                                (
-                                    total_costs[i, s] / active_lines[i, s]
-                                    + production_costs[i]
-                                )
-                                * (1 + agent_profits[i])
-                            )
-                        ),
+                        int(np.ceil((total_costs[i, s] / active_lines[i, s] + production_costs[i]) * (1 + agent_profits[i]))),
                     )
 
                     sales[i, beg:end] += d.sum(axis=0)
@@ -1565,14 +1441,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         profile_info: list[FactoryProfile] = []
         nxt = 0
         for L_ in range(n_processes):
-            for a in range(n_agents_per_process[L_]):
+            for _a in range(n_agents_per_process[L_]):
                 profile_info.append(FactoryProfile(costs=costs[nxt]))
                 nxt += 1
         assert nxt == n_agents
 
-        total_payments = (
-            total_costs + production_costs.reshape(len(production_costs), 1) * supplies
-        )
+        total_payments = total_costs + production_costs.reshape(len(production_costs), 1) * supplies
         revenue_after_costs = revenue - total_payments
 
         if initial_balance is None:
@@ -1585,39 +1459,28 @@ class SCML2020World(TimeInAgreementMixin, World):
             for p in range(n_processes):
                 f, L_ = first_agent[p], last_agent[p]
                 max_money_needs_process[p] = initial_balance[f:L_].max()
-                initial_balance[f:L_] = int(
-                    math.ceil(max_money_needs_process[p] * cash_availability)
-                )
+                initial_balance[f:L_] = int(math.ceil(max_money_needs_process[p] * cash_availability))
         else:
             tmp = total_payments.max(axis=1)
             cash_availability = (initial_balance / tmp).min()
 
         b = np.sum(initial_balance)
 
-        info = dict(
-            simulated_contracts=[tuple(_) for _ in simulated_contracts],
-            active_lines=active_lines,
-            input_quantities=supplies,
-            output_quantities=sales,
-            expected_productivity=float(np.sum(active_lines))
-            / np.sum(n_lines * n_steps * n_agents_per_process),
-            expected_productivity_products=np.sum(active_lines, axis=-1),
-            expected_income=revenue_after_costs,
-            expected_welfare=float(np.sum(revenue_after_costs)),
-            expected_income_per_step=revenue.sum(axis=0),
-            expected_income_per_process=revenue.sum(axis=-1),
-            expected_mean_profit=(
-                float(np.sum(revenue_after_costs) / b)
-                if b != 0
-                else np.sum(revenue_after_costs)
-            ),
-            expected_profit_per_agent=(
-                revenue_after_costs.sum(axis=1) / b
-                if b != 0
-                else revenue_after_costs.sum(axis=1)
-            ),
-            real_cash_availability=cash_availability,
-        )
+        info = {
+            "simulated_contracts": [tuple(_) for _ in simulated_contracts],
+            "active_lines": active_lines,
+            "input_quantities": supplies,
+            "output_quantities": sales,
+            "expected_productivity": float(np.sum(active_lines)) / np.sum(n_lines * n_steps * n_agents_per_process),
+            "expected_productivity_products": np.sum(active_lines, axis=-1),
+            "expected_income": revenue_after_costs,
+            "expected_welfare": float(np.sum(revenue_after_costs)),
+            "expected_income_per_step": revenue.sum(axis=0),
+            "expected_income_per_process": revenue.sum(axis=-1),
+            "expected_mean_profit": (float(np.sum(revenue_after_costs) / b) if b != 0 else np.sum(revenue_after_costs)),
+            "expected_profit_per_agent": (revenue_after_costs.sum(axis=1) / b if b != 0 else revenue_after_costs.sum(axis=1)),
+            "real_cash_availability": cash_availability,
+        }
 
         exogenous = []
         for c in simulated_contracts:
@@ -1662,8 +1525,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 production_costs,
                 process_of_agent,
                 catalog_prices,
-                catalog_valuation=inventory_valuation_trading
-                + inventory_valuation_catalog,
+                catalog_valuation=inventory_valuation_trading + inventory_valuation_catalog,
             ):
                 n_agents, n_steps = active_lines.shape
                 balances = initial_balance[:].copy()
@@ -1674,12 +1536,12 @@ class SCML2020World(TimeInAgreementMixin, World):
                     contracts[c.time].append(c)
 
                 def _check(s):
-                    assert (
-                        balances.min() >= 0
-                    ), f"Contract Simulation Issue: Some agents went bankrupt at step {s}!!\n{balances}\nSupplies:\n{supplies}\nActive:\n{active_lines}\nSales:\n{sales}"
-                    assert (
-                        inventory.min() >= 0
-                    ), f"Contract Simulation Issue: Some agents has negative inventory at step {s}!!\nInventory:{inventory}\nSupplies:\n{supplies}\nActive:\n{active_lines}\nSales:\n{sales}"
+                    assert balances.min() >= 0, (
+                        f"Contract Simulation Issue: Some agents went bankrupt at step {s}!!\n{balances}\nSupplies:\n{supplies}\nActive:\n{active_lines}\nSales:\n{sales}"
+                    )
+                    assert inventory.min() >= 0, (
+                        f"Contract Simulation Issue: Some agents has negative inventory at step {s}!!\nInventory:{inventory}\nSupplies:\n{supplies}\nActive:\n{active_lines}\nSales:\n{sales}"
+                    )
 
                 for s in range(n_steps):
                     _check(s)
@@ -1699,9 +1561,9 @@ class SCML2020World(TimeInAgreementMixin, World):
                         p = process_of_agent[a]
                         q = inventory[a, p]
                         produced = active_lines[a, s]
-                        assert (
-                            produced <= q
-                        ), f"Agent {a} (level {p}) should produce {produced} at step {s} but only have {q} items of product {p}"
+                        assert produced <= q, (
+                            f"Agent {a} (level {p}) should produce {produced} at step {s} but only have {q} items of product {p}"
+                        )
                         if not produced:
                             continue
                         inventory[a, p + 1] += produced
@@ -1710,14 +1572,10 @@ class SCML2020World(TimeInAgreementMixin, World):
 
                 assets = catalog_valuation * (inventory * catalog_prices)
 
-                profit = (
-                    balances + assets.sum(axis=1) - initial_balance
-                ) / initial_balance
+                profit = (balances + assets.sum(axis=1) - initial_balance) / initial_balance
 
                 _check(n_steps)
-                assert (
-                    profit.min() > 0
-                ), f"Contract Simulation Issue: Some agents lost!!\n{profit}"
+                assert profit.min() > 0, f"Contract Simulation Issue: Some agents lost!!\n{profit}"
                 return profit
 
             try:
@@ -1731,7 +1589,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                     catalog_prices,
                 )
             except AssertionError as e:
-                raise RecoverableWorldGenerationException(e)
+                raise RecoverableWorldGenerationException(e) from e
 
             info["expected_profits_simulated"] = expected_profit
         else:
@@ -1796,13 +1654,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 np.minimum(
                     (quantities[-1] // process_outputs[p]) * process_inputs[p],
                     quantities[-1],
-                    (
-                        (
-                            np.round(lines * max_productivity_process[p, :]).astype(int)
-                            // process_inputs[p]
-                        )
-                        * process_outputs[p]
-                    ),
+                    ((np.round(lines * max_productivity_process[p, :]).astype(int) // process_inputs[p]) * process_outputs[p]),
                 )
             )
             # * shift quantities one step to account for the one step needed to move the produce to the next level. This
@@ -1832,30 +1684,22 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         manufacturing_costs = np.zeros((n_processes, n_steps), dtype=int)
         for p in range(n_processes):
-            manufacturing_costs[p, :] = profit_basis(
-                costs[first_agent[p] : last_agent[p], :, p]
-            )
+            manufacturing_costs[p, :] = profit_basis(costs[first_agent[p] : last_agent[p], :, p])
             manufacturing_costs[p, :p] = 0
             manufacturing_costs[p, p - n_startup :] = 0
 
         profits = np.zeros((n_processes, n_steps))
         for p in range(n_processes):
-            profits[p, :] = (
-                np.random.randn() * profit_stddevs_agent[p] + profit_means_agent[p]
-            )
+            profits[p, :] = np.random.randn() * profit_stddevs_agent[p] + profit_means_agent[p]
 
         input_costs = np.zeros((n_processes, n_steps), dtype=int)
         for step in range(n_steps):
-            input_costs[0, step] = np.sum(
-                exogenous_supplies[step] * supply_prices[:, step][:]
-            )
+            input_costs[0, step] = np.sum(exogenous_supplies[step] * supply_prices[:, step][:])
 
         input_quantity = np.zeros((n_processes, n_steps), dtype=int)
         input_quantity[0, :] = quantities[0]
 
-        active_lines = np.hstack(
-            [(n_lines * n_agents_per_process).reshape((n_processes, 1))] * n_steps
-        )
+        active_lines = np.hstack([(n_lines * n_agents_per_process).reshape((n_processes, 1))] * n_steps)
         assert active_lines.shape == (n_processes, n_steps)
         active_lines[0, :] = input_quantity[0, :] // process_inputs[0]
 
@@ -1873,19 +1717,13 @@ class SCML2020World(TimeInAgreementMixin, World):
             input_quantity[p, p:] = output_quantity[p - 1, p - 1 : -1]
             active_lines[p, :] = input_quantity[p, :] // process_inputs[p]
             output_quantity[p, :] = active_lines[p, :] * process_outputs[p]
-            manufacturing_costs[p, p : p - n_startup] *= active_lines[
-                p, p : p - n_startup
-            ]
+            manufacturing_costs[p, p : p - n_startup] *= active_lines[p, p : p - n_startup]
             total_costs[p, :] = input_costs[p, :] + manufacturing_costs[p, :]
-            output_total_prices[p, :] = np.ceil(
-                total_costs[p, :] * (1 + profits[p, :])
-            ).astype(int)
+            output_total_prices[p, :] = np.ceil(total_costs[p, :] * (1 + profits[p, :])).astype(int)
         aa = output_total_prices[-1, n_startup - 1 : -1].astype(float)
         bb = output_quantity[-1, n_startup - 1 : -1].astype(float)
         np.errstate(divide="ignore")
-        sale_prices[:, n_startup:] = np.ceil(
-            np.divide(aa, bb, out=np.zeros_like(aa, dtype=float), where=bb != 0)
-        ).astype(int)
+        sale_prices[:, n_startup:] = np.ceil(np.divide(aa, bb, out=np.zeros_like(aa, dtype=float), where=bb != 0)).astype(int)
         product_prices = np.zeros((n_products, n_steps))
         product_prices[0, :-n_startup] = catalog_prices[0]
         product_prices[1:, 1:] = np.ceil(
@@ -1896,15 +1734,8 @@ class SCML2020World(TimeInAgreementMixin, World):
                 where=output_quantity != 0,
             )
         ).astype(int)[:, :-1]
-        catalog_prices = np.ceil(
-            [
-                profit_basis(product_prices[p, p : p + n_steps - n_startup])
-                for p in range(n_products)
-            ]
-        ).astype(int)
-        profile_info: list[
-            tuple[FactoryProfile, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
-        ] = []
+        catalog_prices = np.ceil([profit_basis(product_prices[p, p : p + n_steps - n_startup]) for p in range(n_products)]).astype(int)
+        profile_info: list[tuple[FactoryProfile, np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = []
         nxt = 0
         for L_ in range(n_processes):
             for a in range(n_agents_per_process[L_]):
@@ -1915,7 +1746,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 if L_ == 0:
                     esupplies[:, 0] = [exogenous_supplies[s][a] for s in range(n_steps)]
                     esupply_prices[:, 0] = supply_prices[a, :]
-                if L_ == n_processes - 1:
+                if n_processes - 1 == L_:
                     esales[:, -1] = [exogenous_sales[s][a] for s in range(n_steps)]
                     esale_prices[:, -1] = sale_prices[a, :]
                 profile_info.append(
@@ -1928,53 +1759,40 @@ class SCML2020World(TimeInAgreementMixin, World):
                     )
                 )
                 nxt += 1
-        max_income = (
-            output_quantity * catalog_prices[1:].reshape((n_processes, 1)) - total_costs
-        )
+        max_income = output_quantity * catalog_prices[1:].reshape((n_processes, 1)) - total_costs
 
         assert nxt == n_agents
         if initial_balance is None:
             # every agent at every level will have just enough to do all the needed to do cash_availability fraction of
             # production (even though it may not have enough lines to do so)
             cash_availability = _realin(cash_availability)
-            balance = np.ceil(
-                np.sum(total_costs, axis=1) / n_agents_per_process
-            ).astype(int)
+            balance = np.ceil(np.sum(total_costs, axis=1) / n_agents_per_process).astype(int)
             initial_balance = []
-            for b, a in zip(balance, n_agents_per_process):
+            for b, a in zip(balance, n_agents_per_process, strict=False):
                 initial_balance += [int(math.ceil(b * cash_availability))] * a
         b = np.sum(initial_balance)
-        info = dict(
-            product_prices=product_prices,
-            active_lines=active_lines,
-            input_quantities=input_quantity,
-            output_quantities=output_quantity,
-            expected_productivity=float(np.sum(active_lines))
-            / np.sum(n_lines * n_steps * n_agents_per_process),
-            expected_n_products=np.sum(active_lines, axis=-1),
-            expected_income=max_income,
-            expected_welfare=float(np.sum(max_income)),
-            expected_income_per_step=max_income.sum(axis=0),
-            expected_income_per_process=max_income.sum(axis=-1),
-            expected_mean_profit=(
-                float(np.sum(max_income) / b) if b != 0 else np.sum(max_income)
-            ),
-            expected_profit_sum=(
-                float(n_agents * np.sum(max_income) / b)
-                if b != 0
-                else n_agents * np.sum(max_income)
-            ),
-        )
+        info = {
+            "product_prices": product_prices,
+            "active_lines": active_lines,
+            "input_quantities": input_quantity,
+            "output_quantities": output_quantity,
+            "expected_productivity": float(np.sum(active_lines)) / np.sum(n_lines * n_steps * n_agents_per_process),
+            "expected_n_products": np.sum(active_lines, axis=-1),
+            "expected_income": max_income,
+            "expected_welfare": float(np.sum(max_income)),
+            "expected_income_per_step": max_income.sum(axis=0),
+            "expected_income_per_process": max_income.sum(axis=-1),
+            "expected_mean_profit": (float(np.sum(max_income) / b) if b != 0 else np.sum(max_income)),
+            "expected_profit_sum": (float(n_agents * np.sum(max_income) / b) if b != 0 else n_agents * np.sum(max_income)),
+        }
 
         exogenous = []
         for (
             indx,
-            (profile, esales, esale_prices, esupplies, esupply_prices),
+            (_profile, esales, esale_prices, esupplies, esupply_prices),
         ) in enumerate(profile_info):
             input_product = process_of_agent[indx]
-            for step, (sale, price) in enumerate(
-                zip(esales[:, input_product + 1], esale_prices[:, input_product + 1])
-            ):
+            for step, (sale, price) in enumerate(zip(esales[:, input_product + 1], esale_prices[:, input_product + 1], strict=False)):
                 if sale == 0:
                     continue
                 if force_signing or exogenous_control <= 0.0:
@@ -2006,9 +1824,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                                 buyer=-1,
                             )
                         )
-            for step, (supply, price) in enumerate(
-                zip(esupplies[:, input_product], esupply_prices[:, input_product])
-            ):
+            for step, (supply, price) in enumerate(zip(esupplies[:, input_product], esupply_prices[:, input_product], strict=False)):
                 if supply == 0:
                     continue
                 if force_signing or exogenous_control <= 0.0:
@@ -2052,9 +1868,7 @@ class SCML2020World(TimeInAgreementMixin, World):
     def get_private_state(self, agent: SCML2020Agent) -> dict:
         return vars(self.a2f[agent.id].state)
 
-    def add_financial_report(
-        self, agent: SCML2020Agent, factory: Factory, reports_agent, reports_time
-    ) -> None:
+    def add_financial_report(self, agent: SCML2020Agent, factory: Factory, reports_agent, reports_time) -> None:
         """
         Records a financial report for the given agent in the agent indexed reports and time indexed reports
 
@@ -2068,11 +1882,7 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         """
         bankrupt = factory.is_bankrupt
-        inventory = (
-            int(np.sum(self.trading_prices * factory.current_inventory))
-            if not bankrupt
-            else 0
-        )
+        inventory = int(np.sum(self.trading_prices * factory.current_inventory)) if not bankrupt else 0
         report = FinancialReport(
             agent_id=agent.id,
             step=self.current_step,
@@ -2108,23 +1918,17 @@ class SCML2020World(TimeInAgreementMixin, World):
             # pay interests for negative balances
             # -----------------------------------
             if self.interest_rate > 0.0:
-                for agent, factory, _ in self.afp:
+                for _agent, factory, _ in self.afp:
                     if factory.current_balance < 0 and not factory.is_bankrupt:
-                        to_pay = -int(
-                            math.ceil(self.interest_rate * factory.current_balance)
-                        )
+                        to_pay = -int(math.ceil(self.interest_rate * factory.current_balance))
                         factory.pay(to_pay)
 
             # Register exogenous contracts as concluded
             # -----------------------------------------
             for contract in self.exogenous_contracts[s]:
-                self.on_contract_concluded(
-                    contract, to_be_signed_at=contract.to_be_signed_at
-                )
+                self.on_contract_concluded(contract, to_be_signed_at=contract.to_be_signed_at)
                 if self.exogenous_force_max:
-                    contract.signatures = dict(
-                        zip(contract.partners, contract.partners)
-                    )
+                    contract.signatures = dict(zip(contract.partners, contract.partners, strict=False))
                 else:
                     if SYSTEM_SELLER_ID in contract.partners:
                         contract.signatures[SYSTEM_SELLER_ID] = SYSTEM_SELLER_ID
@@ -2152,23 +1956,18 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         self._trading_price[~has_trade, s + 1] = self._trading_price[~has_trade, s]
         self._betas_sum[~has_trade, s + 1] = self._betas_sum[~has_trade, s]
-        assert not np.any(
-            np.isnan(self._real_price[has_trade, s + 1])
-        ), f"Nans in _real_price at step {self.current_step}\n{self._real_price}"
+        assert not np.any(np.isnan(self._real_price[has_trade, s + 1])), (
+            f"Nans in _real_price at step {self.current_step}\n{self._real_price}"
+        )
         self._trading_price[has_trade, s + 1] = (
-            self._trading_price[has_trade, s]
-            * self._betas_sum[has_trade, s]
-            * self.trading_price_discount
+            self._trading_price[has_trade, s] * self._betas_sum[has_trade, s] * self.trading_price_discount
             + self._real_price[has_trade, s + 1] * self._sold_quantity[has_trade, s + 1]
         )
         self._betas_sum[has_trade, s + 1] = (
-            self._betas_sum[has_trade, s] * self.trading_price_discount
-            + self._sold_quantity[has_trade, s + 1]
+            self._betas_sum[has_trade, s] * self.trading_price_discount + self._sold_quantity[has_trade, s + 1]
         )
         self._trading_price[has_trade, s + 1] /= self._betas_sum[has_trade, s + 1]
-        self._trading_price[:, s + 1 :] = self._trading_price[:, s + 1].reshape(
-            (self.n_products, 1)
-        )
+        self._trading_price[:, s + 1 :] = self._trading_price[:, s + 1].reshape((self.n_products, 1))
         self._traded_quantity += self._sold_quantity[:, s + 1]
         # self._trading_price[has_trade, s] = (
         #         np.sum(self._betas[:s+1] * self._real_price[has_trade, s::-1])
@@ -2177,14 +1976,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         # update agent penalties
         # ----------------------
         self._agent_spot_loss[:, s] += (
-            self.spot_market_global_loss
-            * self.spot_multiplier
-            * np.sum(self._alphas[: s + 1] * self._spot_quantity[:, s::-1], axis=-1)
+            self.spot_market_global_loss * self.spot_multiplier * np.sum(self._alphas[: s + 1] * self._spot_quantity[:, s::-1], axis=-1)
         )
 
         # run factories
         # --------------
-        for a, f, p in self.afp:
+        for _a, f, _p in self.afp:
             if f.is_bankrupt:
                 continue
             f.step()
@@ -2227,9 +2024,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         }
         if not self.compact:
             c.update(contract.annotation)
-        c["n_neg_steps"] = (
-            contract.mechanism_state.step if contract.mechanism_state else 0
-        )
+        c["n_neg_steps"] = contract.mechanism_state.step if contract.mechanism_state else 0
         return c
 
     def breach_record(self, breach: Breach) -> dict[str, Any]:
@@ -2241,9 +2036,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             "time": breach.step,
         }
 
-    def execute_action(
-        self, action: Action, agent: SCML2020Agent, callback: Callable = None
-    ) -> bool:
+    def execute_action(self, action: Action, agent: SCML2020Agent, callback: Callable = None) -> bool:
         if action.type == "schedule":
             s, _ = self.a2f[agent.id].schedule_production(
                 process=action.params["process"],
@@ -2255,9 +2048,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             )
             return s >= 0
         elif action.type == "cancel":
-            return self.a2f[agent.id].cancel_production(
-                step=action.params.get("step", -1), line=action.params.get("line", -1)
-            )
+            return self.a2f[agent.id].cancel_production(step=action.params.get("step", -1), line=action.params.get("line", -1))
 
     def post_step_stats(self):
         self._stats["n_contracts_nullified_now"].append(self.__n_nullified)
@@ -2265,53 +2056,32 @@ class SCML2020World(TimeInAgreementMixin, World):
         market_size = 0
         scores = self.scores()
         for p in range(self.n_products):
-            self._stats[f"trading_price_{p}"].append(
-                self._trading_price[p, self.current_step + 1]
-            )
-            self._stats[f"sold_quantity_{p}"].append(
-                self._sold_quantity[p, self.current_step + 1]
-            )
-            self._stats[f"unit_price_{p}"].append(
-                self._real_price[p, self.current_step + 1]
-            )
+            self._stats[f"trading_price_{p}"].append(self._trading_price[p, self.current_step + 1])
+            self._stats[f"sold_quantity_{p}"].append(self._sold_quantity[p, self.current_step + 1])
+            self._stats[f"unit_price_{p}"].append(self._real_price[p, self.current_step + 1])
         prod = []
         for a, f, _ in self.afp:
             if is_system_agent(a.id):
                 continue
             ind = self.a2i[a.id]
-            self._stats[f"spot_market_quantity_{a.id}"].append(
-                self._spot_quantity[ind, self.current_step]
-            )
-            self._stats[f"spot_market_loss_{a.id}"].append(
-                self._agent_spot_loss[ind, self.current_step]
-            )
+            self._stats[f"spot_market_quantity_{a.id}"].append(self._spot_quantity[ind, self.current_step])
+            self._stats[f"spot_market_loss_{a.id}"].append(self._agent_spot_loss[ind, self.current_step])
             self._stats[f"balance_{a.id}"].append(f.current_balance)
             for p in a.awi.my_input_products:
                 self._stats[f"inventory_{a.id}_input"].append(f.current_inventory[p])
             for p in a.awi.my_output_products:
                 self._stats[f"inventory_{a.id}_output"].append(f.current_inventory[p])
-            prod.append(
-                np.sum(f.commands[self.current_step, :] != NO_COMMAND)
-                / f.profile.n_lines
-            )
+            prod.append(np.sum(f.commands[self.current_step, :] != NO_COMMAND) / f.profile.n_lines)
             self._stats[f"productivity_{a.id}"].append(prod[-1])
-            self._stats[f"assets_{a.id}"].append(
-                np.sum(f.current_inventory * self.trading_prices)
-            )
+            self._stats[f"assets_{a.id}"].append(np.sum(f.current_inventory * self.trading_prices))
             self._stats[f"bankrupt_{a.id}"].append(f.is_bankrupt)
             self._stats[f"score_{a.id}"].append(scores[a.id])
             if not f.is_bankrupt:
                 market_size += f.current_balance
         self._stats["productivity"].append(float(np.mean(prod)))
         self._stats["market_size"].append(market_size)
-        self._stats["production_failures"].append(
-            self._n_production_failures / len(self.factories)
-            if len(self.factories) > 0
-            else np.nan
-        )
-        self._stats["bankruptcy"].append(
-            np.sum(self.stats["n_bankrupt"]) / len(self.agents)
-        )
+        self._stats["production_failures"].append(self._n_production_failures / len(self.factories) if len(self.factories) > 0 else np.nan)
+        self._stats["bankruptcy"].append(np.sum(self.stats["n_bankrupt"]) / len(self.agents))
         # self._stats["business"] = np.sum(self.stats["business_level"])
 
     def pre_step_stats(self):
@@ -2330,13 +2100,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         return sum(
             scores[f.agent_id] * f.initial_balance
             for f in self.factories
-            if (include_bankrupt or not f.is_bankrupt)
-            and not is_system_agent(f.agent_id)
+            if (include_bankrupt or not f.is_bankrupt) and not is_system_agent(f.agent_id)
         )
 
     def relative_welfare(self, include_bankrupt: bool = False) -> float | None:
         """Total welfare relative to expected value. Returns None if no expectation is found in self.info"""
-        if "expected_income" not in self.info.keys():
+        if "expected_income" not in self.info:
             return None
         return self.welfare(include_bankrupt) / np.sum(self.info["expected_income"])
 
@@ -2344,7 +2113,7 @@ class SCML2020World(TimeInAgreementMixin, World):
     def relative_productivity(self) -> float | None:
         """Productivity relative to the expected value. Will return None if self.info does not have
         the expected productivity"""
-        if "expected_productivity" not in self.info.keys():
+        if "expected_productivity" not in self.info:
             return None
         return self.productivity / self.info["expected_productivity"]
 
@@ -2358,9 +2127,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         """The fraction of factories that went bankrupt"""
         return sum(f.is_bankrupt for f in self.factories)
 
-    def order_contracts_for_execution(
-        self, contracts: Collection[Contract]
-    ) -> Collection[Contract]:
+    def order_contracts_for_execution(self, contracts: Collection[Contract]) -> Collection[Contract]:
         return sorted(contracts, key=lambda x: x.annotation["product"])
 
     def _execute(
@@ -2376,13 +2143,9 @@ class SCML2020World(TimeInAgreementMixin, World):
         """Executes the contract"""
         q, p, u = int(q), int(p), int(u)
         if seller_factory.is_bankrupt or buyer_factory.is_bankrupt:
-            self.logdebug(
-                f"Bankruptcy prevents transferring {q} of {product} at price {u} ({'breached' if has_breaches else ''})"
-            )
+            self.logdebug(f"Bankruptcy prevents transferring {q} of {product} at price {u} ({'breached' if has_breaches else ''})")
             return
-        self.logdebug(
-            f"Transferring {q} of {product} at price {u} ({'breached' if has_breaches else ''})"
-        )
+        self.logdebug(f"Transferring {q} of {product} at price {u} ({'breached' if has_breaches else ''})")
         if q == 0 or u == 0:
             self.logwarning(
                 f"{buyer_factory.agent_name} bought {q} from {seller_factory.agent_name} at {u} dollars"
@@ -2400,12 +2163,12 @@ class SCML2020World(TimeInAgreementMixin, World):
         assert q >= 0, f"executing with quantity {q}"
         if q == 0:
             return
-        assert (
-            seller_factory._inventory[product] >= q
-        ), f"at {self.current_step} Seller has {seller_factory._inventory[product]} but will execute {q} ({'breached' if has_breaches else 'no breaches'})"
-        assert (
-            buyer_factory._balance - self.bankruptcy_limit >= u * q
-        ), f"at {self.current_step} Buyer has {buyer_factory._balance} (bankrupt at {self.bankruptcy_limit}) but we need q={q} * u={u}  ({'breached' if has_breaches else 'no breaches'})"
+        assert seller_factory._inventory[product] >= q, (
+            f"at {self.current_step} Seller has {seller_factory._inventory[product]} but will execute {q} ({'breached' if has_breaches else 'no breaches'})"
+        )
+        assert buyer_factory._balance - self.bankruptcy_limit >= u * q, (
+            f"at {self.current_step} Buyer has {buyer_factory._balance} (bankrupt at {self.bankruptcy_limit}) but we need q={q} * u={u}  ({'breached' if has_breaches else 'no breaches'})"
+        )
         bought, buy_cost = buyer_factory.buy(product, q, u, False, 0.0)
         sold, sell_cost = seller_factory.buy(product, -q, u, False, 0.0)
         if bought == 0:
@@ -2416,25 +2179,19 @@ class SCML2020World(TimeInAgreementMixin, World):
         if oldq > 0:
             totalp = oldp * oldq
         self._sold_quantity[product, self.current_step + 1] += bought
-        self._real_price[product, self.current_step + 1] = (totalp + buy_cost) / (
-            oldq + bought
+        self._real_price[product, self.current_step + 1] = (totalp + buy_cost) / (oldq + bought)
+        assert bought == sold, (
+            f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
         )
-        assert (
-            bought == sold
-        ), f"Step: {self.current_step} Bought {bought} and sold {sold} ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
-        assert (
-            buy_cost + sell_cost == 0
-        ), f"Step: {self.current_step} Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
+        assert buy_cost + sell_cost == 0, (
+            f"Step: {self.current_step} Bought for {buy_cost} and sold for {-sell_cost}  ({'breached' if has_breaches else 'no breaches'})\nSeller factory: {vars(seller_factory)}\nBuyer factory {vars(buyer_factory)}"
+        )
 
     def __register_contract(self, agent_id: str, level: float) -> None:
         """Registers execution of the contract in the agent's stats"""
         n_contracts = self.agent_n_contracts[agent_id] - 1
-        self.breach_prob[agent_id] = (
-            self.breach_prob[agent_id] * n_contracts + (level > 0)
-        ) / (n_contracts + 1)
-        self._breach_level[agent_id] = (
-            self.breach_prob[agent_id] * n_contracts + level
-        ) / (n_contracts + 1)
+        self.breach_prob[agent_id] = (self.breach_prob[agent_id] * n_contracts + (level > 0)) / (n_contracts + 1)
+        self._breach_level[agent_id] = (self.breach_prob[agent_id] * n_contracts + level) / (n_contracts + 1)
 
     def record_bankrupt(self, factory: Factory) -> None:
         """Records agent bankruptcy"""
@@ -2444,16 +2201,11 @@ class SCML2020World(TimeInAgreementMixin, World):
         # announce bankruptcy
         reports_agent = self.bulletin_board.data["reports_agent"]
         reports_time = self.bulletin_board.data["reports_time"]
-        self.add_financial_report(
-            self.agents[agent_id], factory, reports_agent, reports_time
-        )
+        self.add_financial_report(self.agents[agent_id], factory, reports_agent, reports_time)
         self.__n_bankrupt += 1
 
     def on_contract_concluded(self, contract: Contract, to_be_signed_at: int) -> None:
-        if (
-            any(self.a2f[_].is_bankrupt for _ in contract.partners)
-            or contract.agreement["time"] >= self.n_steps
-        ):
+        if any(self.a2f[_].is_bankrupt for _ in contract.partners) or contract.agreement["time"] >= self.n_steps:
             return
         super().on_contract_concluded(contract, to_be_signed_at)
 
@@ -2472,10 +2224,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         #  force_signing case as in this case the two partners will be assued to sign no matter what is
         #  their bankruptcy status
 
-        if (
-            any(self.a2f[_].is_bankrupt for _ in contract.partners)
-            or contract.agreement["time"] >= self.n_steps
-        ):
+        if any(self.a2f[_].is_bankrupt for _ in contract.partners) or contract.agreement["time"] >= self.n_steps:
             self.ignore_contract(contract, as_dropped=False)
             return False
         result = super().on_contract_signed(contract)
@@ -2488,12 +2237,8 @@ class SCML2020World(TimeInAgreementMixin, World):
         product = contract.annotation["product"]
         agent, partner = contract.partners
         is_seller = agent == contract.annotation["seller"]
-        self.a2f[agent].contracts[t].append(
-            ContractInfo(q, u, product, is_seller, partner, contract)
-        )
-        self.a2f[partner].contracts[t].append(
-            ContractInfo(q, u, product, not is_seller, agent, contract)
-        )
+        self.a2f[agent].contracts[t].append(ContractInfo(q, u, product, is_seller, partner, contract))
+        self.a2f[partner].contracts[t].append(ContractInfo(q, u, product, not is_seller, agent, contract))
         return True
 
     def nullify_contract(self, contract: Contract, new_quantity: int):
@@ -2501,9 +2246,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         contract.nullified_at = self.current_step
         contract.annotation["new_quantity"] = new_quantity
 
-    def __register_breach(
-        self, agent_id: str, level: float, contract_total: float, factory: Factory
-    ) -> int:
+    def __register_breach(self, agent_id: str, level: float, contract_total: float, factory: Factory) -> int:
         """
         Registers a breach of the given level on the given agent. Assume that the contract is already added
         to the agent_contracts
@@ -2517,9 +2260,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         Returns:
             If nonzero, the agent should go bankrupt and this amount taken from them
         """
-        self.logdebug(
-            f"{self.agents[agent_id].name} breached {level} of {contract_total}"
-        )
+        self.logdebug(f"{self.agents[agent_id].name} breached {level} of {contract_total}")
         return 0
         # if factory.is_bankrupt:
         #     return 0
@@ -2534,24 +2275,15 @@ class SCML2020World(TimeInAgreementMixin, World):
         # return 0
 
     def _spot_loss(self, aid: str) -> float:
-        base = (
-            self._agent_spot_loss[self.a2i[aid], self.current_step] * self.spot_discount
-        )
-        return (
-            base
-            + self._agent_spot_quantity[self.a2i[aid], self.current_step]
-            * self.spot_multiplier
-        )
+        base = self._agent_spot_loss[self.a2i[aid], self.current_step] * self.spot_discount
+        return base + self._agent_spot_quantity[self.a2i[aid], self.current_step] * self.spot_multiplier
 
     def start_contract_execution(self, contract: Contract) -> set[Breach] | None:
         self.logdebug(f"Executing {str(contract)}")
         s = self.current_step
         # get contract info
         breaches = set()
-        if self.compensate_immediately and (
-            contract.nullified_at >= 0
-            or any(self.a2f[a].is_bankrupt for a in contract.partners)
-        ):
+        if self.compensate_immediately and (contract.nullified_at >= 0 or any(self.a2f[a].is_bankrupt for a in contract.partners)):
             return None
         product = contract.annotation["product"]
         buyer_id, seller_id = (
@@ -2566,9 +2298,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             contract.agreement["time"],
         )
         if q <= 0 or u <= 0:
-            self.logwarning(
-                f"Contract {str(contract)} has zero quantity or unit price!!! will be ignored"
-            )
+            self.logwarning(f"Contract {str(contract)} has zero quantity or unit price!!! will be ignored")
             return None
 
         # if the contract is already nullified, take care of it
@@ -2603,9 +2333,7 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         # if there are no breaches, just execute the contract
         if missing_money <= 0 and missing_product <= 0:
-            self._execute(
-                product, q, p, u, buyer_factory, seller_factory, has_breaches=False
-            )
+            self._execute(product, q, p, u, buyer_factory, seller_factory, has_breaches=False)
             self.__register_contract(seller_id, 0)
             self.__register_contract(buyer_id, 0)
             return breaches
@@ -2619,15 +2347,11 @@ class SCML2020World(TimeInAgreementMixin, World):
             self.__register_breach(seller_id, product_breach_level, p, seller_factory)
             if seller_factory != self.compensation_factory:
                 seller_indx = self.a2i[seller_id]
-                effective_unit = seller_factory.spot_price(
-                    product, self._spot_loss(seller_id)
-                )
+                effective_unit = seller_factory.spot_price(product, self._spot_loss(seller_id))
                 paid = seller_factory.pay(missing_product * effective_unit)
                 paid_for = paid // effective_unit
                 self._agent_spot_quantity[seller_indx, self.current_step] += paid_for
-                stored = seller_factory.store(
-                    product, paid_for, False, 0.0, no_bankruptcy=True, no_borrowing=True
-                )
+                stored = seller_factory.store(product, paid_for, False, 0.0, no_bankruptcy=True, no_borrowing=True)
                 missing_product -= stored
                 self._spot_quantity[seller_indx, s] += stored
                 assert seller_factory.current_inventory[product] >= stored
@@ -2661,11 +2385,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             self.__register_breach(buyer_id, money_breach_level, p, buyer_factory)
             if self.borrow_on_breach and buyer_factory != self.compensation_factory:
                 # find out the amount to be paid to borrow the needed money
-                penalty = (
-                    (1 + self.spot_market_global_loss)
-                    if self.bankruptcy_limit != 0
-                    else 1
-                )
+                penalty = (1 + self.spot_market_global_loss) if self.bankruptcy_limit != 0 else 1
                 to_pay = math.ceil(missing_money * penalty)
                 paid = buyer_factory.pay(to_pay)
                 missing_money -= (missing_money * paid) // to_pay
@@ -2686,14 +2406,10 @@ class SCML2020World(TimeInAgreementMixin, World):
         # return the list of breaches
         return breaches
 
-    def complete_contract_execution(
-        self, contract: Contract, breaches: list[Breach], resolution: Contract
-    ) -> None:
+    def complete_contract_execution(self, contract: Contract, breaches: list[Breach], resolution: Contract) -> None:
         pass
 
-    def compensate(
-        self, available: int, factory: Factory
-    ) -> dict[str, list[tuple[Contract, int, int]]]:
+    def compensate(self, available: int, factory: Factory) -> dict[str, list[tuple[Contract, int, int]]]:
         """
         Called by a factory when it is going bankrupt after liquidation
 
@@ -2705,11 +2421,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             A mapping from agent ID to nullified contracts, the new quantity for them and compensation_money
         """
         # get all future contracts of the bankrupt agent that are not executed in their delivery time order
-        contracts = list(
-            itertools.chain(
-                *(factory.contracts[s] for s in range(self.current_step, self.n_steps))
-            )
-        )
+        contracts = list(itertools.chain(*(factory.contracts[s] for s in range(self.current_step, self.n_steps))))
 
         owed = 0
         total_owed = 0
@@ -2731,9 +2443,7 @@ class SCML2020World(TimeInAgreementMixin, World):
 
         if available <= 0:
             for contract in nulled_contracts:
-                nullified_contracts[self.agents[contract.partner].id].append(
-                    (contract.contract, 0, 0)
-                )
+                nullified_contracts[self.agents[contract.partner].id].append((contract.contract, 0, 0))
             self.record_bankrupt(factory)
             return nullified_contracts
 
@@ -2752,20 +2462,14 @@ class SCML2020World(TimeInAgreementMixin, World):
             if contract.is_seller:
                 compensation_unit = factory.spot_price(
                     contract.product,
-                    self._agent_spot_loss[
-                        self.a2i[factory.agent_id], self.current_step
-                    ],
+                    self._agent_spot_loss[self.a2i[factory.agent_id], self.current_step],
                 )
             else:
                 compensation_unit = contract.u
-            compensation_quantity = min(
-                int(math.floor(available / compensation_unit)), compensation_quantity
-            )
+            compensation_quantity = min(int(math.floor(available / compensation_unit)), compensation_quantity)
             compensation = min(available, compensation_quantity * compensation_unit)
             if compensation <= 0 and compensation_quantity <= 0:
-                nullified_contracts[victim.id].append(
-                    (contract.contract, 0, compensation)
-                )
+                nullified_contracts[victim.id].append((contract.contract, 0, compensation))
                 self.nullify_contract(contract.contract, 0)
                 continue
             if self.compensate_immediately:
@@ -2785,14 +2489,10 @@ class SCML2020World(TimeInAgreementMixin, World):
                         )
                     )
                 else:
-                    self.compensation_records[contract.contract.id].append(
-                        CompensationRecord(-1, 0, compensation, False, victim_factory)
-                    )
+                    self.compensation_records[contract.contract.id].append(CompensationRecord(-1, 0, compensation, False, victim_factory))
                 compensation = 0
             available -= compensation
-            nullified_contracts[victim.id].append(
-                (contract.contract, compensation_quantity, compensation)
-            )
+            nullified_contracts[victim.id].append((contract.contract, compensation_quantity, compensation))
             self.nullify_contract(contract.contract, compensation_quantity)
             assert available >= 0
         self.record_bankrupt(factory)
@@ -2820,25 +2520,17 @@ class SCML2020World(TimeInAgreementMixin, World):
             assets_multiplier_trading = self.inventory_valuation_trading
         if assets_multiplier_trading is None:
             assets_multiplier_trading = 0
-        scores = dict()
-        for aid, agent in self.agents.items():
+        scores = {}
+        for aid, _agent in self.agents.items():
             if is_system_agent(aid):
                 continue
             factory = self.a2f[aid]
             try:
                 scores[aid] = (
-                    factory.current_balance
-                    + (
-                        assets_multiplier_trading
-                        * np.sum(factory.current_inventory * self.trading_prices)
-                    )
+                    factory.current_balance + (assets_multiplier_trading * np.sum(factory.current_inventory * self.trading_prices))
                     if assets_multiplier_trading
                     else (
-                        0.0
-                        + (
-                            assets_multiplier_catalog
-                            * np.sum(factory.current_inventory * self.catalog_prices)
-                        )
+                        0.0 + (assets_multiplier_catalog * np.sum(factory.current_inventory * self.catalog_prices))
                         if assets_multiplier_catalog
                         else 0.0 - factory.initial_balance
                     )
@@ -2853,7 +2545,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         if len(self.agents) < 1:
             return []
         scores = self.scores()
-        sa = sorted(zip(scores.values(), scores.keys()), reverse=True)
+        sa = sorted(zip(scores.values(), scores.keys(), strict=False), reverse=True)
         max_score = sa[0][0]
         winners = []
         for s, a in sa:
@@ -2862,9 +2554,7 @@ class SCML2020World(TimeInAgreementMixin, World):
             winners.append(self.agents[a])
         return winners
 
-    def trading_prices_for(
-        self, discount: float = 1.0, condition="executed"
-    ) -> np.ndarray:
+    def trading_prices_for(self, discount: float = 1.0, condition="executed") -> np.ndarray:
         """
         Calculates the prices at which all products traded using an optional discount factor
 
@@ -2887,9 +2577,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                 contract["quantity"],
                 contract["unit_price"],
             )
-            prices[p, t] = (prices[p, t] * quantities[p, t] + u * q) / (
-                quantities[p, t] + q
-            )
+            prices[p, t] = (prices[p, t] * quantities[p, t] + u * q) / (quantities[p, t] + q)
             quantities[p, t] += q
         discount = np.cumprod(discount * np.ones(self.n_steps))
         discount /= sum(discount)
@@ -2910,9 +2598,7 @@ class SCML2020World(TimeInAgreementMixin, World):
     def contracts_df(self) -> pd.DataFrame:
         """Returns a pandas data frame with the contracts"""
         contracts = pd.DataFrame(self.saved_contracts)
-        contracts["product_index"] = contracts.product_name.str.replace("p", "").astype(
-            int
-        )
+        contracts["product_index"] = contracts.product_name.str.replace("p", "").astype(int)
         contracts["breached"] = contracts.breaches.str.len() > 0
         contracts["executed"] = contracts.executed_at >= 0
         contracts["erred"] = contracts.erred_at >= 0
@@ -2927,7 +2613,7 @@ class SCML2020World(TimeInAgreementMixin, World):
     @property
     def system_agent_names(self) -> list[str]:
         """Returns the names two system agents"""
-        return [_ for _ in self.agents.keys() if is_system_agent(_)]
+        return [_ for _ in self.agents if is_system_agent(_)]
 
     @property
     def non_system_agents(self) -> list[SCML2020Agent]:
@@ -2937,7 +2623,7 @@ class SCML2020World(TimeInAgreementMixin, World):
     @property
     def non_system_agent_names(self) -> list[str]:
         """Returns names of all agents except system agents"""
-        return [_ for _ in self.agents.keys() if not is_system_agent(_)]
+        return [_ for _ in self.agents if not is_system_agent(_)]
 
     @property
     def agreement_fraction(self) -> float:
