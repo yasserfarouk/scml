@@ -67,18 +67,20 @@ class MyExogAgent(OneShotSyncAgent):
         return {k: SAOResponse(ResponseType.REJECT_OFFER, tuple(v)) for k, v in self.first_proposals().items()}
 
     def first_proposals(self) -> dict:
-        return dict(
-            zip(
-                self.negotiators.keys(),
-                (self.get_offer(neg_id) for neg_id in self.negotiators),
-                strict=False,
-            )
-        )
+        proposals = {}
+        for neg_id in self.negotiators:
+            nmi = self.get_nmi(neg_id)
+            if nmi is not None:  # Only include active negotiations
+                proposals[neg_id] = self.get_offer(neg_id, nmi)
+        return proposals
 
-    def get_offer(self, negotiator_id: str):
-        ami = self.get_nmi(negotiator_id)
-        quantity_issue = ami.issues[QUANTITY]
-        unit_price_issue = ami.issues[UNIT_PRICE]
+    def get_offer(self, negotiator_id: str, nmi=None):
+        if nmi is None:
+            nmi = self.get_nmi(negotiator_id)
+            if nmi is None:
+                return None
+        quantity_issue = nmi.issues[QUANTITY]
+        unit_price_issue = nmi.issues[UNIT_PRICE]
 
         offer = [-1] * 3
         offer[QUANTITY] = quantity_issue.max_value

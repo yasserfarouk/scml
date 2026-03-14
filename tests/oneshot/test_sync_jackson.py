@@ -155,7 +155,9 @@ class SyncAgent(OneShotSyncAgent, BetterAgent):  # type: ignore
         d = max(steps) - min(steps)
         if missing:
             for n in missing:
-                assert not self.negotiators[n][0].nmi.state.running, (
+                nmi = self.negotiators[n][0].nmi
+                # If nmi is None, the negotiation has ended (not running)
+                assert nmi is None or not nmi.state.running, (
                     f"{n} is not present in the state and the negotiation is still running (Max round diff is {d})."
                 )
         assert d <= self.max_round_diff, f"Max round diff is {d}\n\t{states}"

@@ -351,17 +351,25 @@ class SyncRandomStdAgent(StdSyncAgent):
 
     def best_price(self, partner_id):
         """Best price for a negotiation today"""
-        issue = self.get_nmi(partner_id).issues[UNIT_PRICE]
+        nmi = self.get_nmi(partner_id)
+        if nmi is None:
+            # Negotiation not active, return a reasonable default
+            if self.is_consumer(partner_id):
+                return self.awi.current_output_issues[UNIT_PRICE].max_value
+            return self.awi.current_input_issues[UNIT_PRICE].min_value
+        issue = nmi.issues[UNIT_PRICE]
         return issue.max_value if self.is_consumer(partner_id) else issue.min_value
 
     def good_price(self, partner_id, today: bool):
         """A good price to use"""
         nmi = self.get_nmi(partner_id)
+        if nmi is None:
+            return self.best_price(partner_id)
         mn = nmi.issues[UNIT_PRICE].min_value
         mx = nmi.issues[UNIT_PRICE].max_value
         if self.is_supplier(partner_id):
             return self.buy_price(nmi.state.relative_time, mn, mx, today=today)
-        return self.sell_price(self.get_nmi(partner_id).state.relative_time, mn, mx, today=today)
+        return self.sell_price(nmi.state.relative_time, mn, mx, today=today)
 
     def buy_price(self, t: float, mn: float, mx: float, today: bool) -> float:
         """Return a good price to buy at"""

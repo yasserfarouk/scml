@@ -867,7 +867,7 @@ class BaseContext(Context, ABC):
         if types is None:
             types = self.placeholder_types
             params = self.placeholder_params
-        test_world = (config is not None,)
+        test_world = config is not None
         if config is None:
             config = self.make_config()
         config = self.world_type.replace_agents(config, self.placeholder_types, types, params)
@@ -1591,10 +1591,13 @@ class LimitedPartnerNumbersContext(GeneralContext):
         assert not types or agent_ids, f"Found no agent IDs for types {types} ({agent_ids=})"
         n_processes = world.n_processes
         expected_level = self.level
+        # Handle -1 as "last level" (n_processes - 1)
+        if expected_level == -1:
+            expected_level = n_processes - 1
         for aid in agent_ids:
             my_level = world.agent_profiles[aid].input_product
             if _is(
-                my_level == expected_level,
+                my_level != expected_level,
                 raise_on_failure,
                 warn_on_failure,
                 f"Agent {aid} of type {world.agents[aid]._obj.__class__.__name__} "

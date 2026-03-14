@@ -643,6 +643,8 @@ class WorldRunner:
             ]
         )
         self._scores = pd.concat((self._scores, df))
+        # Ensure score column is numeric (float) to avoid issues with np.isnan
+        self._scores["score"] = pd.to_numeric(self._scores["score"], errors="coerce")
         stat_names = [
             k
             for k in world._stats
@@ -652,7 +654,8 @@ class WorldRunner:
             return
         df = world.stats_df[stat_names]
         df.columns = [remove_agent_id(_, ids) for _ in df.columns]
-        df = df.groupby(by=df.columns, axis=1).apply(lambda g: g.mean(axis=1) if isinstance(g.iloc[0, 0], numbers.Number) else g.iloc[:, 0])
+        # Group columns with the same name and aggregate (transpose to group by columns, then transpose back)
+        df = df.T.groupby(level=0).apply(lambda g: g.mean() if isinstance(g.iloc[0, 0], numbers.Number) else g.iloc[0]).T
         df["config"] = cid
         df["world"] = world.id
         df["type"] = name

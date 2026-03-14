@@ -2579,7 +2579,6 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             worlds=worlds,
             stats=stats,
             pertype=pertype,
-            makefig=makefig,
             title=title,
             ylabel=ylabel,
             xlabel=xlabel,

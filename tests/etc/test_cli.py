@@ -1,5 +1,5 @@
-from pytest import mark
 from click.testing import CliRunner
+from pytest import mark
 
 from scml.cli import main
 
@@ -15,7 +15,8 @@ def test_main():
     result = runner.invoke(main, [])
 
     assert len(result.output) >= 0
-    assert result.exit_code == 0
+    # Click returns exit code 2 when invoked without a subcommand (missing command)
+    assert result.exit_code == 2
 
 
 def test_help():

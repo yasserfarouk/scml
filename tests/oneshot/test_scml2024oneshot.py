@@ -214,7 +214,6 @@ def test_combining_stats():
         n_steps=None,
         pertype=False,
         legend=True,
-        makefig=True,
         ylegend=1.0,
     )
 
