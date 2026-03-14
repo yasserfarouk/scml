@@ -2,22 +2,23 @@ import random
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from enum import Enum
-from typing import Any, Iterable, Union, Sequence
+from typing import Any
 
 import numpy as np
 from attr import define, field
+from negmas.helpers.strings import unique_name
+
+from scml.common import intin, isin, isinclass, isinfloat, isinobject, make_array
+from scml.oneshot.agent import OneShotAgent
+from scml.oneshot.agents import Placeholder
 from scml.oneshot.agents.greedy import GreedyOneShotAgent
 from scml.oneshot.agents.rand import (
     EqualDistOneShotAgent,
     NiceAgent,
     RandDistOneShotAgent,
 )
-from negmas.helpers.strings import unique_name
-
-from scml.common import intin, isin, isinclass, isinfloat, isinobject, make_array
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agents import Placeholder
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import is_system_agent
 from scml.oneshot.world import (
@@ -80,9 +81,7 @@ class Strength(Enum):
     Strong = 1
 
 
-def sample_with_strength(
-    c: int | tuple[int, int], n: int | tuple[int, int], s: Strength | None
-):
+def sample_with_strength(c: int | tuple[int, int], n: int | tuple[int, int], s: Strength | None):
     if s is None:
         c = intin(c)
         n = intin(n)
@@ -158,7 +157,7 @@ class Context(ABC):
         """Checks that the any world generated from the given `context` could have been generated from this context"""
         ...
 
-    def __contains__(self, other: "Union[SCMLBaseWorld, OneShotAWI, Context]") -> bool:
+    def __contains__(self, other: "SCMLBaseWorld | OneShotAWI | Context") -> bool:
         if isinstance(other, Context):
             return self.contains_context(other)
         if isinstance(other, OneShotAWI):
@@ -188,7 +187,7 @@ def _is(
     if raise_on_failure:
         raise AssertionError(message)
     if warn_on_failure:
-        warnings.warn(message)
+        warnings.warn(message, stacklevel=2)
     return True
 
 
@@ -203,12 +202,12 @@ def _not(
     if raise_on_failure:
         raise AssertionError(message)
     if warn_on_failure:
-        warnings.warn(message)
+        warnings.warn(message, stacklevel=2)
     return True
 
 
 def _safeget(d: dict[str, dict[str, Any]], x: str, y: str):
-    return d.get(x, dict()).get(y, None)
+    return d.get(x, {}).get(y, None)
 
 
 def _world_matches_config(
@@ -248,10 +247,7 @@ def _world_matches_config(
     ):
         return False
     if _not(
-        all(
-            isin(_, _safeget(config, "info", "n_agents_per_process"))
-            for _ in world.info["n_agents_per_process"]
-        ),
+        all(isin(_, _safeget(config, "info", "n_agents_per_process")) for _ in world.info["n_agents_per_process"]),
         raise_on_failure,
         warn_on_failure,
         "not all( isin(_, self.n_agents_per_process) for _ in world.info['n_agents_per_process'])",
@@ -386,9 +382,7 @@ def _world_matches_config(
     ):
         return False
     if _not(
-        isinfloat(
-            world.info["disposal_cost"], _safeget(config, "info", "disposal_cost")
-        ),
+        isinfloat(world.info["disposal_cost"], _safeget(config, "info", "disposal_cost")),
         raise_on_failure,
         warn_on_failure,
         "not isinfloat(world.info['disposal_cost'], self.disposal_cost)",
@@ -442,32 +436,28 @@ def _world_matches_config(
     ):
         return False
     if _is(
-        world.info["cost_increases_with_level"]
-        != _safeget(config, "info", "cost_increases_with_level"),
+        world.info["cost_increases_with_level"] != _safeget(config, "info", "cost_increases_with_level"),
         raise_on_failure,
         warn_on_failure,
         "world.info['cost_increases_with_level'] != self.cost_increases_with_level",
     ):
         return False
     if _is(
-        world.info["equal_exogenous_supply"]
-        != _safeget(config, "info", "equal_exogenous_supply"),
+        world.info["equal_exogenous_supply"] != _safeget(config, "info", "equal_exogenous_supply"),
         raise_on_failure,
         warn_on_failure,
         "world.info['equal_exogenous_supply'] != self.equal_exogenous_supply",
     ):
         return False
     if _is(
-        world.info["equal_exogenous_sales"]
-        != _safeget(config, "info", "equal_exogenous_sales"),
+        world.info["equal_exogenous_sales"] != _safeget(config, "info", "equal_exogenous_sales"),
         raise_on_failure,
         warn_on_failure,
         "world.info['equal_exogenous_sales'] != self.equal_exogenous_sales",
     ):
         return False
     if _is(
-        world.info["cap_exogenous_quantities"]
-        != _safeget(config, "info", "cap_exogenous_quantities"),
+        world.info["cap_exogenous_quantities"] != _safeget(config, "info", "cap_exogenous_quantities"),
         raise_on_failure,
         warn_on_failure,
         "world.info['cap_exogenous_quantities'] != self.cap_exogenous_quantities",
@@ -481,8 +471,7 @@ def _world_matches_config(
     ):
         return False
     if _is(
-        world.info["random_agent_types"]
-        != _safeget(config, "info", "random_agent_types"),
+        world.info["random_agent_types"] != _safeget(config, "info", "random_agent_types"),
         raise_on_failure,
         warn_on_failure,
         "world.info['random_agent_types'] != self.random_agent_types",
@@ -496,8 +485,7 @@ def _world_matches_config(
     ):
         return False
     if _is(
-        world.info["exogenous_generation_method"]
-        != _safeget(config, "info", "exogenous_generation_method"),
+        world.info["exogenous_generation_method"] != _safeget(config, "info", "exogenous_generation_method"),
         raise_on_failure,
         warn_on_failure,
         "world.info['exogenous_generation_method'] != self.method",
@@ -571,10 +559,7 @@ def _config_matches_base(
     ):
         return False
     if _not(
-        all(
-            isin(_, _safeget(base, "info", "n_agents_per_process"))
-            for _ in _safeget(config, "info", "n_agents_per_process")
-        ),
+        all(isin(_, _safeget(base, "info", "n_agents_per_process")) for _ in _safeget(config, "info", "n_agents_per_process")),
         raise_on_failure,
         warn_on_failure,
         f"not all( isin(_, self.n_agents_per_process) for _ in config.get('info', dict())['n_agents_per_process'])\n"
@@ -773,70 +758,60 @@ def _config_matches_base(
     ):
         return False
     if _is(
-        _safeget(config, "info", "cost_increases_with_level")
-        != _safeget(base, "info", "cost_increases_with_level"),
+        _safeget(config, "info", "cost_increases_with_level") != _safeget(base, "info", "cost_increases_with_level"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['cost_increases_with_level'] != self.cost_increases_with_level",
     ):
         return False
     if _is(
-        _safeget(config, "info", "equal_exogenous_supply")
-        != _safeget(base, "info", "equal_exogenous_supply"),
+        _safeget(config, "info", "equal_exogenous_supply") != _safeget(base, "info", "equal_exogenous_supply"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['equal_exogenous_supply'] != self.equal_exogenous_supply",
     ):
         return False
     if _is(
-        _safeget(config, "info", "equal_exogenous_sales")
-        != _safeget(base, "info", "equal_exogenous_sales"),
+        _safeget(config, "info", "equal_exogenous_sales") != _safeget(base, "info", "equal_exogenous_sales"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['equal_exogenous_sales'] != self.equal_exogenous_sales",
     ):
         return False
     if _is(
-        _safeget(config, "info", "cap_exogenous_quantities")
-        != _safeget(base, "info", "cap_exogenous_quantities"),
+        _safeget(config, "info", "cap_exogenous_quantities") != _safeget(base, "info", "cap_exogenous_quantities"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['cap_exogenous_quantities'] != self.cap_exogenous_quantities",
     ):
         return False
     if _is(
-        _safeget(config, "info", "force_signing")
-        != _safeget(base, "info", "force_signing"),
+        _safeget(config, "info", "force_signing") != _safeget(base, "info", "force_signing"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['force_signing'] != self.force_signing",
     ):
         return False
     if _is(
-        _safeget(config, "info", "random_agent_types")
-        != _safeget(base, "info", "random_agent_types"),
+        _safeget(config, "info", "random_agent_types") != _safeget(base, "info", "random_agent_types"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['random_agent_types'] != self.random_agent_types",
     ):
         return False
     if _is(
-        _safeget(config, "info", "penalties_scale")
-        != _safeget(base, "info", "penalties_scale"),
+        _safeget(config, "info", "penalties_scale") != _safeget(base, "info", "penalties_scale"),
         raise_on_failure,
         warn_on_failure,
         "config.get('info', dict())['penalties_scale'] != self.penalties_scale",
     ):
         return False
-    if _is(
-        _safeget(config, "info", "exogenous_generation_method")
-        != _safeget(base, "info", "exogenous_generation_method"),
+    return not _is(
+        _safeget(config, "info", "exogenous_generation_method") != _safeget(base, "info", "exogenous_generation_method"),
         raise_on_failure,
         warn_on_failure,
         f' {_safeget(config, "info", "exogenous_generation_method")=} != {_safeget(base, "info", "exogenous_generation_method")=}, ',
-    ):
-        return False
-    return True
+    )
 
 
 @define
@@ -865,13 +840,9 @@ class BaseContext(Context, ABC):
     ) -> bool:
         """Checks that the given world could have been generated from this context"""
 
-    def extract_context_params(
-        self, min_values: bool, level: int | None = None
-    ) -> ContextParams:
+    def extract_context_params(self, min_values: bool, level: int | None = None) -> ContextParams:
         _ = min_values, level
-        raise NotImplementedError(
-            f"{self.__class__.__name__} did not implement `extrtact_context_params`"
-        )
+        raise NotImplementedError(f"{self.__class__.__name__} did not implement `extrtact_context_params`")
 
     def make(
         self,
@@ -899,9 +870,7 @@ class BaseContext(Context, ABC):
         test_world = (config is not None,)
         if config is None:
             config = self.make_config()
-        config = self.world_type.replace_agents(
-            config, self.placeholder_types, types, params
-        )
+        config = self.world_type.replace_agents(config, self.placeholder_types, types, params)
         if name is None:
             name = unique_name(self.name, sep=".")
         if name is not None:
@@ -935,9 +904,7 @@ class BaseContext(Context, ABC):
         ids = []
         if types:
             ids = [id for id, a in world.agents.items() if isinobject(a._obj, types)]  # type: ignore
-            assert len(ids) == len(
-                types
-            ), f"Found the following agent of type {types=}: {ids=}"
+            assert len(ids) == len(types), f"Found the following agent of type {types=}: {ids=}"
         agents = tuple(world.agents[id]._obj for id in ids)  # type: ignore
         return world, agents  # type: ignore
 
@@ -1026,9 +993,7 @@ class GeneralContext(BaseContext):
         else:
             assert issubclass(self.world_type, StdWorld)
 
-    def extract_context_params(
-        self, min_values: bool, level: int | None = None
-    ) -> ContextParams:
+    def extract_context_params(self, min_values: bool, level: int | None = None) -> ContextParams:
         nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
         app = self.n_agents_per_process
         if not isinstance(app, Iterable):
@@ -1043,9 +1008,7 @@ class GeneralContext(BaseContext):
                 mn_consumers, mn_suppliers = min(app[1:]), min(app[:-1])
                 mx_consumers, mx_suppliers = max(app[1:]), max(app[:-1])
             else:
-                mx_consumers = mn_consumers = (
-                    app[level + 1] if 0 <= level < n_processes - 1 else 0
-                )
+                mx_consumers = mn_consumers = app[level + 1] if 0 <= level < n_processes - 1 else 0
                 mx_suppliers = mn_suppliers = app[level - 1] if level > 0 else 0
             nsuppliers = mn_suppliers if min_values else mx_suppliers
             nconsumers = mn_consumers if min_values else mx_consumers
@@ -1053,11 +1016,7 @@ class GeneralContext(BaseContext):
             return ContextParams(self.perishable, nlines, nsuppliers, nconsumers)
         if level == 0:
             nsuppliers = 0
-        elif (
-            level == -1
-            or not isinstance(self.n_processes, Iterable)
-            and level == self.n_processes - 1
-        ):
+        elif level == -1 or not isinstance(self.n_processes, Iterable) and level == self.n_processes - 1:
             nconsumers = 0
         return ContextParams(self.perishable, nlines, nsuppliers, nconsumers)
 
@@ -1070,7 +1029,7 @@ class GeneralContext(BaseContext):
     ) -> dict[str, Any]:
         """Generates a config for a world"""
         if agent_params is None:
-            agent_params = [dict() for _ in agent_types]
+            agent_params = [{} for _ in agent_types]
 
         return self.world_params | self.world_type.generate(
             agent_types=agent_types,  # type: ignore
@@ -1119,18 +1078,16 @@ class GeneralContext(BaseContext):
     ) -> bool:
         if isinstance(context, GeneralContext):
             return self.contains_general_context(context)
-        return super().contains_context(
-            context, raise_on_failure, warn_on_failure, n_tests
-        )
+        return super().contains_context(context, raise_on_failure, warn_on_failure, n_tests)
 
     def _assign_types(self, n_processes, types, params, levels, n_agents_per_process):
         n_agents = sum(n_agents_per_process)
         perlevel = defaultdict(list)
-        for i, t, p in zip(levels, types, params):
+        for i, t, p in zip(levels, types, params, strict=False):
             perlevel[i].append((t, p))
 
         agent_types = list(random.choices(self.non_competitors, k=n_agents))
-        agent_params: list[dict[str, Any]] = list(dict() for _ in agent_types)
+        agent_params: list[dict[str, Any]] = [{} for _ in agent_types]
         agent_processes = np.zeros(n_agents, dtype=int)
         nxt, indx = 0, -1
         rngs = []
@@ -1141,15 +1098,13 @@ class GeneralContext(BaseContext):
             nxt += n_agents_per_process[level]
         for i, tp in perlevel.items():
             first, last = rngs[i]
-            assert (
-                last - first + 1 >= len(tp)
-            ), f"Cannot put agents of type {tp=} in level {i} which has only {last - first + 1} agents"
+            assert last - first + 1 >= len(tp), f"Cannot put agents of type {tp=} in level {i} which has only {last - first + 1} agents"
 
             random.shuffle(tp)
             selected = list(range(first, last))
             random.shuffle(selected)
             selected = selected[: len(tp)]
-            for indx, (my_type, my_params) in zip(selected, tp):
+            for indx, (my_type, my_params) in zip(selected, tp, strict=False):
                 agent_types[indx] = my_type
                 if params:
                     agent_params[indx]["controller_params"] = my_params
@@ -1159,15 +1114,13 @@ class GeneralContext(BaseContext):
         n_processes = intin(self.n_processes)
 
         # distribute agents over production levels (processes)
-        n_agents_per_process = make_array(
-            self.n_agents_per_process, n_processes, dtype=int, min_total=n_types
-        )
+        n_agents_per_process = make_array(self.n_agents_per_process, n_processes, dtype=int, min_total=n_types)
         return n_processes, n_agents_per_process
 
     def make_config(self) -> dict[str, Any]:
         """Generates a config for a world"""
         types = self.placeholder_types
-        params = [dict() for _ in types]
+        params = [{} for _ in types]
         levels = self.placeholder_levels
         n_processes, n_agents_per_process = self._distribute_agents(len(types))
         assert len(n_agents_per_process) == n_processes
@@ -1180,9 +1133,7 @@ class GeneralContext(BaseContext):
             levels = tuple(random.randint(0, n_processes - 1) for _ in types)
 
         return self.make_predefined_config(
-            *self._assign_types(
-                n_processes, types, params, levels, n_agents_per_process
-            ),
+            *self._assign_types(n_processes, types, params, levels, n_agents_per_process),
             n_agents_per_process,  # type: ignore
         )
 
@@ -1223,10 +1174,7 @@ class GeneralContext(BaseContext):
         ):
             return False
         if _not(
-            all(
-                isin(_, self.n_agents_per_process)
-                for _ in world.info["n_agents_per_process"]
-            ),
+            all(isin(_, self.n_agents_per_process) for _ in world.info["n_agents_per_process"]),
             raise_on_failure,
             warn_on_failure,
             f"not all( isin(_, self.n_agents_per_process) for _ in world.info['n_agents_per_process'])\n"
@@ -1276,8 +1224,7 @@ class GeneralContext(BaseContext):
         ):
             return False
         if _is(
-            self.initial_balance is not None
-            and not isin(world.info["initial_balance"], self.initial_balance),
+            self.initial_balance is not None and not isin(world.info["initial_balance"], self.initial_balance),
             raise_on_failure,
             warn_on_failure,
             "self.initial_balance is not None and not isin(world.info['initial_balance'], self.initial_balance)",
@@ -1423,8 +1370,7 @@ class GeneralContext(BaseContext):
         ):
             return False
         if _is(
-            world.info["exogenous_generation_method"]
-            != self.exogenous_generation_method,
+            world.info["exogenous_generation_method"] != self.exogenous_generation_method,
             raise_on_failure,
             warn_on_failure,
             "world.info['exogenous_generation_method'] != self.method",
@@ -1477,11 +1423,9 @@ class GeneralContext(BaseContext):
         if not isinfloat(context.max_productivity, self.max_productivity):
             return False
         if (
-            self.initial_balance is not None
-            and not isin(context.initial_balance, self.initial_balance)  # type: ignore
+            self.initial_balance is not None and not isin(context.initial_balance, self.initial_balance)  # type: ignore
         ) or (
-            self.initial_balance is not None
-            and not isin(context.initial_balance, self.initial_balance)  # type: ignore
+            self.initial_balance is not None and not isin(context.initial_balance, self.initial_balance)  # type: ignore
         ):
             return False
         if not isinfloat(
@@ -1532,9 +1476,7 @@ class GeneralContext(BaseContext):
             return False
         if isinstance(context.world_type, self.world_type):
             return False
-        if not isinclass(list(context.non_competitors), list(self.non_competitors)):
-            return False
-        return True
+        return isinclass(list(context.non_competitors), list(self.non_competitors))
 
 
 @define
@@ -1550,51 +1492,28 @@ class LimitedPartnerNumbersContext(GeneralContext):
     selling_strength: Strength | None = None
 
     def __attrs_post_init__(self):
-        max_n_proceses = (
-            max(self.n_processes)
-            if isinstance(self.n_processes, Iterable)
-            else self.n_processes
-        )
+        max_n_proceses = max(self.n_processes) if isinstance(self.n_processes, Iterable) else self.n_processes
         assert isin(
             tuple(_ + 1 for _ in self.n_competitors),  # type: ignore
             self.n_agents_per_process,  # type: ignore
         ), f"{self.n_competitors=}, {self.n_agents_per_process=}"
-        assert (
-            not (self.level > 0 and self.level < max_n_proceses - 1)
-            or (self.n_suppliers[-1] > 1 and self.n_consumers[-1] > 1)
-        ), f"{self.n_suppliers=}, {self.n_consumers=}, {self.level=}, {self.n_processes=}"
+        assert not (self.level > 0 and self.level < max_n_proceses - 1) or (self.n_suppliers[-1] > 1 and self.n_consumers[-1] > 1), (
+            f"{self.n_suppliers=}, {self.n_consumers=}, {self.level=}, {self.n_processes=}"
+        )
         if self.level == 0:
-            assert isin(
-                self.n_consumers, self.n_agents_per_process
-            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert isin(self.n_consumers, self.n_agents_per_process), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
             assert max(self.n_suppliers) < 1, f"{self.n_suppliers=}, {self.level=}"
-            assert (
-                min(self.n_consumers) > 0
-            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
-        elif (
-            self.level == -1
-            or isinstance(self.n_processes, int)
-            and self.level == max_n_proceses - 1
-        ):
+            assert min(self.n_consumers) > 0, f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+        elif self.level == -1 or isinstance(self.n_processes, int) and self.level == max_n_proceses - 1:
             assert self.level < max_n_proceses, f"{max_n_proceses=}, {self.level=}"
-            assert isin(
-                self.n_suppliers, self.n_agents_per_process
-            ), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
-            assert (
-                max(self.n_consumers) < 1
-            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert isin(self.n_suppliers, self.n_agents_per_process), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert max(self.n_consumers) < 1, f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
             assert min(self.n_suppliers) > 0, f"{self.n_suppliers=}, {self.level=}"
         else:
-            assert isin(
-                self.n_consumers, self.n_agents_per_process
-            ), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
-            assert isin(
-                self.n_suppliers, self.n_agents_per_process
-            ), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert isin(self.n_consumers, self.n_agents_per_process), f"{self.n_consumers=}, {self.n_agents_per_process=}, {self.level=}"
+            assert isin(self.n_suppliers, self.n_agents_per_process), f"{self.n_suppliers=}, {self.n_agents_per_process=}, {self.level=}"
 
-    def extract_context_params(
-        self, min_values: bool, level: int | None = None
-    ) -> ContextParams:
+    def extract_context_params(self, min_values: bool, level: int | None = None) -> ContextParams:
         assert level is None or level == self.level
         nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
         nsuppliers = self.n_suppliers[0 if min_values else -1]
@@ -1604,11 +1523,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
     def make_config(self) -> dict[str, Any]:
         """Generates a config"""
         types = self.placeholder_types
-        params = (
-            [dict() for _ in types]
-            if self.placeholder_params is None
-            else self.placeholder_params
-        )
+        params = [{} for _ in types] if self.placeholder_params is None else self.placeholder_params
         levels = self.placeholder_levels
         assert levels is None or all(_ == self.level for _ in levels), (
             "LimitedPartnerNumbersContext does not allow you to decide the levels of "
@@ -1617,23 +1532,17 @@ class LimitedPartnerNumbersContext(GeneralContext):
         )
         levels = tuple(self.level for _ in types)
         if params is None:
-            params = tuple(dict() for _ in types)
+            params = tuple({} for _ in types)
         n_processes, n_agents_per_process = self._distribute_agents(len(types))
         # find my level
         my_level = n_processes - 1 if self.level < 0 else self.level
         n_competitors = self.n_competitors
         n_suppliers = n_agents_per_process[my_level - 1] if my_level > 0 else 0
-        n_consumers = (
-            n_agents_per_process[my_level + 1] if my_level < n_processes - 1 else 0
-        )
+        n_consumers = n_agents_per_process[my_level + 1] if my_level < n_processes - 1 else 0
         if self.buying_strength is not None:
-            n_competitors, n_suppliers = sample_with_strength(
-                n_competitors, self.n_suppliers, self.buying_strength
-            )
+            n_competitors, n_suppliers = sample_with_strength(n_competitors, self.n_suppliers, self.buying_strength)
         if self.selling_strength is not None:
-            n_competitors, n_consumers = sample_with_strength(
-                n_competitors, self.n_consumers, self.selling_strength
-            )
+            n_competitors, n_consumers = sample_with_strength(n_competitors, self.n_consumers, self.selling_strength)
         n_competitors = intin(n_competitors)
 
         # override the number of consumers and number of suppliers to match my choice
@@ -1655,9 +1564,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
             )
 
         return self.make_predefined_config(
-            *self._assign_types(
-                n_processes, types, params, levels, n_agents_per_process
-            ),
+            *self._assign_types(n_processes, types, params, levels, n_agents_per_process),
             n_agents_per_process,  # type: ignore
         )
 
@@ -1668,9 +1575,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
     ) -> list[str]:
         if types is None:
             types = self.placeholder_types
-        return [
-            aid for aid, agent in world.agents.items() if isinobject(agent._obj, types)
-        ]
+        return [aid for aid, agent in world.agents.items() if isinobject(agent._obj, types)]
 
     def is_valid_world(  # type: ignore
         self,
@@ -1683,9 +1588,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
         if types is None:
             types = self.placeholder_types
         agent_ids = self.find_test_agents(world, types)
-        assert (
-            not types or agent_ids
-        ), f"Found no agent IDs for types {types} ({agent_ids=})"
+        assert not types or agent_ids, f"Found no agent IDs for types {types} ({agent_ids=})"
         n_processes = world.n_processes
         expected_level = self.level
         for aid in agent_ids:
@@ -1700,27 +1603,15 @@ class LimitedPartnerNumbersContext(GeneralContext):
                 return False
             is_first_level = my_level == 0
             is_last_level = my_level == n_processes - 1
-            my_suppliers = [
-                _ for _ in world.agent_suppliers[aid] if not is_system_agent(_)
-            ]
-            my_consumers = [
-                _ for _ in world.agent_consumers[aid] if not is_system_agent(_)
-            ]
-            my_competitors = (
-                world.suppliers[my_level + 1]
-                if not is_last_level
-                else world.suppliers[-1]
-            )
-            assert (
-                aid in my_competitors
-            ), f"{aid} not found in its competitors!! {my_competitors=}. My level is {my_level}"
+            my_suppliers = [_ for _ in world.agent_suppliers[aid] if not is_system_agent(_)]
+            my_consumers = [_ for _ in world.agent_consumers[aid] if not is_system_agent(_)]
+            my_competitors = world.suppliers[my_level + 1] if not is_last_level else world.suppliers[-1]
+            assert aid in my_competitors, f"{aid} not found in its competitors!! {my_competitors=}. My level is {my_level}"
             my_competitors = [_ for _ in my_competitors if _ != aid]
             n_consumers, n_suppliers = len(my_consumers), len(my_suppliers)
             n_competitors = len(my_competitors)
             if not isin(n_competitors, self.n_competitors):
-                warnings.warn(
-                    f"Invalid n_competitors: {n_competitors=} != {self.n_competitors=}"
-                )
+                warnings.warn(f"Invalid n_competitors: {n_competitors=} != {self.n_competitors=}", stacklevel=2)
                 return False
             if self.buying_strength is not None:
                 if self.buying_strength == Strength.Strong:
@@ -1739,14 +1630,13 @@ class LimitedPartnerNumbersContext(GeneralContext):
                         message=f"Strength {self.buying_strength} but {n_suppliers=} and {n_competitors=}",
                     ):
                         return False
-                elif self.buying_strength == Strength.Balanced:
-                    if _not(
-                        n_competitors - 1 <= n_suppliers <= n_competitors + 1,
-                        raise_on_failure=raise_on_failure,
-                        warn_on_failure=warn_on_failure,
-                        message=f"Strength {self.buying_strength} but {n_suppliers=} and {n_competitors=}",
-                    ):
-                        return False
+                elif self.buying_strength == Strength.Balanced and _not(
+                    n_competitors - 1 <= n_suppliers <= n_competitors + 1,
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=f"Strength {self.buying_strength} but {n_suppliers=} and {n_competitors=}",
+                ):
+                    return False
 
             if self.selling_strength is not None:
                 if self.selling_strength == Strength.Strong:
@@ -1765,14 +1655,13 @@ class LimitedPartnerNumbersContext(GeneralContext):
                         message=f"Strength {self.selling_strength} but {n_consumers=} and {n_competitors=}",
                     ):
                         return False
-                elif self.selling_strength == Strength.Balanced:
-                    if _not(
-                        n_competitors - 1 <= n_consumers <= n_competitors + 1,
-                        raise_on_failure=raise_on_failure,
-                        warn_on_failure=warn_on_failure,
-                        message=f"Strength {self.selling_strength} but {n_consumers=} and {n_competitors=}",
-                    ):
-                        return False
+                elif self.selling_strength == Strength.Balanced and _not(
+                    n_competitors - 1 <= n_consumers <= n_competitors + 1,
+                    raise_on_failure=raise_on_failure,
+                    warn_on_failure=warn_on_failure,
+                    message=f"Strength {self.selling_strength} but {n_consumers=} and {n_competitors=}",
+                ):
+                    return False
 
             if is_first_level:
                 if _not(
@@ -1881,9 +1770,7 @@ class LimitedPartnerNumbersContext(GeneralContext):
                 raise_on_failure=raise_on_failure,
                 warn_on_failure=warn_on_failure,
             )
-        return super().contains_context(
-            context, raise_on_failure, warn_on_failure, n_tests
-        )
+        return super().contains_context(context, raise_on_failure, warn_on_failure, n_tests)
 
 
 @define
@@ -1899,17 +1786,13 @@ class FixedPartnerNumbersContext(LimitedPartnerNumbersContext):
     def __attrs_post_init__(self):
         object.__setattr__(self, "n_consumers", (self.n_consumers, self.n_consumers))
         object.__setattr__(self, "n_suppliers", (self.n_suppliers, self.n_suppliers))
-        object.__setattr__(
-            self, "n_competitors", (self.n_competitors, self.n_competitors)
-        )
+        object.__setattr__(self, "n_competitors", (self.n_competitors, self.n_competitors))
         super().__attrs_post_init__()
         object.__setattr__(self, "n_consumers", self.n_consumers[0])  # type: ignore
         object.__setattr__(self, "n_suppliers", self.n_suppliers[0])  # type: ignore
         object.__setattr__(self, "n_competitors", self.n_competitors[0])  # type: ignore
 
-    def extract_context_params(
-        self, min_values: bool, level: int | None = None
-    ) -> ContextParams:
+    def extract_context_params(self, min_values: bool, level: int | None = None) -> ContextParams:
         assert level is None or level == self.level
         nlines = safemin(self.n_lines) if min_values else safemax(self.n_lines)
         nsuppliers = self.n_suppliers
@@ -1931,9 +1814,7 @@ class MonopolicContext(LimitedPartnerNumbersContext):
     def __attrs_post_init__(self):
         npp = self.n_agents_per_process
         if isinstance(npp, int):
-            assert (
-                npp == 1
-            ), f"You passed {self.n_agents_per_process=} to a MonopolicContext but this MUST be one in this case"
+            assert npp == 1, f"You passed {self.n_agents_per_process=} to a MonopolicContext but this MUST be one in this case"
         elif isinstance(npp, tuple):
             npp = (min(1, npp[0]), npp[1])
         else:
@@ -1949,9 +1830,7 @@ class SingleAgentPerLevelConsumerContext(MonopolicContext):
     level: int = -1
     n_consumers: tuple[int, int] = (0, 0)
     n_suppliers: tuple[int, int] = (1, 1)
-    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(
-        default=1, converter=lambda _: 1
-    )
+    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(default=1, converter=lambda _: 1)
 
 
 @define
@@ -1961,18 +1840,14 @@ class SingleAgentPerLevelSupplierContext(MonopolicContext):
     level: int = 0
     n_consumers: tuple[int, int] = (1, 1)
     n_suppliers: tuple[int, int] = (0, 0)
-    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(
-        default=1, converter=lambda _: 1
-    )
+    n_agents_per_process: np.ndarray | list[int] | tuple[int, int] | int = field(default=1, converter=lambda _: 1)
 
 
 @define
 class EutopiaContext(MonopolicContext):
     """An unrealistic context in which the agent is the only one in its level and all other agents are nice."""
 
-    non_competitors: tuple[str | type[OneShotAgent], ...] = field(
-        default=(NiceAgent,), converter=lambda _: (NiceAgent,)
-    )
+    non_competitors: tuple[str | type[OneShotAgent], ...] = field(default=(NiceAgent,), converter=lambda _: (NiceAgent,))
 
 
 @define
@@ -1994,8 +1869,7 @@ class EutopiaConsumerContext(EutopiaContext):
 
 
 @define
-class FixedPartnerNumbersOneShotContext(FixedPartnerNumbersContext):
-    ...
+class FixedPartnerNumbersOneShotContext(FixedPartnerNumbersContext): ...
 
 
 @define
@@ -2067,13 +1941,13 @@ class SupplierContext(LimitedPartnerNumbersOneShotContext):
             min(N_SUPPLIERS[0], N_CONSUMERS[0]),  # type: ignore
             max(N_SUPPLIERS[1], N_CONSUMERS[1]),  # type: ignore
         )
-        kwargs |= dict(
-            n_suppliers=(0, 0),  # suppliers have no suppliers
-            n_consumers=N_CONSUMERS,
-            n_competitors=(N_SUPPLIERS[0] - 1, N_SUPPLIERS[1] - 1),
-            n_agents_per_process=n_agents_per_process,
-            level=0,  # suppliers are always in the first level
-        )
+        kwargs |= {
+            "n_suppliers": (0, 0),  # suppliers have no suppliers
+            "n_consumers": N_CONSUMERS,
+            "n_competitors": (N_SUPPLIERS[0] - 1, N_SUPPLIERS[1] - 1),
+            "n_agents_per_process": n_agents_per_process,
+            "level": 0,  # suppliers are always in the first level
+        }
         super().__init__(*args, **kwargs)
 
 
@@ -2082,7 +1956,7 @@ class StrongSupplierContext(SupplierContext):
     """A supplier with almost many consumers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Strong)
+        kwargs |= {"selling_strength": Strength.Strong}
         super().__init__(*args, **kwargs)
 
 
@@ -2091,7 +1965,7 @@ class BalancedSupplierContext(SupplierContext):
     """A supplier with almost same number of consumers as competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Balanced)
+        kwargs |= {"selling_strength": Strength.Balanced}
         super().__init__(*args, **kwargs)
 
 
@@ -2100,7 +1974,7 @@ class WeakSupplierContext(SupplierContext):
     """A supplier with few consumers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Weak)
+        kwargs |= {"selling_strength": Strength.Weak}
         super().__init__(*args, **kwargs)
 
 
@@ -2113,13 +1987,13 @@ class ConsumerContext(LimitedPartnerNumbersOneShotContext):
             min(N_SUPPLIERS[0], N_CONSUMERS[0]),  # type: ignore
             max(N_SUPPLIERS[1], N_CONSUMERS[1]),  # type: ignore
         )
-        kwargs |= dict(
-            n_suppliers=N_SUPPLIERS,
-            n_consumers=(0, 0),  # consumers have no consumers
-            n_competitors=(N_CONSUMERS[0] - 1, N_CONSUMERS[1] - 1),
-            n_agents_per_process=n_agents_per_process,
-            level=-1,  # consumers are always in the last level
-        )
+        kwargs |= {
+            "n_suppliers": N_SUPPLIERS,
+            "n_consumers": (0, 0),  # consumers have no consumers
+            "n_competitors": (N_CONSUMERS[0] - 1, N_CONSUMERS[1] - 1),
+            "n_agents_per_process": n_agents_per_process,
+            "level": -1,  # consumers are always in the last level
+        }
         super().__init__(*args, **kwargs)
 
 
@@ -2128,7 +2002,7 @@ class StrongConsumerContext(ConsumerContext):
     """A consumer with almost many suppliers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(buying_strength=Strength.Strong)
+        kwargs |= {"buying_strength": Strength.Strong}
         super().__init__(*args, **kwargs)
 
 
@@ -2137,7 +2011,7 @@ class BalancedConsumerContext(ConsumerContext):
     """A consumer with almost same number of suppliers as competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(buying_strength=Strength.Balanced)
+        kwargs |= {"buying_strength": Strength.Balanced}
         super().__init__(*args, **kwargs)
 
 
@@ -2146,7 +2020,7 @@ class WeakConsumerContext(ConsumerContext):
     """A consumer with few suppliers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(buying_strength=Strength.Weak)
+        kwargs |= {"buying_strength": Strength.Weak}
         super().__init__(*args, **kwargs)
 
 
@@ -2159,9 +2033,7 @@ class OneShotContext(GeneralContext):
 class RepeatingContext(BaseContext):
     """Encapsulates one or more configs and switches between them when asked to generate or make something."""
 
-    configs: tuple[dict[str, Any], ...] = field(
-        factory=lambda: (GeneralContext().make_config(),)
-    )
+    configs: tuple[dict[str, Any], ...] = field(factory=lambda: (GeneralContext().make_config(),))
     randomize: bool = True
     rename: bool = True
     _next: int = field(init=False, default=0)
@@ -2170,15 +2042,11 @@ class RepeatingContext(BaseContext):
         if not self.configs:
             raise ValueError("RepeatingContext with no configs")
 
-    def extract_context_params(
-        self, min_values: bool, level: int | None = None
-    ) -> ContextParams:
+    def extract_context_params(self, min_values: bool, level: int | None = None) -> ContextParams:
         nlines, nsuppliers, nconsumers = 0, 0, 0
         nlines = min(get_n_lines(_)[0] for _ in self.configs)
-        perishables = set(_.get("perishable", None) for _ in self.configs)
-        assert (
-            len(perishables) == 1
-        ), f"Found {perishables} perishables. We cannot combine OneShot and Std worlds here"
+        perishables = {_.get("perishable", None) for _ in self.configs}
+        assert len(perishables) == 1, f"Found {perishables} perishables. We cannot combine OneShot and Std worlds here"
         perishable = list(perishables)[0]
         assert len(self.placeholder_types) == 1
         mn_suppliers, mx_suppliers = float("inf"), float("-inf")
@@ -2187,15 +2055,11 @@ class RepeatingContext(BaseContext):
         for config in self.configs:
             app = get_n_agents_per_process(config)
             n_processes = len(app)
-            existing_types = [
-                _.get("controller_type", None) for _ in config["agent_params"]
-            ]
+            existing_types = [_.get("controller_type", None) for _ in config["agent_params"]]
             try:
                 agent_indx = existing_types.index(self.placeholder_types[0])
             except ValueError:
-                raise ValueError(
-                    f"Cannot find {self.placeholder_types[0]=} in {existing_types=}"
-                )
+                raise ValueError(f"Cannot find {self.placeholder_types[0]=} in {existing_types=}") from None
 
             my_level = config["profiles"][agent_indx].level
             assert level is None or my_level == level
@@ -2226,13 +2090,9 @@ class RepeatingContext(BaseContext):
             self._next = random.randint(0, len(self.configs) - 1)
         config = self.configs[self._next]
         self._next = (self._next + 1) % len(self.configs)
-        config = self.world_type.replace_agents(
-            config, self.placeholder_types, types, params
-        )
+        config = self.world_type.replace_agents(config, self.placeholder_types, types, params)
         if self.rename:
-            config["name"] = unique_name(
-                f"c{self._next}", add_time=False, rand_digits=6, sep=""
-            )
+            config["name"] = unique_name(f"c{self._next}", add_time=False, rand_digits=6, sep="")
         return config
 
     @classmethod
@@ -2258,10 +2118,7 @@ class RepeatingContext(BaseContext):
         warn_on_failure: bool = False,
     ):
         for config in context.configs:
-            if any(
-                _config_matches_base(config, base, raise_on_failure, warn_on_failure)
-                for base in self.configs
-            ):
+            if any(_config_matches_base(config, base, raise_on_failure, warn_on_failure) for base in self.configs):
                 break
         else:
             return False
@@ -2279,9 +2136,7 @@ class RepeatingContext(BaseContext):
             if _world_matches_config(
                 world,
                 config,
-                expected_types=list(self.non_competitors) + list(types)
-                if types
-                else None,
+                expected_types=list(self.non_competitors) + list(types) if types else None,
                 expected_world_type=self.world_type,
                 raise_on_failure=raise_on_failure,
                 warn_on_failure=warn_on_failure,
@@ -2297,9 +2152,5 @@ class RepeatingContext(BaseContext):
         n_tests: int = NTESTS,
     ) -> bool:
         if isinstance(context, RepeatingContext):
-            return self.contains_repeating_context(
-                context, raise_on_failure, warn_on_failure
-            )
-        return super().contains_context(
-            context, raise_on_failure, warn_on_failure, n_tests
-        )
+            return self.contains_repeating_context(context, raise_on_failure, warn_on_failure)
+        return super().contains_context(context, raise_on_failure, warn_on_failure, n_tests)
