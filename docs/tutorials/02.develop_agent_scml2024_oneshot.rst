@@ -2800,9 +2800,11 @@ for our partners:
 
    distribution = self.distribute_needs()
    return {
-       k: SAOResponse(ResponseType.END_NEGOTIATION, None)
-       if q == 0
-       else SAOResponse(ResponseType.REJECT_OFFER, (q, s, p))
+       k: (
+           SAOResponse(ResponseType.END_NEGOTIATION, None)
+           if q == 0
+           else SAOResponse(ResponseType.REJECT_OFFER, (q, s, p))
+       )
        for k, q in distribution.items()
    }
 

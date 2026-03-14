@@ -1,4 +1,4 @@
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from negmas import Breach, Contract
 
@@ -32,9 +32,7 @@ class OneShotSCML2020Adapter(DefaultOneShotAdapter):
     def on_contract_executed(self, contract: Contract) -> None:
         return self._obj.on_contract_executed(contract)
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         return self._obj.on_contract_breached(contract, breaches, resolution)
 
     def init(self):

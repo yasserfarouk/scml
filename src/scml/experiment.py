@@ -4,9 +4,10 @@ import sys
 import time
 import traceback
 from collections import namedtuple
+from collections.abc import Iterable
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import click
 import pandas as pd
@@ -110,7 +111,7 @@ def get_var_vals(var: str, val: Any) -> dict[str, Any]:
     """Extracts variable name and value allowing for multiple names separated by semicolon"""
     if ";" not in var:
         return {var: val}
-    return dict(zip(var.split(";"), val))
+    return dict(zip(var.split(";"), val, strict=False))
 
 
 def run_config(world_config: dict[str, Any], funcs: list[str]):
@@ -153,9 +154,7 @@ def satisfied(config: dict[str, Any], constraints: Iterable[Constraint]) -> bool
 
     """
     for c in constraints:
-        if not all(
-            config[var] in val for var, val in zip(c.condition_vars, c.condition_values)
-        ):
+        if not all(config[var] in val for var, val in zip(c.condition_vars, c.condition_values, strict=False)):
             continue
         if config[c.conditioned_var] not in c.feasible_values:
             return False
@@ -166,7 +165,7 @@ def generate_configs_factorial(
     ind_vars: dict[str, list],
     fixed_vars: dict[str, Any],
     n_worlds_per_condition=5,
-    constraints: tuple[Constraint, ...] = tuple(),
+    constraints: tuple[Constraint, ...] = (),
 ) -> list[dict[str, Any]]:
     """
     Generates all configs for an experiment with a factorial design
@@ -190,7 +189,7 @@ def generate_configs_factorial(
     configs = []
     for c in combinations:
         d = {}
-        for key, value in zip(ind_vars.keys(), c):
+        for key, value in zip(ind_vars.keys(), c, strict=False):
             d.update(get_var_vals(key, value))
         config = dict(**fixed_vars)
         config.update(d)
@@ -237,10 +236,7 @@ def run_configs(configs: Iterable[dict[str, Any]], n_jobs: int) -> pd.DataFrame:
             results.append(run_config(world_config, list(dep_vars.keys())))
         return pd.DataFrame(results)
 
-    results = Parallel(n_jobs=n_jobs)(
-        delayed(run_config)(configs[i], list(dep_vars.keys()))
-        for i in track(range(len(configs)))
-    )
+    results = Parallel(n_jobs=n_jobs)(delayed(run_config)(configs[i], list(dep_vars.keys())) for i in track(range(len(configs))))
     return pd.DataFrame(results)
 
 
@@ -249,7 +245,7 @@ def run(
     fixed_vars: dict[str, Any],
     n_worlds_per_condition=5,
     factorial: bool = True,
-    constraints: tuple[Constraint, ...] = tuple(),
+    constraints: tuple[Constraint, ...] = (),
     n_jobs: float | int = 0,
 ) -> pd.DataFrame:
     """
@@ -268,16 +264,12 @@ def run(
     """
     n_jobs = jobs(n_jobs)
     if factorial:
-        configs = generate_configs_factorial(
-            ind_vars, fixed_vars, n_worlds_per_condition, constraints
-        )
+        configs = generate_configs_factorial(ind_vars, fixed_vars, n_worlds_per_condition, constraints)
     else:
         configs = []
         for k, v in ind_vars.items():
             configs += generate_configs_single(k, v, fixed_vars, n_worlds_per_condition)
-    print(
-        f"Will run a total of {len(configs)} configs using {n_jobs} core{'s' if n_jobs > 1 else ''}"
-    )
+    print(f"Will run a total of {len(configs)} configs using {n_jobs} core{'s' if n_jobs > 1 else ''}")
     return run_configs(configs, n_jobs)
 
 
@@ -310,8 +302,7 @@ def run(
     "--variables",
     type=str,
     default="all",
-    help="A semicolon separated list of independent variable names to try. The"
-    " special value 'all' will use all independent variables",
+    help="A semicolon separated list of independent variable names to try. The special value 'all' will use all independent variables",
 )
 @click.option(
     "--compact/--debug",
@@ -321,8 +312,7 @@ def run(
 @click.option(
     "--log/--nolog",
     default=not NOLOGS,
-    help="Whether to keep or not keep logs. Should not use --nolog except with "
-    "--compact.",
+    help="Whether to keep or not keep logs. Should not use --nolog except with --compact.",
 )
 @click.option("-n", "--name", type=str, default=None, help="Experiment Name")
 @click.option(
@@ -361,7 +351,7 @@ def main(worlds, factorial, variables, name, steps, compact, log, jobs):
         if ";" in v:
             vs = v.split(";")
             vals = random.sample(ind_vars[v], 1)[0]
-            fixed_vars.update(dict(zip(vs, vals)))
+            fixed_vars.update(dict(zip(vs, vals, strict=False)))
             continue
         fixed_vars[v] = random.sample(ind_vars[v], 1)[0]
 
@@ -397,13 +387,6 @@ def main(worlds, factorial, variables, name, steps, compact, log, jobs):
         f"Untested Variables: {list(fixed_vars.keys())}\n"
         f"n. runs per world: {worlds} ({'factorial' if factorial else 'non-factorial'})"
     )
-    path = (
-        Path.home()
-        / "negmas"
-        / "experiments"
-        / unique_name("E" if name is None else name, add_time=True, sep="")
-    )
+    path = Path.home() / "negmas" / "experiments" / unique_name("E" if name is None else name, add_time=True, sep="")
     path.mkdir(parents=True, exist_ok=True)
-    run(ind_vars, fixed_vars, worlds, factorial, constraints, n_jobs=jobs).to_csv(
-        path / "results.csv"
-    )
+    run(ind_vars, fixed_vars, worlds, factorial, constraints, n_jobs=jobs).to_csv(path / "results.csv")

@@ -2,7 +2,6 @@
 Implements the `DecentralizingAgent` which creates ony buy and one sell controller for each time-step and relinquishes
 control of negotiations to buy/sell the required number of items of its input/output product.
 """
-from typing import Tuple
 
 import numpy as np
 
@@ -40,7 +39,7 @@ class ReactiveAgent(
 
         return needed[step] - secured[step]
 
-    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:
+    def target_quantities(self, steps: tuple[int, int], sell: bool) -> np.ndarray:
         """Implemented for speed but not really required"""
 
         if sell:

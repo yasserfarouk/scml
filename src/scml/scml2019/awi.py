@@ -1,7 +1,8 @@
 """
 Implements an agent-world-interface (see `AgentWorldInterface`) for the SCM world.
 """
-from typing import Any, Dict, List, Optional
+
+from typing import Any
 
 from negmas import Issue
 from negmas.situated import Action, AgentWorldInterface, Contract
@@ -154,17 +155,15 @@ class SCMLAWI(AgentWorldInterface):
         """Registers a CFP"""
         self._world.n_new_cfps += 1
         cfp.money_resolution = self._world.money_resolution
-        cfp.publisher = (
-            self.agent.id
-        )  # force the publisher to be the agent using this AWI.
+        cfp.publisher = self.agent.id  # force the publisher to be the agent using this AWI.
         self.logdebug(f"{self.agent.name} registered CFP {str(cfp)}")
         self.bb_record(section="cfps", key=cfp.id, value=cfp)
 
-    def register_interest(self, products: List[int]) -> None:
+    def register_interest(self, products: list[int]) -> None:
         """registers interest in receiving callbacks about CFPs related to these products"""
         self._world.register_interest(agent=self.agent, products=products)
 
-    def unregister_interest(self, products: List[int]) -> None:
+    def unregister_interest(self, products: list[int]) -> None:
         """registers interest in receiving callbacks about CFPs related to these products"""
         self._world.unregister_interest(agent=self.agent, products=products)
 
@@ -174,7 +173,7 @@ class SCMLAWI(AgentWorldInterface):
             return False
         return self.bb_remove(section="cfps", key=str(hash(cfp)))
 
-    def evaluate_insurance(self, contract: Contract, t: int = None) -> Optional[float]:
+    def evaluate_insurance(self, contract: Contract, t: int = None) -> float | None:
         """Can be called to evaluate the premium for insuring the given contract against breaches committed by others
 
         Args:
@@ -200,9 +199,9 @@ class SCMLAWI(AgentWorldInterface):
         self,
         cfp: CFP,
         req_id: str,
-        roles: List[str] = None,
+        roles: list[str] = None,
         mechanism_name: str = None,
-        mechanism_params: Dict[str, Any] = None,
+        mechanism_params: dict[str, Any] = None,
     ) -> bool:
         """
         Requests a negotiation with the publisher of a given CFP
@@ -229,9 +228,7 @@ class SCMLAWI(AgentWorldInterface):
         if self._world.prevent_cfp_tampering:
             cfp_ = self._world.bulletin_board.read("cfps", cfp.id)
             if cfp_ is None:
-                self._world.logwarning(
-                    f"CFP {str(cfp)} with id {cfp.id} was tampered with by {self.agent.name} and will be ignored"
-                )
+                self._world.logwarning(f"CFP {str(cfp)} with id {cfp.id} was tampered with by {self.agent.name} and will be ignored")
                 return False
             cfp = cfp_
         default_annotation = self._create_annotation(cfp)
@@ -247,13 +244,13 @@ class SCMLAWI(AgentWorldInterface):
 
     def request_negotiation_about(
         self,
-        issues: List[Issue],
-        partners: List[str],
+        issues: list[Issue],
+        partners: list[str],
         req_id: str,
-        roles: List[str] = None,
-        annotation: Optional[Dict[str, Any]] = None,
+        roles: list[str] = None,
+        annotation: dict[str, Any] | None = None,
         mechanism_name: str = None,
-        mechanism_params: Dict[str, Any] = None,
+        mechanism_params: dict[str, Any] = None,
     ):
         """
         Overrides the method of the same name in the base class to disable it in SCM Worlds.
@@ -261,10 +258,7 @@ class SCMLAWI(AgentWorldInterface):
         **Do not call this method**
 
         """
-        raise RuntimeError(
-            "request_negotiation_about should never be called directly in the SCM world"
-            ", call request_negotiation instead."
-        )
+        raise RuntimeError("request_negotiation_about should never be called directly in the SCM world, call request_negotiation instead.")
 
     def is_bankrupt(self, agent_id: str) -> bool:
         """
@@ -279,7 +273,7 @@ class SCMLAWI(AgentWorldInterface):
         """
         return bool(self.bb_read("bankruptcy", key=agent_id))
 
-    def reports_for(self, agent_id: str) -> List[FinancialReport]:
+    def reports_for(self, agent_id: str) -> list[FinancialReport]:
         """
         Gets all financial reports of an agent (in the order of their publication)
 
@@ -294,7 +288,7 @@ class SCMLAWI(AgentWorldInterface):
             return []
         return reports
 
-    def reports_at(self, step: int = None) -> Dict[str, FinancialReport]:
+    def reports_at(self, step: int = None) -> dict[str, FinancialReport]:
         """
         Gets all financial reports of all agents at a given step
 
@@ -308,18 +302,14 @@ class SCMLAWI(AgentWorldInterface):
         """
         if step is None:
             reports = self.bb_query(section="reports_time", query=None)
-            reports = self.bb_read(
-                "reports_time", key=str(max(int(_) for _ in reports.keys()))
-            )
+            reports = self.bb_read("reports_time", key=str(max(int(_) for _ in reports)))
         else:
             reports = self.bb_read("reports_time", key=str(step))
         if reports is None:
             return {}
         return reports
 
-    def receive_financial_reports(
-        self, receive: bool = True, agents: Optional[List[str]] = None
-    ) -> None:
+    def receive_financial_reports(self, receive: bool = True, agents: list[str] | None = None) -> None:
         """
         Registers/unregisters interest in receiving financial reports
 
@@ -347,12 +337,12 @@ class SCMLAWI(AgentWorldInterface):
         return self._world.get_private_state(self.agent)
 
     @property
-    def products(self) -> List[Product]:
+    def products(self) -> list[Product]:
         """Products in the world"""
         return self._world.products
 
     @property
-    def processes(self) -> List[Process]:
+    def processes(self) -> list[Process]:
         """Processes in the world"""
         return self._world.processes
 
@@ -362,7 +352,7 @@ class SCMLAWI(AgentWorldInterface):
         self,
         profile: int,
         step: int,
-        contract: Optional[Contract] = None,
+        contract: Contract | None = None,
         override: bool = True,
     ) -> None:
         """
@@ -387,9 +377,7 @@ class SCMLAWI(AgentWorldInterface):
             )
         )
 
-    def stop_production(
-        self, line: int, step: int, contract: Optional[Contract], override: bool = True
-    ):
+    def stop_production(self, line: int, step: int, contract: Contract | None, override: bool = True):
         """
         Stops/cancels production scheduled at the given line at the given time.
 
@@ -410,7 +398,7 @@ class SCMLAWI(AgentWorldInterface):
         step: Step to stop/cancel production at
     """
 
-    def schedule_job(self, job: Job, contract: Optional[Contract]):
+    def schedule_job(self, job: Job, contract: Contract | None):
         """
         Schedules production using a `Job` object. This can be used to schedule any kind of job
 
@@ -450,11 +438,7 @@ class SCMLAWI(AgentWorldInterface):
               exists is hidden
             - hiding is always immediate
         """
-        self.execute(
-            action=Action(
-                type="hide_product", params={"product": product, "quantity": quantity}
-            )
-        )
+        self.execute(action=Action(type="hide_product", params={"product": product, "quantity": quantity}))
 
     def hide_funds(self, amount: float) -> None:
         """
@@ -486,11 +470,7 @@ class SCMLAWI(AgentWorldInterface):
               exists is hidden
             - hiding is always immediate
         """
-        self.execute(
-            action=Action(
-                type="unhide_product", params={"product": product, "quantity": quantity}
-            )
-        )
+        self.execute(action=Action(type="unhide_product", params={"product": product, "quantity": quantity}))
 
     def unhide_funds(self, amount: float) -> None:
         """

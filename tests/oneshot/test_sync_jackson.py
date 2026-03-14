@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import math
+import random
 import sys
 from collections import defaultdict
 
@@ -9,14 +10,12 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 from hypothesis import given, settings
-import random
-
-from scml.oneshot.ufun import OneShotUFun
 from negmas import Outcome, ResponseType, SAOResponse, SAOState
 from negmas.sao.negotiators.controlled import ControlledSAONegotiator
 
 from scml.oneshot import OneShotAgent, OneShotSyncAgent
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE
+from scml.oneshot.ufun import OneShotUFun
 
 from ..switches import DefaultOneShotWorld
 
@@ -42,11 +41,7 @@ class SimpleAgent(OneShotAgent):
         my_needs = self._needed(negotiator_id)
         if my_needs <= 0:
             return ResponseType.END_NEGOTIATION
-        return (
-            ResponseType.ACCEPT_OFFER
-            if offer[QUANTITY] <= my_needs
-            else ResponseType.REJECT_OFFER
-        )
+        return ResponseType.ACCEPT_OFFER if offer[QUANTITY] <= my_needs else ResponseType.REJECT_OFFER
 
     def best_offer(self, negotiator_id) -> Outcome | None:
         my_needs = self._needed(negotiator_id)
@@ -58,9 +53,7 @@ class SimpleAgent(OneShotAgent):
         quantity_issue = nmi.issues[QUANTITY]
         unit_price_issue = nmi.issues[UNIT_PRICE]
         offer = [-1] * 3
-        offer[QUANTITY] = max(
-            min(my_needs, quantity_issue.max_value), quantity_issue.min_value
-        )
+        offer[QUANTITY] = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
         offer[TIME] = self.awi.current_step
         if self._is_selling(nmi):
             offer[UNIT_PRICE] = unit_price_issue.max_value
@@ -69,11 +62,7 @@ class SimpleAgent(OneShotAgent):
         return tuple(offer)
 
     def _needed(self, negotiator_id=None):
-        return (
-            self.awi.current_exogenous_input_quantity
-            + self.awi.current_exogenous_output_quantity
-            - self.secured
-        )
+        return self.awi.current_exogenous_input_quantity + self.awi.current_exogenous_output_quantity - self.secured
 
     def _is_selling(self, nmi):
         return nmi.annotation["product"] == self.awi.my_output_product
@@ -91,9 +80,7 @@ class BetterAgent(SimpleAgent):
         if not offer:
             return None
         offer = list(offer)
-        offer[UNIT_PRICE] = int(
-            round(self._find_good_price(self.get_nmi(negotiator_id), state))
-        )
+        offer[UNIT_PRICE] = int(round(self._find_good_price(self.get_nmi(negotiator_id), state)))
         return tuple(offer)
 
     def respond(self, negotiator_id, state, source=None):
@@ -103,11 +90,7 @@ class BetterAgent(SimpleAgent):
             return response
         nmi = self.get_nmi(negotiator_id)
         assert offer is not None
-        return (
-            response
-            if self._is_good_price(nmi, state, offer[UNIT_PRICE])
-            else ResponseType.REJECT_OFFER
-        )
+        return response if self._is_good_price(nmi, state, offer[UNIT_PRICE]) else ResponseType.REJECT_OFFER
 
     def _is_good_price(self, nmi, state, price):
         """Checks if a given price is good enough at this stage"""
@@ -160,7 +143,8 @@ class SyncAgent(OneShotSyncAgent, BetterAgent):  # type: ignore
         return dict(
             zip(
                 self.negotiators.keys(),
-                (self.best_offer(_) for _ in self.negotiators.keys()),
+                (self.best_offer(_) for _ in self.negotiators),
+                strict=False,
             )
         )
 
@@ -171,23 +155,18 @@ class SyncAgent(OneShotSyncAgent, BetterAgent):  # type: ignore
         d = max(steps) - min(steps)
         if missing:
             for n in missing:
-                assert not self.negotiators[
-                    n
-                ][
-                    0
-                ].nmi.state.running, f"{n} is not present in the state and the negotiation is still running (Max round diff is {d})."
+                assert not self.negotiators[n][0].nmi.state.running, (
+                    f"{n} is not present in the state and the negotiation is still running (Max round diff is {d})."
+                )
         assert d <= self.max_round_diff, f"Max round diff is {d}\n\t{states}"
-        responses = {
-            k: SAOResponse(ResponseType.REJECT_OFFER, v)
-            for k, v in self.first_proposals().items()
-        }
+        responses = {k: SAOResponse(ResponseType.REJECT_OFFER, v) for k, v in self.first_proposals().items()}
         my_needs = self._needed()
-        is_selling = (self._is_selling(self.get_nmi(_)) for _ in offers.keys())
+        is_selling = (self._is_selling(self.get_nmi(_)) for _ in offers)
         sorted_offers = sorted(
-            zip(offers.values(), is_selling),
+            zip(offers.values(), is_selling, strict=False),
             key=lambda x: (-x[0][UNIT_PRICE]) if x[1] else x[0][UNIT_PRICE],
         )
-        secured, outputs, chosen = 0, [], dict()
+        secured, outputs, chosen = 0, [], {}
         for i, k in enumerate(offers.keys()):
             offer, is_output = sorted_offers[i]
             secured += offer[QUANTITY]
@@ -200,7 +179,7 @@ class SyncAgent(OneShotSyncAgent, BetterAgent):  # type: ignore
         rng = self.ufun.max_utility - self.ufun.min_utility
         threshold = self._threshold * rng + self.ufun.min_utility
         if u >= threshold:
-            for k in chosen.keys():
+            for k in chosen:
                 responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
         return responses
 
@@ -217,8 +196,7 @@ class ReporterAgent(BetterAgent):
     def respond(self, negotiator_id, state, source=None):
         offer = state.current_offer
         assert state.running, (
-            f"{self.id} called to respond in a negotiation that "
-            f"is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}"
+            f"{self.id} called to respond in a negotiation that is no longer running\n{state}\noffer:{offer}\npartner:{negotiator_id}"
         )
         self.round_nums[negotiator_id] += 1
         max_diff = max(self.round_nums.values()) - min(self.round_nums.values())
@@ -241,16 +219,10 @@ class ReporterAgent(BetterAgent):
                     f"\n{mx_id} state: {self.negotiators[mx_id][0].nmi.state}"
                 )
                 if isinstance(self.negotiators[mn_id][0], ControlledSAONegotiator):
-                    sync_partner = [
-                        _
-                        for _ in self.negotiators[mn_id][0].nmi._mechanism.negotiators
-                        if _.owner.id == mn_id
-                    ][0].parent
+                    sync_partner = [_ for _ in self.negotiators[mn_id][0].nmi._mechanism.negotiators if _.owner.id == mn_id][0].parent
                     for k, v in vars(sync_partner).items():
                         if k.startswith("_SAOSync"):
-                            msg += (
-                                f'\n{k.replace("_SAOSyncController__", "")}:{str(v)}\n'
-                            )
+                            msg += f"\n{k.replace('_SAOSyncController__', '')}:{str(v)}\n"
                 raise AssertionError(msg)
                 # print(msg)
                 # log_str = f"{datetime.now()}: on round {self.round_nums[negotiator_id]} with opp {negotiator_id}"
@@ -259,10 +231,8 @@ class ReporterAgent(BetterAgent):
 
     def on_negotiation_success(self, contract, mechanism):
         partners = [_ for _ in contract.partners if _ != self.id]
-        assert (
-            len(partners) == 1
-        ), f"id={self.id}, partners={contract.partners}\n{contract}\n{mechanism.state}"
-        if partners[0] in self.round_nums.keys():
+        assert len(partners) == 1, f"id={self.id}, partners={contract.partners}\n{contract}\n{mechanism.state}"
+        if partners[0] in self.round_nums:
             del self.round_nums[partners[0]]
 
     def on_negotiation_failure(
@@ -273,10 +243,8 @@ class ReporterAgent(BetterAgent):
         state,
     ) -> None:
         npartners = [_ for _ in partners if _ != self.id]
-        assert (
-            len(npartners) == 1
-        ), f"id={self.id}, partners={partners}\n{annotation}\n{state}"
-        if npartners[0] in self.round_nums.keys():
+        assert len(npartners) == 1, f"id={self.id}, partners={partners}\n{annotation}\n{state}"
+        if npartners[0] in self.round_nums:
             del self.round_nums[npartners[0]]
 
 
@@ -291,33 +259,15 @@ def run_experiment(
     enable_time_limit=True,
     shuffle_negotiations=False,
 ):
-    suppliers = (
-        ([ReporterAgent] if supplier_reporter else [])
-        + [SyncAgent] * n_sync_suppliers
-        + [BetterAgent] * (2 - n_sync_suppliers)
-    )  # type: ignore
-    consumers = (
-        ([ReporterAgent] if consumer_reporter else [])
-        + [SyncAgent] * n_sync_consumers
-        + [BetterAgent] * (2 - n_sync_consumers)
-    )  # type: ignore
-    max_round_diff = (
-        len(suppliers) * n_sync_consumers + len(consumers) * n_sync_suppliers + 1
-    )
-    supplier_params = [
-        (
-            dict(controller_params=dict(max_round_diff=max_round_diff))
-            if supplier_reporter
-            else dict()
-        )
-    ] + [dict() for _ in range(len(suppliers) - 1)]
-    consumer_params = [
-        (
-            dict(controller_params=dict(max_round_diff=max_round_diff))
-            if consumer_reporter
-            else dict()
-        )
-    ] + [dict() for _ in range(len(consumers) - 1)]
+    suppliers = ([ReporterAgent] if supplier_reporter else []) + [SyncAgent] * n_sync_suppliers + [BetterAgent] * (2 - n_sync_suppliers)  # type: ignore
+    consumers = ([ReporterAgent] if consumer_reporter else []) + [SyncAgent] * n_sync_consumers + [BetterAgent] * (2 - n_sync_consumers)  # type: ignore
+    max_round_diff = len(suppliers) * n_sync_consumers + len(consumers) * n_sync_suppliers + 1
+    supplier_params = [({"controller_params": {"max_round_diff": max_round_diff}} if supplier_reporter else {})] + [
+        {} for _ in range(len(suppliers) - 1)
+    ]
+    consumer_params = [({"controller_params": {"max_round_diff": max_round_diff}} if consumer_reporter else {})] + [
+        {} for _ in range(len(consumers) - 1)
+    ]
     types = suppliers + consumers
     params = supplier_params + consumer_params
     if n_steps <= 2:

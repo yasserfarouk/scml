@@ -96,15 +96,11 @@ class GreedyStdAgent(StdAgent):
         if contract.annotation["product"] == self.awi.my_output_product:
             partner = contract.annotation["buyer"]
             self._best_acc_selling = max(up, self._best_acc_selling)
-            self._best_opp_acc_selling[partner] = max(
-                up, self._best_opp_acc_selling[partner]
-            )
+            self._best_opp_acc_selling[partner] = max(up, self._best_opp_acc_selling[partner])
         else:
             partner = contract.annotation["seller"]
             self._best_acc_buying = min(up, self._best_acc_buying)
-            self._best_opp_acc_buying[partner] = min(
-                up, self._best_opp_acc_buying[partner]
-            )
+            self._best_opp_acc_buying[partner] = min(up, self._best_opp_acc_buying[partner])
 
     def propose(self, negotiator_id: str, state, source=None) -> Outcome | None:
         # find the absolute best offer for me. This will most likely has an
@@ -117,9 +113,7 @@ class GreedyStdAgent(StdAgent):
 
         # over-write the unit price in the best offer with a good-enough price
         offer = list(offer)
-        offer[UNIT_PRICE] = self._find_good_price(
-            self.get_nmi(negotiator_id), state, offer
-        )
+        offer[UNIT_PRICE] = self._find_good_price(self.get_nmi(negotiator_id), state, offer)
         return tuple(offer)
 
     def respond(self, negotiator_id, state, source=None) -> ResponseType:
@@ -131,10 +125,7 @@ class GreedyStdAgent(StdAgent):
         response = (
             ResponseType.ACCEPT_OFFER
             if (offer[QUANTITY] <= my_needs and offer[TIME] == self.awi.current_step)
-            or (
-                offer[QUANTITY] < self._future_needs(negotiator_id, offer[TIME])
-                and offer[TIME] > self.awi.current_step
-            )
+            or (offer[QUANTITY] < self._future_needs(negotiator_id, offer[TIME]) and offer[TIME] > self.awi.current_step)
             else ResponseType.REJECT_OFFER
         )
         if response != ResponseType.ACCEPT_OFFER:
@@ -142,11 +133,7 @@ class GreedyStdAgent(StdAgent):
 
         # reject offers with prices that are deemed NOT good-enough
         nmi = self.get_nmi(negotiator_id)
-        response = (
-            response
-            if self._is_good_price(nmi, state, offer)
-            else ResponseType.REJECT_OFFER
-        )
+        response = response if self._is_good_price(nmi, state, offer) else ResponseType.REJECT_OFFER
         # If this response is about today, do not update internal stats
         if offer[TIME] != self.awi.current_step:
             return response
@@ -181,9 +168,7 @@ class GreedyStdAgent(StdAgent):
                 offer = [-1] * 3
                 quantity_issue = nmi.issues[QUANTITY]
                 unit_price_issue = nmi.issues[UNIT_PRICE]
-                mx = max(
-                    min(my_needs, quantity_issue.max_value), quantity_issue.min_value
-                )
+                mx = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
                 # never contract offer more than production capacity
                 mx = max(0, min(mx, self.awi.n_lines * (t - self.awi.current_step)))
                 if mx < 1:
@@ -204,9 +189,7 @@ class GreedyStdAgent(StdAgent):
         mx = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
         # never contract offer more than production capacity
         mx = min(mx, self.awi.n_lines)
-        offer[QUANTITY] = random.randint(
-            max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps)), int(mx)
-        )
+        offer[QUANTITY] = random.randint(max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps)), int(mx))
         offer[TIME] = self.awi.current_step
         if self._is_selling(nmi):
             offer[UNIT_PRICE] = unit_price_issue.max_value
@@ -217,25 +200,13 @@ class GreedyStdAgent(StdAgent):
     def _future_needs(self, negotiator_id, t):
         return self._production_target * (
             self.awi.n_lines
-            - sum(
-                (
-                    self.awi.future_sales
-                    if negotiator_id in self.awi.my_consumers
-                    else self.awi.future_supplies
-                )
-                .get(t, dict())
-                .values()
-            )
+            - sum((self.awi.future_sales if negotiator_id in self.awi.my_consumers else self.awi.future_supplies).get(t, {}).values())
         )
 
     def _needed(self, negotiator_id):
         if self.awi.is_middle_level:
             return self._production_target * self.awi.n_lines
-        return (
-            self.awi.needed_sales
-            if negotiator_id in self.awi.my_consumers
-            else self.awi.needed_supplies
-        )
+        return self.awi.needed_sales if negotiator_id in self.awi.my_consumers else self.awi.needed_supplies
 
     def _is_selling(self, nmi):
         if not nmi:
@@ -246,11 +217,7 @@ class GreedyStdAgent(StdAgent):
         """Checks if a given price is good enough at this stage"""
         price = offer[UNIT_PRICE]
         mn, mx = self._price_range(nmi, offer)
-        th = (
-            self._th(state.step, nmi.n_steps)
-            if offer[TIME] == self.awi.current_step
-            else self._future_threshold
-        )
+        th = self._th(state.step, nmi.n_steps) if offer[TIME] == self.awi.current_step else self._future_threshold
         # a good price is one better than the threshold
         if self._is_selling(nmi):
             return (price - mn) >= th * (mx - mn)

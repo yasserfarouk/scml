@@ -64,9 +64,7 @@ class IndependentNegotiationsAgent(
         return needed[step] - secured[step]
 
 
-class MarketAwareIndependentNegotiationsAgent(
-    KeepOnlyGoodPrices, IndependentNegotiationsAgent
-):
+class MarketAwareIndependentNegotiationsAgent(KeepOnlyGoodPrices, IndependentNegotiationsAgent):
     """
     Implements the base class for agents that negotiate independently with different partners using trading/catalog
     prices to control signing

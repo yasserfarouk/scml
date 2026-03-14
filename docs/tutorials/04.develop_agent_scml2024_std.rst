@@ -2037,10 +2037,12 @@ random price for today’s offers.
 
    distribution = self.distribute_todays_needs()
    response |= {
-       k: SAOResponse(ResponseType.REJECT_OFFER, self.sample_future_offer(k))
-       if q == 0
-       else SAOResponse(
-           ResponseType.REJECT_OFFER, (q, self.awi.current_step, self.price(k))
+       k: (
+           SAOResponse(ResponseType.REJECT_OFFER, self.sample_future_offer(k))
+           if q == 0
+           else SAOResponse(
+               ResponseType.REJECT_OFFER, (q, self.awi.current_step, self.price(k))
+           )
        )
        for k, q in distribution.items()
    }

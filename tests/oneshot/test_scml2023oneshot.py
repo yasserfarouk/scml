@@ -28,7 +28,7 @@ from ..switches import DefaultOneShotWorld
 #     save_resolved_breaches=True,
 #     save_unresolved_breaches=True,
 # )
-LOG_PARAMAS = dict(no_logs=True)
+LOG_PARAMAS = {"no_logs": True}
 
 
 def test_equal_exogenous_supply():
@@ -101,8 +101,8 @@ def test_equal_exogenous_supply_stepping_with_no_action():
         ),
         **LOG_PARAMAS,
     )
-    world.step_with(actions=dict(), init=True)
-    while world.step_with(actions=dict()):
+    world.step_with(actions={}, init=True)
+    while world.step_with(actions={}):
         pass
     assert len(world.contracts_executed) > 0
 
@@ -129,43 +129,25 @@ def test_equal_exogenous_supply_stepping_with_random_action():
         **LOG_PARAMAS,
     )
     agents = list(random.choices(list(world.agents.values()), k=1))
-    world.step_with(actions=dict(), init=True)
+    world.step_with(actions={}, init=True)
 
     def make_actions():
-        actions = dict()
+        actions = {}
         for agent in agents:
-            negotiator, responses = None, dict()
+            negotiator, responses = None, {}
             for t in ["buy", "sell"]:
                 for partner, neg in agent.awi.current_negotiation_details[t].items():  # type: ignore
                     assert agent.id in (neg.buyer, neg.seller)
                     partner2 = neg.buyer if agent.id == neg.seller else neg.seller
                     assert partner2 == partner
-                    negotiator = [
-                        _.id
-                        for _ in neg.nmi._mechanism.negotiators
-                        if _.owner.id == agent.id
-                    ][0]
-                    partner = [
-                        _.id
-                        for _ in neg.nmi._mechanism.negotiators
-                        if _.owner.id != agent.id
-                    ][0]
+                    negotiator = [_.id for _ in neg.nmi._mechanism.negotiators if _.owner.id == agent.id][0]
+                    partner = [_.id for _ in neg.nmi._mechanism.negotiators if _.owner.id != agent.id][0]
                     if random.random() > 0.5:
-                        responses[neg.nmi.mechanism_id] = {
-                            negotiator: SAOResponse(
-                                ResponseType.REJECT_OFFER, neg.nmi.random_outcome()
-                            )
-                        }
+                        responses[neg.nmi.mechanism_id] = {negotiator: SAOResponse(ResponseType.REJECT_OFFER, neg.nmi.random_outcome())}
                     elif random.random() < 0.1:
-                        responses[neg.nmi.mechanism_id] = {
-                            negotiator: SAOResponse(ResponseType.END_NEGOTIATION, None)
-                        }
+                        responses[neg.nmi.mechanism_id] = {negotiator: SAOResponse(ResponseType.END_NEGOTIATION, None)}
                     else:
-                        responses[neg.nmi.mechanism_id] = {
-                            negotiator: SAOResponse(
-                                ResponseType.ACCEPT_OFFER, neg.nmi.state.current_offer
-                            )
-                        }
+                        responses[neg.nmi.mechanism_id] = {negotiator: SAOResponse(ResponseType.ACCEPT_OFFER, neg.nmi.state.current_offer)}
 
             actions[agent.id] = responses
         return actions
@@ -178,12 +160,8 @@ def test_equal_exogenous_supply_stepping_with_random_action():
 
 @pytest.mark.parametrize("year", [2023])
 def test_anac_single_world(year):
-    configs = anac_config_generator_oneshot(
-        year, n_competitors=1, n_agents_per_competitor=1
-    )
-    assigned = anac_assigner_oneshot(
-        configs, 1, competitors=[RandomOneShotAgent], params=None, fair=False
-    )
+    configs = anac_config_generator_oneshot(year, n_competitors=1, n_agents_per_competitor=1)
+    assigned = anac_assigner_oneshot(configs, 1, competitors=[RandomOneShotAgent], params=None, fair=False)
     assert len(assigned) == 1
     assigned = assigned[0][0]
     world = anac2023_oneshot_world_generator(year=year, **assigned)

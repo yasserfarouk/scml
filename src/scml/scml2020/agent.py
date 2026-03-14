@@ -1,7 +1,7 @@
 """Implements the world class for the SCML2020 world"""
 
 from collections import defaultdict
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 
 import numpy as np
 from negmas import (
@@ -20,10 +20,10 @@ from negmas import (
 from negmas.helpers import get_full_type_name, instantiate
 from negmas.situated import Adapter
 
-from .common import Failure
 from ..oneshot.agent import OneShotAgent
 from ..oneshot.common import OneShotProfile, OneShotState
 from ..oneshot.mixins import OneShotUFunCreatorMixin
+from .common import Failure
 from .components.production import DemandDrivenProductionStrategy
 from .components.signing import SignAll
 from .components.trading import MarketAwareTradePredictionStrategy
@@ -71,69 +71,59 @@ class SCML2020Agent(Agent):
     def _respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-        role: Optional[str],
-        req_id: Optional[str],
-    ) -> Optional[Negotiator]:
+        role: str | None,
+        req_id: str | None,
+    ) -> Negotiator | None:
         if self.awi.is_bankrupt():
             return None
-        return self.respond_to_negotiation_request(
-            initiator, issues, annotation, mechanism
-        )
+        return self.respond_to_negotiation_request(initiator, issues, annotation, mechanism)
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(self, contract: Contract, breaches: list[Breach]) -> RenegotiationRequest | None:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
+    ) -> Negotiator | None:
         return None
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: list[str] | None):
         pass
 
-    def on_neg_request_accepted(
-        self, req_id: str, mechanism: NegotiatorMechanismInterface
-    ):
+    def on_neg_request_accepted(self, req_id: str, mechanism: NegotiatorMechanismInterface):
         pass
 
     @property
-    def internal_state(self) -> Dict[str, Any]:
+    def internal_state(self) -> dict[str, Any]:
         """Returns the internal state of the agent for debugging purposes"""
         return {}
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         """Called whenever a negotiation ends without agreement"""
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         """Called whenever a negotiation ends with agreement"""
 
     def on_agent_bankrupt(
         self,
         agent: str,
-        contracts: List[Contract],
-        quantities: List[int],
+        contracts: list[Contract],
+        quantities: list[int],
         compensation_money: int,
     ) -> None:
         """
@@ -154,7 +144,7 @@ class SCML2020Agent(Agent):
 
         """
 
-    def on_failures(self, failures: List["Failure"]) -> None:
+    def on_failures(self, failures: list["Failure"]) -> None:
         """
         Called whenever there are failures either in production or in execution of guaranteed transactions
 
@@ -166,10 +156,10 @@ class SCML2020Agent(Agent):
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         """
         Called whenever another agent requests a negotiation with this agent.
 
@@ -183,9 +173,7 @@ class SCML2020Agent(Agent):
             None to reject the negotiation, otherwise a negotiator
         """
 
-    def confirm_production(
-        self, commands: np.ndarray, balance: int, inventory
-    ) -> np.ndarray:
+    def confirm_production(self, commands: np.ndarray, balance: int, inventory) -> np.ndarray:
         """
         Called just before production starts at every time-step allowing the agent to change what is to be
         produced in its factory
@@ -210,7 +198,7 @@ class SCML2020Agent(Agent):
         """
         return commands
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         """Signs all contracts"""
         return [self.id] * len(contracts)
 
@@ -226,22 +214,22 @@ class _SystemAgent(SCML2020Agent):
     def on_agent_bankrupt(
         self,
         agent: str,
-        contracts: List[Contract],
-        quantities: List[int],
+        contracts: list[Contract],
+        quantities: list[int],
         compensation_money: int,
     ) -> None:
         pass
 
-    def on_failures(self, failures: List["Failure"]) -> None:
+    def on_failures(self, failures: list["Failure"]) -> None:
         pass
 
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         pass
 
     def step(self):
@@ -255,27 +243,23 @@ class _SystemAgent(SCML2020Agent):
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         """Signs all contracts"""
         return [self.id] * len(contracts)
 
@@ -346,13 +330,9 @@ class AWIHelper:
         if self.penalties_scale.startswith("n"):
             return 1
         if self.penalties_scale.startswith("t"):
-            return self.trading_prices[
-                self.my_input_product if is_input else self.my_output_product
-            ]
+            return self.trading_prices[self.my_input_product if is_input else self.my_output_product]
         if self.penalties_scale.startswith("c"):
-            return self.catalog_prices[
-                self.my_input_product if is_input else self.my_output_product
-            ]
+            return self.catalog_prices[self.my_input_product if is_input else self.my_output_product]
         return unit_price
 
     @property
@@ -361,9 +341,7 @@ class AWIHelper:
         Are exogenous contracts forced in the sense that the agent cannot decide
         not to sign them?
         """
-        return self.bb_read("settings", "force_signing") or self.bb_read(
-            "settings", "force_exogenous"
-        )
+        return self.bb_read("settings", "force_signing") or self.bb_read("settings", "force_exogenous")
 
     @property
     def n_input_negotiations(self) -> int:
@@ -408,7 +386,7 @@ class AWIHelper:
         q, p = self._owner.get_exogenous_input()
         qo, po = self._owner.get_exogenous_output()
         # TODO add missing components
-        all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
+        all_agents = [_ for _ in self._world.agents if self.is_system(_)]
         return OneShotState(
             production_capacities=[],
             perishable=True,
@@ -452,9 +430,9 @@ class AWIHelper:
             exogenous_contract_summary=self.exogenous_contract_summary,
             current_input_outcome_space=self.current_input_outcome_space,
             current_output_outcome_space=self.current_output_outcome_space,
-            current_negotiation_details=dict(),
-            sales=dict(),
-            supplies=dict(),
+            current_negotiation_details={},
+            sales={},
+            supplies={},
             needed_sales=0,
             needed_supplies=0,
             bankrupt_agents=[_ for _ in all_agents if self.is_bankrupt(_)],
@@ -462,6 +440,7 @@ class AWIHelper:
                 zip(
                     all_agents,
                     [self.reports_of_agent(_) for _ in all_agents],
+                    strict=False,
                 )
             ),
             # running_negotiations=dict(),
@@ -520,7 +499,7 @@ class AWIHelper:
         return self._owner.get_shortfall_penalty()
 
     @property
-    def current_input_issues(self) -> List[Issue]:
+    def current_input_issues(self) -> list[Issue]:
         if self.my_input_product == 0:
             issues = []
         else:
@@ -533,7 +512,7 @@ class AWIHelper:
         return issues  # type: ignore
 
     @property
-    def current_output_issues(self) -> List[Issue]:
+    def current_output_issues(self) -> list[Issue]:
         if self.my_output_product == 0:
             issues = []
         else:
@@ -562,7 +541,7 @@ class AWIHelper:
     # Public Information
     # ==================
     @property
-    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
+    def exogenous_contract_summary(self) -> list[tuple[int, int]]:
         """
         The exogenous contracts in the current step for all products
 
@@ -580,10 +559,7 @@ class AWIHelper:
         x = np.zeros_like(self._world.exogenous_contracts_summary)
         for i in range(0, n_products):
             x[i, 0 : n_steps - i, :] = y[i, i:n_steps, :]
-        summary = [
-            (int(x[i, self.current_step, 0]), int(x[i, self.current_step, 1]))
-            for i in range(n_products)
-        ]
+        summary = [(int(x[i, self.current_step, 0]), int(x[i, self.current_step, 1])) for i in range(n_products)]
         return summary
 
     @property
@@ -614,9 +590,9 @@ class OneShotAdapter(
 
     def __init__(
         self,
-        oneshot_type: Union[str, OneShotAgent],
-        oneshot_params: Dict[str, Any],
-        obj: Optional[OneShotAgent] = None,
+        oneshot_type: str | OneShotAgent,
+        oneshot_params: dict[str, Any],
+        obj: OneShotAgent | None = None,
         name=None,
         type_postfix="",
         ufun=None,
@@ -625,10 +601,10 @@ class OneShotAdapter(
             self.oneshot_type = get_full_type_name(obj)  # type: ignore
             # note that this may not be true and we cannot guarantee that
             # we can instantiate an agent of the same type
-            self.oneshot_params = dict()
+            self.oneshot_params = {}
         else:
             if not oneshot_params:
-                oneshot_params = dict()
+                oneshot_params = {}
             self.oneshot_type, self.oneshot_params = (
                 get_full_type_name(oneshot_type),  # type: ignore
                 oneshot_params,
@@ -667,11 +643,7 @@ class OneShotAdapter(
             ),
             int(
                 self.price_multiplier
-                * (
-                    self.awi.trading_prices[product]
-                    if self.awi._world.publish_trading_prices
-                    else self.awi.catalog_prices[product]
-                )
+                * (self.awi.trading_prices[product] if self.awi._world.publish_trading_prices else self.awi.catalog_prices[product])
             ),
         )
         unit_price = (int(unit_price[0]), int(max(unit_price)))
@@ -785,10 +757,10 @@ class OneShotAdapter(
         return self.awi.current_balance
 
     # todo: correct this
-    def get_exogenous_output(self) -> Tuple[int, int]:
+    def get_exogenous_output(self) -> tuple[int, int]:
         return 0, 0
 
-    def get_exogenous_input(self) -> Tuple[int, int]:
+    def get_exogenous_input(self) -> tuple[int, int]:
         return 0, 0
 
     @property

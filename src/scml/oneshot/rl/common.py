@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 
@@ -26,9 +26,7 @@ def model_wrapper(model, deterministic: bool = False) -> RLModel:
     return lambda obs: model.predict(obs, deterministic=deterministic)[0]
 
 
-def group_partners(
-    my_partners: list[str], n_partners: int, max_group_size: int, extend: bool = True
-) -> list[list[str]]:
+def group_partners(my_partners: list[str], n_partners: int, max_group_size: int, extend: bool = True) -> list[list[str]]:
     """Combines a list of partners/consumers into the given number of groups"""
     if n_partners == 0:
         return []

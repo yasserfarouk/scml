@@ -24,9 +24,7 @@ class OneShotUFunCreatorMixin:
         iq = awi.current_input_issues[QUANTITY] if awi.current_input_issues else None
         ip = awi.current_input_issues[UNIT_PRICE] if awi.current_input_issues else None
         oq = awi.current_output_issues[QUANTITY] if awi.current_output_issues else None
-        op = (
-            awi.current_output_issues[UNIT_PRICE] if awi.current_output_issues else None
-        )
+        op = awi.current_output_issues[UNIT_PRICE] if awi.current_output_issues else None
         self.ufun = OneShotUFun(
             agent_id=awi.agent.id,
             perishable=awi.is_perishable,
@@ -47,9 +45,7 @@ class OneShotUFunCreatorMixin:
             n_input_negs=awi.n_input_negotiations,
             n_output_negs=awi.n_output_negotiations,
             current_step=awi.current_step,
-            time_range=(it.min_value, it.max_value)
-            if it
-            else (awi.current_step, awi.current_step),
+            time_range=(it.min_value, it.max_value) if it else (awi.current_step, awi.current_step),
             input_qrange=(iq.min_value, iq.max_value) if iq else (0, 0),
             input_prange=(ip.min_value, ip.max_value) if ip else (0, 0),
             output_qrange=(oq.min_value, oq.max_value) if oq else (0, 0),

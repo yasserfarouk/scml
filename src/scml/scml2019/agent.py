@@ -4,7 +4,7 @@ import itertools
 import math
 from abc import abstractmethod
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from negmas import UtilityFunction
 from negmas.common import NegotiatorMechanismInterface
@@ -31,19 +31,17 @@ __all__ = ["SCML2019Agent"]
 class SCML2019Agent(Agent):
     """The base for all SCM Agents"""
 
-    def __init__(
-        self, name: Optional[str] = None, ufun: Optional["UtilityFunction"] = None
-    ):
+    def __init__(self, name: str | None = None, ufun: Optional["UtilityFunction"] = None):
         super().__init__(name=name, ufun=ufun)
-        self.line_profiles: Dict[int, ManufacturingProfileCompiled] = {}
+        self.line_profiles: dict[int, ManufacturingProfileCompiled] = {}
         """A mapping specifying for each `Line` index, all the profiles used to run it in the factory"""
-        self.process_profiles: Dict[int, ManufacturingProfileCompiled] = {}
+        self.process_profiles: dict[int, ManufacturingProfileCompiled] = {}
         """A mapping specifying for each `Process` index, all the profiles used to run it in the factory"""
-        self.producing: Dict[int, List[ProductManufacturingInfo]] = defaultdict(list)
+        self.producing: dict[int, list[ProductManufacturingInfo]] = defaultdict(list)
         """Mapping from a product to all manufacturing processes that can generate it"""
-        self.consuming: Dict[int, List[ProductManufacturingInfo]] = defaultdict(list)
+        self.consuming: dict[int, list[ProductManufacturingInfo]] = defaultdict(list)
         """Mapping from a product to all manufacturing processes that can consume it"""
-        self.compiled_profiles: List[ManufacturingProfileCompiled] = []
+        self.compiled_profiles: list[ManufacturingProfileCompiled] = []
         """All the profiles to be used by the factory belonging to this agent compiled to use indices"""
         self.immediate_negotiations = False
         """Whether or not negotiations start immediately upon registration (default is to start on the next production
@@ -52,9 +50,9 @@ class SCML2019Agent(Agent):
         """The number of negotiation rounds (steps) conducted in a single production step"""
         self.transportation_delay: int = 0
         """Transportation delay in the system. Default is zero"""
-        self.products: List[Product] = []
+        self.products: list[Product] = []
         """List of products in the system"""
-        self.processes: List[Process] = []
+        self.processes: list[Process] = []
         """List of processes in the system"""
 
     @property
@@ -97,54 +95,34 @@ class SCML2019Agent(Agent):
         self.products = self.awi.products  # type: ignore
         # noinspection PyUnresolvedReferences
         self.processes = self.awi.processes  # type: ignore
-        self.negotiation_speed_multiple = self.awi.bb_read(
-            "settings", "negotiation_speed_multiple"
-        )
-        self.immediate_negotiations = self.awi.bb_read(
-            "settings", "immediate_negotiations"
-        )
-        self.transportation_delay = self.awi.bb_read(
-            section="settings", key="transportation_delay"
-        )
+        self.negotiation_speed_multiple = self.awi.bb_read("settings", "negotiation_speed_multiple")
+        self.immediate_negotiations = self.awi.bb_read("settings", "immediate_negotiations")
+        self.transportation_delay = self.awi.bb_read(section="settings", key="transportation_delay")
 
         factory = self.awi.state
         if factory is None:
-            raise ValueError(
-                "Cannot init any SCML2019Agent without specifying a factory"
-            )
+            raise ValueError("Cannot init any SCML2019Agent without specifying a factory")
         profiles = factory.profiles
         self.line_profiles = defaultdict(list)
         self.process_profiles = defaultdict(list)
         self.compiled_profiles = []
         self.producing = defaultdict(list)
         self.consuming = defaultdict(list)
-        p2i = dict(zip(self.processes, range(len(self.processes))))
+        p2i = dict(zip(self.processes, range(len(self.processes)), strict=False))
         for index, profile in enumerate(profiles):
-            compiled = ManufacturingProfileCompiled.from_manufacturing_profile(
-                profile=profile, process2ind=p2i
-            )
+            compiled = ManufacturingProfileCompiled.from_manufacturing_profile(profile=profile, process2ind=p2i)
             self.compiled_profiles.append(compiled)
             self.line_profiles[profile.line].append(compiled)
             self.process_profiles[profile.process].append(compiled)
             process = profile.process
             for outpt in process.outputs:
                 step = int(math.ceil(outpt.step * profile.n_steps))
-                self.producing[outpt.product].append(
-                    ProductManufacturingInfo(
-                        profile=index, quantity=outpt.quantity, step=step
-                    )
-                )
+                self.producing[outpt.product].append(ProductManufacturingInfo(profile=index, quantity=outpt.quantity, step=step))
 
             for inpt in process.inputs:
                 step = int(math.floor(inpt.step * profile.n_steps))
-                self.consuming[inpt.product].append(
-                    ProductManufacturingInfo(
-                        profile=index, quantity=inpt.quantity, step=step
-                    )
-                )
-        self.awi.register_interest(
-            list(set(itertools.chain(self.producing.keys(), self.consuming.keys())))
-        )
+                self.consuming[inpt.product].append(ProductManufacturingInfo(profile=index, quantity=inpt.quantity, step=step))
+        self.awi.register_interest(list(set(itertools.chain(self.producing.keys(), self.consuming.keys()))))
         self._initialized = True
         self.init()
 
@@ -159,10 +137,7 @@ class SCML2019Agent(Agent):
         Returns:
 
         """
-        return (
-            cfp.max_time
-            >= self.awi.current_step + 1 - int(self.immediate_negotiations) + margin
-        )
+        return cfp.max_time >= self.awi.current_step + 1 - int(self.immediate_negotiations) + margin
 
     def _create_annotation(self, cfp: "CFP", partner: str = None):
         """Creates full annotation based on a cfp that the agent is receiving
@@ -177,9 +152,7 @@ class SCML2019Agent(Agent):
 
         """
         if self.id == cfp.publisher and partner is None:
-            raise ValueError(
-                f"{self.id} published {str(cfp)} and create annotation is called without 'partner'"
-            )
+            raise ValueError(f"{self.id} published {str(cfp)} and create annotation is called without 'partner'")
         if self.id == cfp.publisher:
             partners = [self.id, partner]
             non_publisher = partner
@@ -199,13 +172,13 @@ class SCML2019Agent(Agent):
     def _respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-        role: Optional[str],
-        req_id: Optional[str],
-    ) -> Optional[Negotiator]:
+        role: str | None,
+        req_id: str | None,
+    ) -> Negotiator | None:
         """
         Called by the mechanism to ask for joining a negotiation. The agent can refuse by returning a None
 
@@ -228,13 +201,9 @@ class SCML2019Agent(Agent):
 
         """
         cfp = annotation["cfp"]
-        return self.respond_to_negotiation_request(
-            cfp=cfp, partner=initiator if self.id != initiator else cfp.publisher
-        )
+        return self.respond_to_negotiation_request(cfp=cfp, partner=initiator if self.id != initiator else cfp.publisher)
 
-    def request_negotiation(
-        self, cfp: CFP, negotiator: Negotiator = None, ufun: UtilityFunction = None
-    ) -> bool:
+    def request_negotiation(self, cfp: CFP, negotiator: Negotiator = None, ufun: UtilityFunction = None) -> bool:
         """
         Requests a negotiation from the AWI while keeping track of available negotiation requests
 
@@ -270,9 +239,7 @@ class SCML2019Agent(Agent):
         pass
 
     @abstractmethod
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
     @abstractmethod
@@ -281,9 +248,7 @@ class SCML2019Agent(Agent):
         breached"""
 
     @abstractmethod
-    def on_contract_nullified(
-        self, contract: Contract, bankrupt_partner: str, compensation: float
-    ) -> None:
+    def on_contract_nullified(self, contract: Contract, bankrupt_partner: str, compensation: float) -> None:
         """Will be called whenever a contract the agent is involved in is nullified because another partner went
         bankrupt"""
 
@@ -311,9 +276,7 @@ class SCML2019Agent(Agent):
         """
 
     @abstractmethod
-    def confirm_partial_execution(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> bool:
+    def confirm_partial_execution(self, contract: Contract, breaches: list[Breach]) -> bool:
         """Will be called whenever a contract cannot be fully executed due to breaches by the other partner.
 
         Args:
@@ -332,9 +295,7 @@ class SCML2019Agent(Agent):
         return True
 
     @abstractmethod
-    def respond_to_negotiation_request(
-        self, cfp: "CFP", partner: str
-    ) -> Optional[Negotiator]:
+    def respond_to_negotiation_request(self, cfp: "CFP", partner: str) -> Negotiator | None:
         """Called when a prospective partner requests a negotiation to start"""
 
     @abstractmethod

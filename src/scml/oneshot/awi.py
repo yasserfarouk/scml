@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import TYPE_CHECKING, Literal, Any
+from typing import TYPE_CHECKING, Any, Literal
+
 import numpy as np
 from negmas import ContiguousIssue
 from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome, make_os
@@ -194,12 +195,8 @@ class OneShotAWI(AgentWorldInterface):
         self.agent = agent
         self._future_sales: dict[int, dict[str, int]] = defaultdict(defaultdict_int)
         self._future_supplies: dict[int, dict[str, int]] = defaultdict(defaultdict_int)
-        self._future_sales_cost: dict[int, dict[str, int]] = defaultdict(
-            defaultdict_int
-        )
-        self._future_supplies_cost: dict[int, dict[str, int]] = defaultdict(
-            defaultdict_int
-        )
+        self._future_sales_cost: dict[int, dict[str, int]] = defaultdict(defaultdict_int)
+        self._future_supplies_cost: dict[int, dict[str, int]] = defaultdict(defaultdict_int)
 
     # ================================================================
     # Static World Information (does not change during the simulation)
@@ -389,11 +386,7 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def my_competitors(self) -> list[str]:
         """Returns the names of all factories in the same level as me"""
-        return [
-            _
-            for _ in self._world.consumers[self.my_input_product]
-            if _ != self.agent.id
-        ]
+        return [_ for _ in self._world.consumers[self.my_input_product] if _ != self.agent.id]
 
     @property
     def my_suppliers(self) -> list[str]:
@@ -413,11 +406,7 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def my_partners(self) -> list[str]:
         """Returns a list of IDs for all of the agent's partners starting with suppliers"""
-        return [
-            _
-            for _ in itertools.chain(self.my_suppliers, self.my_consumers)
-            if not self.is_system(_)
-        ]
+        return [_ for _ in itertools.chain(self.my_suppliers, self.my_consumers) if not self.is_system(_)]
 
     @property
     def penalties_scale(self) -> Literal["trading", "catalog", "unit", "none"]:
@@ -428,7 +417,7 @@ class OneShotAWI(AgentWorldInterface):
     # =========================================================
     @property
     def state(self) -> OneShotState:
-        all_agents = [_ for _ in self._world.agents.keys() if self.is_system(_)]
+        all_agents = [_ for _ in self._world.agents if self.is_system(_)]
 
         return OneShotState(
             perishable=self.is_perishable,
@@ -481,9 +470,7 @@ class OneShotAWI(AgentWorldInterface):
             needed_sales=self.needed_sales,
             needed_supplies=self.needed_supplies,
             bankrupt_agents=[_ for _ in all_agents if self.is_bankrupt(_)],
-            reports_of_agents=dict(
-                zip(all_agents, [self.reports_of_agent(_) for _ in all_agents])
-            ),
+            reports_of_agents=dict(zip(all_agents, [self.reports_of_agent(_) for _ in all_agents], strict=False)),
             # running_negotiations=dict(),
         )
 
@@ -554,17 +541,11 @@ class OneShotAWI(AgentWorldInterface):
         if self.penalties_scale.startswith("n"):
             return 1
         if self.penalties_scale.startswith("t"):
-            return self.trading_prices[
-                self.my_input_product if is_input else self.my_output_product
-            ]
+            return self.trading_prices[self.my_input_product if is_input else self.my_output_product]
         if self.penalties_scale.startswith("c"):
-            return self.catalog_prices[
-                self.my_input_product if is_input else self.my_output_product
-            ]
+            return self.catalog_prices[self.my_input_product if is_input else self.my_output_product]
         if unit_price is None:
-            raise ValueError(
-                "Must pass unit price to the penalty multiplier if the scale does not start with n, t or c"
-            )
+            raise ValueError("Must pass unit price to the penalty multiplier if the scale does not start with n, t or c")
         return unit_price
 
     @property
@@ -585,9 +566,7 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def current_shortfall_penalty(self) -> float:
         """Cost of failure to deliver one unit (penalizes buying too little / selling too much)"""
-        return self._world.agent_shortfall_penalty[self.agent.id][
-            self._world.current_step
-        ]
+        return self._world.agent_shortfall_penalty[self.agent.id][self._world.current_step]
 
     # =========================================================
     # Dynamic World Information (changes during the simulation)
@@ -599,11 +578,7 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def trading_prices(self) -> np.ndarray:
         """Returns the current trading prices of all products"""
-        return (
-            self._world.trading_prices
-            if self._world.publish_trading_prices
-            else self.catalog_prices
-        )
+        return self._world.trading_prices if self._world.publish_trading_prices else self.catalog_prices
 
     @property
     def exogenous_contract_summary(self) -> list[tuple[int, int]]:
@@ -615,11 +590,7 @@ class OneShotAWI(AgentWorldInterface):
             all revealed exogenous contracts of all products at the current
             step. Will be empty if the world has "publish_exogenous_summary==False"
         """
-        return (
-            self._world.exogenous_contracts_summary
-            if self._world.publish_exogenous_summary
-            else []
-        )
+        return self._world.exogenous_contracts_summary if self._world.publish_exogenous_summary else []
 
     # Other agents' information
     # -------------------------
@@ -637,9 +608,9 @@ class OneShotAWI(AgentWorldInterface):
             return result
         steps = sorted(
             int(i)
-            for i in self.bb_query("reports_time", None, query_keys=True).keys()  # type: ignore
+            for i in self.bb_query("reports_time", None, query_keys=True)  # type: ignore
         )
-        for s, prev in zip(steps[1:], steps[:-1]):
+        for s, prev in zip(steps[1:], steps[:-1], strict=False):
             if s > step:
                 return self.bb_read("reports_time", prev)  # type: ignore
         return self.bb_read("reports_time", str(steps[-1]))  # type: ignore
@@ -672,24 +643,20 @@ class OneShotAWI(AgentWorldInterface):
             - current_negotiation_details["buy"] gives details on all negotiations for buying
             - current_negotiation_details["sell"] gives details on all negotiations for selling
         """
-        return self._world._agent_negotiations.get(
-            self.agent.id, dict(buy=dict(), sell=dict())
-        )
+        return self._world._agent_negotiations.get(self.agent.id, {"buy": {}, "sell": {}})
 
     @property
     def current_buy_states(self) -> dict[str, SAOState]:
         """All running buy negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi.state
-            for partner, info in self.current_negotiation_details["buy"].items()
+            partner: info.nmi.state for partner, info in self.current_negotiation_details["buy"].items()
         }
 
     @property
     def current_sell_states(self) -> dict[str, SAOState]:
         """All running sell negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi.state
-            for partner, info in self.current_negotiation_details["sell"].items()
+            partner: info.nmi.state for partner, info in self.current_negotiation_details["sell"].items()
         }
 
     @property
@@ -701,16 +668,14 @@ class OneShotAWI(AgentWorldInterface):
     def current_buy_nmis(self) -> dict[str, SAONMI]:
         """All running buy negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
-            partner: info.nmi
-            for partner, info in self.current_negotiation_details["buy"].items()
+            partner: info.nmi for partner, info in self.current_negotiation_details["buy"].items()
         }
 
     @property
     def current_sell_nmis(self) -> dict[str, SAONMI]:
         """All running negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi
-            for partner, info in self.current_negotiation_details["sell"].items()
+            partner: info.nmi for partner, info in self.current_negotiation_details["sell"].items()
         }
 
     @property
@@ -745,18 +710,14 @@ class OneShotAWI(AgentWorldInterface):
     def running_buy_states(self) -> dict[str, SAOState]:
         """All running buy negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi.state
-            for partner, info in self.current_negotiation_details["buy"].items()
-            if not info.nmi.state.ended
+            partner: info.nmi.state for partner, info in self.current_negotiation_details["buy"].items() if not info.nmi.state.ended
         }
 
     @property
     def running_sell_states(self) -> dict[str, SAOState]:
         """All running sell negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi.state
-            for partner, info in self.current_negotiation_details["sell"].items()
-            if not info.nmi.state.ended
+            partner: info.nmi.state for partner, info in self.current_negotiation_details["sell"].items() if not info.nmi.state.ended
         }
 
     @property
@@ -768,18 +729,14 @@ class OneShotAWI(AgentWorldInterface):
     def running_sell_nmis(self) -> dict[str, SAONMI]:
         """All running sell negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
-            partner: info.nmi
-            for partner, info in self.current_negotiation_details["sell"].items()
-            if not info.nmi.state.ended
+            partner: info.nmi for partner, info in self.current_negotiation_details["sell"].items() if not info.nmi.state.ended
         }
 
     @property
     def running_buy_nmis(self) -> dict[str, SAONMI]:
         """All running buy negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
-            partner: info.nmi
-            for partner, info in self.current_negotiation_details["buy"].items()
-            if not info.nmi.state.ended
+            partner: info.nmi for partner, info in self.current_negotiation_details["buy"].items() if not info.nmi.state.ended
         }
 
     @property
@@ -792,22 +749,22 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def sales(self) -> dict[str, int]:
         """Sales (quantity) per customer so far (this day)"""
-        return self._future_sales.get(self.current_step, dict())
+        return self._future_sales.get(self.current_step, {})
 
     @property
     def supplies(self) -> dict[str, int]:
         """Supplies (quantity) per supplier so far (this day)"""
-        return self._future_supplies.get(self.current_step, dict())
+        return self._future_supplies.get(self.current_step, {})
 
     @property
     def sales_cost(self) -> dict[str, int]:
         """Sales (total price) per customer so far (this day)"""
-        return self._future_sales_cost.get(self.current_step, dict())
+        return self._future_sales_cost.get(self.current_step, {})
 
     @property
     def supplies_cost(self) -> dict[str, int]:
         """Supplies (total price) per supplier so far (this day)"""
-        return self._future_supplies_cost.get(self.current_step, dict())
+        return self._future_supplies_cost.get(self.current_step, {})
 
     @property
     def future_sales(self) -> dict[int, dict[str, int]]:
@@ -822,16 +779,12 @@ class OneShotAWI(AgentWorldInterface):
     @property
     def future_sales_cost(self) -> dict[int, dict[str, int]]:
         """Future sales (total price) per customer so far (excluding this day)"""
-        return {
-            t: v for t, v in self._future_sales_cost.items() if t > self.current_step
-        }
+        return {t: v for t, v in self._future_sales_cost.items() if t > self.current_step}
 
     @property
     def future_supplies_cost(self) -> dict[int, dict[str, int]]:
         """Future supplies (total price) per supplier so far (excluding this day)"""
-        return {
-            t: v for t, v in self._future_supplies_cost.items() if t > self.current_step
-        }
+        return {t: v for t, v in self._future_supplies_cost.items() if t > self.current_step}
 
     @property
     def total_sales(self) -> int:
@@ -850,35 +803,19 @@ class OneShotAWI(AgentWorldInterface):
 
     def total_sales_from(self, start: int) -> int:
         """Total sales starting at start and ending at end (inclusive). Past days are ignored"""
-        return sum(
-            sum(_.values())
-            for i, _ in self._future_sales.items()
-            if max(start, self.current_step) <= i <= self.n_steps - 1
-        )
+        return sum(sum(_.values()) for i, _ in self._future_sales.items() if max(start, self.current_step) <= i <= self.n_steps - 1)
 
     def total_supplies_from(self, start: int) -> int:
         """Total supplies starting at start and ending at end (inclusive). Past days are ignored"""
-        return sum(
-            sum(_.values())
-            for i, _ in self._future_supplies.items()
-            if max(start, self.current_step) <= i <= self.n_steps - 1
-        )
+        return sum(sum(_.values()) for i, _ in self._future_supplies.items() if max(start, self.current_step) <= i <= self.n_steps - 1)
 
     def total_sales_between(self, start: int, end: int) -> int:
         """Total sales starting at start and ending at end (inclusive). Past days are ignored"""
-        return sum(
-            sum(_.values())
-            for i, _ in self._future_sales.items()
-            if max(start, self.current_step) <= i <= end
-        )
+        return sum(sum(_.values()) for i, _ in self._future_sales.items() if max(start, self.current_step) <= i <= end)
 
     def total_supplies_between(self, start: int, end: int) -> int:
         """Total supplies starting at start and ending at end (inclusive). Past days are ignored"""
-        return sum(
-            sum(_.values())
-            for i, _ in self._future_supplies.items()
-            if max(start, self.current_step) <= i <= end
-        )
+        return sum(sum(_.values()) for i, _ in self._future_supplies.items() if max(start, self.current_step) <= i <= end)
 
     def total_supplies_until(self, step: int) -> int:
         """Total supplies starting today until the given step (inclusive). Past days are ignored"""
@@ -896,13 +833,13 @@ class OneShotAWI(AgentWorldInterface):
         """Total sales already signed at a future step"""
         if step < self.current_step:
             return 0
-        return sum(self._future_sales.get(step, dict()).values())
+        return sum(self._future_sales.get(step, {}).values())
 
     def total_supplies_at(self, step: int) -> int:
         """Total supplies already signed at a future step"""
         if step < self.current_step:
             return 0
-        return sum(self._future_supplies.get(step, dict()).values())
+        return sum(self._future_supplies.get(step, {}).values())
 
     @property
     def total_future_supplies(self) -> int:
@@ -940,9 +877,7 @@ class OneShotAWI(AgentWorldInterface):
         return min(self.n_lines, x) if self.is_perishable else x
 
     # helper operations (sales and supplies) -- you do not need to call these.
-    def _register_sale(
-        self, customer: str, quantity: int, unit_price: int, step: int
-    ) -> None:
+    def _register_sale(self, customer: str, quantity: int, unit_price: int, step: int) -> None:
         # assert (
         #     quantity == 0
         #     or not self.is_perishable
@@ -953,9 +888,7 @@ class OneShotAWI(AgentWorldInterface):
         self._future_sales[step][customer] += quantity
         self._future_sales_cost[step][customer] += quantity * unit_price
 
-    def _register_supply(
-        self, supplier: str, quantity: int, unit_price: int, step: int
-    ) -> None:
+    def _register_supply(self, supplier: str, quantity: int, unit_price: int, step: int) -> None:
         # assert (
         #     quantity == 0
         #     or not self.is_perishable
@@ -974,7 +907,7 @@ class OneShotAWI(AgentWorldInterface):
             self._future_sales_cost,
         ):
             to_remove = []
-            for t in d.keys():
+            for t in d:
                 if t < self.current_step:
                     to_remove.append(t)
             for t in to_remove:

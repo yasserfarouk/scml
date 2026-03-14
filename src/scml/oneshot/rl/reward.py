@@ -29,9 +29,7 @@ class RewardFunction(Protocol):
         """
         ...
 
-    def __call__(
-        self, awi: OneShotAWI, action: dict[str, SAOResponse], info: Any
-    ) -> float:
+    def __call__(self, awi: OneShotAWI, action: dict[str, SAOResponse], info: Any) -> float:
         """
         Called to calculate the reward to be given to the agent at the end of a step.
 

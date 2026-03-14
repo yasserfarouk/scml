@@ -34,14 +34,9 @@ class MySyncAgent(OneShotSyncAgent):
 
     def counter_all(self, offers, states):
         _ = states
-        s = {self.get_nmi(_) for _ in offers.keys()}
-        if self.in_counter_all and (
-            not self._check_negs
-            or (self._check_negs and len(self.countering_set.intersection(s)))
-        ):
-            raise RuntimeError(
-                f"uh-oh! new offers: {offers}, previous offers: {self.offers}"
-            )
+        s = {self.get_nmi(_) for _ in offers}
+        if self.in_counter_all and (not self._check_negs or (self._check_negs and len(self.countering_set.intersection(s)))):
+            raise RuntimeError(f"uh-oh! new offers: {offers}, previous offers: {self.offers}")
 
         self.in_counter_all = True
         self.countering_set = s
@@ -49,16 +44,14 @@ class MySyncAgent(OneShotSyncAgent):
         self.delay()
         self.in_counter_all = False
 
-        return {
-            k: SAOResponse(ResponseType.REJECT_OFFER, v)
-            for k, v in self.first_proposals().items()
-        }
+        return {k: SAOResponse(ResponseType.REJECT_OFFER, v) for k, v in self.first_proposals().items()}
 
     def first_proposals(self) -> dict:
         return dict(
             zip(
                 self.negotiators.keys(),
-                (self.get_offer(neg_id) for neg_id in self.negotiators.keys()),
+                (self.get_offer(neg_id) for neg_id in self.negotiators),
+                strict=False,
             )
         )
 
@@ -104,9 +97,7 @@ def does_not_raise(err):
     yield None
 
 
-def sync_counter_all_reenters_as_expected(
-    use_sleep, check_negs, single_thread, raise_expected
-):
+def sync_counter_all_reenters_as_expected(use_sleep, check_negs, single_thread, raise_expected):
     from ..switches import DefaultOneShotWorld
 
     _strt = time.perf_counter()
@@ -165,12 +156,8 @@ if pytest in sys.modules:
         condition=not SCML_RUN2021_ONESHOT_SYNC or not SCML_RUN_TEMP_FAILING,
         reason="Environment set to ignore running oneshot tests. See switches.py",
     )
-    def test_sync_counter_all_reenters_as_expected(
-        use_sleep, check_negs, single_thread, raise_expected
-    ):
-        sync_counter_all_reenters_as_expected(
-            use_sleep, check_negs, single_thread, raise_expected
-        )
+    def test_sync_counter_all_reenters_as_expected(use_sleep, check_negs, single_thread, raise_expected):
+        sync_counter_all_reenters_as_expected(use_sleep, check_negs, single_thread, raise_expected)
 
 
 if __name__ == "__main__":

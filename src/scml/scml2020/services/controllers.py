@@ -1,15 +1,10 @@
 import random
 from collections import defaultdict
+from collections.abc import Callable
 from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
     TYPE_CHECKING,
+    Any,
+    Optional,
 )
 
 import numpy as np
@@ -19,11 +14,11 @@ from negmas import (
     LinearUtilityFunction,
     MechanismState,
     Outcome,
+    Preferences,
     ResponseType,
+    UtilityFunction,
     make_issue,
     outcome_is_valid,
-    Preferences,
-    UtilityFunction,
 )
 from negmas.common import NegotiatorMechanismInterface
 from negmas.events import Notification, Notifier
@@ -82,15 +77,15 @@ class StepController(SAOController, Notifier):
         target_quantity: int,
         is_seller: bool,
         step: int,
-        urange: Tuple[int, int],
+        urange: tuple[int, int],
         product: int,
-        partners: List[str],
+        partners: list[str],
         negotiator_type: SAONegotiator,
         horizon: int,
         awi: AgentWorldInterface,
         parent_name: str,
         negotiations_concluded_callback: Callable[[int, bool], None],
-        negotiator_params: Dict[str, Any] = None,
+        negotiator_params: dict[str, Any] = None,
         max_retries: int = 2,
         **kwargs,
     ):
@@ -104,15 +99,11 @@ class StepController(SAOController, Notifier):
         self.urange = urange
         self.partners = partners
         self.product = product
-        negotiator_params = (
-            negotiator_params if negotiator_params is not None else dict()
-        )
+        negotiator_params = negotiator_params if negotiator_params is not None else {}
         issues = [
             make_issue((1, max(int(target_quantity), 1)), "quantity"),
             make_issue((step, step), "time"),
-            make_issue(
-                (int(urange[0]), max(int(urange[0]), int(urange[1]))), "unit_price"
-            ),
+            make_issue((int(urange[0]), max(int(urange[0]), int(urange[1]))), "unit_price"),
         ]
         if is_seller:
             self.ufun = LinearUtilityFunction(weights=(1.0, 1.0, 10.0), issues=issues)
@@ -123,7 +114,7 @@ class StepController(SAOController, Notifier):
         self.secured = 0
         self.completed = defaultdict(bool)
         self.step = step
-        self.retries: Dict[str, int] = defaultdict(int)
+        self.retries: dict[str, int] = defaultdict(int)
         self.max_retries = max_retries
 
     def join(
@@ -136,15 +127,13 @@ class StepController(SAOController, Notifier):
         ufun: Optional["UtilityFunction"] = None,
         role: str = "agent",
     ) -> bool:
-        joined = super().join(
-            negotiator_id, nmi, state, preferences=preferences, ufun=ufun, role=role
-        )
+        joined = super().join(negotiator_id, nmi, state, preferences=preferences, ufun=ufun, role=role)
         if joined:
             self.completed[negotiator_id] = False
         return joined
 
     def propose(self, negotiator_id: str, state: MechanismState) -> Optional["Outcome"]:
-        if negotiator_id not in self.negotiators.keys():
+        if negotiator_id not in self.negotiators:
             return None
         try:
             self.__negotiator._nmi = self.negotiators[negotiator_id][0].nmi
@@ -158,7 +147,7 @@ class StepController(SAOController, Notifier):
         state: MechanismState,
         source: str = "",
     ) -> ResponseType:
-        if negotiator_id not in self.negotiators.keys():
+        if negotiator_id not in self.negotiators:
             return ResponseType.END_NEGOTIATION
         if self.secured >= self.target:
             return ResponseType.END_NEGOTIATION
@@ -179,7 +168,7 @@ class StepController(SAOController, Notifier):
 
     def create_negotiator(
         self,
-        negotiator_type: Union[str, Type[ControlledNegotiator]] = None,
+        negotiator_type: str | type[ControlledNegotiator] = None,
         name: str = None,
         cntxt: Any = None,
         **kwargs,
@@ -207,12 +196,10 @@ class StepController(SAOController, Notifier):
             if self.secured >= self.target:
                 self.awi.loginfo(f"Ending all negotiations on controller {str(self)}")
                 # If we are done, end all other negotiations
-                for k in self.negotiators.keys():
+                for k in self.negotiators:
                     if self.completed[k]:
                         continue
-                    self.notify(
-                        self.negotiators[k][0], Notification("end_negotiation", None)
-                    )
+                    self.notify(self.negotiators[k][0], Notification("end_negotiation", None))
         self.kill_negotiator(negotiator_id, force=True)
         if all(self.completed.values()):
             # If we secured everything, just return control to the agent
@@ -236,14 +223,9 @@ class StepController(SAOController, Notifier):
                 neg = self.create_negotiator()
                 self.completed[neg.id] = False
                 self.awi.loginfo(
-                    f"{str(self)} negotiating with {partner} on u={self.urange}"
-                    f", q=(1,{self.target-self.secured}), u=({tmin}, {tmax})"
+                    f"{str(self)} negotiating with {partner} on u={self.urange}, q=(1,{self.target - self.secured}), u=({tmin}, {tmax})"
                 )
-                if (
-                    self.target > self.secured
-                    and self.urange[0] <= self.urange[1]
-                    and tmin <= tmax
-                ):
+                if self.target > self.secured and self.urange[0] <= self.urange[1] and tmin <= tmax:
                     self.awi.request_negotiation(
                         not self.is_seller,
                         product=self.product,
@@ -252,9 +234,7 @@ class StepController(SAOController, Notifier):
                         time=(tmin, tmax),
                         partner=partner,
                         negotiator=neg,
-                        extra=dict(
-                            controller_index=self.step, is_seller=self.is_seller
-                        ),
+                        extra={"controller_index": self.step, "is_seller": self.is_seller},
                     )
 
 
@@ -280,10 +260,10 @@ class SyncController(SAOSyncController):
         self._time_threshold = time_threshold
         self._price_weight = price_weight
         self._utility_threshold = utility_threshold
-        self._best_utils: Dict[str, float] = {}
+        self._best_utils: dict[str, float] = {}
         # find out my needs and the amount secured lists
 
-    def utility(self, offer: Tuple[int, int, int], max_price: int) -> float:
+    def utility(self, offer: tuple[int, int, int], max_price: int) -> float:
         """A simple utility function
 
         Remarks:
@@ -321,9 +301,7 @@ class SyncController(SAOSyncController):
         issues = self.negotiators[negotiator_id][0].nmi.issues
         return outcome_is_valid(offer, issues)
 
-    def counter_all(
-        self, offers: Dict[str, "Outcome"], states: Dict[str, SAOState]
-    ) -> Dict[str, SAOResponse]:
+    def counter_all(self, offers: dict[str, "Outcome"], states: dict[str, SAOState]) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators (negotiator ID is the key).
 
         Args:
@@ -337,14 +315,7 @@ class SyncController(SAOSyncController):
 
         # find the best offer
         negotiator_ids = list(offers.keys())
-        utils = np.array(
-            [
-                self.utility(
-                    o, self.negotiators[nid][0].nmi.issues[UNIT_PRICE].max_value
-                )
-                for nid, o in offers.items()
-            ]
-        )
+        utils = np.array([self.utility(o, self.negotiators[nid][0].nmi.issues[UNIT_PRICE].max_value) for nid, o in offers.items()])
 
         best_index = int(np.argmax(utils))
         best_utility = utils[best_index]
@@ -356,25 +327,18 @@ class SyncController(SAOSyncController):
 
         # if the best offer is still so bad just reject everything
         if best_utility < 0:
-            return {
-                k: SAOResponse(ResponseType.REJECT_OFFER, best_proposals[k])
-                for k in offers.keys()
-                if k in self.negotiators.keys()
-            }
+            return {k: SAOResponse(ResponseType.REJECT_OFFER, best_proposals[k]) for k in offers if k in self.negotiators}
 
         relative_time = min(_.relative_time for _ in states.values())
 
         # if this is good enough or the negotiation is about to end accept the best offer
-        if (
-            best_utility >= self._utility_threshold * self._best_utils[best_partner]
-            or relative_time > self._time_threshold
-        ):
+        if best_utility >= self._utility_threshold * self._best_utils[best_partner] or relative_time > self._time_threshold:
             responses = {
                 k: SAOResponse(
                     ResponseType.REJECT_OFFER,
                     best_offer if self.is_valid(k, best_offer) else best_proposals[k],
                 )
-                for k in offers.keys()
+                for k in offers
             }
             responses[best_partner] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
             return responses
@@ -385,11 +349,9 @@ class SyncController(SAOSyncController):
                 ResponseType.REJECT_OFFER,
                 best_offer if self.is_valid(k, best_offer) else best_proposals[k],
             )
-            for k in offers.keys()
+            for k in offers
         }
-        responses[best_partner] = SAOResponse(
-            ResponseType.REJECT_OFFER, best_proposals[best_partner]
-        )
+        responses[best_partner] = SAOResponse(ResponseType.REJECT_OFFER, best_proposals[best_partner])
         return responses
 
     #     def on_negotiation_end(self, negotiator_id: str, state: MechanismState) -> None:
@@ -403,7 +365,7 @@ class SyncController(SAOSyncController):
     #         else:
     #             self.__parent.inputs_secured[t] += q
     #
-    def best_proposal(self, nid: str) -> Tuple[Optional[Outcome], float]:
+    def best_proposal(self, nid: str) -> tuple[Outcome | None, float]:
         """
         Finds the best proposal for the given negotiation
 
@@ -417,18 +379,13 @@ class SyncController(SAOSyncController):
         if negotiator.nmi is None:
             return None, -1000
         outcomes = negotiator.nmi.discrete_outcomes()
-        utils = np.array(
-            [
-                self.utility(_, negotiator.nmi.issues[UNIT_PRICE].max_value)
-                for _ in outcomes
-            ]
-        )
+        utils = np.array([self.utility(_, negotiator.nmi.issues[UNIT_PRICE].max_value) for _ in outcomes])
         best_indx = np.argmax(utils)
         self._best_utils[nid] = utils[best_indx]
         if utils[best_indx] < 0:
             return None, utils[best_indx]
         return outcomes[best_indx], utils[best_indx]
 
-    def first_proposals(self) -> Dict[str, "Outcome"]:
+    def first_proposals(self) -> dict[str, "Outcome"]:
         """Gets a set of proposals to use for initializing the negotiation."""
-        return {nid: self.best_proposal(nid)[0] for nid in self.negotiators.keys()}
+        return {nid: self.best_proposal(nid)[0] for nid in self.negotiators}

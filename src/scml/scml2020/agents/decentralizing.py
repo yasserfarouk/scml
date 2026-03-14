@@ -2,7 +2,6 @@
 Implements the `DecentralizingAgent` which creates ony buy and one sell controller for each time-step and relinquishes
 control of negotiations to buy/sell the required number of items of its input/output product.
 """
-from typing import Tuple
 
 import numpy as np
 from negmas import LinearUtilityFunction
@@ -32,12 +31,8 @@ class _NegotiationCallbacks:
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
         if sell:
-            return min(
-                production_cost + self.input_cost[step:].min(), self.output_price[step]
-            )
-        return max(
-            self.output_price[step:].max() - production_cost, self.input_cost[step]
-        )
+            return min(production_cost + self.input_cost[step:].min(), self.output_price[step])
+        return max(self.output_price[step:].max() - production_cost, self.input_cost[step])
 
     def target_quantity(self, step: int, sell: bool) -> int:
         if sell:
@@ -53,7 +48,7 @@ class _NegotiationCallbacks:
 
         return min(self.awi.n_lines, needed - secured)
 
-    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:
+    def target_quantities(self, steps: tuple[int, int], sell: bool) -> np.ndarray:
         """Implemented for speed but not really required"""
 
         if sell:

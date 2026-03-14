@@ -3,12 +3,12 @@ from collections import defaultdict
 from pprint import pprint
 
 import matplotlib.pyplot as plt
-from scml.oneshot.agent import OneShotAgent
-from scml.oneshot.agents.rand import SyncRandomOneShotAgent
-from scml.oneshot.world import SCML2022OneShotWorld, SCML2023OneShotWorld
 from negmas import ResponseType
 
 from scml.oneshot import RandomOneShotAgent
+from scml.oneshot.agent import OneShotAgent
+from scml.oneshot.agents.rand import SyncRandomOneShotAgent
+from scml.oneshot.world import SCML2022OneShotWorld, SCML2023OneShotWorld
 from scml.scml2020.common import is_system_agent
 
 
@@ -17,23 +17,17 @@ def try_agent(agent_type, n_processes=2, **kwargs):
     return try_agents([RandomOneShotAgent, agent_type], n_processes, **kwargs)
 
 
-def try_agents(
-    agent_types, n_processes=2, n_trials=1, draw=True, agent_params=None, year=2023
-):
+def try_agents(agent_types, n_processes=2, n_trials=1, draw=True, agent_params=None, year=2023):
     """
     Runs a simulation with the given agent_types, and n_processes n_trial times.
     Optionally also draws a graph showing what happened
     """
     type_scores = defaultdict(float)
     counts = defaultdict(int)
-    agent_scores = dict()
+    agent_scores = {}
     world = None
     for _ in range(n_trials):
-        p = (
-            n_processes
-            if isinstance(n_processes, int)
-            else random.randint(*n_processes)
-        )
+        p = n_processes if isinstance(n_processes, int) else random.randint(*n_processes)
         cls = {2022: SCML2022OneShotWorld, 2023: SCML2023OneShotWorld}[year]
         world = cls(
             **cls.generate(
@@ -87,9 +81,7 @@ def analyze_contracts(world):
     import pandas as pd
 
     data = pd.DataFrame.from_records(world.saved_contracts)
-    return data.groupby(["seller_name", "buyer_name"])[
-        ["quantity", "unit_price"]
-    ].mean()
+    return data.groupby(["seller_name", "buyer_name"])[["quantity", "unit_price"]].mean()
 
 
 def print_agent_scores(agent_scores):
@@ -102,7 +94,7 @@ def print_agent_scores(agent_scores):
 
 def print_type_scores(type_scores):
     """Prints scores of agent types"""
-    pprint(sorted(tuple(type_scores.items()), key=lambda x: -x[1]))
+    pprint(sorted(type_scores.items(), key=lambda x: -x[1]))
 
 
 class MyOneShotDoNothing(OneShotAgent):

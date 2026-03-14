@@ -73,16 +73,9 @@ def test_std(n):
         n_runs_per_world=1,
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
-    df = (
-        results.scores[["agent_type", "score"]]
-        .groupby(["agent_type"])
-        .count()
-        .reset_index()
-    )
+    df = results.scores[["agent_type", "score"]].groupby(["agent_type"]).count().reset_index()
     assert len(results.total_scores) == n
-    assert (
-        len(df["score"].unique()) == 1
-    ), f"Agents do not appear the same number of times:\n{df}"
+    assert len(df["score"].unique()) == 1, f"Agents do not appear the same number of times:\n{df}"
 
 
 @pytest.mark.parametrize("n", [2, 3])
@@ -99,16 +92,9 @@ def test_collusion(n):
         n_runs_per_world=1,
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
-    df = (
-        results.scores[["agent_type", "score"]]
-        .groupby(["agent_type"])
-        .count()
-        .reset_index()
-    )
+    df = results.scores[["agent_type", "score"]].groupby(["agent_type"]).count().reset_index()
     assert len(results.total_scores) == n
-    assert (
-        len(df["score"].unique()) == 1
-    ), f"Agents do not appear the same number of times:\n{df}"
+    assert len(df["score"].unique()) == 1, f"Agents do not appear the same number of times:\n{df}"
 
 
 @pytest.mark.parametrize("n", [2, 3])
@@ -125,16 +111,9 @@ def test_std21(n):
         n_runs_per_world=1,
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
-    df = (
-        results.scores[["agent_type", "score"]]
-        .groupby(["agent_type"])
-        .count()
-        .reset_index()
-    )
+    df = results.scores[["agent_type", "score"]].groupby(["agent_type"]).count().reset_index()
     assert len(results.total_scores) == n
-    assert (
-        len(df["score"].unique()) == 1
-    ), f"Agents do not appear the same number of times:\n{df}"
+    assert len(df["score"].unique()) == 1, f"Agents do not appear the same number of times:\n{df}"
 
 
 @pytest.mark.parametrize("n", [2, 3])
@@ -151,13 +130,6 @@ def test_collusion21(n):
         n_runs_per_world=1,
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
-    df = (
-        results.scores[["agent_type", "score"]]
-        .groupby(["agent_type"])
-        .count()
-        .reset_index()
-    )
+    df = results.scores[["agent_type", "score"]].groupby(["agent_type"]).count().reset_index()
     assert len(results.total_scores) == n
-    assert (
-        len(df["score"].unique()) == 1
-    ), f"Agents do not appear the same number of times:\n{df}"
+    assert len(df["score"].unique()) == 1, f"Agents do not appear the same number of times:\n{df}"

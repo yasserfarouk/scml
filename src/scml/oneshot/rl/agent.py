@@ -36,9 +36,8 @@ class OneShotRLAgent(OneShotPolicy):
     def __init__(
         self,
         *args,
-        models: list[RLModel] | tuple[RLModel, ...] = tuple(),
-        observation_managers: list[ObservationManager]
-        | tuple[ObservationManager, ...] = tuple(),
+        models: list[RLModel] | tuple[RLModel, ...] = (),
+        observation_managers: list[ObservationManager] | tuple[ObservationManager, ...] = (),
         action_managers: list[ActionManager] | tuple[ActionManager, ...] | None = None,
         fallback_type: type[OneShotAgent] | None = GreedyOneShotAgent,
         fallback_params: dict[str, Any] | None = None,
@@ -49,18 +48,13 @@ class OneShotRLAgent(OneShotPolicy):
         super().__init__(*args, **kwargs)
         self._models = models
         if action_managers is None:
-            action_managers = [
-                FlexibleActionManager(ANACOneShotContext())
-                for _ in observation_managers
-            ]
+            action_managers = [FlexibleActionManager(ANACOneShotContext()) for _ in observation_managers]
         self._action_managers = action_managers
         self._obs_managers = observation_managers
         self._fallback_type = fallback_type
         self._dynamic_context_switching = dynamic_context_switching
         self._randomize_test_order = randomize_test_order
-        self._fallback_params = (
-            fallback_params if fallback_params is not None else dict()
-        )
+        self._fallback_params = fallback_params if fallback_params is not None else {}
         self._valid_context: Context = None  # type: ignore
         self._valid_action_manager: ActionManager = None  # type: ignore
         self._valid_obs_manager: ObservationManager = None  # type: ignore
@@ -83,17 +77,13 @@ class OneShotRLAgent(OneShotPolicy):
         return self._valid_index < 0
 
     def context_switch(self):
-        aolist = zip(
-            self._action_managers, self._obs_managers, range(len(self._obs_managers))
-        )
+        aolist = zip(self._action_managers, self._obs_managers, range(len(self._obs_managers)), strict=False)
         if self._randomize_test_order:
             aolist = list(aolist)
             shuffle(aolist)
         self._valid_index = -1
         for a, o, i in aolist:
-            if a.context.is_valid_awi(
-                self.awi, types=(type(self),), raise_on_failure=False
-            ) and o.context.is_valid_awi(
+            if a.context.is_valid_awi(self.awi, types=(type(self),), raise_on_failure=False) and o.context.is_valid_awi(
                 self.awi, types=(type(self),), raise_on_failure=False
             ):
                 self._valid_index = i
@@ -111,23 +101,17 @@ class OneShotRLAgent(OneShotPolicy):
         _ = mechanism_states
         if not self.has_no_valid_model():
             return self._obs_managers[self._valid_index].encode(self.awi)
-        raise RuntimeError(
-            "This is an RL agent running in fallback mode and its encode_state should never be called"
-        )
+        raise RuntimeError("This is an RL agent running in fallback mode and its encode_state should never be called")
 
     def decode_action(self, action: RLAction) -> dict[str, SAOResponse]:
         if not self.has_no_valid_model():
             return self._action_managers[self._valid_index].decode(self.awi, action)
-        raise RuntimeError(
-            "This is an RL agent running in fallback mode and its decode_action should never be called"
-        )
+        raise RuntimeError("This is an RL agent running in fallback mode and its decode_action should never be called")
 
     def act(self, state: RLState) -> RLAction:
         if not self.has_no_valid_model():
             return self._models[self._valid_index](state)
-        raise RuntimeError(
-            "This is an RL agent running in fallback mode and its act() method should never be called"
-        )
+        raise RuntimeError("This is an RL agent running in fallback mode and its act() method should never be called")
 
     # =====================
     # Negotiation Callbacks

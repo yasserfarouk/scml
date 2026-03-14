@@ -1,13 +1,15 @@
 import math
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, field
-from typing import Any, Callable, Collection, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from negmas.situated import Contract
 
 from scml.scml2019.helpers import zero_runs
 
+from .awi import SCMLAWI
 from .common import (
     NO_PRODUCTION,
     Job,
@@ -18,7 +20,6 @@ from .common import (
     ProductManufacturingInfo,
     SCMLAgreement,
 )
-from .awi import SCMLAWI
 from .simulators import FactorySimulator, transaction
 
 __all__ = ["ScheduleInfo", "Scheduler", "GreedyScheduler"]
@@ -30,41 +31,29 @@ class ScheduleInfo:
     """balance at the end of the schedule"""
     valid: bool = True
     """Is this a valid schedule?"""
-    start: Optional[int] = None
+    start: int | None = None
     """The starting step of this schedule"""
-    end: Optional[int] = None
+    end: int | None = None
     """The step after the last step in this simulation"""
     # these two attributes are not directly related to the schedule but with the scheduling operation that generated it
-    needs: List[ProductionNeed] = field(default_factory=list)
+    needs: list[ProductionNeed] = field(default_factory=list)
     """The products needed but not still in storage needed to complete this schedule."""
-    jobs: List[Job] = field(default_factory=list)
+    jobs: list[Job] = field(default_factory=list)
     """The jobs that need to be scheduled"""
-    failed_contracts: List[Contract] = field(default_factory=list)
+    failed_contracts: list[Contract] = field(default_factory=list)
     """A list of contracts that failed to be scheduled."""
-    ignored_contracts: List[Contract] = field(default_factory=list)
+    ignored_contracts: list[Contract] = field(default_factory=list)
     """A list of contracts ignored for this schedule because they are in the past."""
 
     def __str__(self):
-        fail = (
-            str("fail " + "|".join(str(_) for _ in self.failed_contracts))
-            if len(self.failed_contracts) > 0
-            else ""
-        )
-        ignored = (
-            str("ignored " + "|".join(str(_) for _ in self.ignored_contracts))
-            if len(self.ignored_contracts) > 0
-            else ""
-        )
-        jobs = (
-            str("jobs " + "|".join(str(_) for _ in self.jobs))
-            if len(self.jobs) > 0
-            else ""
-        )
+        fail = str("fail " + "|".join(str(_) for _ in self.failed_contracts)) if len(self.failed_contracts) > 0 else ""
+        ignored = str("ignored " + "|".join(str(_) for _ in self.ignored_contracts)) if len(self.ignored_contracts) > 0 else ""
+        jobs = str("jobs " + "|".join(str(_) for _ in self.jobs)) if len(self.jobs) > 0 else ""
         updates, needs = "", ""
         if len(self.needs) > 0:
             needs = "needs :" + "\n\t".join(str(_) for _ in self.needs)
 
-        result = f'{"valid" if self.valid else "invalid"} (ends before {self.end}):'
+        result = f"{'valid' if self.valid else 'invalid'} (ends before {self.end}):"
         for x in (fail, ignored, jobs, updates, needs):
             if len(x) > 0:
                 result += "\n" + x
@@ -93,16 +82,16 @@ class Scheduler(ABC):
         manager_id: str,
         awi: "SCMLAWI",
         max_insurance_premium: float = float("inf"),
-        horizon: Optional[int] = None,
+        horizon: int | None = None,
     ):
         self.horizon = horizon
         self.n_steps = 0
         self.n_lines = 0
         self.simulator: FactorySimulator | None = None
-        self.products: List[Product] = []
-        self.processes: List[Process] = []
-        self.profiles: List[ManufacturingProfileCompiled] = []
-        self.producing: Dict[int, List[ProductManufacturingInfo]] = {}
+        self.products: list[Product] = []
+        self.processes: list[Process] = []
+        self.profiles: list[ManufacturingProfileCompiled] = []
+        self.producing: dict[int, list[ProductManufacturingInfo]] = {}
         self.manager_id = manager_id
         self.awi = awi
         self.max_insurance_premium = max_insurance_premium
@@ -148,10 +137,10 @@ class Scheduler(ABC):
     def init(
         self,
         simulator: FactorySimulator,
-        products: List[Product],
-        processes: List[Process],
-        profiles: List[ManufacturingProfileCompiled],
-        producing: Dict[int, List[ProductManufacturingInfo]],
+        products: list[Product],
+        processes: list[Process],
+        profiles: list[ManufacturingProfileCompiled],
+        producing: dict[int, list[ProductManufacturingInfo]],
     ):
         """Called by the FactoryManager after it is initialized"""
         self.simulator = simulator
@@ -249,7 +238,7 @@ class GreedyScheduler(Scheduler):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        if "fields" in result.keys():
+        if "fields" in result:
             result.pop("fields", None)
 
     def __setstate__(self, state):
@@ -266,7 +255,7 @@ class GreedyScheduler(Scheduler):
         manager_id: str,
         awi: "SCMLAWI",
         max_insurance_premium: float = float("inf"),
-        horizon: Optional[int] = None,
+        horizon: int | None = None,
         add_catalog_prices=True,
         strategy: str = "latest",
         profile_sorter: str = "total-cost>time",
@@ -311,16 +300,16 @@ class GreedyScheduler(Scheduler):
         )
         self.add_catalog_prices = add_catalog_prices
         self.strategy = strategy
-        self.fields: List[Callable[[ProductManufacturingInfo], float]] = [
+        self.fields: list[Callable[[ProductManufacturingInfo], float]] = [
             self.total_unit_cost,
             self.unit_time,
             self.production_unit_cost,
             self.input_unit_cost,
         ]
         mapper = {"tc": 0, "t": 1, "pc": 2, "ic": 3}
-        self.field_order: List[int] = []
+        self.field_order: list[int] = []
         sort_fields = profile_sorter.split(">")
-        self.producing: Dict[int, List[ProductManufacturingInfo]] = {}
+        self.producing: dict[int, list[ProductManufacturingInfo]] = {}
         for field_name in sort_fields:
             if field_name in ("time", "t"):
                 self.field_order.append(mapper["t"])
@@ -334,10 +323,10 @@ class GreedyScheduler(Scheduler):
     def init(
         self,
         simulator: FactorySimulator,
-        products: List[Product],
-        processes: List[Process],
-        profiles: List[ManufacturingProfileCompiled],
-        producing: Dict[int, List[ProductManufacturingInfo]],
+        products: list[Product],
+        processes: list[Process],
+        profiles: list[ManufacturingProfileCompiled],
+        producing: dict[int, list[ProductManufacturingInfo]],
     ):
         super().init(
             simulator=simulator,
@@ -346,16 +335,12 @@ class GreedyScheduler(Scheduler):
             producing=producing,
             profiles=profiles,
         )
-        self.producing = {
-            k: sorted(v, key=self._profile_sorter) for k, v in self.producing.items()
-        }
+        self.producing = {k: sorted(v, key=self._profile_sorter) for k, v in self.producing.items()}
 
     def _profile_sorter(self, info: ProductManufacturingInfo) -> Any:
         vals = [field(info) for field in self.fields]
         profile = self.profiles[info.profile]
-        return tuple(
-            [vals[indx] for indx in self.field_order] + [profile.line, profile.process]
-        )
+        return tuple([vals[indx] for indx in self.field_order] + [profile.line, profile.process])
 
     def unit_time(self, info: ProductManufacturingInfo) -> float:
         profile = self.profiles[info.profile]
@@ -370,10 +355,7 @@ class GreedyScheduler(Scheduler):
         def safe(x):
             return 0.0 if x is None else x
 
-        inputs_cost = sum(
-            safe(products[inp.product].catalog_price) * inp.quantity
-            for inp in process.inputs
-        )
+        inputs_cost = sum(safe(products[inp.product].catalog_price) * inp.quantity for inp in process.inputs)
         return production_cost + inputs_cost
 
     def total_unit_cost(self, info: ProductManufacturingInfo) -> float:
@@ -394,10 +376,7 @@ class GreedyScheduler(Scheduler):
         def safe(x):
             return 0.0 if x is None else x
 
-        return sum(
-            safe(products[inp.product].catalog_price) * inp.quantity
-            for inp in process.inputs
-        )
+        return sum(safe(products[inp.product].catalog_price) * inp.quantity for inp in process.inputs)
 
     def input_unit_cost(self, info: ProductManufacturingInfo) -> float:
         return self.input_cost(info=info) / info.quantity
@@ -434,9 +413,7 @@ class GreedyScheduler(Scheduler):
         if end is None:
             end = simulator.n_steps
         if contract.agreement is None:
-            return ScheduleInfo(
-                end=end, final_balance=self.simulator.balance_at(end - 1)
-            )
+            return ScheduleInfo(end=end, final_balance=self.simulator.balance_at(end - 1))
         agreement: SCMLAgreement
         if isinstance(contract.agreement, dict):
             agreement = SCMLAgreement(**contract.agreement)
@@ -477,16 +454,12 @@ class GreedyScheduler(Scheduler):
                     end=end,
                     final_balance=self.simulator.balance_at(end - 1),
                 )
-            insurance = self.awi.evaluate_insurance(
-                contract=contract, t=self.awi.current_step
-            )
+            insurance = self.awi.evaluate_insurance(contract=contract, t=self.awi.current_step)
             if insurance is not None and insurance / p < self.max_insurance_premium:
                 # if it is not possible to buy the insurance, the factory manager will not try to buy it. This is still
                 # a valid schedule
                 simulator.pay(insurance, t=t)
-            return ScheduleInfo(
-                valid=True, end=end, final_balance=self.simulator.balance_at(end - 1)
-            )
+            return ScheduleInfo(valid=True, end=end, final_balance=self.simulator.balance_at(end - 1))
         elif contract.annotation["seller"] == self.manager_id:
             # I am a seller
 
@@ -501,9 +474,7 @@ class GreedyScheduler(Scheduler):
                     ignore_money_shortage=ignore_failures,
                     ignore_inventory_shortage=ignore_failures,
                 ):
-                    return ScheduleInfo(
-                        end=end, final_balance=self.simulator.balance_at(end - 1)
-                    )
+                    return ScheduleInfo(end=end, final_balance=self.simulator.balance_at(end - 1))
                 else:
                     return ScheduleInfo(
                         end=end,
@@ -511,8 +482,8 @@ class GreedyScheduler(Scheduler):
                         failed_contracts=[contract],
                         final_balance=float("-inf"),
                     )
-            jobs: List[Job] = []
-            needs: List[ProductionNeed] = []
+            jobs: list[Job] = []
+            needs: list[ProductionNeed] = []
 
             with transaction(simulator) as bookmark:
                 some_production = True
@@ -528,14 +499,10 @@ class GreedyScheduler(Scheduler):
                             info.profile,
                         )
                         q_produced, t_production = info.quantity, info.step
-                        current_schedule = simulator.line_schedules_to(
-                            t - ensure_storage_for - 1
-                        )[line][start:]
+                        current_schedule = simulator.line_schedules_to(t - ensure_storage_for - 1)[line][start:]
                         if len(current_schedule) < t_production:
                             continue
-                        locs = zero_runs(
-                            (current_schedule != NO_PRODUCTION).astype(int)
-                        )
+                        locs = zero_runs((current_schedule != NO_PRODUCTION).astype(int))
                         lengths = locs[:, 1] - locs[:, 0]
                         indices = np.array(range(len(lengths)))
                         indices = indices[lengths >= t_production]
@@ -548,21 +515,17 @@ class GreedyScheduler(Scheduler):
                             loc = locs[-1, :] - 1
                             loc[0] = loc[1] - t_production + 1
                         elif self.strategy == "shortest":
-                            sorted_lengths = sorted(
-                                zip(range(len(lengths)), lengths), key=lambda x: x[1]
-                            )
+                            sorted_lengths = sorted(zip(range(len(lengths)), lengths, strict=False), key=lambda x: x[1])
                             loc = locs[sorted_lengths[0][0], :]
                         elif self.strategy == "longest":
                             sorted_lengths = sorted(
-                                zip(range(len(lengths)), lengths),
+                                zip(range(len(lengths)), lengths, strict=False),
                                 key=lambda x: x[1],
                                 reverse=True,
                             )
                             loc = locs[sorted_lengths[0][0], :]
                         else:
-                            raise ValueError(
-                                f"Unknown production strategy {self.strategy}"
-                            )
+                            raise ValueError(f"Unknown production strategy {self.strategy}")
                         ptime = loc[0] + start
                         job = Job(
                             line=line,
@@ -592,8 +555,7 @@ class GreedyScheduler(Scheduler):
                                 break
                             available = max(
                                 0,
-                                self.simulator.available_storage_at(step)[pind]
-                                - quantity,
+                                self.simulator.available_storage_at(step)[pind] - quantity,
                             )
                             if available >= quantity:
                                 instore, tobuy = quantity, 0
@@ -660,10 +622,7 @@ class GreedyScheduler(Scheduler):
                     end=end,
                     final_balance=self.simulator.balance_at(end - 1),
                 )
-        raise ValueError(
-            f"{self.manager_id} Not a seller of a buyer in Contract: {contract} with "
-            f"annotation: {contract.annotation}"
-        )
+        raise ValueError(f"{self.manager_id} Not a seller of a buyer in Contract: {contract} with annotation: {contract.annotation}")
 
     def schedule_contracts(
         self,
@@ -693,9 +652,7 @@ class GreedyScheduler(Scheduler):
         simulator = self.simulator
         if end is None:
             end = simulator.n_steps
-        result = ScheduleInfo(
-            valid=True, end=end, final_balance=self.simulator.final_balance
-        )
+        result = ScheduleInfo(valid=True, end=end, final_balance=self.simulator.final_balance)
         contracts = sorted(contracts, key=lambda x: x.agreement["time"])
         for contract in contracts:
             new_schedule = self.schedule_contract(
@@ -731,11 +688,7 @@ class GreedyScheduler(Scheduler):
         )
 
         # Mark the schedule as invalid if it has any production needs and we assume_no_further_negotiations
-        if (
-            assume_no_further_negotiations
-            and schedule.needs is not None
-            and len(schedule.needs) > 0
-        ):
+        if assume_no_further_negotiations and schedule.needs is not None and len(schedule.needs) > 0:
             schedule.valid = False
             return schedule
 

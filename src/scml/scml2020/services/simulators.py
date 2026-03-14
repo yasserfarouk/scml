@@ -4,7 +4,6 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -16,21 +15,11 @@ __all__ = ["FactorySimulator", "transaction", "temporary_transaction"]
 @dataclass
 class _Bookmark:
     id: int
-    jobs: Dict[int, List[int]] = field(
-        default_factory=lambda: defaultdict(list), init=False
-    )
-    buy_contracts: Dict[int, List[int]] = field(
-        default_factory=lambda: defaultdict(list), init=False
-    )
-    sell_contracts: Dict[int, List[int]] = field(
-        default_factory=lambda: defaultdict(list), init=False
-    )
-    payment_updates: Dict[int, int] = field(
-        default_factory=lambda: defaultdict(int), init=False
-    )
-    inventory_updates: Dict[int, Dict[int, int]] = field(
-        default_factory=lambda: defaultdict(lambda: defaultdict(int)), init=False
-    )
+    jobs: dict[int, list[int]] = field(default_factory=lambda: defaultdict(list), init=False)
+    buy_contracts: dict[int, list[int]] = field(default_factory=lambda: defaultdict(list), init=False)
+    sell_contracts: dict[int, list[int]] = field(default_factory=lambda: defaultdict(list), init=False)
+    payment_updates: dict[int, int] = field(default_factory=lambda: defaultdict(int), init=False)
+    inventory_updates: dict[int, dict[int, int]] = field(default_factory=lambda: defaultdict(lambda: defaultdict(int)), init=False)
 
 
 NEVER = sys.maxsize  # indicates infinite future time
@@ -42,7 +31,7 @@ class _State:
     inventory: np.array
     balance: int
     commands: np.array
-    bankrupt_at: Optional[int]
+    bankrupt_at: int | None
 
 
 @dataclass
@@ -51,7 +40,7 @@ class _FullBookmark:
     balance: np.array
     inventory: np.array
     commands: np.array
-    bankrupt_at: Optional[int]
+    bankrupt_at: int | None
 
 
 class FactorySimulator:
@@ -93,17 +82,13 @@ class FactorySimulator:
             initial_inventory = np.zeros(n_products, dtype=int)
 
         self._inventory = initial_inventory
-        self._inventory = np.repeat(
-            initial_inventory.reshape((n_products, 1)), n_steps, axis=1
-        )
+        self._inventory = np.repeat(initial_inventory.reshape((n_products, 1)), n_steps, axis=1)
         self._profile = profile
-        self.commands = (
-            np.ones(shape=(self._n_lines, self._n_steps), dtype=int) * NO_COMMAND
-        )
+        self.commands = np.ones(shape=(self._n_lines, self._n_steps), dtype=int) * NO_COMMAND
         self.commands = np.zeros(shape=(self._n_lines, self._n_steps), dtype=int)
         self._fixed_before = 0
-        self._bookmarks: List[_FullBookmark] = []
-        self._active_bookmark: Optional[_FullBookmark] = None
+        self._bookmarks: list[_FullBookmark] = []
+        self._active_bookmark: _FullBookmark | None = None
 
     # -----------------
     # FIXED PROPERTIES
@@ -134,7 +119,7 @@ class FactorySimulator:
         """Returns the final balance of the agent at the end of the simulation"""
         return self._balance[-1]
 
-    def final_score(self, prices: Optional[np.ndarray]) -> int:
+    def final_score(self, prices: np.ndarray | None) -> int:
         """Returns the final balance of the agent at the end of the simulation"""
         return self._balance[-1]
 
@@ -318,11 +303,7 @@ class FactorySimulator:
               trading prices of the market that are used to calculate
               the real score
         """
-        return self.balance_at(
-            self.n_steps - 1
-        ) + inventory_weight * self._catalog_prices * self.inventory_at(
-            self.n_steps - 1
-        )
+        return self.balance_at(self.n_steps - 1) + inventory_weight * self._catalog_prices * self.inventory_at(self.n_steps - 1)
 
     def balance_at(self, t: int) -> np.array:
         """
@@ -418,9 +399,7 @@ class FactorySimulator:
             Success or failure
         """
         if t < self._fixed_before:
-            raise ValueError(
-                f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})"
-            )
+            raise ValueError(f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})")
         b = self._balance[t:]
         if b.size < 1:
             return False
@@ -466,9 +445,7 @@ class FactorySimulator:
 
         """
         if t < self._fixed_before:
-            raise ValueError(
-                f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})"
-            )
+            raise ValueError(f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})")
         s = self._inventory[product, t:].view()
         if s.size < 1:
             return False
@@ -513,9 +490,7 @@ class FactorySimulator:
 
         """
         if t < self._fixed_before:
-            raise ValueError(
-                f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})"
-            )
+            raise ValueError(f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})")
         balance = self._balance.copy()
         if not self.pay(price * quantity, t, ignore_money_shortage):
             self._balance = balance
@@ -556,9 +531,7 @@ class FactorySimulator:
 
         """
         if t < self._fixed_before:
-            raise ValueError(
-                f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})"
-            )
+            raise ValueError(f"Cannot run operations in the past (t={t}, fixed before {self._fixed_before})")
         inventory = self._inventory.copy()
         if not self.transport_to(product, -quantity, t, ignore_inventory_shortage):
             self._inventory = inventory
@@ -568,11 +541,11 @@ class FactorySimulator:
     def available_for_production(
         self,
         repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        step: int | tuple[int, int] = ANY_STEP,
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Finds available times and lines for scheduling production.
 
@@ -612,23 +585,15 @@ class FactorySimulator:
             return np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
         if override:
             if line < 0:
-                steps, lines = np.nonzero(
-                    self.commands[step[0] : step[1], :] >= NO_COMMAND
-                )
+                steps, lines = np.nonzero(self.commands[step[0] : step[1], :] >= NO_COMMAND)
             else:
-                steps = np.nonzero(
-                    self.commands[step[0] : step[1], line] >= NO_COMMAND
-                )[0]
+                steps = np.nonzero(self.commands[step[0] : step[1], line] >= NO_COMMAND)[0]
                 lines = [line]
         else:
             if line < 0:
-                steps, lines = np.nonzero(
-                    self.commands[step[0] : step[1], :] == NO_COMMAND
-                )
+                steps, lines = np.nonzero(self.commands[step[0] : step[1], :] == NO_COMMAND)
             else:
-                steps = np.nonzero(
-                    self.commands[step[0] : step[1], line] == NO_COMMAND
-                )[0]
+                steps = np.nonzero(self.commands[step[0] : step[1], line] == NO_COMMAND)[0]
                 lines = [line]
         steps += step[0]
         possible = min(repeats, len(steps))
@@ -643,9 +608,7 @@ class FactorySimulator:
 
         return steps, lines
 
-    def order_production(
-        self, process: int, steps: np.ndarray, lines: np.ndarray
-    ) -> None:
+    def order_production(self, process: int, steps: np.ndarray, lines: np.ndarray) -> None:
         """
         Orders production of the given process
 
@@ -662,16 +625,14 @@ class FactorySimulator:
         if len(steps) == 0:
             return
         if np.min(steps) < self._fixed_before:
-            raise ValueError(
-                f"Cannot run operations in the past (t={np.min(steps)}, fixed before {self._fixed_before})"
-            )
+            raise ValueError(f"Cannot run operations in the past (t={np.min(steps)}, fixed before {self._fixed_before})")
         self.commands[steps, lines] = process
 
     def schedule(
         self,
         process: int,
         quantity: int,
-        t: Union[int, Tuple[int, int]] = ANY_STEP,
+        t: int | tuple[int, int] = ANY_STEP,
         line: int = ANY_LINE,
         override=True,
         method: str = "latest",
@@ -709,7 +670,7 @@ class FactorySimulator:
                 self.rollback(bookmark)
                 return False
             scheduled = 0
-            for s, ii in zip(steps, lines):
+            for s, ii in zip(steps, lines, strict=False):
                 if not (
                     (ignore_inventory_shortage or self._inventory[process, s] >= 1)
                     and (ignore_money_shortage or (self._balance[s] >= cost))
@@ -791,9 +752,7 @@ class FactorySimulator:
         if self._active_bookmark is None or self._active_bookmark.id != bookmark_id:
             raise ValueError("there is no active bookmark to delete")
         self._bookmarks = self._bookmarks[:-1]
-        self._active_bookmark = (
-            self._bookmarks[-1] if len(self._bookmarks) > 0 else None
-        )
+        self._active_bookmark = self._bookmarks[-1] if len(self._bookmarks) > 0 else None
         return True
 
     def bookmark(self) -> int:
@@ -845,9 +804,7 @@ class FactorySimulator:
         self.commands = b.commands
         return True
 
-    def set_state(
-        self, t: int, inventory: np.array, balance: int, commands: np.array
-    ) -> None:
+    def set_state(self, t: int, inventory: np.array, balance: int, commands: np.array) -> None:
         """
         Sets the current state at the given time-step. It implicitly causes a fix_before(t + 1)
 
@@ -859,9 +816,7 @@ class FactorySimulator:
             commands: Line schedules (array of process numbers/NO_PRODUCTION of size `n_lines`)
 
         """
-        self._inventory[:, t:] += inventory.reshape(
-            self._n_products, 1
-        ) - self._inventory[:, t].reshape(self._n_products, 1)
+        self._inventory[:, t:] += inventory.reshape(self._n_products, 1) - self._inventory[:, t].reshape(self._n_products, 1)
         self._balance[t:] += balance - self._balance[t]
         self.commands[:, t] = commands
         self.fix_before(t)

@@ -15,9 +15,9 @@ from .common import DEFAULT_NEGOTIATOR, FinancialReport
 from .helpers import pos_gauss
 
 if True:
-    from typing import Any, Optional
+    from typing import Any
 
-    from .common import Loan, CFP
+    from .common import CFP, Loan
 
 __all__ = ["Miner", "MiningProfile", "ReactiveMiner"]
 
@@ -66,9 +66,7 @@ class ReactiveMiner(Miner):
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: list[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
     def on_inventory_change(self, product: int, quantity: int, cause: str) -> None:
@@ -80,17 +78,13 @@ class ReactiveMiner(Miner):
     def on_new_report(self, report: FinancialReport):
         pass
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[list[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: list[str] | None):
         pass
 
-    def on_neg_request_accepted(
-        self, req_id: str, mechanism: NegotiatorMechanismInterface
-    ):
+    def on_neg_request_accepted(self, req_id: str, mechanism: NegotiatorMechanismInterface):
         pass
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
     def on_contract_signed(self, contract: Contract) -> None:
@@ -99,20 +93,16 @@ class ReactiveMiner(Miner):
     def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
-    def sign_contract(self, contract: Contract) -> Optional[str]:
+    def sign_contract(self, contract: Contract) -> str | None:
         return self.id
 
-    def on_contract_nullified(
-        self, contract: Contract, bankrupt_partner: str, compensation: float
-    ) -> None:
+    def on_contract_nullified(self, contract: Contract, bankrupt_partner: str, compensation: float) -> None:
         pass
 
     def on_agent_bankrupt(self, agent_id: str) -> None:
         pass
 
-    def confirm_partial_execution(
-        self, contract: Contract, breaches: list[Breach]
-    ) -> bool:
+    def confirm_partial_execution(self, contract: Contract, breaches: list[Breach]) -> bool:
         return True
 
     def on_remove_cfp(self, cfp: "CFP"):
@@ -147,28 +137,19 @@ class ReactiveMiner(Miner):
     ) -> None:
         # noinspection PyUnusedLocal
         cfp = annotation["cfp"]
-        super().on_negotiation_failure(
-            partners=partners, annotation=annotation, mechanism=mechanism, state=state
-        )
+        super().on_negotiation_failure(partners=partners, annotation=annotation, mechanism=mechanism, state=state)
         thiscfp = self.awi.bb_query(section="cfps", query=cfp.id, query_keys=True)
-        if (
-            cfp.publisher != self.id
-            and thiscfp is not None
-            and len(thiscfp) > 0
-            and self.n_neg_trials[cfp.id] < self.n_retrials
-        ):
+        if cfp.publisher != self.id and thiscfp is not None and len(thiscfp) > 0 and self.n_neg_trials[cfp.id] < self.n_retrials:
             self.awi.logdebug(f"Renegotiating {self.n_neg_trials[cfp.id]} on {cfp}")
             self.on_new_cfp(cfp=annotation["cfp"])
 
     def set_profiles(self, profiles: dict[int, MiningProfile]):
-        self.profiles = profiles if profiles is not None else dict()
+        self.profiles = profiles if profiles is not None else {}
 
     def _process_cfp(self, cfp: "CFP"):
         if not cfp.is_buy:
             return
-        if self.awi.is_bankrupt(cfp.publisher) or not self.can_expect_agreement(
-            cfp=cfp, margin=0
-        ):
+        if self.awi.is_bankrupt(cfp.publisher) or not self.can_expect_agreement(cfp=cfp, margin=0):
             return
         profile = self.profiles.get(cfp.product, None)
         if profile is None:
@@ -180,11 +161,7 @@ class ReactiveMiner(Miner):
                 profile.alpha_t,
             )
         else:
-            alpha_u, alpha_q, alpha_t = tuple(
-                dirichlet((profile.alpha_u, profile.alpha_q, profile.alpha_t), size=1)[
-                    0
-                ]
-            )
+            alpha_u, alpha_q, alpha_t = tuple(dirichlet((profile.alpha_u, profile.alpha_q, profile.alpha_t), size=1)[0])
         beta_u = pos_gauss(profile.beta_u, profile.cv)
         beta_t = pos_gauss(profile.beta_t, profile.cv)
         beta_q = pos_gauss(profile.beta_q, profile.cv)
@@ -210,9 +187,7 @@ class ReactiveMiner(Miner):
             )
         )
         # ufun = normalize(, outcomes=cfp.outcomes, infeasible_cutoff=-1)
-        negotiator = self.negotiator_type(
-            name=self.name + "*" + cfp.publisher[:4], ufun=ufun
-        )
+        negotiator = self.negotiator_type(name=self.name + "*" + cfp.publisher[:4], ufun=ufun)
         self.n_neg_trials[cfp.id] += 1
         self.request_negotiation(cfp=cfp, negotiator=negotiator)
         # normalize(ufun, outcomes=cfp.outcomes, infeasible_cutoff=None)
@@ -239,21 +214,15 @@ class ReactiveMiner(Miner):
     def confirm_contract_execution(self, contract: Contract) -> bool:
         return True
 
-    def respond_to_negotiation_request(
-        self, cfp: "CFP", partner: str
-    ) -> Optional[Negotiator]:
-        raise ValueError(
-            "Miners should never receive negotiation requests as they publish no CFPs"
-        )
+    def respond_to_negotiation_request(self, cfp: "CFP", partner: str) -> Negotiator | None:
+        raise ValueError("Miners should never receive negotiation requests as they publish no CFPs")
 
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: list[Breach]
-    ) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(self, contract: Contract, breaches: list[Breach]) -> RenegotiationRequest | None:
         return None
 
     def respond_to_renegotiation_request(
         self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         return None
 
     def confirm_loan(self, loan: Loan, bankrupt_if_rejected: bool) -> bool:

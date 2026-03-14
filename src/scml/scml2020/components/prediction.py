@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Iterable, List, Optional, Union
+from collections.abc import Iterable
 
 import numpy as np
 from negmas import Breach, Contract
@@ -57,8 +57,8 @@ class TradePredictionStrategy:
     def __init__(
         self,
         *args,
-        predicted_outputs: Union[int, np.ndarray] = None,
-        predicted_inputs: Union[int, np.ndarray] = None,
+        predicted_outputs: int | np.ndarray = None,
+        predicted_inputs: int | np.ndarray = None,
         add_trade=False,
         **kwargs,
     ):
@@ -87,12 +87,8 @@ class TradePredictionStrategy:
         """Will be called at the end of every step to update the prediction"""
 
     def init(self):
-        self.input_cost = self.awi.catalog_prices[self.awi.my_input_product] * np.ones(
-            self.awi.n_steps, dtype=int
-        )
-        self.output_price = self.awi.catalog_prices[
-            self.awi.my_output_product
-        ] * np.ones(self.awi.n_steps, dtype=int)
+        self.input_cost = self.awi.catalog_prices[self.awi.my_input_product] * np.ones(self.awi.n_steps, dtype=int)
+        self.output_price = self.awi.catalog_prices[self.awi.my_output_product] * np.ones(self.awi.n_steps, dtype=int)
 
         def adjust(x):
             return max(1, self.awi.n_lines) * np.ones(self.awi.n_steps, dtype=int)
@@ -145,9 +141,7 @@ class ExecutionRatePredictionStrategy:
 
     @abstractmethod
     def predict_quantity(self, contract: Contract):
-        raise NotImplementedError(
-            "predict_quantity should be implemented by the ExecutionRatePredictionStrategy"
-        )
+        raise NotImplementedError("predict_quantity should be implemented by the ExecutionRatePredictionStrategy")
 
 
 class FixedTradePredictionStrategy(TradePredictionStrategy):
@@ -216,9 +210,9 @@ class FixedTradePredictionStrategy(TradePredictionStrategy):
 
     def on_contracts_finalized(
         self,
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
+        signed: list[Contract],
+        cancelled: list[Contract],
+        rejectors: list[list[str]],
     ) -> None:
         super().on_contracts_finalized(signed, cancelled, rejectors)
         if not self._add_trade:
@@ -291,12 +285,8 @@ class MarketAwareTradePredictionStrategy(TradePredictionStrategy):
             exogenous = self.awi.exogenous_contract_summary
             horizon = self.awi.settings.get("horizon", 1)
             a, b = self.awi.current_step, self.awi.current_step + horizon
-            self.expected_inputs[a:b] = (
-                exogenous[self.awi.my_input_product, a:b, 0] / self._n_competitors
-            )
-            self.expected_outputs[a:b] = (
-                exogenous[self.awi.my_output_product, a:b, 0] / self._n_competitors
-            )
+            self.expected_inputs[a:b] = exogenous[self.awi.my_input_product, a:b, 0] / self._n_competitors
+            self.expected_outputs[a:b] = exogenous[self.awi.my_output_product, a:b, 0] / self._n_competitors
 
         if self.awi.settings.get("public_trading_prices", False):
             s = self.awi.current_step
@@ -421,17 +411,11 @@ class MeanERPStrategy(ExecutionRatePredictionStrategy):
         old_total = self._total_quantity
         q = contract.agreement["quantity"]
         self._total_quantity += q
-        self._execution_fraction = (
-            self._execution_fraction * old_total + q
-        ) / self._total_quantity
+        self._execution_fraction = (self._execution_fraction * old_total + q) / self._total_quantity
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         super().on_contract_breached(contract, breaches, resolution)
         old_total = self._total_quantity
         q = int(contract.agreement["quantity"] * (1.0 - max(b.level for b in breaches)))
         self._total_quantity += contract.agreement["quantity"]
-        self._execution_fraction = (
-            self._execution_fraction * old_total + q
-        ) / self._total_quantity
+        self._execution_fraction = (self._execution_fraction * old_total + q) / self._total_quantity

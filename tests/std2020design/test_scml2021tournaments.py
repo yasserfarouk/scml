@@ -66,16 +66,9 @@ def test_oneshot(n):
         parallelism="serial",
         log_folder=str(Path.home() / "negmas" / "logs" / "tests"),
     )
-    df = (
-        results.scores[["agent_type", "score"]]
-        .groupby(["agent_type"])
-        .count()
-        .reset_index()
-    )
+    df = results.scores[["agent_type", "score"]].groupby(["agent_type"]).count().reset_index()
     assert len(results.total_scores) == n
-    assert (
-        len(df["score"].unique()) == 1
-    ), f"Agents do not appear the same number of times:\n{df}"
+    assert len(df["score"].unique()) == 1, f"Agents do not appear the same number of times:\n{df}"
 
 
 @pytest.mark.skipif(
@@ -86,9 +79,7 @@ class TestTruncatedMean:
     @given(s=st.floats(0.0, 100.0), m=st.floats(-50, 50))
     def test_tukey(self, s, m):
         limit = 1.5
-        scores = np.hstack(
-            (m + s * np.random.randn(90), m + limit * s + 0.1 + s * np.random.rand(10))
-        )
+        scores = np.hstack((m + s * np.random.randn(90), m + limit * s + 0.1 + s * np.random.rand(10)))
         tmean, limits = truncated_mean(
             scores,
             top_limit=limit,
@@ -102,9 +93,7 @@ class TestTruncatedMean:
     @given(s=st.floats(0.0, 100.0), m=st.floats(-50, 50))
     def test_zscore(self, s, m):
         limit, eps = 3, max(0.001, s * 1e-2)
-        scores = np.hstack(
-            (m + s * np.random.randn(90), m + limit * s + 0.1 + s * np.random.rand(10))
-        )
+        scores = np.hstack((m + s * np.random.randn(90), m + limit * s + 0.1 + s * np.random.rand(10)))
         m, s = np.mean(scores), np.std(scores)
         non_outlier = scores[scores <= m + s * limit]
         tmean, limits = truncated_mean(

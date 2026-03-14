@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 from negmas import Mechanism, MechanismState, NegotiatorMechanismInterface
 from negmas.negotiators import Negotiator
@@ -21,66 +21,60 @@ class InsuranceCompany(Agent, ABC):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._world: Optional[SCML2019World] = None
+        self._world: SCML2019World | None = None
 
     def _respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-        role: Optional[str],
-        req_id: Optional[str],
-    ) -> Optional[Negotiator]:
+        role: str | None,
+        req_id: str | None,
+    ) -> Negotiator | None:
         pass
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: list[str] | None):
         pass
 
-    def on_neg_request_accepted(
-        self, req_id: str, mechanism: NegotiatorMechanismInterface
-    ):
+    def on_neg_request_accepted(self, req_id: str, mechanism: NegotiatorMechanismInterface):
         pass
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
     def on_contract_signed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_cancelled(self, contract: Contract, rejectors: List[str]) -> None:
+    def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
-    def sign_contract(self, contract: Contract) -> Optional[str]:
+    def sign_contract(self, contract: Contract) -> str | None:
         pass
 
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        partners: List[str],
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: Mechanism,
-        role: Optional[str],
+        role: str | None,
         req_id: str,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         pass
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
@@ -95,7 +89,7 @@ class DefaultInsuranceCompany(InsuranceCompany):
         premium: float,
         premium_breach_increment: float,
         premium_time_increment: float,
-        a2f: Dict[str, Factory],
+        a2f: dict[str, Factory],
         disabled=False,
         name: str = None,
     ):
@@ -104,22 +98,20 @@ class DefaultInsuranceCompany(InsuranceCompany):
         self.premium = premium
         self.disabled = disabled
         self.premium_time_increment = premium_time_increment
-        self.insured_contracts: Dict[Tuple[Contract, str], InsurancePolicy] = dict()
-        self.storage: Dict[int, int] = defaultdict(int)
+        self.insured_contracts: dict[tuple[Contract, str], InsurancePolicy] = {}
+        self.storage: dict[int, int] = defaultdict(int)
         self.wallet: float = 0.0
         self.a2f = a2f
 
     def init(self):
         pass
 
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(self, contract: Contract, breaches: list[Breach]) -> RenegotiationRequest | None:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
+    ) -> Negotiator | None:
         raise ValueError("The insurance company does not receive callbacks")
 
     def evaluate_insurance(
@@ -128,7 +120,7 @@ class DefaultInsuranceCompany(InsuranceCompany):
         insured: SCML2019Agent,
         against: SCML2019Agent,
         t: int = None,
-    ) -> Optional[float]:
+    ) -> float | None:
         """Can be called to evaluate the premium for insuring the given contract against breaches committed by others
 
         Args:
@@ -170,13 +162,9 @@ class DefaultInsuranceCompany(InsuranceCompany):
         if breaches is not None:
             for _, breach in breaches.items():
                 b += breach.level
-        return (self.premium + b * self.premium_breach_increment) * (
-            1 + self.premium_time_increment * dt
-        )
+        return (self.premium + b * self.premium_breach_increment) * (1 + self.premium_time_increment * dt)
 
-    def buy_insurance(
-        self, contract: Contract, insured: SCML2019Agent, against: SCML2019Agent
-    ) -> Optional[InsurancePolicy]:
+    def buy_insurance(self, contract: Contract, insured: SCML2019Agent, against: SCML2019Agent) -> InsurancePolicy | None:
         """Buys insurance for the contract at the premium calculated by the insurance company.
 
         Remarks:
@@ -189,9 +177,7 @@ class DefaultInsuranceCompany(InsuranceCompany):
         """
         if self.disabled:
             return None
-        premium = self.evaluate_insurance(
-            contract=contract, t=self.awi.current_step, insured=insured, against=against
-        )
+        premium = self.evaluate_insurance(contract=contract, t=self.awi.current_step, insured=insured, against=against)
         if premium is None:
             return None
 
@@ -223,7 +209,7 @@ class DefaultInsuranceCompany(InsuranceCompany):
         """
         if self.disabled:
             return False
-        if (contract, perpetrator.id) in self.insured_contracts.keys():
+        if (contract, perpetrator.id) in self.insured_contracts:
             del self.insured_contracts[(contract, perpetrator.id)]
             return True
         return False

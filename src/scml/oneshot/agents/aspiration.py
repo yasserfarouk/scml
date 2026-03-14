@@ -1,6 +1,5 @@
 import itertools
 import random
-from typing import Dict
 
 from negmas import Outcome, PolyAspiration, ResponseType
 from negmas.outcomes.issue_ops import enumerate_issues
@@ -31,15 +30,11 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
         self._reserved_value = self.ufun.reserved_value
         self._asp = PolyAspiration(
             max_aspiration=1.0,
-            aspiration_type=float(random.randint(1, 4))
-            if random.random() < 0.7
-            else random.random(),
+            aspiration_type=float(random.randint(1, 4)) if random.random() < 0.7 else random.random(),
         )
         # if self.awi.current_exogenous_input_quantity or self.awi.current_exogenous_output_quantity:
         #     breakpoint()
-        self._limit = self.ufun.find_limit(
-            True, int(self.awi.is_last_level), int(self.awi.is_first_level)
-        )
+        self._limit = self.ufun.find_limit(True, int(self.awi.is_last_level), int(self.awi.is_first_level))
         self._max_utility = self._limit.utility
         urange = self._max_utility - self._reserved_value
         if urange <= 1e-5:
@@ -53,11 +48,7 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
 
         # compile a list of all outcomes with their utilities and sort it
         # descendigly by utility
-        issues = (
-            self.awi.current_output_issues
-            if self.awi.is_first_level
-            else self.awi.current_output_issues
-        )
+        issues = self.awi.current_output_issues if self.awi.is_first_level else self.awi.current_output_issues
         outcomes = list(enumerate_issues(issues))
         self._outcomes = sorted(
             zip(
@@ -73,6 +64,7 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
                     for _ in outcomes
                 ),
                 outcomes,
+                strict=False,
             ),
             key=lambda x: -x[0],
         )
@@ -87,18 +79,14 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
                 )
             )
         # find current aspiration level between zero and one
-        asp = max(
-            self._asp.utility_at(state.relative_time) for state in states.values()
-        )
+        asp = max(self._asp.utility_at(state.relative_time) for state in states.values())
 
         # acceptance strategy
         partner_utils = sorted(
             zip(
                 offers.keys(),
-                (
-                    (self.ufun(_) - self._reserved_value) / self._urange
-                    for _ in offers.values()
-                ),
+                ((self.ufun(_) - self._reserved_value) / self._urange for _ in offers.values()),
+                strict=False,
             ),
             key=lambda x: -x[1],
         )
@@ -131,13 +119,10 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
         """Selects an appropriate way to distribute this outcome to agents with
         given IDs."""
         if len(offers) == 0:
-            return dict()
+            return {}
         # fidn the partner which gave me the offer most similar to my best
         dists = sorted(
-            (
-                (sum((a - b) * (a - b) for a, b in zip(outcome, v)), k)
-                for k, v in offers.items()
-            ),
+            ((sum((a - b) * (a - b) for a, b in zip(outcome, v, strict=False)), k) for k, v in offers.items()),
             key=lambda x: x[0],
         )
         # offer everyone nothing excdpt the one agent that gave me the offer most
@@ -151,7 +136,7 @@ class SingleAgreementAspirationAgent(OneShotSyncAgent):
         result[dists[0][1]] = SAOResponse(ResponseType.REJECT_OFFER, outcome)
         return result
 
-    def first_proposals(self) -> Dict[str, Outcome | None]:
+    def first_proposals(self) -> dict[str, Outcome | None]:
         """
         Gets a set of proposals to use for initializing the negotiation.
 

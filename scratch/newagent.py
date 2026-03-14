@@ -18,9 +18,7 @@ class MyAgent(MyPredictor, DecentralizingAgent):
 def main():
     from scml.utils import anac2020_std
 
-    results = anac2020_std(
-        (DecentralizingAgent, MyAgent), n_runs_per_world=1, n_steps=20, verbose=True
-    )
+    results = anac2020_std((DecentralizingAgent, MyAgent), n_runs_per_world=1, n_steps=20, verbose=True)
     print(str(results))
 
 

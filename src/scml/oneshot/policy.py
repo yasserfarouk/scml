@@ -53,11 +53,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         offers = []
         for partner in itertools.chain(state.my_suppliers, state.my_consumers):
             # End the negotiation if it is already ended or randomly with some small probability
-            if (
-                random.random() < 0.025
-                or partner not in state.mechanism_states.keys()
-                or state.mechanism_states[partner].ended
-            ):
+            if random.random() < 0.025 or partner not in state.mechanism_states or state.mechanism_states[partner].ended:
                 offers[partner] = (0, 0)
                 continue
             outcome = self.awi.current_input_outcome_space.random_outcome()
@@ -70,9 +66,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """
         return action
 
-    def encode_action(
-        self, responses: dict[str, SAOResponse]
-    ) -> dict[str, SAOResponse]:
+    def encode_action(self, responses: dict[str, SAOResponse]) -> dict[str, SAOResponse]:
         """
         Receives offers for all partners and generates the corresponding action. Used mostly for debugging and testing.
         """
@@ -82,9 +76,7 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
         """A policy is a callable that receives a state and generates an action"""
         return self.act(state)
 
-    def counter_all(
-        self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
-    ) -> dict[str, SAOResponse]:
+    def counter_all(self, offers: dict[str, Outcome | None], states: dict[str, SAOState]) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).
 
@@ -123,15 +115,13 @@ class OneShotPolicy(OneShotSyncAgent, ABC):
             return SAOState(started=True, n_negotiators=2)
 
         responses = self.counter_all(
-            offers=dict(zip(partners, itertools.repeat(None))),
-            states=dict(zip(partners, itertools.repeat(_state()))),
+            offers=dict(zip(partners, itertools.repeat(None), strict=False)),
+            states=dict(zip(partners, itertools.repeat(_state()), strict=False)),
         )
         return dict(
             zip(
                 responses.keys(),
-                [
-                    None if k == ResponseType.END_NEGOTIATION else v.outcome
-                    for k, v in responses.items()
-                ],
+                [None if k == ResponseType.END_NEGOTIATION else v.outcome for k, v in responses.items()],
+                strict=False,
             )
         )

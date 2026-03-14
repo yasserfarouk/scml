@@ -1,22 +1,22 @@
-import attr
-from scml.oneshot.agents.rand import EqualDistOneShotAgent, RandDistOneShotAgent
-from scml.oneshot.agents.greedy import GreedyOneShotAgent, GreedySingleAgreementAgent
-from scml.utils import anac2024_oneshot
-
 # required for typing
 from typing import Any
 
-# required for development
-from scml.oneshot import OneShotSyncAgent
+import attr
 
 # required for typing
-from negmas import SAONMI, Contract, Outcome, SAOResponse, SAOState, ResponseType
+from negmas import SAONMI, Contract, Outcome, ResponseType, SAOResponse, SAOState
+
+# required for development
+from scml.oneshot import OneShotSyncAgent
+from scml.oneshot.agents.greedy import GreedyOneShotAgent, GreedySingleAgreementAgent
+from scml.oneshot.agents.rand import EqualDistOneShotAgent, RandDistOneShotAgent
+from scml.utils import anac2024_oneshot
 
 
 class AWITester(OneShotSyncAgent):
     def first_proposals(self) -> dict[str, Outcome | None]:
         nmis = self.awi.current_nmis
-        return dict(zip(nmis.keys(), [n.random_outcome() for n in nmis.values()]))
+        return dict(zip(nmis.keys(), [n.random_outcome() for n in nmis.values()], strict=False))
 
     def counter_all(  # type: ignore
         self, offers: dict[str, Outcome], states: dict[str, SAOState]
@@ -29,23 +29,15 @@ class AWITester(OneShotSyncAgent):
         assert n_steps == n_steps2
 
         steps = {k: v.step for k, v in states.items()}
-        assert len(offers) == len(
-            self.awi.current_offers
-        ), f"{offers=}\n{self.awi.current_offers=}"
+        assert len(offers) == len(self.awi.current_offers), f"{offers=}\n{self.awi.current_offers=}"
         for k, v in offers.items():
-            assert (
-                v == self.awi.current_offers[k]
-            ), f"{k=}: {offers[k]=}, {self.awi.current_offers[k]=}"
-        assert len(states) == len(
-            self.awi.current_states
-        ), f"{states=}\n{self.awi.current_states=}"
+            assert v == self.awi.current_offers[k], f"{k=}: {offers[k]=}, {self.awi.current_offers[k]=}"
+        assert len(states) == len(self.awi.current_states), f"{states=}\n{self.awi.current_states=}"
         for k, v in states.items():
-            assert (
-                v.step == self.awi.current_states[k].step
-            ), f"{k=}: {states[k]=}, {self.awi.current_states[k]=}"
+            assert v.step == self.awi.current_states[k].step, f"{k=}: {states[k]=}, {self.awi.current_states[k]=}"
 
-        buy = {k for k in self.awi.current_negotiation_details["buy"].keys()}
-        sell = {k for k in self.awi.current_negotiation_details["sell"].keys()}
+        buy = set(self.awi.current_negotiation_details["buy"].keys())
+        sell = set(self.awi.current_negotiation_details["sell"].keys())
         mynegs = []
         commonset = (
             set(offers.keys())
@@ -100,6 +92,7 @@ class AWITester(OneShotSyncAgent):
                     )
                     for _ in offers
                 ],
+                strict=False,
             )
         )
 

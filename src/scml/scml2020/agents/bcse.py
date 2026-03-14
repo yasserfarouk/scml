@@ -17,7 +17,5 @@ class BuyCheapSellExpensiveAgent(IndependentNegotiationsAgent):
         return LinearUtilityFunction((1, -1, -10), issues=issues, outcomes=outcomes)
 
 
-class MarketAwareBuyCheapSellExpensiveAgent(
-    MarketAwareIndependentNegotiationsAgent, BuyCheapSellExpensiveAgent
-):
+class MarketAwareBuyCheapSellExpensiveAgent(MarketAwareIndependentNegotiationsAgent, BuyCheapSellExpensiveAgent):
     """An agent that tries to buy cheap and sell expensive but does not care about production scheduling."""

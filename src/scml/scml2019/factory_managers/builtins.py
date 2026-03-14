@@ -39,16 +39,9 @@ from scml.scml2019.simulators import (
 )
 
 if True:
+    from collections.abc import Callable, Collection, Iterable
     from typing import (
         Any,
-        Callable,
-        Collection,
-        Dict,
-        Iterable,
-        List,
-        Optional,
-        Type,
-        Union,
     )
 
 __all__ = [
@@ -211,16 +204,14 @@ class FactoryManager(SCML2019Agent, ABC):
     def __init__(
         self,
         name=None,
-        simulator_type: Union[str, Type[FactorySimulator]] = FastFactorySimulator,
+        simulator_type: str | type[FactorySimulator] = FastFactorySimulator,
     ):
         super().__init__(name=name)
         self.transportation_delay = 0
         """Transportation delay in the world"""
-        self.simulator: Optional[FactorySimulator] = None
+        self.simulator: FactorySimulator | None = None
         """The simulator used by this agent"""
-        self.simulator_type: Type[FactorySimulator] = get_class(
-            simulator_type, scope=globals()
-        )
+        self.simulator_type: type[FactorySimulator] = get_class(simulator_type, scope=globals())
         """Simulator type (as a class)"""
         self.current_step = 0
         """Current simulation step"""
@@ -254,11 +245,11 @@ class FactoryManager(SCML2019Agent, ABC):
         self.step()
 
     @abstractmethod
-    def on_production_failure(self, failures: List[ProductionFailure]) -> None:
+    def on_production_failure(self, failures: list[ProductionFailure]) -> None:
         """Called with a list of `ProductionFailure` records on production failure."""
 
     @abstractmethod
-    def on_production_success(self, reports: List[ProductionReport]) -> None:
+    def on_production_success(self, reports: list[ProductionReport]) -> None:
         """Called with a list of `ProductionReport` records on production success"""
 
 
@@ -271,80 +262,66 @@ class DoNothingFactoryManager(FactoryManager):
     def step(self):
         pass
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[List[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: list[str] | None):
         pass
 
-    def on_neg_request_accepted(
-        self, req_id: str, mechanism: NegotiatorMechanismInterface
-    ):
+    def on_neg_request_accepted(self, req_id: str, mechanism: NegotiatorMechanismInterface):
         pass
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
     def on_contract_signed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_cancelled(self, contract: Contract, rejectors: List[str]) -> None:
+    def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
-    def sign_contract(self, contract: Contract) -> Optional[str]:
+    def sign_contract(self, contract: Contract) -> str | None:
         return self.id
 
-    def on_contract_nullified(
-        self, contract: Contract, bankrupt_partner: str, compensation: float
-    ) -> None:
+    def on_contract_nullified(self, contract: Contract, bankrupt_partner: str, compensation: float) -> None:
         pass
 
     def on_agent_bankrupt(self, agent_id: str) -> None:
         pass
 
-    def confirm_partial_execution(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> bool:
+    def confirm_partial_execution(self, contract: Contract, breaches: list[Breach]) -> bool:
         return True
 
     def on_remove_cfp(self, cfp: "CFP") -> None:
         pass
 
-    def on_production_failure(self, failures: List[ProductionFailure]) -> None:
+    def on_production_failure(self, failures: list[ProductionFailure]) -> None:
         pass
 
-    def respond_to_negotiation_request(
-        self, cfp: "CFP", partner: str
-    ) -> Optional[Negotiator]:
+    def respond_to_negotiation_request(self, cfp: "CFP", partner: str) -> Negotiator | None:
         return None
 
     def confirm_contract_execution(self, contract: Contract) -> bool:
         return True
 
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(self, contract: Contract, breaches: list[Breach]) -> RenegotiationRequest | None:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
+    ) -> Negotiator | None:
         return None
 
     def confirm_loan(self, loan: Loan, bankrupt_if_rejected: bool) -> bool:
@@ -358,7 +335,7 @@ class DoNothingFactoryManager(FactoryManager):
     def on_inventory_change(self, product: int, quantity: int, cause: str) -> None:
         pass
 
-    def on_production_success(self, reports: List[ProductionReport]) -> None:
+    def on_production_success(self, reports: list[ProductionReport]) -> None:
         pass
 
     def on_cash_transfer(self, amount: float, cause: str) -> None:
@@ -371,10 +348,10 @@ class DoNothingFactoryManager(FactoryManager):
 class GreedyFactoryManager(DoNothingFactoryManager):
     """The default factory manager that will be implemented by the committee of ANAC-SCML 2019"""
 
-    def on_production_failure(self, failures: List[ProductionFailure]) -> None:
+    def on_production_failure(self, failures: list[ProductionFailure]) -> None:
         pass
 
-    def on_production_success(self, reports: List[ProductionReport]) -> None:
+    def on_production_success(self, reports: list[ProductionReport]) -> None:
         pass
 
     def confirm_loan(self, loan: Loan, bankrupt_if_rejected: bool) -> bool:
@@ -383,25 +360,23 @@ class GreedyFactoryManager(DoNothingFactoryManager):
     def confirm_contract_execution(self, contract: Contract) -> bool:
         return True
 
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: List[Breach]
-    ) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(self, contract: Contract, breaches: list[Breach]) -> RenegotiationRequest | None:
         return None
 
     def respond_to_renegotiation_request(
-        self, contract: Contract, breaches: List[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
+        self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
+    ) -> Negotiator | None:
         return None
 
     def __init__(
         self,
         name=None,
-        simulator_type: Union[str, Type[FactorySimulator]] = FastFactorySimulator,
-        scheduler_type: Union[str, Type[Scheduler]] = GreedyScheduler,
-        scheduler_params: Optional[Dict[str, Any]] = None,
+        simulator_type: str | type[FactorySimulator] = FastFactorySimulator,
+        scheduler_type: str | type[Scheduler] = GreedyScheduler,
+        scheduler_params: dict[str, Any] | None = None,
         optimism: float = 0.0,
-        negotiator_type: Union[str, Type[Negotiator]] = DEFAULT_NEGOTIATOR,
-        negotiator_params: Optional[Dict[str, Any]] = None,
+        negotiator_type: str | type[Negotiator] = DEFAULT_NEGOTIATOR,
+        negotiator_params: dict[str, Any] | None = None,
         n_retrials=5,
         use_consumer=True,
         reactive=True,
@@ -412,47 +387,38 @@ class GreedyFactoryManager(DoNothingFactoryManager):
     ):
         super().__init__(name=name, simulator_type=simulator_type)
         self.negotiator_type = get_class(negotiator_type, scope=globals())
-        self.negotiator_params = (
-            negotiator_params if negotiator_params is not None else {}
-        )
+        self.negotiator_params = negotiator_params if negotiator_params is not None else {}
         self.optimism = optimism
-        self.ufun_factory: Union[
-            Type[NegotiatorUtility], Callable[[Any, Any], NegotiatorUtility]
-        ]
+        self.ufun_factory: type[NegotiatorUtility] | Callable[[Any, Any], NegotiatorUtility]
         if optimism < 1e-6:
             self.ufun_factory = PessimisticNegotiatorUtility
         elif optimism > 1 - 1e-6:
             self.ufun_factory = OptimisticNegotiatorUtility
         else:
-            self.ufun_factory: NegotiatorUtility = (
-                lambda agent, annotation: AveragingNegotiatorUtility(
-                    agent=agent, annotation=annotation, optimism=self.optimism
-                )
+            self.ufun_factory: NegotiatorUtility = lambda agent, annotation: AveragingNegotiatorUtility(
+                agent=agent, annotation=annotation, optimism=self.optimism
             )
         if max_insurance_premium < 0.0:
             warnings.warn(
                 f"Negative max insurance ({max_insurance_premium}) is deprecated. Set max_insurance_premium = inf "
-                f"for always buying and max_insurance_premium = 0.0 for never buying. Will continue assuming inf"
+                f"for always buying and max_insurance_premium = 0.0 for never buying. Will continue assuming inf",
+                stacklevel=2,
             )
             max_insurance_premium = float("inf")
         self.__reserved_value = reserved_value
         self.max_insurance_premium = max_insurance_premium
         self.n_retrials = n_retrials
-        self.n_neg_trials: Dict[str, int] = defaultdict(int)
+        self.n_neg_trials: dict[str, int] = defaultdict(int)
         self.consumer = None
         self.use_consumer = use_consumer
         self.reactive = reactive
         self.sign_only_guaranteed_contracts = sign_only_guaranteed_contracts
-        self.contract_schedules: Dict[str, ScheduleInfo] = {}
+        self.contract_schedules: dict[str, ScheduleInfo] = {}
         self.riskiness = riskiness
         self.negotiation_margin = int(round(n_retrials * max(0.0, 1.0 - riskiness)))
-        self.scheduler_type: Type[Scheduler] = get_class(
-            scheduler_type, scope=globals()
-        )
+        self.scheduler_type: type[Scheduler] = get_class(scheduler_type, scope=globals())
         self.scheduler: Scheduler = None
-        self.scheduler_params: Dict[str, Any] = (
-            scheduler_params if scheduler_params is not None else {}
-        )
+        self.scheduler_params: dict[str, Any] = scheduler_params if scheduler_params is not None else {}
 
     def total_utility(self, contracts: Collection[Contract] = ()) -> float:
         """Calculates the total utility for the agent of a collection of contracts"""
@@ -481,10 +447,8 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             profiles = dict(
                 zip(
                     self.consuming.keys(),
-                    (
-                        ConsumptionProfile(schedule=[_] * self.awi.n_steps)
-                        for _ in itertools.repeat(0)
-                    ),
+                    (ConsumptionProfile(schedule=[_] * self.awi.n_steps) for _ in itertools.repeat(0)),
+                    strict=False,
                 )
             )
             self.consumer: JustInTimeConsumer = JustInTimeConsumer(
@@ -510,35 +474,25 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             profiles=self.compiled_profiles,
         )
 
-    def respond_to_negotiation_request(
-        self, cfp: "CFP", partner: str
-    ) -> Optional[Negotiator]:
+    def respond_to_negotiation_request(self, cfp: "CFP", partner: str) -> Negotiator | None:
         if self.awi.is_bankrupt(partner):
             return None
         if self.use_consumer:
-            return self.consumer.respond_to_negotiation_request(
-                cfp=cfp, partner=partner
-            )
+            return self.consumer.respond_to_negotiation_request(cfp=cfp, partner=partner)
         else:
-            ufun_ = self.ufun_factory(
-                self, self._create_annotation(cfp=cfp, partner=partner)
-            )
+            ufun_ = self.ufun_factory(self, self._create_annotation(cfp=cfp, partner=partner))
             ufun_.reserved_value = self.__reserved_value
-            neg = self.negotiator_type(
-                name=self.name + "*" + partner[:4], **self.negotiator_params, ufun=ufun_
-            )
+            neg = self.negotiator_type(name=self.name + "*" + partner[:4], **self.negotiator_params, ufun=ufun_)
             return neg
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ):
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface):
         if self.use_consumer:
             self.consumer.on_negotiation_success(contract, mechanism)
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
@@ -546,12 +500,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             self.consumer.on_negotiation_failure(partners, annotation, mechanism, state)
         cfp = annotation["cfp"]
         thiscfp = self.awi.bb_query(section="cfps", query=cfp.id, query_keys=True)
-        if (
-            cfp.publisher != self.id
-            and thiscfp is not None
-            and len(thiscfp) > 0
-            and self.n_neg_trials[cfp.id] < self.n_retrials
-        ):
+        if cfp.publisher != self.id and thiscfp is not None and len(thiscfp) > 0 and self.n_neg_trials[cfp.id] < self.n_retrials:
             self.awi.logdebug(f"Renegotiating {self.n_neg_trials[cfp.id]} on {cfp}")
             self.n_neg_trials[cfp.id] += 1
             self.on_new_cfp(cfp=annotation["cfp"])
@@ -576,9 +525,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
                 return
             premium = relative_premium * total
             if relative_premium <= self.max_insurance_premium:
-                self.awi.logdebug(
-                    f"{self.name} buys insurance @ {premium:0.02} ({relative_premium:0.02%}) for {str(contract)}"
-                )
+                self.awi.logdebug(f"{self.name} buys insurance @ {premium:0.02} ({relative_premium:0.02%}) for {str(contract)}")
                 awi.buy_insurance(contract=contract)
                 self.simulator.pay(premium, self.awi.current_step)
             return
@@ -608,9 +555,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             product_id = need.product
             # self.simulator.reserve(product=product_id, quantity=need.quantity_to_buy, t=need.step)
             if self.use_consumer:
-                self.consumer.profiles[product_id].schedule[
-                    need.step
-                ] += need.quantity_to_buy
+                self.consumer.profiles[product_id].schedule[need.step] += need.quantity_to_buy
                 self.consumer.register_product_cfps(
                     p=product_id,
                     t=need.step,
@@ -626,11 +571,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             if need.step < awi.current_step:
                 continue
                 # raise ValueError(f'need {need} at {need.step} while running at step {awi.current_step}')
-            time = (
-                need.step
-                if self.max_storage is not None
-                else (awi.current_step, need.step)
-            )
+            time = need.step if self.max_storage is not None else (awi.current_step, need.step)
             cfp = CFP(
                 is_buy=True,
                 publisher=self.id,
@@ -653,12 +594,8 @@ class GreedyFactoryManager(DoNothingFactoryManager):
                 start_at=self.awi.current_step + 1,
             )
 
-        if self.sign_only_guaranteed_contracts and (
-            not schedule.valid or len(schedule.needs) > 1
-        ):
-            self.awi.logdebug(
-                f"{self.name} refused to sign contract {contract.id} because it cannot be scheduled"
-            )
+        if self.sign_only_guaranteed_contracts and (not schedule.valid or len(schedule.needs) > 1):
+            self.awi.logdebug(f"{self.name} refused to sign contract {contract.id} because it cannot be scheduled")
             return None
         # if schedule.final_balance <= self.simulator.final_balance:
         #     self.awi.logdebug(f'{self.name} refused to sign contract {contract.id} because it is not expected '
@@ -668,12 +605,10 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             profit = schedule.final_balance - self.simulator.final_balance
             self.awi.logdebug(
                 f"{self.name} singing contract {contract.id} expecting "
-                f'{-profit if profit < 0 else profit} {"loss" if profit < 0 else "profit"}'
+                f"{-profit if profit < 0 else profit} {'loss' if profit < 0 else 'profit'}"
             )
         else:
-            self.awi.logdebug(
-                f"{self.name} singing contract {contract.id} expecting breach"
-            )
+            self.awi.logdebug(f"{self.name} singing contract {contract.id} expecting breach")
             return None
 
         self.contract_schedules[contract.id] = schedule
@@ -697,15 +632,11 @@ class GreedyFactoryManager(DoNothingFactoryManager):
             return
         if self.awi.is_bankrupt(cfp.publisher):
             return
-        if self.simulator is None or not self.can_expect_agreement(
-            cfp=cfp, margin=self.negotiation_margin
-        ):
+        if self.simulator is None or not self.can_expect_agreement(cfp=cfp, margin=self.negotiation_margin):
             return
         if not self.can_produce(cfp=cfp):
             return
-        neg = self.negotiator_type(
-            name=self.name + ">" + cfp.publisher[:4], **self.negotiator_params
-        )
+        neg = self.negotiator_type(name=self.name + ">" + cfp.publisher[:4], **self.negotiator_params)
         ufun = self.ufun_factory(self, self._create_annotation(cfp=cfp))
         ufun.reserved_value = self.__reserved_value
         self.request_negotiation(negotiator=neg, cfp=cfp, ufun=ufun)
@@ -720,13 +651,9 @@ class GreedyFactoryManager(DoNothingFactoryManager):
     def on_new_cfp(self, cfp: "CFP") -> None:
         if not self.reactive:
             return
-        if cfp.satisfies(
-            query={"is_buy": True, "products": list(self.producing.keys())}
-        ):
+        if cfp.satisfies(query={"is_buy": True, "products": list(self.producing.keys())}):
             self._process_buy_cfp(cfp)
-        if cfp.satisfies(
-            query={"is_buy": False, "products": list(self.consuming.keys())}
-        ):
+        if cfp.satisfies(query={"is_buy": False, "products": list(self.consuming.keys())}):
             self._process_sell_cfp(cfp)
 
     def step(self):
@@ -739,9 +666,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
 
         # respond to interesting CFPs
         # todo: should check time and sort products by interest etc
-        cfps = self.awi.bb_query(
-            section="cfps", query={"products": self.producing.keys(), "is_buy": True}
-        )
+        cfps = self.awi.bb_query(section="cfps", query={"products": self.producing.keys(), "is_buy": True})
         if cfps is None:
             return
         for cfp in cfps.values():
@@ -749,11 +674,9 @@ class GreedyFactoryManager(DoNothingFactoryManager):
 
     def can_produce(self, cfp: CFP, assume_no_further_negotiations=False) -> bool:
         """Whether or not we can produce the required item in time"""
-        if cfp.product not in self.producing.keys():
+        if cfp.product not in self.producing:
             return False
-        agreement = SCMLAgreement(
-            time=cfp.max_time, unit_price=cfp.max_unit_price, quantity=cfp.min_quantity
-        )
+        agreement = SCMLAgreement(time=cfp.max_time, unit_price=cfp.max_unit_price, quantity=cfp.min_quantity)
         min_concluded_at = self.awi.current_step + 1 - int(self.immediate_negotiations)
         min_sign_at = min_concluded_at + self.awi.default_signing_delay
         if cfp.max_time < min_sign_at + 1:  # 1 is minimum time to produce the product
@@ -774,9 +697,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
                 assume_no_further_negotiations=assume_no_further_negotiations,
                 start_at=min_sign_at,
             )
-        return schedule.valid and self.can_secure_needs(
-            schedule=schedule, step=self.awi.current_step
-        )
+        return schedule.valid and self.can_secure_needs(schedule=schedule, step=self.awi.current_step)
 
     def can_secure_needs(self, schedule: ScheduleInfo, step: int):
         """
@@ -792,12 +713,7 @@ class GreedyFactoryManager(DoNothingFactoryManager):
         needs = schedule.needs
         if len(needs) < 1:
             return True
-        for need in needs:
-            if need.quantity_to_buy > 0 and need.step < step + 1 - int(
-                self.immediate_negotiations
-            ):  # @todo check this
-                return False
-        return True
+        return all(not (need.quantity_to_buy > 0 and need.step < step + 1 - int(self.immediate_negotiations)) for need in needs)
 
 
 TotalUtilityFun = Callable[[Collection[Contract]], float]
@@ -809,22 +725,14 @@ class NegotiatorUtility(UtilityFunction):
     def __init__(
         self,
         agent: GreedyFactoryManager,
-        annotation: Dict[str, Any],
-        name: Optional[str] = None,
+        annotation: dict[str, Any],
+        name: str | None = None,
         avoid_free_sales: bool = True,
         expected_breach_level: float = 0.5,
         **kwargs,
     ):
         if name is None:
-            name = (
-                (
-                    agent.name
-                    + "*"
-                    + "*".join(_ for _ in annotation["partners"] if _ != agent.id)
-                )
-                if agent is not None
-                else None
-            )
+            name = (agent.name + "*" + "*".join(_ for _ in annotation["partners"] if _ != agent.id)) if agent is not None else None
         super().__init__(
             name=name,
             **kwargs,
@@ -860,20 +768,13 @@ class NegotiatorUtility(UtilityFunction):
         )
 
     def _free_sale(self, agreement: SCMLAgreement) -> bool:
-        return (
-            (
-                self.annotation["seller"] == self.agent.id
-                and agreement["unit_price"] < 1e-6
-            )
-            if self.avoid_free_sales
-            else False
-        )
+        return (self.annotation["seller"] == self.agent.id and agreement["unit_price"] < 1e-6) if self.avoid_free_sales else False
 
-    def eval(self, outcome: Outcome) -> Optional[Value]:
+    def eval(self, outcome: Outcome) -> Value | None:
         if outcome is None:
             return float("-inf")
         if isinstance(outcome, tuple):
-            outcome = dict(zip(("quantity", "time", "unit_price"), outcome))
+            outcome = dict(zip(("quantity", "time", "unit_price"), outcome, strict=False))
         if isinstance(outcome, dict):
             return self.call(agreement=SCMLAgreement(**outcome))
         if isinstance(outcome, SCMLAgreement):
@@ -881,17 +782,17 @@ class NegotiatorUtility(UtilityFunction):
         raise ValueError(f"Outcome: {outcome} cannot be converted to an SCMLAgreement")
 
     @abstractmethod
-    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
+    def call(self, agreement: SCMLAgreement) -> Value | None:
         """Called to evaluate a agreement"""
 
-    def xml(self, issues: List[Issue]) -> str:
+    def xml(self, issues: list[Issue]) -> str:
         return "NegotiatorUtility has not xml representation"
 
 
 class PessimisticNegotiatorUtility(NegotiatorUtility):
     """The utility function of a negotiator that assumes other negotiations currently open will fail."""
 
-    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
+    def call(self, agreement: SCMLAgreement) -> Value | None:
         """An offer will be a tuple of one value which in turn will be a list of contracts"""
         if self._free_sale(agreement):
             return float("-inf")
@@ -909,7 +810,7 @@ class PessimisticNegotiatorUtility(NegotiatorUtility):
 class OptimisticNegotiatorUtility(NegotiatorUtility):
     """The utility function of a negotiator that assumes other negotiations currently open will succeed."""
 
-    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
+    def call(self, agreement: SCMLAgreement) -> Value | None:
         if self._free_sale(agreement):
             return float("-inf")
         # contracts = self.agent.contracts
@@ -934,8 +835,8 @@ class AveragingNegotiatorUtility(NegotiatorUtility):
     def __init__(
         self,
         agent: GreedyFactoryManager,
-        annotation: Dict[str, Any],
-        name: Optional[str] = None,
+        annotation: dict[str, Any],
+        name: str | None = None,
         optimism: float = 0.5,
         avoid_free_sale: bool = True,
     ):
@@ -947,14 +848,10 @@ class AveragingNegotiatorUtility(NegotiatorUtility):
         )
         self.avoid_free_sales = avoid_free_sale
         self.optimism = optimism
-        self.optimistic = OptimisticNegotiatorUtility(
-            agent=agent, annotation=annotation, avoid_free_sales=avoid_free_sale
-        )
-        self.pessimistic = PessimisticNegotiatorUtility(
-            agent=agent, annotation=annotation, avoid_free_sales=avoid_free_sale
-        )
+        self.optimistic = OptimisticNegotiatorUtility(agent=agent, annotation=annotation, avoid_free_sales=avoid_free_sale)
+        self.pessimistic = PessimisticNegotiatorUtility(agent=agent, annotation=annotation, avoid_free_sales=avoid_free_sale)
 
-    def call(self, agreement: SCMLAgreement) -> Optional[Value]:
+    def call(self, agreement: SCMLAgreement) -> Value | None:
         if self._free_sale(agreement):
             return float("-inf")
         opt, pess = self.optimistic(agreement), self.pessimistic(agreement)

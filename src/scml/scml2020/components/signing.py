@@ -1,6 +1,5 @@
 __all__ = ["SignAll", "SignAllPossible", "KeepOnlyGoodPrices"]
 
-from typing import List, Optional
 
 from negmas import Contract
 
@@ -29,7 +28,7 @@ class SignAll:
           action (i.e. not starting with `on_`) are overridden this way.
     """
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         # calls the super class to allow it to do any book-keeping.
         return [self.id] * len(contracts)
 
@@ -60,20 +59,17 @@ class SignAllPossible:
           action (i.e. not starting with `on_`) are overridden this way.
     """
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         from scml.scml2020.world import is_system_agent
 
         results = [None] * len(contracts)
         # sort contracts by time and then put system contracts first within each time-step
         contracts = sorted(
-            zip(contracts, range(len(contracts))),
+            zip(contracts, range(len(contracts)), strict=False),
             key=lambda x: (
                 x[0].agreement["unit_price"],
                 x[0].agreement["time"],
-                0
-                if is_system_agent(x[0].annotation["seller"])
-                or is_system_agent(x[0].annotation["buyer"])
-                else 1,
+                0 if is_system_agent(x[0].annotation["seller"]) or is_system_agent(x[0].annotation["buyer"]) else 1,
             ),
         )
         consumed = 0
@@ -83,9 +79,7 @@ class SignAllPossible:
             if step > self.awi.n_steps - 1 or step < self.awi.current_step:
                 continue
             if contract.annotation["seller"] == self.id:
-                steps, _ = self.awi.available_for_production(
-                    q, (self.awi.current_step, step), -1, override=False, method="all"
-                )
+                steps, _ = self.awi.available_for_production(q, (self.awi.current_step, step), -1, override=False, method="all")
                 if len(steps) - consumed < q:
                     continue
                 consumed += q
@@ -134,7 +128,7 @@ class KeepOnlyGoodPrices:
             1.0 - selling_margin,
         )
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         # calls the super class to allow it to do any book-keeping.
         signatures = super().sign_all_contracts(contracts)
         # calculate current trading prices (approximate them with catalog price
@@ -150,12 +144,8 @@ class KeepOnlyGoodPrices:
         for i, c in enumerate(contracts):
             if signatures[i] is None:
                 continue
-            if (
-                c.annotation["buyer"] == self.id
-                and c.agreement["unit_price"] > self._buying_factor * in_price
-            ) or (
-                c.annotation["seller"] == self.id
-                and c.agreement["unit_price"] < self._selling_factor * out_price
+            if (c.annotation["buyer"] == self.id and c.agreement["unit_price"] > self._buying_factor * in_price) or (
+                c.annotation["seller"] == self.id and c.agreement["unit_price"] < self._selling_factor * out_price
             ):
                 signatures[i] = None
         return signatures

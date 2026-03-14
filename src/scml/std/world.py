@@ -10,25 +10,25 @@ __all__ = [
     "PLACEHOLDER_AGENT_PREFIX",
 ]
 
-STD_DEFAULT_PARAMS = dict(
-    perishable=False,
-    n_processes=(2, 3),
-    horizon=10,
-    disposal_cost=0,
-    disposal_cost_dev=0,
-    storage_cost=(0.01, 0.05),
-    storage_cost_dev=0,
-    price_range_fraction=0.1,
-    price_multiplier=0.0,
-    wide_price_range=False,
-    one_time_per_negotiation=False,
-    quantity_multiplier=3,
-    max_productivity=(0.8, 1.0),
-    max_supply=(0.2, 1.0),
-    exogenous_supply_predictability=(0.0, 0.7),
-    exogenous_sales_predictability=(0.0, 0.7),
-    cap_exogenous_quantities=False,
-)
+STD_DEFAULT_PARAMS = {
+    "perishable": False,
+    "n_processes": (2, 3),
+    "horizon": 10,
+    "disposal_cost": 0,
+    "disposal_cost_dev": 0,
+    "storage_cost": (0.01, 0.05),
+    "storage_cost_dev": 0,
+    "price_range_fraction": 0.1,
+    "price_multiplier": 0.0,
+    "wide_price_range": False,
+    "one_time_per_negotiation": False,
+    "quantity_multiplier": 3,
+    "max_productivity": (0.8, 1.0),
+    "max_supply": (0.2, 1.0),
+    "exogenous_supply_predictability": (0.0, 0.7),
+    "exogenous_sales_predictability": (0.0, 0.7),
+    "cap_exogenous_quantities": False,
+}
 STD_DEFAULT_PARAMS2024 = STD_DEFAULT_PARAMS
 
 
@@ -71,12 +71,8 @@ class StdWorld(SCMLBaseWorld):
         perishable=STD_DEFAULT_PARAMS["perishable"],
         max_productivity=STD_DEFAULT_PARAMS["max_productivity"],
         max_supply=STD_DEFAULT_PARAMS["max_supply"],
-        exogenous_supply_predictability=STD_DEFAULT_PARAMS[
-            "exogenous_supply_predictability"
-        ],
-        exogenous_sales_predictability=STD_DEFAULT_PARAMS[
-            "exogenous_sales_predictability"
-        ],
+        exogenous_supply_predictability=STD_DEFAULT_PARAMS["exogenous_supply_predictability"],
+        exogenous_sales_predictability=STD_DEFAULT_PARAMS["exogenous_sales_predictability"],
         cap_exogenous_quantities=STD_DEFAULT_PARAMS["cap_exogenous_quantities"],
         **kwargs,
     ) -> dict[str, Any]:

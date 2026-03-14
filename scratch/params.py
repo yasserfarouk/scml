@@ -23,12 +23,12 @@ app = typer.Typer()
 
 BASE_PATH = Path(".")
 
-PARAMS = dict(
-    disposal_cost=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
-    shortfall_penalty=(0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
-    max_productivity=(1.0, 0.9, 0.8, 0.6, 0.5),
-    profit_means=((0.0, 0.1), (0.1, 0.1), (0.1, 0.2), (0.0, 0.2)),
-)
+PARAMS = {
+    "disposal_cost": (0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
+    "shortfall_penalty": (0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
+    "max_productivity": (1.0, 0.9, 0.8, 0.6, 0.5),
+    "profit_means": ((0.0, 0.1), (0.1, 0.1), (0.1, 0.2), (0.0, 0.2)),
+}
 
 
 def save_data(data, dir_name, post):
@@ -36,17 +36,9 @@ def save_data(data, dir_name, post):
     file_name = dir_name / f"limits_{post}.csv"
     add_records(file_name, data)
     df = pd.read_csv(file_name, index_col=None)
-    mxstats = (
-        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["max_util"]]
-        .describe()
-        .reset_index()
-    )
+    mxstats = df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["max_util"]].describe().reset_index()
     mxstats.to_csv(dir_name / f"max_stats_{post}.csv", index=False)
-    mnstats = (
-        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["min_util"]]
-        .describe()
-        .reset_index()
-    )
+    mnstats = df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["min_util"]].describe().reset_index()
     mnstats.to_csv(dir_name / f"min_stats_{post}.csv", index=False)
     # print(mnstats)
     # print(mxstats)
@@ -55,9 +47,7 @@ def save_data(data, dir_name, post):
 class Recorder(SCML2020OneShotWorld):
     """Records UFun ranges"""
 
-    def __init__(
-        self, *args, params, util_eval_method="bruteforce", dir_name=BASE_PATH, **kwargs
-    ):
+    def __init__(self, *args, params, util_eval_method="bruteforce", dir_name=BASE_PATH, **kwargs):
         super().__init__(*args, **kwargs)
         self.__util_eval_method = util_eval_method
         self.__dir_name = dir_name
@@ -87,33 +77,33 @@ class Recorder(SCML2020OneShotWorld):
             d = {f"p_{k}": v for k, v in self.__params.items()}
             d.update({f"f_{k}": v for k, v in vars(a.ufun).items()})
             d.update(
-                dict(
-                    step=self.current_step,
-                    exogenous_input_quantity=awi.current_exogenous_input_quantity,
-                    exogenous_input_price=awi.current_exogenous_input_price,
-                    exogenous_output_quantity=awi.current_exogenous_output_quantity,
-                    exogenous_output_price=awi.current_exogenous_output_price,
-                    disposal_cost=awi.current_disposal_cost,
-                    shortfall_penalty=awi.current_shortfall_penalty,
-                    production_cost=profile.cost,
-                    current_balance=awi.current_balance,
-                    input_product=profile.input_product,
-                    n_lines=profile.n_lines,
-                    shortfall_penalty_mean=profile.shortfall_penalty_mean,
-                    disposal_cost_mean=profile.disposal_cost_mean,
-                    shortfall_penalty_dev=profile.shortfall_penalty_dev,
-                    disposal_cost_dev=profile.disposal_cost_dev,
-                    world=self.id,
-                    agent=aid,
-                    input=a.awi.my_input_product,
-                    output=a.awi.my_output_product,
-                    level=a.awi.level,
-                    max_producible=max_producible,
-                    min_producible=min_producible,
-                    max_util=mx,
-                    min_util=mn,
-                    limit_method=self.__util_eval_method,
-                )
+                {
+                    "step": self.current_step,
+                    "exogenous_input_quantity": awi.current_exogenous_input_quantity,
+                    "exogenous_input_price": awi.current_exogenous_input_price,
+                    "exogenous_output_quantity": awi.current_exogenous_output_quantity,
+                    "exogenous_output_price": awi.current_exogenous_output_price,
+                    "disposal_cost": awi.current_disposal_cost,
+                    "shortfall_penalty": awi.current_shortfall_penalty,
+                    "production_cost": profile.cost,
+                    "current_balance": awi.current_balance,
+                    "input_product": profile.input_product,
+                    "n_lines": profile.n_lines,
+                    "shortfall_penalty_mean": profile.shortfall_penalty_mean,
+                    "disposal_cost_mean": profile.disposal_cost_mean,
+                    "shortfall_penalty_dev": profile.shortfall_penalty_dev,
+                    "disposal_cost_dev": profile.disposal_cost_dev,
+                    "world": self.id,
+                    "agent": aid,
+                    "input": a.awi.my_input_product,
+                    "output": a.awi.my_output_product,
+                    "level": a.awi.level,
+                    "max_producible": max_producible,
+                    "min_producible": min_producible,
+                    "max_util": mx,
+                    "min_util": mn,
+                    "limit_method": self.__util_eval_method,
+                }
             )
             # print(d)
             save_data([d], self.__dir_name, self.__util_eval_method)
@@ -154,7 +144,7 @@ def run(
         workers = 2
 
     if len(vars) < 1:
-        params = {k: v for k, v in PARAMS.items()}
+        params = dict(PARAMS.items())
     else:
         keys = set(vars.split(";"))
         params = {k: v for k, v in PARAMS.items() if k in keys}
@@ -173,14 +163,12 @@ def run(
     if serial:
         for method in methods:
             for v in track(param_values):
-                run_once(dict(zip(param_names, v)), steps, method)
+                run_once(dict(zip(param_names, v, strict=False)), steps, method)
     else:
         with ProcessPoolExecutor(max_workers=workers) as pool:
             for method in methods:
                 for v in param_values:
-                    futures.append(
-                        pool.submit(run_once, dict(zip(param_names, v)), steps, method)
-                    )
+                    futures.append(pool.submit(run_once, dict(zip(param_names, v, strict=False)), steps, method))
         print("RUNNING ...", flush=True)
         for _ in track(as_completed(futures), total=len(param_values)):
             pass
@@ -199,53 +187,29 @@ def plot(method: str = "bruteforce"):
         print("No data")
         return
     print(f"Found {len(df)} data records")
-    mxstats = (
-        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["max_util"]]
-        .describe()
-        .reset_index()
-    )
+    mxstats = df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["max_util"]].describe().reset_index()
     mxstats.to_csv(dir_name / f"max_stats_{method.replace(';', '_')}.csv", index=False)
-    mnstats = (
-        df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["min_util"]]
-        .describe()
-        .reset_index()
-    )
+    mnstats = df.groupby(["p_disposal_cost", "p_shortfall_penalty", "level"])[["min_util"]].describe().reset_index()
     mnstats.to_csv(dir_name / f"min_stats_{method.replace(';', '_')}.csv", index=False)
     print(mnstats)
     print(mxstats)
-    for k in PARAMS.keys():
+    for k in PARAMS:
         if len(PARAMS[k]) < 2:
             continue
         df[f"p_{k}"] = df[f"p_{k}"].apply(lambda x: str(x))
         print(f"Plotting {k}")
         fig, axs = plt.subplots(2, 2)
-        sns.barplot(
-            data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_util", ax=axs[0, 0]
-        )
-        sns.barplot(
-            data=df.loc[df.level == 1, :], x=f"p_{k}", y="min_util", ax=axs[0, 1]
-        )
-        sns.barplot(
-            data=df.loc[df.level == 2, :], x=f"p_{k}", y="max_util", ax=axs[1, 0]
-        )
-        sns.barplot(
-            data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_util", ax=axs[1, 1]
-        )
+        sns.barplot(data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_util", ax=axs[0, 0])
+        sns.barplot(data=df.loc[df.level == 1, :], x=f"p_{k}", y="min_util", ax=axs[0, 1])
+        sns.barplot(data=df.loc[df.level == 2, :], x=f"p_{k}", y="max_util", ax=axs[1, 0])
+        sns.barplot(data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_util", ax=axs[1, 1])
         plt.suptitle(f"{k}")
         plt.show()
         fig, axs = plt.subplots(2, 2)
-        sns.barplot(
-            data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_producible", ax=axs[0, 0]
-        )
-        sns.barplot(
-            data=df.loc[df.level == 1, :], x=f"p_{k}", y="min_producible", ax=axs[0, 1]
-        )
-        sns.barplot(
-            data=df.loc[df.level == 2, :], x=f"p_{k}", y="max_producible", ax=axs[1, 0]
-        )
-        sns.barplot(
-            data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_producible", ax=axs[1, 1]
-        )
+        sns.barplot(data=df.loc[df.level == 1, :], x=f"p_{k}", y="max_producible", ax=axs[0, 0])
+        sns.barplot(data=df.loc[df.level == 1, :], x=f"p_{k}", y="min_producible", ax=axs[0, 1])
+        sns.barplot(data=df.loc[df.level == 2, :], x=f"p_{k}", y="max_producible", ax=axs[1, 0])
+        sns.barplot(data=df.loc[df.level == 2, :], x=f"p_{k}", y="min_producible", ax=axs[1, 1])
         plt.suptitle(f"{k}")
         plt.show()
 

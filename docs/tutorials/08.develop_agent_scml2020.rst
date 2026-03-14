@@ -1527,9 +1527,9 @@ The main idea behind this agent is very simple:
                issues=issues,
            )
        return MappingUtilityFunction(
-           lambda x: -1000
-           if x[UNIT_PRICE] > self.prices[0]
-           else prange[1] - x[UNIT_PRICE],
+           lambda x: (
+               -1000 if x[UNIT_PRICE] > self.prices[0] else prange[1] - x[UNIT_PRICE]
+           ),
            reserved_value=0.0,
            issues=issues,
        )

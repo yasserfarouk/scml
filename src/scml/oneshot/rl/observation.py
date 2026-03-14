@@ -6,20 +6,21 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Iterable, Protocol, runtime_checkable
+from collections.abc import Iterable
+from typing import Protocol, runtime_checkable
 
 import numpy as np
 from attr import define, field
 from gymnasium import spaces
 from negmas.helpers.strings import itertools
 from negmas.outcomes import Outcome
-from scml.oneshot.context import BaseContext
 
 from scml.oneshot.awi import OneShotAWI
+from scml.oneshot.context import BaseContext
 from scml.oneshot.rl.helpers import (
+    clip,
     discretize_and_clip,
     read_offers,
-    clip,
     recover_offers,
 )
 
@@ -41,8 +42,7 @@ class ObservationManager(Protocol):
     """Manages the observations of an agent in an RL environment"""
 
     @property
-    def context(self) -> BaseContext:
-        ...
+    def context(self) -> BaseContext: ...
 
     def make_space(self) -> spaces.Space:
         """Creates the observation space"""
@@ -56,9 +56,7 @@ class ObservationManager(Protocol):
         """Creates the initial observation (returned from gym's reset())"""
         ...
 
-    def get_offers(
-        self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, Outcome | None]:
+    def get_offers(self, awi: OneShotAWI, encoded: np.ndarray) -> dict[str, Outcome | None]:
         """Gets the offers from an encoded awi"""
         ...
 
@@ -84,9 +82,7 @@ class BaseObservationManager(ABC):
         ...
 
     @abstractmethod
-    def get_offers(
-        self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, Outcome | None]:
+    def get_offers(self, awi: OneShotAWI, encoded: np.ndarray) -> dict[str, Outcome | None]:
         """Gets the offers from an encoded awi"""
         ...
 
@@ -137,9 +133,7 @@ class FlexibleObservationManager(BaseObservationManager):
         if p.nlines:
             object.__setattr__(self, "n_suppliers", p.nsuppliers)
             object.__setattr__(self, "n_consumers", p.nconsumers)
-            object.__setattr__(
-                self, "max_quantity", p.nlines * self.capacity_multiplier
-            )
+            object.__setattr__(self, "max_quantity", p.nlines * self.capacity_multiplier)
             if not self.exogenous_multiplier:
                 object.__setattr__(self, "exogenous_multiplier", p.nlines)
             object.__setattr__(self, "n_partners", p.nsuppliers + p.nconsumers)
@@ -149,17 +143,10 @@ class FlexibleObservationManager(BaseObservationManager):
     def get_dims(self) -> list[int]:
         """Get the sizes of all dimensions in the observation space. Used if not continuous."""
         return (
-            list(
-                itertools.chain(
-                    [self.max_group_size * self.max_quantity + 1, self.n_prices]
-                    * self.n_partners
-                )
-            )
+            list(itertools.chain([self.max_group_size * self.max_quantity + 1, self.n_prices] * self.n_partners))
             + list(
                 itertools.chain(
-                    [self.max_group_size * self.max_quantity + 1, self.n_prices]
-                    * self.n_partners
-                    * self.n_past_received_offers
+                    [self.max_group_size * self.max_quantity + 1, self.n_prices] * self.n_partners * self.n_past_received_offers
                 )
             )
             + [self.max_quantity + 1] * 2  # needed sales and supplies
@@ -175,9 +162,7 @@ class FlexibleObservationManager(BaseObservationManager):
         if self._dims is None:
             self._dims = dims
         elif self.extra_checks:
-            assert all(
-                a == b for a, b in zip(dims, self._dims, strict=True)
-            ), f"Surprising dims while making space\n{self._dims=}\n{dims=}"
+            assert all(a == b for a, b in zip(dims, self._dims, strict=True)), f"Surprising dims while making space\n{self._dims=}\n{dims=}"
         if self.continuous:
             return spaces.Box(0.0, 1.0, shape=(len(dims),))
         return spaces.MultiDiscrete(np.asarray(dims))
@@ -200,13 +185,10 @@ class FlexibleObservationManager(BaseObservationManager):
         current_offers = np.asarray(offers).flatten().tolist()
 
         if self.extra_checks:
-            assert (
-                len(current_offers) == self.n_partners * 2
-            ), f"{len(current_offers)=} but {self.n_partners=}"
-            assert (
-                len(self._previous_offers)
-                == self.n_past_received_offers * self.n_partners * 2
-            ), f"{self._previous_offers=} but {self.n_partners=}"
+            assert len(current_offers) == self.n_partners * 2, f"{len(current_offers)=} but {self.n_partners=}"
+            assert len(self._previous_offers) == self.n_past_received_offers * self.n_partners * 2, (
+                f"{self._previous_offers=} but {self.n_partners=}"
+            )
 
         extra = self.extra_obs(awi)
         v = np.asarray(
@@ -237,25 +219,21 @@ class FlexibleObservationManager(BaseObservationManager):
             assert not self.continuous or isinstance(space, spaces.Box)
             assert space is not None and space.shape is not None
             exp = space.shape[0]
-            assert (
-                len(v) == exp
-            ), f"{len(v)=}, {len(extra)=}, {len(offers)=}, {exp=}, {self.n_partners=}\n{awi.current_negotiation_details=}"
+            assert len(v) == exp, (
+                f"{len(v)=}, {len(extra)=}, {len(offers)=}, {exp=}, {self.n_partners=}\n{awi.current_negotiation_details=}"
+            )
             if self._dims is None:
                 self._dims = self.get_dims()
-            assert self.continuous or all(
-                a <= b for a, b in zip(v, self._dims, strict=True)
-            ), f"Surprising dims\n{v=}\n{self._dims=}"
-            assert not self.continuous or all(
-                [0 <= x <= 1 for x in v]
-            ), f"Surprising dims (continuous)\n{v=}"
+            assert self.continuous or all(a <= b for a, b in zip(v, self._dims, strict=True)), f"Surprising dims\n{v=}\n{self._dims=}"
+            assert not self.continuous or all(0 <= x <= 1 for x in v), f"Surprising dims (continuous)\n{v=}"
             if isinstance(space, spaces.MultiDiscrete):
-                if not all(0 <= a < b for a, b in zip(v, space.nvec)):
+                if not all(0 <= a < b for a, b in zip(v, space.nvec, strict=False)):
                     print(
-                        f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (awi.current_exogenous_input_quantity , awi.total_supplies , awi.total_sales , awi.current_exogenous_output_quantity) }"
+                        f"{v=}\n{space.nvec=}\n{space.nvec - v =}\n{(awi.current_exogenous_input_quantity, awi.total_supplies, awi.total_sales, awi.current_exogenous_output_quantity)}"
                     )
-                assert all(
-                    0 <= a < b for a, b in zip(v, space.nvec)
-                ), f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{ (awi.current_exogenous_input_quantity , awi.total_supplies , awi.total_sales , awi.current_exogenous_output_quantity) }"  # type: ignore
+                assert all(0 <= a < b for a, b in zip(v, space.nvec, strict=False)), (
+                    f"{offers=}\n{extra=}\n{v=}\n{space.nvec=}\n{space.nvec - v =}\n{(awi.current_exogenous_input_quantity, awi.total_supplies, awi.total_sales, awi.current_exogenous_output_quantity)}"
+                )  # type: ignore
 
         return v
 
@@ -271,13 +249,9 @@ class FlexibleObservationManager(BaseObservationManager):
 
         """
         # adding extra components to the observation
-        neg_relative_time = min(
-            awi.current_states.values(), key=lambda x: x.relative_time
-        ).relative_time
+        neg_relative_time = min(awi.current_states.values(), key=lambda x: x.relative_time).relative_time
         exogenous = awi.exogenous_contract_summary
-        incost = (
-            awi.current_disposal_cost if awi.is_perishable else awi.current_storage_cost
-        )
+        incost = awi.current_disposal_cost if awi.is_perishable else awi.current_storage_cost
 
         return [
             (awi.needed_sales / self.max_quantity, self.max_quantity + 1),
@@ -287,20 +261,13 @@ class FlexibleObservationManager(BaseObservationManager):
             (neg_relative_time, 2 * self.n_bins),
             awi.profile.cost / self.max_production_cost,
             incost / (incost + awi.current_shortfall_penalty),
-            (
-                awi.trading_prices[awi.my_output_product]
-                - awi.trading_prices[awi.my_input_product]
-            )
+            (awi.trading_prices[awi.my_output_product] - awi.trading_prices[awi.my_input_product])
             / awi.trading_prices[awi.my_output_product],
-            exogenous[0][0]
-            / (self.exogenous_multiplier * awi.production_capacities[0]),
-            exogenous[-1][0]
-            / (self.exogenous_multiplier * awi.production_capacities[-1]),
+            exogenous[0][0] / (self.exogenous_multiplier * awi.production_capacities[0]),
+            exogenous[-1][0] / (self.exogenous_multiplier * awi.production_capacities[-1]),
         ]
 
-    def get_offers(
-        self, awi: OneShotAWI, encoded: np.ndarray
-    ) -> dict[str, Outcome | None]:
+    def get_offers(self, awi: OneShotAWI, encoded: np.ndarray) -> dict[str, Outcome | None]:
         """
         Gets offers from an encoded awi.
         """

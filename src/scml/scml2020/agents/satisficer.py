@@ -2,7 +2,6 @@
 import math
 import random
 from collections import defaultdict
-from typing import Optional
 
 import numpy as np
 from negmas import (
@@ -45,7 +44,7 @@ class ObedientNegotiator(SAONegotiator):
     # Negotiation Callbacks
     # =====================
 
-    def propose(self, state: MechanismState) -> Optional[Outcome]:
+    def propose(self, state: MechanismState) -> Outcome | None:
         """Simply calls the corresponding method on the owner"""
         return self.owner.propose(state, self.nmi, self.is_selling, self.is_requested)
 
@@ -110,7 +109,7 @@ class SatisficerAgent(SCML2020Agent):
         self.et = concession_rate_time
         self.acceptable_loss = acceptable_loss
         self.last_q = defaultdict(int)
-        self.last_t = dict()
+        self.last_t = {}
         self.market_share = market_share
 
     # =====================
@@ -132,16 +131,12 @@ class SatisficerAgent(SCML2020Agent):
 
         # Market capacity is the total number of items that can be produced per
         # step in this market. It is totally controlled by the narrowest level
-        self.market_capacity = awi.n_lines * min(
-            len(awi.all_consumers[i]) for i in range(awi.n_processes)
-        )
+        self.market_capacity = awi.n_lines * min(len(awi.all_consumers[i]) for i in range(awi.n_processes))
         # My market share is calcualted based on my competitor number
         if self.market_share == float("inf"):
             self.market_share = 1.0
         else:
-            self.market_share = (self.market_share) / (
-                self.n_competitors + self.market_share - 1
-            )
+            self.market_share = (self.market_share) / (self.n_competitors + self.market_share - 1)
 
     def before_step(self):
         """Called at at the BEGINNING of every production step (day)"""
@@ -295,14 +290,12 @@ class SatisficerAgent(SCML2020Agent):
             price = (
                 max(
                     prices[product],
-                    (1 + self.satisfying_profit)
-                    * (prices[product - 1] + self.production_cost),
+                    (1 + self.satisfying_profit) * (prices[product - 1] + self.production_cost),
                 )
                 if selling
                 else min(
                     prices[product],
-                    (1 - self.satisfying_profit)
-                    * (prices[product + 1] - self.production_cost),
+                    (1 - self.satisfying_profit) * (prices[product + 1] - self.production_cost),
                 )
             )
 
@@ -320,12 +313,7 @@ class SatisficerAgent(SCML2020Agent):
                 urange,
                 trange,
                 None,
-                [
-                    ObedientNegotiator(
-                        selling=selling, requested=True, name=f"{self.id}>{_}"
-                    )
-                    for _ in partners
-                ],
+                [ObedientNegotiator(selling=selling, requested=True, name=f"{self.id}>{_}") for _ in partners],
                 partners,
             )
 
@@ -352,19 +340,11 @@ class SatisficerAgent(SCML2020Agent):
         # separate sell and buy contracts and sort them with the better price
         # first (ties are broken by smallest quantity first)
         sell_contracts = sorted(
-            (
-                (i, _)
-                for i, _ in enumerate(contracts)
-                if _.annotation["seller"] == self.id
-            ),
+            ((i, _) for i, _ in enumerate(contracts) if _.annotation["seller"] == self.id),
             key=lambda x: (-x[1].agreement["unit_price"], x[1].agreement["quantity"]),
         )
         buy_contracts = sorted(
-            (
-                (i, _)
-                for i, _ in enumerate(contracts)
-                if _.annotation["seller"] != self.id
-            ),
+            ((i, _) for i, _ in enumerate(contracts) if _.annotation["seller"] != self.id),
             key=lambda x: (x[1].agreement["unit_price"], x[1].agreement["quantity"]),
         )
 
@@ -455,9 +435,7 @@ class SatisficerAgent(SCML2020Agent):
     # Negotiation functions
     # =====================
 
-    def propose(
-        self, state: SAOState, ami: SAONMI, is_selling: bool, is_requested: bool
-    ):
+    def propose(self, state: SAOState, ami: SAONMI, is_selling: bool, is_requested: bool):
         """
         Used to propose to the opponent
 
@@ -493,9 +471,7 @@ class SatisficerAgent(SCML2020Agent):
         r = [
             1
             - math.pow(
-                state.step / (awi.n_steps - 1)
-                if cdim == i
-                else max(0, state.step - 1) / (awi.n_steps - 1),
+                state.step / (awi.n_steps - 1) if cdim == i else max(0, state.step - 1) / (awi.n_steps - 1),
                 self.eq,
             )
             for i in range(3)
@@ -511,9 +487,7 @@ class SatisficerAgent(SCML2020Agent):
                 self.max_sales,
                 self.min_sales,
             )
-            accaptable_price = prices[awi.my_output_product] * (
-                1 - self.acceptable_loss
-            )
+            accaptable_price = prices[awi.my_output_product] * (1 - self.acceptable_loss)
             p = max((p1 - accaptable_price) * r[UNIT_PRICE] + accaptable_price, p0)
         else:
             tentative, accepted, max_quantity, min_quantity = (
@@ -540,12 +514,7 @@ class SatisficerAgent(SCML2020Agent):
             return None
 
         # find all valid times
-        ts = [
-            _
-            for _ in range(t0, t1 + 1)
-            if max_quantity[_ - t0] >= q0
-            and max_quantity[_ - t0] >= min_quantity[_ - t0]
-        ]
+        ts = [_ for _ in range(t0, t1 + 1) if max_quantity[_ - t0] >= q0 and max_quantity[_ - t0] >= min_quantity[_ - t0]]
 
         # If we have not valid time, end the round offering nothing.
         n_times = len(ts)
@@ -565,8 +534,7 @@ class SatisficerAgent(SCML2020Agent):
                 min_quantity[t],
                 min(
                     max_quantity[t],
-                    int((max_quantity[t] - min_quantity[t]) * r[QUANTITY])
-                    + min_quantity[t],
+                    int((max_quantity[t] - min_quantity[t]) * r[QUANTITY]) + min_quantity[t],
                 ),
             )
 
@@ -628,9 +596,7 @@ class SatisficerAgent(SCML2020Agent):
                 self.min_sales,
             )
             worst_acceptable_price = (
-                prices[awi.my_output_product] * (1 - self.acceptable_loss)
-                if ami.annotation["caller"] != self.id
-                else p0
+                prices[awi.my_output_product] * (1 - self.acceptable_loss) if ami.annotation["caller"] != self.id else p0
             )
         else:
             tentative, accepted, max_quantity, min_quantity = (
@@ -640,9 +606,7 @@ class SatisficerAgent(SCML2020Agent):
                 self.min_supplies,
             )
             worst_acceptable_price = (
-                prices[awi.my_input_product] * (1 + self.acceptable_loss)
-                if ami.annotation["caller"] != self.id
-                else p1
+                prices[awi.my_input_product] * (1 + self.acceptable_loss) if ami.annotation["caller"] != self.id else p1
             )
 
         # parse the offer
@@ -682,7 +646,7 @@ class SatisficerAgent(SCML2020Agent):
     def on_negotiation_failure(self, partners, annotation, mechanism, state):
         """Called when a negotiation fails"""
         # removes my standing tentative offer for this negotiation if any
-        partner = [_ for _ in mechanism.agent_ids][0]
+        partner = list(mechanism.agent_ids)[0]
         self._remove_tentative_offer(annotation["seller"] == self.id, partner)
 
     def on_negotiation_success(self, contract, mechanism):
@@ -722,9 +686,5 @@ class SatisficerAgent(SCML2020Agent):
         if prices is None:
             prices = awi.catalog_prices
         if is_selling:
-            return u > (1 + self.satisfying_profit - slack) * (
-                prices[awi.my_input_product] + self.production_cost
-            )
-        return u < (1 - self.satisfying_profit + slack) * (
-            prices[awi.my_output_product] - self.production_cost
-        )
+            return u > (1 + self.satisfying_profit - slack) * (prices[awi.my_input_product] + self.production_cost)
+        return u < (1 - self.satisfying_profit + slack) * (prices[awi.my_output_product] - self.production_cost)

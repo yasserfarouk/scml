@@ -1,10 +1,11 @@
 """
 Defines ways to encode and decode actions.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from attr import define
@@ -17,7 +18,8 @@ from negmas.sao.common import SAOResponse
 from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.context import BaseContext
 from scml.scml2019.common import QUANTITY
-from .helpers import recover_offers, encode_given_offers
+
+from .helpers import encode_given_offers, recover_offers
 
 __all__ = [
     "ActionManager",
@@ -51,9 +53,7 @@ class ActionManager(ABC):
     def encode(self, awi: OneShotAWI, responses: dict[str, SAOResponse]) -> np.ndarray:
         """Encodes an action as an array. This is only used for testing so it is optional"""
         _ = awi, responses
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not implement `encode`."
-        )
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement `encode`.")
 
 
 def safemin(x: Iterable | int | float | str):
@@ -108,9 +108,7 @@ class FlexibleActionManager(ActionManager):
     def __attrs_post_init__(self):
         p = self.context.extract_context_params(self.reduce_space_size)
         if p.nlines:
-            object.__setattr__(
-                self, "max_quantity", self.capacity_multiplier * p.nlines
-            )
+            object.__setattr__(self, "max_quantity", self.capacity_multiplier * p.nlines)
             object.__setattr__(self, "n_consumers", p.nconsumers)
             object.__setattr__(self, "n_suppliers", p.nsuppliers)
         object.__setattr__(self, "n_partners", self.n_suppliers + self.n_consumers)
@@ -118,11 +116,7 @@ class FlexibleActionManager(ActionManager):
     def make_space(self) -> spaces.MultiDiscrete | spaces.Box:
         """Creates the action space"""
         return (
-            spaces.MultiDiscrete(
-                np.asarray(
-                    [self.max_quantity + 1, self.n_prices] * self.n_partners
-                ).flatten()
-            )
+            spaces.MultiDiscrete(np.asarray([self.max_quantity + 1, self.n_prices] * self.n_partners).flatten())
             if not self.continuous
             else spaces.Box(0.0, 1.0, shape=(self.n_partners * 2,))
         )
@@ -133,9 +127,7 @@ class FlexibleActionManager(ActionManager):
         """
         action = action.reshape((action.size // 2, 2))
         if not (len(action) == self.n_partners):
-            raise AssertionError(
-                f"{len(action)=}, {self.n_partners=} ({self.n_suppliers=}, {self.n_consumers=})"
-            )
+            raise AssertionError(f"{len(action)=}, {self.n_partners=} ({self.n_suppliers=}, {self.n_consumers=})")
         offers = recover_offers(
             action,
             awi,
@@ -145,7 +137,7 @@ class FlexibleActionManager(ActionManager):
             self.continuous,
             self.n_prices,
         )
-        separated_offers, responses = dict(), dict()
+        separated_offers, responses = {}, {}
         nmis = awi.current_nmis
         for k, v in offers.items():
             if "+" not in k:
@@ -153,11 +145,11 @@ class FlexibleActionManager(ActionManager):
                 continue
             partners = k.split("+")
             if v is None:
-                separated_offers |= dict(zip(partners, itertools.repeat(None)))
+                separated_offers |= dict(zip(partners, itertools.repeat(None), strict=False))
                 continue
             q = v[QUANTITY]
             dist = distribute_integer_randomly(q, len(partners))
-            separated_offers |= dict(zip(partners, ((_, v[1], v[-1]) for _ in dist)))
+            separated_offers |= dict(zip(partners, ((_, v[1], v[-1]) for _ in dist), strict=False))
 
         for k, v in separated_offers.items():
             nmi = nmis.get(k, None)
@@ -178,7 +170,7 @@ class FlexibleActionManager(ActionManager):
         """
         Receives offers for all partners and generates the corresponding action. Used mostly for debugging and testing.
         """
-        offers = dict()
+        offers = {}
         for k, v in responses.items():
             if v.response == ResponseType.END_NEGOTIATION:
                 offers[k] = None

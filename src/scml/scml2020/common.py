@@ -73,16 +73,10 @@ def is_system_agent(aid: str) -> bool:
 
         True if the ID is for a system agent.
     """
-    return (
-        aid.startswith(SYSTEM_SELLER_ID)
-        or aid.startswith(SYSTEM_BUYER_ID)
-        or aid.startswith(COMPENSATION_ID)
-    )
+    return aid.startswith(SYSTEM_SELLER_ID) or aid.startswith(SYSTEM_BUYER_ID) or aid.startswith(COMPENSATION_ID)
 
 
-ContractInfo = namedtuple(
-    "ContractInfo", ["q", "u", "product", "is_seller", "partner", "contract"]
-)
+ContractInfo = namedtuple("ContractInfo", ["q", "u", "product", "is_seller", "partner", "contract"])
 """Information about a contract including a pointer to it"""
 
 
@@ -170,17 +164,17 @@ class FactoryProfile:
     @property
     def processes(self) -> np.ndarray:
         """The processes that have valid costs"""
-        return np.nonzero(np.any(self.costs != INFINITE_COST, axis=0))[0]
+        return np.nonzero(np.atleast_1d(np.any(self.costs != INFINITE_COST, axis=0)))[0]
 
     @property
     def input_products(self) -> np.ndarray:
         """The input products to all processes runnable (See `processes` )"""
-        return np.nonzero(np.any(self.costs != INFINITE_COST, axis=0))[0]
+        return np.nonzero(np.atleast_1d(np.any(self.costs != INFINITE_COST, axis=0)))[0]
 
     @property
     def output_products(self) -> np.ndarray:
         """The output products to all processes runnable (See `processes` )"""
-        return np.nonzero(np.any(self.costs != INFINITE_COST, axis=0))[0] + 1
+        return np.nonzero(np.atleast_1d(np.any(self.costs != INFINITE_COST, axis=0)))[0] + 1
 
 
 @dataclass

@@ -263,7 +263,7 @@ class OneShotAgent(SAOController, Entity, ABC):
         Returns the `SAONMI` (Agent Mechanism Interface) connecting the agent
         to the negotiation mechanism for the given partner.
         """
-        warnings.warn("get_ami is depricated. Use get_nmi")
+        warnings.warn("get_ami is depricated. Use get_nmi", stacklevel=2)
         return self.negotiators[partner_id][0].nmi
 
     def get_nmi(self, partner_id: str) -> SAONMI:
@@ -285,9 +285,7 @@ class OneShotSyncAgent(SAOSyncController, OneShotAgent, ABC):  # type: ignore
         super().__init__(*args, **kwargs)
 
     @abstractmethod
-    def counter_all(
-        self, offers: dict[str, Outcome | None], states: dict[str, SAOState]
-    ) -> dict[str, SAOResponse]:
+    def counter_all(self, offers: dict[str, Outcome | None], states: dict[str, SAOState]) -> dict[str, SAOResponse]:
         """Calculate a response to all offers from all negotiators
         (negotiator ID is the key).
 
@@ -392,9 +390,7 @@ class OneShotSingleAgreementAgent(SAOSingleAgreementController, OneShotSyncAgent
         """
 
     @abstractmethod
-    def is_better(
-        self, a: Outcome | None, b: Outcome | None, negotiator: str, state: SAOState
-    ) -> bool:
+    def is_better(self, a: Outcome | None, b: Outcome | None, negotiator: str, state: SAOState) -> bool:
         """Compares two outcomes of the same negotiation
 
         Args:
@@ -464,10 +460,8 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
     ):
         super().__init__(*args, **kwargs)
         self._default_negotiator_type = get_class(default_negotiator_type)
-        self._default_negotiator_params = (
-            dict() if not default_negotiator_params else default_negotiator_params
-        )
-        self._ufuns = dict()
+        self._default_negotiator_params = default_negotiator_params if default_negotiator_params else {}
+        self._ufuns = {}
         self._normalize = normalize_ufuns
         self._set_reservation = set_reservation
 
@@ -531,11 +525,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         for partner_id, u in ufuns.items():
             if self.awi.is_system(partner_id):
                 continue
-            issues = (
-                self.awi.current_input_issues
-                if partner_id in self.awi.my_suppliers
-                else self.awi.current_output_issues
-            )
+            issues = self.awi.current_input_issues if partner_id in self.awi.my_suppliers else self.awi.current_output_issues
             mn, mx = self._urange(u, tuple(issues))
             if self._normalize:
                 u = self._unorm(u, mn, mx)
@@ -543,11 +533,7 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
                     continue
             if not self._set_reservation:
                 continue
-            if (
-                u.reserved_value is None
-                or u.reserved_value == float("-inf")
-                or u.reserved_value == float("nan")
-            ):
+            if u.reserved_value is None or u.reserved_value == float("-inf") or u.reserved_value == float("nan"):
                 u.reserved_value = mn - 1e-5
             u.reserved_value = u.reserved_value / mx
             if u.reserved_value > mx:
@@ -598,6 +584,4 @@ class OneShotIndNegotiatorsAgent(OneShotAgent):
         return negotiator  # type: ignore
 
     def propose(self, negotiator_id, state):
-        raise ValueError(
-            "propose should never be called directly on OneShotIndNegotiatorsAgent"
-        )
+        raise ValueError("propose should never be called directly on OneShotIndNegotiatorsAgent")

@@ -1,13 +1,15 @@
 """Helpers for the observation and action managers."""
 
-import numpy as np
 from collections import defaultdict
-from typing import Mapping, TypeVar
-from scml.oneshot.awi import OneShotAWI
+from collections.abc import Mapping
+from typing import TypeVar
+
+import numpy as np
 from negmas.outcomes import Outcome
+
+from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.common import QUANTITY, TIME, UNIT_PRICE, OneShotState
 from scml.oneshot.rl.common import group_partners
-
 
 __all__ = [
     "recover_offers",
@@ -73,17 +75,13 @@ def encode_given_offers(
     max_iquantity = state.current_input_outcome_space.issues[QUANTITY].max_value
     ioffers = encoder(offers, suppliers, min_iprice, max_iprice)
     if continuous:
-        ioffers = normalizer(
-            ioffers, min_iprice, max_iprice, 0, max_iquantity, subtract_min_price=False
-        )
+        ioffers = normalizer(ioffers, min_iprice, max_iprice, 0, max_iquantity, subtract_min_price=False)
     min_oprice = state.current_output_outcome_space.issues[UNIT_PRICE].min_value
     max_oprice = state.current_output_outcome_space.issues[UNIT_PRICE].max_value
     max_oquantity = state.current_output_outcome_space.issues[QUANTITY].max_value
     ooffers = encoder(offers, consumers, min_oprice, max_iprice)
     if continuous:
-        ooffers = normalizer(
-            ooffers, min_oprice, max_oprice, 0, max_oquantity, subtract_min_price=False
-        )
+        ooffers = normalizer(ooffers, min_oprice, max_oprice, 0, max_oquantity, subtract_min_price=False)
     return ioffers + ooffers
 
 
@@ -126,7 +124,7 @@ def encode_offers_with_time(
     offer_list: list[tuple[int, int, int]] = [(0, 0, 0) for _ in range(n_partners)]
     for i, partners in enumerate(partner_groups):
         n_read = 0
-        curr_offer = dict()
+        curr_offer = {}
         for partner in partners:
             outcome = offers.get(partner, None)
             if outcome is None:
@@ -262,9 +260,7 @@ def decode_offers_no_time(
         else:
             responses[p] = (
                 r[0] + outcome[0],
-                max(
-                    outcome[1], r[1]
-                ),  #  we use the largest step here as all steps should be equal anyway
+                max(outcome[1], r[1]),  #  we use the largest step here as all steps should be equal anyway
                 r[-1] + outcome[-1],
             )
 
@@ -275,10 +271,7 @@ def decode_offers_no_time(
         update_respones(plst, w, True)
     for plst, w in zip(consumers, consumer_offers, strict=True):
         update_respones(plst, w, False)
-    result = {
-        k: None if v is not None and v[0] == 0 and v[1] == 0 else v
-        for k, v in responses.items()
-    }
+    result = {k: None if v is not None and v[0] == 0 and v[1] == 0 else v for k, v in responses.items()}
     return result
 
 
@@ -298,10 +291,7 @@ def normalize_offers_with_time(
     dq = max_quantity - min_quantity
     if not dq:
         dq = 1
-    return [
-        (float(offer[0] - min_quantity) / dq, offer[1], float(offer[-1]) / d)
-        for offer in offers
-    ]
+    return [(float(offer[0] - min_quantity) / dq, offer[1], float(offer[-1]) / d) for offer in offers]
 
 
 def normalize_offers_no_time(
@@ -323,10 +313,7 @@ def normalize_offers_no_time(
         dq = 1
     if not subtract_min_price:
         min_price = 0
-    return [
-        (float(offer[0] - min_quantity) / dq, float(offer[1] - min_price) / d)
-        for offer in offers
-    ]
+    return [(float(offer[0] - min_quantity) / dq, float(offer[1] - min_price) / d) for offer in offers]
 
 
 def unnormalize_offers(
@@ -348,10 +335,7 @@ def unnormalize_offers(
         dq = 1
     if not add_min_price:
         min_price = 0
-    return [
-        (int(offer[0] * dq + min_quantity + 0.5), int(offer[1] * d + min_price + 0.5))
-        for offer in offers
-    ]
+    return [(int(offer[0] * dq + min_quantity + 0.5), int(offer[1] * d + min_price + 0.5)) for offer in offers]
 
 
 def clip_normal(

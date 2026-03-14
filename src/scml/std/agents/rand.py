@@ -18,9 +18,7 @@ PROB_END = 0.005
 class RandomStdAgent(StdAgent):
     """A naive random agent"""
 
-    def __init__(
-        self, owner=None, ufun=None, name=None, p_accept=PROB_ACCEPTANCE, p_end=PROB_END
-    ):
+    def __init__(self, owner=None, ufun=None, name=None, p_accept=PROB_ACCEPTANCE, p_end=PROB_END):
         self.p_accept, self.p_end = p_accept, p_end
         super().__init__(owner, ufun, name)
 
@@ -93,13 +91,10 @@ class SyncRandomStdAgent(StdSyncAgent):
         # remaining partners get random future offers
         distribution = self.distribute_todays_needs()
         future_suppliers = {k for k, v in distribution.items() if v <= 0}
-        unneeded = (
-            None if not self.awi.allow_zero_quantity else (0, self.awi.current_step, 0)
-        )
+        unneeded = None if not self.awi.allow_zero_quantity else (0, self.awi.current_step, 0)
 
         offers = {
-            k: ((q, self.awi.current_step, self.best_price(k)) if q > 0 else unneeded)
-            for k, q in distribution.items()
+            k: ((q, self.awi.current_step, self.best_price(k)) if q > 0 else unneeded) for k, q in distribution.items()
         } | self.distribute_future_offers(list(future_suppliers))
 
         return offers
@@ -130,7 +125,7 @@ class SyncRandomStdAgent(StdSyncAgent):
             )
 
         # accept all offers I seem to need if they have good price
-        responses = dict()
+        responses = {}
         c = self.awi.current_step
         n = max(self.awi.n_steps - c, 1)
         for is_partner, needs, is_good_price, mn, mx in (
@@ -152,28 +147,18 @@ class SyncRandomStdAgent(StdSyncAgent):
                 if 0 < q < needs.get(t, 0):
                     responses[partner] = SAOResponse(ResponseType.ACCEPT_OFFER, offer)
                     needs[t] -= q
-        remaining = {k for k in offers.keys() if k not in responses.keys()}
+        remaining = {k for k in offers if k not in responses}
 
         # distribute today's needs over the partners with rejected offers
         distribution = self.distribute_todays_needs(partners=remaining)
         future_partners = {k for k, v in distribution.items() if v <= 0}
-        unneeded = (
-            None if not self.awi.allow_zero_quantity else (0, self.awi.current_step, 0)
-        )
+        unneeded = None if not self.awi.allow_zero_quantity else (0, self.awi.current_step, 0)
 
         # distribute my future needs over people I did not use today
         myoffers = {
-            k: (
-                (q, self.awi.current_step, self.good_price(k, today=False))
-                if q > 0
-                else unneeded
-            )
-            for k, q in distribution.items()
+            k: ((q, self.awi.current_step, self.good_price(k, today=False)) if q > 0 else unneeded) for k, q in distribution.items()
         } | self.distribute_future_offers(list(future_partners))
-        responses |= {
-            k: SAOResponse(ResponseType.REJECT_OFFER, offer)
-            for k, offer in myoffers.items()
-        }
+        responses |= {k: SAOResponse(ResponseType.REJECT_OFFER, offer) for k, offer in myoffers.items()}
 
         return responses
 
@@ -188,9 +173,7 @@ class SyncRandomStdAgent(StdSyncAgent):
         ignored = partners[n:]
         partners = partners[:n]
 
-        response = dict(zip(partners, itertools.repeat(0))) | dict(
-            zip(ignored, itertools.repeat(0))
-        )
+        response = dict(zip(partners, itertools.repeat(0), strict=False)) | dict(zip(ignored, itertools.repeat(0), strict=False))
 
         mxin = self.awi.current_input_issues[QUANTITY].max_value
         mxout = self.awi.current_output_issues[QUANTITY].max_value
@@ -220,6 +203,7 @@ class SyncRandomStdAgent(StdSyncAgent):
                         equal=random.random() > 0.5,
                         mx=mxq,
                     ),
+                    strict=False,
                 )
             )
 
@@ -229,9 +213,7 @@ class SyncRandomStdAgent(StdSyncAgent):
         """Estimates how much I need to buy and sell for each future step"""
         current_step, n_steps = self.awi.current_step, self.awi.n_steps
         trange = (
-            max(
-                self.awi.current_input_issues[TIME].min_value, self.awi.current_step + 1
-            ),
+            max(self.awi.current_input_issues[TIME].min_value, self.awi.current_step + 1),
             min(self.awi.current_input_issues[TIME].max_value, self.awi.n_steps - 1),
         )
         trange = (
@@ -244,32 +226,16 @@ class SyncRandomStdAgent(StdSyncAgent):
             ),
             max(
                 trange[1],
-                min(
-                    self.awi.current_input_issues[TIME].max_value, self.awi.n_steps - 1
-                ),
+                min(self.awi.current_input_issues[TIME].max_value, self.awi.n_steps - 1),
             ),
         )
-        target_supplies, target_sales = dict(), dict()
+        target_supplies, target_sales = {}, {}
         for t in range(trange[0], trange[1] + 1):
-            secured_supplies = (
-                self.awi.total_supplies_until(t)
-                + self.awi.current_inventory_input
-                + self.awi.current_inventory_output
-            )
+            secured_supplies = self.awi.total_supplies_until(t) + self.awi.current_inventory_input + self.awi.current_inventory_output
             secured_sales = self.awi.total_sales_from(t)
-            secured_supplies += (
-                self.awi.current_exogenous_input_quantity * (t - current_step)
-                if self.awi.is_first_level
-                else 0
-            )
-            secured_sales += (
-                self.awi.current_exogenous_output_quantity * (n_steps - t)
-                if self.awi.is_last_level
-                else 0
-            )
-            secured_supplies = max(
-                self.future_productivity * (t - current_step), secured_supplies
-            )
+            secured_supplies += self.awi.current_exogenous_input_quantity * (t - current_step) if self.awi.is_first_level else 0
+            secured_sales += self.awi.current_exogenous_output_quantity * (n_steps - t) if self.awi.is_last_level else 0
+            secured_supplies = max(self.future_productivity * (t - current_step), secured_supplies)
             secured_sales = max(self.future_productivity * (n_steps - t), secured_sales)
             target_supplies[t] = secured_sales - secured_supplies
             target_sales[t] = secured_supplies - secured_sales
@@ -282,12 +248,10 @@ class SyncRandomStdAgent(StdSyncAgent):
         target_sales = {k: int(v) for k, v in target_sales.items() if v > 0}
         return target_supplies, target_sales
 
-    def distribute_future_offers(
-        self, partners: list[str]
-    ) -> dict[str, Outcome | None]:
+    def distribute_future_offers(self, partners: list[str]) -> dict[str, Outcome | None]:
         """Distribute future offers over the given partners"""
         if not partners:
-            return dict()
+            return {}
 
         c = self.awi.current_step
         n = max((self.awi.n_steps - c), 1)
@@ -334,10 +298,8 @@ class SyncRandomStdAgent(StdSyncAgent):
                 random.shuffle(shffl)
                 needed_sales = {k: needed_sales[k] for k in shffl}
         # initialize indicating that I do not need anything
-        unneeded = (
-            None if not self.awi.allow_zero_quantity else (0, self.awi.current_step, 0)
-        )
-        offers = dict(zip(partners, itertools.repeat(unneeded)))
+        unneeded = None if not self.awi.allow_zero_quantity else (0, self.awi.current_step, 0)
+        offers = dict(zip(partners, itertools.repeat(unneeded), strict=False))
         # loop over suppliers and consumers
         for plist, needs, mnp, mxp, mxq, price in (
             (
@@ -377,11 +339,7 @@ class SyncRandomStdAgent(StdSyncAgent):
                 # find relative time to the end of simulation to estimate good prices
                 # Notice that nearer times will entail higher concessions
                 r = 1 - max(0, min(1, (t - c) / n))
-                offers |= {
-                    plist[i]: (q, t, price(r, mnp, mxp, today=t == c))
-                    for i, q in enumerate(d)
-                    if q > 0
-                }
+                offers |= {plist[i]: (q, t, price(r, mnp, mxp, today=t == c)) for i, q in enumerate(d) if q > 0}
                 plist = list(set(plist).difference(offers.keys()))
         return offers
 
@@ -403,9 +361,7 @@ class SyncRandomStdAgent(StdSyncAgent):
         mx = nmi.issues[UNIT_PRICE].max_value
         if self.is_supplier(partner_id):
             return self.buy_price(nmi.state.relative_time, mn, mx, today=today)
-        return self.sell_price(
-            self.get_nmi(partner_id).state.relative_time, mn, mx, today=today
-        )
+        return self.sell_price(self.get_nmi(partner_id).state.relative_time, mn, mx, today=today)
 
     def buy_price(self, t: float, mn: float, mx: float, today: bool) -> float:
         """Return a good price to buy at"""

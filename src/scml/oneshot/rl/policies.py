@@ -1,7 +1,7 @@
 import itertools
 import random
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from negmas import ResponseType
@@ -23,9 +23,7 @@ def random_action(obs: np.ndarray, env: OneShotEnv) -> np.ndarray:
     return env.action_space.sample()
 
 
-def random_policy(
-    obs: np.ndarray, env: OneShotEnv, pend: float = 0.05, paccept: float = 0.15
-) -> np.ndarray:
+def random_policy(obs: np.ndarray, env: OneShotEnv, pend: float = 0.05, paccept: float = 0.15) -> np.ndarray:
     """
     Ends the negotiation or accepts with a predefined probability or samples a random response.
     """
@@ -43,9 +41,7 @@ def random_policy(
 
 def powerset(iterable):
     s = list(iterable)
-    return itertools.chain.from_iterable(
-        itertools.combinations(s, r) for r in range(len(s) + 1)
-    )
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s) + 1))
 
 
 def all_but_concentrated(q, n) -> list[int]:
@@ -97,39 +93,21 @@ def greedy_policy(
         assert isinstance(awi, OneShotAWI)
         awi_offers = awi.current_offers
         received_keys = []
-        for k in received_offers.keys():
+        for k in received_offers:
             if "+" in k:
-                received_keys += [_ for _ in k.split("+") if _ in awi_offers.keys()]
+                received_keys += [_ for _ in k.split("+") if _ in awi_offers]
             else:
                 received_keys.append(k)
         if set(awi_offers.keys()) != set(received_keys):
-            raise AssertionError(
-                f"AWI keys do not match received keys\n"
-                f"{awi_offers=}\n{offers=}\n{received_offers=}\n{received_keys=}"
-            )
+            raise AssertionError(f"AWI keys do not match received keys\n{awi_offers=}\n{offers=}\n{received_offers=}\n{received_keys=}")
         for k, v in received_offers.items():
             if "+" in k:
                 q, t, p = v
                 assert q == sum(awi_offers.get(_, (0, 0, 0))[0] for _ in k.split("+"))
-                assert (
-                    abs(
-                        p * q
-                        - sum(
-                            awi_offers.get(_, (0, 0, 0))[-1]
-                            * awi_offers.get(_, (0, 0, 0))[0]
-                            for _ in k.split("+")
-                        )
-                    )
-                    < 1e-5
-                )
-                assert all(
-                    t == awi_offers[_][1] for _ in k.split("+") if _ in awi_offers
-                )
+                assert abs(p * q - sum(awi_offers.get(_, (0, 0, 0))[-1] * awi_offers.get(_, (0, 0, 0))[0] for _ in k.split("+"))) < 1e-5
+                assert all(t == awi_offers[_][1] for _ in k.split("+") if _ in awi_offers)
                 continue
-            assert awi_offers[k] == v, (
-                f"AWI values do not match received values\n"
-                f"{awi_offers[k]=} != {offers[k]}"
-            )
+            assert awi_offers[k] == v, f"AWI values do not match received values\n{awi_offers[k]=} != {offers[k]}"
     needed = awi.needed_supplies if not awi.is_first_level else awi.needed_sales
     all_offers = list(offers.values())
     all_partners = list(offers.keys())
@@ -137,10 +115,7 @@ def greedy_policy(
     all_indices = list(range(len(offers)))
     best, diff = None, sys.maxsize
     for indices in powerset(all_indices):
-        q = sum(
-            r[QUANTITY] if r is not None else 0
-            for r in [all_offers[_] for _ in indices]
-        )
+        q = sum(r[QUANTITY] if r is not None else 0 for r in [all_offers[_] for _ in indices])
         d = needed - q
         if d < 0:
             continue
@@ -148,11 +123,7 @@ def greedy_policy(
             best, diff = indices, d
         if d == 0:
             break
-    os = (
-        awi.current_input_outcome_space
-        if not awi.is_first_level
-        else awi.current_output_outcome_space
-    )
+    os = awi.current_input_outcome_space if not awi.is_first_level else awi.current_output_outcome_space
     t = awi.current_step
     mn = os.issues[UNIT_PRICE].min_value
     mx = os.issues[UNIT_PRICE].max_value
@@ -166,10 +137,8 @@ def greedy_policy(
         response = dict(
             zip(
                 all_partners,
-                [
-                    SAOResponse(ResponseType.REJECT_OFFER, (q, t, p))
-                    for q, p in zip(quantities, prices)
-                ],
+                [SAOResponse(ResponseType.REJECT_OFFER, (q, t, p)) for q, p in zip(quantities, prices, strict=False)],
+                strict=False,
             )
         )
     else:

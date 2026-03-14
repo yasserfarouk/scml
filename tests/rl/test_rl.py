@@ -5,11 +5,12 @@ from functools import partial
 from typing import Any
 
 import numpy as np
-from scml.oneshot.agents.greedy import GreedyOneShotAgent
 from negmas.gb.common import ResponseType
 from negmas.outcomes.issue_ops import itertools
 from negmas.sao.common import SAOResponse
 from pytest import mark
+
+from scml.oneshot.agents.greedy import GreedyOneShotAgent
 
 try:
     from stable_baselines3 import A2C, SAC
@@ -18,40 +19,39 @@ except ImportError:
 
 from scml.oneshot.agents.rand import RandDistOneShotAgent
 from scml.oneshot.context import (
+    ANACContext,
+    ANACOneShotContext,
+    BalancedConsumerContext,
+    BalancedSupplierContext,
     BaseContext,
     ConsumerContext,
+    FixedPartnerNumbersContext,
     FixedPartnerNumbersOneShotContext,
+    GeneralContext,
     LimitedPartnerNumbersContext,
     LimitedPartnerNumbersOneShotContext,
+    RepeatingContext,
+    StrongConsumerContext,
+    StrongSupplierContext,
     SupplierContext,
+    WeakConsumerContext,
+    WeakSupplierContext,
 )
 from scml.oneshot.rl.action import ActionManager, FlexibleActionManager
 from scml.oneshot.rl.agent import OneShotRLAgent
-from scml.oneshot.rl.common import model_wrapper, group_partners
+from scml.oneshot.rl.common import group_partners, model_wrapper
 from scml.oneshot.rl.env import OneShotEnv
+from scml.oneshot.rl.helpers import (
+    clip,
+    decode_offers_no_time,
+    discretize_and_clip,
+    encode_offers_no_time,
+    normalize_and_clip,
+)
 from scml.oneshot.rl.observation import FlexibleObservationManager, ObservationManager
 from scml.oneshot.rl.policies import greedy_policy, random_action, random_policy
 from scml.oneshot.rl.reward import RewardFunction
-from scml.oneshot.context import (
-    GeneralContext,
-    ANACContext,
-    FixedPartnerNumbersContext,
-    ANACOneShotContext,
-    StrongSupplierContext,
-    StrongConsumerContext,
-    WeakSupplierContext,
-    WeakConsumerContext,
-    BalancedSupplierContext,
-    BalancedConsumerContext,
-    RepeatingContext,
-)
-from scml.oneshot.rl.helpers import (
-    clip,
-    discretize_and_clip,
-    normalize_and_clip,
-    encode_offers_no_time,
-    decode_offers_no_time,
-)
+
 from ..switches import SCML_RUNALL_TESTS
 
 SCML_TEST_BRITTLE_ISSUES = False
@@ -95,28 +95,28 @@ def make_env(
     continuous=False,
 ) -> OneShotEnv:
     world_params: dict[str, Any] = (
-        dict(
-            no_logs=False,
-            log_stats_every=1,
-            log_file_level=logging.DEBUG,
-            log_screen_level=logging.ERROR,
-            save_signed_contracts=True,
-            save_cancelled_contracts=True,
-            save_negotiations=True,
-            save_resolved_breaches=True,
-            save_unresolved_breaches=True,
-        )
+        {
+            "no_logs": False,
+            "log_stats_every": 1,
+            "log_file_level": logging.DEBUG,
+            "log_screen_level": logging.ERROR,
+            "save_signed_contracts": True,
+            "save_cancelled_contracts": True,
+            "save_negotiations": True,
+            "save_resolved_breaches": True,
+            "save_unresolved_breaches": True,
+        }
         if log
-        else dict()
+        else {}
     )
-    world_params |= dict(
-        ignore_agent_exceptions=False,
-        ignore_negotiation_exceptions=False,
-        ignore_contract_execution_exceptions=False,
-        ignore_simulation_exceptions=False,
-        debug=True,
-        sync_calls=True,
-    )
+    world_params |= {
+        "ignore_agent_exceptions": False,
+        "ignore_negotiation_exceptions": False,
+        "ignore_contract_execution_exceptions": False,
+        "ignore_simulation_exceptions": False,
+        "debug": True,
+        "sync_calls": True,
+    }
     if oneshot:
         obs_type, act_type = (FlexibleObservationManager, FlexibleActionManager)
     else:
@@ -130,18 +130,14 @@ def make_env(
     )
     return OneShotEnv(
         action_manager=act_type(context=context, continuous=continuous),
-        observation_manager=obs_type(
-            context=context, extra_checks=extra_checks, continuous=continuous
-        ),
+        observation_manager=obs_type(context=context, extra_checks=extra_checks, continuous=continuous),
         context=context,
         extra_checks=extra_checks,
         debug=confirm_context_match,
     )
 
 
-@mark.parametrize(
-    ["type_", "continuous"], list(itertools.product(context_types, [False, True]))
-)
+@mark.parametrize(["type_", "continuous"], list(itertools.product(context_types, [False, True])))
 def test_env_runs(type_, continuous):
     env = make_env(type_, continuous=continuous)
 
@@ -158,9 +154,7 @@ def test_env_runs(type_, continuous):
     A2C is None,
     reason="Skipped because you do not have stable-baselines3 installed.Try: python -m pip install stable-baselines3",
 )
-@mark.parametrize(
-    ["type_", "continuous"], list(itertools.product(context_types, [False, True]))
-)
+@mark.parametrize(["type_", "continuous"], list(itertools.product(context_types, [False, True])))
 def test_training(type_, continuous):
     alg = TEST_ALG[continuous]
     if alg is None:
@@ -192,9 +186,7 @@ def test_rl_agent_fallback():
     A2C is None,
     reason="Skipped because you do not have stable-baselines3 installed.Try: python -m pip install stable-baselines3",
 )
-@mark.parametrize(
-    ["type_", "continuous"], list(itertools.product(context_types, [False, True]))
-)
+@mark.parametrize(["type_", "continuous"], list(itertools.product(context_types, [False, True])))
 def test_rl_agent_with_a_trained_model_in_memory(type_, continuous):
     alg = TEST_ALG[continuous]
     if alg is None:
@@ -210,11 +202,11 @@ def test_rl_agent_with_a_trained_model_in_memory(type_, continuous):
     world, agents = context.generate(
         types=(OneShotRLAgent,),
         params=(
-            dict(
-                models=[model_wrapper(model)],
-                observation_managers=[obs],
-                action_managers=[act],
-            ),
+            {
+                "models": [model_wrapper(model)],
+                "observation_managers": [obs],
+                "action_managers": [act],
+            },
         ),
     )
     assert len(agents) == 1
@@ -229,9 +221,7 @@ def test_rl_agent_with_a_trained_model_in_memory(type_, continuous):
     A2C is None,
     reason="Skipped because you do not have stable-baselines3 installed.Try: python -m pip install stable-baselines3",
 )
-@mark.parametrize(
-    ["type_", "continuous"], list(itertools.product(context_types, [False, True]))
-)
+@mark.parametrize(["type_", "continuous"], list(itertools.product(context_types, [False, True])))
 def test_rl_agent_with_a_trained_model(type_, continuous):
     alg = TEST_ALG[continuous]
     if alg is None:
@@ -250,11 +240,11 @@ def test_rl_agent_with_a_trained_model(type_, continuous):
     world, agents = context.generate(
         types=(OneShotRLAgent,),
         params=(  # type: ignore
-            dict(
-                models=[model_wrapper(model)],
-                observation_managers=[obs],
-                action_managers=[act],
-            )
+            {
+                "models": [model_wrapper(model)],
+                "observation_managers": [obs],
+                "action_managers": [act],
+            }
         ),
     )
     assert len(agents) == 1
@@ -277,8 +267,7 @@ def test_env_runs_one_world():
     env.close()
 
 
-class MyOneShotAgent(GreedyOneShotAgent):
-    ...
+class MyOneShotAgent(GreedyOneShotAgent): ...
 
 
 # TODO: do not skip this test
@@ -295,12 +284,10 @@ def test_action_manager(context_type, continuous, type_: type[ActionManager]):
     assert world.neg_n_steps is not None
     for _ in range(min(100, world.neg_n_steps * (world.n_steps - 1))):
         # action = space.sample()
-        responses = dict()
+        responses = {}
         awi = None
         if not agent._awi:
-            responses = defaultdict(
-                lambda: SAOResponse(ResponseType.REJECT_OFFER, (1, 0, 22))
-            )
+            responses = defaultdict(lambda: SAOResponse(ResponseType.REJECT_OFFER, (1, 0, 22)))
         else:
             awi = agent.awi
             for nmi in awi.current_nmis.values():
@@ -327,9 +314,7 @@ def test_action_manager(context_type, continuous, type_: type[ActionManager]):
             decoded = manager.decode(awi, action)
             encoded = manager.encode(awi, decoded)
             if not np.all(np.isclose(action, encoded)):
-                raise AssertionError(
-                    f"Unexpected decoding on step {awi.current_step}\n{responses=}\n{action=}\n{decoded=}\n{encoded=}"
-                )
+                raise AssertionError(f"Unexpected decoding on step {awi.current_step}\n{responses=}\n{action=}\n{decoded=}\n{encoded=}")
 
 
 class RecorderAgent(RandDistOneShotAgent):
@@ -348,31 +333,27 @@ class RecorderAgent(RandDistOneShotAgent):
         expected = offers
         current = self.awi.current_offers
         for k, v in current.items():
-            assert (
-                expected.get(k, None) == v
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            assert expected.get(k, None) == v, (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            )
         for k, v in decoded.items():
-            assert (
-                "+" in k or expected.get(k, None) == v
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            assert "+" in k or expected.get(k, None) == v, (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            )
         for k, v in expected.items():
-            assert (
-                decoded.get(k, None) is None or decoded.get(k, None) == v
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
-            assert (
-                current.get(k, None) == v
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            assert decoded.get(k, None) is None or decoded.get(k, None) == v, (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            )
+            assert current.get(k, None) == v, (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            )
         if SCML_TEST_BRITTLE_ISSUES:
-            assert (
-                sum(_[0] for _ in expected.values() if _)
-                == sum(_[0] for _ in decoded.values() if _)
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            assert sum(_[0] for _ in expected.values() if _) == sum(_[0] for _ in decoded.values() if _), (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}\n{encoded=}"
+            )
             # note that decoding may not be perfect for discrete obs managers because encoding converts to int which loses fractions for groups
             if not (
-                abs(
-                    sum(_[0] * _[-1] for _ in expected.values() if _)
-                    - sum(_[0] * _[-1] for _ in decoded.values() if _)
-                )
+                abs(sum(_[0] * _[-1] for _ in expected.values() if _) - sum(_[0] * _[-1] for _ in decoded.values() if _))
                 <= sum(_[0] for _ in expected.values() if _)
             ):
                 raise AssertionError(
@@ -389,22 +370,20 @@ class RecorderAgent(RandDistOneShotAgent):
         encoded = obs.encode(state)
         decoded = obs.get_offers(self.awi, encoded)
         for k, v in decoded.items():
-            assert (
-                "+" in k or expected.get(k, None) == v
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            assert "+" in k or expected.get(k, None) == v, (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            )
         for k, v in expected.items():
-            assert (
-                decoded.get(k, None) is None or decoded.get(k, None) == v
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            assert decoded.get(k, None) is None or decoded.get(k, None) == v, (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            )
         if SCML_TEST_BRITTLE_ISSUES:
-            assert (
-                sum(_[0] for _ in expected.values() if _)
-                == sum(_[0] for _ in decoded.values() if _)
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
-            assert (
-                sum(_[0] * _[-1] for _ in expected.values() if _)
-                == sum(_[0] * _[-1] for _ in decoded.values() if _)
-            ), f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            assert sum(_[0] for _ in expected.values() if _) == sum(_[0] for _ in decoded.values() if _), (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            )
+            assert sum(_[0] * _[-1] for _ in expected.values() if _) == sum(_[0] * _[-1] for _ in decoded.values() if _), (
+                f"{self.awi.current_step=}\n{self.awi.current_input_issues}\n{self.awi.current_output_issues}\n{decoded=}\n{expected=}"
+            )
         return d
 
 
@@ -418,9 +397,7 @@ def test_obs_manager(context_type, continuous, type_: type[ObservationManager]):
     context = context_type()
     obs = type_(context, continuous=continuous)
     for _ in range(n_worlds):
-        world, agents = context.generate(
-            types=(RecorderAgent,), params=(dict(obs=obs),)
-        )
+        world, agents = context.generate(types=(RecorderAgent,), params=({"obs": obs},))
         world.init()
         agent = agents[0]
         assert isinstance(agent, RecorderAgent)
@@ -436,9 +413,7 @@ def test_env_random_policy():
     assert world.n_steps is not None and world.neg_n_steps is not None
     for _ in range(world.n_steps * world.neg_n_steps):
         action = partial(random_action, env=env)(obs)
-        assert env.action_space.contains(
-            action
-        ), "f{action} not contained in the action space"
+        assert env.action_space.contains(action), "f{action} not contained in the action space"
         obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             break
@@ -466,13 +441,9 @@ def test_env_greedy_policy_no_end():
         # action = env._action_manager.encode(env._agent.awi, decoded_action)
         action = greedy(obs)
         decoded_action = env._action_manager.decode(env._agent.awi, action)  #
-        if not all(
-            _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
-        ):
+        if not all(_.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()):
             ended_everything = False
-        if any(
-            _.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()
-        ):
+        if any(_.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()):
             accepted_sometime = True
 
         # assert env.action_space.contains(
@@ -500,18 +471,12 @@ def test_env_random_policy_no_end():
     for _ in range(world.n_steps * world.neg_n_steps):
         action = partial(random_policy, env=env)(obs)
         decoded_action = env._action_manager.decode(env._agent.awi, action)
-        if not all(
-            _.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()
-        ):
+        if not all(_.response == ResponseType.END_NEGOTIATION for _ in decoded_action.values()):
             ended_everything = False
-        if any(
-            _.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()
-        ):
+        if any(_.response == ResponseType.ACCEPT_OFFER for _ in decoded_action.values()):
             accepted_sometime = True
 
-        assert env.action_space.contains(
-            action
-        ), "f{action} not contained in the action space"
+        assert env.action_space.contains(action), "f{action} not contained in the action space"
         obs, _, terminated, truncated, _ = env.step(action)
         if terminated or truncated:
             break
@@ -568,10 +533,7 @@ def test_reward_reception():
     assert rewardfun.n_call >= n_steps
     assert rewardfun.n_before >= n_steps
     assert len(env._world.saved_contracts) > 0, "There are no contracts"
-    assert (
-        len([c for c in env._world.saved_contracts if env._agent_id in c["signatures"]])
-        > 0
-    ), "No contracts from the RL agent"
+    assert len([c for c in env._world.saved_contracts if env._agent_id in c["signatures"]]) > 0, "No contracts from the RL agent"
 
 
 def test_relative_times_make_sense():
@@ -632,9 +594,7 @@ def test_normalize():
 
 def test_encode_offers_no_time_supplier():
     minp, maxp = 3, 20
-    offer_map = dict(
-        a11=None, a12=(4, 0, 10), a13=(2, 0, 4), a21=(3, 0, 6), a31=None, a41=(0, 0, 9)
-    )
+    offer_map = {"a11": None, "a12": (4, 0, 10), "a13": (2, 0, 4), "a21": (3, 0, 6), "a31": None, "a41": (0, 0, 9)}
     groups = [["a11", "a12", "a13"], ["a21"], ["a31"], ["a44", "z1"], ["a41"], []]
     offers = encode_offers_no_time(offer_map, groups, minp, maxp)
     expected = [
@@ -644,14 +604,11 @@ def test_encode_offers_no_time_supplier():
         (0, 0),
         (0, maxp - minp),
     ]
-    assert all(
-        len(a) == len(b) == 2 and a[0] == b[0] and abs(a[1] - b[1]) < 1e-8
-        for a, b in zip(offers, expected)
-    ), f"{offers=}\n{expected=}"
-    # check decoding is correct when no n_prices is passed
-    decoded = decode_offers_no_time(
-        offers, len(groups), 0, groups, [], 0, False, minp, -1, maxp
+    assert all(len(a) == len(b) == 2 and a[0] == b[0] and abs(a[1] - b[1]) < 1e-8 for a, b in zip(offers, expected, strict=False)), (
+        f"{offers=}\n{expected=}"
     )
+    # check decoding is correct when no n_prices is passed
+    decoded = decode_offers_no_time(offers, len(groups), 0, groups, [], 0, False, minp, -1, maxp)
     for group in groups:
         if not group:
             continue
@@ -680,9 +637,7 @@ def test_encode_offers_no_time_supplier():
     assert decoded["a21"] == (3, 0, 6)
     # check decoding is correct when n_prices is np
     np = 2
-    decoded = decode_offers_no_time(
-        offers, len(groups), 0, groups, [], 0, False, minp, -1, maxp, n_prices=np
-    )
+    decoded = decode_offers_no_time(offers, len(groups), 0, groups, [], 0, False, minp, -1, maxp, n_prices=np)
     for group in groups:
         if not group:
             continue
@@ -693,9 +648,7 @@ def test_encode_offers_no_time_supplier():
 
 def test_encode_offers_no_time_consumer():
     minp, maxp = 3, 20
-    offer_map = dict(
-        a11=None, a12=(4, 0, 10), a13=(2, 0, 4), a21=(3, 0, 6), a31=None, a41=(0, 0, 9)
-    )
+    offer_map = {"a11": None, "a12": (4, 0, 10), "a13": (2, 0, 4), "a21": (3, 0, 6), "a31": None, "a41": (0, 0, 9)}
     groups = [["a11", "a12", "a13"], ["a21"], ["a31"], ["a44", "z1"], ["a41"], []]
     offers = encode_offers_no_time(offer_map, groups, minp, maxp)
     expected = [
@@ -705,14 +658,11 @@ def test_encode_offers_no_time_consumer():
         (0, 0),
         (0, maxp - minp),
     ]
-    assert all(
-        len(a) == len(b) == 2 and a[0] == b[0] and abs(a[1] - b[1]) < 1e-8
-        for a, b in zip(offers, expected)
-    ), f"{offers=}\n{expected=}"
-    # check decoding is correct when no n_prices is passed
-    decoded = decode_offers_no_time(
-        offers, 0, len(groups), [], groups, 0, False, -1, minp, -1, maxp
+    assert all(len(a) == len(b) == 2 and a[0] == b[0] and abs(a[1] - b[1]) < 1e-8 for a, b in zip(offers, expected, strict=False)), (
+        f"{offers=}\n{expected=}"
     )
+    # check decoding is correct when no n_prices is passed
+    decoded = decode_offers_no_time(offers, 0, len(groups), [], groups, 0, False, -1, minp, -1, maxp)
     for group in groups:
         if not group:
             continue
@@ -742,9 +692,7 @@ def test_encode_offers_no_time_consumer():
     assert decoded["a21"] == (3, 0, 6)
     # check decoding is correct when n_prices is np
     np = 2
-    decoded = decode_offers_no_time(
-        offers, len(groups), 0, groups, [], 0, False, minp, -1, maxp, n_prices=np
-    )
+    decoded = decode_offers_no_time(offers, len(groups), 0, groups, [], 0, False, minp, -1, maxp, n_prices=np)
     for group in groups:
         if not group:
             continue
@@ -756,19 +704,19 @@ def test_encode_offers_no_time_consumer():
 def test_encode_offers_no_time_both():
     minip, maxip = 3, 20
     minop, maxop = 5, 30
-    offer_map = dict(
-        a11=None,
-        a12=(4, 0, 10),
-        a13=(2, 0, 4),
-        a21=(3, 0, 6),
-        a31=None,
-        a41=(0, 0, 9),
-        b11=(2, 0, 9),
-        b12=(3, 0, 22),
-        b22=(8, 0, 11),
-        b21=(3, 0, 13),
-        b31=(7, 0, 9),
-    )
+    offer_map = {
+        "a11": None,
+        "a12": (4, 0, 10),
+        "a13": (2, 0, 4),
+        "a21": (3, 0, 6),
+        "a31": None,
+        "a41": (0, 0, 9),
+        "b11": (2, 0, 9),
+        "b12": (3, 0, 22),
+        "b22": (8, 0, 11),
+        "b21": (3, 0, 13),
+        "b31": (7, 0, 9),
+    }
     groupsi = [["a11", "a12", "a13"], ["a21"], ["a31"], ["a44", "z1"], ["a41"], []]
     groupso = [["b11", "b12"], ["b21", "b22"], ["b31"], ["b44", "z1"], []]
     groups = groupsi + groupso
@@ -787,10 +735,9 @@ def test_encode_offers_no_time_both():
         (0, 0),
         (0, 0),
     ]
-    assert all(
-        len(a) == len(b) == 2 and a[0] == b[0] and abs(a[1] - b[1]) < 1e-8
-        for a, b in zip(offers, expected)
-    ), f"{offers=}\n{expected=}\n{minip=}, {maxip=}, {minop=}, {maxop=}"
+    assert all(len(a) == len(b) == 2 and a[0] == b[0] and abs(a[1] - b[1]) < 1e-8 for a, b in zip(offers, expected, strict=False)), (
+        f"{offers=}\n{expected=}\n{minip=}, {maxip=}, {minop=}, {maxop=}"
+    )
     # check decoding is correct when no n_prices is passed
     decoded = decode_offers_no_time(
         offers,
@@ -839,13 +786,7 @@ def test_encode_offers_no_time_both():
     assert decoded["b11+b12"] == (5, 0, (np / (maxop - minop + 1)) * (18 + 66) / 5)
     assert (
         decoded["b21+b22"] is not None
-        and sum(
-            abs(a - b)
-            for a, b in zip(
-                decoded["b21+b22"], (11, 0, (np / (maxop - minop + 1)) * (88 + 39) / 11)
-            )
-        )
-        < 1e-4
+        and sum(abs(a - b) for a, b in zip(decoded["b21+b22"], (11, 0, (np / (maxop - minop + 1)) * (88 + 39) / 11), strict=False)) < 1e-4
     )
 
 
@@ -860,16 +801,10 @@ def test_grouping_too_few_partners(extend):
         assert groups[i][0] == partners[i]
     for i in range(len(partners), n):
         if extend:
-            assert (
-                len(groups[i]) == 1
-            ), f"{i=}: {groups[i]=}, {n=}\n{partners=}\n{groups=}"
-            assert (
-                groups[i][0] == partners[i - len(partners)]
-            ), f"{i=}: {groups[i]=}, {n=}\n{partners=}\n{groups=}"
+            assert len(groups[i]) == 1, f"{i=}: {groups[i]=}, {n=}\n{partners=}\n{groups=}"
+            assert groups[i][0] == partners[i - len(partners)], f"{i=}: {groups[i]=}, {n=}\n{partners=}\n{groups=}"
         else:
-            assert (
-                len(groups[i]) == 0
-            ), f"{i=}: {groups[i]=}, {n=}\n{partners=}\n{groups=}"
+            assert len(groups[i]) == 0, f"{i=}: {groups[i]=}, {n=}\n{partners=}\n{groups=}"
 
 
 @mark.parametrize("extend", [False, True])

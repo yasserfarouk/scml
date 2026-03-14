@@ -4,7 +4,6 @@ from scml.oneshot.awi import OneShotAWI
 from scml.oneshot.world import PLACEHOLDER_AGENT_PREFIX
 from scml.std.agents import GreedyStdAgent, SyncRandomStdAgent
 from scml.std.world import SCML2024StdWorld
-
 from tests.switches import DefaultStdWorld
 
 
@@ -53,7 +52,7 @@ def test_replace_agents():
         d = SCML2024StdWorld.replace_agents(c, old, tuple(f"A{i}" for i in range(n)))
         new_types = [_["controller_type"] for _ in d["agent_params"]]
         old_types = [_["controller_type"] for _ in d["agent_params"]]
-        assert all(a[-1] == b[-1] for a, b in zip(new_types, old_types))
+        assert all(a[-1] == b[-1] for a, b in zip(new_types, old_types, strict=False))
 
 
 def sumall(d):

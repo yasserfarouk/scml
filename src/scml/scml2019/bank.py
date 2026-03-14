@@ -1,7 +1,8 @@
 """Implements all builtin banks."""
+
 from abc import ABC
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from negmas import (
     Issue,
@@ -34,17 +35,15 @@ class Bank(Agent, ABC):
         issues: list[Issue],
         annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-        role: Optional[str],
-        req_id: Optional[str],
-    ) -> Optional[Negotiator]:
+        role: str | None,
+        req_id: str | None,
+    ) -> Negotiator | None:
         pass
 
-    def on_neg_request_rejected(self, req_id: str, by: Optional[list[str]]):
+    def on_neg_request_rejected(self, req_id: str, by: list[str] | None):
         pass
 
-    def on_neg_request_accepted(
-        self, req_id: str, mechanism: NegotiatorMechanismInterface
-    ):
+    def on_neg_request_accepted(self, req_id: str, mechanism: NegotiatorMechanismInterface):
         pass
 
     def on_negotiation_failure(
@@ -56,9 +55,7 @@ class Bank(Agent, ABC):
     ) -> None:
         pass
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
     def on_contract_signed(self, contract: Contract) -> None:
@@ -67,7 +64,7 @@ class Bank(Agent, ABC):
     def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
-    def sign_contract(self, contract: Contract) -> Optional[str]:
+    def sign_contract(self, contract: Contract) -> str | None:
         pass
 
     def respond_to_negotiation_request(
@@ -77,17 +74,15 @@ class Bank(Agent, ABC):
         issues: list[Issue],
         annotation: dict[str, Any],
         mechanism: Mechanism,
-        role: Optional[str],
+        role: str | None,
         req_id: str,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: list[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass
 
 
@@ -104,9 +99,9 @@ class DefaultBank(Bank):
         issues: list[Issue],
         annotation: dict[str, Any],
         mechanism: Mechanism,
-        role: Optional[str],
+        role: str | None,
         req_id: str,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         pass
 
     def __init__(
@@ -135,14 +130,12 @@ class DefaultBank(Bank):
         self._credit_rating: dict[str, float] = defaultdict(float)
         self.a2f = a2f
 
-    def set_renegotiation_agenda(
-        self, contract: Contract, breaches: list[Breach]
-    ) -> Optional[RenegotiationRequest]:
+    def set_renegotiation_agenda(self, contract: Contract, breaches: list[Breach]) -> RenegotiationRequest | None:
         return None
 
     def respond_to_renegotiation_request(
         self, contract: Contract, breaches: list[Breach], agenda: RenegotiationRequest
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         raise ValueError("The bank does not receive callbacks")
 
     def _evaluate_loan(
@@ -152,7 +145,7 @@ class DefaultBank(Bank):
         n_installments: int,
         starts_at: int,
         installment_loan=False,
-    ) -> Optional[Loan]:
+    ) -> Loan | None:
         """Evaluates the interest that will be imposed on the agent to buy_loan that amount"""
         if self.disabled:
             return None
@@ -164,9 +157,7 @@ class DefaultBank(Bank):
         interest = self.installment_interest if installment_loan else self.interest_rate
 
         if balance < 0 and self.interest_max is not None:
-            interest += (
-                balance * (interest - self.interest_max) / self.balance_at_max_interest
-            )
+            interest += balance * (interest - self.interest_max) / self.balance_at_max_interest
         interest += max(0, starts_at - self.awi.current_step) * self.time_increment
         interest += self._credit_rating[agent.id]
         total = amount * (1 + interest) ** n_installments
@@ -182,9 +173,7 @@ class DefaultBank(Bank):
             starts_at=starts_at,
         )
 
-    def evaluate_loan(
-        self, agent: "SCML2019Agent", amount: float, start_at: int, n_installments: int
-    ) -> Optional[Loan]:
+    def evaluate_loan(self, agent: "SCML2019Agent", amount: float, start_at: int, n_installments: int) -> Loan | None:
         """Evaluates the interest that will be imposed on the agent to buy_loan that amount"""
         if self.disabled:
             return None
@@ -201,9 +190,9 @@ class DefaultBank(Bank):
         agent: "SCML2019Agent",
         loan: Loan,
         beneficiary: Agent,
-        contract: Optional[Contract],
+        contract: Contract | None,
         bankrupt_if_rejected=False,
-    ) -> Optional[Loan]:
+    ) -> Loan | None:
         if self.disabled:
             return None
         if loan is None:
@@ -230,9 +219,9 @@ class DefaultBank(Bank):
         amount: float,
         n_installments: int,
         beneficiary: Agent,
-        contract: Optional[Contract],
+        contract: Contract | None,
         force: bool = False,
-    ) -> Optional[Loan]:
+    ) -> Loan | None:
         """Gives a loan of amount to agent at the interest calculated using `evaluate_loan`"""
         if self.disabled:
             return None
@@ -262,9 +251,7 @@ class DefaultBank(Bank):
         # for every agent with loans
         for agent, loans in self.loans.items():
             factory = self.a2f[agent.id]
-            keep = [True] * len(
-                loans
-            )  # a flag to tell whether a loan is to be kept for future processing
+            keep = [True] * len(loans)  # a flag to tell whether a loan is to be kept for future processing
             unpaid = []  # any new loans that may arise from failure to pay installments
             unavailable = 0.0
             for i, loan in enumerate(loans):
@@ -290,10 +277,7 @@ class DefaultBank(Bank):
                 # if the loan is completely paid, mark it for removal
                 if loan.n_installments <= 0:
                     keep[i] = False
-                self.awi.logdebug(
-                    f"Bank: {agent.name} payed {payment} (of {loan.installment}) "
-                    f"[{loan.n_installments} remain]"
-                )
+                self.awi.logdebug(f"Bank: {agent.name} payed {payment} (of {loan.installment}) [{loan.n_installments} remain]")
             if unavailable > 0.0:
                 new_loan = self._evaluate_loan(
                     agent=agent,
@@ -304,9 +288,7 @@ class DefaultBank(Bank):
                 )
                 if new_loan is None:
                     self._reduce_credit_rating(agent=agent, unavailable=unavailable)
-                    self.awi.logdebug(
-                        f"Bank: CR of {agent.name} was reduced for failure to pay {unavailable}"
-                    )
+                    self.awi.logdebug(f"Bank: CR of {agent.name} was reduced for failure to pay {unavailable}")
                 elif (
                     self._buy_loan(
                         agent=agent,
@@ -317,9 +299,7 @@ class DefaultBank(Bank):
                     )
                     is not None
                 ):
-                    self.awi.logdebug(
-                        f"Bank: {agent.name} payed an installment by a new loan {str(new_loan)}"
-                    )
+                    self.awi.logdebug(f"Bank: {agent.name} payed an installment by a new loan {str(new_loan)}")
                     factory.add_loan(-new_loan.amount)
                     factory.pay(new_loan.amount)
                     self.wallet += new_loan.amount

@@ -1,8 +1,7 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import pytest
 from rich import print
-from collections import Counter
 
 from scml.oneshot import PLACEHOLDER_AGENT_PREFIX
 from scml.oneshot.agents.greedy import (
@@ -41,17 +40,12 @@ def test_run_single_agent(atype, no_bankrupt, some_profits):
         for k, a in world.agents.items()
         if not is_system_agent(k)
     ]
-    assert all(
-        [issubclass(_, atype) for _ in types]
-    ), f"Not all types are {atype.__name__}: {types}"
+    assert all(issubclass(_, atype) for _ in types), f"Not all types are {atype.__name__}: {types}"
     world.run()
     d = world.scores()
     scores = list(d.values())
     if no_bankrupt:
-        assert min(scores) >= 0, (
-            "Some negative scores (i.e. some agents went bankrupt)!!\n"
-            "{k:v for k, v in d.items() if v < 0}"
-        )
+        assert min(scores) >= 0, "Some negative scores (i.e. some agents went bankrupt)!!\n{k:v for k, v in d.items() if v < 0}"
     if some_profits:
         assert max(scores) >= 1, f"No agents got a any profits:\n{d}"
 
@@ -67,9 +61,7 @@ class NonCompetitorRecordingAgent(RandDistOneShotAgent):
         proposals = super().first_proposals()
         self.first_proposal_calls[self.awi.current_step] += 1
         if self.print_everything:
-            print(
-                f"{self.awi.current_step} First Proposal for {self.id}:{self.awi.needed_sales}, {self.awi.needed_supplies}"
-            )
+            print(f"{self.awi.current_step} First Proposal for {self.id}:{self.awi.needed_sales}, {self.awi.needed_supplies}")
             print(proposals)
         return proposals
 
@@ -77,15 +69,12 @@ class NonCompetitorRecordingAgent(RandDistOneShotAgent):
         responses = super().counter_all(offers, states)
         self.counter_calls[self.awi.current_step] += 1
         if self.print_everything:
-            print(
-                f"{self.awi.current_step} Responses for {self.id}:{self.awi.needed_sales}, {self.awi.needed_supplies}"
-            )
+            print(f"{self.awi.current_step} Responses for {self.id}:{self.awi.needed_sales}, {self.awi.needed_supplies}")
             print(f"{offers=}\n{responses=}")
         return responses
 
 
-class RecordingAgent(NonCompetitorRecordingAgent):
-    ...
+class RecordingAgent(NonCompetitorRecordingAgent): ...
 
 
 class AlwaysFallingBack(OneShotRLAgent):
@@ -110,14 +99,12 @@ def test_recording(allow_zero):
     context = ANACOneShotContext(
         world_type=DefaultOneShotWorld,
         non_competitors=(NonCompetitorRecordingAgent,),
-        world_params=dict(allow_zero_quantity=allow_zero),
+        world_params={"allow_zero_quantity": allow_zero},
     )
     world, (agent,) = context.generate((RecordingAgent,))
     assert isinstance(agent, RecordingAgent)
     world.run()
-    assert (
-        len(agent.counter_calls) + len(agent.first_proposal_calls) >= world.current_step
-    )
+    assert len(agent.counter_calls) + len(agent.first_proposal_calls) >= world.current_step
     # print(world.scores())
     # assert (
     #     False
@@ -129,24 +116,20 @@ def test_fallingback(allow_zero):
     context = ANACOneShotContext(
         world_type=DefaultOneShotWorld,
         non_competitors=(NonCompetitorRecordingAgent,),
-        world_params=dict(allow_zero_quantity=allow_zero),
+        world_params={"allow_zero_quantity": allow_zero},
     )
     world, (agent,) = context.generate((AlwaysFallingBack,))
     assert isinstance(agent, AlwaysFallingBack)
     world.run()
     assert agent._fallback_agent is not None
-    assert (
-        len(agent._fallback_agent.counter_calls)
-        + len(agent._fallback_agent.first_proposal_calls)
-        >= world.current_step
-    )
+    assert len(agent._fallback_agent.counter_calls) + len(agent._fallback_agent.first_proposal_calls) >= world.current_step
     # print(world.scores())
     # assert (
     #     False
     # ), f"{world.current_step=}\n{agent._fallback_agent.first_proposal_calls=}\n{agent._fallback_agent.counter_calls=}"
 
 
-CONFIGS = dict()
+CONFIGS = {}
 DefaultType = RandDistOneShotAgent
 
 
@@ -174,9 +157,7 @@ def make_configs(n, n_trials, n_steps=10):
     ]
 
 
-def try_agents(
-    agent_types, n_trials=4, n_steps=10, draw=True, agent_params=None, debug=True
-):
+def try_agents(agent_types, n_trials=4, n_steps=10, draw=True, agent_params=None, debug=True):
     """
     Runs a simulation with the given agent_types, and n_processes n_trial times.
     Optionally also draws a graph showing what happened
@@ -190,13 +171,11 @@ def try_agents(
     configs = CONFIGS[n]
     type_scores = defaultdict(float)
     counts = defaultdict(int)
-    agent_scores = dict()
+    agent_scores = {}
     worlds = []
     for old_types, config in configs[:n_trials]:
         world = SCML2024OneShotWorld(
-            **SCML2024OneShotWorld.replace_agents(
-                config, old_types, agent_types, agent_params
-            ),
+            **SCML2024OneShotWorld.replace_agents(config, old_types, agent_types, agent_params),
             debug=debug,
         )
         worlds.append(world)
@@ -241,21 +220,9 @@ def test_combining_stats():
 
 
 def test_run_defaults_gets_contracts():
-    world = SCML2024OneShotWorld(
-        **SCML2024OneShotWorld.generate(DefaultAgentsOneShot2024, n_steps=50)
-    )
+    world = SCML2024OneShotWorld(**SCML2024OneShotWorld.generate(DefaultAgentsOneShot2024, n_steps=50))
     world.run()
-    exogenous = [
-        _
-        for _ in world.saved_contracts
-        if any(is_system_agent(a) for a in _["partners"])
-    ]
-    negotiated = [
-        _
-        for _ in world.saved_contracts
-        if all(not is_system_agent(a) for a in _["partners"])
-    ]
+    exogenous = [_ for _ in world.saved_contracts if any(is_system_agent(a) for a in _["partners"])]
+    negotiated = [_ for _ in world.saved_contracts if all(not is_system_agent(a) for a in _["partners"])]
     assert len(exogenous) > 0
-    assert (
-        len(negotiated) > 0
-    ), f"{Counter([tuple(_['partners']) for _ in world.saved_contracts])}"
+    assert len(negotiated) > 0, f"{Counter([tuple(_['partners']) for _ in world.saved_contracts])}"

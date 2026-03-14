@@ -1,5 +1,6 @@
 """Implements an agent that does nothing"""
-from typing import Any, Dict, List, Optional
+
+from typing import Any
 
 from negmas import (
     Breach,
@@ -22,20 +23,20 @@ class DoNothingAgent(SCML2020Agent):
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         return None
 
-    def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
+    def sign_all_contracts(self, contracts: list[Contract]) -> list[str | None]:
         return [None] * len(contracts)
 
     def on_contracts_finalized(
         self,
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
+        signed: list[Contract],
+        cancelled: list[Contract],
+        rejectors: list[list[str]],
     ) -> None:
         pass
 
@@ -48,36 +49,32 @@ class DoNothingAgent(SCML2020Agent):
     def on_agent_bankrupt(
         self,
         agent: str,
-        contracts: List[Contract],
-        quantities: List[int],
+        contracts: list[Contract],
+        quantities: list[int],
         compensation_money: int,
     ) -> None:
         pass
 
-    def on_failures(self, failures: List[Failure]) -> None:
+    def on_failures(self, failures: list[Failure]) -> None:
         pass
 
     def on_negotiation_failure(
         self,
-        partners: List[str],
-        annotation: Dict[str, Any],
+        partners: list[str],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
         state: MechanismState,
     ) -> None:
         pass
 
-    def on_negotiation_success(
-        self, contract: Contract, mechanism: NegotiatorMechanismInterface
-    ) -> None:
+    def on_negotiation_success(self, contract: Contract, mechanism: NegotiatorMechanismInterface) -> None:
         pass
 
-    def on_contract_cancelled(self, contract: Contract, rejectors: List[str]) -> None:
+    def on_contract_cancelled(self, contract: Contract, rejectors: list[str]) -> None:
         pass
 
     def on_contract_executed(self, contract: Contract) -> None:
         pass
 
-    def on_contract_breached(
-        self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
-    ) -> None:
+    def on_contract_breached(self, contract: Contract, breaches: list[Breach], resolution: Contract | None) -> None:
         pass

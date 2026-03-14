@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -51,7 +52,7 @@ class ProductionStrategy:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.schedule_range: dict[str, tuple[int, int, bool]] = dict()
+        self.schedule_range: dict[str, tuple[int, int, bool]] = {}
         """Gives the range of steps at which the production needed for a given contract are scheduled"""
 
     def can_be_produced(self, contract_id: str):
@@ -63,22 +64,16 @@ class ProductionStrategy:
 
             - Cannot be called before calling on_contracts_finalized
         """
-        earliest, latest, is_sell = self.schedule_range.get(
-            contract_id, (-1, -1, False)
-        )
-        return (
-            earliest >= self.awi.current_step
-            if is_sell
-            else (latest <= self.awi.n_steps - 2 and earliest >= 0)
-        )
+        earliest, latest, is_sell = self.schedule_range.get(contract_id, (-1, -1, False))
+        return earliest >= self.awi.current_step if is_sell else (latest <= self.awi.n_steps - 2 and earliest >= 0)
 
     def on_contract_executed(self, contract: Contract) -> None:
         super().on_contract_executed(contract)
-        if contract.id in self.schedule_range.keys():
+        if contract.id in self.schedule_range:
             del self.schedule_range[contract.id]
 
     def on_contract_breached(self, contract: Contract, breaches, resolution) -> None:
-        if contract.id in self.schedule_range.keys():
+        if contract.id in self.schedule_range:
             del self.schedule_range[contract.id]
 
 

@@ -1,10 +1,19 @@
-from attr import define
 import numpy as np
-from scml.oneshot.agent import OneShotAgent
-from scml.std.agents.greedy import GreedyStdAgent
-from scml.std.agents.rand import RandomStdAgent, SyncRandomStdAgent
-from scml.std.world import SCML2024StdWorld
+from attr import define
 
+from scml.oneshot.agent import OneShotAgent
+from scml.oneshot.context import (
+    N_CONSUMERS,
+    N_SUPPLIERS,
+    BaseContext,
+    ConsumerContext,
+    FixedPartnerNumbersContext,
+    GeneralContext,
+    LimitedPartnerNumbersOneShotContext,
+    RepeatingContext,
+    Strength,
+    SupplierContext,
+)
 from scml.oneshot.world import (
     SCML2021OneShotWorld,
     SCML2022OneShotWorld,
@@ -12,19 +21,9 @@ from scml.oneshot.world import (
     SCML2024OneShotWorld,
     SCMLBaseWorld,
 )
-from scml.oneshot.context import (
-    BaseContext,
-    ConsumerContext,
-    FixedPartnerNumbersContext,
-    GeneralContext,
-    LimitedPartnerNumbersOneShotContext,
-    RepeatingContext,
-    SupplierContext,
-    Strength,
-    N_SUPPLIERS,
-    N_CONSUMERS,
-)
-from scml.std.world import STD_DEFAULT_PARAMS
+from scml.std.agents.greedy import GreedyStdAgent
+from scml.std.agents.rand import RandomStdAgent, SyncRandomStdAgent
+from scml.std.world import STD_DEFAULT_PARAMS, SCML2024StdWorld
 
 __all__ = [
     "BaseStdContext",
@@ -77,19 +76,11 @@ class GeneralStdContext(GeneralContext):
     horizon: int = STD_DEFAULT_PARAMS["horizon"]  # type: ignore
     n_processes: tuple[int, int] | int = STD_DEFAULT_PARAMS["n_processes"]  # type: ignore
     disposal_cost: tuple[float, float] | float = STD_DEFAULT_PARAMS["disposal_cost"]
-    disposal_cost_dev: tuple[float, float] | float = STD_DEFAULT_PARAMS[
-        "disposal_cost_dev"
-    ]
+    disposal_cost_dev: tuple[float, float] | float = STD_DEFAULT_PARAMS["disposal_cost_dev"]
     storage_cost: tuple[float, float] | float = STD_DEFAULT_PARAMS["storage_cost"]
-    storage_cost_dev: tuple[float, float] | float = STD_DEFAULT_PARAMS[
-        "storage_cost_dev"
-    ]
-    price_range_fraction: float | tuple[float, float] = STD_DEFAULT_PARAMS[
-        "price_range_fraction"
-    ]
-    price_multiplier: np.ndarray | tuple[float, float] | float = STD_DEFAULT_PARAMS[
-        "price_multiplier"
-    ]
+    storage_cost_dev: tuple[float, float] | float = STD_DEFAULT_PARAMS["storage_cost_dev"]
+    price_range_fraction: float | tuple[float, float] = STD_DEFAULT_PARAMS["price_range_fraction"]
+    price_multiplier: np.ndarray | tuple[float, float] | float = STD_DEFAULT_PARAMS["price_multiplier"]
     wide_price_range: bool = STD_DEFAULT_PARAMS["wide_price_range"]  # type: ignore
     one_time_per_negotiation: bool = STD_DEFAULT_PARAMS["one_time_per_negotiation"]  # type: ignore
     quantity_multiplier: int = STD_DEFAULT_PARAMS["quantity_multiplier"]  # type: ignore
@@ -97,12 +88,8 @@ class GeneralStdContext(GeneralContext):
         "max_productivity"
     ]
     max_supply: tuple[float, float] | float = STD_DEFAULT_PARAMS["max_supply"]
-    exogenous_supply_predictability: tuple[float, float] | float = STD_DEFAULT_PARAMS[
-        "exogenous_supply_predictability"
-    ]
-    exogenous_sales_predictability: tuple[float, float] | float = STD_DEFAULT_PARAMS[
-        "exogenous_sales_predictability"
-    ]
+    exogenous_supply_predictability: tuple[float, float] | float = STD_DEFAULT_PARAMS["exogenous_supply_predictability"]
+    exogenous_sales_predictability: tuple[float, float] | float = STD_DEFAULT_PARAMS["exogenous_sales_predictability"]
     cap_exogenous_quantities: bool = STD_DEFAULT_PARAMS["cap_exogenous_quantities"]  # type: ignore
 
 
@@ -162,13 +149,13 @@ class MiddleManStdContext(LimitedPartnerNumbersOneShotContext):
             min(N_SUPPLIERS[0], N_CONSUMERS[0]),  # type: ignore
             max(N_SUPPLIERS[1], N_CONSUMERS[1]),  # type: ignore
         )
-        kwargs |= dict(
-            n_suppliers=N_SUPPLIERS,  # suppliers have no suppliers
-            n_consumers=N_CONSUMERS,
-            n_competitors=(N_SUPPLIERS[0] - 1, N_SUPPLIERS[1] - 1),
-            n_agents_per_process=n_agents_per_process,
-            level=0,  # suppliers are always in the first level
-        )
+        kwargs |= {
+            "n_suppliers": N_SUPPLIERS,  # suppliers have no suppliers
+            "n_consumers": N_CONSUMERS,
+            "n_competitors": (N_SUPPLIERS[0] - 1, N_SUPPLIERS[1] - 1),
+            "n_agents_per_process": n_agents_per_process,
+            "level": 0,  # suppliers are always in the first level
+        }
         super().__init__(*args, **kwargs)
 
 
@@ -177,7 +164,7 @@ class StrongMiddleManStdContext(MiddleManStdContext):
     """A supplier with almost many consumers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Strong)
+        kwargs |= {"selling_strength": Strength.Strong}
         super().__init__(*args, **kwargs)
 
 
@@ -186,7 +173,7 @@ class BalancedMiddleManStdContext(MiddleManStdContext):
     """A supplier with almost same number of consumers as competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Balanced)
+        kwargs |= {"selling_strength": Strength.Balanced}
         super().__init__(*args, **kwargs)
 
 
@@ -195,7 +182,7 @@ class WeakMiddleManStdContext(MiddleManStdContext):
     """A supplier with few consumers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Weak)
+        kwargs |= {"selling_strength": Strength.Weak}
         super().__init__(*args, **kwargs)
 
 
@@ -212,7 +199,7 @@ class StrongSupplierStdContext(SupplierStdContext):
     """A supplier with almost many consumers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Strong)
+        kwargs |= {"selling_strength": Strength.Strong}
         super().__init__(*args, **kwargs)
 
 
@@ -221,7 +208,7 @@ class BalancedSupplierStdContext(SupplierStdContext):
     """A supplier with almost same number of consumers as competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Balanced)
+        kwargs |= {"selling_strength": Strength.Balanced}
         super().__init__(*args, **kwargs)
 
 
@@ -230,7 +217,7 @@ class WeakSupplierStdContext(SupplierStdContext):
     """A supplier with few consumers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(selling_strength=Strength.Weak)
+        kwargs |= {"selling_strength": Strength.Weak}
         super().__init__(*args, **kwargs)
 
 
@@ -247,7 +234,7 @@ class StrongConsumerStdContext(ConsumerStdContext):
     """A consumer with almost many suppliers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(buying_strength=Strength.Strong)
+        kwargs |= {"buying_strength": Strength.Strong}
         super().__init__(*args, **kwargs)
 
 
@@ -256,7 +243,7 @@ class BalancedConsumerStdContext(ConsumerStdContext):
     """A consumer with almost same number of suppliers as competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(buying_strength=Strength.Balanced)
+        kwargs |= {"buying_strength": Strength.Balanced}
         super().__init__(*args, **kwargs)
 
 
@@ -265,7 +252,7 @@ class WeakConsumerStdContext(ConsumerStdContext):
     """A consumer with few suppliers relative to competitors"""
 
     def __init__(self, *args, **kwargs):
-        kwargs |= dict(buying_strength=Strength.Weak)
+        kwargs |= {"buying_strength": Strength.Weak}
         super().__init__(*args, **kwargs)
 
 

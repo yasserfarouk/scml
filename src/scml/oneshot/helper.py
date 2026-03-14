@@ -44,17 +44,11 @@ class AWIHelper:
         copy_partner_id=True,
     ) -> bool:
         if not is_buy:
-            self._world.logwarning(
-                f"{self.agent.name} requested selling on {product}. This is not allowed in oneshot"
-            )
+            self._world.logwarning(f"{self.agent.name} requested selling on {product}. This is not allowed in oneshot")
             return False
         buyable, sellable = self.my_input_products, self.my_output_products
-        if (product not in buyable and is_buy) or (
-            product not in sellable and not is_buy
-        ):
-            self._world.logwarning(
-                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
-            )
+        if (product not in buyable and is_buy) or (product not in sellable and not is_buy):
+            self._world.logwarning(f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed")
             return False
         unit_price, time, quantity = self._world._make_issues(product)
         return self._world._request_negotiations(
@@ -83,14 +77,10 @@ class AWIHelper:
             return False
 
         if extra is None:
-            extra = dict()
+            extra = {}
         buyable, sellable = self.my_input_products, self.my_output_products
-        if (product not in buyable and is_buy) or (
-            product not in sellable and not is_buy
-        ):
-            self._world.logwarning(
-                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
-            )
+        if (product not in buyable and is_buy) or (product not in sellable and not is_buy):
+            self._world.logwarning(f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed")
             return False
         unit_price, time, quantity = self._world._make_issues(product)
         return (
@@ -120,9 +110,7 @@ class AWIHelper:
     ) -> tuple[np.ndarray, np.ndarray]:
         return (np.asarray([]), np.asarray([]))
 
-    def order_production(
-        self, process: int, steps: np.ndarray, lines: np.ndarray
-    ) -> None:
+    def order_production(self, process: int, steps: np.ndarray, lines: np.ndarray) -> None:
         return None
 
     def available_for_production(
@@ -151,9 +139,7 @@ class AWIHelper:
     @property
     def trading_prices(self) -> np.ndarray | None:
         """Returns the current trading prices of all products"""
-        return (
-            self._world.trading_prices if self._world.publish_trading_prices else None
-        )
+        return self._world.trading_prices if self._world.publish_trading_prices else None
 
     @property
     def current_balance(self) -> float:

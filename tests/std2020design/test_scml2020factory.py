@@ -141,10 +141,7 @@ class TestFactory:
         assert factory.inventory_changes[process] == -1
         assert factory.inventory_changes[process + 1] == 1
         assert sum(factory.inventory_changes) == 0
-        assert (
-            factory.state.balance
-            == factory.initial_balance - factory.profile.costs[line, process]
-        )
+        assert factory.state.balance == factory.initial_balance - factory.profile.costs[line, process]
         assert factory.state.balance_change == -factory.profile.costs[line, process]
         factory.step()
         assert factory.current_inventory[process] == 0
@@ -152,10 +149,7 @@ class TestFactory:
         assert factory.inventory_changes[process] == 0
         assert factory.inventory_changes[process + 1] == 0
         assert sum(factory.inventory_changes) == 0
-        assert (
-            factory.state.balance
-            == factory.initial_balance - factory.profile.costs[line, process]
-        )
+        assert factory.state.balance == factory.initial_balance - factory.profile.costs[line, process]
         assert factory.state.balance_change == 0
 
 
@@ -175,9 +169,7 @@ def test_simulator_runs():
     assert simulator.balance_at(simulator.n_steps - 1) == factory.initial_balance
     assert np.all(simulator.inventory_at(simulator.n_steps - 1) == 0)
     assert not simulator.is_bankrupt()
-    assert not simulator.pay(
-        factory.initial_balance * 3, t=1, ignore_money_shortage=False
-    )
+    assert not simulator.pay(factory.initial_balance * 3, t=1, ignore_money_shortage=False)
     assert simulator.balance_at(simulator.n_steps - 1) == factory.initial_balance
     simulator.pay(factory.initial_balance * 3, t=1, ignore_money_shortage=True)
     assert simulator.is_bankrupt()

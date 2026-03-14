@@ -1,23 +1,25 @@
 from __future__ import annotations
-from attr import define
-import random
-import numbers
-from collections import defaultdict
-from scml.oneshot.agent import OneShotAgent
-import pandas as pd
-import numpy as np
-from typing import Any, Callable, Iterable
 
+import numbers
+import random
+from collections import defaultdict
+from collections.abc import Callable, Iterable
+from copy import deepcopy
+from typing import Any
+
+import numpy as np
+import pandas as pd
+from attr import define
+from negmas.helpers import get_full_type_name
+from negmas.helpers.numeric import truncated_mean
+from negmas.negotiators.modular import itertools
+
+from scml.oneshot.agent import OneShotAgent
 from scml.oneshot.context import BaseContext, RepeatingContext
 from scml.oneshot.sysagents import DefaultOneShotAdapter
 from scml.oneshot.world import SCMLBaseWorld
 from scml.std.agent import StdAgent
 from scml.std.world import StdWorld
-
-from negmas.helpers import get_full_type_name
-from negmas.negotiators.modular import itertools
-from negmas.helpers.numeric import truncated_mean
-from copy import deepcopy
 
 __all__ = ["WorldRunner", "mean", "median", "truncated_mean"]
 
@@ -130,18 +132,15 @@ class WorldRunner:
             - It simply copies the configurations created by the source runner.
             - You can override any parameters by passing them as keyword arguments
         """
-        kwargs = (
-            dict(
-                n_repetitions=src.n_repetitions,
-                save_common_stats=src.save_common_stats,
-                save_agent_stats=src.save_agent_stats,
-                combiner=src._combiner,
-                control_all_agents=src.control_all_agents,
-                shorten_names=src.shorten_names,
-                progress=src.progress,
-            )
-            | kwargs
-        )
+        kwargs = {
+            "n_repetitions": src.n_repetitions,
+            "save_common_stats": src.save_common_stats,
+            "save_agent_stats": src.save_agent_stats,
+            "combiner": src._combiner,
+            "control_all_agents": src.control_all_agents,
+            "shorten_names": src.shorten_names,
+            "progress": src.progress,
+        } | kwargs
         runner = WorldRunner(src.generator, len(src.configs), **kwargs)  # type: ignore
         runner.configs = src.configs
         return runner
@@ -223,11 +222,10 @@ class WorldRunner:
         if not isinstance(types, Iterable):
             types = tuple([types] * len(self.generator.placeholder_types))
         assert len(types) == len(self.generator.placeholder_types), (
-            f"Cannot pass {len(types)} types to a generator with "
-            f"{len(self.generator.placeholder_types)} placeholders"
+            f"Cannot pass {len(types)} types to a generator with {len(self.generator.placeholder_types)} placeholders"
         )
         if params is None:
-            params = dict()
+            params = {}
         if isinstance(params, dict):
             params = [deepcopy(params) for _ in range(len(types))]
 
@@ -237,30 +235,20 @@ class WorldRunner:
 
         types = tuple(types)
         control_all_agents = self.control_all_agents
-        for base_config, cid in zip(self.configs, self.config_names):
+        for base_config, cid in zip(self.configs, self.config_names, strict=False):
             config_worlds: list[WorldInfo] = []
             indices = (
-                [
-                    i
-                    for i, p in enumerate(base_config["agent_params"])
-                    if p["controller_type"] in (self.generator.placeholder_types)
-                ]
+                [i for i, p in enumerate(base_config["agent_params"]) if p["controller_type"] in (self.generator.placeholder_types)]
                 if not control_all_agents
                 else list(range(len(base_config["agent_params"])))
             )
             if control_all_agents:
-                existing_types = [
-                    p["controller_type"] for p in base_config["agent_params"]
-                ]
+                existing_types = [p["controller_type"] for p in base_config["agent_params"]]
             else:
                 existing_types = self.generator.placeholder_types
 
-            new_types = tuple(
-                [types[i % len(types)] for i in range(len(existing_types))]
-            )
-            new_params = tuple(
-                [params[i % len(types)] for i in range(len(existing_types))]
-            )
+            new_types = tuple([types[i % len(types)] for i in range(len(existing_types))])
+            new_params = tuple([params[i % len(types)] for i in range(len(existing_types))])
             config = self.generator.world_type.replace_agents(
                 base_config,
                 existing_types,
@@ -274,12 +262,10 @@ class WorldRunner:
                 )
                 ids = [world.non_system_agent_ids[i] for i in indices]
                 agents = [world.agents[i] for i in ids]
-                assert all(
-                    isinstance(a._obj, t) for a, t in zip(agents, types)
-                ), f"Found {[type(_._ob) for _ in agents]} but expected {types} at {indices=} with {ids=}"
-                config_worlds.append(
-                    WorldInfo(world, indices, name, trial, cid, agents)
+                assert all(isinstance(a._obj, t) for a, t in zip(agents, types, strict=False)), (
+                    f"Found {[type(_._ob) for _ in agents]} but expected {types} at {indices=} with {ids=}"
                 )
+                config_worlds.append(WorldInfo(world, indices, name, trial, cid, agents))
             worlds += config_worlds
             if self.save_worlds:
                 self.worlds[(name, cid)] = config_worlds
@@ -328,21 +314,15 @@ class WorldRunner:
         self._runall(world_infos, progress)
         return world_infos
 
-    def _types_and_configs(
-        self, type: AgentType | str | None = None, config: str | None = None
-    ) -> tuple[list[str], list[str]]:
+    def _types_and_configs(self, type: AgentType | str | None = None, config: str | None = None) -> tuple[list[str], list[str]]:
         if config is None:
             configs = self.config_names
         else:
             configs = [config]
-        types = (
-            [self.get_type_name(type)] if type is not None else self.existing_type_names
-        )
+        types = [self.get_type_name(type)] if type is not None else self.existing_type_names
         return types, configs
 
-    def world_infos_of(
-        self, type: AgentType | str | None = None, config: str | None = None
-    ) -> list[WorldInfo]:
+    def world_infos_of(self, type: AgentType | str | None = None, config: str | None = None) -> list[WorldInfo]:
         """
         Returns the information of all worlds of the given type and config.
 
@@ -351,18 +331,9 @@ class WorldRunner:
             given type.
         """
         types, configs = self._types_and_configs(type, config)
-        return list(
-            itertools.chain(
-                *(
-                    [_ for _ in self.worlds.get((t, c), [])]
-                    for t, c in itertools.product(types, configs)
-                )
-            )
-        )
+        return list(itertools.chain(*(list(self.worlds.get((t, c), [])) for t, c in itertools.product(types, configs))))
 
-    def worlds_of(
-        self, type: AgentType | str | None = None, config: str | None = None
-    ) -> list[SCMLBaseWorld]:
+    def worlds_of(self, type: AgentType | str | None = None, config: str | None = None) -> list[SCMLBaseWorld]:
         """
         Returns the worlds of the given type and config.
 
@@ -373,20 +344,11 @@ class WorldRunner:
         types, configs = self._types_and_configs(type, config)
         return list(
             itertools.chain(
-                *(
-                    [
-                        _.world
-                        for _ in self.worlds.get((t, c), [])
-                        if _.world is not None
-                    ]
-                    for t, c in itertools.product(types, configs)
-                )
+                *([_.world for _ in self.worlds.get((t, c), []) if _.world is not None] for t, c in itertools.product(types, configs))
             )
         )
 
-    def agents_per_world_of(
-        self, type: AgentType | str | None = None, config: str | None = None
-    ) -> dict[str, list[AgentType]]:
+    def agents_per_world_of(self, type: AgentType | str | None = None, config: str | None = None) -> dict[str, list[AgentType]]:
         """
         Returns the agents representing the type for each world of the given type and config.
 
@@ -399,19 +361,13 @@ class WorldRunner:
             map(
                 dict.popitem,
                 [
-                    {
-                        info.world.id: info.agents
-                        for info in self.worlds.get((t, c), [])
-                        if info and info.world is not None
-                    }
+                    {info.world.id: info.agents for info in self.worlds.get((t, c), []) if info and info.world is not None}
                     for t, c in itertools.product(types, configs)
                 ],
             )
         )
 
-    def agents_of(
-        self, type: AgentType | str | None = None, config: str | None = None
-    ) -> list[AgentType]:
+    def agents_of(self, type: AgentType | str | None = None, config: str | None = None) -> list[AgentType]:
         """
         Returns the agents representing the type and config.
 
@@ -480,9 +436,7 @@ class WorldRunner:
         if order_by and order_by == "median":
             order_by = "50%"
         df1 = self._scores.groupby(by)["score"].apply(truncated_mean)
-        df2 = self._scores.groupby(by)["score"].describe(
-            percentiles=percentiles, include=include, exclude=exclude
-        )
+        df2 = self._scores.groupby(by)["score"].describe(percentiles=percentiles, include=include, exclude=exclude)
         df = pd.concat((df1, df2), axis=1, ignore_index=False)
         df = df.reset_index()
         if order_by:
@@ -536,9 +490,7 @@ class WorldRunner:
                 s_ += [
                     "shortfall_penalty",
                     "score",
-                    "storage_cost"
-                    if issubclass(self.generator.world_type, StdWorld)
-                    else "disposal_cost",
+                    "storage_cost" if issubclass(self.generator.world_type, StdWorld) else "disposal_cost",
                     "productivity",
                 ]
                 if issubclass(self.generator.world_type, StdWorld):
@@ -552,13 +504,7 @@ class WorldRunner:
             return
         # print(self.score_summary(by=by))
         # print(self.score_summary(by=by).sort_values(order_by)[by])
-        order = (
-            self.score_summary(by=by)
-            .sort_values(order_by, ascending=ascending)[by]
-            .tolist()
-            if order_by
-            else None
-        )
+        order = self.score_summary(by=by).sort_values(order_by, ascending=ascending)[by].tolist() if order_by else None
         if len(stats) == 1:
             ncols = nrows = 1
         else:
@@ -572,7 +518,7 @@ class WorldRunner:
         else:
             axs = axs.flatten()
 
-        for i, (ax, stat) in enumerate(zip(axs, stats)):
+        for i, (ax, stat) in enumerate(zip(axs, stats, strict=False)):
             show_legend = not agg and legend and (i == 0)
             if agg:
                 df = self.stats
@@ -590,13 +536,10 @@ class WorldRunner:
                 g.tick_params(axis="x", rotation=90)
                 g.set(xlabel=None)
             else:
-                kwargs = (
-                    dict(
-                        err_style="bars",
-                        errorbar=("se", 1),
-                    )
-                    | kwargs
-                )
+                kwargs = {
+                    "err_style": "bars",
+                    "errorbar": ("se", 1),
+                } | kwargs
                 g = sns.lineplot(
                     data=self.stats,
                     hue=by,
@@ -644,8 +587,9 @@ class WorldRunner:
         Returns:
             figure and axes used.
         """
-        import matplotlib.pyplot as plt
         import math
+
+        import matplotlib.pyplot as plt
 
         worlds = self.worlds_of(type, config)
         if self.n_repetitions > 1 and n is not None and not randomize:
@@ -660,7 +604,7 @@ class WorldRunner:
         axs = fig.subplots(int(math.ceil(n_trials / mx)), mx)
         if isinstance(axs, Iterable):
             axs = axs.flatten()
-        for ax, world in zip(axs if n_trials > 1 else [axs], worlds):
+        for ax, world in zip(axs if n_trials > 1 else [axs], worlds, strict=False):
             world.draw(
                 what=what,
                 steps=(0, world.n_steps - 1),
@@ -683,39 +627,32 @@ class WorldRunner:
         scores = [wscores[id] for id in ids]
         df = pd.DataFrame.from_records(
             [
-                dict(
-                    config=cid,
-                    world=world.id,
-                    type=name,
-                    trial=trial,
-                    score=score,
-                    agent=aid,
-                    level=agent.awi.profile.level,
-                    n_suppliers=len(agent.awi.my_suppliers),
-                    n_consumers=len(agent.awi.my_consumers),
-                    n_competitors=len(
-                        agent.awi.all_consumers[agent.awi.my_input_product]
-                    ),
-                )
-                for aid, score, agent in zip(ids, scores, agents)
+                {
+                    "config": cid,
+                    "world": world.id,
+                    "type": name,
+                    "trial": trial,
+                    "score": score,
+                    "agent": aid,
+                    "level": agent.awi.profile.level,
+                    "n_suppliers": len(agent.awi.my_suppliers),
+                    "n_consumers": len(agent.awi.my_consumers),
+                    "n_competitors": len(agent.awi.all_consumers[agent.awi.my_input_product]),
+                }
+                for aid, score, agent in zip(ids, scores, agents, strict=False)
             ]
         )
         self._scores = pd.concat((self._scores, df))
         stat_names = [
             k
-            for k in world._stats.keys()
-            if (is_agent_stat(k, ids) and self.save_agent_stats)
-            or (self.save_common_stats and is_common_stat(k, all_ids))
+            for k in world._stats
+            if (is_agent_stat(k, ids) and self.save_agent_stats) or (self.save_common_stats and is_common_stat(k, all_ids))
         ]
         if not stat_names:
             return
         df = world.stats_df[stat_names]
         df.columns = [remove_agent_id(_, ids) for _ in df.columns]
-        df = df.groupby(by=df.columns, axis=1).apply(
-            lambda g: g.mean(axis=1)
-            if isinstance(g.iloc[0, 0], numbers.Number)
-            else g.iloc[:, 0]
-        )
+        df = df.groupby(by=df.columns, axis=1).apply(lambda g: g.mean(axis=1) if isinstance(g.iloc[0, 0], numbers.Number) else g.iloc[:, 0])
         df["config"] = cid
         df["world"] = world.id
         df["type"] = name

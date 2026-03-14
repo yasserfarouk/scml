@@ -1,10 +1,12 @@
 """Common data-structures and objects used throughout the SCM world implementation"""
+
 import math
 import sys
 import uuid
 from collections import defaultdict, namedtuple
+from collections.abc import Iterable
 from dataclasses import InitVar, dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from negmas.outcomes import make_issue
@@ -76,16 +78,14 @@ class Product:
     """The level of this product in the production graph."""
     name: str
     """Object name"""
-    expires_in: Optional[int]
+    expires_in: int | None
     """Number of steps within which the product must be consumed. None means never"""
-    catalog_price: Optional[float]
+    catalog_price: float | None
     """Catalog price of the product."""
 
     def __str__(self):
         """String representation is simply the name"""
-        return self.name + (
-            f"(cp:{self.catalog_price:0.02f})" if self.catalog_price is not None else ""
-        )
+        return self.name + (f"(cp:{self.catalog_price:0.02f})" if self.catalog_price is not None else "")
 
     def __post_init__(self):
         global g_last_product_id
@@ -129,20 +129,18 @@ class Process:
     """The level of this process in the production graph"""
     name: str
     """Object name"""
-    inputs: List[InputOutput]
+    inputs: list[InputOutput]
     """list of input product name + quantity required and time of consumption relative to the time required for
     production (value from 0 to 1)"""
-    outputs: List[InputOutput]
+    outputs: list[InputOutput]
     """list of output product names, quantity required and when it becomes available relative to the time required for
     production (value from 0 to 1)"""
-    historical_cost: Optional[float]
+    historical_cost: float | None
     """Average cost for running this process in some world. Filled by the world"""
 
     def __str__(self):
         """String representation is simply the name"""
-        return self.name + (
-            f"(cp:{self.historical_cost})" if self.historical_cost is not None else ""
-        )
+        return self.name + (f"(cp:{self.historical_cost})" if self.historical_cost is not None else "")
 
     def __post_init__(self):
         global g_last_process_id
@@ -201,7 +199,7 @@ class FactoryStatusUpdate:
     __slots__ = ["balance", "storage"]
     balance: float
     """The update to the balance"""
-    storage: Dict[int, int]
+    storage: dict[int, int]
     """The updates to be applied to the storage after this step"""
 
     def __post_init__(self):
@@ -237,8 +235,8 @@ class FactoryStatusUpdate:
     @classmethod
     def combine_sets(
         cls,
-        dst: Dict[int, "FactoryStatusUpdate"],
-        src: Dict[int, "FactoryStatusUpdate"],
+        dst: dict[int, "FactoryStatusUpdate"],
+        src: dict[int, "FactoryStatusUpdate"],
     ):
         """
         Combines a set of updates over time with another in place (overriding `first`)
@@ -260,19 +258,14 @@ class FactoryStatusUpdate:
 
     @property
     def is_empty(self):
-        return self.balance == 0 and (
-            len(self.storage) == 0 or sum(self.storage.values()) == 0
-        )
+        return self.balance == 0 and (len(self.storage) == 0 or sum(self.storage.values()) == 0)
 
     @classmethod
     def empty(cls):
         return FactoryStatusUpdate(balance=0.0, storage={})
 
     def __str__(self):
-        return (
-            f"balance: {self.balance}, "
-            + f'{str({k: v for k, v in self.storage.items()}) if self.storage is not None else ""}'
-        )
+        return f"balance: {self.balance}, " + f"{str(dict(self.storage.items())) if self.storage is not None else ''}"
 
 
 @dataclass
@@ -292,7 +285,7 @@ class RunningCommandInfo:
     """True if the command is paused"""
     action: str
     """The command type. For the current implementation it will always be run or none for no command"""
-    updates: Dict[int, "FactoryStatusUpdate"]
+    updates: dict[int, "FactoryStatusUpdate"]
     """The status updates implied by this command with their times relative to `beg`"""
 
     @property
@@ -349,14 +342,14 @@ class Job:
     action: str
     """The command type. For the current implementation it can be run/pause/resume/stop/cancel with `cancel` cancelling
     any other command type."""
-    contract: Optional[Contract]
+    contract: Contract | None
     """The sell contract associated with the command"""
     override: bool
     """Whether to override existing commands when the job is to be executed."""
 
     def __str__(self):
-        s = f'{self.action} {self.profile if self.action == "run" else ""} at {self.time} on {self.line}'
-        s += f'{" override" if self.override else ""}'
+        s = f"{self.action} {self.profile if self.action == 'run' else ''} at {self.time} on {self.line}"
+        s += f"{' override' if self.override else ''}"
         if self.contract is not None:
             s += f" for {self.contract.id}"
         return s
@@ -406,8 +399,7 @@ class ProductionNeed:
     def __str__(self):
         """String representation is simply the name"""
         return (
-            f"Need {self.quantity_to_buy} ({self.quantity_in_storage} exist) of {self.product} at "
-            + f" {self.step} for {self.needed_for}"
+            f"Need {self.quantity_to_buy} ({self.quantity_in_storage} exist) of {self.product} at " + f" {self.step} for {self.needed_for}"
         )
 
 
@@ -428,7 +420,7 @@ class ProductionFailure:
     """ID of the line that failed"""
     command: RunningCommandInfo
     """Information about the command that failed"""
-    missing_inputs: List[MissingInput]
+    missing_inputs: list[MissingInput]
     """The missing inputs if any with their quantities"""
     missing_money: float
     """The amount of money needed for production that is not available"""
@@ -450,13 +442,13 @@ class ProductionFailure:
 class ProductionReport:
     line: int
     """ID of the line"""
-    started: Optional[RunningCommandInfo]
+    started: RunningCommandInfo | None
     """Commands started"""
-    continuing: Optional[RunningCommandInfo]
+    continuing: RunningCommandInfo | None
     """Command that is continuing"""
-    finished: Optional[RunningCommandInfo]
+    finished: RunningCommandInfo | None
     """Command finished"""
-    failure: Optional[ProductionFailure]
+    failure: ProductionFailure | None
     """Failures"""
     updates: FactoryStatusUpdate
     """Updates applied to the factory"""
@@ -499,7 +491,7 @@ class SCMLAgreement:
     """unit price"""
     quantity: int
     """quantity"""
-    penalty: Optional[float] = None
+    penalty: float | None = None
     """penalty"""
     signing_delay: int = -1
     """Delay between agreement conclusion and signing it to be binding"""
@@ -536,23 +528,23 @@ class CFP:
     """the publisher name. Non-negotiable."""
     product: int
     """product ID. Non-negotiable."""
-    time: Union[int, Tuple[int, int], List[int]]
+    time: int | tuple[int, int] | list[int]
     """delivery time. May be negotiable."""
-    unit_price: Union[float, Tuple[float, float], List[float]]
+    unit_price: float | tuple[float, float] | list[float]
     """unit price. May be negotiable."""
-    quantity: Union[int, Tuple[int, int], List[int]]
+    quantity: int | tuple[int, int] | list[int]
     """quantity. May be negotiable."""
-    penalty: Optional[Union[float, Tuple[float, float], List[float]]] = None
+    penalty: float | tuple[float, float] | list[float] | None = None
     """penalty per missing item in case the seller cannot provide the required quantity. May be negotiable."""
-    signing_delay: Optional[Union[int, Tuple[int, int], List[int]]] = None
+    signing_delay: int | tuple[int, int] | list[int] | None = None
     """The grace period after which the agents are asked to confirm signing the contract"""
-    money_resolution: Optional[float] = None
+    money_resolution: float | None = None
     """If not None then it is the minimum unit of money (e.g. 1 for dollar, 0.01 for cent, etc)"""
     id: str = field(default_factory=lambda: str(uuid.uuid4()), init=True)
     """Unique CFP ID"""
 
     def __str__(self):
-        s = f'{"buy" if self.is_buy else "sell"} '
+        s = f"{'buy' if self.is_buy else 'sell'} "
         s += f"{self.product} "
         s += f"(t: {self.time}, u: {self.unit_price}, q: {self.quantity}"
         if self.penalty is not None:
@@ -562,7 +554,7 @@ class CFP:
         s += ")"
         return s
 
-    def satisfies(self, query: Dict[str, Any]) -> bool:
+    def satisfies(self, query: dict[str, Any]) -> bool:
         """
         Tests whether the CFP satisfies the conditions set by the query
 
@@ -606,12 +598,8 @@ class CFP:
         """
 
         def _overlap(
-            a: Union[
-                int, float, Tuple[float, float], List[float], Tuple[int, int], List[int]
-            ],
-            b: Union[
-                float, Tuple[float, float], List[float], int, Tuple[int, int], List[int]
-            ],
+            a: int | float | tuple[float, float] | list[float] | tuple[int, int] | list[int],
+            b: float | tuple[float, float] | list[float] | int | tuple[int, int] | list[int],
         ):
             def _test_single(a, b):
                 if not isinstance(b, Iterable):
@@ -676,16 +664,8 @@ class CFP:
                 if x[0] == x[1]:
                     if ensure_list and self.money_resolution is not None:
                         if ensure_int:
-                            return [
-                                int(
-                                    math.floor(x[0] / self.money_resolution)
-                                    * self.money_resolution
-                                )
-                            ]
-                        return [
-                            math.floor(x[0] / self.money_resolution)
-                            * self.money_resolution
-                        ]
+                            return [int(math.floor(x[0] / self.money_resolution) * self.money_resolution)]
+                        return [math.floor(x[0] / self.money_resolution) * self.money_resolution]
                     else:
                         if ensure_int:
                             return [int(x[0])]
@@ -696,9 +676,7 @@ class CFP:
                         int(math.floor(x[0] / self.money_resolution)),
                         int(math.floor(x[1] / self.money_resolution)),
                     )
-                    xs = list(
-                        _ * self.money_resolution for _ in range(xs[0], xs[1] + 1)
-                    )
+                    xs = [_ * self.money_resolution for _ in range(xs[0], xs[1] + 1)]
                 elif isinstance(x[0], int):
                     xs = list(range(x[0], x[1] + 1))
                 else:
@@ -706,16 +684,8 @@ class CFP:
                 if len(xs) == 0:
                     if ensure_list and self.money_resolution is not None:
                         if ensure_int:
-                            return [
-                                int(
-                                    math.floor(x[0] / self.money_resolution)
-                                    * self.money_resolution
-                                )
-                            ]
-                        return [
-                            math.floor(x[0] / self.money_resolution)
-                            * self.money_resolution
-                        ]
+                            return [int(math.floor(x[0] / self.money_resolution) * self.money_resolution)]
+                        return [math.floor(x[0] / self.money_resolution) * self.money_resolution]
                     if ensure_int:
                         return [int(x[0])]
                     return [x[0]]
@@ -741,18 +711,14 @@ class CFP:
             ),
             make_issue(
                 name="unit_price",
-                values=_values(
-                    self.unit_price, ensure_list=self.money_resolution is not None
-                ),
+                values=_values(self.unit_price, ensure_list=self.money_resolution is not None),
             ),
         ]
         if self.penalty is not None:
             issues.append(
                 make_issue(
                     name="penalty",
-                    values=_values(
-                        self.penalty, ensure_list=self.money_resolution is not None
-                    ),
+                    values=_values(self.penalty, ensure_list=self.money_resolution is not None),
                 )
             )
         if self.signing_delay is not None:
@@ -862,34 +828,22 @@ class CFP:
             "publisher": self.publisher,
             "product": self.product,
             "id": self.id,
-            "money_resolution": float(self.money_resolution)
-            if self.money_resolution is not None
-            else 0.0,
+            "money_resolution": float(self.money_resolution) if self.money_resolution is not None else 0.0,
             "min_time": int(self.min_time),
             "max_time": int(self.max_time),
             "min_quantity": int(self.min_quantity),
             "max_quantity": int(self.max_quantity),
             "min_unit_price": float(self.min_unit_price),
             "max_unit_price": float(self.max_unit_price),
-            "min_penalty": float(self.min_penalty)
-            if self.min_penalty is not None
-            else None,
-            "max_penalty": float(self.max_penalty)
-            if self.max_penalty is not None
-            else None,
-            "min_signing_delay": int(self.min_signing_delay)
-            if self.min_signing_delay is not None
-            else None,
-            "max_signing_delay": int(self.max_signing_delay)
-            if self.max_signing_delay is not None
-            else None,
+            "min_penalty": float(self.min_penalty) if self.min_penalty is not None else None,
+            "max_penalty": float(self.max_penalty) if self.max_penalty is not None else None,
+            "min_signing_delay": int(self.min_signing_delay) if self.min_signing_delay is not None else None,
+            "max_signing_delay": int(self.max_signing_delay) if self.max_signing_delay is not None else None,
         }
         return d
 
     @classmethod
-    def from_dict(
-        cls, idict: Dict[str, Any], class_name: Optional[str] = None
-    ) -> "CFP":
+    def from_dict(cls, idict: dict[str, Any], class_name: str | None = None) -> "CFP":
         if idict["min_time"] == idict["max_time"]:
             t = idict["min_time"]
         else:
@@ -902,16 +856,14 @@ class CFP:
             up = idict["min_unit_price"]
         else:
             up = (idict["min_unit_price"], idict["max_unit_price"])
-        if not idict.get("min_penalty", None) or not idict.get("max_penalty", None):
+        if not idict.get("min_penalty") or not idict.get("max_penalty"):
             p = None
         else:
             if idict["min_penalty"] == idict["max_penalty"]:
                 p = idict["min_penalty"]
             else:
                 p = (idict["min_penalty"], idict["max_penalty"])
-        if not idict.get("min_signing_delay", None) or not idict.get(
-            "max_signing_delay", None
-        ):
+        if not idict.get("min_signing_delay") or not idict.get("max_signing_delay"):
             s = None
         else:
             if idict["min_signing_delay"] == idict["max_signing_delay"]:
@@ -928,8 +880,8 @@ class CFP:
             quantity=q,
             penalty=p,
             signing_delay=s,
-            money_resolution=idict.get("money_resolution", None),
-            id=idict.get("id", None),
+            money_resolution=idict.get("money_resolution"),
+            id=idict.get("id"),
         )
 
 
@@ -937,7 +889,7 @@ class CFP:
 class SCMLAction:
     line: str
     """Line to execute the action on (need not be given if the profile is given"""
-    profile: Optional[int]
+    profile: int | None
     """Index of the profile to execute"""
     action: str
     """The action which may be start, stop, pause, resume"""
@@ -982,9 +934,7 @@ class ManufacturingProfileCompiled:
     """The `Process` index"""
 
     @classmethod
-    def from_manufacturing_profile(
-        cls, profile: ManufacturingProfile, process2ind: Dict[Process, int]
-    ):
+    def from_manufacturing_profile(cls, profile: ManufacturingProfile, process2ind: dict[Process, int]):
         return ManufacturingProfileCompiled(
             n_steps=profile.n_steps,
             cost=profile.cost,
@@ -1040,11 +990,7 @@ class FinancialReport:
             - If the inventory was not calculated (due to having at least one product with unknown catalog price),
               it is used as zero in the equation.
         """
-        return (
-            self.cash + self.inventory - self.liabilities
-            if self.inventory is not None
-            else self.cash - self.liabilities
-        )
+        return self.cash + self.inventory - self.liabilities if self.inventory is not None else self.cash - self.liabilities
 
 
 @dataclass
@@ -1069,9 +1015,7 @@ class Loan:
         )
 
 
-RunningNegotiationInfo = namedtuple(
-    "RunningNegotiationInfo", ["negotiator", "annotation", "uuid", "extra"]
-)
+RunningNegotiationInfo = namedtuple("RunningNegotiationInfo", ["negotiator", "annotation", "uuid", "extra"])
 """Keeps track of running negotiations for an agent"""
 
 NegotiationRequestInfo = namedtuple(
@@ -1097,25 +1041,25 @@ class FactoryState:
     """Maximum storage allowed in this factory"""
     line_schedules: np.ndarray
     """An array of n_lines * n_steps giving the line schedules"""
-    storage: Dict[int, int]
+    storage: dict[int, int]
     """Mapping from product index to the amount available in the inventory"""
     wallet: float
     """Money available for purchases"""
     hidden_money: float
     """Amount of money hidden by the agent"""
-    hidden_storage: Dict[int, int]
+    hidden_storage: dict[int, int]
     """Mapping from product index to the amount hidden by the agent"""
     loans: float
     """The total money owned as loans"""
     n_lines: int
     """The number of lines in the factory, will be set using the `profiles` input"""
-    profiles: List[ManufacturingProfile]
+    profiles: list[ManufacturingProfile]
     """A list of profiles used to initialize the factory"""
     next_step: int
     """Next simulation step for this factory"""
     commands: np.ndarray
     """The production command currently running"""
-    jobs: Dict[Tuple[int, int], Job]
+    jobs: dict[tuple[int, int], Job]
     """The jobs waiting to be run on the factory indexed by (time, line) tuples"""
 
 
@@ -1123,13 +1067,13 @@ class FactoryState:
 class Factory:
     """Represents a factory within an SCML world. It is only accessed by the SCML2020World so it need not be made public."""
 
-    initial_storage: InitVar[Dict[int, int]]
+    initial_storage: InitVar[dict[int, int]]
     """Initial storage"""
     initial_wallet: InitVar[float] = 0.0
     """Initial Wallet"""
     id: str = field(default_factory=lambda: str(uuid.uuid4()), init=True)
     """Object name"""
-    profiles: List[ManufacturingProfile] = field(default_factory=list)
+    profiles: list[ManufacturingProfile] = field(default_factory=list)
     """A list of profiles used to initialize the factory"""
     max_storage: int = sys.maxsize
     """Maximum storage allowed in this factory"""
@@ -1142,9 +1086,7 @@ class Factory:
     _commands: np.ndarray = field(init=False)
     """The production command currently running"""
     _line_schedules: np.ndarray = field(init=False)
-    _storage: Dict[int, int] = field(
-        default_factory=lambda: defaultdict(int), init=False
-    )
+    _storage: dict[int, int] = field(default_factory=lambda: defaultdict(int), init=False)
     """Mapping from product index to the amount available in the inventory"""
     _total_storage: int = field(init=False, default=0)
     """Total storage"""
@@ -1152,41 +1094,35 @@ class Factory:
     """Money available for purchases"""
     _hidden_money: float = field(default=0, init=False)
     """Amount of money hidden by the agent"""
-    _hidden_storage: Dict[int, int] = field(
-        default_factory=lambda: defaultdict(int), init=False
-    )
+    _hidden_storage: dict[int, int] = field(default_factory=lambda: defaultdict(int), init=False)
     """Mapping from product index to the amount hidden by the agent"""
     _loans: float = field(default=0.0, init=False)
     """The total money owned as loans"""
     _n_lines: int = field(init=False)
     """The number of lines in the factory, will be set using the `profiles` input"""
-    _jobs: Dict[Tuple[int, int], Job] = field(default_factory=dict)
+    _jobs: dict[tuple[int, int], Job] = field(default_factory=dict)
     """The jobs waiting to be run on the factory indexed by (time, line) tuples"""
 
     _next_step: int = field(init=False, default=0)
     """Current simulation step"""
-    _carried_updates: FactoryStatusUpdate = field(
-        init=False, default_factory=lambda: FactoryStatusUpdate.empty()
-    )
+    _carried_updates: FactoryStatusUpdate = field(init=False, default_factory=lambda: FactoryStatusUpdate.empty())
     """Carried updates from last executed command"""
     _world: World = field(init=False, default=None)  # type: ignore
 
     def attach_to_world(self, world):
         self._world = world
 
-    def __post_init__(self, initial_storage: Dict[int, int], initial_wallet=0.0):
+    def __post_init__(self, initial_storage: dict[int, int], initial_wallet=0.0):
         # no matter what are the line indices in the given profiles, the lines used by the factory
         # will be numbered from 0 to `n_lines` - 1
         if self.max_storage is None or self.max_storage < 0:
             self.max_storage = sys.maxsize
-        given_lines = sorted(list({p.line for p in self.profiles}))
-        mapping = dict(zip(given_lines, range(len(given_lines))))
+        given_lines = sorted({p.line for p in self.profiles})
+        mapping = dict(zip(given_lines, range(len(given_lines)), strict=False))
         for profile in self.profiles:
             profile.line = mapping[profile.line]
         self._n_lines = len(given_lines)
-        self._commands = np.asarray(
-            [RunningCommandInfo.do_nothing() for _ in range(self._n_lines)]
-        )
+        self._commands = np.asarray([RunningCommandInfo.do_nothing() for _ in range(self._n_lines)])
         self._line_schedules = np.ones(self._n_lines, dtype=int) * NO_PRODUCTION
         self._storage = defaultdict(int)
         self._total_storage = 0
@@ -1202,7 +1138,7 @@ class Factory:
         return self._hidden_money
 
     @property
-    def hidden_storage(self) -> Dict[int, int]:
+    def hidden_storage(self) -> dict[int, int]:
         return self._hidden_storage
 
     @property
@@ -1210,7 +1146,7 @@ class Factory:
         return self._n_lines
 
     @property
-    def jobs(self) -> Dict[Tuple[int, int], Job]:
+    def jobs(self) -> dict[tuple[int, int], Job]:
         return self._jobs
 
     @property
@@ -1226,7 +1162,7 @@ class Factory:
         return self._wallet
 
     @property
-    def storage(self) -> Dict[int, int]:
+    def storage(self) -> dict[int, int]:
         return self._storage
 
     @property
@@ -1299,9 +1235,7 @@ class Factory:
                 f"{product} for {price} (wallet {self._wallet} / balance {self.balance})"
             )
         if self._world is not None:
-            self._world.logdebug(
-                f"{self.id} bought {quantity} of {product} for {price} dollars total"
-            )
+            self._world.logdebug(f"{self.id} bought {quantity} of {product} for {price} dollars total")
         self._wallet -= price
         self._storage[product] += quantity
         self._total_storage += quantity
@@ -1313,9 +1247,7 @@ class Factory:
                 f"{product} for {price} (wallet {self._wallet} / balance {self.balance})"
             )
         if self._world is not None:
-            self._world.logdebug(
-                f"{self.id} sold {quantity} of {product} for {price} dollars total"
-            )
+            self._world.logdebug(f"{self.id} sold {quantity} of {product} for {price} dollars total")
         self._storage[product] -= quantity
         self._total_storage -= quantity
         self._wallet += price
@@ -1363,17 +1295,12 @@ class Factory:
         """
         # you can only schedule jobs at the following simulation step
         if self._world is not None:
-            self._world.logdebug(
-                f"{self.id} scheduled {str(job)} {'(override)' if override else ''}"
-            )
+            self._world.logdebug(f"{self.id} scheduled {str(job)} {'(override)' if override else ''}")
         t, line, profile = job.time, job.line, self.profiles[job.profile]
         if job.action in ("run", "start"):
             line = profile.line
         if t < self._next_step - 1 or line >= self._n_lines or line < 0:
-            raise ValueError(
-                f"cannot schedule at time {t} (current {self._next_step - 1}) on line {line} "
-                f"of {self._n_lines}"
-            )
+            raise ValueError(f"cannot schedule at time {t} (current {self._next_step - 1}) on line {line} of {self._n_lines}")
         existing_job = self._jobs.get((t, line), None)
         if existing_job is None:
             self._jobs[(t, line)] = job
@@ -1382,9 +1309,7 @@ class Factory:
             del self._jobs[(t, line)]
             return
         if not override:
-            raise ValueError(
-                f"Cannot schedule {str(job)}: Job {str(existing_job)} is scheduled at {t} and overriding is not allowed"
-            )
+            raise ValueError(f"Cannot schedule {str(job)}: Job {str(existing_job)} is scheduled at {t} and overriding is not allowed")
         self._jobs[(t, line)] = job
 
     def _apply_updates(self, updates: FactoryStatusUpdate) -> None:
@@ -1395,7 +1320,7 @@ class Factory:
                 self._storage[k] += v
                 self._total_storage += v
 
-    def step(self) -> List[ProductionReport]:
+    def step(self) -> list[ProductionReport]:
         reports = []
         for line in range(self._n_lines):
             # step the current production process
@@ -1452,13 +1377,9 @@ class Factory:
             step=0,
         )
         for need in process.inputs:
-            updates[int(math.floor(need.step * n))].storage[
-                need.product
-            ] -= need.quantity
+            updates[int(math.floor(need.step * n))].storage[need.product] -= need.quantity
         for output in process.outputs:
-            updates[int(math.ceil(output.step * n))].storage[
-                output.product
-            ] += output.quantity
+            updates[int(math.ceil(output.step * n))].storage[output.product] += output.quantity
         updates[0].balance -= cost
 
         # cancel the running command by stopping it and then run the new command
@@ -1488,9 +1409,7 @@ class Factory:
         if running_command.is_none:
             return
         running_command.updates[running_command.step].combine(
-            FactoryStatusUpdate(
-                balance=-running_command.profile.initial_pause_cost, storage={}
-            )
+            FactoryStatusUpdate(balance=-running_command.profile.initial_pause_cost, storage={})
         )
         running_command.paused = True
 
@@ -1516,9 +1435,7 @@ class Factory:
         if running_command.is_none:
             return
         profile = running_command.profile
-        running_command.updates[running_command.step].combine(
-            FactoryStatusUpdate(balance=-profile.resumption_cost, storage={})
-        )
+        running_command.updates[running_command.step].combine(FactoryStatusUpdate(balance=-profile.resumption_cost, storage={}))
         running_command.paused = False
 
     def _stop(self, line: int) -> None:
@@ -1592,12 +1509,8 @@ class Factory:
         profile = running_command.profile
         if running_command.paused:
             running_command.end += 1
-            running_command.updates = {
-                k + 1: v for k, v in running_command.updates.items()
-            }
-            running_command.updates[running_command.step].combine(
-                FactoryStatusUpdate(balance=-profile.running_pause_cost, storage={})
-            )
+            running_command.updates = {k + 1: v for k, v in running_command.updates.items()}
+            running_command.updates[running_command.step].combine(FactoryStatusUpdate(balance=-profile.running_pause_cost, storage={}))
         updates = running_command.updates.get(running_command.step, None)
         if not running_command.paused:
             running_command.step += 1
@@ -1623,9 +1536,7 @@ class Factory:
         for product_id, quantity in updates.storage.items():
             if quantity < 0 and self._storage.get(product_id, 0) < -quantity:
                 failed = True
-                missing_inputs.append(
-                    MissingInput(product=product_id, quantity=-quantity)
-                )
+                missing_inputs.append(MissingInput(product=product_id, quantity=-quantity))
             elif quantity > 0:
                 available_storage -= quantity
                 if available_storage < 0:
@@ -1650,11 +1561,7 @@ class Factory:
                 line=line,
             )
         if running_command.ended_before(t + 1):
-            self._carried_updates.combine(
-                running_command.updates.get(
-                    running_command.step, FactoryStatusUpdate.empty()
-                )
-            )
+            self._carried_updates.combine(running_command.updates.get(running_command.step, FactoryStatusUpdate.empty()))
         return ProductionReport(
             updates=updates,
             continuing=running_command if running_command.beg < t else None,

@@ -1,7 +1,9 @@
 """
 Implements the Agent-World-Interface for SCML2020 worlds
 """
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 from negmas import (
@@ -153,13 +155,13 @@ class AWI(AgentWorldInterface):
         self,
         is_buy: bool,
         product: int,
-        quantity: Union[int, Tuple[int, int]],
-        unit_price: Union[int, Tuple[int, int]],
-        time: Union[int, Tuple[int, int]],
-        controller: Optional[SAOController] = None,
-        negotiators: List[Negotiator] = None,
-        partners: List[str] = None,
-        extra: Dict[str, Any] = None,
+        quantity: int | tuple[int, int],
+        unit_price: int | tuple[int, int],
+        time: int | tuple[int, int],
+        controller: SAOController | None = None,
+        negotiators: list[Negotiator] = None,
+        partners: list[str] = None,
+        extra: dict[str, Any] = None,
         copy_partner_id=True,
     ) -> bool:
         """
@@ -200,31 +202,21 @@ class AWI(AgentWorldInterface):
         if self.is_bankrupt():
             return False
         if controller is not None and negotiators is not None:
-            raise ValueError(
-                "You cannot pass both controller and negotiators to request_negotiations"
-            )
+            raise ValueError("You cannot pass both controller and negotiators to request_negotiations")
         if controller is None and negotiators is None:
-            raise ValueError(
-                "You MUST pass either controller or negotiators to request_negotiations"
-            )
+            raise ValueError("You MUST pass either controller or negotiators to request_negotiations")
         if extra is None:
-            extra = dict()
+            extra = {}
         buyable, sellable = self.my_input_products, self.my_output_products
         if self._world.allow_selling_input:
             sellable = set(sellable + self.my_input_products)
         if self._world.allow_buying_output:
             buyable = set(buyable + self.my_output_products)
-        if (product not in buyable and is_buy) or (
-            product not in sellable and not is_buy
-        ):
-            self._world.logwarning(
-                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
-            )
+        if (product not in buyable and is_buy) or (product not in sellable and not is_buy):
+            self._world.logwarning(f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed")
             return False
         if partners is None:
-            partners = (
-                self.all_suppliers[product] if is_buy else self.all_consumers[product]
-            )
+            partners = self.all_suppliers[product] if is_buy else self.all_consumers[product]
         partners = [_ for _ in partners if not is_system_agent(_)]
         if not partners:
             return False
@@ -238,18 +230,15 @@ class AWI(AgentWorldInterface):
                 for _ in partners
             ]
         results = [
-            self.request_negotiation(
-                is_buy, product, quantity, unit_price, time, partner, negotiator, extra
-            )
-            if not self.is_bankrupt(partner)
-            and self._world.can_negotiate(partner, self.agent.id)
+            self.request_negotiation(is_buy, product, quantity, unit_price, time, partner, negotiator, extra)
+            if not self.is_bankrupt(partner) and self._world.can_negotiate(partner, self.agent.id)
             else False
-            for partner, negotiator in zip(partners, negotiators)
+            for partner, negotiator in zip(partners, negotiators, strict=False)
         ]
         # for r, n in zip(results, negotiators):
         #     if not r:
         #         controller.kill_negotiator(n.id, force=True)
-        for p, neg, r in zip(partners, negotiators, results):
+        for p, neg, r in zip(partners, negotiators, results, strict=False):
             if not r:
                 continue
             if controller is not None:
@@ -261,12 +250,12 @@ class AWI(AgentWorldInterface):
         self,
         is_buy: bool,
         product: int,
-        quantity: Union[int, Tuple[int, int]],
-        unit_price: Union[int, Tuple[int, int]],
-        time: Union[int, Tuple[int, int]],
+        quantity: int | tuple[int, int],
+        unit_price: int | tuple[int, int],
+        time: int | tuple[int, int],
         partner: str,
         negotiator: SAONegotiator,
-        extra: Dict[str, Any] = None,
+        extra: dict[str, Any] = None,
     ) -> bool:
         """
         Requests a negotiation
@@ -302,34 +291,27 @@ class AWI(AgentWorldInterface):
             return False
         if self.is_bankrupt():
             return False
-        if self.is_bankrupt(partner) or not self._world.can_negotiate(
-            partner, self.agent.id
-        ):
+        if self.is_bankrupt(partner) or not self._world.can_negotiate(partner, self.agent.id):
             return False
 
         if extra is None:
-            extra = dict()
+            extra = {}
         buyable, sellable = self.my_input_products, self.my_output_products
         if self._world.allow_selling_input:
             sellable = set(sellable + self.my_input_products)
         if self._world.allow_buying_output:
             buyable = set(buyable + self.my_output_products)
-        if (product not in buyable and is_buy) or (
-            product not in sellable and not is_buy
-        ):
-            self._world.logwarning(
-                f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed"
-            )
+        if (product not in buyable and is_buy) or (product not in sellable and not is_buy):
+            self._world.logwarning(f"{self.agent.name} requested ({'buying' if is_buy else 'selling'}) on {product}. This is not allowed")
             return False
 
-        def values(x: Union[int, Tuple[int, int]]):
+        def values(x: int | tuple[int, int]):
             if not isinstance(x, Iterable):
                 return int(x), int(x)
             return int(x[0]), int(x[1])
 
         self._world.logdebug(
-            f"{self.agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner}"
-            f" q: {quantity}, u: {unit_price}, t: {time}"
+            f"{self.agent.name} requested to {'buy' if is_buy else 'sell'} {product} to {partner} q: {quantity}, u: {unit_price}, t: {time}"
         )
 
         annotation = {
@@ -358,9 +340,7 @@ class AWI(AgentWorldInterface):
             annotation=annotation,
             extra=dict(**extra),
         )
-        result = self.request_negotiation_about(
-            issues=issues, partners=partners, req_id=req_id, annotation=annotation
-        )
+        result = self.request_negotiation_about(issues=issues, partners=partners, req_id=req_id, annotation=annotation)
         if result:
             self._world._registered_negs[tuple(sorted([partner, self.agent.id]))] += 1
         return result
@@ -369,12 +349,12 @@ class AWI(AgentWorldInterface):
         self,
         process: int,
         repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        step: int | tuple[int, int] = ANY_STEP,
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
         partial_ok: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Orders the factory to run the given process at the given line at the given step
 
@@ -398,13 +378,9 @@ class AWI(AgentWorldInterface):
             - ordering production of process -1 is equivalent of `cancel_production` only if both step and line are
               given
         """
-        return self._world.a2f[self.agent.id].schedule_production(
-            process, repeats, step, line, override, method, partial_ok
-        )
+        return self._world.a2f[self.agent.id].schedule_production(process, repeats, step, line, override, method, partial_ok)
 
-    def order_production(
-        self, process: int, steps: np.ndarray, lines: np.ndarray
-    ) -> None:
+    def order_production(self, process: int, steps: np.ndarray, lines: np.ndarray) -> None:
         """
         Orders production of the given process
 
@@ -423,11 +399,11 @@ class AWI(AgentWorldInterface):
     def available_for_production(
         self,
         repeats: int,
-        step: Union[int, Tuple[int, int]] = ANY_STEP,
+        step: int | tuple[int, int] = ANY_STEP,
         line: int = ANY_LINE,
         override: bool = True,
         method: str = "latest",
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Finds available times and lines for scheduling production.
 
@@ -453,9 +429,7 @@ class AWI(AgentWorldInterface):
               will be corrected.
 
         """
-        return self._world.a2f[self.agent.id].available_for_production(
-            repeats, step, line, override, method
-        )
+        return self._world.a2f[self.agent.id].available_for_production(repeats, step, line, override, method)
 
     def set_commands(self, commands: np.ndarray, step: int = -1) -> None:
         """
@@ -496,12 +470,10 @@ class AWI(AgentWorldInterface):
     @property
     def trading_prices(self) -> np.ndarray:
         """Returns the current trading prices of all products"""
-        return (
-            self._world.trading_prices if self._world.publish_trading_prices else None
-        )
+        return self._world.trading_prices if self._world.publish_trading_prices else None
 
     @property
-    def exogenous_contract_summary(self) -> List[Tuple[int, int]]:
+    def exogenous_contract_summary(self) -> list[tuple[int, int]]:
         """
         The exogenous contracts in the current step for all products
 
@@ -510,11 +482,7 @@ class AWI(AgentWorldInterface):
             all revealed exogenous contracts of all products at the current
             step.
         """
-        return (
-            self._world.exogenous_contracts_summary
-            if self._world.publish_exogenous_summary
-            else None
-        )
+        return self._world.exogenous_contracts_summary if self._world.publish_exogenous_summary else None
 
     @property
     def allow_zero_quantity(self) -> bool:
@@ -538,19 +506,17 @@ class AWI(AgentWorldInterface):
         """Current inventory of the agent"""
         return self.state.inventory
 
-    def reports_of_agent(self, aid: str) -> Dict[int, FinancialReport]:
+    def reports_of_agent(self, aid: str) -> dict[int, FinancialReport]:
         """Returns a dictionary mapping time-steps to financial reports of the given agent"""
         return self.bb_read("reports_agent", aid)
 
-    def reports_at_step(self, step: int) -> Dict[str, FinancialReport]:
+    def reports_at_step(self, step: int) -> dict[str, FinancialReport]:
         """Returns a dictionary mapping agent ID to its financial report for the given time-step"""
         result = self.bb_read("reports_time", str(step))
         if result is not None:
             return result
-        steps = sorted(
-            int(i) for i in self.bb_query("reports_time", None, query_keys=True).keys()
-        )
-        for s, prev in zip(steps[1:], steps[:-1]):
+        steps = sorted(int(i) for i in self.bb_query("reports_time", None, query_keys=True))
+        for s, prev in zip(steps[1:], steps[:-1], strict=False):
             if s > step:
                 return self.bb_read("reports_time", prev)
         return self.bb_read("reports_time", str(steps[-1]))
@@ -562,12 +528,12 @@ class AWI(AgentWorldInterface):
         return FactoryProfile(profile.costs)
 
     @property
-    def all_suppliers(self) -> List[List[str]]:
+    def all_suppliers(self) -> list[list[str]]:
         """Returns a list of agent IDs for all suppliers for every product"""
         return self._world.suppliers
 
     @property
-    def all_consumers(self) -> List[List[str]]:
+    def all_consumers(self) -> list[list[str]]:
         """Returns a list of agent IDs for all consumers for every product"""
         return self._world.consumers
 
@@ -613,7 +579,7 @@ class AWI(AgentWorldInterface):
         return self._world.agent_outputs.get(self.agent.id, np.empty(0, dtype=int))
 
     @property
-    def my_suppliers(self) -> List[str]:
+    def my_suppliers(self) -> list[str]:
         """Returns a list of IDs for all of the agent's suppliers (agents that can supply at least one product it may
         need).
 
@@ -625,7 +591,7 @@ class AWI(AgentWorldInterface):
         return self._world.agent_suppliers.get(self.agent.id, [])
 
     @property
-    def my_consumers(self) -> List[str]:
+    def my_consumers(self) -> list[str]:
         """Returns a list of IDs for all the agent's consumers (agents that can consume at least one product it may
         produce).
 
@@ -692,7 +658,7 @@ class AWI(AgentWorldInterface):
         """
         return is_system_agent(aid)
 
-    def is_bankrupt(self, aid: Optional[str] = None) -> bool:
+    def is_bankrupt(self, aid: str | None = None) -> bool:
         """
         Checks whether the agent is bankrupt
 
@@ -703,7 +669,7 @@ class AWI(AgentWorldInterface):
             aid = self.agent.id
         return self._world.a2f[aid].is_bankrupt
 
-    def spot_market_quantity(self, step: Optional[int]) -> int:
+    def spot_market_quantity(self, step: int | None) -> int:
         """
         The quantity bought by the agent from the spot market at the given step.
 
@@ -717,7 +683,7 @@ class AWI(AgentWorldInterface):
             step = self.current_step
         return self._world._spot_quantity[self._world.a2i[self.agent.id], step]
 
-    def spot_market_loss(self, step: Optional[int]) -> int:
+    def spot_market_loss(self, step: int | None) -> int:
         """
         The spot market loss of the agent at the given step.
 

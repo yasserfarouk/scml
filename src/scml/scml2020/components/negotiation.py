@@ -3,7 +3,7 @@ import math
 from abc import abstractmethod
 from dataclasses import dataclass
 from pprint import pformat
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 from negmas import (
@@ -116,7 +116,7 @@ class NegotiationManager:
         quantity: int,
         unit_price: int,
         step: int,
-        partners: List[str] = None,
+        partners: list[str] = None,
     ) -> None:
         """
         Starts a set of negotiations to buy/sell the product with the given limits
@@ -152,9 +152,7 @@ class NegotiationManager:
                 partners = awi.my_consumers
             else:
                 partners = awi.my_suppliers
-        self._start_negotiations(
-            product, is_seller, step, qvalues, uvalues, tvalues, partners
-        )
+        self._start_negotiations(product, is_seller, step, qvalues, uvalues, tvalues, partners)
 
     def step(self):
         """Generates buy and sell negotiations as needed"""
@@ -180,9 +178,9 @@ class NegotiationManager:
 
     def on_contracts_finalized(
         self,
-        signed: List[Contract],
-        cancelled: List[Contract],
-        rejectors: List[List[str]],
+        signed: list[Contract],
+        cancelled: list[Contract],
+        rejectors: list[list[str]],
     ) -> None:
         if self._negotiate_on_signing:
             steps = (self.awi.current_step + 1, self.awi.n_steps)
@@ -234,8 +232,7 @@ class NegotiationManager:
     def _urange(self, step, is_seller, time_range):
         prices = (
             self.awi.catalog_prices
-            if not self._use_trading
-            or not self.awi.settings.get("public_trading_prices", False)
+            if not self._use_trading or not self.awi.settings.get("public_trading_prices", False)
             else self.awi.trading_prices
         )
         if is_seller:
@@ -253,7 +250,7 @@ class NegotiationManager:
             )
         return self.awi.current_step + 1, step - 1
 
-    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:
+    def target_quantities(self, steps: tuple[int, int], sell: bool) -> np.ndarray:
         """
         Returns the target quantity to negotiate about for each step in the range given (beginning included and ending
         excluded) for buying/selling
@@ -271,10 +268,10 @@ class NegotiationManager:
         product: int,
         sell: bool,
         step: int,
-        qvalues: Tuple[int, int],
-        uvalues: Tuple[int, int],
-        tvalues: Tuple[int, int],
-        partners: List[str],
+        qvalues: tuple[int, int],
+        uvalues: tuple[int, int],
+        tvalues: tuple[int, int],
+        partners: list[str],
     ) -> None:
         """
         Actually start negotiations with the given agenda
@@ -316,10 +313,10 @@ class NegotiationManager:
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         raise ValueError("You must implement respond_to_negotiation_request")
 
 
@@ -330,7 +327,7 @@ class ControllerInfo:
     controller: StepController
     time_step: int
     is_seller: bool
-    time_range: Tuple[int, int]
+    time_range: tuple[int, int]
     target: int
     expected: int
     done: bool = False
@@ -377,17 +374,15 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
     def __init__(
         self,
         *args,
-        negotiator_type: Union[SAONegotiator, str] = AspirationNegotiator,
-        negotiator_params: Optional[Dict[str, Any]] = None,
+        negotiator_type: SAONegotiator | str = AspirationNegotiator,
+        negotiator_params: dict[str, Any] | None = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
         # save construction parameters
         self.negotiator_type = get_class(negotiator_type)
-        self.negotiator_params = (
-            negotiator_params if negotiator_params is not None else dict()
-        )
+        self.negotiator_params = negotiator_params if negotiator_params is not None else {}
 
         # attributes that will be read during init() from the AWI
         # -------------------------------------------------------
@@ -399,14 +394,8 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         super().init()
 
         # initialize one controller for buying and another for selling for each time-step
-        self.buyers: List[ControllerInfo] = [
-            ControllerInfo(None, i, False, tuple(), 0, 0, False)
-            for i in range(self.awi.n_steps)
-        ]
-        self.sellers: List[ControllerInfo] = [
-            ControllerInfo(None, i, True, tuple(), 0, 0, False)
-            for i in range(self.awi.n_steps)
-        ]
+        self.buyers: list[ControllerInfo] = [ControllerInfo(None, i, False, (), 0, 0, False) for i in range(self.awi.n_steps)]
+        self.sellers: list[ControllerInfo] = [ControllerInfo(None, i, True, (), 0, 0, False) for i in range(self.awi.n_steps)]
         # self.awi.logdebug_agent(f"Initialized\n{pformat(self.internal_state)}")
 
     def _start_negotiations(
@@ -414,10 +403,10 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         product: int,
         sell: bool,
         step: int,
-        qvalues: Tuple[int, int],
-        uvalues: Tuple[int, int],
-        tvalues: Tuple[int, int],
-        partners: List[str],
+        qvalues: tuple[int, int],
+        uvalues: tuple[int, int],
+        tvalues: tuple[int, int],
+        partners: list[str],
     ) -> None:
         if sell:
             expected_quantity = int(math.floor(qvalues[1] * self._execution_fraction))
@@ -425,9 +414,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             expected_quantity = int(math.floor(qvalues[1] * self._execution_fraction))
 
         # negotiate with everyone
-        controller = self.create_controller(
-            sell, qvalues[1], uvalues, expected_quantity, step
-        )
+        controller = self.create_controller(sell, qvalues[1], uvalues, expected_quantity, step)
         # self.awi.loginfo_agent(
         #     f"Requesting {'selling' if sell else 'buying'} negotiation "
         #     f"on u={uvalues}, q={qvalues}, t={tvalues}"
@@ -441,19 +428,17 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             time=tvalues,
             partners=partners,
             controller=controller,
-            extra=dict(controller_index=step, is_seller=sell),
+            extra={"controller_index": step, "is_seller": sell},
         ):
-            self.insert_controller(
-                controller, sell, qvalues[1], uvalues, expected_quantity, step
-            )
+            self.insert_controller(controller, sell, qvalues[1], uvalues, expected_quantity, step)
 
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
+    ) -> Negotiator | None:
         # find negotiation parameters
         is_seller = annotation["seller"] == self.id
         tmin, tmax = issues[TIME].min_value, issues[TIME].max_value + 1
@@ -494,15 +479,9 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         # create a new negotiator, add it to the controller and return it
         return controller.create_negotiator(id=initiator)
 
-    def all_negotiations_concluded(
-        self, controller_index: int, is_seller: bool
-    ) -> None:
+    def all_negotiations_concluded(self, controller_index: int, is_seller: bool) -> None:
         """Called by the `StepController` to affirm that it is done negotiating for some time-step"""
-        info = (
-            self.sellers[controller_index]
-            if is_seller
-            else self.buyers[controller_index]
-        )
+        info = self.sellers[controller_index] if is_seller else self.buyers[controller_index]
         info.done = True
         c = info.controller
         if c is None:
@@ -526,23 +505,19 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         self,
         is_seller: bool,
         target,
-        urange: Tuple[int, int],
+        urange: tuple[int, int],
         expected_quantity: int,
         step: int,
     ) -> StepController:
-        controller = self.create_controller(
-            is_seller, target, urange, expected_quantity, step
-        )
-        return self.insert_controller(
-            controller, is_seller, target, urange, expected_quantity, step
-        )
+        controller = self.create_controller(is_seller, target, urange, expected_quantity, step)
+        return self.insert_controller(controller, is_seller, target, urange, expected_quantity, step)
 
     def insert_controller(
         self,
         controller: StepController,
         is_seller: bool,
         target,
-        urange: Tuple[int, int],
+        urange: tuple[int, int],
         expected_quantity: int,
         step: int = None,
     ) -> StepController:
@@ -574,7 +549,7 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
         self,
         is_seller: bool,
         target,
-        urange: Tuple[int, int],
+        urange: tuple[int, int],
         expected_quantity: int,
         step: int,
     ) -> StepController:
@@ -589,14 +564,10 @@ class StepNegotiationManager(MeanERPStrategy, NegotiationManager):
             negotiator_params=self.negotiator_params,
             step=step,
             urange=urange,
-            product=self.awi.my_output_product
-            if is_seller
-            else self.awi.my_input_product,
+            product=self.awi.my_output_product if is_seller else self.awi.my_input_product,
             partners=self.awi.my_consumers if is_seller else self.awi.my_suppliers,
             horizon=self._horizon,
-            negotiations_concluded_callback=functools.partial(
-                self.__class__.all_negotiations_concluded, self
-            ),
+            negotiations_concluded_callback=functools.partial(self.__class__.all_negotiations_concluded, self),
             parent_name=self.name,
             awi=self.awi,
         )
@@ -644,25 +615,23 @@ class IndependentNegotiationsManager(NegotiationManager):
     def __init__(
         self,
         *args,
-        negotiator_type: Union[SAONegotiator, str] = AspirationNegotiator,
-        negotiator_params: Optional[Dict[str, Any]] = None,
+        negotiator_type: SAONegotiator | str = AspirationNegotiator,
+        negotiator_params: dict[str, Any] | None = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.negotiator_type = get_class(negotiator_type)
-        self.negotiator_params = (
-            negotiator_params if negotiator_params is not None else dict()
-        )
+        self.negotiator_params = negotiator_params if negotiator_params is not None else {}
 
     def _start_negotiations(
         self,
         product: int,
         sell: bool,
         step: int,
-        qvalues: Tuple[int, int],
-        uvalues: Tuple[int, int],
-        tvalues: Tuple[int, int],
-        partners: List[str],
+        qvalues: tuple[int, int],
+        uvalues: tuple[int, int],
+        tvalues: tuple[int, int],
+        partners: list[str],
     ) -> None:
         # negotiate with all suppliers of the input product I need to produce
 
@@ -686,30 +655,22 @@ class IndependentNegotiationsManager(NegotiationManager):
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
-        return self.negotiator(
-            annotation["seller"] == self.id, issues=issues, partner=initiator
-        )
+    ) -> Negotiator | None:
+        return self.negotiator(annotation["seller"] == self.id, issues=issues, partner=initiator)
 
-    def create_ufun(
-        self, is_seller: bool, issues=None, outcomes=None
-    ) -> UtilityFunction:
+    def create_ufun(self, is_seller: bool, issues=None, outcomes=None) -> UtilityFunction:
         """Creates a utility function"""
         if is_seller:
             return LinearUtilityFunction((1, 1, 10), issues=issues, outcomes=outcomes)
         return LinearUtilityFunction((1, -1, -10), issues=issues, outcomes=outcomes)
 
-    def negotiator(
-        self, is_seller: bool, issues=None, outcomes=None, partner=None
-    ) -> SAONegotiator:
+    def negotiator(self, is_seller: bool, issues=None, outcomes=None, partner=None) -> SAONegotiator:
         """Creates a negotiator"""
         params = self.negotiator_params
-        params["ufun"] = self.create_ufun(
-            is_seller=is_seller, outcomes=outcomes, issues=issues
-        )
+        params["ufun"] = self.create_ufun(is_seller=is_seller, outcomes=outcomes, issues=issues)
         return instantiate(self.negotiator_type, id=partner, **params)
 
 
@@ -758,14 +719,14 @@ class MovingRangeNegotiationManager:
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.index: List[int] = None
+        self.index: list[int] = None
         self.time_horizon = time_horizon
         self._time_threshold = time_threshold
         self._price_weight = price_weight
         self._utility_threshold = utility_threshold
         self._min_margin = 1 - min_price_margin
         self._max_margin = 1 + max_price_margin
-        self.controllers: Dict[bool, SyncController] = {
+        self.controllers: dict[bool, SyncController] = {
             False: SyncController(
                 is_seller=False,
                 parent=self,
@@ -796,11 +757,7 @@ class MovingRangeNegotiationManager:
         )
         if self._current_start >= self._current_end:
             return
-        prices = (
-            self.awi.catalog_prices
-            if not self.awi.settings.get("public_trading_prices", False)
-            else self.awi.trading_prices
-        )
+        prices = self.awi.catalog_prices if not self.awi.settings.get("public_trading_prices", False) else self.awi.trading_prices
         for seller, needed, secured, product in [
             (False, self.inputs_needed, self.inputs_secured, self.awi.my_input_product),
             (
@@ -810,10 +767,7 @@ class MovingRangeNegotiationManager:
                 self.awi.my_output_product,
             ),
         ]:
-            needs = np.max(
-                needed[self._current_start : self._current_end]
-                - secured[self._current_start : self._current_end]
-            )
+            needs = np.max(needed[self._current_start : self._current_end] - secured[self._current_start : self._current_end])
             if needs < 1:
                 continue
             if seller:
@@ -823,19 +777,9 @@ class MovingRangeNegotiationManager:
             price_range = (self._min_margin * price, self._max_margin * price)
             if price_range[0] >= price_range[1]:
                 continue
-            if (
-                seller
-                and price_range[-1]
-                < prices[self.awi.my_input_product]
-                + self.awi.profile.costs[self.awi.my_input_product].min()
-            ):
+            if seller and price_range[-1] < prices[self.awi.my_input_product] + self.awi.profile.costs[self.awi.my_input_product].min():
                 continue
-            if (
-                not seller
-                and price_range[0]
-                > prices[self.awi.my_output_product]
-                - self.awi.profile.costs[self.awi.my_input_product].min()
-            ):
+            if not seller and price_range[0] > prices[self.awi.my_output_product] - self.awi.profile.costs[self.awi.my_input_product].min():
                 continue
             self.awi.request_negotiations(
                 not seller,
@@ -849,14 +793,11 @@ class MovingRangeNegotiationManager:
     def respond_to_negotiation_request(
         self,
         initiator: str,
-        issues: List[Issue],
-        annotation: Dict[str, Any],
+        issues: list[Issue],
+        annotation: dict[str, Any],
         mechanism: NegotiatorMechanismInterface,
-    ) -> Optional[Negotiator]:
-        if not (
-            issues[TIME].min_value < self._current_end
-            or issues[TIME].max_value > self._current_start
-        ):
+    ) -> Negotiator | None:
+        if not (issues[TIME].min_value < self._current_end or issues[TIME].max_value > self._current_start):
             return None
         controller = self.controllers[not annotation["is_buy"]]
         if controller is None:

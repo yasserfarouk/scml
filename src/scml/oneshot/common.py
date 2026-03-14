@@ -61,11 +61,7 @@ def is_system_agent(aid: str) -> bool:
 
         True if the ID is for a system agent.
     """
-    return (
-        aid.startswith(SYSTEM_SELLER_ID)
-        or aid.startswith(SYSTEM_BUYER_ID)
-        or aid.startswith(COMPENSATION_ID)
-    )
+    return aid.startswith(SYSTEM_SELLER_ID) or aid.startswith(SYSTEM_BUYER_ID) or aid.startswith(COMPENSATION_ID)
 
 
 @dataclass
@@ -323,16 +319,14 @@ class OneShotState:
     def running_buy_states(self) -> dict[str, SAOState]:
         """All running buy negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi.state
-            for partner, info in self.current_negotiation_details["buy"].items()
+            partner: info.nmi.state for partner, info in self.current_negotiation_details["buy"].items()
         }
 
     @property
     def current_sell_states(self) -> dict[str, SAOState]:
         """All running sell negotiations as a mapping from partner ID to current negotiation state"""
         return {  # type: ignore
-            partner: info.nmi.state
-            for partner, info in self.current_negotiation_details["sell"].items()
+            partner: info.nmi.state for partner, info in self.current_negotiation_details["sell"].items()
         }
 
     @property
@@ -345,16 +339,14 @@ class OneShotState:
     def current_buy_nmis(self) -> dict[str, SAONMI]:
         """All running buy negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
-            partner: info.nmi
-            for partner, info in self.current_negotiation_details["buy"].items()
+            partner: info.nmi for partner, info in self.current_negotiation_details["buy"].items()
         }
 
     @property
     def current_sell_nmis(self) -> dict[str, SAONMI]:
         """All running sell negotiations as a mapping from partner ID to current negotiation nmi"""
         return {  # type: ignore
-            partner: info.nmi
-            for partner, info in self.current_negotiation_details["sell"].items()
+            partner: info.nmi for partner, info in self.current_negotiation_details["sell"].items()
         }
 
     @property
@@ -399,13 +391,10 @@ class OneShotState:
         level = random.randint(0, n_processes - 1)
         n_agents_per_process = [random.randint(2, 8) for _ in range(n_processes)]
         names, nxt = [], 0
-        namesof = dict()
+        namesof = {}
         for p in range(n_processes):
             namesof[p] = [
-                f"{_:02}"
-                + random.choice("ABCDEFGZY")
-                + random.choice("abdioxfwl")
-                + f"@{p:02}"
+                f"{_:02}" + random.choice("ABCDEFGZY") + random.choice("abdioxfwl") + f"@{p:02}"
                 for _ in range(nxt, nxt + n_agents_per_process[p])
             ]
             names += namesof[p]
@@ -442,14 +431,8 @@ class OneShotState:
             n_competitors=n_agents_per_process[level] - 1,
             all_suppliers=[["SELLER"]] + [namesof[k] for k in range(len(namesof) - 1)],
             all_consumers=[namesof[k] for k in range(len(namesof) - 1)] + [["BUYER"]],
-            bankrupt_agents=(
-                [random.choice(names) for _ in range(x)]
-                if (x := random.randint(0, 10)) != 0
-                else []
-            ),
-            catalog_prices=[
-                random.random() * (i + 1) * 10 for i in range(n_processes + 1)
-            ],
+            bankrupt_agents=([random.choice(names) for _ in range(x)] if (x := random.randint(0, 10)) != 0 else []),
+            catalog_prices=[random.random() * (i + 1) * 10 for i in range(n_processes + 1)],
             price_multiplier=random.random() * 0.5 + 1.5,
             is_exogenous_forced=True,
             current_step=step,
@@ -468,39 +451,27 @@ class OneShotState:
             my_partners=my_suppliers + my_consumers,
             penalties_scale=random.choice(["trading", "catalog", "unit", "none"]),
             n_input_negotiations=n_agents_per_process[level - 1] if level > 0 else 0,
-            n_output_negotiations=(
-                n_agents_per_process[level + 1] if level < n_processes - 1 else 0
-            ),
-            trading_prices=[
-                random.random() * 50 + 10.0 for _ in range(n_processes + 1)
-            ],
+            n_output_negotiations=(n_agents_per_process[level + 1] if level < n_processes - 1 else 0),
+            trading_prices=[random.random() * 50 + 10.0 for _ in range(n_processes + 1)],
             exogenous_contract_summary=esummary,
-            reports_of_agents=dict(),
+            reports_of_agents={},
             current_input_outcome_space=make_os(  # type: ignore
                 [
                     make_issue((1, 10)),
-                    (
-                        make_issue(step, step)
-                        if oneshot
-                        else make_issue(step, step + random.randint(0, 4))
-                    ),
+                    (make_issue(step, step) if oneshot else make_issue(step, step + random.randint(0, 4))),
                     make_issue((20.0, 50.0)),
                 ]
             ),
             current_output_outcome_space=make_os(  # type: ignore
                 [
                     make_issue((1, 10)),
-                    (
-                        make_issue(step, step)
-                        if oneshot
-                        else make_issue(step, step + random.randint(0, 4))
-                    ),
+                    (make_issue(step, step) if oneshot else make_issue(step, step + random.randint(0, 4))),
                     make_issue((40.0, 90.0)),
                 ]
             ),
-            current_negotiation_details=dict(),
-            sales=dict(),
-            supplies=dict(),
+            current_negotiation_details={},
+            sales={},
+            supplies={},
             needed_sales=random.randint(0, 10) if level < n_processes - 1 else 0,
             needed_supplies=random.randint(0, 10) if level > 0 else 0,
             perishable=oneshot,

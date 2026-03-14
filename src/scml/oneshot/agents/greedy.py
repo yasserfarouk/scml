@@ -1,6 +1,6 @@
 import itertools
-import random
 import math
+import random
 from collections import defaultdict
 
 from negmas import Outcome, ResponseType, SAOResponse
@@ -93,15 +93,11 @@ class GreedyOneShotAgent(OneShotAgent):
         if contract.annotation["product"] == self.awi.my_output_product:
             partner = contract.annotation["buyer"]
             self._best_acc_selling = max(up, self._best_acc_selling)
-            self._best_opp_acc_selling[partner] = max(
-                up, self._best_opp_acc_selling[partner]
-            )
+            self._best_opp_acc_selling[partner] = max(up, self._best_opp_acc_selling[partner])
         else:
             partner = contract.annotation["seller"]
             self._best_acc_buying = min(up, self._best_acc_buying)
-            self._best_opp_acc_buying[partner] = min(
-                up, self._best_opp_acc_buying[partner]
-            )
+            self._best_opp_acc_buying[partner] = min(up, self._best_opp_acc_buying[partner])
 
     def propose(self, negotiator_id: str, state, source=None) -> Outcome | None:
         # find the absolute best offer for me. This will most likely has an
@@ -126,21 +122,13 @@ class GreedyOneShotAgent(OneShotAgent):
             return ResponseType.END_NEGOTIATION
 
         # reject any offers with quantities above my needs
-        response = (
-            ResponseType.ACCEPT_OFFER
-            if offer[QUANTITY] <= my_needs
-            else ResponseType.REJECT_OFFER
-        )
+        response = ResponseType.ACCEPT_OFFER if offer[QUANTITY] <= my_needs else ResponseType.REJECT_OFFER
         if response != ResponseType.ACCEPT_OFFER:
             return response
 
         # reject offers with prices that are deemed NOT good-enough
         nmi = self.get_nmi(negotiator_id)
-        response = (
-            response
-            if self._is_good_price(nmi, state, offer[UNIT_PRICE])
-            else ResponseType.REJECT_OFFER
-        )
+        response = response if self._is_good_price(nmi, state, offer[UNIT_PRICE]) else ResponseType.REJECT_OFFER
 
         # update my current best price to use for limiting concession in other
         # negotiations
@@ -167,9 +155,7 @@ class GreedyOneShotAgent(OneShotAgent):
         unit_price_issue = nmi.issues[UNIT_PRICE]
         offer = [-1] * 3
         mx = max(min(my_needs, quantity_issue.max_value), quantity_issue.min_value)
-        offer[QUANTITY] = random.randint(
-            max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps)), mx
-        )
+        offer[QUANTITY] = random.randint(max(1, int(0.5 + mx * self.awi.current_step / self.awi.n_steps)), mx)
         offer[TIME] = self.awi.current_step
         if self._is_selling(nmi):
             offer[UNIT_PRICE] = unit_price_issue.max_value
@@ -283,7 +269,8 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
         return dict(
             zip(
                 self.negotiators.keys(),
-                (self.best_offer(_) for _ in self.negotiators.keys()),
+                (self.best_offer(_) for _ in self.negotiators),
+                strict=False,
             )
         )
 
@@ -293,20 +280,12 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
         if self.ufun.max_utility < 0:
             return dict(zip(offers.keys(), itertools.repeat(None)))
 
-        good_prices = {
-            k: self._find_good_price(self.get_nmi(k), s) for k, s in states.items()
-        }
+        good_prices = {k: self._find_good_price(self.get_nmi(k), s) for k, s in states.items()}
 
-        responses = {
-            k: SAOResponse(ResponseType.REJECT_OFFER, None) for k in offers.keys()
-        }
+        responses = {k: SAOResponse(ResponseType.REJECT_OFFER, None) for k in offers}
         my_input_needs, my_output_needs = self._needs()
-        input_offers = {
-            k: v for k, v in offers.items() if not self._is_selling(self.get_nmi(k))
-        }
-        output_offers = {
-            k: v for k, v in offers.items() if self._is_selling(self.get_nmi(k))
-        }
+        input_offers = {k: v for k, v in offers.items() if not self._is_selling(self.get_nmi(k))}
+        output_offers = {k: v for k, v in offers.items() if self._is_selling(self.get_nmi(k))}
 
         def calc_responses(my_needs, offers, is_selling):
             nonlocal responses
@@ -316,7 +295,7 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
                 offers.values(),
                 key=lambda x: -x[UNIT_PRICE] if is_selling else x[UNIT_PRICE],
             )
-            secured, outputs, chosen = 0, [], dict()
+            secured, outputs, chosen = 0, [], {}
             for i, k in enumerate(offers.keys()):
                 offer = sorted_offers[i]
                 secured += offer[QUANTITY]
@@ -327,10 +306,9 @@ class GreedySyncAgent(OneShotSyncAgent, GreedyOneShotAgent):  # type: ignore
 
             if (
                 self.ufun.from_offers(tuple(chosen.values()), tuple(outputs))
-                >= self._th(self.awi.current_step, self.awi.n_steps)
-                * self.ufun.max_utility
+                >= self._th(self.awi.current_step, self.awi.n_steps) * self.ufun.max_utility
             ):
-                for k in chosen.keys():
+                for k in chosen:
                     responses[k] = SAOResponse(ResponseType.ACCEPT_OFFER, None)
             return secured
 

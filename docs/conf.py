@@ -22,7 +22,6 @@ import os
 
 import sphinx_rtd_theme
 
-
 on_rtd = os.environ.get("READTHEDOCS", None)
 
 THEME_NAME = "sphinx_rtd_theme"
@@ -126,9 +125,7 @@ todo_include_todos = False
 html_static_path = ["_static"]
 if not on_rtd:  # only set the theme if we're building docs locally
     html_context = {
-        "css_files": [
-            "_static/theme_overrides.css"
-        ]  # override wide tables in RTD theme
+        "css_files": ["_static/theme_overrides.css"]  # override wide tables in RTD theme
     }
 # theme options for sphinx_rtd_theme
 html_theme_options = {
@@ -144,9 +141,7 @@ html_theme = THEME_NAME
 if THEME_PATH:
     html_theme_path = THEME_PATH
 
-html_sidebars = {
-    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
-}
+html_sidebars = {"**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]}
 
 
 # theme options for alabaster
@@ -182,20 +177,16 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, "scml.tex", "SCML Documentation", "Yasser Mohammad", "manual")
-]
+latex_documents = [(master_doc, "scml.tex", "SCML Documentation", "Yasser Mohammad", "manual")]
 
 # -- Options for graphviz used in inheritence diagrams -----------------
 
 graphviz_output_format = "svg"
 if on_rtd:
     graphviz_output_format = "png"
-inheritance_graph_attrs = dict(
-    randkir="TB", fontsize=10, size='""', ratio="compress"
-)  # , size='"16.0, 20.0"')
+inheritance_graph_attrs = {"randkir": "TB", "fontsize": 10, "size": '""', "ratio": "compress"}  # , size='"16.0, 20.0"')
 
-inheritance_node_attrs = dict(fontsize=10)
+inheritance_node_attrs = {"fontsize": 10}
 # , size='"16.0, 20.0"')
 # inheritance_node_attrs = dict(
 
