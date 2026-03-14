@@ -82,22 +82,61 @@ class Strength(Enum):
 
 
 def sample_with_strength(c: int | tuple[int, int], n: int | tuple[int, int], s: Strength | None):
+    """Sample (n_competitors, n_partners) satisfying the strength constraint.
+
+    For buying_strength (n = n_suppliers):
+        - Strong: n_suppliers >= n_competitors + 1  (many suppliers)
+        - Weak: n_suppliers <= n_competitors - 1  (few suppliers)
+        - Balanced: n_competitors - 1 <= n_suppliers <= n_competitors + 1
+
+    For selling_strength (n = n_consumers):
+        - Strong: n_consumers >= n_competitors + 1  (many consumers)
+        - Weak: n_consumers <= n_competitors - 1  (few consumers)
+        - Balanced: n_competitors - 1 <= n_consumers <= n_competitors + 1
+    """
     if s is None:
         c = intin(c)
         n = intin(n)
         return c, n
     mnc, mxc = c if isinstance(c, Iterable) else (c, c)
+    mnn, mxn = n if isinstance(n, Iterable) else (n, n)
     if s == Strength.Balanced:
-        c = intin((mnc + 1, mxc - 1))
-        mn, mx = c, c + 2
+        # Condition: n_competitors - 1 <= n <= n_competitors + 1
+        # Pick c such that we can satisfy [c-1, c+1] intersected with [mnn, mxn]
+        # Need c - 1 <= mxn and c + 1 >= mnn, i.e., c <= mxn + 1 and c >= mnn - 1
+        min_c = max(mnc, mnn - 1)
+        max_c = min(mxc, mxn + 1)
+        if min_c > max_c:
+            c = mnc
+            mn, mx = mnn, mxn
+        else:
+            c = intin((min_c, max_c))
+            mn = max(mnn, c - 1)
+            mx = min(mxn, c + 1)
     elif s == Strength.Strong:
-        c = intin((mnc + 1, mxc))
-        mn = n[0] if isinstance(n, Iterable) else n
-        mx = max(mn, c - 1)
-    else:
-        c = intin((mnc, mxc - 1))
-        mx = n[1] if isinstance(n, Iterable) else n
-        mn = min(c + 2, mx)
+        # Condition: n >= c + 1 (many partners)
+        # Need c + 1 <= mxn, i.e., c <= mxn - 1
+        max_c = min(mxc, mxn - 1)
+        if mnc > max_c:
+            # Impossible to satisfy, use minimum competitors and maximum partners
+            c = mnc
+            mn, mx = mxn, mxn
+        else:
+            c = intin((mnc, max_c))
+            mn = c + 1
+            mx = mxn
+    else:  # Weak
+        # Condition: n <= c - 1 (few partners)
+        # Need c - 1 >= mnn, i.e., c >= mnn + 1
+        min_c = max(mnc, mnn + 1)
+        if min_c > mxc:
+            # Impossible to satisfy, use maximum competitors and minimum partners
+            c = mxc
+            mn, mx = mnn, mnn
+        else:
+            c = intin((min_c, mxc))
+            mn = mnn
+            mx = c - 1
     return c, intin((mn, mx))
 
 
@@ -1537,12 +1576,17 @@ class LimitedPartnerNumbersContext(GeneralContext):
         # find my level
         my_level = n_processes - 1 if self.level < 0 else self.level
         n_competitors = self.n_competitors
-        n_suppliers = n_agents_per_process[my_level - 1] if my_level > 0 else 0
-        n_consumers = n_agents_per_process[my_level + 1] if my_level < n_processes - 1 else 0
+        # Sample n_suppliers and n_consumers from context constraints
+        # When strength is specified, use sample_with_strength which considers the constraint
+        # Otherwise, sample directly from the context's n_suppliers/n_consumers ranges
         if self.buying_strength is not None:
             n_competitors, n_suppliers = sample_with_strength(n_competitors, self.n_suppliers, self.buying_strength)
+        else:
+            n_suppliers = intin(self.n_suppliers) if my_level > 0 else 0
         if self.selling_strength is not None:
             n_competitors, n_consumers = sample_with_strength(n_competitors, self.n_consumers, self.selling_strength)
+        else:
+            n_consumers = intin(self.n_consumers) if my_level < n_processes - 1 else 0
         n_competitors = intin(n_competitors)
 
         # override the number of consumers and number of suppliers to match my choice
