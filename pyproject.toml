@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scml"
-version = "0.8.0"
+version = "0.8.1"
 description = "ANAC Supply Chain Management League Platform"
 readme = "README.rst"
 license = "GPL-2.0-or-later"
