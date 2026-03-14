@@ -1,6 +1,6 @@
 __author__ = """Yasser Mohammad"""
 __email__ = "yasserfarouk@gmail.com"
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 from .scml2019 import *
 from .scml2020 import *
