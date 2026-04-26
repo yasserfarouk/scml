@@ -1,0 +1,143 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scml"
+version = "0.8.2"
+description = "ANAC Supply Chain Management League Platform"
+readme = "README.rst"
+license = "GPL-2.0-or-later"
+authors = [{ name = "Yasser Mohammad", email = "yasserfarouk@gmail.com" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Operating System :: Unix",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "click",
+    "click-aliases",
+    "pytest",
+    "hypothesis",
+    "negmas>=0.15.2",
+    "joblib",
+    "jupyter",
+    "gif",
+    "gymnasium",
+    "papermill>=2.7.0",
+    "progressbar>=2.5",
+    "seaborn>=0.13.2",
+]
+
+[project.optional-dependencies]
+gui = ["pyqt5"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-repeat",
+    "hypothesis",
+    "coverage",
+    "tox",
+    "pre-commit",
+    "ruff",
+    "pysnooper",
+    "ipykernel",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "myst-parser",
+]
+
+[project.scripts]
+scml = "scml.cli:main"
+cliadv = "scml.cliadv:cli"
+
+[project.urls]
+Homepage = "https://github.com/yasserfarouk/scml"
+Documentation = "https://scml.readthedocs.io/"
+Changelog = "https://scml.readthedocs.io/en/latest/changelog.html"
+Repository = "https://github.com/yasserfarouk/scml"
+"Issue Tracker" = "https://github.com/yasserfarouk/scml/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/scml"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 140
+src = ["src", "tests"]
+exclude = ["__init__.py", "quick", "old", "etc"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "SIM108", # use ternary operator instead of if-else
+]
+unfixable = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["scml"]
+force-single-line = false
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = [
+    "--doctest-modules",
+    "--ignore=setup.py",
+    "--show-capture=no",
+    "-ra",
+]
+norecursedirs = [".svn", "_build", "tmp*", "build", "docs", ".undodir", "migrations"]
+filterwarnings = ["ignore"]
+
+[tool.coverage.run]
+source = ["src/scml"]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+[tool.pyright]
+venvPath = ".venv"
+useLibraryCodeForTypes = true

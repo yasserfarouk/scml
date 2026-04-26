@@ -1,0 +1,252 @@
+Ideas for developing your agent
+-------------------------------
+
+This section of the tutorials will discuss some possible ideas for
+developing your agent. It is completely optional to read this but it may
+provide some directions that help you in your quest. We will assume that
+you are using the component based approach discussed in the second
+tutorial.
+
+Let’s start by reminding ourselves of the agent decomposition used by
+built in agents (check this `video <https://youtu.be/3xwR-aPZSb0>`__
+explains the main components in details).
+
+The three main components of an agent in this decomposition are the
+trading strategy, negotiation control strategy and production strategy.
+
+.. image:: anatomy.png
+
+The trading strategy decides what should the agent buy and sell (the
+*trading schedule*) and the negotiation control strategy takes that as
+input and uses it to drive negotiations in order to carry out this plan.
+The production strategy controls the factory by deciding how many items
+to produce at every time step (based on existing inventory and the
+trading schedule).
+
+We will discuss ideas for improving each one of these three components
+separately.
+
+Before diving into these ideas, it is important to note that the overall
+performance of the agent does not come from having one perfect component
+but from harmony between all the components constituting it. For
+example, a trading strategy that generates a perfect trading schedule is
+useless without a negotiation control strategy capable of achieving that
+schedule.
+
+Trading Strategy
+~~~~~~~~~~~~~~~~
+
+Representing the planning department of a company, the trading strategy
+seems like the obvious target of improvement. This figure shows the
+outputs of the trading strategy and the three examples implemented in
+the ``scml`` package.
+
+.. image:: trading.png
+
+The best trading strategy used by the built-in agents is the
+``PredictionBasedTradingStrategy`` and we will focus on it as it seems
+the most amenable to improvement.
+
+This trading strategy uses two components, a ``TradePredictionStrategy``
+that predicts the amount of trade on the input and output products of
+the agent as a function of the simulation step, and an
+``ERPredictionStrategy`` predicting the quantity that will actually be
+executed from a contract. These predictions are both set to constants
+for the built-in component. This immediately suggests the following
+ideas
+
+IDEA 1: Improve trade prediction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The only ``TradePredictionStrategy`` implemented in ``scml`` is the
+``FixedTradePredictionStrategy`` which predicts trade at a fixed amount
+in every product at every step (currently set to half the number of
+lines: :math:`5`). This can definitely be improved.
+
+1. Train a regressor (e.g. a
+   `scikit-learn <https://scikit-learn.org/stable/user_guide.html>`__
+   regressor) on many worlds to receive the product number and the
+   fraction of the simulation steps passed and predict the amount of
+   trade and use this regressor in real time (or store its results in a
+   table that you can `load in real
+   time <https://scml.readthedocs.io/en/latest/faq.html#how-can-i-access-a-data-file-in-my-package>`__).
+2. Improve the regressor using incremental learning in real time during
+   world simulation. This may not be very effective in short simulations
+   but we will simulate up to :math:`200` steps so it may improve
+   performance.
+
+IDEA 2: Improve execution rate prediction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The only ``ERPredictionStrategy`` implemented in the system is the
+``FixedERPredictionStrategy`` which will expect that half of the
+quantity in any contract will be executed. This can easily be improved
+using several approaches.
+
+1. Use the financial reports of your suppliers and consumers to predict
+   the possibility that they will breach contracts in the future. Again
+   you can train a regressor that receives few past financial reports
+   and predicts future behavior using simulations against a variety of
+   agents (including your own!) and then load it in real time.
+2. Use more general market conditions for prediction of actual trade
+   amount and base your prediction of the contract execution rate on
+   that.
+
+IDEA3: Improve the logic of the trading strategy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``PredictionBasedTradingStrategy`` just uses the
+``TradePredictionStrategy`` and ``ERPredictionStrategy`` directly for
+deciding trade but that need not be the optimal thing to do. It may be
+possible to change that logic of the trading strategy itself to add a
+higher level of control over the outputs of these base prediction
+strategies.
+
+Negotiation Manager
+~~~~~~~~~~~~~~~~~~~
+
+This is a *negotiation* competition and it seems fit to focus our
+efforts on negotiation. Moreover, as we indicated earlier, having the
+perfect trade schedule coming out from the trading strategy is useless
+for the agent if it cannot negotiate effectively to achieve that
+schedule.
+
+The negotiation control strategy consists of two main components:
+
+-  **Negotiation Manager** responsible of requesting negotiations as
+   needed and responding to such requests
+-  **Negotiation Algorithm** which can be implemented using one or more
+   ``negmas``
+   `SAOController <https://negmas.readthedocs.io/en/latest/modules/sao.html?highlight=Controller#module-negmas.sao>`__
+   or directly using ``negmas``
+   `SAONegotiator <https://negmas.readthedocs.io/en/latest/modules/sao.html?highlight=Negotiator#module-negmas.sao>`__.
+   This `video <https://youtu.be/10Rjl3ikaDU>`__ describes available
+   controllers and negotiators and of course you can - and should -
+   design your own.
+
+This figure shows the two inputs you need to define for any negotiation
+manager: ``target_quantity`` and ``acceptable_unit_price``. Their names
+are self-descriptive.
+
+.. image:: negotiation.png
+
+Built-in negotiation managers are intentionally pretty basic. It may be
+that this is the point of improvement that has the highest probability
+of leading to winning agents (that may not be true though as the trading
+strategy seems as important). Here are some ideas for improving the
+negotiation control strategy
+
+IDEA 4: Improve the negotiation manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The negotiation manager responsible of starting and accepting
+negotiations in ``scml`` is extremely basic.
+
+1. It uses a target quantity that is set directly as the difference
+   between needs and secured quantity and it does not take into account
+   in any way running negotiations. You can access running negotiations
+   using ``self.negotiations`` and standing negotiation requests using
+   ``self.negotiation_requests``.
+2. It always negotiates with everybody. You can use financial reports to
+   decide whom to negotiate with.
+3. It uses fixed ranges for negotiation issues. You can try to
+   dynamically decide the ranges allowed for negotiation issues based on
+   market conditions. For example, you can set the range of prices based
+   on your estimate of the current trading price of products.
+
+IDEA 5 Improve signing strategy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deciding what to sign is not strictly a part of the negotiation strategy
+but it needs to be implemented to respond to ``sign_all_contracts``.
+Currently, it is handled by the trading strategy but you can override
+that by providing your own ``SigningStrategy`` that overrides
+``sign_all_contracts``.
+
+All negotiations in a single simulation step run in parallel. This means
+that the negotiation manager is prone to over-contracting. This can then
+be corrected using a ``SigningStrategy`` that intelligently decides what
+to sign.
+
+Negotiation Algorithm
+~~~~~~~~~~~~~~~~~~~~~
+
+All built in negotiations are conducted using either simple negotiation
+algorithm (e.g. time-based strategy, naive tit-for-tat implementation,
+…) or a simple ``negmas`` built in controller. None of the adequately
+handles the two main challenges: concurrent negotiations within a single
+simulation step and taking into account future negotiation
+opportunities.
+
+IDEA 6: Improve concurrent negotiation control
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``StepController`` is the negotiation algorithm used by the
+``StepNegotiationManager`` employed by the ``DecentralizingAgent`` (the
+top built-in agent). It instantiates one controller to handle buying and
+another to handle selling *for each simulation step*. These controllers
+rely heavily on the ``SAOSyncController`` of ``negmas`` using a
+time-based meta-negotiation strategy. That is a very simple algorithm
+that is not expected to effectively handle concurrent negotiations. Try
+to find a way to either *coordinate* the behavior of multiple autonomous
+negotiators each simulation step or to centrally *control* these
+negotiators to achieve the preset target.
+
+IDEA 7: Improve sequential negotiation control
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Agents in SCML negotiate repeatedly. This means that the utility of any
+offer in any negotiation does not only depend on current market
+conditions but also in expected future negotiations. Built-in agents
+side step the need to take that into account during negotiation by
+having a trading strategy and a negotiation manager set their targets
+for them rendering negotiations in every simulation step independent
+from future negotiations (given the targets). This is clearly a
+simplistic heuristic. Try to find a way to take future negotiations into
+account when designing your agent. One way to do that is to have them
+affect the utility function used by your controller/negotiator.
+
+IDEA 8: Improve the utility functions used
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``IndependentNegotiationManager`` uses linear independent utility
+functions with a simple time-base negotiation (``AspirationNegotiator``)
+for all of its negotiations. The other two negotiation managers employ
+controllers that define their utilities linearly using some built-in
+fixed weights for price and quantity. That is obviously suboptimal. 1.
+Try to improve the utility function used by either the negotiators or
+the controller (depending on the negotiation manager you use) to achieve
+higher expected utilities. 2. Try to take the identity of the agent you
+are negotiating with into account in your utility calculations. A
+contract with a *trustworthy* agent has more utility than one with a
+*non-trustworthy* agent. You can use the financial reports of agents to
+judge their *trustworthiness*.
+
+Production Strategy
+~~~~~~~~~~~~~~~~~~~
+
+That is the simplest of the three components. There are two main
+production strategies in ``scml`` as described earlier in the second
+tutorial: supply based or demand based production strategies.
+
+IDEA 9: Base production decisions on trading prices (as well as contracts).
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Given that disposal cost is zero and storage capacity is infinite, it
+seems that the only optimization you can do is to avoid over production.
+Production has cost so over production may not be a good idea. On the
+other hand, the inventory is valued in SCML 2020 at half the trading
+price which means that it may be a good idea to convert inputs to
+outputs (even if you do not sell that output) if the difference in
+trading prices at the end of simulation offsets your production costs.
+Try creating a production strategy that takes this effect into account
+switching between supply based and demand based production using a
+estimate of the final trading prices of its input and output products.
+
+Final Remarks
+~~~~~~~~~~~~~
+
+The ideas presented above are, by no means, exclusive or comprehensive.
+You can combine them and add new ones. The
+main reason we present these ideas is to *challenge you to come with
+better ones*. Happy coding :-)

@@ -1,0 +1,13 @@
+nbconvert
+nbformat
+nbsphinx
+sphinx
+sphinx-autoapi
+sphinx-autodoc-annotation
+sphinx-autodoc-typehints
+# sphinx-automodapi
+sphinx-rtd-theme
+sphinxcontrib-fulltoc
+sphinxcontrib-napoleon
+sphinxcontrib-websupport
+stringcase

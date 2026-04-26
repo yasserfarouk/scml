@@ -1,0 +1,164 @@
+{
+	"configurations": {
+		"run": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"program": "${file}",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"stopOnEntry": false,
+				"console": "integratedTerminal"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "N",
+					"userUnhandled": ""
+				}
+			}
+		},
+		"params": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"program": "${workspaceRoot}/scratch/params.py",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"args": [
+					"run",
+					"--steps=4",
+					"--worlds=2",
+					"--method=brute",
+					"--serial",
+					"--fast",
+					"--vars=storage_cost;delivery_penalty"
+				],
+				"stopOnEntry": false,
+				"console": "integratedTerminal"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "Y",
+					"userUnhandled": ""
+				}
+			}
+		},
+		"run2021oneshot": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"program": "${workspaceRoot}/src/scml/cli.py",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"args": [
+					"run2021",
+					"--oneshot"
+				],
+				"stopOnEntry": false,
+				"console": "integratedTerminal"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "N",
+					"userUnhandled": ""
+				}
+			}
+		},
+		"run2021": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"program": "${workspaceRoot}/src/scml/cli.py",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"args": [
+					"run2021",
+					"--log-negs"
+				],
+				"stopOnEntry": false,
+				"console": "integratedTerminal"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "N",
+					"userUnhandled": ""
+				}
+			}
+		},
+		"run - default": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"program": "${program:${file\\}}",
+				"stopOnEntry": true,
+				"console": "integratedTerminal",
+				"args#json": "${args:[]}",
+				"env#json": "${env:{\\}}",
+				"igored#json#s": "string not json"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "N",
+					"userUnhandled": "Y"
+				}
+			}
+		},
+		"test current file": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"program": "${workspaceRoot}/.venv/bin/pytest",
+				"stopOnEntry": false,
+				"console": "integratedTerminal",
+				"args#json": "${args:[]}",
+				"env#json": "${env:{\\}}",
+				"igored#json#s": "string not json"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "N",
+					"userUnhandled": "Y"
+				}
+			}
+		},
+		"test last failed": {
+			"adapter": "debugpy",
+			"configuration": {
+				"request": "launch",
+				"type": "python",
+				"cwd": "${workspaceRoot}",
+				"python": "${workspaceRoot}/.venv/bin/python3",
+				"program": "${workspaceRoot}/.venv/bin/pytest",
+				"stopOnEntry": false,
+				"console": "integratedTerminal",
+				"args": [
+					"--lf"
+				],
+				"igored#json#s": "string not json"
+			},
+			"breakpoints": {
+				"exception": {
+					"raised": "N",
+					"uncaught": "N",
+					"userUnhandled": "Y"
+				}
+			}
+		}
+	}
+}

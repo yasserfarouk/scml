@@ -1,0 +1,68 @@
+import os
+
+from scml.oneshot.world import SCML2024OneShotWorld
+from scml.std.world import SCML2024StdWorld
+
+__all__ = [
+    "SCML_RUNALL_TESTS",
+    "SCML_FASTRUN",
+    "SCML_RUN2019",
+    "SCML_RUN2020",
+    "SCML_RUN2021_TOURNAMENT",
+    "SCML_RUN2021_ONESHOT",
+    "SCML_RUN2021_ONESHOT_SYNC",
+    "SCML_RUN2021_STD",
+    "SCML_TRY2020",
+    "SCML_TRY2021",
+    "SCML_TRY2022",
+    "SCML_TRY2023",
+    "SCML_TRY2024",
+    "SCML_RUN_TUTORIAL2",
+    "SCML_RUN_GENIUS",
+    "SCML_RUN_TOURNAMENTS",
+    "SCML_RUN_STD_TOURNAMENTS",
+    "SCML_RUN_COLLUSION_TOURNAMENTS",
+    "SCML_RUN_SABOTAGE_TOURNAMENTS",
+    "SCML_RUN_TEMP_FAILING",
+    "SCML_TEST_BRITTLE_ISSUES",
+    "DefaultOneShotWorld",
+    "DefaultStdWorld",
+]
+
+
+def is_enabled(val: str) -> bool:
+    return os.environ.get(val, "").lower() in ("true", "yes")
+
+
+def isnot_disabled(val: str) -> bool:
+    return os.environ.get(val, "").lower() not in ("false", "no")
+
+
+SCML_TEST_BRITTLE_ISSUES = is_enabled("SCML_TEST_BRITTLE_ISSUES")
+SCML_RUNALL_TESTS = is_enabled("SCML_RUNALL_TESTS")
+SCML_ON_GITHUB = is_enabled("GITHUB_ACTIONS")
+SCML_FASTRUN = (is_enabled("SCML_FASTRUN") or SCML_ON_GITHUB) and not SCML_RUNALL_TESTS
+SCML_RUN_TEMP_FAILING = is_enabled("SCML_RUN_TEMP_FAILING")
+SCML_RUN2021_ONESHOT = isnot_disabled("SCML_RUN2021_ONESHOT")
+SCML_RUN2021_STD = isnot_disabled("SCML_RUN2021_STD")
+SCML_RUN_GENIUS = is_enabled("SCML_RUN_GENIUS")
+SCML_RUN_TOURNAMENTS = is_enabled("SCML_RUN_TOURNAMENTS")
+SCML_RUN_STD_TOURNAMENTS = is_enabled("SCML_RUN_STD_TOURNAMENTS")
+SCML_RUN_COLLUSION_TOURNAMENTS = is_enabled("SCML_RUN_COLLUSION_TOURNAMENTS")
+SCML_RUN_SABOTAGE_TOURNAMENTS = is_enabled("SCML_RUN_SABOTAGE_TOURNAMENTS")
+SCML_RUN2021_TOURNAMENT = isnot_disabled("SCML_RUN2021_TOURNAMENT")
+SCML_RUN2021_ONESHOT_SYNC = isnot_disabled("SCML_RUN2021_ONESHOT_SYNC")
+SCML_RUN2019 = is_enabled("SCML_RUN2019")
+SCML_RUN2020 = is_enabled("SCML_RUN2020")
+SCML_RUN_TUTORIAL2 = isnot_disabled("SCML_RUN_TUTORIAL2")
+SCML_RUN_NOTEBOOKS = isnot_disabled("SCML_RUN_NOTEBOOKS")
+SCML_RUN_SCHEDULER = is_enabled("SCML_RUN_SCHEDULER")
+
+SCML_TRY2020 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2021 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2022 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2023 = is_enabled("SCML_RUNALL_TESTS") and SCML_RUN2020
+SCML_TRY2024 = True
+
+DefaultOneShotWorld = SCML2024OneShotWorld
+DefaultStdWorld = SCML2024StdWorld

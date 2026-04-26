@@ -1,0 +1,38 @@
+Ideas for developing you agent (OneShot)
+----------------------------------------
+
+The one shot game is simpler than the standard game but it is still a
+challenging problem. Here are some ideas that you can use for your
+agent:
+
+IDEA 1: Learn the acceptance strategy of your partners
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You negotiate with the same partners (suppliers, and consumers)
+repeatedly. Moreover, each supplier/consumer is driven partially by a
+stable set of variables (e.g. exogenous contract’s mean quantity,
+production cost, disposal cost, and delivery cost). This means that you
+can learn what kinds of agreements will each one of them be able to
+accept over time and adjust your negotiation behavior specifically to
+each of them.
+
+IDEA 2: Predict future market conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The trading prices are public information this year. This means you
+should be able to extrapolate future market conditions and use this to
+adapt your behavior. Even though your profits in every step are
+independent from the future, your concession strategy may depend on your
+expectation about the future of the market.
+
+Final Remarks
+-------------
+
+The ideas presented above are, by no means, exclusive or comprehensive.
+You can combine them and add new ones or you may like any of them. The
+main reason we present these ideas is to *challenge you to come with
+better ones*.
+
+
+
+Download :download:`Notebook<notebooks/07.ideas.ipynb>`.
