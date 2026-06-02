@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import namedtuple
 from collections.abc import Iterable
-from functools import cache
 from typing import Literal, overload
 
 from attr import define
@@ -32,6 +31,53 @@ UFunLimit = namedtuple(
     ],
 )
 """Information about one utility limit (either highest or lowest). See `OnShotUFun.find_limit` for details."""
+
+
+# Caps for the per-instance utility caches below. Generous enough never to
+# evict during normal play (real working sets are small) but hard upper bounds
+# so a pathological agent can never grow them without limit.
+_FROM_AGGREGATES_CACHE_MAX = 100_000
+_FIND_LIMIT_CACHE_MAX = 10_000
+
+
+def _instance_cached(maxsize: int):
+    """Bounded, per-instance method memoization.
+
+    ``functools.cache`` on a method keeps a single *class-level* cache keyed by
+    ``(self, *args)``. That pins every instance that was ever called forever and
+    grows without bound. In situated tournaments this leaked one world's worth
+    of utility-function state (millions of cached outcome tuples) per simulation
+    until the process OOMed, and made every ``gc.collect`` walk an ever-growing
+    graph. This decorator instead stores the cache on the *instance* (so it is
+    released together with the instance between worlds) and caps its size so it
+    can never grow without bound. The cache holds only hashable keys and plain
+    values, so instances stay copy-/pickle-able.
+    """
+
+    def decorator(func):
+        cache_attr = "_cache_" + func.__name__
+
+        def wrapper(self, *args, **kwargs):
+            key = args if not kwargs else (args, tuple(sorted(kwargs.items())))
+            cache = self.__dict__.get(cache_attr)
+            if cache is None:
+                cache = self.__dict__[cache_attr] = {}
+            try:
+                return cache[key]
+            except KeyError:
+                pass
+            value = func(self, *args, **kwargs)
+            if len(cache) < maxsize:
+                cache[key] = value
+            return value
+
+        wrapper.__wrapped__ = func
+        wrapper.__name__ = getattr(func, "__name__", "wrapper")
+        wrapper.__qualname__ = getattr(func, "__qualname__", wrapper.__name__)
+        wrapper.__doc__ = func.__doc__
+        return wrapper
+
+    return decorator
 
 
 @define
@@ -244,19 +290,27 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             self._worst = self.find_limit(False)
         return self._worst
 
+    def _invalidate_limit_cache(self):
+        """Drop cached ``find_limit_brute_force`` results.
+
+        Called whenever the registered supplies/sales (which those limits
+        depend on) change. Clears only this instance's cache.
+        """
+        self.__dict__.pop("_cache_find_limit_brute_force", None)
+
     def register_supply_failure(self, supplier_id: str):
-        self.find_limit_brute_force.cache_clear()
+        self._invalidate_limit_cache()
         self._registered_supply_failures.add(supplier_id)
 
     def register_sale_failure(self, consumer_id: str):
-        self.find_limit_brute_force.cache_clear()
+        self._invalidate_limit_cache()
         self._registered_sale_failures.add(consumer_id)
 
     def register_sale(self, q: int, p: int, t: int):
         """Registers a sale to be considered when calculating utilities"""
         if t != self.current_step:
             return
-        self.find_limit_brute_force.cache_clear()
+        self._invalidate_limit_cache()
         self._signed_agreements.append((q, t if t >= 0 else self.current_step, p))
         self._signed_is_output.append(True)
 
@@ -264,7 +318,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
         """Registers a supply to be considered when calculating utilities"""
         if t != self.current_step:
             return
-        self.find_limit_brute_force.cache_clear()
+        self._invalidate_limit_cache()
         self._signed_agreements.append((q, t if t >= 0 else self.current_step, p))
         self._signed_is_output.append(False)
 
@@ -589,7 +643,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             )
         return u
 
-    @cache  # noqa: B019
+    @_instance_cached(_FROM_AGGREGATES_CACHE_MAX)
     def from_aggregates(
         self,
         qin: int,
@@ -875,7 +929,7 @@ class OneShotUFun(StationaryMixin, UtilityFunction):  # type: ignore
             )
         raise ValueError(f"We need to buy and sell which means there is single contract that makes sense {self._worst=}.")
 
-    @cache  # noqa: B019
+    @_instance_cached(_FIND_LIMIT_CACHE_MAX)
     def find_limit_brute_force(
         self,
         best,
