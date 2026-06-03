@@ -888,6 +888,13 @@ class MySyncAgent(OneShotSyncAgent):
 
     def get_offer(self, negotiator_id: str):
         ami = self.get_nmi(negotiator_id)
+        if ami is None:
+            # A negotiator can be registered without a live mechanism (e.g. a
+            # negotiation that has not started yet or has already ended); it has
+            # no NMI to read issues from. Returning None ends that negotiation,
+            # which is the correct first-proposal for a negotiation we cannot
+            # propose on.
+            return None
         quantity_issue = ami.issues[QUANTITY]
         unit_price_issue = ami.issues[UNIT_PRICE]
 
