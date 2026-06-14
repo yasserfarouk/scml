@@ -790,10 +790,24 @@ def anac_world_generator(*, year: int, **kwargs):
     return world
 
 
-anac2020_world_generator = partial(anac_world_generator, year=2020)
-anac2021_world_generator = partial(anac_world_generator, year=2021)
-anac2022_world_generator = partial(anac_world_generator, year=2022)
-anac2023_world_generator = partial(anac_world_generator, year=2023)
+# Defined as real named functions (not partials) so that negmas can persist
+# them by name and reconstruct them on resume. ``get_full_type_name`` unwraps
+# a ``functools.partial`` to its ``.func``, which would drop the ``year``
+# binding and crash ``continue_tournament`` with a missing ``year`` argument.
+def anac2020_world_generator(**kwargs):
+    return anac_world_generator(year=2020, **kwargs)
+
+
+def anac2021_world_generator(**kwargs):
+    return anac_world_generator(year=2021, **kwargs)
+
+
+def anac2022_world_generator(**kwargs):
+    return anac_world_generator(year=2022, **kwargs)
+
+
+def anac2023_world_generator(**kwargs):
+    return anac_world_generator(year=2023, **kwargs)
 
 
 def anac_oneshot_world_generator(*, year, **kwargs):
@@ -882,11 +896,26 @@ def anac_std_world_generator(*, year, **kwargs):
     return world
 
 
-anac2021_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2021)
-anac2022_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2022)
-anac2023_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2023)
-anac2024_oneshot_world_generator = partial(anac_oneshot_world_generator, year=2024)
-anac2024_std_world_generator = partial(anac_std_world_generator, year=2024)
+# Real named functions (not partials) — see the note above the
+# ``anacYYYY_world_generator`` definitions for why this matters on resume.
+def anac2021_oneshot_world_generator(**kwargs):
+    return anac_oneshot_world_generator(year=2021, **kwargs)
+
+
+def anac2022_oneshot_world_generator(**kwargs):
+    return anac_oneshot_world_generator(year=2022, **kwargs)
+
+
+def anac2023_oneshot_world_generator(**kwargs):
+    return anac_oneshot_world_generator(year=2023, **kwargs)
+
+
+def anac2024_oneshot_world_generator(**kwargs):
+    return anac_oneshot_world_generator(year=2024, **kwargs)
+
+
+def anac2024_std_world_generator(**kwargs):
+    return anac_std_world_generator(year=2024, **kwargs)
 
 
 def balance_calculator(
