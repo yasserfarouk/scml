@@ -795,19 +795,23 @@ def anac_world_generator(*, year: int, **kwargs):
 # a ``functools.partial`` to its ``.func``, which would drop the ``year``
 # binding and crash ``continue_tournament`` with a missing ``year`` argument.
 def anac2020_world_generator(**kwargs):
-    return anac_world_generator(year=2020, **kwargs)
+    kwargs |= {"year": 2020}
+    return anac_world_generator(**kwargs)
 
 
 def anac2021_world_generator(**kwargs):
-    return anac_world_generator(year=2021, **kwargs)
+    kwargs |= {"year": 2021}
+    return anac_world_generator(**kwargs)
 
 
 def anac2022_world_generator(**kwargs):
-    return anac_world_generator(year=2022, **kwargs)
+    kwargs |= {"year": 2022}
+    return anac_world_generator(**kwargs)
 
 
 def anac2023_world_generator(**kwargs):
-    return anac_world_generator(year=2023, **kwargs)
+    kwargs |= {"year": 2023}
+    return anac_world_generator(**kwargs)
 
 
 def anac_oneshot_world_generator(*, year, **kwargs):
@@ -899,23 +903,28 @@ def anac_std_world_generator(*, year, **kwargs):
 # Real named functions (not partials) — see the note above the
 # ``anacYYYY_world_generator`` definitions for why this matters on resume.
 def anac2021_oneshot_world_generator(**kwargs):
-    return anac_oneshot_world_generator(year=2021, **kwargs)
+    kwargs |= {"year": 2021}
+    return anac_oneshot_world_generator(**kwargs)
 
 
 def anac2022_oneshot_world_generator(**kwargs):
-    return anac_oneshot_world_generator(year=2022, **kwargs)
+    kwargs |= {"year": 2022}
+    return anac_oneshot_world_generator(**kwargs)
 
 
 def anac2023_oneshot_world_generator(**kwargs):
-    return anac_oneshot_world_generator(year=2023, **kwargs)
+    kwargs |= {"year": 2023}
+    return anac_oneshot_world_generator(**kwargs)
 
 
 def anac2024_oneshot_world_generator(**kwargs):
-    return anac_oneshot_world_generator(year=2024, **kwargs)
+    kwargs |= {"year": 2024}
+    return anac_oneshot_world_generator(**kwargs)
 
 
 def anac2024_std_world_generator(**kwargs):
-    return anac_std_world_generator(year=2024, **kwargs)
+    kwargs |= {"year": 2024}
+    return anac_std_world_generator(**kwargs)
 
 
 def balance_calculator(
@@ -1015,10 +1024,32 @@ def balance_calculator(
     return result
 
 
-balance_calculator2020 = partial(balance_calculator, consolidated=False)
-balance_calculator2021 = partial(balance_calculator, consolidated=False)
-balance_calculator2022 = partial(balance_calculator, consolidated=True)
-balance_calculator2023 = partial(balance_calculator, consolidated=True)
+# Real named functions (not partials) so negmas can persist the score
+# calculator by name and reconstruct it on resume. ``get_full_type_name``
+# unwraps a ``functools.partial`` to its ``.func``, which would drop the
+# ``consolidated`` binding (silently scoring with the wrong consolidation on
+# resume) and would make the 2020/2021 and 2022/2023 variants indistinguishable
+# since they would all serialize to the same ``balance_calculator`` name.
+# ``*args`` is forwarded because ``score_calculator`` is invoked positionally
+# as ``score_calculator(worlds, scoring_context, dry_run)``.
+def balance_calculator2020(*args, **kwargs):
+    kwargs |= {"consolidated": False}
+    return balance_calculator(*args, **kwargs)
+
+
+def balance_calculator2021(*args, **kwargs):
+    kwargs |= {"consolidated": False}
+    return balance_calculator(*args, **kwargs)
+
+
+def balance_calculator2022(*args, **kwargs):
+    kwargs |= {"consolidated": True}
+    return balance_calculator(*args, **kwargs)
+
+
+def balance_calculator2023(*args, **kwargs):
+    kwargs |= {"consolidated": True}
+    return balance_calculator(*args, **kwargs)
 
 
 def balance_calculator_collusion(
@@ -1101,10 +1132,28 @@ def balance_calculator_collusion(
     return results_with_collusion
 
 
-balance_calculator2020collusion = partial(balance_calculator_collusion, year=2020)
-balance_calculator2021collusion = partial(balance_calculator_collusion, year=2021)
-balance_calculator2022collusion = partial(balance_calculator_collusion, year=2022)
-balance_calculator2023collusion = partial(balance_calculator_collusion, year=2023)
+# Real named functions (not partials) — see the note above the
+# ``balance_calculatorYYYY`` definitions. Here the dropped binding is the
+# *required* ``year`` argument, so an unwrapped partial would crash on resume
+# rather than merely mis-score.
+def balance_calculator2020collusion(*args, **kwargs):
+    kwargs |= {"year": 2020}
+    return balance_calculator_collusion(*args, **kwargs)
+
+
+def balance_calculator2021collusion(*args, **kwargs):
+    kwargs |= {"year": 2021}
+    return balance_calculator_collusion(*args, **kwargs)
+
+
+def balance_calculator2022collusion(*args, **kwargs):
+    kwargs |= {"year": 2022}
+    return balance_calculator_collusion(*args, **kwargs)
+
+
+def balance_calculator2023collusion(*args, **kwargs):
+    kwargs |= {"year": 2023}
+    return balance_calculator_collusion(*args, **kwargs)
 
 
 def balance_calculator_oneshot(
