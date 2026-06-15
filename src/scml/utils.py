@@ -675,41 +675,58 @@ def anac_assigner_collusion(
     def _copy_config(perm_, c, indx):
         _ = indx
         new_config = copy.deepcopy(c)
-        new_config["is_default"] = is_default
-        for (a, p_), assignable in zip(perm_, assignable_factories, strict=False):
-            for factory in assignable:
-                new_config["agent_types"][factory] = a
-                new_config["agent_params"][factory] = copy.deepcopy(p_)
-        configs: list[dict] = [copy.deepcopy(new_config) for _ in range(n_agents_per_competitor + 1)]
+        # Use a local copy of is_default: this closure is called once per
+        # permutation and must not mutate the shared list.
+        config_is_default = list(is_default)
 
+        # The pool of default (non-competitor) agents available in the base
+        # config, used to fill factories we want to "deactivate".
         non_competitor_info = [
             (a, p if p else {})
-            for a, p, d in zip(new_config["agent_types"], new_config["agent_params"], is_default, strict=False)
+            for a, p, d in zip(c["agent_types"], c["agent_params"], is_default, strict=False)
             if d and a is not None and a not in competitors
         ]
-
         non_competitors = [get_full_type_name(a) for a, _ in non_competitor_info]
         non_competitor_params = [b for _, b in non_competitor_info]
         max_def_agents = len(non_competitors) - 1
 
-        assert len({tuple(_) for _ in assignable_factories}) == 1
-        free_factories = assignable_factories[0]
+        def _fill_with_default(config, default_flags, factory, name):
+            def_indx = randint(0, max_def_agents)
+            params_ = copy.deepcopy(non_competitor_params[def_indx])
+            params_["name"] = name
+            config["agent_types"][factory] = non_competitors[def_indx]
+            config["agent_params"][factory] = params_
+            default_flags[factory] = True
 
+        # Only the *measured* competitor (first in the rotated permutation)
+        # occupies its factory block; every other competitor's block is filled
+        # with default agents. The permutation is rotated once per competitor
+        # (n_permutations == n_competitors) so each competitor is measured in
+        # exactly one config group. This keeps every group a clean
+        # single-competitor collusion measurement, matching what
+        # ``balance_calculator_collusion`` expects (worlds[0] = the colluding
+        # competitor, worlds[1:] = the same competitor with factories isolated).
+        measured_competitor, measured_params = perm_[0]
+        free_factories = assignable_factories[0]
         assert len(free_factories) == n_agents_per_competitor
+        for factory in free_factories:
+            new_config["agent_types"][factory] = measured_competitor
+            new_config["agent_params"][factory] = copy.deepcopy(measured_params)
+            config_is_default[factory] = False
+        for block in assignable_factories[1:]:
+            for factory in block:
+                _fill_with_default(new_config, config_is_default, factory, f"_df_other_{factory}")
+
+        new_config["is_default"] = config_is_default
+        configs: list[dict] = [copy.deepcopy(new_config) for _ in range(n_agents_per_competitor + 1)]
+
         # for each config other than the first, remove all unassigned factories keeping one
         for j, config in zip(free_factories, configs[1:], strict=False):
             for i in free_factories:
                 if i == j:
                     continue
-                # assert config["agent_types"][i] is None
                 assert not config["is_default"][i]
-                def_indx = randint(0, max_def_agents)
-                params_ = copy.deepcopy(non_competitor_params[def_indx])
-                params_["name"] = f"_df_{100}_{i}"
-                config["agent_types"][i] = non_competitors[def_indx]
-                config["agent_params"][i] = params_
-                config["is_default"][i] = True
-                # config["is_default"][i] = False
+                _fill_with_default(config, config["is_default"], i, f"_df_{100}_{i}")
             assert len([_ for _ in config["is_default"] if not _]) == 1
         return configs
 
@@ -1548,7 +1565,7 @@ def anac2020_collusion(
         world_generator=anac2020_world_generator,
         config_generator=anac2020_config_generator_collusion,
         config_assigner=anac_assigner_collusion,
-        score_calculator=balance_calculator2020,
+        score_calculator=balance_calculator2020collusion,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric="median",
@@ -1887,7 +1904,7 @@ def anac2021_collusion(
         world_generator=anac2021_world_generator,
         config_generator=anac2021_config_generator_collusion,
         config_assigner=anac_assigner_collusion,
-        score_calculator=balance_calculator2021,
+        score_calculator=balance_calculator2021collusion,
         min_factories_per_level=min_factories_per_level,
         compact=compact,
         metric=truncated_mean,
