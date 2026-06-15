@@ -3529,7 +3529,7 @@ wheels = [
 
 [[package]]
 name = "scml"
-version = "0.8.2"
+version = "0.8.3"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -3582,7 +3582,7 @@ requires-dist = [
     { name = "joblib" },
     { name = "jupyter" },
     { name = "myst-parser", marker = "extra == 'docs'" },
-    { name = "negmas", specifier = ">=0.15.2" },
+    { name = "negmas", specifier = ">=0.15.6" },
     { name = "papermill", specifier = ">=2.7.0" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "progressbar", specifier = ">=2.5" },

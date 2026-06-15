@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.8.3 (2026.06.15)
+0.8.3 (2026.06.16)
 ------------------
 
 * Compatibility with negmas 0.15.6 (now the minimum required version)
