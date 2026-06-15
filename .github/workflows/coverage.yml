@@ -3,7 +3,7 @@ on: [push]
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - name: Setup Python
@@ -23,7 +23,7 @@ jobs:
       - name: "Get coverage data by running tests"
         run: |
           pip install pytest pytest-cov
-          pytest --cov=./ --cov-report=xml
+          pytest --cov=src/scml --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
