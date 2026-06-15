@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.8.3 (2026.06.15)
+------------------
+
+* Compatibility with negmas 0.15.6 (now the minimum required version)
+* bugfix: Correcting a crash in the ANAC world generators when ``year`` was passed explicitly (e.g. on tournament resume). The world generators and score calculators are now real named functions so negmas can persist and reconstruct them by name
+* bugfix: negmas compatibility by routing ``neg_hidden_time_limit`` to the negotiation mechanism, which restores the SCML2020 standard and collusion tournaments
+* bugfix: Correcting collusion tournament configuration and scoring when more than one competitor shares a world
+* Upgrading vulnerable development and documentation dependencies (Dependabot and Snyk security alerts)
+* CI: Raising the coverage job timeout and scoping coverage to ``src/scml``
+* tests: Ensuring the test suite never blocks on interactive plot windows
+
+
 0.7.7 (2025.05.28)
 ------------------
 
