@@ -234,6 +234,7 @@ class SCML2020World(TimeInAgreementMixin, World):
         neg_n_steps=20,
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
+        neg_hidden_time_limit=float("inf"),
         negotiation_speed=21,
         negotiation_quota_per_step=None,
         negotiation_quota_per_simulation=float("inf"),
@@ -311,6 +312,7 @@ class SCML2020World(TimeInAgreementMixin, World):
                         "end_on_no_response": end_negotiation_on_refusal_to_propose,
                         "dynamic_entry": False,
                         "max_wait": negotiation_quota_per_step,
+                        "hidden_time_limit": neg_hidden_time_limit,
                     },
                 )
             },
