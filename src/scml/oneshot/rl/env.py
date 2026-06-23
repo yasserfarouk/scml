@@ -59,6 +59,9 @@ class OneShotEnv(gym.Env):
         return self._obs_manager.encode(self._agent.awi)
         # return {"agent": self._agent_location, "target": self._target_location}
 
+    def _get_first_obs(self):
+        return self._obs_manager.make_first_observation(self._agent.awi)
+
     def calc_info(self):
         """Calculates info to be returned from `step()`."""
         return {}
@@ -88,7 +91,7 @@ class OneShotEnv(gym.Env):
             assert self._world in self._context
         self._agent_id = self._agent.id
         self._world.step_with({}, init=True)
-        observation = self._get_obs()
+        observation = self._get_first_obs()
         info = self.calc_info()
 
         if self.render_mode == "human":
