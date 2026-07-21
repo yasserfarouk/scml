@@ -1599,6 +1599,21 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
 
             # Reset all agents
             # ================
+            # Any negotiation still running at this point will be killed by the
+            # reset below: the killed negotiator loses its parent controller, so
+            # ControlledSAONegotiator.propose returns None -> (REJECT, None) ->
+            # the negotiation breaks spuriously. With negotiation_speed=None
+            # negotiations run to completion within the step, so this is empty.
+            # A too-small negotiation_speed leaves negotiations stranded here.
+            _still_running = len(self._negotiations)
+            if _still_running:
+                warnings.warn(
+                    f"[step {self.current_step}] {_still_running} negotiation(s) "
+                    f"still running when agents are reset; they will be killed and "
+                    f"break with (REJECT, None). Increase negotiation_speed or set "
+                    f"it to None so negotiations finish within a simulation step.",
+                    stacklevel=2,
+                )
             for aid, a in self.agents.items():
                 a.reset()
                 assert a.is_clean(), f"Agent {aid} has unclean state: Negotiations: {a._negotiations}"

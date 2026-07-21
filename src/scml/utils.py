@@ -352,7 +352,15 @@ def anac_config_generator(
             "neg_hidden_time_limit": ONESHOT_NEG_HIDDEN_TIMEOUT,
             "neg_n_steps": 20,
             "neg_step_time_limit": NEG_STEP_TIME_LIMIT,
-            "negotiation_speed": 21,
+            # Run each negotiation to completion within a simulation step.
+            # A finite value (previously 21) budgets mechanism step() calls per
+            # day; sync controllers spend ~half of them on WAITs (collecting all
+            # offers), so ~21 calls advance only ~10-11 of a negotiation's 20
+            # rounds. Unfinished negotiations are then killed by the next day's
+            # agent reset(), which nulls the negotiator's parent controller so
+            # ControlledSAONegotiator.propose returns None -> (REJECT, None) ->
+            # the negotiation breaks spuriously. None avoids the cap entirely.
+            "negotiation_speed": None,
             "start_negotiations_immediately": False,
             "agent_processes": agent_processes,
             "n_processes": np,
