@@ -90,7 +90,7 @@ fixed_vars = {
     "bankruptcy_limit": 1.0,
     "n_steps": N_STEPS,
     "neg_n_steps": 20,
-    "negotiation_speed": 21,
+    "negotiation_speed": None,
     "cash_availability": (0.8, 1.0),
     "max_productivity": (0.8, 1.0),
     "compact": COMPACT,

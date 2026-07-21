@@ -380,7 +380,7 @@ def anac_config_generator(
             "neg_hidden_time_limit": ONESHOT_NEG_HIDDEN_TIMEOUT,
             "neg_n_steps": 20,
             "neg_step_time_limit": NEG_STEP_TIME_LIMIT,
-            "negotiation_speed": 21,
+            "negotiation_speed": None,
             "spot_market_global_loss": 0.2,
             "interest_rate": 0.08,
             "bankruptcy_limit": 1.0,

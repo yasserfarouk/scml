@@ -110,7 +110,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         neg_n_steps=20,
         neg_time_limit=2 * 60,
         neg_step_time_limit=60,
-        negotiation_speed=21,
+        negotiation_speed=None,
         # bank parameters
         no_bank=False,
         minimum_balance=0,
@@ -536,7 +536,7 @@ class SCML2019World(TimeInAgreementMixin, World):
         miner_kwargs: dict[str, Any] = None,
         consumption: int | tuple[int, int] = (0, 5),
         consumer_kwargs: dict[str, Any] = None,
-        negotiation_speed: int | None = 21,
+        negotiation_speed: int | None = None,
         manager_types: Sequence[type[FactoryManager]] = (GreedyFactoryManager,),
         manager_params: Sequence[dict[str, Any]] | None = None,
         n_default_per_level: int = 0,
