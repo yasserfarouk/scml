@@ -4,6 +4,8 @@ Changelog
 0.8.4 (unreleased)
 ------------------
 
+* Compatibility with negmas 0.16.0 (now the minimum required version)
+* bugfix: ``_request_negotiations`` handled the buying and the selling side in one loop but assigned the negotiators it created to the parameter it was reading, so the selling side reused the buying side's negotiators. A negotiator that already joined a mechanism cannot join another, so the selling mechanism was registered with a single negotiator and never started. Agents that both buy from and sell to non-system partners (which needs at least four processes) silently lost all of their selling negotiations, and the dead mechanisms made the world spin until its real-time limit, ending simulations after zero steps with no contracts executed. Affected both oneshot and standard worlds
 * ``scml.experiment.run_configs`` now gives every configuration its own reproducible seed (via negmas's ``task_seed``) when ``NEGMAS_RAND_SEED`` is set. joblib workers each re-apply the environment seed on import, so without this every repetition of a configuration collapsed onto one identical outcome. Unseeded runs are dispatched exactly as before.
 * The RL environments (``OneShotEnv``/``StdEnv``) now honor negmas's global seed. When ``NEGMAS_RAND_SEED`` is set, the first ``reset()`` of every environment seeds the gymnasium action/observation spaces (which negmas does not cover) as well, making random policies reproducible. With the variable unset, behavior is unchanged.
 

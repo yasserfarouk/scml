@@ -9,13 +9,14 @@ from scml.oneshot.agents import (
     GreedySyncAgent,
     RandomOneShotAgent,
 )
+from scml.oneshot.world import is_system_agent
 from scml.utils import (
     anac2023_oneshot_world_generator,
     anac_assigner_oneshot,
     anac_config_generator_oneshot,
 )
 
-from ..switches import DefaultOneShotWorld
+from ..switches import DefaultOneShotWorld, DefaultStdWorld
 
 # LOG_PARAMS = dict(
 #     no_logs=False,
@@ -156,6 +157,53 @@ def test_equal_exogenous_supply_stepping_with_random_action():
     while world.step_with(actions=actions):
         actions = make_actions()
     assert len(world.contracts_executed) > 0
+
+
+@pytest.mark.parametrize("world_type", [DefaultOneShotWorld, DefaultStdWorld])
+def test_every_negotiation_has_both_partners(world_type):
+    """Every mechanism must be created with both of its partners in it.
+
+    ``_request_negotiations`` handles the buying and the selling side in one
+    loop. It used to assign the freshly created negotiators to the parameter it
+    was reading, so the selling side reused the buying side's negotiators. A
+    negotiator that already joined a mechanism cannot join another one, so
+    ``Mechanism.add`` dropped it and the selling mechanism was registered with a
+    single negotiator, which never starts and never produces an agreement.
+
+    Only agents that both buy from and sell to non-system partners are affected,
+    and only those that initiate negotiations, so this needs at least four
+    processes to show up.
+    """
+    world = world_type(
+        **world_type.generate(
+            agent_types=[RandomOneShotAgent],
+            n_processes=4,
+            n_agents_per_process=2,
+            n_steps=5,
+            random_agent_types=False,
+        ),
+        **LOG_PARAMAS,
+    )
+    world.step_with(actions={}, init=True)
+
+    negotiations = list(world._negotiations.values())
+    assert negotiations, "No negotiations were started, the test would pass vacuously"
+    bad = [(neg.partners, len(neg.mechanism.negotiators)) for neg in negotiations if len(neg.mechanism.negotiators) != 2]
+    assert not bad, f"Mechanisms registered without both partners: {bad}"
+
+    # the middle agents are the ones that exercise both sides of the loop
+    middles = [
+        aid
+        for aid in world.agents
+        if not is_system_agent(aid)
+        and any(not is_system_agent(_) for _ in world.agent_suppliers[aid])
+        and any(not is_system_agent(_) for _ in world.agent_consumers[aid])
+    ]
+    assert middles, "No agent buys and sells to non-system partners, the test would pass vacuously"
+    for aid in middles:
+        details = world.agents[aid].awi.current_negotiation_details  # type: ignore
+        assert details["buy"], f"{aid} has no buying negotiations"
+        assert details["sell"], f"{aid} has no selling negotiations"
 
 
 @pytest.mark.parametrize("year", [2023])

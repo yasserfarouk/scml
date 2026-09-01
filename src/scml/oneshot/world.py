@@ -2090,13 +2090,19 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
             partners = [_ for _ in responding_agents if not self.is_bankrupt[_] and not is_system_agent(_)]
             if not partners:
                 return True
-            if negotiators is None:
+            # Keep this list local to the side being processed. Assigning to
+            # `negotiators` here would leak the buying side's negotiators into
+            # the selling side of the next iteration; a negotiator that already
+            # joined a mechanism cannot join another, so `Mechanism.add` would
+            # silently drop it and the selling mechanism would be registered
+            # with a single negotiator (and never start).
+            side_negotiators = negotiators
+            if side_negotiators is None:
                 assert controller is not None
-                negotiators = [
+                side_negotiators = [
                     controller.create_negotiator(ControlledSAONegotiator, name=_, id=_)  # type: ignore
                     for _ in partners
                 ]
-            assert negotiators is not None
             results += [
                 self._request_negotiation(
                     agent_id=agent_id,
@@ -2109,7 +2115,7 @@ class SCMLBaseWorld(TimeInAgreementMixin, World[OneShotAWI, DefaultOneShotAdapte
                     extra=extra,
                     is_buy=is_buying,
                 )
-                for partner, negotiator in zip(partners, negotiators, strict=False)
+                for partner, negotiator in zip(partners, side_negotiators, strict=False)
             ]
             # for p, r in zip(partners, results):
             #     if r:

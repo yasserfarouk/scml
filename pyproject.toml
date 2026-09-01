@@ -27,7 +27,7 @@ dependencies = [
     "click-aliases",
     "pytest",
     "hypothesis",
-    "negmas>=0.15.6",
+    "negmas>=0.16.0",
     "joblib",
     "jupyter",
     "gif",
