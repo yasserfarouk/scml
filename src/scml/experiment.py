@@ -17,6 +17,11 @@ from rich.progress import track
 
 from scml import DecentralizingAgent, SCML2020World
 
+try:
+    from negmas.helpers.rand import seed_all, task_seed
+except ImportError:  # negmas is too old to have a global seed
+    seed_all = task_seed = None  # type: ignore[assignment]
+
 N_STEPS = 10
 N_WORLDS = 2
 COMPACT = True
@@ -228,15 +233,39 @@ def generate_configs_single(
     return configs
 
 
+def _task_seeds(n: int) -> list[int | None]:
+    """A distinct reproducible seed per config, or `None`s when unseeded.
+
+    Parallel workers are separate processes that each re-apply
+    ``NEGMAS_RAND_SEED`` as they import negmas, so without this every worker
+    starts from the same stream and the repetitions of one configuration
+    collapse onto a single outcome. All seeds are derived up-front from the
+    run's base seed so a serial run reproduces a parallel one.
+    """
+    if task_seed is None:
+        return [None] * n
+    return [task_seed(i) for i in range(n)]
+
+
+def run_config_seeded(seed: int | None, world_config: dict[str, Any], funcs: list[str]):
+    """Runs `run_config` after seeding this process with ``seed`` (if any)."""
+    if seed is not None and seed_all is not None:
+        seed_all(seed)
+    return run_config(world_config, funcs)
+
+
 def run_configs(configs: Iterable[dict[str, Any]], n_jobs: int) -> pd.DataFrame:
     configs = list(configs)
+    seeds = _task_seeds(len(configs))
     if n_jobs == 1:
         results = []
-        for world_config in configs:
-            results.append(run_config(world_config, list(dep_vars.keys())))
+        for seed, world_config in zip(seeds, configs, strict=True):
+            results.append(run_config_seeded(seed, world_config, list(dep_vars.keys())))
         return pd.DataFrame(results)
 
-    results = Parallel(n_jobs=n_jobs)(delayed(run_config)(configs[i], list(dep_vars.keys())) for i in track(range(len(configs))))
+    results = Parallel(n_jobs=n_jobs)(
+        delayed(run_config_seeded)(seeds[i], configs[i], list(dep_vars.keys())) for i in track(range(len(configs)))
+    )
     return pd.DataFrame(results)
 
 

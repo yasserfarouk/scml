@@ -4,6 +4,7 @@ Changelog
 0.8.4 (unreleased)
 ------------------
 
+* ``scml.experiment.run_configs`` now gives every configuration its own reproducible seed (via negmas's ``task_seed``) when ``NEGMAS_RAND_SEED`` is set. joblib workers each re-apply the environment seed on import, so without this every repetition of a configuration collapsed onto one identical outcome. Unseeded runs are dispatched exactly as before.
 * The RL environments (``OneShotEnv``/``StdEnv``) now honor negmas's global seed. When ``NEGMAS_RAND_SEED`` is set, the first ``reset()`` of every environment seeds the gymnasium action/observation spaces (which negmas does not cover) as well, making random policies reproducible. With the variable unset, behavior is unchanged.
 
 
