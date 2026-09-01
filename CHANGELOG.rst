@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.8.4 (unreleased)
+0.8.4 (2026.09.01)
 ------------------
 
 * Compatibility with negmas 0.16.0 (now the minimum required version)
