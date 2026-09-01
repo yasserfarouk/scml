@@ -1,3 +1,4 @@
+import random
 from typing import Any
 
 import gymnasium as gym
@@ -10,6 +11,14 @@ from scml.oneshot.rl.action import ActionManager
 from scml.oneshot.rl.observation import ObservationManager
 from scml.oneshot.rl.reward import DefaultRewardFunction, RewardFunction
 from scml.oneshot.world import SCMLBaseWorld
+
+try:
+    from negmas.helpers.rand import get_seed
+except ImportError:  # negmas is too old to have a global seed
+
+    def get_seed() -> int | None:  # type: ignore[misc]
+        return None
+
 
 __all__ = ["OneShotEnv"]
 
@@ -53,6 +62,7 @@ class OneShotEnv(gym.Env):
         self.action_space = action_manager.make_space()
         self.observation_space = observation_manager.make_space()
         self.render_mode = render_mode
+        self._negmas_seeded = False
         # self.reset()
 
     def _get_obs(self):
@@ -78,9 +88,18 @@ class OneShotEnv(gym.Env):
 
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[Any, dict[str, Any]]:
         _ = options
-        import random
-
-        random.seed(seed)
+        negmas_seed = get_seed()
+        if seed is None and negmas_seed is not None:
+            # NEGMAS_RAND_SEED is set. Seed everything negmas does not cover
+            # once per environment and then let the seeded streams advance so
+            # that later episodes still differ from the first one.
+            if not self._negmas_seeded:
+                self._negmas_seeded = True
+                random.seed(negmas_seed)
+                self.action_space.seed(negmas_seed % (2**32))
+                self.observation_space.seed(negmas_seed % (2**32))
+        else:
+            random.seed(seed)
         self._world, agents = self._context.generate(
             types=(self._agent_type,),
             params=(self._agent_params,),

@@ -828,3 +828,37 @@ def test_grouping_too_many_partners(extend):
     assert tuple(groups[1]) == ("a21", "a22")
     assert tuple(groups[2]) == ("a31",)
     assert tuple(groups[3]) == ("a41",)
+
+
+def _make_seed_test_env():
+    context = DefaultContext()
+    return OneShotEnv(
+        action_manager=FlexibleActionManager(context=context),
+        observation_manager=FlexibleObservationManager(context=context),
+        context=context,
+    )
+
+
+def test_env_uses_negmas_global_seed(monkeypatch):
+    """With a negmas global seed in effect, two envs sample identically."""
+    import scml.oneshot.rl.env as envmodule
+
+    monkeypatch.setattr(envmodule, "get_seed", lambda: 42)
+    samples = []
+    for _ in range(2):
+        env = _make_seed_test_env()
+        obs, _ = env.reset()
+        assert obs is not None
+        samples.append([env.action_space.sample() for _ in range(5)])
+    assert all((a == b).all() for a, b in zip(samples[0], samples[1], strict=True))
+
+
+def test_env_reset_unseeded_still_works():
+    """Without a negmas global seed, `reset()` behaves exactly as before."""
+    import scml.oneshot.rl.env as envmodule
+
+    assert envmodule.get_seed() is None, "This test assumes NEGMAS_RAND_SEED is not set"
+    env = _make_seed_test_env()
+    obs, info = env.reset()
+    assert obs is not None
+    assert isinstance(info, dict)

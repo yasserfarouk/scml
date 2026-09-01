@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.4 (unreleased)
+------------------
+
+* The RL environments (``OneShotEnv``/``StdEnv``) now honor negmas's global seed. When ``NEGMAS_RAND_SEED`` is set, the first ``reset()`` of every environment seeds the gymnasium action/observation spaces (which negmas does not cover) as well, making random policies reproducible. With the variable unset, behavior is unchanged.
+
+
 0.8.3 (2026.06.16)
 ------------------
 
