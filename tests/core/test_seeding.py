@@ -25,6 +25,10 @@ def test_task_seeds_are_none_when_unseeded(monkeypatch):
 
 def test_task_seeds_are_distinct_when_seeded(monkeypatch):
     rand = pytest.importorskip("negmas.helpers.rand", reason="negmas has no global seed")
+    # The module existing is not enough: task_seed was added after it, so a
+    # negmas picked up from between the two commits has one and not the other.
+    if not hasattr(rand, "task_seed"):
+        pytest.skip("this negmas has no per-task seeding")
     monkeypatch.setattr(rand, "_seed", 42)
     monkeypatch.setattr(exp, "task_seed", rand.task_seed)
 
