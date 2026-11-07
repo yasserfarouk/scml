@@ -2124,7 +2124,7 @@ wheels = [
 
 [[package]]
 name = "negmas"
-version = "0.16.0"
+version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -2156,9 +2156,9 @@ dependencies = [
     { name = "typer" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/72/61/1c12d915e5bed01e346566cf39913c080c3bbcbd861a87f4d522b258190c/negmas-0.16.0.tar.gz", hash = "sha256:c4bde84532fff62748f468f85704e7a2be0fd85808dccfd0b912548df0209e21", size = 1018656, upload-time = "2026-09-01T07:20:14.323Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/80/0afd5e783a7233076bc426f962a9730218b43c96a8081b80f2ff1d158ac4/negmas-0.17.0.tar.gz", hash = "sha256:2e0142546352bdc3eb8b7123475179865a5f21e6ab7a9b5b0f1509c2afca773a", size = 1056141, upload-time = "2026-11-07T18:24:28.852Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/8a/77c1c00af857e9bca45e3c4327499c7b6507ef7d477c1d5e9c852a8d014f/negmas-0.16.0-py3-none-any.whl", hash = "sha256:cb5c2b14156a4aabec78df68136b99833ae0eb4075ed8f7525fff2322e72e42d", size = 1129303, upload-time = "2026-09-01T07:20:12.417Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/0e/7eee2006b9284d3a14588a859006a24fe93547c6abe899358fbd41340d6d/negmas-0.17.0-py3-none-any.whl", hash = "sha256:ab78e4d65d483e634971ba4c83b8c4159c31fbbfb87c7454dff4dee9bb946e51", size = 1169593, upload-time = "2026-11-07T18:24:26.983Z" },
 ]
 
 [[package]]
@@ -3529,7 +3529,7 @@ wheels = [
 
 [[package]]
 name = "scml"
-version = "0.8.3"
+version = "0.8.4"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -3582,7 +3582,7 @@ requires-dist = [
     { name = "joblib" },
     { name = "jupyter" },
     { name = "myst-parser", marker = "extra == 'docs'" },
-    { name = "negmas", specifier = ">=0.16.0" },
+    { name = "negmas", specifier = ">=0.17.0" },
     { name = "papermill", specifier = ">=2.7.0" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "progressbar", specifier = ">=2.5" },
