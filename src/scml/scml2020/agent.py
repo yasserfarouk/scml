@@ -8,7 +8,7 @@ from negmas import (
     Agent,
     Breach,
     Contract,
-    DiscreteCartesianOutcomeSpace,
+    EnumerableCartesianOutcomeSpace,
     Issue,
     MechanismState,
     Negotiator,
@@ -525,11 +525,11 @@ class AWIHelper:
         return issues  # type: ignore
 
     @property
-    def current_input_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+    def current_input_outcome_space(self) -> EnumerableCartesianOutcomeSpace:
         return make_os(self.current_input_issues) if self.current_input_issues else None  # type: ignore
 
     @property
-    def current_output_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+    def current_output_outcome_space(self) -> EnumerableCartesianOutcomeSpace:
         return (  # type: ignore
             make_os(self.current_output_issues) if self.current_output_issues else None
         )

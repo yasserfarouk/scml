@@ -5,7 +5,7 @@ from typing import Literal
 
 from attr import define
 from negmas import make_issue, make_os
-from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome
+from negmas.outcomes import EnumerableCartesianOutcomeSpace, Outcome
 from negmas.sao import SAONMI
 from negmas.sao.common import SAOState
 
@@ -292,9 +292,9 @@ class OneShotState:
     contracts for a product. This information is only available if `publish_exogenous_summary` is set in the world."""
     reports_of_agents: dict[str, dict[int, FinancialReport]]
     """Gives all past financial reports of a given agent. See `FinancialReport` for details."""
-    current_input_outcome_space: DiscreteCartesianOutcomeSpace
+    current_input_outcome_space: EnumerableCartesianOutcomeSpace
     """The current issues for all negotiations to buy the input product of the agent. If the agent is at level zero, this will be empty. This is exactly the same as current_input_outcome_space.issues"""
-    current_output_outcome_space: DiscreteCartesianOutcomeSpace
+    current_output_outcome_space: EnumerableCartesianOutcomeSpace
     """The current issues for all negotiations to buy the output product of
     the agent. If the agent is at level n_products - 1, this will be empty.
     This is exactly the same as current_output_outcome_space.issues"""

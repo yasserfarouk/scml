@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 from negmas import ContiguousIssue
-from negmas.outcomes import DiscreteCartesianOutcomeSpace, Outcome, make_os
+from negmas.outcomes import EnumerableCartesianOutcomeSpace, Outcome, make_os
 from negmas.sao import SAONMI, SAOState
 from negmas.situated import AgentWorldInterface
 
@@ -627,11 +627,11 @@ class OneShotAWI(AgentWorldInterface):
         return self._world._current_issues[self.my_output_product]
 
     @property
-    def current_input_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+    def current_input_outcome_space(self) -> EnumerableCartesianOutcomeSpace:
         return make_os(self._world._current_issues[self.my_input_product])  # type: ignore
 
     @property
-    def current_output_outcome_space(self) -> DiscreteCartesianOutcomeSpace:
+    def current_output_outcome_space(self) -> EnumerableCartesianOutcomeSpace:
         return make_os(self._world._current_issues[self.my_output_product])  # type: ignore
 
     @property
